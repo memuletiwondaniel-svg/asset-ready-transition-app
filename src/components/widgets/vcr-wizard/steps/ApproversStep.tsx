@@ -81,26 +81,40 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
         .eq('id', vcrId)
         .maybeSingle();
 
+      let projectId = '';
       let plantName = '';
       let hubName = '';
+
       if (hp?.handover_plan_id) {
         const { data: plan } = await client
           .from('p2a_handover_plans')
           .select('project_id')
           .eq('id', hp.handover_plan_id)
           .maybeSingle();
+
         if (plan?.project_id) {
+          projectId = plan.project_id;
           const { data: project } = await client
             .from('projects')
             .select('plant_id, hub_id')
             .eq('id', plan.project_id)
             .maybeSingle();
+
           if (project?.plant_id) {
-            const { data: plant } = await client.from('plant').select('name').eq('id', project.plant_id).maybeSingle();
+            const { data: plant } = await client
+              .from('plant')
+              .select('name')
+              .eq('id', project.plant_id)
+              .maybeSingle();
             plantName = plant?.name || '';
           }
+
           if (project?.hub_id) {
-            const { data: hub } = await client.from('hubs').select('name').eq('id', project.hub_id).maybeSingle();
+            const { data: hub } = await client
+              .from('hubs')
+              .select('name')
+              .eq('id', project.hub_id)
+              .maybeSingle();
             hubName = hub?.name || '';
           }
         }
@@ -112,10 +126,63 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
         .eq('is_active', true);
       if (!allProfiles) return [];
 
+      const explicitRoleMatches: Record<string, { full_name?: string; avatar_url?: string; position?: string }> = {};
+
+      if (projectId) {
+        const { data: teamMembers } = await client
+          .from('project_team_members')
+          .select('user_id, role')
+          .eq('project_id', projectId);
+
+        const roleMatchers: Record<string, (role: string) => boolean> = {
+          'Project Hub Lead': (role) => role.includes('project hub lead') || role === 'hub lead' || role.includes('hub lead'),
+          'Construction Lead': (role) => role.includes('construction lead'),
+        };
+
+        await Promise.all(
+          Object.entries(roleMatchers).map(async ([roleLabel, matcher]) => {
+            const teamMember = teamMembers?.find((m: any) => matcher((m.role || '').toLowerCase().trim()));
+            if (!teamMember?.user_id) return;
+
+            const fromProfiles = allProfiles.find((p: any) => p.user_id === teamMember.user_id);
+            if (fromProfiles) {
+              explicitRoleMatches[roleLabel] = {
+                full_name: fromProfiles.full_name,
+                avatar_url: fromProfiles.avatar_url,
+                position: fromProfiles.position,
+              };
+              return;
+            }
+
+            const { data: safeProfileData } = await client.rpc('get_safe_profile_data', {
+              target_user_id: teamMember.user_id,
+            });
+            const safeProfile = Array.isArray(safeProfileData) ? safeProfileData[0] : safeProfileData;
+            if (!safeProfile) return;
+
+            explicitRoleMatches[roleLabel] = {
+              full_name: safeProfile.full_name,
+              avatar_url: safeProfile.avatar_url,
+              position: safeProfile.position,
+            };
+          })
+        );
+      }
+
       const plantLower = plantName.toLowerCase();
       const regionKeywords = hubName ? getRegionKeywords(hubName) : [];
 
       return DEFAULT_APPROVER_ROLES.map((role) => {
+        const explicitMatch = explicitRoleMatches[role];
+        if (explicitMatch?.full_name) {
+          return {
+            role,
+            name: explicitMatch.full_name || '',
+            position: explicitMatch.position || role,
+            avatarUrl: getFullAvatarUrl(explicitMatch.avatar_url || null),
+          };
+        }
+
         const candidates = allProfiles.filter((p: any) => {
           const pos = (p.position || '').toLowerCase().replace(/–/g, '-').replace(/—/g, '-');
 
