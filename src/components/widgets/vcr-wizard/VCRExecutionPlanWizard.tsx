@@ -312,16 +312,27 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
               "border-t border-border/60 flex items-center justify-between",
               isMobile ? "px-3 py-2" : "px-6 py-3"
             )}>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBack}
-                disabled={currentStep === 0}
-                className="gap-1.5"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                {!isMobile && 'Back'}
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBack}
+                  disabled={currentStep === 0}
+                  className="gap-1.5"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  {!isMobile && 'Back'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onOpenChange(false)}
+                  className="gap-1.5 text-muted-foreground"
+                >
+                  <X className="w-4 h-4" />
+                  {!isMobile && 'Save & Exit'}
+                </Button>
+              </div>
               {!isMobile && (
                 <div className="flex items-center gap-1.5">
                   {STEPS.map((_, idx) => (
