@@ -1728,26 +1728,42 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         .eq('is_active', true);
       if (!allProfiles) return [];
 
-      const plantLower = plantName.toLowerCase();
-      const hubLower = hubName.toLowerCase();
-      const result: Array<{ id: string; name: string; role: string; status?: 'pending' | 'approved' | 'rejected'; avatar_url?: string }> = [];
+      // Primary resolution: use project_team_members (source of truth)
+      let hubLeadProfile: any = null;
+      if (plan?.project_id) {
+        const { data: teamMembers } = await client
+          .from('project_team_members')
+          .select('user_id, role')
+          .eq('project_id', plan.project_id);
 
-      // 1. Project Hub Lead — match by hub name in position
-      const hubLead = allProfiles.find((p: any) => {
-        const pos = (p.position || '').toLowerCase().replace(/–/g, '-');
-        if (!pos.includes('hub lead')) return false;
-        // Must match the project's hub name
-        return hubLower ? pos.replace(/–/g, '-').includes(hubLower) : false;
-      }) || allProfiles.find((p: any) => {
-        // Fallback: any hub lead if no hub-specific match
-        const pos = (p.position || '').toLowerCase().replace(/–/g, '-');
-        return pos.includes('project hub lead');
-      });
+        const hubTeamMember = teamMembers?.find((m: any) => {
+          const r = (m.role || '').toLowerCase().trim();
+          return r.includes('hub lead') || r.includes('project hub lead');
+        });
+
+        if (hubTeamMember?.user_id) {
+          hubLeadProfile = allProfiles.find((p: any) => p.user_id === hubTeamMember.user_id);
+          if (!hubLeadProfile) {
+            const { data: safeData } = await client.rpc('get_safe_profile_data', { target_user_id: hubTeamMember.user_id });
+            const safe = Array.isArray(safeData) ? safeData[0] : safeData;
+            if (safe) hubLeadProfile = safe;
+          }
+        }
+      }
+
+      // Fallback: position-based matching
+      if (!hubLeadProfile) {
+        hubLeadProfile = allProfiles.find((p: any) => {
+          const pos = (p.position || '').toLowerCase().replace(/–/g, '-');
+          return pos.includes('project hub lead');
+        });
+      }
+
       result.push({
-        id: hubLead?.user_id || 'pac-hub-lead',
-        name: hubLead?.full_name || '',
-        role: hubLead?.position || 'Project Hub Lead',
-        avatar_url: getFullAvatarUrl(hubLead?.avatar_url || null),
+        id: hubLeadProfile?.user_id || 'pac-hub-lead',
+        name: hubLeadProfile?.full_name || '',
+        role: hubLeadProfile?.position || 'Project Hub Lead',
+        avatar_url: getFullAvatarUrl(hubLeadProfile?.avatar_url || null),
       });
 
       // 2. Plant Director (primary, NOT deputy)
