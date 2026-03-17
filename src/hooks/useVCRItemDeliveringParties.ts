@@ -16,9 +16,9 @@ export interface DeliveringPartyMember {
  * Pass either vcrItemId OR prerequisiteId (not both).
  */
 export const useVCRItemDeliveringParties = (
-  options: { vcrItemId?: string; prerequisiteId?: string }
+  options: { vcrItemId?: string; prerequisiteId?: string; handoverPointId?: string }
 ) => {
-  const { vcrItemId, prerequisiteId } = options;
+  const { vcrItemId, prerequisiteId, handoverPointId } = options;
   const entityId = prerequisiteId || vcrItemId;
   const entityField = prerequisiteId ? 'prerequisite_id' : 'vcr_item_id';
   const queryClient = useQueryClient();
@@ -79,6 +79,10 @@ export const useVCRItemDeliveringParties = (
         insertData.prerequisite_id = prerequisiteId;
       } else {
         insertData.vcr_item_id = vcrItemId;
+      }
+      // Include handover_point_id for DB-level location validation
+      if (handoverPointId) {
+        insertData.handover_point_id = handoverPointId;
       }
       const { error } = await client
         .from('vcr_item_delivering_parties')

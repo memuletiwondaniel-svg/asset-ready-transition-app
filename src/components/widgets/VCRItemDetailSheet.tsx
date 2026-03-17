@@ -99,7 +99,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
 
   // Delivering parties management
-  const { members: deliveringParties, addMember, removeMember } = useVCRItemDeliveringParties({ vcrItemId: item?.id });
+  const { members: deliveringParties, addMember, removeMember } = useVCRItemDeliveringParties({ vcrItemId: item?.id, handoverPointId: vcrId });
   const { data: teamMembers = [] } = useProjectTeamSearch(projectId);
 
   // Determine the category for ORA intelligence based on item category

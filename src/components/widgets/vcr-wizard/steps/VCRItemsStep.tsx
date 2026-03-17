@@ -651,6 +651,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
               roles={roles}
               projectId={projectId}
               projectLocationCtx={projectLocationCtx || undefined}
+              vcrId={vcrId}
               onSave={(payload) => updateItem.mutate(payload)}
               isSaving={updateItem.isPending}
             />
@@ -729,9 +730,10 @@ const EditItemForm: React.FC<{
   roles: Role[];
   projectId?: string;
   projectLocationCtx?: ProjectLocationContext;
+  vcrId: string;
   onSave: (payload: OverridePayload) => void;
   isSaving: boolean;
-}> = ({ item, roles, projectId, projectLocationCtx, onSave, isSaving }) => {
+}> = ({ item, roles, projectId, projectLocationCtx, vcrId, onSave, isSaving }) => {
   const queryClient = useQueryClient();
   const [vcrItem, setVcrItem] = useState(item.effective_vcr_item);
   const [topic, setTopic] = useState(item.effective_topic || '');
@@ -743,7 +745,7 @@ const EditItemForm: React.FC<{
   const [addDeliveringOpen, setAddDeliveringOpen] = useState(false);
   const [deliveringSearch, setDeliveringSearch] = useState('');
 
-  const { members: explicitDeliveringParties, addMember, removeMember } = useVCRItemDeliveringParties({ vcrItemId: item.id });
+  const { members: explicitDeliveringParties, addMember, removeMember } = useVCRItemDeliveringParties({ vcrItemId: item.id, handoverPointId: vcrId });
 
   // Build role IDs including family expansion (e.g., ORA Engr → Snr ORA Engr)
   const allRoleIds = [...new Set([deliveringParty, ...approvingParties].filter(Boolean))];
@@ -865,6 +867,7 @@ const EditItemForm: React.FC<{
       vcr_item_id: item.id,
       user_id: userId,
       added_by: authData.user?.id,
+      handover_point_id: vcrId,
     }));
 
     const client = supabase as any;

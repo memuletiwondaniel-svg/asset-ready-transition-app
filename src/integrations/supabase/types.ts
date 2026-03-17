@@ -9362,6 +9362,7 @@ export type Database = {
         Row: {
           added_by: string | null
           created_at: string
+          handover_point_id: string | null
           id: string
           prerequisite_id: string | null
           user_id: string
@@ -9370,6 +9371,7 @@ export type Database = {
         Insert: {
           added_by?: string | null
           created_at?: string
+          handover_point_id?: string | null
           id?: string
           prerequisite_id?: string | null
           user_id: string
@@ -9378,12 +9380,20 @@ export type Database = {
         Update: {
           added_by?: string | null
           created_at?: string
+          handover_point_id?: string | null
           id?: string
           prerequisite_id?: string | null
           user_id?: string
           vcr_item_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "vcr_item_delivering_parties_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vcr_item_delivering_parties_prerequisite_id_fkey"
             columns: ["prerequisite_id"]
