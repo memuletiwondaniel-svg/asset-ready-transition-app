@@ -55,6 +55,7 @@ import { getVCRCategoryConfig, VCR_CATEGORY_ORDER } from '@/lib/vcrCategoryConfi
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
 import { useProjectTeamSearch, useVCRItemDeliveringParties } from '@/hooks/useVCRItemDeliveringParties';
+import { getRegionKeywords, posMatchesRegion } from '@/utils/hubRegionMapping';
 
 interface VCRItemsStepProps {
   vcrId: string;
