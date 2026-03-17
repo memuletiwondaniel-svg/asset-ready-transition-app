@@ -650,6 +650,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
               item={editingItem}
               roles={roles}
               projectId={projectId}
+              projectLocationCtx={projectLocationCtx || undefined}
               onSave={(payload) => updateItem.mutate(payload)}
               isSaving={updateItem.isPending}
             />
