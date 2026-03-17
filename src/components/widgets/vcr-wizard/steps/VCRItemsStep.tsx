@@ -677,6 +677,7 @@ const EditItemForm: React.FC<{
   onSave: (payload: OverridePayload) => void;
   isSaving: boolean;
 }> = ({ item, roles, projectId, onSave, isSaving }) => {
+  const queryClient = useQueryClient();
   const [vcrItem, setVcrItem] = useState(item.effective_vcr_item);
   const [topic, setTopic] = useState(item.effective_topic || '');
   const [deliveringParty, setDeliveringParty] = useState(item.effective_delivering_party_role_id || '');
@@ -684,6 +685,11 @@ const EditItemForm: React.FC<{
   const [guidanceNotes, setGuidanceNotes] = useState(item.effective_guidance_notes || '');
   const [addApproverOpen, setAddApproverOpen] = useState(false);
   const [approverSearch, setApproverSearch] = useState('');
+  const [addDeliveringOpen, setAddDeliveringOpen] = useState(false);
+  const [deliveringSearch, setDeliveringSearch] = useState('');
+
+  const { members: explicitDeliveringParties, addMember, removeMember } = useVCRItemDeliveringParties({ vcrItemId: item.id });
+  const { data: projectTeamMembers = [] } = useProjectTeamSearch(projectId);
 
   // Resolve actual users for all assigned role IDs
   const allRoleIds = [...new Set([deliveringParty, ...approvingParties].filter(Boolean))];
@@ -742,6 +748,35 @@ const EditItemForm: React.FC<{
   const getUsersForRole = (roleId: string) => resolvedUsers.filter(u => u.role_id === roleId);
   const getRoleName = (roleId: string) => roles.find(r => r.id === roleId)?.name || 'Unknown';
 
+  const roleDeliveringUsers = deliveringParty ? getUsersForRole(deliveringParty) : [];
+
+  const displayDeliveringUsers = explicitDeliveringParties.length > 0
+    ? explicitDeliveringParties.map(user => ({
+        id: user.id,
+        user_id: user.user_id,
+        full_name: user.full_name,
+        avatar_url: user.avatar_url,
+        role_name: user.role_name,
+        source: 'explicit' as const,
+      }))
+    : roleDeliveringUsers.map(user => ({
+        id: user.user_id,
+        user_id: user.user_id,
+        full_name: user.full_name,
+        avatar_url: user.avatar_url,
+        role_name: getRoleName(user.role_id),
+        source: 'role' as const,
+      }));
+
+  const assignedDeliveringUserIds = new Set(displayDeliveringUsers.map(u => u.user_id));
+
+  const availableDeliveringCandidates = projectTeamMembers.filter(user =>
+    !assignedDeliveringUserIds.has(user.user_id) &&
+    (deliveringSearch === '' ||
+      user.full_name.toLowerCase().includes(deliveringSearch.toLowerCase()) ||
+      (user.role_name || '').toLowerCase().includes(deliveringSearch.toLowerCase()))
+  );
+
   const removeApprover = (roleId: string) => {
     setApprovingParties(prev => prev.filter(r => r !== roleId));
   };
@@ -751,6 +786,64 @@ const EditItemForm: React.FC<{
     r.id !== deliveringParty &&
     (approverSearch === '' || r.name.toLowerCase().includes(approverSearch.toLowerCase()))
   );
+
+  const seedRoleUsersAsExplicit = async (extraUserIds: string[] = []) => {
+    const userIdsFromRole = roleDeliveringUsers.map(u => u.user_id);
+    const targetUserIds = [...new Set([...userIdsFromRole, ...extraUserIds])];
+    if (targetUserIds.length === 0) return;
+
+    const { data: authData } = await supabase.auth.getUser();
+    const rows = targetUserIds.map(userId => ({
+      vcr_item_id: item.id,
+      user_id: userId,
+      added_by: authData.user?.id,
+    }));
+
+    const client = supabase as any;
+    const { error } = await client
+      .from('vcr_item_delivering_parties')
+      .upsert(rows, { onConflict: 'vcr_item_id,user_id' });
+
+    if (error) throw error;
+    await queryClient.invalidateQueries({ queryKey: ['vcr-item-delivering-parties'] });
+  };
+
+  const handleAddDeliveringUser = async (userId: string) => {
+    try {
+      if (explicitDeliveringParties.length === 0 && roleDeliveringUsers.length > 0) {
+        await seedRoleUsersAsExplicit([userId]);
+      } else {
+        await addMember.mutateAsync(userId);
+      }
+      setDeliveringSearch('');
+    } catch {
+      toast.error('Failed to add delivering party');
+    }
+  };
+
+  const handleRemoveDeliveringUser = async (user: (typeof displayDeliveringUsers)[number]) => {
+    try {
+      if (user.source === 'explicit') {
+        await removeMember.mutateAsync(user.id);
+        return;
+      }
+
+      // First convert role-based users to explicit, then remove selected user
+      await seedRoleUsersAsExplicit();
+      const client = supabase as any;
+      const { error } = await client
+        .from('vcr_item_delivering_parties')
+        .delete()
+        .eq('vcr_item_id', item.id)
+        .eq('user_id', user.user_id);
+
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ['vcr-item-delivering-parties'] });
+      toast.success('Delivering party removed');
+    } catch {
+      toast.error('Failed to remove delivering party');
+    }
+  };
 
   return (
     <ScrollArea className="h-[calc(100vh-100px)]">
@@ -771,7 +864,46 @@ const EditItemForm: React.FC<{
 
         {/* Delivering Party */}
         <div className="space-y-1.5">
-          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Delivering Party</Label>
+          <div className="flex items-center justify-between">
+            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+              Delivering Party ({displayDeliveringUsers.length})
+            </Label>
+            <Popover open={addDeliveringOpen} onOpenChange={setAddDeliveringOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
+                  <Plus className="w-3 h-3" /> Add
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2" align="end">
+                <Input
+                  placeholder="Search team members..."
+                  value={deliveringSearch}
+                  onChange={(e) => setDeliveringSearch(e.target.value)}
+                  className="h-8 text-xs mb-2"
+                />
+                <ScrollArea className="h-48">
+                  <div className="space-y-0.5">
+                    {availableDeliveringCandidates.map(user => (
+                      <button
+                        key={user.user_id}
+                        onClick={() => { void handleAddDeliveringUser(user.user_id); }}
+                        className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-muted/60 transition-colors"
+                      >
+                        <div className="font-medium truncate">{user.full_name}</div>
+                        {user.role_name && (
+                          <div className="text-[10px] text-muted-foreground truncate">{user.role_name}</div>
+                        )}
+                      </button>
+                    ))}
+                    {availableDeliveringCandidates.length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-4">No members available</p>
+                    )}
+                  </div>
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
+          </div>
+
           <Select value={deliveringParty} onValueChange={setDeliveringParty}>
             <SelectTrigger className="text-sm">
               <SelectValue placeholder="Select role" />
@@ -782,21 +914,31 @@ const EditItemForm: React.FC<{
               ))}
             </SelectContent>
           </Select>
-          {deliveringParty && (
+
+          {displayDeliveringUsers.length > 0 ? (
             <div className="mt-2 flex items-center gap-2 flex-wrap">
-              {getUsersForRole(deliveringParty).length > 0 ? (
-                getUsersForRole(deliveringParty).map(user => (
-                  <div key={user.user_id} className="flex items-center gap-2 bg-muted/50 rounded-full pl-1 pr-3 py-1">
-                    <Avatar className="w-6 h-6">
-                      <AvatarImage src={getAvatarUrl(user.avatar_url)} />
-                      <AvatarFallback className="text-[9px]">{getInitials(user.full_name)}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs">{user.full_name}</span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs text-muted-foreground italic">No users assigned to this role</p>
-              )}
+              {displayDeliveringUsers.map(user => (
+                <div key={user.id} className="group/delivering relative flex items-center gap-2 bg-muted/50 rounded-full pl-1 pr-6 py-1">
+                  <Avatar className="w-6 h-6">
+                    <AvatarImage src={getAvatarUrl(user.avatar_url)} />
+                    <AvatarFallback className="text-[9px]">{getInitials(user.full_name)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs">{user.full_name}</span>
+                  <button
+                    onClick={() => { void handleRemoveDeliveringUser(user); }}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full text-destructive hover:bg-destructive/10 flex items-center justify-center opacity-0 group-hover/delivering:opacity-100 transition-opacity"
+                    title={`Remove ${user.full_name}`}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : deliveringParty ? (
+            <p className="text-xs text-muted-foreground italic">No users assigned to this role</p>
+          ) : (
+            <div className="border border-dashed rounded-lg p-4 text-center">
+              <p className="text-xs text-muted-foreground">No delivering parties assigned</p>
             </div>
           )}
         </div>
