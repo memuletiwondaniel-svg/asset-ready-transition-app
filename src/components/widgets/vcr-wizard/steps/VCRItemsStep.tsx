@@ -1201,7 +1201,13 @@ const AddItemForm: React.FC<{
     enabled: expandedRoleIds.length > 0,
   });
 
-  const getUsersForRole = (roleId: string) => resolvedUsers.filter(u => u.role_id === roleId);
+  const getUsersForRole = (roleId: string) => {
+    const roleName = roles.find(r => r.id === roleId)?.name;
+    const familyNames = roleName ? getRoleFamilyNames(roleName) : [];
+    const familyRoleIds = new Set(roles.filter(r => familyNames.includes(r.name)).map(r => r.id));
+    familyRoleIds.add(roleId);
+    return resolvedUsers.filter(u => familyRoleIds.has(u.role_id));
+  };
   const getRoleName = (roleId: string) => roles.find(r => r.id === roleId)?.name || 'Unknown';
   const removeApprover = (roleId: string) => setApprovingParties(prev => prev.filter(r => r !== roleId));
 
