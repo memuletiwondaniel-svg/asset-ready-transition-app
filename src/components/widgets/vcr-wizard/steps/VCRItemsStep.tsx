@@ -1189,7 +1189,7 @@ const AddItemForm: React.FC<{
             <SelectTrigger className="text-sm">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[200]">
               {categories.map(c => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}
