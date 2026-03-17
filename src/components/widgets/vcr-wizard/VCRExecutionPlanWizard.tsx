@@ -151,10 +151,10 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn(
-        "flex flex-col p-0 gap-0 [&>button]:hidden",
+        "flex flex-col p-0 gap-0 [&>button]:hidden z-[100]",
         isMobile
-          ? "max-w-full h-full w-full rounded-none border-0 inset-0 translate-x-0 translate-y-0 top-0 left-0"
-          : "max-w-5xl h-[min(90vh,780px)]"
+          ? "!inset-0 !max-w-full !max-h-full !translate-x-0 !translate-y-0 !rounded-none border-0 h-[100dvh] w-full"
+          : "sm:max-w-6xl sm:w-[95vw] sm:h-[min(88vh,800px)] sm:!max-h-[88vh]"
       )}>
         <VisuallyHidden>
           <DialogHeader>
