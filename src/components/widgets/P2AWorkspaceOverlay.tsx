@@ -71,7 +71,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!inset-2 sm:!inset-2 sm:!max-w-none sm:!max-h-none sm:!translate-x-0 sm:!translate-y-0 sm:!left-2 sm:!top-2 !w-[calc(100vw-16px)] !h-[calc(100vh-16px)] p-0 gap-0 overflow-hidden rounded-xl sm:!rounded-xl [&>button]:hidden border-border/50 shadow-2xl">
+      <DialogContent className="!inset-4 sm:!inset-4 sm:!max-w-none sm:!max-h-none sm:!translate-x-0 sm:!translate-y-0 sm:!left-4 sm:!top-4 !w-[calc(100vw-32px)] !h-[calc(100vh-32px)] p-0 gap-0 overflow-hidden rounded-xl sm:!rounded-xl [&>button]:hidden border-border/50 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-border/40 bg-gradient-to-r from-background via-muted/30 to-background backdrop-blur-sm">
           <div className="flex items-center gap-3">
@@ -81,7 +81,11 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
                 <Key className="h-4 w-4 text-white" />
               </div>
             </div>
-            <h2 className="text-base font-semibold text-foreground">{readOnly ? 'P2A Plan' : 'Develop P2A Plan'}</h2>
+            <h2 className="text-base font-semibold text-foreground">
+              {readOnly || ['COMPLETED', 'APPROVED'].includes(plan?.status || '')
+                ? `${projectNumber ? projectNumber + ' ' : ''}P2A Plan`
+                : 'Develop P2A Plan'}
+            </h2>
             <Badge variant="outline" className={cn("text-xs", statusConfig.className)}>
               {statusConfig.label}
             </Badge>
