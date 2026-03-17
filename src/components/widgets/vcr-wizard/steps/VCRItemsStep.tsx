@@ -531,7 +531,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                     const allCatItems = mergedItems.filter(i => (i.category?.name || 'Uncategorized') === catName);
                     const origIdx = allCatItems.findIndex(i => i.id === item.id);
                     const itemId = `${catCode}-${String(origIdx + 1).padStart(2, '0')}`;
-                    const catColor = CATEGORY_COLORS[catName] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' };
+                    const catColor = getVCRCategoryConfig(catName);
 
                     return (
                       <Card key={item.id} className="group border-dashed border-orange-200 dark:border-orange-900/50 bg-orange-50/30 dark:bg-orange-950/10">
