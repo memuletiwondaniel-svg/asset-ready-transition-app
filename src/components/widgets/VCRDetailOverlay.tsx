@@ -65,7 +65,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CategoryItemsSheet } from './CategoryItemsSheet';
 import { ApproverDetailSheet } from './ApproverDetailSheet';
-
+import { getVCRCategoryConfig } from '@/lib/vcrCategoryConfig';
 interface VCRDetailOverlayProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
