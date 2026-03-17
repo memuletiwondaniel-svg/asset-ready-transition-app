@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import {
   ClipboardCheck,
   GraduationCap,
@@ -13,6 +14,28 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
+
+const ID_BADGE_PALETTE = [
+  { bg: 'bg-blue-100 dark:bg-blue-900/40', text: 'text-blue-700 dark:text-blue-300' },
+  { bg: 'bg-emerald-100 dark:bg-emerald-900/40', text: 'text-emerald-700 dark:text-emerald-300' },
+  { bg: 'bg-violet-100 dark:bg-violet-900/40', text: 'text-violet-700 dark:text-violet-300' },
+  { bg: 'bg-amber-100 dark:bg-amber-900/40', text: 'text-amber-700 dark:text-amber-300' },
+  { bg: 'bg-rose-100 dark:bg-rose-900/40', text: 'text-rose-700 dark:text-rose-300' },
+  { bg: 'bg-cyan-100 dark:bg-cyan-900/40', text: 'text-cyan-700 dark:text-cyan-300' },
+  { bg: 'bg-orange-100 dark:bg-orange-900/40', text: 'text-orange-700 dark:text-orange-300' },
+  { bg: 'bg-indigo-100 dark:bg-indigo-900/40', text: 'text-indigo-700 dark:text-indigo-300' },
+  { bg: 'bg-teal-100 dark:bg-teal-900/40', text: 'text-teal-700 dark:text-teal-300' },
+  { bg: 'bg-pink-100 dark:bg-pink-900/40', text: 'text-pink-700 dark:text-pink-300' },
+];
+
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
 
 import { WizardShell, WizardShellStep } from '../shared/WizardShell';
 import { VCRItemsStep } from './steps/VCRItemsStep';
@@ -155,14 +178,19 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     return code.replace(/^VCR-[A-Z0-9]+-/, 'VCR-');
   })();
 
+  const idColors = shortVcrId
+    ? ID_BADGE_PALETTE[hashCode(shortVcrId) % ID_BADGE_PALETTE.length]
+    : ID_BADGE_PALETTE[0];
+
   const headerContent = (
     <div className="flex flex-col gap-2 min-w-0">
       {shortVcrId && (
         <Badge
-          variant="outline"
-          className="self-start border-border bg-background text-foreground text-xs font-mono font-bold px-2 py-0.5 gap-1.5"
+          className={cn(
+            "self-start text-[11px] font-mono font-semibold border-0 px-2.5 py-0.5",
+            idColors.bg, idColors.text
+          )}
         >
-          <ClipboardCheck className="h-3 w-3 text-primary" />
           {shortVcrId}
         </Badge>
       )}
