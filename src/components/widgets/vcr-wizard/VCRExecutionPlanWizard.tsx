@@ -12,6 +12,7 @@ import {
   ScrollText,
   UserCheck,
 } from 'lucide-react';
+import { hashCode, ID_BADGE_PALETTE } from '@/components/tasks/ORAActivityTaskSheet';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
 
 import { WizardShell, WizardShellStep } from '../shared/WizardShell';
