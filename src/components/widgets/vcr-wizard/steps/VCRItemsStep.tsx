@@ -333,24 +333,9 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
     return acc;
   }, {});
 
-  const CATEGORY_ORDER = ['Design Integrity', 'Technical Integrity', 'Operating Integrity', 'Management Systems', 'Health & Safety'];
-  const CATEGORY_ICONS: Record<string, { icon: LucideIcon; color: string }> = {
-    'Design Integrity': { icon: Compass, color: 'text-blue-500' },
-    'Technical Integrity': { icon: Wrench, color: 'text-teal-500' },
-    'Operating Integrity': { icon: Settings, color: 'text-amber-500' },
-    'Management Systems': { icon: ShieldCheck, color: 'text-purple-500' },
-    'Health & Safety': { icon: HeartPulse, color: 'text-rose-500' },
-  };
-  const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-    'Design Integrity': { bg: 'bg-blue-50 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-800' },
-    'Technical Integrity': { bg: 'bg-teal-50 dark:bg-teal-950/40', text: 'text-teal-700 dark:text-teal-300', border: 'border-teal-200 dark:border-teal-800' },
-    'Operating Integrity': { bg: 'bg-amber-50 dark:bg-amber-950/40', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-200 dark:border-amber-800' },
-    'Management Systems': { bg: 'bg-purple-50 dark:bg-purple-950/40', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-200 dark:border-purple-800' },
-    'Health & Safety': { bg: 'bg-rose-50 dark:bg-rose-950/40', text: 'text-rose-700 dark:text-rose-300', border: 'border-rose-200 dark:border-rose-800' },
-  };
   const sortedCategories = Object.keys(grouped).sort((a, b) => {
-    const ai = CATEGORY_ORDER.indexOf(a);
-    const bi = CATEGORY_ORDER.indexOf(b);
+    const ai = VCR_CATEGORY_ORDER.indexOf(a);
+    const bi = VCR_CATEGORY_ORDER.indexOf(b);
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
 
