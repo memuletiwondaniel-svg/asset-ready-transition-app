@@ -53,7 +53,7 @@ const HUB_TO_REGION: Record<string, string[]> = {
 };
 
 const getRegionKeywords = (hubName: string): string[] => {
-  const lower = hubName.toLowerCase();
+  const lower = hubName.toLowerCase().trim();
   if (HUB_TO_REGION[lower]) return HUB_TO_REGION[lower];
   // Fallback: try matching partial hub names
   for (const [key, keywords] of Object.entries(HUB_TO_REGION)) {
@@ -126,16 +126,10 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
             return (pos.includes('commissioning') || pos.includes('csu')) && pos.includes('lead');
           }
           if (role === 'Construction Lead') {
-            if (!(pos.includes('construction') && pos.includes('lead'))) return false;
-            if (regionKeywords.length === 0) return true;
-            const hasRegion = pos.includes('-') && pos.indexOf('-') > pos.indexOf('lead');
-            if (!hasRegion) return true;
-            return posMatchesRegion(pos, regionKeywords);
+            return pos.includes('construction') && pos.includes('lead');
           }
           if (role === 'Project Hub Lead') {
-            if (!pos.includes('project hub lead')) return false;
-            if (!hubName) return true;
-            return regionKeywords.length > 0 ? posMatchesRegion(pos, regionKeywords) : true;
+            return pos.includes('project hub lead');
           }
           if (role === 'Deputy Plant Director') {
             return (pos.includes('deputy') || pos.includes('dep.')) && pos.includes('plant') && pos.includes('director') && (plantLower ? pos.includes(plantLower) : true);
