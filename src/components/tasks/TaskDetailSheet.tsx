@@ -1107,14 +1107,27 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             )}
 
             {isVcrDeliveryPlanTask && vcrForWizard && (
-              <Button
-                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-                onClick={() => setVcrWizardOpen(true)}
-              >
-                <ClipboardList className="h-4 w-4" />
-                Develop VCR Plan
-                <ChevronRight className="h-4 w-4 ml-auto" />
-              </Button>
+              <div className="space-y-3">
+                {vcrHasDraft && !vcrPlanIsApproved && !vcrPlanIsSubmitted && (
+                  <div className="flex items-start gap-3 rounded-lg border border-blue-200 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-950/20 p-3">
+                    <div className="mt-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 p-1.5">
+                      <ClipboardList className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-medium text-blue-800 dark:text-blue-300">Draft in progress</p>
+                      <p className="text-[11px] text-blue-600/80 dark:text-blue-400/70">You've started configuring this VCR Plan. Continue to complete training, procedures, and other building blocks.</p>
+                    </div>
+                  </div>
+                )}
+                <Button
+                  className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                  onClick={() => setVcrWizardOpen(true)}
+                >
+                  {vcrPlanIsApproved ? <Eye className="h-4 w-4" /> : <ClipboardList className="h-4 w-4" />}
+                  {vcrCtaLabel}
+                  <ChevronRight className="h-4 w-4 ml-auto" />
+                </Button>
+              </div>
             )}
 
             {/* VCR Delivery Plan: Collaborative Document, Attachments, Reviewers & Activity Feed */}
