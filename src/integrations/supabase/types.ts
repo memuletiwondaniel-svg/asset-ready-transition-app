@@ -9363,24 +9363,34 @@ export type Database = {
           added_by: string | null
           created_at: string
           id: string
+          prerequisite_id: string | null
           user_id: string
-          vcr_item_id: string
+          vcr_item_id: string | null
         }
         Insert: {
           added_by?: string | null
           created_at?: string
           id?: string
+          prerequisite_id?: string | null
           user_id: string
-          vcr_item_id: string
+          vcr_item_id?: string | null
         }
         Update: {
           added_by?: string | null
           created_at?: string
           id?: string
+          prerequisite_id?: string | null
           user_id?: string
-          vcr_item_id?: string
+          vcr_item_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "vcr_item_delivering_parties_prerequisite_id_fkey"
+            columns: ["prerequisite_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_vcr_prerequisites"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vcr_item_delivering_parties_vcr_item_id_fkey"
             columns: ["vcr_item_id"]
