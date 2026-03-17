@@ -48,12 +48,6 @@ import {
   X,
   Ban,
   Undo2,
-  Compass,
-  Wrench,
-  Settings,
-  ShieldCheck,
-  HeartPulse,
-  type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getVCRCategoryConfig, VCR_CATEGORY_ORDER } from '@/lib/vcrCategoryConfig';
