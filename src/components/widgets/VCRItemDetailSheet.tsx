@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -13,6 +13,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
+import {
   FileText,
   User,
   ArrowRight,
@@ -26,6 +32,10 @@ import {
   Brain,
   TrendingUp,
   ShieldAlert,
+  X,
+  Plus,
+  Search,
+  UserPlus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -34,6 +44,7 @@ import { format } from 'date-fns';
 import { useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
+import { useVCRItemDeliveringParties, useProjectTeamSearch } from '@/hooks/useVCRItemDeliveringParties';
 import { useVCRChecklistIntelligence } from '@/hooks/useVCRChecklistIntelligence';
 import {
   AlertDialog,
@@ -84,6 +95,12 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   const { id: projectId } = useParams<{ id: string }>();
   const [showWarningDialog, setShowWarningDialog] = React.useState(false);
   const [pendingStatus, setPendingStatus] = React.useState<string | null>(null);
+  const [addPartyOpen, setAddPartyOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Delivering parties management
+  const { members: deliveringParties, addMember, removeMember } = useVCRItemDeliveringParties(item?.id);
+  const { data: teamMembers = [] } = useProjectTeamSearch(projectId);
 
   // Determine the category for ORA intelligence based on item category
   const categoryForIntelligence = item?.category_name?.toLowerCase().includes('training') ? 'training'
@@ -346,10 +363,75 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
               {/* Delivering Party */}
               <Card>
                 <CardContent className="p-3">
-                  <div className="text-[10px] text-muted-foreground mb-2">Delivering Party</div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-medium text-muted-foreground w-20 shrink-0 truncate" title={deliveringRoleName}>{deliveringRoleName}</span>
-                    {deliveringMembers.length > 0 ? (
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[10px] text-muted-foreground">Delivering Party</div>
+                    <Popover open={addPartyOpen} onOpenChange={setAddPartyOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-5 px-1.5 text-[10px] text-primary hover:text-primary gap-1">
+                          <UserPlus className="w-3 h-3" />
+                          Add
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 p-2" align="end" side="bottom">
+                        <div className="space-y-2">
+                          <div className="relative">
+                            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                            <Input
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              placeholder="Search team members..."
+                              className="h-8 pl-7 text-xs"
+                            />
+                          </div>
+                          <ScrollArea className="max-h-48">
+                            <div className="space-y-0.5">
+                              {teamMembers
+                                .filter(m => 
+                                  !deliveringParties.some(dp => dp.user_id === m.user_id) &&
+                                  (m.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                   m.role_name?.toLowerCase().includes(searchTerm.toLowerCase()))
+                                )
+                                .map(member => (
+                                  <button
+                                    key={member.user_id}
+                                    onClick={() => {
+                                      addMember.mutate(member.user_id);
+                                      setSearchTerm('');
+                                    }}
+                                    disabled={addMember.isPending}
+                                    className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-muted/60 transition-colors text-left"
+                                  >
+                                    <Avatar className="w-6 h-6">
+                                      <AvatarImage src={getAvatarUrl(member.avatar_url)} />
+                                      <AvatarFallback className="text-[9px]">{getInitials(member.full_name)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="min-w-0 flex-1">
+                                      <div className="text-xs font-medium truncate">{member.full_name}</div>
+                                      {member.role_name && (
+                                        <div className="text-[10px] text-muted-foreground truncate">{member.role_name}</div>
+                                      )}
+                                    </div>
+                                    <Plus className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                  </button>
+                                ))}
+                              {teamMembers.filter(m => 
+                                !deliveringParties.some(dp => dp.user_id === m.user_id) &&
+                                (m.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                 m.role_name?.toLowerCase().includes(searchTerm.toLowerCase()))
+                              ).length === 0 && (
+                                <p className="text-[10px] text-muted-foreground text-center py-3">No members found</p>
+                              )}
+                            </div>
+                          </ScrollArea>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* Role-based members (legacy) */}
+                  {deliveringMembers.length > 0 && deliveringParties.length === 0 && (
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-[10px] font-medium text-muted-foreground w-20 shrink-0 truncate" title={deliveringRoleName}>{deliveringRoleName}</span>
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         {deliveringMembers.map((member: any) => (
                           <div key={member.user_id} className="flex flex-col items-center gap-0.5 min-w-0">
@@ -361,10 +443,43 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <p className="text-[10px] text-muted-foreground italic">Unassigned</p>
-                    )}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* Individual delivering parties */}
+                  {deliveringParties.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {deliveringParties.map((dp) => (
+                        <div
+                          key={dp.id}
+                          className="group relative flex flex-col items-center gap-0.5 min-w-0"
+                        >
+                          <div className="relative">
+                            <Avatar className="w-7 h-7">
+                              <AvatarImage src={getAvatarUrl(dp.avatar_url)} />
+                              <AvatarFallback className="text-[10px]">{getInitials(dp.full_name)}</AvatarFallback>
+                            </Avatar>
+                            <button
+                              onClick={() => removeMember.mutate(dp.id)}
+                              disabled={removeMember.isPending}
+                              className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                              title={`Remove ${dp.full_name}`}
+                            >
+                              <X className="w-2.5 h-2.5" />
+                            </button>
+                          </div>
+                          <span className="text-[10px] text-foreground truncate max-w-[80px] text-center" title={dp.full_name}>
+                            {dp.full_name?.split(' ')[0]}
+                          </span>
+                          {dp.role_name && (
+                            <span className="text-[9px] text-muted-foreground truncate max-w-[80px] text-center">{dp.role_name}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : deliveringMembers.length === 0 ? (
+                    <p className="text-[10px] text-muted-foreground italic">No delivering parties assigned. Click "Add" to assign team members.</p>
+                  ) : null}
                 </CardContent>
               </Card>
 

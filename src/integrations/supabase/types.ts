@@ -9358,6 +9358,38 @@ export type Database = {
           },
         ]
       }
+      vcr_item_delivering_parties: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          id: string
+          user_id: string
+          vcr_item_id: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          id?: string
+          user_id: string
+          vcr_item_id: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string
+          vcr_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_item_delivering_parties_vcr_item_id_fkey"
+            columns: ["vcr_item_id"]
+            isOneToOne: false
+            referencedRelation: "vcr_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vcr_items: {
         Row: {
           approving_party_role_ids: string[] | null
