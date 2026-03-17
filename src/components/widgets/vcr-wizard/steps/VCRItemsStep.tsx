@@ -911,7 +911,7 @@ const EditItemForm: React.FC<{
                   <Plus className="w-3 h-3" /> Add
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-64 p-2" align="end">
+              <PopoverContent className="w-64 p-2 z-[200]" align="end">
                 <Input
                   placeholder="Search team members..."
                   value={deliveringSearch}
