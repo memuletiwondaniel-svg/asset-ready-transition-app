@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Search, CheckCircle2, Clock, AlertCircle, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getVCRCategoryConfig } from '@/lib/vcrCategoryConfig';
 import { PSSRItemDetailSheet } from './PSSRItemDetailSheet';
 
 interface PSSRApproverItemsSheetProps {
