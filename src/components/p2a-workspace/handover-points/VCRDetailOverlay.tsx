@@ -109,6 +109,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { progress } = useVCRPrerequisites(handoverPoint.id);
   const { systems } = useHandoverPointSystems(handoverPoint.id);
   const statusConfig = getStatusConfig(handoverPoint.status);
