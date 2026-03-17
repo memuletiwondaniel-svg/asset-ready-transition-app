@@ -109,6 +109,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { progress } = useVCRPrerequisites(handoverPoint.id);
   const { systems } = useHandoverPointSystems(handoverPoint.id);
   const statusConfig = getStatusConfig(handoverPoint.status);
@@ -119,7 +120,11 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
   const handleTabChange = (tabId: string) => {
     if (!isExecutionPlanApproved && lockedTabIds.includes(tabId)) return;
     setActiveTab(tabId);
+    setMobileNavOpen(false);
   };
+
+  const activeTabLabel = [...coreTabs, ...buildingBlockTabs].find(t => t.id === activeTab)?.label || 'VCR';
+  const ActiveTabIcon = [...coreTabs, ...buildingBlockTabs].find(t => t.id === activeTab)?.icon || BarChart3;
 
   const handleDeleteConfirm = () => {
     if (onDelete) {
@@ -185,53 +190,87 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPortal>
         <DialogOverlay className="z-[200]" />
-        <DialogPrimitive.Content className="fixed z-[200] !max-w-[95vw] sm:!max-w-[95vw] !w-[95vw] h-[95vh] p-0 gap-0 overflow-hidden border bg-background shadow-lg rounded-lg inset-auto left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+        <DialogPrimitive.Content className="fixed z-[200] !inset-0 md:inset-auto md:left-[50%] md:top-[50%] md:translate-x-[-50%] md:translate-y-[-50%] !max-w-none md:!max-w-[95vw] md:!w-[95vw] !w-full h-[100dvh] md:h-[95vh] p-0 gap-0 overflow-hidden border-0 md:border bg-background shadow-lg md:rounded-lg rounded-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b shrink-0">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-3 md:px-5 py-2.5 md:py-3 border-b shrink-0">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
             <div
-              className="w-3 h-8 rounded-full"
+              className="w-2.5 md:w-3 h-7 md:h-8 rounded-full shrink-0"
               style={{ backgroundColor: `hsl(${(handoverPoint.position_y || 0) * 40}, 70%, 55%)` }}
             />
-            <div>
-              <DialogTitle className="text-lg font-semibold">
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="text-sm md:text-lg font-semibold truncate">
                 {handoverPoint.vcr_code}: {handoverPoint.name}
               </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground">
+              <DialogDescription className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">
                 Verification Certificate of Readiness
               </DialogDescription>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2 shrink-0">
             {onDelete && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                className="h-7 w-7 md:h-8 md:w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                 onClick={() => setShowDeleteDialog(true)}
                 title="Delete VCR"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
               </Button>
             )}
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              className="h-7 w-7 md:h-8 md:w-8 text-muted-foreground hover:text-foreground"
               onClick={() => onOpenChange(false)}
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5 md:w-4 md:h-4" />
             </Button>
           </div>
         </div>
 
+        {/* Mobile Tab Selector */}
+        <div className="md:hidden border-b">
+          <button
+            onClick={() => setMobileNavOpen(!mobileNavOpen)}
+            className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium"
+          >
+            <div className="flex items-center gap-2">
+              <ActiveTabIcon className="w-4 h-4 text-primary" />
+              <span>{activeTabLabel}</span>
+            </div>
+            <svg className={cn("w-4 h-4 text-muted-foreground transition-transform", mobileNavOpen && "rotate-180")} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {mobileNavOpen && (
+            <div className="border-t bg-muted/30 max-h-[50vh] overflow-y-auto overscroll-contain">
+              <div className="p-2 space-y-0.5">
+                <div className="px-2 pt-1 pb-1.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Navigate</span>
+                </div>
+                {coreTabs.map((tab) => (
+                  <NavButton key={tab.id} {...tab} />
+                ))}
+                <Separator className="my-3" />
+                <div className="px-2 pb-1.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">VCR Deliverables</span>
+                </div>
+                {buildingBlockTabs.map((tab) => (
+                  <NavButton key={tab.id} {...tab} locked={!isExecutionPlanApproved} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Body: Sidebar + Content */}
         <div className="flex flex-1 min-h-0">
-          {/* Left Sidebar Navigation */}
-          <div className="w-56 shrink-0 border-r bg-muted/30 flex flex-col">
+          {/* Left Sidebar Navigation - Desktop only */}
+          <div className="hidden md:flex w-56 shrink-0 border-r bg-muted/30 flex-col">
             <ScrollArea className="flex-1">
               <div className="p-3 space-y-1">
-                {/* Section 1: Core Tabs */}
                 <div className="px-2 pt-1 pb-2">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                     Navigate
@@ -240,11 +279,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
                 {coreTabs.map((tab) => (
                   <NavButton key={tab.id} {...tab} />
                 ))}
-
-                {/* Separator */}
                 <Separator className="my-6" />
-
-                {/* Section 2: VCR Deliverables */}
                 <div className="px-2 pb-2">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                     VCR Deliverables
@@ -260,7 +295,7 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
           {/* Main Content Area */}
           <div className="flex-1 min-w-0 min-h-0 flex flex-col">
             <ScrollArea className="flex-1">
-              <div className="p-5">
+              <div className="p-3 md:p-5">
                 {renderContent()}
               </div>
             </ScrollArea>
