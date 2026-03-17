@@ -16,9 +16,9 @@ export interface DeliveringPartyMember {
  * Pass either vcrItemId OR prerequisiteId (not both).
  */
 export const useVCRItemDeliveringParties = (
-  options: { vcrItemId?: string; prerequisiteId?: string }
+  options: { vcrItemId?: string; prerequisiteId?: string; handoverPointId?: string }
 ) => {
-  const { vcrItemId, prerequisiteId } = options;
+  const { vcrItemId, prerequisiteId, handoverPointId } = options;
   const entityId = prerequisiteId || vcrItemId;
   const entityField = prerequisiteId ? 'prerequisite_id' : 'vcr_item_id';
   const queryClient = useQueryClient();
