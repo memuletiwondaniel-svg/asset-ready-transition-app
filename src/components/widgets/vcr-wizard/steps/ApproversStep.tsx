@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, X, Plus } from 'lucide-react';
+import { Users, X, Plus, RefreshCw } from 'lucide-react';
 
 interface ApproversStepProps {
   vcrId: string;
