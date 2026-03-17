@@ -1728,6 +1728,9 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
         .eq('is_active', true);
       if (!allProfiles) return [];
 
+      const plantLower = plantName.toLowerCase();
+      const result: Array<{ id: string; name: string; role: string; status?: 'pending' | 'approved' | 'rejected'; avatar_url?: string }> = [];
+
       // Primary resolution: use project_team_members (source of truth)
       let hubLeadProfile: any = null;
       if (plan?.project_id) {
