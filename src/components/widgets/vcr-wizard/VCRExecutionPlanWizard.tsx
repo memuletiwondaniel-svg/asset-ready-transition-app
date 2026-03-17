@@ -177,14 +177,19 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     return code.replace(/^VCR-[A-Z0-9]+-/, 'VCR-');
   })();
 
+  const idColors = shortVcrId
+    ? ID_BADGE_PALETTE[hashCode(shortVcrId) % ID_BADGE_PALETTE.length]
+    : ID_BADGE_PALETTE[0];
+
   const headerContent = (
     <div className="flex flex-col gap-2 min-w-0">
       {shortVcrId && (
         <Badge
-          variant="outline"
-          className="self-start border-border bg-background text-foreground text-xs font-mono font-bold px-2 py-0.5 gap-1.5"
+          className={cn(
+            "self-start text-[11px] font-mono font-semibold border-0 px-2.5 py-0.5",
+            idColors.bg, idColors.text
+          )}
         >
-          <ClipboardCheck className="h-3 w-3 text-primary" />
           {shortVcrId}
         </Badge>
       )}
