@@ -38,11 +38,15 @@ const DEFAULT_APPROVER_ROLES = [
 ];
 
 const HUB_TO_REGION: Record<string, string[]> = {
-  zubair: ['central'],
+  zubair: ['central', 'zubair'],
   north: ['north'],
   uq: ['uq'],
+  'uq pipelines': ['uq', 'pipelines'],
+  'uq full ref': ['uq'],
+  'uq condensate chiller pkg': ['uq'],
+  'uq train f package': ['uq'],
   'west qurna': ['west qurna'],
-  'nrngl, bngl & nr/sr': ['nrngl', 'bngl'],
+  'nrngl, bngl & nr/sr': ['nrngl', 'bngl', 'nr/sr', 'nrngl, bngl & nr/sr'],
   kaz: ['kaz'],
   pipelines: ['pipelines'],
   central: ['central'],
@@ -50,7 +54,12 @@ const HUB_TO_REGION: Record<string, string[]> = {
 
 const getRegionKeywords = (hubName: string): string[] => {
   const lower = hubName.toLowerCase();
-  return HUB_TO_REGION[lower] || [lower];
+  if (HUB_TO_REGION[lower]) return HUB_TO_REGION[lower];
+  // Fallback: try matching partial hub names
+  for (const [key, keywords] of Object.entries(HUB_TO_REGION)) {
+    if (lower.includes(key) || key.includes(lower)) return keywords;
+  }
+  return [lower];
 };
 
 const posMatchesRegion = (pos: string, regionKeywords: string[]): boolean => {
