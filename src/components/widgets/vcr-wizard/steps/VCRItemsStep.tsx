@@ -1136,9 +1136,10 @@ const AddItemForm: React.FC<{
   roles: Role[];
   categories: Array<{ id: string; name: string; code: string }>;
   projectId?: string;
+  projectLocationCtx?: ProjectLocationContext;
   onSave: (payload: CreateItemPayload) => void;
   isSaving: boolean;
-}> = ({ roles, categories, projectId, onSave, isSaving }) => {
+}> = ({ roles, categories, projectId, projectLocationCtx, onSave, isSaving }) => {
   const [vcrItem, setVcrItem] = useState('');
   const [topic, setTopic] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -1148,90 +1149,56 @@ const AddItemForm: React.FC<{
   const [addApproverOpen, setAddApproverOpen] = useState(false);
   const [approverSearch, setApproverSearch] = useState('');
 
-  // Fetch project location context for filtering
-  const { data: addFormProjectLocation } = useQuery({
-    queryKey: ['project-location-context', projectId],
-    queryFn: async () => {
-      if (!projectId) return null;
-      const { data: project } = await supabase
-        .from('projects')
-        .select('hub_id, plant_id')
-        .eq('id', projectId)
-        .maybeSingle();
-      if (!project) return null;
-
-      let hubName = '';
-      let plantName = '';
-
-      if (project.hub_id) {
-        const { data: hub } = await supabase.from('hubs').select('name').eq('id', project.hub_id).maybeSingle();
-        hubName = hub?.name || '';
-      }
-      if (project.plant_id) {
-        const { data: plant } = await supabase.from('plant').select('name').eq('id', project.plant_id).maybeSingle();
-        plantName = plant?.name || '';
-      }
-
-      return { hubName, plantName, regionKeywords: hubName ? getRegionKeywords(hubName) : [] };
-    },
-    enabled: !!projectId,
-  });
-
   const allRoleIds = [...new Set([deliveringParty, ...approvingParties].filter(Boolean))];
 
+  // Expand role families
+  const expandedRoleIds = React.useMemo(() => {
+    const expanded = new Set<string>();
+    allRoleIds.forEach(roleId => {
+      expanded.add(roleId);
+      const roleName = roles.find(r => r.id === roleId)?.name;
+      if (roleName) {
+        const familyNames = getRoleFamilyNames(roleName);
+        roles.forEach(r => {
+          if (familyNames.includes(r.name)) expanded.add(r.id);
+        });
+      }
+    });
+    return [...expanded];
+  }, [allRoleIds.join(','), roles]);
+
   const { data: resolvedUsers = [] } = useQuery({
-    queryKey: ['add-form-users', allRoleIds.sort().join(','), projectId, addFormProjectLocation?.hubName],
+    queryKey: ['add-form-users', expandedRoleIds.sort().join(','), projectId, projectLocationCtx?.hubName],
     queryFn: async () => {
-      if (allRoleIds.length === 0) return [];
-      let candidates: any[] = [];
+      if (expandedRoleIds.length === 0) return [];
 
-      if (projectId) {
-        const { data: members } = await supabase
-          .from('project_team_members')
-          .select('user_id')
-          .eq('project_id', projectId);
-        if (members && members.length > 0) {
-          const userIds = members.map((m: any) => m.user_id);
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, avatar_url, role, position')
-            .in('user_id', userIds)
-            .in('role', allRoleIds)
-            .eq('is_active', true);
-          candidates = profiles || [];
-        }
-      }
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url, role, position, hub')
+        .in('role', expandedRoleIds)
+        .eq('is_active', true);
 
-      const coveredRoles = new Set(candidates.map((p: any) => p.role));
-      const uncovered = allRoleIds.filter(r => !coveredRoles.has(r));
-      if (uncovered.length > 0) {
-        const { data: fallback } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, avatar_url, role, position')
-          .in('role', uncovered)
-          .eq('is_active', true);
-        if (fallback) {
-          const regionKw = addFormProjectLocation?.regionKeywords || [];
-          const filtered = fallback.filter((p: any) => {
-            const pos = (p.position || '').toLowerCase();
-            if (pos.includes('asset')) return false;
-            if (regionKw.length > 0) {
-              return posMatchesRegion(pos, regionKw);
-            }
-            return true;
-          });
-          candidates.push(...filtered);
-        }
-      }
+      if (!profiles || profiles.length === 0) return [];
 
-      return candidates.map((p: any) => ({
+      const filtered = profiles.filter((p: any) => {
+        if (!projectLocationCtx) return true;
+        const roleName = roles.find(r => r.id === p.role)?.name || '';
+        const usePortfolio = requiresPortfolio(roleName) && !requiresHub(roleName);
+        return profileMatchesProjectLocation(
+          { position: p.position, hub: p.hub },
+          projectLocationCtx,
+          usePortfolio
+        );
+      });
+
+      return filtered.map((p: any) => ({
         user_id: p.user_id,
         full_name: p.full_name,
         avatar_url: p.avatar_url,
         role_id: p.role,
       })) as ResolvedUser[];
     },
-    enabled: allRoleIds.length > 0,
+    enabled: expandedRoleIds.length > 0,
   });
 
   const getUsersForRole = (roleId: string) => resolvedUsers.filter(u => u.role_id === roleId);
