@@ -158,30 +158,28 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const vcrColor = getVCRColor(vcr.vcr_code);
 
   const headerContent = (
-    <div className="flex items-center gap-2 min-w-0">
-      <div className="relative shrink-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/40 to-indigo-500/40 rounded-xl blur-sm" />
-        <div className="relative p-2 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500">
-          <ClipboardCheck className="h-4 w-4 text-white" />
+    <div className="flex flex-col gap-1.5 min-w-0">
+      <div className="flex items-center gap-2">
+        <div className="relative shrink-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/40 to-indigo-500/40 rounded-xl blur-sm" />
+          <div className="relative p-2 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500">
+            <ClipboardCheck className="h-4 w-4 text-white" />
+          </div>
         </div>
+        {shortVcrId && (
+          <Badge
+            className="text-[10px] font-mono font-semibold border-0 px-1.5 py-0 shrink-0"
+            style={{
+              backgroundColor: vcrColor?.background,
+              color: vcrColor?.border,
+            }}
+          >
+            {shortVcrId}
+          </Badge>
+        )}
       </div>
-      <div className="min-w-0">
-        <div className="flex items-center gap-1.5">
-          {shortVcrId && (
-            <Badge
-              className="text-[10px] font-mono font-semibold border-0 px-1.5 py-0 shrink-0"
-              style={{
-                backgroundColor: vcrColor?.background,
-                color: vcrColor?.border,
-              }}
-            >
-              {shortVcrId}
-            </Badge>
-          )}
-          <h2 className="text-sm font-semibold truncate">{vcr.name}</h2>
-        </div>
-        <p className="text-[10px] text-muted-foreground mt-0.5">Develop VCR Plan</p>
-      </div>
+      <h2 className="text-sm font-semibold line-clamp-2 leading-tight">{vcr.name}</h2>
+      <p className="text-[10px] text-muted-foreground">Develop VCR Plan</p>
     </div>
   );
 
