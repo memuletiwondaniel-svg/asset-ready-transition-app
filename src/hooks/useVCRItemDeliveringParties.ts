@@ -80,6 +80,10 @@ export const useVCRItemDeliveringParties = (
       } else {
         insertData.vcr_item_id = vcrItemId;
       }
+      // Include handover_point_id for DB-level location validation
+      if (handoverPointId) {
+        insertData.handover_point_id = handoverPointId;
+      }
       const { error } = await client
         .from('vcr_item_delivering_parties')
         .insert(insertData);
