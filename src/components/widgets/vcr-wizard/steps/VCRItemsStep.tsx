@@ -48,6 +48,12 @@ import {
   X,
   Ban,
   Undo2,
+  Compass,
+  Wrench,
+  Settings,
+  ShieldCheck,
+  HeartPulse,
+  type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -327,6 +333,13 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
   }, {});
 
   const CATEGORY_ORDER = ['Design Integrity', 'Technical Integrity', 'Operating Integrity', 'Management Systems', 'Health & Safety'];
+  const CATEGORY_ICONS: Record<string, { icon: LucideIcon; color: string }> = {
+    'Design Integrity': { icon: Compass, color: 'text-blue-500' },
+    'Technical Integrity': { icon: Wrench, color: 'text-teal-500' },
+    'Operating Integrity': { icon: Settings, color: 'text-amber-500' },
+    'Management Systems': { icon: ShieldCheck, color: 'text-purple-500' },
+    'Health & Safety': { icon: HeartPulse, color: 'text-rose-500' },
+  };
   const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
     'Design Integrity': { bg: 'bg-blue-50 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-800' },
     'Technical Integrity': { bg: 'bg-teal-50 dark:bg-teal-950/40', text: 'text-teal-700 dark:text-teal-300', border: 'border-teal-200 dark:border-teal-800' },
@@ -417,6 +430,14 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                   className="flex items-center gap-2 w-full text-left py-2 px-1 hover:bg-muted/40 rounded transition-colors"
                 >
                   {isCollapsed ? <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/50" />}
+                  {(() => {
+                    const catIcon = CATEGORY_ICONS[cat];
+                    if (catIcon) {
+                      const CatIcon = catIcon.icon;
+                      return <CatIcon className={cn("w-4 h-4", catIcon.color)} />;
+                    }
+                    return null;
+                  })()}
                   <span className="text-sm font-semibold">{cat}</span>
                   <Badge variant="secondary" className="text-[10px] ml-auto">{catItems.length}</Badge>
                 </button>
