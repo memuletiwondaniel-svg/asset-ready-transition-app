@@ -187,15 +187,27 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
           <Users className="w-3.5 h-3.5" />
           <span>{totalResolved} of {visibleApprovers.length} approvers resolved</span>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-          onClick={handleAdd}
-        >
-          <Plus className="w-3.5 h-3.5" />
-          Add
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            title="Resync approvers"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            onClick={handleAdd}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-1">
