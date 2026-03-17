@@ -55,6 +55,7 @@ import { getVCRCategoryConfig, VCR_CATEGORY_ORDER } from '@/lib/vcrCategoryConfi
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
 import { useProjectTeamSearch, useVCRItemDeliveringParties } from '@/hooks/useVCRItemDeliveringParties';
+import { getRegionKeywords, posMatchesRegion } from '@/utils/hubRegionMapping';
 
 interface VCRItemsStepProps {
   vcrId: string;
@@ -691,11 +692,40 @@ const EditItemForm: React.FC<{
   const { members: explicitDeliveringParties, addMember, removeMember } = useVCRItemDeliveringParties({ vcrItemId: item.id });
   const { data: projectTeamMembers = [] } = useProjectTeamSearch(projectId);
 
+  // Fetch project location context (hub, plant) for filtering
+  const { data: projectLocation } = useQuery({
+    queryKey: ['project-location-context', projectId],
+    queryFn: async () => {
+      if (!projectId) return null;
+      const { data: project } = await supabase
+        .from('projects')
+        .select('hub_id, plant_id')
+        .eq('id', projectId)
+        .maybeSingle();
+      if (!project) return null;
+
+      let hubName = '';
+      let plantName = '';
+
+      if (project.hub_id) {
+        const { data: hub } = await supabase.from('hubs').select('name').eq('id', project.hub_id).maybeSingle();
+        hubName = hub?.name || '';
+      }
+      if (project.plant_id) {
+        const { data: plant } = await supabase.from('plant').select('name').eq('id', project.plant_id).maybeSingle();
+        plantName = plant?.name || '';
+      }
+
+      return { hubName, plantName, regionKeywords: hubName ? getRegionKeywords(hubName) : [] };
+    },
+    enabled: !!projectId,
+  });
+
   // Resolve actual users for all assigned role IDs
   const allRoleIds = [...new Set([deliveringParty, ...approvingParties].filter(Boolean))];
 
   const { data: resolvedUsers = [] } = useQuery({
-    queryKey: ['edit-form-users', allRoleIds.sort().join(','), projectId],
+    queryKey: ['edit-form-users', allRoleIds.sort().join(','), projectId, projectLocation?.hubName],
     queryFn: async () => {
       if (allRoleIds.length === 0) return [];
       let candidates: any[] = [];
@@ -709,7 +739,7 @@ const EditItemForm: React.FC<{
           const userIds = members.map((m: any) => m.user_id);
           const { data: profiles } = await supabase
             .from('profiles')
-            .select('user_id, full_name, avatar_url, role')
+            .select('user_id, full_name, avatar_url, role, position')
             .in('user_id', userIds)
             .in('role', allRoleIds)
             .eq('is_active', true);
@@ -717,7 +747,7 @@ const EditItemForm: React.FC<{
         }
       }
 
-      // Fallback for uncovered roles
+      // Fallback for uncovered roles — filter by location
       const coveredRoles = new Set(candidates.map((p: any) => p.role));
       const uncovered = allRoleIds.filter(r => !coveredRoles.has(r));
       if (uncovered.length > 0) {
@@ -727,9 +757,16 @@ const EditItemForm: React.FC<{
           .in('role', uncovered)
           .eq('is_active', true);
         if (fallback) {
+          const regionKw = projectLocation?.regionKeywords || [];
           const filtered = fallback.filter((p: any) => {
             const pos = (p.position || '').toLowerCase();
-            return !pos.includes('asset');
+            // Always exclude asset-level roles
+            if (pos.includes('asset')) return false;
+            // If we have region keywords, filter by them
+            if (regionKw.length > 0) {
+              return posMatchesRegion(pos, regionKw);
+            }
+            return true;
           });
           candidates.push(...filtered);
         }
@@ -874,7 +911,7 @@ const EditItemForm: React.FC<{
                   <Plus className="w-3 h-3" /> Add
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-64 p-2" align="end">
+              <PopoverContent className="w-64 p-2 z-[200]" align="end">
                 <Input
                   placeholder="Search team members..."
                   value={deliveringSearch}
@@ -908,7 +945,7 @@ const EditItemForm: React.FC<{
             <SelectTrigger className="text-sm">
               <SelectValue placeholder="Select role" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[200]">
               {roles.map(r => (
                 <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
               ))}
@@ -953,7 +990,7 @@ const EditItemForm: React.FC<{
                   <Plus className="w-3 h-3" /> Add
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-64 p-2" align="end">
+              <PopoverContent className="w-64 p-2 z-[200]" align="end">
                 <Input
                   placeholder="Search roles..."
                   value={approverSearch}
@@ -1080,10 +1117,39 @@ const AddItemForm: React.FC<{
   const [addApproverOpen, setAddApproverOpen] = useState(false);
   const [approverSearch, setApproverSearch] = useState('');
 
+  // Fetch project location context for filtering
+  const { data: addFormProjectLocation } = useQuery({
+    queryKey: ['project-location-context', projectId],
+    queryFn: async () => {
+      if (!projectId) return null;
+      const { data: project } = await supabase
+        .from('projects')
+        .select('hub_id, plant_id')
+        .eq('id', projectId)
+        .maybeSingle();
+      if (!project) return null;
+
+      let hubName = '';
+      let plantName = '';
+
+      if (project.hub_id) {
+        const { data: hub } = await supabase.from('hubs').select('name').eq('id', project.hub_id).maybeSingle();
+        hubName = hub?.name || '';
+      }
+      if (project.plant_id) {
+        const { data: plant } = await supabase.from('plant').select('name').eq('id', project.plant_id).maybeSingle();
+        plantName = plant?.name || '';
+      }
+
+      return { hubName, plantName, regionKeywords: hubName ? getRegionKeywords(hubName) : [] };
+    },
+    enabled: !!projectId,
+  });
+
   const allRoleIds = [...new Set([deliveringParty, ...approvingParties].filter(Boolean))];
 
   const { data: resolvedUsers = [] } = useQuery({
-    queryKey: ['add-form-users', allRoleIds.sort().join(','), projectId],
+    queryKey: ['add-form-users', allRoleIds.sort().join(','), projectId, addFormProjectLocation?.hubName],
     queryFn: async () => {
       if (allRoleIds.length === 0) return [];
       let candidates: any[] = [];
@@ -1097,7 +1163,7 @@ const AddItemForm: React.FC<{
           const userIds = members.map((m: any) => m.user_id);
           const { data: profiles } = await supabase
             .from('profiles')
-            .select('user_id, full_name, avatar_url, role')
+            .select('user_id, full_name, avatar_url, role, position')
             .in('user_id', userIds)
             .in('role', allRoleIds)
             .eq('is_active', true);
@@ -1114,9 +1180,14 @@ const AddItemForm: React.FC<{
           .in('role', uncovered)
           .eq('is_active', true);
         if (fallback) {
+          const regionKw = addFormProjectLocation?.regionKeywords || [];
           const filtered = fallback.filter((p: any) => {
             const pos = (p.position || '').toLowerCase();
-            return !pos.includes('asset');
+            if (pos.includes('asset')) return false;
+            if (regionKw.length > 0) {
+              return posMatchesRegion(pos, regionKw);
+            }
+            return true;
           });
           candidates.push(...filtered);
         }
@@ -1152,7 +1223,7 @@ const AddItemForm: React.FC<{
             <SelectTrigger className="text-sm">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[200]">
               {categories.map(c => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}
@@ -1182,7 +1253,7 @@ const AddItemForm: React.FC<{
             <SelectTrigger className="text-sm">
               <SelectValue placeholder="Select role" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[200]">
               {roles.map(r => (
                 <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
               ))}
@@ -1217,7 +1288,7 @@ const AddItemForm: React.FC<{
                   <Plus className="w-3 h-3" /> Add
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-64 p-2" align="end">
+              <PopoverContent className="w-64 p-2 z-[200]" align="end">
                 <Input
                   placeholder="Search roles..."
                   value={approverSearch}
