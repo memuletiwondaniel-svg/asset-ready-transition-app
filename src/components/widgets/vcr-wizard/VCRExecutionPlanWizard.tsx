@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
-import { ProjectIdBadge } from '@/components/ui/project-id-badge';
+import { Badge } from '@/components/ui/badge';
 import {
   ClipboardCheck,
   GraduationCap,
@@ -156,21 +156,17 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   })();
 
   const headerContent = (
-    <div className="flex flex-col gap-1.5 min-w-0">
-      <div className="flex items-center gap-2">
-        <div className="relative shrink-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/40 to-indigo-500/40 rounded-xl blur-sm" />
-          <div className="relative p-2 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500">
-            <ClipboardCheck className="h-4 w-4 text-white" />
-          </div>
-        </div>
-        {shortVcrId && (
-          <ProjectIdBadge size="default" projectId={vcr.vcr_code}>
-            {shortVcrId}
-          </ProjectIdBadge>
-        )}
-      </div>
-      <h2 className="text-sm font-semibold line-clamp-2 leading-tight">{vcr.name}</h2>
+    <div className="flex flex-col gap-2 min-w-0">
+      {shortVcrId && (
+        <Badge
+          variant="outline"
+          className="self-start border-0 bg-gradient-to-r from-violet-500 to-indigo-500 text-white text-xs font-mono font-bold px-2.5 py-1 gap-1.5 shadow-sm"
+        >
+          <ClipboardCheck className="h-3.5 w-3.5" />
+          {shortVcrId}
+        </Badge>
+      )}
+      <h2 className="text-sm font-black line-clamp-2 leading-tight">{vcr.name}</h2>
       <p className="text-[10px] text-muted-foreground">Develop VCR Plan</p>
     </div>
   );
