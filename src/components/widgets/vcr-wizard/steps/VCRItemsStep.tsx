@@ -572,7 +572,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
       </div>
 
       <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px] z-[150]">
+        <SheetContent className="w-[480px] sm:max-w-[480px] z-[150]" overlayClassName="z-[150]">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               Edit VCR Item
