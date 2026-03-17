@@ -605,7 +605,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
 
       {/* Add New Item Sheet */}
       <Sheet open={addSheetOpen} onOpenChange={setAddSheetOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px] z-[150]">
+        <SheetContent className="w-[480px] sm:max-w-[480px] z-[150]" overlayClassName="z-[150]">
           <SheetHeader>
             <SheetTitle>Add VCR Item</SheetTitle>
           </SheetHeader>
