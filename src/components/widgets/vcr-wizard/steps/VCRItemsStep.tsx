@@ -424,7 +424,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                     {catItems.map((item, idx) => {
                       const catCode = item.category?.code || '??';
                       const itemId = `${catCode}-${String(idx + 1).padStart(2, '0')}`;
-                      const catColor = CATEGORY_COLORS[item.category?.name || ''] || { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' };
+                      const catColor = getVCRCategoryConfig(item.category?.name || '');
 
                       return (
                         <Card key={item.id} className={cn("group transition-colors cursor-pointer", item.is_na ? "opacity-50 border-dashed" : "hover:border-primary/40")} onClick={() => { if (!item.is_na) { setEditingItem(item); setEditSheetOpen(true); } }}>
