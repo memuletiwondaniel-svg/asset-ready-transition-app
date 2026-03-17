@@ -619,6 +619,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
                   {getORAStatusLabel()!.label}
                 </Badge>
               )}
+              {isVcrDeliveryPlanTask && getVcrStatusBadge() && (
+                <Badge variant="outline" className={cn("text-xs", getVcrStatusBadge()!.className)}>
+                  {getVcrStatusBadge()!.label}
+                </Badge>
+              )}
             </div>
              <SheetTitle className="text-left text-base sm:text-lg leading-snug mt-2 break-words">
               {task.title}
