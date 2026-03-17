@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Key, Loader2, Trash2, AlertTriangle, Edit3, Eye, XCircle, RotateCcw, MessageSquare, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { WizardProgress, WizardStep } from './WizardProgress';
-import { WizardNavigation } from './WizardNavigation';
+import { WizardShell, WizardShellStep } from '../shared/WizardShell';
 import { ProjectOverviewStep } from './steps/ProjectOverviewStep';
 import { SystemsImportStep, WizardSystem } from './steps/SystemsImportStep';
 import { VCRCreationStep, WizardVCR } from './steps/VCRCreationStep';
@@ -12,13 +10,12 @@ import { SystemMappingStep } from './steps/SystemMappingStep';
 import { PhasesStep, WizardPhase } from './steps/PhasesStep';
 import { WorkspacePreviewStep } from './steps/WorkspacePreviewStep';
 import { ApprovalSetupStep, WizardApprover } from './steps/ApprovalSetupStep';
-import { ConfirmationStep } from './steps/ConfirmationStep';
+
 import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
 import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
 import { useP2ARejectionContext } from '@/hooks/useP2ARejectionContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -42,22 +39,19 @@ interface P2APlanCreationWizardProps {
   milestones?: Array<{ id: string; name: string; target_date?: string }>;
   onSuccess?: () => void;
   onOpenWorkspace?: () => void;
-  /** When set, wizard operates in review mode for an approver task */
   reviewTaskId?: string;
-  /** Callback when reviewer approves */
   onApprove?: (comment: string) => void;
-  /** Callback when reviewer rejects */
   onReject?: (comment: string) => void;
 }
 
-const WIZARD_STEPS: WizardStep[] = [
-  { id: 1, title: 'Overview', description: 'Project info and approach' },
-  { id: 2, title: 'Select\nSystems', description: 'Import or create systems' },
-  { id: 3, title: 'Create\nVCRs', description: 'Define Verification Certificate of Readiness' },
-  { id: 4, title: 'Assign Systems', description: 'Map systems to VCRs' },
-  { id: 5, title: 'Handover Phases', description: 'Define phases & assign VCRs' },
-  { id: 6, title: 'Selected\nApprovers', description: 'Choose who approves the plan' },
-  { id: 7, title: 'Review &\nSubmit', description: 'Review the plan layout' },
+const WIZARD_STEPS: WizardShellStep[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'systems', label: 'Select Systems' },
+  { id: 'vcrs', label: 'Create VCRs' },
+  { id: 'mapping', label: 'Assign Systems' },
+  { id: 'phases', label: 'Handover Phases' },
+  { id: 'approvers', label: 'Selected Approvers' },
+  { id: 'review', label: 'Review & Submit' },
 ];
 
 export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
@@ -75,7 +69,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   onReject,
 }) => {
   const isReviewMode = !!reviewTaskId;
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [useWizard, setUseWizard] = useState<boolean | null>(null);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [isLoadingDraft, setIsLoadingDraft] = useState(false);
@@ -86,16 +80,14 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const [isApproving, setIsApproving] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const queryClient = useQueryClient();
-  
+
   const { data: existingPlan } = useP2APlanByProject(projectId);
 
-  // Unified rejection context from plan-level fields (persisted by trigger + cascade)
   const { data: rejectionInfo } = useP2ARejectionContext(
     existingPlan?.id,
     !isReviewMode ? existingPlan?.status : undefined
   );
-  
-  // Read-only when plan is submitted (ACTIVE) or fully approved (COMPLETED/APPROVED)
+
   const isReadOnly = existingPlan ? ['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status) : false;
 
   const {
@@ -112,19 +104,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     isDeleting,
   } = useP2APlanWizard(projectId, projectCode);
 
-  // Total wizard steps (excluding overview which is step 1 / entry point)
-  const TOTAL_CREATION_STEPS = WIZARD_STEPS.length; // 7
+  const TOTAL_CREATION_STEPS = WIZARD_STEPS.length;
 
-  /**
-   * Sync wizard step progress to ora_plan_activities and user_tasks.
-   * Maps wizard steps: step 1=0%, step 2=14%, ... step 7=86%, submitted=100%
-   */
   const syncWizardProgress = useCallback(async (step: number, isSubmitted = false) => {
-    // Submitted = 95% (pending approval); 100% only after final approval
-    const percentage = isSubmitted ? 95 : Math.round(((step - 1) / TOTAL_CREATION_STEPS) * 100);
-    
+    const percentage = isSubmitted ? 95 : Math.round(((step) / TOTAL_CREATION_STEPS) * 100);
     try {
-      // Find ORP plan for this project
       const { data: plans } = await (supabase as any)
         .from('orp_plans')
         .select('id')
@@ -133,9 +117,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
       if (plans?.[0]) {
         const orpPlanId = plans[0].id;
-
-        // Find the P2A activity - search by multiple strategies:
-        // 1. activity_code 'P2A-01' (legacy), 2. name containing 'P2A', 3. name 'Develop P2A Plan'
         let activity: any = null;
         const { data: activities } = await (supabase as any)
           .from('ora_plan_activities')
@@ -150,10 +131,8 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         }
 
         if (activity) {
-          // Update ora_plan_activities
           const activityUpdate: Record<string, any> = {
             completion_percentage: percentage,
-            // Submitted = still IN_PROGRESS (95%), only COMPLETED at 100% after approval
             status: isSubmitted ? 'IN_PROGRESS' : percentage > 0 ? 'IN_PROGRESS' : 'NOT_STARTED',
           };
           await (supabase as any)
@@ -161,7 +140,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             .update(activityUpdate)
             .eq('id', activity.id);
 
-          // Update linked user_task via task_id if available
           if (activity.task_id) {
             const { data: taskRow } = await supabase
               .from('user_tasks')
@@ -177,7 +155,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
                   completion_percentage: percentage,
                   plan_status: isSubmitted ? 'ACTIVE' : undefined,
                 } as any,
-                // Task moves to completed on submission (no further user action needed)
                 status: isSubmitted ? 'completed' : percentage > 0 ? 'in_progress' : 'pending',
               })
               .eq('id', activity.task_id);
@@ -185,7 +162,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         }
       }
 
-      // Also update standalone P2A tasks (create_p2a_plan action tasks)
       const { data: allTasks } = await supabase
         .from('user_tasks')
         .select('id, metadata')
@@ -205,13 +181,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
               completion_percentage: percentage,
               plan_status: isSubmitted ? 'ACTIVE' : undefined,
             } as any,
-            // Task moves to completed on submission (no further user action needed)
             status: isSubmitted ? 'completed' : percentage > 0 ? 'in_progress' : 'pending',
           })
           .eq('id', p2aTask.id);
       }
 
-      // Invalidate caches so Kanban/Gantt reflect changes
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['user-orp-activities'] });
       queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
@@ -221,15 +195,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     } catch (err) {
       console.error('Failed to sync wizard progress:', err);
     }
-  }, [projectId, queryClient]);
+  }, [projectId, queryClient, TOTAL_CREATION_STEPS]);
 
-  /**
-   * Sync review progress to the reviewer's user_task.
-   * Each of the 6 wizard steps (2-7) = ~14%, capped at 85%. Approval = 100%.
-   */
   const syncReviewProgress = useCallback(async (visitedCount: number) => {
     if (!reviewTaskId) return;
-    const REVIEW_STEPS = 6; // steps 2-7
+    const REVIEW_STEPS = 6;
     const percentage = Math.min(Math.round((visitedCount / REVIEW_STEPS) * 85), 85);
     try {
       const { data: taskRow } = await supabase
@@ -237,7 +207,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         .select('metadata')
         .eq('id', reviewTaskId)
         .single();
-      
+
       await supabase
         .from('user_tasks')
         .update({
@@ -248,21 +218,20 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           status: percentage > 0 ? 'in_progress' : 'pending',
         })
         .eq('id', reviewTaskId);
-      
+
       queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
     } catch (err) {
       console.error('Failed to sync review progress:', err);
     }
   }, [reviewTaskId, queryClient]);
 
-  // Track step visits in review mode and sync progress
+  // Track step visits in review mode
   useEffect(() => {
-    if (isReviewMode && currentStep > 1) {
+    if (isReviewMode && currentStep > 0) {
       setReviewVisitedSteps(prev => {
         const next = new Set(prev);
         if (!next.has(currentStep)) {
           next.add(currentStep);
-          // Fire async progress sync (don't block)
           syncReviewProgress(next.size);
         }
         return next;
@@ -270,8 +239,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     }
   }, [currentStep, isReviewMode, syncReviewProgress]);
 
-  // When the wizard opens and a draft plan exists, auto-load and resume
-  // Reset dismissable banner each time wizard opens
   useEffect(() => {
     if (open) setBannerDismissed(false);
   }, [open]);
@@ -283,13 +250,12 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         .then((hasDraft) => {
           if (hasDraft) {
             setUseWizard(true);
-            // Review mode: start at step 2 (first content step)
             if (isReviewMode) {
-              setCurrentStep(2);
+              setCurrentStep(1);
             } else if (['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status)) {
-              setCurrentStep(WIZARD_STEPS.length); // Step 7 (Review)
+              setCurrentStep(WIZARD_STEPS.length - 1);
             } else {
-              setCurrentStep(2);
+              setCurrentStep(1);
             }
           }
         })
@@ -304,7 +270,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
   const handleClose = () => {
     resetState();
-    setCurrentStep(1);
+    setCurrentStep(0);
     setUseWizard(null);
     setCompletedSteps(new Set());
     setReviewVisitedSteps(new Set());
@@ -318,7 +284,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     if (!onApprove) return;
     setIsApproving(true);
     try {
-      // Set review task to 100%
       if (reviewTaskId) {
         const { data: taskRow } = await supabase
           .from('user_tasks')
@@ -355,8 +320,6 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           .select('metadata')
           .eq('id', reviewTaskId)
           .single();
-
-        // Store the rejection comment in the task metadata so the cascade can use it
         await supabase
           .from('user_tasks')
           .update({
@@ -378,25 +341,32 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     }
   };
 
-  const isStepComplete = (displayStep: number): boolean => {
-    const hasVisitedPast = (currentStep - 1) > displayStep;
-    switch (displayStep) {
+  // Step completion uses 0-indexed steps now
+  // Steps: 0=Overview, 1=Systems, 2=VCRs, 3=Mapping, 4=Phases, 5=Approvers, 6=Review
+  const isStepComplete = (idx: number): boolean => {
+    switch (idx) {
+      case 0: return useWizard === true;
       case 1: return state.systems.length > 0;
       case 2: return state.vcrs.length > 0;
       case 3: return Object.values(state.mappings).some(arr => arr.length > 0);
       case 4: return state.phases.length > 0;
       case 5: return state.approvers.length > 0;
-      case 6: return hasVisitedPast;
+      case 6: return currentStep > idx;
       default: return false;
     }
   };
 
+  const isStepWarning = (idx: number): boolean => {
+    // A step is "warning" if the user has been past it but it's not complete
+    if (idx === 0) return false;
+    const hasBeenPast = currentStep > idx;
+    return hasBeenPast && !isStepComplete(idx);
+  };
+
   const recalculateCompletedSteps = () => {
     const newCompleted = new Set<number>();
-    for (let i = 1; i <= WIZARD_STEPS.length - 1; i++) {
-      // A step is only complete if its own validation passes AND all prior steps are complete
-      const priorStepsComplete = i === 1 || Array.from({ length: i - 1 }, (_, k) => k + 1).every(s => isStepComplete(s));
-      if (isStepComplete(i) && priorStepsComplete) {
+    for (let i = 0; i < WIZARD_STEPS.length - 1; i++) {
+      if (isStepComplete(i)) {
         newCompleted.add(i);
       }
     }
@@ -406,34 +376,30 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   useEffect(() => {
     if (draftLoaded && useWizard) {
       recalculateCompletedSteps();
-      // Only sync progress for editable (non-read-only) plans.
-      // For submitted/approved plans, syncing would overwrite 'completed' status
-      // with 'in_progress', causing the Kanban card to jump out of Done.
       if (!isReadOnly) {
-        // Determine highest completed step to reflect accurate progress
-        let highestComplete = 1; // At minimum step 1 (systems) if draft exists
-        for (let i = 1; i <= WIZARD_STEPS.length - 1; i++) {
+        let highestComplete = 0;
+        for (let i = 0; i < WIZARD_STEPS.length - 1; i++) {
           if (isStepComplete(i)) {
-            highestComplete = i + 1; // Next step is where the user would resume
+            highestComplete = i + 1;
           } else {
             break;
           }
         }
-        syncWizardProgress(Math.min(highestComplete, WIZARD_STEPS.length));
+        syncWizardProgress(Math.min(highestComplete, WIZARD_STEPS.length - 1));
       }
     }
   }, [draftLoaded, useWizard, isReadOnly]);
 
   const handleChooseWizard = () => {
     setUseWizard(true);
-    setCurrentStep(2);
+    setCurrentStep(1);
   };
 
   const handleChooseWorkspace = async () => {
     try {
       await saveDraft();
     } catch (error) {
-      // Continue even if save fails — user can still view workspace
+      // Continue even if save fails
     }
     handleClose();
     onOpenWorkspace?.();
@@ -441,24 +407,23 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
   const handleBack = () => {
     recalculateCompletedSteps();
-    if (currentStep === 2 && useWizard) {
+    if (currentStep === 1 && useWizard) {
       setUseWizard(null);
-      setCurrentStep(1);
+      setCurrentStep(0);
     } else {
-      setCurrentStep(prev => Math.max(prev - 1, 1));
+      setCurrentStep(prev => Math.max(prev - 1, 0));
     }
   };
 
-  // Auto-save when clicking Next (skip save in read-only mode)
   const handleNext = async () => {
     recalculateCompletedSteps();
-    const nextStep = Math.min(currentStep + 1, WIZARD_STEPS.length);
+    const nextStep = Math.min(currentStep + 1, WIZARD_STEPS.length - 1);
     if (!isReadOnly) {
       try {
         await saveDraft();
         syncWizardProgress(nextStep);
       } catch (error) {
-        // Continue navigation even if save fails silently
+        // Continue navigation
       }
     }
     setCurrentStep(nextStep);
@@ -496,7 +461,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const handleSubmit = async () => {
     try {
       await submitForApproval(submissionComment || undefined);
-      await syncWizardProgress(WIZARD_STEPS.length, true);
+      await syncWizardProgress(WIZARD_STEPS.length - 1, true);
       handleClose();
       onSuccess?.();
       toast.success('P2A Plan submitted for approval!');
@@ -519,7 +484,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
       );
     }
 
-    if (currentStep === 1 || useWizard === null) {
+    if (currentStep === 0 || useWizard === null) {
       return (
         <ProjectOverviewStep
           projectId={projectId}
@@ -534,7 +499,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     }
 
     switch (currentStep) {
-      case 2:
+      case 1:
         return (
           <SystemsImportStep
             systems={state.systems}
@@ -542,7 +507,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             projectCode={projectCode}
           />
         );
-      case 3:
+      case 2:
         return (
           <VCRCreationStep
             vcrs={state.vcrs}
@@ -550,7 +515,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             onVCRsChange={(vcrs) => updateState('vcrs', vcrs)}
           />
         );
-      case 4:
+      case 3:
         return (
           <SystemMappingStep
             systems={state.systems}
@@ -559,7 +524,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             onMappingsChange={(mappings) => updateState('mappings', mappings)}
           />
         );
-      case 5:
+      case 4:
         return (
           <PhasesStep
             vcrs={state.vcrs}
@@ -575,7 +540,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             onOpenFullWorkspace={handleChooseWorkspace}
           />
         );
-      case 6:
+      case 5:
         return (
           <ApprovalSetupStep
             approvers={state.approvers}
@@ -584,7 +549,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             onApproversChange={(approvers) => updateState('approvers', approvers)}
           />
         );
-      case 7:
+      case 6:
         return (
           <WorkspacePreviewStep
             systems={state.systems}
@@ -600,294 +565,309 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-6xl sm:w-[95vw] !p-0 sm:!p-0 !gap-0 !inset-0 !max-h-full !translate-x-0 !translate-y-0 !rounded-none !overflow-hidden sm:!inset-auto sm:!left-[50%] sm:!top-[50%] sm:!translate-x-[-50%] sm:!translate-y-[-50%] sm:!rounded-lg sm:h-[min(88vh,800px)] sm:!max-h-[88vh] h-[100dvh] flex flex-col [&>button]:hidden z-[100]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-3 sm:px-5 py-3 sm:py-4 border-b shrink-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/40 to-amber-500/40 rounded-xl blur-sm" />
-              <div className="relative p-2.5 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500">
-                <Key className="h-5 w-5 text-white" />
-              </div>
-            </div>
-            <div>
-              <h2 className="text-sm sm:text-lg font-semibold">
-                {isReviewMode
-                  ? 'Review P2A Plan'
-                  : existingPlan && ['ACTIVE'].includes(existingPlan.status)
-                    ? 'P2A Plan — Pending Approval'
-                    : existingPlan && ['COMPLETED', 'APPROVED'].includes(existingPlan.status)
-                      ? 'P2A Plan — Approved'
-                      : 'Develop P2A Plan'}
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {projectName && projectName !== projectCode 
-                  ? `${projectCode}: ${projectName}` 
-                  : projectCode}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            {/* Delete draft button - only for existing drafts */}
-            {existingPlan && existingPlan.status === 'DRAFT' && useWizard && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="z-[150]">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Draft Plan?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete the P2A Plan draft including all systems, VCRs, phases, and approvers. This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDeleteDraft}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Delete Draft
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
+  // Whether to show full wizard layout (not overview)
+  const showWizardLayout = useWizard && currentStep > 0 && !isLoadingDraft;
+  const isLastStep = currentStep === WIZARD_STEPS.length - 1;
+
+  // Header content
+  const headerContent = (
+    <div className="flex items-center gap-2.5 min-w-0">
+      <div className="relative shrink-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/40 to-amber-500/40 rounded-xl blur-sm" />
+        <div className="relative p-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500">
+          <Key className="h-4 w-4 text-white" />
         </div>
+      </div>
+      <div className="min-w-0">
+        <h2 className="text-sm font-semibold truncate">
+          {isReviewMode
+            ? 'Review P2A Plan'
+            : existingPlan && ['ACTIVE'].includes(existingPlan.status)
+              ? 'P2A Plan — Pending Approval'
+              : existingPlan && ['COMPLETED', 'APPROVED'].includes(existingPlan.status)
+                ? 'P2A Plan — Approved'
+                : 'Develop P2A Plan'}
+        </h2>
+        <p className="text-[10px] text-muted-foreground">
+          {projectName && projectName !== projectCode
+            ? `${projectCode}: ${projectName}`
+            : projectCode}
+        </p>
+      </div>
+    </div>
+  );
 
-        {/* Progress Indicator */}
-        {useWizard && currentStep > 1 && !isLoadingDraft && (
-          <WizardProgress
-            steps={WIZARD_STEPS.slice(1)}
-            currentStep={currentStep - 1}
-            completedSteps={completedSteps}
-            onStepClick={(step) => {
-              recalculateCompletedSteps();
-              setCurrentStep(step + 1);
-            }}
-          />
-        )}
-
-        {/* Review mode banner */}
-        {isReviewMode && useWizard && currentStep > 1 && !isLoadingDraft && (
-          <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-2.5 border-b bg-primary/5 dark:bg-primary/10 text-primary shrink-0">
-            <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-            <p className="text-[11px] sm:text-xs flex-1">
-              You are reviewing this plan as an approver. Navigate through each section to review, then approve or reject on the final step.
-              <span className="ml-1 sm:ml-2 font-medium">
-                ({reviewVisitedSteps.size}/6 sections reviewed)
-              </span>
-            </p>
-          </div>
-        )}
-
-        {/* Draft context banner — rejection or revert (shown to author) */}
-        {!isReviewMode && rejectionInfo && useWizard && !isLoadingDraft && !bannerDismissed && (
-          rejectionInfo.type === 'reverted' ? (
-            <div className="group/banner relative flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-1.5 sm:py-2 border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 shrink-0" style={{ borderLeft: '3px solid hsl(38, 92%, 50%)' }}>
-              <RotateCcw className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-              <div className="flex-1 text-[11px] sm:text-xs space-y-0.5">
-                <p className="font-medium text-amber-800 dark:text-amber-200">
-                  Plan reverted to Draft by {rejectionInfo.rejector_name || rejectionInfo.role_name}
-                  {rejectionInfo.approved_at && (
-                    <span className="font-normal text-amber-600/80 dark:text-amber-400/70 ml-1">
-                      on {new Date(rejectionInfo.approved_at).toLocaleDateString()}
-                    </span>
-                  )}
-                </p>
-                {rejectionInfo.comments && (
-                  <p className="text-amber-700/80 dark:text-amber-300/70 italic">"{rejectionInfo.comments}"</p>
-                )}
-                <p className="text-amber-600/70 dark:text-amber-400/60">You can continue editing and resubmit when ready.</p>
-              </div>
-              <button
-                onClick={() => setBannerDismissed(true)}
-                className="absolute top-1.5 right-1.5 p-0.5 rounded-sm opacity-0 group-hover/banner:opacity-100 transition-opacity text-amber-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-200/50 dark:hover:bg-amber-800/50"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          ) : (
-            <div className="group/banner relative flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-1.5 sm:py-2 border-b bg-destructive/5 dark:bg-destructive/10 text-destructive shrink-0">
-              <XCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-              <div className="flex-1 text-[11px] sm:text-xs space-y-0.5">
-                <p className="font-medium">
-                  Plan was rejected by {rejectionInfo.rejector_name || rejectionInfo.role_name}
-                  {rejectionInfo.approved_at && (
-                    <span className="font-normal text-muted-foreground ml-1">
-                      on {new Date(rejectionInfo.approved_at).toLocaleDateString()}
-                    </span>
-                  )}
-                </p>
-                {rejectionInfo.comments && rejectionInfo.comments !== 'Rejected by approver' && (
-                  <p className="text-foreground/80 italic">"{rejectionInfo.comments}"</p>
-                )}
-                <p className="text-muted-foreground">Please address the feedback and resubmit for approval.</p>
-              </div>
-              <button
-                onClick={() => setBannerDismissed(true)}
-                className="absolute top-1.5 right-1.5 p-0.5 rounded-sm opacity-0 group-hover/banner:opacity-100 transition-opacity text-destructive/50 hover:text-destructive hover:bg-destructive/10"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          )
-        )}
-
-
-        {!isReviewMode && isReadOnly && useWizard && currentStep > 1 && !isLoadingDraft && (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-2.5 border-b bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 shrink-0">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-              <p className="text-[11px] sm:text-xs flex-1">
-                {existingPlan?.status === 'ACTIVE'
-                  ? 'This plan has been submitted and is pending approval. Changes are not allowed until the review is complete.'
-                  : 'This plan has been approved. Any modifications will require resubmitting for re-approval.'}
-              </p>
-            </div>
+  // Header actions (delete draft)
+  const headerActions = (
+    <>
+      {existingPlan && existingPlan.status === 'DRAFT' && useWizard && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
             <Button
-              variant="outline"
-              size="sm"
-              className="shrink-0 text-[11px] sm:text-xs gap-1.5 border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50 h-7 sm:h-8"
-              onClick={() => setRequestChangeOpen(true)}
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+              disabled={isDeleting}
             >
-              <Edit3 className="h-3 w-3" />
-              Request Change
+              {isDeleting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="h-3.5 w-3.5" />
+              )}
             </Button>
-          </div>
-        )}
-
-        {/* Content */}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y">
-          {renderStepContent()}
-        </div>
-
-        {/* Notes for Approvers — pinned above footer on last step (author mode) */}
-        {!isReviewMode && !isReadOnly && useWizard && currentStep === WIZARD_STEPS.length && !isLoadingDraft && (
-          <div className="px-3 sm:px-5 py-2 sm:py-2.5 border-t bg-muted/30 shrink-0">
-            <div className="flex items-center gap-1.5 mb-1">
-              <MessageSquare className="h-3 w-3 text-muted-foreground" />
-              <label className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Notes for Approvers
-              </label>
-              <span className="text-[10px] text-muted-foreground ml-auto">(optional)</span>
-            </div>
-            <div className="relative">
-              <textarea
-                placeholder="Add any context, instructions, or key decisions for the approval team..."
-                value={submissionComment}
-                onChange={(e) => setSubmissionComment(e.target.value.slice(0, 500))}
-                className="w-full min-h-[40px] max-h-[56px] rounded-md border border-input bg-background px-2.5 py-1.5 pr-14 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring"
-              />
-              <span className={cn(
-                "absolute bottom-1.5 right-2.5 text-[10px] tabular-nums pointer-events-none",
-                submissionComment.length >= 500 ? "text-destructive" : "text-muted-foreground/60"
-              )}>
-                {submissionComment.length}/500
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Review comment box — pinned above final actions on last step */}
-        {isReviewMode && useWizard && currentStep === WIZARD_STEPS.length && !isLoadingDraft && (
-          <div className="px-3 sm:px-5 py-2 sm:py-2.5 border-t bg-muted/30 shrink-0">
-            <label className="text-[11px] sm:text-xs font-medium text-foreground mb-1 sm:mb-1.5 block">
-              Review Comments <span className="text-muted-foreground font-normal">(optional)</span>
-            </label>
-            <textarea
-              placeholder="Add comments about your review decision..."
-              value={reviewComment}
-              onChange={(e) => setReviewComment(e.target.value)}
-              className="w-full min-h-[40px] sm:min-h-[48px] max-h-[60px] sm:max-h-[72px] rounded-md border border-input bg-background px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-        )}
-
-        {/* Navigation */}
-        {useWizard && currentStep > 1 && !isLoadingDraft && (
-          <WizardNavigation
-            currentStep={currentStep - 1}
-            totalSteps={WIZARD_STEPS.length - 1}
-            onBack={handleBack}
-            onNext={handleNext}
-            onSave={isReadOnly && !isReviewMode ? undefined : (!isReviewMode ? handleSave : undefined)}
-            onSaveAndExit={isReviewMode ? () => onOpenChange(false) : (isReadOnly ? () => onOpenChange(false) : handleSaveAndExit)}
-            onSubmit={!isReviewMode && currentStep === WIZARD_STEPS.length && !isReadOnly && (!existingPlan || existingPlan.status === 'DRAFT') ? handleSubmit : undefined}
-            onApprove={isReviewMode ? handleReviewApprove : undefined}
-            onReject={isReviewMode ? handleReviewReject : undefined}
-            isSubmitting={isSubmitting || isApproving}
-            isSaving={isSaving}
-            canProceed={canProceed()}
-            submitLabel="Submit for Approval"
-            saveAndExitLabel={isReadOnly || isReviewMode ? 'Close' : undefined}
-            isReviewMode={isReviewMode}
-          />
-        )}
-
-        {/* Request Change confirmation dialog */}
-        <AlertDialog open={requestChangeOpen} onOpenChange={setRequestChangeOpen}>
+          </AlertDialogTrigger>
           <AlertDialogContent className="z-[150]">
             <AlertDialogHeader>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30">
-                  <AlertTriangle className="h-5 w-5 text-amber-600" />
-                </div>
-                <AlertDialogTitle>Request Changes?</AlertDialogTitle>
-              </div>
-              <AlertDialogDescription className="pt-2">
-                Making changes to this plan will revert it to <strong>Draft</strong> status and void all current approvals. 
-                You will need to resubmit the plan for a new approval cycle, and all approvers will be notified.
+              <AlertDialogTitle>Delete Draft Plan?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the P2A Plan draft including all systems, VCRs, phases, and approvers. This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                className="bg-amber-600 text-white hover:bg-amber-700"
-                onClick={async () => {
-                  try {
-                    // Revert plan status to DRAFT
-                    if (existingPlan) {
-                      await (supabase as any)
-                        .from('p2a_handover_plans')
-                        .update({ status: 'DRAFT' })
-                        .eq('id', existingPlan.id);
-                      // Reset approvals
-                      await (supabase as any)
-                        .from('p2a_handover_approvers')
-                        .update({ status: 'PENDING', approved_at: null })
-                        .eq('plan_id', existingPlan.id);
-                    }
-                    queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project'] });
-                    queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
-                    queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
-                    toast.success('Plan reverted to draft. You can now make changes.');
-                    setRequestChangeOpen(false);
-                  } catch (err) {
-                    toast.error('Failed to revert plan status.');
-                  }
-                }}
+                onClick={handleDeleteDraft}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Revert to Draft & Edit
+                Delete Draft
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </DialogContent>
-    </Dialog>
+      )}
+    </>
+  );
+
+  // Banners
+  const bannerContent = showWizardLayout ? (
+    <>
+      {/* Review mode banner */}
+      {isReviewMode && (
+        <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-2.5 border-b bg-primary/5 dark:bg-primary/10 text-primary shrink-0">
+          <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+          <p className="text-[11px] sm:text-xs flex-1">
+            You are reviewing this plan as an approver. Navigate through each section to review, then approve or reject on the final step.
+            <span className="ml-1 sm:ml-2 font-medium">
+              ({reviewVisitedSteps.size}/6 sections reviewed)
+            </span>
+          </p>
+        </div>
+      )}
+
+      {/* Draft context banner — rejection or revert */}
+      {!isReviewMode && rejectionInfo && !bannerDismissed && (
+        rejectionInfo.type === 'reverted' ? (
+          <div className="group/banner relative flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-1.5 sm:py-2 border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 shrink-0" style={{ borderLeft: '3px solid hsl(38, 92%, 50%)' }}>
+            <RotateCcw className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+            <div className="flex-1 text-[11px] sm:text-xs space-y-0.5">
+              <p className="font-medium text-amber-800 dark:text-amber-200">
+                Plan reverted to Draft by {rejectionInfo.rejector_name || rejectionInfo.role_name}
+                {rejectionInfo.approved_at && (
+                  <span className="font-normal text-amber-600/80 dark:text-amber-400/70 ml-1">
+                    on {new Date(rejectionInfo.approved_at).toLocaleDateString()}
+                  </span>
+                )}
+              </p>
+              {rejectionInfo.comments && (
+                <p className="text-amber-700/80 dark:text-amber-300/70 italic">"{rejectionInfo.comments}"</p>
+              )}
+              <p className="text-amber-600/70 dark:text-amber-400/60">You can continue editing and resubmit when ready.</p>
+            </div>
+            <button
+              onClick={() => setBannerDismissed(true)}
+              className="absolute top-1.5 right-1.5 p-0.5 rounded-sm opacity-0 group-hover/banner:opacity-100 transition-opacity text-amber-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-200/50 dark:hover:bg-amber-800/50"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        ) : (
+          <div className="group/banner relative flex items-start gap-2 sm:gap-3 px-3 sm:px-5 py-1.5 sm:py-2 border-b bg-destructive/5 dark:bg-destructive/10 text-destructive shrink-0">
+            <XCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+            <div className="flex-1 text-[11px] sm:text-xs space-y-0.5">
+              <p className="font-medium">
+                Plan was rejected by {rejectionInfo.rejector_name || rejectionInfo.role_name}
+                {rejectionInfo.approved_at && (
+                  <span className="font-normal text-muted-foreground ml-1">
+                    on {new Date(rejectionInfo.approved_at).toLocaleDateString()}
+                  </span>
+                )}
+              </p>
+              {rejectionInfo.comments && rejectionInfo.comments !== 'Rejected by approver' && (
+                <p className="text-foreground/80 italic">"{rejectionInfo.comments}"</p>
+              )}
+              <p className="text-muted-foreground">Please address the feedback and resubmit for approval.</p>
+            </div>
+            <button
+              onClick={() => setBannerDismissed(true)}
+              className="absolute top-1.5 right-1.5 p-0.5 rounded-sm opacity-0 group-hover/banner:opacity-100 transition-opacity text-destructive/50 hover:text-destructive hover:bg-destructive/10"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )
+      )}
+
+      {/* Read-only banner */}
+      {!isReviewMode && isReadOnly && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-2.5 border-b bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 shrink-0">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <p className="text-[11px] sm:text-xs flex-1">
+              {existingPlan?.status === 'ACTIVE'
+                ? 'This plan has been submitted and is pending approval. Changes are not allowed until the review is complete.'
+                : 'This plan has been approved. Any modifications will require resubmitting for re-approval.'}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 text-[11px] sm:text-xs gap-1.5 border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50 h-7 sm:h-8"
+            onClick={() => setRequestChangeOpen(true)}
+          >
+            <Edit3 className="h-3 w-3" />
+            Request Change
+          </Button>
+        </div>
+      )}
+    </>
+  ) : null;
+
+  // Pinned footer content (notes)
+  const pinnedFooter = showWizardLayout ? (
+    <>
+      {/* Notes for Approvers — author mode, last step */}
+      {!isReviewMode && !isReadOnly && isLastStep && (
+        <div className="px-3 sm:px-5 py-2 sm:py-2.5 border-t bg-muted/30 shrink-0">
+          <div className="flex items-center gap-1.5 mb-1">
+            <MessageSquare className="h-3 w-3 text-muted-foreground" />
+            <label className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Notes for Approvers
+            </label>
+            <span className="text-[10px] text-muted-foreground ml-auto">(optional)</span>
+          </div>
+          <div className="relative">
+            <textarea
+              placeholder="Add any context, instructions, or key decisions for the approval team..."
+              value={submissionComment}
+              onChange={(e) => setSubmissionComment(e.target.value.slice(0, 500))}
+              className="w-full min-h-[40px] max-h-[56px] rounded-md border border-input bg-background px-2.5 py-1.5 pr-14 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ring"
+            />
+            <span className={cn(
+              "absolute bottom-1.5 right-2.5 text-[10px] tabular-nums pointer-events-none",
+              submissionComment.length >= 500 ? "text-destructive" : "text-muted-foreground/60"
+            )}>
+              {submissionComment.length}/500
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Review comment — reviewer mode, last step */}
+      {isReviewMode && isLastStep && (
+        <div className="px-3 sm:px-5 py-2 sm:py-2.5 border-t bg-muted/30 shrink-0">
+          <label className="text-[11px] sm:text-xs font-medium text-foreground mb-1 sm:mb-1.5 block">
+            Review Comments <span className="text-muted-foreground font-normal">(optional)</span>
+          </label>
+          <textarea
+            placeholder="Add comments about your review decision..."
+            value={reviewComment}
+            onChange={(e) => setReviewComment(e.target.value)}
+            className="w-full min-h-[40px] sm:min-h-[48px] max-h-[60px] sm:max-h-[72px] rounded-md border border-input bg-background px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+      )}
+    </>
+  ) : null;
+
+  // Navigation props
+  const navigationProps = showWizardLayout ? {
+    onBack: handleBack,
+    onNext: handleNext,
+    onSave: isReadOnly && !isReviewMode ? undefined : (!isReviewMode ? handleSave : undefined),
+    onSaveAndExit: isReviewMode ? () => onOpenChange(false) : (isReadOnly ? () => onOpenChange(false) : handleSaveAndExit),
+    onSubmit: !isReviewMode && isLastStep && !isReadOnly && (!existingPlan || existingPlan.status === 'DRAFT') ? handleSubmit : undefined,
+    onApprove: isReviewMode ? handleReviewApprove : undefined,
+    onReject: isReviewMode ? handleReviewReject : undefined,
+    isSubmitting: isSubmitting || isApproving,
+    isSaving,
+    canProceed: canProceed(),
+    canGoBack: currentStep > 0,
+    submitLabel: 'Submit for Approval',
+    saveAndExitLabel: isReadOnly || isReviewMode ? 'Close' : undefined,
+    isReviewMode,
+  } : undefined;
+
+  return (
+    <>
+      <WizardShell
+        open={open}
+        onOpenChange={onOpenChange}
+        dialogTitle={isReviewMode ? 'Review P2A Plan' : 'Develop P2A Plan'}
+        steps={WIZARD_STEPS}
+        currentStep={currentStep}
+        onStepChange={(idx) => {
+          recalculateCompletedSteps();
+          setCurrentStep(idx);
+        }}
+        isStepComplete={isStepComplete}
+        isStepWarning={isStepWarning}
+        header={headerContent}
+        headerActions={headerActions}
+        banners={bannerContent}
+        pinnedFooterContent={pinnedFooter}
+        navigation={navigationProps}
+      >
+        <div className="flex-1">
+          {renderStepContent()}
+        </div>
+      </WizardShell>
+
+      {/* Request Change confirmation dialog */}
+      <AlertDialog open={requestChangeOpen} onOpenChange={setRequestChangeOpen}>
+        <AlertDialogContent className="z-[150]">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              </div>
+              <AlertDialogTitle>Request Changes?</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="pt-2">
+              Making changes to this plan will revert it to <strong>Draft</strong> status and void all current approvals.
+              You will need to resubmit the plan for a new approval cycle, and all approvers will be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-amber-600 text-white hover:bg-amber-700"
+              onClick={async () => {
+                try {
+                  if (existingPlan) {
+                    await (supabase as any)
+                      .from('p2a_handover_plans')
+                      .update({ status: 'DRAFT' })
+                      .eq('id', existingPlan.id);
+                    await (supabase as any)
+                      .from('p2a_handover_approvers')
+                      .update({ status: 'PENDING', approved_at: null })
+                      .eq('plan_id', existingPlan.id);
+                  }
+                  queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project'] });
+                  queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+                  queryClient.invalidateQueries({ queryKey: ['p2a-plan-exists-sheet'] });
+                  toast.success('Plan reverted to draft. You can now make changes.');
+                  setRequestChangeOpen(false);
+                } catch (err) {
+                  toast.error('Failed to revert plan status.');
+                }
+              }}
+            >
+              Revert to Draft & Edit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

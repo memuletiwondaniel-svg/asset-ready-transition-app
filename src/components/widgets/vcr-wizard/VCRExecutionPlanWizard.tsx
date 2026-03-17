@@ -2,15 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   ClipboardCheck,
@@ -19,17 +10,11 @@ import {
   FileText,
   ClipboardList,
   ScrollText,
-  Check,
-  ChevronRight,
-  ChevronLeft,
   UserCheck,
-  X,
-  LogOut,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
+import { WizardShell, WizardShellStep } from '../shared/WizardShell';
 import { VCRItemsStep } from './steps/VCRItemsStep';
 import { TrainingStep } from './steps/TrainingStep';
 import { ProceduresStep } from './steps/ProceduresStep';
@@ -46,7 +31,7 @@ interface VCRExecutionPlanWizardProps {
   projectCode?: string;
 }
 
-const STEPS = [
+const STEPS: WizardShellStep[] = [
   { id: 'items', label: 'VCR Items', icon: ClipboardCheck, color: 'text-violet-500' },
   { id: 'training', label: 'Training', icon: GraduationCap, color: 'text-blue-500' },
   { id: 'procedures', label: 'Procedures', icon: BookOpen, color: 'text-emerald-500' },
@@ -65,7 +50,6 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
-  const isMobile = useIsMobile();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const hasPromotedRef = useRef(false);
@@ -78,7 +62,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     }
   }, [open]);
 
-  // Auto-promote associated task from "pending" (To Do) → "in_progress" (In Progress)
+  // Auto-promote associated task from "pending" → "in_progress"
   useEffect(() => {
     if (!open || !user?.id || hasPromotedRef.current) return;
     hasPromotedRef.current = true;
@@ -103,7 +87,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     })();
   }, [open, user?.id, vcr.id, queryClient]);
 
-  // Query step data counts to determine real completion
+  // Query step data counts for completion
   const { data: stepCounts = {} } = useQuery({
     queryKey: ['vcr-wizard-step-counts', vcr.id],
     queryFn: async () => {
@@ -115,21 +99,24 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         (supabase as any).from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
       ]);
       return {
-        1: training.count || 0,       // Training
-        2: procedures.count || 0,     // Procedures
-        3: criticalDocs.count || 0,   // Critical Documents
-        4: registers.count || 0,      // Op. Registers
-        5: logsheets.count || 0,      // Logsheets
+        1: training.count || 0,
+        2: procedures.count || 0,
+        3: criticalDocs.count || 0,
+        4: registers.count || 0,
+        5: logsheets.count || 0,
       } as Record<number, number>;
     },
     enabled: open,
     refetchInterval: 5000,
   });
 
-  // Steps 0 (VCR Items), 6 (ITP), 7 (Approvers) are always complete when visited
   const isStepComplete = (idx: number): boolean => {
     if (idx === 0 || idx === 6 || idx === 7) return visitedSteps.has(idx);
     return (stepCounts[idx] || 0) > 0;
+  };
+
+  const isStepWarning = (idx: number): boolean => {
+    return visitedSteps.has(idx) && !isStepComplete(idx);
   };
 
   const goToStep = (step: number) => {
@@ -147,28 +134,19 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   const renderStep = () => {
     switch (currentStep) {
-      case 0:
-        return <VCRItemsStep vcrId={vcr.id} />;
-      case 1:
-        return <TrainingStep vcrId={vcr.id} />;
-      case 2:
-        return <ProceduresStep vcrId={vcr.id} />;
-      case 3:
-        return <CriticalDocumentsStep vcrId={vcr.id} />;
-      case 4:
-        return <OperationalRegistersStep vcrId={vcr.id} />;
-      case 5:
-        return <LogsheetsStep vcrId={vcr.id} />;
-      case 6:
-        return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 7:
-        return <ApproversStep vcrId={vcr.id} />;
-      default:
-        return null;
+      case 0: return <VCRItemsStep vcrId={vcr.id} />;
+      case 1: return <TrainingStep vcrId={vcr.id} />;
+      case 2: return <ProceduresStep vcrId={vcr.id} />;
+      case 3: return <CriticalDocumentsStep vcrId={vcr.id} />;
+      case 4: return <OperationalRegistersStep vcrId={vcr.id} />;
+      case 5: return <LogsheetsStep vcrId={vcr.id} />;
+      case 6: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 7: return <ApproversStep vcrId={vcr.id} />;
+      default: return null;
     }
   };
 
-  // Generate short VCR ID (e.g., VCR-01)
+  // Generate short VCR ID
   const shortVcrId = (() => {
     const code = vcr.vcr_code;
     if (!code) return '';
@@ -179,243 +157,58 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   const vcrColor = getVCRColor(vcr.vcr_code);
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(
-        "flex flex-col p-0 gap-0 [&>button]:hidden z-[100]",
-        isMobile
-          ? "!inset-0 !max-w-full !max-h-full !translate-x-0 !translate-y-0 !rounded-none border-0 h-[100dvh] w-full"
-          : "sm:max-w-6xl sm:w-[95vw] sm:h-[min(88vh,800px)] sm:!max-h-[88vh]"
-      )}>
-        <VisuallyHidden>
-          <DialogHeader>
-            <DialogTitle>VCR Plan Wizard</DialogTitle>
-            <DialogDescription>Configure the VCR plan step by step</DialogDescription>
-          </DialogHeader>
-        </VisuallyHidden>
-
-        <div className={cn("flex h-full overflow-hidden", isMobile ? "flex-col" : "gap-2")}>
-          {/* Mobile Header with step selector */}
-          {isMobile ? (
-            <div className="shrink-0 bg-muted/30 border-b border-border/60 px-3 pt-3 pb-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  {shortVcrId && (
-                    <Badge
-                      className="text-[10px] font-mono font-semibold border-0 px-1.5 py-0 shrink-0"
-                      style={{
-                        backgroundColor: vcrColor?.background,
-                        color: vcrColor?.border,
-                      }}
-                    >
-                      {shortVcrId}
-                    </Badge>
-                  )}
-                  <span className="text-xs font-semibold truncate">{vcr.name}</span>
-                </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => onOpenChange(false)}>
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              {/* Horizontal scrollable step pills */}
-              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                {STEPS.map((step, idx) => {
-                  const isActive = idx === currentStep;
-                  const isComplete = isStepComplete(idx);
-                  return (
-                    <button
-                      key={step.id}
-                      onClick={() => goToStep(idx)}
-                      className={cn(
-                        'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap shrink-0 transition-all',
-                        isActive
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : isComplete
-                            ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
-                            : 'bg-muted text-muted-foreground'
-                      )}
-                    >
-                      {isComplete && !isActive ? <Check className="w-3 h-3" /> : <span className="text-[10px]">{idx + 1}</span>}
-                      {isActive && step.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            /* Desktop Left Sidebar */
-            <div className="w-56 shrink-0 bg-muted/30 border-r border-border/60 p-4 flex flex-col">
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-0.5">
-                  {shortVcrId && (
-                    <Badge
-                      className="text-[10px] font-mono font-semibold border-0 px-1.5 py-0"
-                      style={{
-                        backgroundColor: vcrColor?.background,
-                        color: vcrColor?.border,
-                      }}
-                    >
-                      {shortVcrId}
-                    </Badge>
-                  )}
-                  <h3 className="text-sm font-semibold truncate">{vcr.name}</h3>
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Develop VCR Plan</p>
-              </div>
-
-              <div className="flex-1 space-y-1">
-                {STEPS.map((step, idx) => {
-                  const isActive = idx === currentStep;
-                  const isVisited = visitedSteps.has(idx);
-                  const isComplete = isStepComplete(idx);
-
-                  return (
-                    <button
-                      key={step.id}
-                      onClick={() => goToStep(idx)}
-                      className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all text-sm',
-                        isActive
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : isVisited
-                            ? 'hover:bg-muted/60 text-foreground'
-                            : 'hover:bg-muted/40 text-muted-foreground'
-                      )}
-                    >
-                      <div className={cn(
-                        'w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-medium',
-                        isActive
-                          ? 'bg-primary-foreground/20 text-primary-foreground'
-                          : isComplete
-                            ? 'bg-emerald-500/10 text-emerald-500'
-                            : 'bg-muted text-muted-foreground'
-                      )}>
-                        {isComplete && !isActive ? <Check className="w-3 h-3" /> : idx + 1}
-                      </div>
-                      <span className="truncate text-xs font-medium">{step.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-auto pt-4 border-t border-border/60">
-                <p className="text-[10px] text-muted-foreground">
-                  Step {currentStep + 1} of {STEPS.length}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Content Area */}
-          <div className="flex-1 flex flex-col min-w-0 min-h-0">
-            {/* Step Header */}
-            <div className={cn(
-              "border-b border-border/60 flex items-center justify-between shrink-0",
-              isMobile ? "px-4 py-3" : "px-6 py-4"
-            )}>
-              <div className="flex items-center gap-3 min-w-0">
-                {React.createElement(STEPS[currentStep].icon, {
-                  className: cn('w-5 h-5 shrink-0', STEPS[currentStep].color),
-                })}
-                <div className="min-w-0">
-                  <h2 className={cn("font-semibold truncate", isMobile ? "text-sm" : "text-base")}>{STEPS[currentStep].label}</h2>
-                  <p className="text-xs text-muted-foreground line-clamp-1">
-                    {getStepDescription(currentStep)}
-                  </p>
-                </div>
-              </div>
-              {!isMobile && (
-                <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-xs">
-                  Close
-                </Button>
-              )}
-            </div>
-
-            {/* Step Content */}
-            <div className="flex-1 min-h-0 overflow-y-auto">
-              <div className={cn(isMobile ? "p-3" : "p-6")}>
-                {renderStep()}
-              </div>
-            </div>
-
-            {/* Footer Navigation */}
-            <div className={cn(
-              "border-t border-border/60 flex items-center justify-between",
-              isMobile ? "px-3 py-2" : "px-6 py-3"
-            )}>
-              <div className="flex items-center gap-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleBack}
-                  disabled={currentStep === 0}
-                  className="gap-1.5"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  {!isMobile && 'Back'}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onOpenChange(false)}
-                  className="gap-1.5 text-muted-foreground"
-                >
-                  <LogOut className="w-4 h-4" />
-                  {!isMobile && 'Save & Exit'}
-                </Button>
-              </div>
-              {!isMobile && (
-                <div className="flex items-center gap-1.5">
-                  {STEPS.map((_, idx) => (
-                    <div
-                      key={idx}
-                      className={cn(
-                        'w-2 h-2 rounded-full transition-colors cursor-pointer',
-                        idx === currentStep
-                          ? 'bg-primary'
-                          : isStepComplete(idx)
-                            ? 'bg-emerald-500'
-                            : 'bg-muted-foreground/20'
-                      )}
-                      onClick={() => goToStep(idx)}
-                    />
-                  ))}
-                </div>
-              )}
-              {isMobile && (
-                <span className="text-[10px] text-muted-foreground">
-                  {currentStep + 1}/{STEPS.length}
-                </span>
-              )}
-              {currentStep < STEPS.length - 1 ? (
-                <Button size="sm" onClick={handleNext} className="gap-1.5">
-                  {!isMobile && 'Next'}
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              ) : (
-                <Button size="sm" onClick={() => onOpenChange(false)} className="gap-1.5">
-                  Done
-                  <Check className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-          </div>
+  const headerContent = (
+    <div className="flex items-center gap-2 min-w-0">
+      <div className="relative shrink-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/40 to-indigo-500/40 rounded-xl blur-sm" />
+        <div className="relative p-2 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500">
+          <ClipboardCheck className="h-4 w-4 text-white" />
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5">
+          {shortVcrId && (
+            <Badge
+              className="text-[10px] font-mono font-semibold border-0 px-1.5 py-0 shrink-0"
+              style={{
+                backgroundColor: vcrColor?.background,
+                color: vcrColor?.border,
+              }}
+            >
+              {shortVcrId}
+            </Badge>
+          )}
+          <h2 className="text-sm font-semibold truncate">{vcr.name}</h2>
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-0.5">Develop VCR Plan</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <WizardShell
+      open={open}
+      onOpenChange={onOpenChange}
+      dialogTitle="VCR Plan Wizard"
+      steps={STEPS}
+      currentStep={currentStep}
+      onStepChange={goToStep}
+      isStepComplete={isStepComplete}
+      isStepWarning={isStepWarning}
+      header={headerContent}
+      navigation={{
+        onBack: handleBack,
+        onNext: handleNext,
+        onSaveAndExit: () => onOpenChange(false),
+        canGoBack: currentStep > 0,
+        saveAndExitLabel: 'Save & Exit',
+        submitLabel: 'Done',
+        onSubmit: currentStep === STEPS.length - 1 ? () => onOpenChange(false) : undefined,
+      }}
+    >
+      <div className="p-3 sm:p-6">
+        {renderStep()}
+      </div>
+    </WizardShell>
   );
 };
-
-function getStepDescription(step: number): string {
-  switch (step) {
-    case 0: return 'Review, edit, add or remove VCR checklist items and assign parties';
-    case 1: return 'Define training requirements for the handover';
-    case 2: return 'List all procedures that need to be developed';
-    case 3: return 'Select Tier 1 & Tier 2 critical documents required for this VCR';
-    case 4: return 'Select operational registers to be developed or updated';
-    case 5: return 'Add logsheets to be newly developed or updated';
-    case 6: return 'Define witness and hold points for each system';
-    case 7: return 'Review and confirm the default approvers for this VCR';
-    default: return '';
-  }
-}
