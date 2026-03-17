@@ -361,13 +361,13 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
 
   return (
     <div className="space-y-4">
-      {/* Template indicator */}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Badge variant="secondary" className="text-[10px]">
-          {hasHydrocarbon ? 'Hydrocarbon Systems' : 'Non-Hydrocarbon Systems'} Template
-        </Badge>
-        <span>•</span>
-        <span>Items loaded based on linked system types</span>
+      {/* Guidance note */}
+      <div className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-3.5 py-2.5">
+        <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+        <div className="text-xs text-muted-foreground leading-relaxed">
+          <span className="font-medium text-foreground">Review the VCR checklist below.</span>{' '}
+          Expand each category to review items. Click any item to edit its content, delivering or approving parties. Mark non-applicable items as N/A.
+        </div>
       </div>
 
       {/* Header */}
