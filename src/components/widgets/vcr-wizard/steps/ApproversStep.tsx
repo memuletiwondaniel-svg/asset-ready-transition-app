@@ -61,7 +61,7 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
   const [removedIndices, setRemovedIndices] = useState<Set<number>>(new Set());
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
-  const { data: approvers, isLoading } = useQuery<ResolvedApprover[]>({
+  const { data: approvers, isLoading, refetch, isFetching } = useQuery<ResolvedApprover[]>({
     queryKey: ['vcr-exec-plan-approvers', vcrId],
     queryFn: async () => {
       const client = supabase as any;
