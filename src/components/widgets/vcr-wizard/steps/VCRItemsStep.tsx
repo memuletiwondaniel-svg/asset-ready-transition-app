@@ -537,7 +537,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                       <Card key={item.id} className="group border-dashed border-orange-200 dark:border-orange-900/50 bg-orange-50/30 dark:bg-orange-950/10">
                         <CardContent className="p-3">
                           <div className="flex items-start gap-3">
-                            <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border line-through", catColor.bg, catColor.text, catColor.border)}>
+                            <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border line-through", catColor.badgeBg, catColor.badgeText, catColor.badgeBorder)}>
                               {itemId}
                             </Badge>
                             <div className="flex-1 min-w-0">
