@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
-import { Badge } from '@/components/ui/badge';
+import { ProjectIdBadge } from '@/components/ui/project-id-badge';
 import {
   ClipboardCheck,
   GraduationCap,
@@ -13,7 +13,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
-import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
+
 import { WizardShell, WizardShellStep } from '../shared/WizardShell';
 import { VCRItemsStep } from './steps/VCRItemsStep';
 import { TrainingStep } from './steps/TrainingStep';
@@ -155,8 +155,6 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     return code.replace(/^VCR-[A-Z0-9]+-/, 'VCR-');
   })();
 
-  const vcrColor = getVCRColor(vcr.vcr_code);
-
   const headerContent = (
     <div className="flex flex-col gap-1.5 min-w-0">
       <div className="flex items-center gap-2">
@@ -167,15 +165,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           </div>
         </div>
         {shortVcrId && (
-          <Badge
-            className="text-[10px] font-mono font-semibold border-0 px-1.5 py-0 shrink-0"
-            style={{
-              backgroundColor: vcrColor?.background,
-              color: vcrColor?.border,
-            }}
-          >
+          <ProjectIdBadge size="default" projectId={vcr.vcr_code}>
             {shortVcrId}
-          </Badge>
+          </ProjectIdBadge>
         )}
       </div>
       <h2 className="text-sm font-semibold line-clamp-2 leading-tight">{vcr.name}</h2>
