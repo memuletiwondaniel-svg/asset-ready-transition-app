@@ -120,7 +120,11 @@ export const VCRDetailOverlay: React.FC<VCRDetailOverlayProps> = ({
   const handleTabChange = (tabId: string) => {
     if (!isExecutionPlanApproved && lockedTabIds.includes(tabId)) return;
     setActiveTab(tabId);
+    setMobileNavOpen(false);
   };
+
+  const activeTabLabel = [...coreTabs, ...buildingBlockTabs].find(t => t.id === activeTab)?.label || 'VCR';
+  const ActiveTabIcon = [...coreTabs, ...buildingBlockTabs].find(t => t.id === activeTab)?.icon || BarChart3;
 
   const handleDeleteConfirm = () => {
     if (onDelete) {
