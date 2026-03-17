@@ -476,6 +476,49 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const isOraReviewTask = task.type === 'ora_plan_review';
   const isOraActivityTask = task.type === 'ora_activity' || task.metadata?.action === 'complete_ora_activity';
   const isVcrDeliveryPlanTask = (task.type === 'vcr_delivery_plan' || task.metadata?.action === 'create_vcr_delivery_plan');
+  const metaVcrId = task.metadata?.vcr_id as string | undefined;
+
+  // VCR Plan status query
+  const { data: vcrPlanStepCounts } = useQuery({
+    queryKey: ['vcr-plan-draft-check', metaVcrId],
+    queryFn: async () => {
+      if (!metaVcrId) return { hasDraft: false, status: 'DRAFT' as string };
+      const [hpResult, training, procedures, criticalDocs, registers, logsheets] = await Promise.all([
+        (supabase as any).from('p2a_handover_points').select('execution_plan_status').eq('id', metaVcrId).maybeSingle(),
+        (supabase as any).from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+        (supabase as any).from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+        (supabase as any).from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+        (supabase as any).from('p2a_vcr_register_selections').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+        (supabase as any).from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+      ]);
+      const totalItems = (training.count || 0) + (procedures.count || 0) + (criticalDocs.count || 0) + (registers.count || 0) + (logsheets.count || 0);
+      const status = hpResult.data?.execution_plan_status || 'DRAFT';
+      return { hasDraft: totalItems > 0, status };
+    },
+    enabled: !!metaVcrId && isVcrDeliveryPlanTask,
+    staleTime: 0,
+  });
+
+  const vcrHasDraft = vcrPlanStepCounts?.hasDraft || false;
+  const vcrPlanStatus = vcrPlanStepCounts?.status || 'DRAFT';
+  const vcrPlanIsApproved = vcrPlanStatus === 'APPROVED';
+  const vcrPlanIsSubmitted = vcrPlanStatus === 'SUBMITTED';
+
+  const vcrCtaLabel = vcrPlanIsApproved
+    ? 'View VCR Plan'
+    : vcrPlanIsSubmitted
+      ? 'View VCR Plan'
+      : vcrHasDraft
+        ? 'Continue VCR Plan'
+        : 'Develop VCR Plan';
+
+  const getVcrStatusBadge = () => {
+    if (!isVcrDeliveryPlanTask || !vcrPlanStepCounts) return null;
+    if (vcrPlanIsApproved) return { label: 'Approved', className: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30' };
+    if (vcrPlanIsSubmitted) return { label: 'Pending Approval', className: 'bg-amber-500/10 text-amber-700 border-amber-500/30' };
+    if (vcrHasDraft) return { label: 'Draft', className: 'bg-slate-500/10 text-slate-600 border-slate-500/30' };
+    return null;
+  };
   const oraPlanId = task.metadata?.plan_id as string | undefined;
   const p2aProjectCode = task.metadata?.project_code as string | undefined;
 
