@@ -95,6 +95,12 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
   const { id: projectId } = useParams<{ id: string }>();
   const [showWarningDialog, setShowWarningDialog] = React.useState(false);
   const [pendingStatus, setPendingStatus] = React.useState<string | null>(null);
+  const [addPartyOpen, setAddPartyOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Delivering parties management
+  const { members: deliveringParties, addMember, removeMember } = useVCRItemDeliveringParties(item?.id);
+  const { data: teamMembers = [] } = useProjectTeamSearch(projectId);
 
   // Determine the category for ORA intelligence based on item category
   const categoryForIntelligence = item?.category_name?.toLowerCase().includes('training') ? 'training'
