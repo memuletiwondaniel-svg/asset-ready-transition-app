@@ -476,6 +476,49 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const isOraReviewTask = task.type === 'ora_plan_review';
   const isOraActivityTask = task.type === 'ora_activity' || task.metadata?.action === 'complete_ora_activity';
   const isVcrDeliveryPlanTask = (task.type === 'vcr_delivery_plan' || task.metadata?.action === 'create_vcr_delivery_plan');
+  const metaVcrId = task.metadata?.vcr_id as string | undefined;
+
+  // VCR Plan status query
+  const { data: vcrPlanStepCounts } = useQuery({
+    queryKey: ['vcr-plan-draft-check', metaVcrId],
+    queryFn: async () => {
+      if (!metaVcrId) return { hasDraft: false, status: 'DRAFT' as string };
+      const [hpResult, training, procedures, criticalDocs, registers, logsheets] = await Promise.all([
+        (supabase as any).from('p2a_handover_points').select('execution_plan_status').eq('id', metaVcrId).maybeSingle(),
+        (supabase as any).from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+        (supabase as any).from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+        (supabase as any).from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+        (supabase as any).from('p2a_vcr_register_selections').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+        (supabase as any).from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+      ]);
+      const totalItems = (training.count || 0) + (procedures.count || 0) + (criticalDocs.count || 0) + (registers.count || 0) + (logsheets.count || 0);
+      const status = hpResult.data?.execution_plan_status || 'DRAFT';
+      return { hasDraft: totalItems > 0, status };
+    },
+    enabled: !!metaVcrId && isVcrDeliveryPlanTask,
+    staleTime: 0,
+  });
+
+  const vcrHasDraft = vcrPlanStepCounts?.hasDraft || false;
+  const vcrPlanStatus = vcrPlanStepCounts?.status || 'DRAFT';
+  const vcrPlanIsApproved = vcrPlanStatus === 'APPROVED';
+  const vcrPlanIsSubmitted = vcrPlanStatus === 'SUBMITTED';
+
+  const vcrCtaLabel = vcrPlanIsApproved
+    ? 'View VCR Plan'
+    : vcrPlanIsSubmitted
+      ? 'View VCR Plan'
+      : vcrHasDraft
+        ? 'Continue VCR Plan'
+        : 'Develop VCR Plan';
+
+  const getVcrStatusBadge = () => {
+    if (!isVcrDeliveryPlanTask || !vcrPlanStepCounts) return null;
+    if (vcrPlanIsApproved) return { label: 'Approved', className: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30' };
+    if (vcrPlanIsSubmitted) return { label: 'Pending Approval', className: 'bg-amber-500/10 text-amber-700 border-amber-500/30' };
+    if (vcrHasDraft) return { label: 'Draft', className: 'bg-slate-500/10 text-slate-600 border-slate-500/30' };
+    return null;
+  };
   const oraPlanId = task.metadata?.plan_id as string | undefined;
   const p2aProjectCode = task.metadata?.project_code as string | undefined;
 
@@ -508,7 +551,12 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
       return 'Create the Project to Asset (P2A) handover plan for this project. Click below to launch the P2A planning wizard.';
     }
     if (isOraTask) return oraIntentMessage;
-    if (isVcrDeliveryPlanTask) return 'Configure the VCR Plan for this item. Click below to define training, procedures, and other building blocks.';
+    if (isVcrDeliveryPlanTask) {
+      if (vcrPlanIsApproved) return 'The VCR Plan has been approved. Click below to view the finalized plan.';
+      if (vcrPlanIsSubmitted) return 'The VCR Plan has been submitted and is pending approval.';
+      if (vcrHasDraft) return 'You have a saved draft for this VCR Plan. Continue where you left off to define training, procedures, and other building blocks.';
+      return 'Configure the VCR Plan for this item. Click below to define training, procedures, critical documents, and other building blocks.';
+    }
     if (isOraActivityTask) return 'You have an ORA activity to complete. Click below to open the activity details and update progress.';
     if (isOraReviewTask) return 'You have been asked to review and approve an ORA Plan. Use the button below to review, then approve or request changes.';
     if (pssrId) return 'You have been asked to review and approve a PSSR. Use the button below to review, then approve or reject.';
@@ -569,6 +617,11 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
               {isOraTask && getORAStatusLabel() && (
                 <Badge variant="outline" className={cn("text-xs", getORAStatusLabel()!.className)}>
                   {getORAStatusLabel()!.label}
+                </Badge>
+              )}
+              {isVcrDeliveryPlanTask && getVcrStatusBadge() && (
+                <Badge variant="outline" className={cn("text-xs", getVcrStatusBadge()!.className)}>
+                  {getVcrStatusBadge()!.label}
                 </Badge>
               )}
             </div>
@@ -1059,14 +1112,27 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
             )}
 
             {isVcrDeliveryPlanTask && vcrForWizard && (
-              <Button
-                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-                onClick={() => setVcrWizardOpen(true)}
-              >
-                <ClipboardList className="h-4 w-4" />
-                Develop VCR Plan
-                <ChevronRight className="h-4 w-4 ml-auto" />
-              </Button>
+              <div className="space-y-3">
+                {vcrHasDraft && !vcrPlanIsApproved && !vcrPlanIsSubmitted && (
+                  <div className="flex items-start gap-3 rounded-lg border border-blue-200 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-950/20 p-3">
+                    <div className="mt-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 p-1.5">
+                      <ClipboardList className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-medium text-blue-800 dark:text-blue-300">Draft in progress</p>
+                      <p className="text-[11px] text-blue-600/80 dark:text-blue-400/70">You've started configuring this VCR Plan. Continue to complete training, procedures, and other building blocks.</p>
+                    </div>
+                  </div>
+                )}
+                <Button
+                  className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                  onClick={() => setVcrWizardOpen(true)}
+                >
+                  {vcrPlanIsApproved ? <Eye className="h-4 w-4" /> : <ClipboardList className="h-4 w-4" />}
+                  {vcrCtaLabel}
+                  <ChevronRight className="h-4 w-4 ml-auto" />
+                </Button>
+              </div>
             )}
 
             {/* VCR Delivery Plan: Collaborative Document, Attachments, Reviewers & Activity Feed */}
