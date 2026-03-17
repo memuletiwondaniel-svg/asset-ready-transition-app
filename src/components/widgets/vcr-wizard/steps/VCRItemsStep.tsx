@@ -333,6 +333,13 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
   }, {});
 
   const CATEGORY_ORDER = ['Design Integrity', 'Technical Integrity', 'Operating Integrity', 'Management Systems', 'Health & Safety'];
+  const CATEGORY_ICONS: Record<string, { icon: LucideIcon; color: string }> = {
+    'Design Integrity': { icon: Compass, color: 'text-blue-500' },
+    'Technical Integrity': { icon: Wrench, color: 'text-teal-500' },
+    'Operating Integrity': { icon: Settings, color: 'text-amber-500' },
+    'Management Systems': { icon: ShieldCheck, color: 'text-purple-500' },
+    'Health & Safety': { icon: HeartPulse, color: 'text-rose-500' },
+  };
   const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
     'Design Integrity': { bg: 'bg-blue-50 dark:bg-blue-950/40', text: 'text-blue-700 dark:text-blue-300', border: 'border-blue-200 dark:border-blue-800' },
     'Technical Integrity': { bg: 'bg-teal-50 dark:bg-teal-950/40', text: 'text-teal-700 dark:text-teal-300', border: 'border-teal-200 dark:border-teal-800' },
