@@ -13,7 +13,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
-import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
+
 import { WizardShell, WizardShellStep } from '../shared/WizardShell';
 import { VCRItemsStep } from './steps/VCRItemsStep';
 import { TrainingStep } from './steps/TrainingStep';
