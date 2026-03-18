@@ -192,7 +192,7 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={(e) => { e.stopPropagation(); setDeleteTarget(item.id); }}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive"
+                          className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
