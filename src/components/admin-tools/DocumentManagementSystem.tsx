@@ -42,46 +42,15 @@ const TAB_CONFIG = [
   { id: 'unit', label: 'Unit', icon: Box, activeColor: 'text-orange-600 dark:text-orange-400' },
 ] as const;
 
-type TabId = typeof TAB_CONFIG[number]['id'];
-
-// Mock seed data per tab
-const MOCK_DATA: Record<TabId, ConfigItem[]> = {
-  'document-type': [
-    { id: '1', code: 'DWG', name: 'Drawing', description: 'Engineering and technical drawings', display_order: 1, is_active: true },
-    { id: '2', code: 'SPC', name: 'Specification', description: 'Technical specifications', display_order: 2, is_active: true },
-    { id: '3', code: 'RPT', name: 'Report', description: 'Study and analysis reports', display_order: 3, is_active: true },
-    { id: '4', code: 'PRC', name: 'Procedure', description: 'Operating and work procedures', display_order: 4, is_active: true },
-    { id: '5', code: 'MNL', name: 'Manual', description: 'User and reference manuals', display_order: 5, is_active: true },
-  ],
-  'discipline': [
-    { id: '1', code: 'PROC', name: 'Process', description: 'Process engineering discipline', display_order: 1, is_active: true },
-    { id: '2', code: 'MECH', name: 'Mechanical', description: 'Mechanical engineering discipline', display_order: 2, is_active: true },
-    { id: '3', code: 'ELEC', name: 'Electrical', description: 'Electrical engineering discipline', display_order: 3, is_active: true },
-    { id: '4', code: 'INST', name: 'Instrumentation', description: 'Instrumentation and control', display_order: 4, is_active: true },
-    { id: '5', code: 'CIVL', name: 'Civil / Structural', description: 'Civil and structural engineering', display_order: 5, is_active: true },
-  ],
-  'project': [
-    { id: '1', code: 'DP300', name: 'DP300 Expansion', description: 'DP300 plant expansion project', display_order: 1, is_active: true },
-    { id: '2', code: 'GP100', name: 'GP100 Debottleneck', description: 'GP100 debottleneck project', display_order: 2, is_active: true },
-  ],
-  'originator': [
-    { id: '1', code: 'OWN', name: 'Owner', description: 'Asset owner / operator', display_order: 1, is_active: true },
-    { id: '2', code: 'EPC', name: 'EPC Contractor', description: 'EPC main contractor', display_order: 2, is_active: true },
-    { id: '3', code: 'VND', name: 'Vendor', description: 'Equipment vendor / supplier', display_order: 3, is_active: true },
-  ],
-  'plant': [
-    { id: '1', code: 'PLT-A', name: 'Plant Alpha', description: 'Main production plant', display_order: 1, is_active: true },
-    { id: '2', code: 'PLT-B', name: 'Plant Bravo', description: 'Secondary processing plant', display_order: 2, is_active: true },
-  ],
-  'site': [
-    { id: '1', code: 'SITE-N', name: 'North Site', description: 'Northern industrial complex', display_order: 1, is_active: true },
-    { id: '2', code: 'SITE-S', name: 'South Site', description: 'Southern processing area', display_order: 2, is_active: true },
-  ],
-  'unit': [
-    { id: '1', code: 'U-100', name: 'Feed Preparation', description: 'Feed preparation and pre-treatment unit', display_order: 1, is_active: true },
-    { id: '2', code: 'U-200', name: 'Reaction', description: 'Main reaction unit', display_order: 2, is_active: true },
-    { id: '3', code: 'U-300', name: 'Separation', description: 'Product separation and fractionation', display_order: 3, is_active: true },
-  ],
+// Mock data cleared — tabs will be connected to backend tables
+const EMPTY_DATA: Record<TabId, ConfigItem[]> = {
+  'document-type': [],
+  'discipline': [],
+  'project': [],
+  'originator': [],
+  'plant': [],
+  'site': [],
+  'unit': [],
 };
 
 const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onBack }) => {
