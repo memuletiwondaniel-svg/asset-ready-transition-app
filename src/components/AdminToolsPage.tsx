@@ -51,6 +51,7 @@ const IncidentResponseRunbook = lazy(() => import("./admin-tools/IncidentRespons
 const DeploymentConfigs = lazy(() => import("./admin-tools/DeploymentConfigs"));
 const CustomerJourneyMaps = lazy(() => import("./admin-tools/CustomerJourneyMaps"));
 const ProcessFlowMaps = lazy(() => import("./admin-tools/ProcessFlowMaps"));
+const DocumentManagementSystem = lazy(() => import("./admin-tools/DocumentManagementSystem"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
