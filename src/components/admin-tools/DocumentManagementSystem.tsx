@@ -337,7 +337,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
 
             {/* ─── Document Type Tab (connected to backend) ─── */}
             <TabsContent value="document-type" className="mt-0">
-              <DmsDocumentTypesTab searchQuery={searchQuery} />
+              <DmsDocumentTypesTab />
             </TabsContent>
           </Tabs>
         </div>
