@@ -583,6 +583,39 @@ export type Database = {
         }
         Relationships: []
       }
+      dms_sites: {
+        Row: {
+          code: string
+          comment: string | null
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          site_name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          comment?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          site_name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          comment?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          site_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fac_prerequisites: {
         Row: {
           created_at: string | null
