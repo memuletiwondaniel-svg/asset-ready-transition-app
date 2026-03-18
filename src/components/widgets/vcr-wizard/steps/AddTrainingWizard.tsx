@@ -87,6 +87,14 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
   isSaving,
 }) => {
   const [step, setStep] = useState(0);
+  const [highestStep, setHighestStep] = useState(0);
+  const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
+
+  const goToStep = (target: number) => {
+    setStep(target);
+    setHighestStep(prev => Math.max(prev, target));
+    setVisitedSteps(prev => new Set([...prev, target]));
+  };
 
   // Form state
   const [title, setTitle] = useState('');
@@ -101,7 +109,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
   const [durationDays, setDurationDays] = useState<string>('');
   const [tentativeDate, setTentativeDate] = useState('');
 
-  // Deduplicate systems (same system_id may appear multiple times for subsystem assignments)
+  // Deduplicate systems
   const uniqueSystems = useMemo(() => {
     const seen = new Set<string>();
     return (systems || []).filter((s: any) => {
@@ -114,6 +122,8 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
   useEffect(() => {
     if (open) {
       setStep(0);
+      setHighestStep(0);
+      setVisitedSteps(new Set([0]));
       setTitle('');
       setOverview('');
       setProvider('');
@@ -150,6 +160,20 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
     s.name?.toLowerCase().includes(systemSearch.toLowerCase()) ||
     s.system_id?.toLowerCase().includes(systemSearch.toLowerCase())
   );
+
+  // Step completion checks (data-aware)
+  const isStepComplete = (i: number): boolean => {
+    if (i === 0) return title.trim().length > 0;
+    if (i === 1) return provider.trim().length > 0 || deliveryMethods.length > 0;
+    if (i === 2) return targetAudience.length > 0 || selectedSystemIds.length > 0;
+    if (i === 3) return durationDays !== '' || tentativeDate !== '';
+    return false;
+  };
+
+  // A step is incomplete if user has passed it but it has no data
+  const isStepIncomplete = (i: number): boolean => {
+    return (visitedSteps.has(i) || i < highestStep) && !isStepComplete(i) && i < step;
+  };
 
   const canProceed = (s: number) => {
     if (s === 0) return title.trim().length > 0;
@@ -196,36 +220,44 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
             </div>
           </div>
 
-          {/* Step Indicator — Modern horizontal stepper */}
+          {/* Step Indicator — Free-navigation stepper with completion awareness */}
           <div className="flex items-center w-full">
             {STEPS.map((s, i) => {
               const isActive = i === step;
-              const isComplete = i < step;
-              const isUpcoming = i > step;
+              const complete = isStepComplete(i) && !isActive;
+              const incomplete = isStepIncomplete(i);
+              const isUnreachable = i > highestStep && !isActive;
+              const blocked = step === 0 && !canProceed(0) && i > 0;
               return (
                 <React.Fragment key={s.id}>
                   <button
-                    onClick={() => i <= step && setStep(i)}
-                    disabled={i > step}
+                    onClick={() => { if (!blocked) goToStep(i); }}
                     className={cn(
-                      'flex flex-col items-center gap-1.5 group transition-all min-w-0',
-                      i <= step && 'cursor-pointer',
-                      isUpcoming && 'cursor-default'
+                      'flex flex-col items-center gap-1.5 group transition-all min-w-0 cursor-pointer',
+                      blocked && 'cursor-not-allowed opacity-50'
                     )}
                   >
                     <div className={cn(
                       'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300 border-2',
-                      isComplete && 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/25',
+                      complete && 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/25',
                       isActive && 'border-primary bg-primary text-primary-foreground shadow-md shadow-primary/30 scale-110',
-                      isUpcoming && 'border-border bg-muted/50 text-muted-foreground/50'
+                      incomplete && !isActive && 'border-amber-400 bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-500',
+                      !complete && !isActive && !incomplete && isUnreachable && 'border-border bg-muted/50 text-muted-foreground/50',
+                      !complete && !isActive && !incomplete && !isUnreachable && 'border-border bg-muted/80 text-muted-foreground'
                     )}>
-                      {isComplete ? <Check className="w-4 h-4" /> : i + 1}
+                      {complete ? <Check className="w-4 h-4" /> : incomplete && !isActive ? (
+                        <span className="relative flex items-center justify-center">
+                          {i + 1}
+                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400 dark:bg-amber-500" />
+                        </span>
+                      ) : i + 1}
                     </div>
                     <span className={cn(
                       'text-[10px] font-medium leading-tight text-center max-w-[64px] whitespace-nowrap truncate transition-colors',
-                      isComplete && 'text-emerald-600 dark:text-emerald-400',
+                      complete && 'text-emerald-600 dark:text-emerald-400',
                       isActive && 'text-foreground font-semibold',
-                      isUpcoming && 'text-muted-foreground/40'
+                      incomplete && !isActive && 'text-amber-600 dark:text-amber-400',
+                      !complete && !isActive && !incomplete && 'text-muted-foreground/40'
                     )}>
                       {s.title}
                     </span>
@@ -233,7 +265,8 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
                   {i < STEPS.length - 1 && (
                     <div className={cn(
                       'flex-1 h-0.5 rounded-full mx-1 mb-5 min-w-3 transition-colors duration-300',
-                      i < step ? 'bg-emerald-500' : 'bg-border'
+                      complete || (i < step && isStepComplete(i)) ? 'bg-emerald-500' :
+                      i < step ? 'bg-amber-300 dark:bg-amber-600' : 'bg-border'
                     )} />
                   )}
                 </React.Fragment>
@@ -309,7 +342,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => step > 0 ? setStep(step - 1) : onOpenChange(false)}
+            onClick={() => step > 0 ? goToStep(step - 1) : onOpenChange(false)}
             disabled={isSaving}
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
@@ -321,7 +354,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
                 variant="ghost"
                 size="sm"
                 className="text-muted-foreground"
-                onClick={() => setStep(step + 1)}
+                onClick={() => goToStep(step + 1)}
                 disabled={!canProceed(step)}
               >
                 Skip
@@ -329,7 +362,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
             )}
             <Button
               size="sm"
-              onClick={isLastStep ? handleSubmit : () => setStep(step + 1)}
+              onClick={isLastStep ? handleSubmit : () => goToStep(step + 1)}
               disabled={!canProceed(step) || (isLastStep && isSaving)}
               className={cn(
                 'gap-1.5',
