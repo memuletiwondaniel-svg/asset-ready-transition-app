@@ -83,7 +83,7 @@ const MOCK_MAPPINGS: PhaseDocumentMapping[] = [
 ];
 
 const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState('document-types');
+  const [activeTab, setActiveTab] = useState('categories');
   const [searchQuery, setSearchQuery] = useState('');
 
   // --- Document Types state ---
