@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,10 +28,6 @@ interface DocTypeRow {
   display_order: number;
 }
 
-interface DmsDocumentTypesTabProps {
-  searchQuery: string;
-}
-
 interface ColumnConfig {
   id: string;
   label: string;
@@ -49,8 +46,9 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'acceptable_status', label: 'Acceptable Status', visible: false, toggleable: true },
 ];
 
-const DmsDocumentTypesTab: React.FC<DmsDocumentTypesTabProps> = ({ searchQuery }) => {
+const DmsDocumentTypesTab: React.FC = () => {
   const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DocTypeRow | null>(null);
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS);
@@ -208,6 +206,10 @@ const DmsDocumentTypesTab: React.FC<DmsDocumentTypesTabProps> = ({ searchQuery }
             <CardDescription>Manage document type codes used in document classification</CardDescription>
           </div>
           <div className="flex items-center gap-2">
+            <div className="relative w-56">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9 h-9" />
+            </div>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-1.5">
