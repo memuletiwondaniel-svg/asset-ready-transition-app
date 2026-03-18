@@ -21,6 +21,7 @@ import DmsProjectsTab from './dms/DmsProjectsTab';
 import DmsPlantsTab from './dms/DmsPlantsTab';
 import DmsSitesTab from './dms/DmsSitesTab';
 import DmsOriginatorsTab from './dms/DmsOriginatorsTab';
+import DmsUnitsTab from './dms/DmsUnitsTab';
 
 interface DocumentManagementSystemProps {
   onBack: () => void;
