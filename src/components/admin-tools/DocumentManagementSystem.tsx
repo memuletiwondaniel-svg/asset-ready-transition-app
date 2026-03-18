@@ -255,10 +255,6 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="flex items-center justify-between mb-6">
               <TabsList className="grid grid-cols-3 max-w-xl">
-                <TabsTrigger value="document-types" className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Document Types
-                </TabsTrigger>
                 <TabsTrigger value="categories" className="flex items-center gap-2">
                   <FolderOpen className="h-4 w-4" />
                   Categories
