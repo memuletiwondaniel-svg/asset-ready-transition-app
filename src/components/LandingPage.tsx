@@ -756,7 +756,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                               e.stopPropagation();
                               toggleFavorite(fav.path, fav.label);
                             }}
-                            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover/fav:opacity-100 transition-opacity duration-150 hover:scale-110 z-10"
+                            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover/fav:opacity-100 transition-opacity duration-150 hover:scale-110 z-20"
                             title="Remove from favorites"
                           >
                             <X className="w-3 h-3" />
