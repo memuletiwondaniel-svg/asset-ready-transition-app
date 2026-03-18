@@ -125,9 +125,11 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
             </TabsList>
           </Tabs>
         </div>
-        <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
-          <Plus className="w-4 h-4" /> Add Document
-        </Button>
+        {items.length > 0 && (
+          <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
+            <Plus className="w-4 h-4" /> Add Document
+          </Button>
+        )}
       </div>
 
       {showSearch && (
