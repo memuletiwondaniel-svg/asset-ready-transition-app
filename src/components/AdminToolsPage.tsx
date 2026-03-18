@@ -51,6 +51,7 @@ const IncidentResponseRunbook = lazy(() => import("./admin-tools/IncidentRespons
 const DeploymentConfigs = lazy(() => import("./admin-tools/DeploymentConfigs"));
 const CustomerJourneyMaps = lazy(() => import("./admin-tools/CustomerJourneyMaps"));
 const ProcessFlowMaps = lazy(() => import("./admin-tools/ProcessFlowMaps"));
+const DocumentManagementSystem = lazy(() => import("./admin-tools/DocumentManagementSystem"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -81,7 +82,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows'>(() => {
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows' | 'document-management'>(() => {
     // Check if navigated with a specific activeView from favorites
     const state = location.state as any;
     return state?.activeView || 'dashboard';
@@ -493,6 +494,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('process-flows')
+  }, {
+    id: 'document-management',
+    title: 'Document Management System',
+    description: 'Configure document types, categories, lifecycle phases, and the Project Lifecycle Information Plan',
+    icon: FolderOpen,
+    gradient: 'from-sky-500 to-blue-600',
+    tooltip: 'Set up the Document Management System and Project Lifecycle Information Plan',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('document-management')
   }];
 
   // Filter admin tools based on search query
@@ -759,6 +770,13 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <ProcessFlowMaps onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
+  if (activeView === 'document-management') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <DocumentManagementSystem onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }
