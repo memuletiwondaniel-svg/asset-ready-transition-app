@@ -514,6 +514,36 @@ export type Database = {
         }
         Relationships: []
       }
+      dms_originators: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          display_order: number
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dms_plants: {
         Row: {
           code: string
