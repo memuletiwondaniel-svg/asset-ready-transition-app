@@ -514,6 +514,39 @@ export type Database = {
         }
         Relationships: []
       }
+      dms_plants: {
+        Row: {
+          code: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          location: string | null
+          plant_name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          plant_name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          plant_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dms_projects: {
         Row: {
           cabinet: string | null
