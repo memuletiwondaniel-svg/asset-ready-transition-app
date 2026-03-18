@@ -322,7 +322,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
 
             {/* ─── Site Tab (connected to backend) ─── */}
             <TabsContent value="site" className="mt-0">
-              <DmsSitesTab searchQuery={searchQuery} />
+              <DmsSitesTab />
             </TabsContent>
 
             {/* ─── Originator Tab (connected to backend) ─── */}
