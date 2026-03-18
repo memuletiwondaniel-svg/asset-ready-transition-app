@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, MessageSquare, ChevronDown, ChevronUp, Bot, Zap, BarChart3, Paperclip, Key, AlertTriangle, ListChecks, Gauge, Wrench, Users, Shield, Bookmark, Building2, CalendarCheck, GanttChart, Sliders, Activity, LayoutTemplate, Plug, Database, Archive, BookOpen, Flag, Compass, Container, MapPin, GitBranch } from 'lucide-react';
+import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileText, CheckCircle, Home, Loader2, History, X, Sparkles, Upload, ChevronLeft, ChevronRight, Check, Filter, ArrowUpDown, MoreVertical, Eye, EyeOff, Maximize2, Minimize2, GripVertical, MessageSquare, ChevronDown, ChevronUp, Bot, Zap, BarChart3, Paperclip, Key, AlertTriangle, ListChecks, Gauge, Wrench, Users, Shield, Bookmark, Building2, CalendarCheck, GanttChart, Sliders, Activity, LayoutTemplate, Plug, Database, Archive, BookOpen, Flag, Compass, Container, MapPin, GitBranch, Timer, ShieldAlert, Webhook } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -73,6 +73,9 @@ const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color:
   '/admin-tools/deployment-configs': { icon: Container, color: 'bg-cyan-600' },
   '/admin-tools/journey-maps': { icon: MapPin, color: 'bg-pink-600' },
   '/admin-tools/process-flows': { icon: GitBranch, color: 'bg-emerald-600' },
+  '/admin-tools/session-timeout': { icon: Timer, color: 'bg-orange-500' },
+  '/admin-tools/brute-force': { icon: ShieldAlert, color: 'bg-red-500' },
+  '/admin-tools/webhook-security': { icon: Webhook, color: 'bg-teal-600' },
 };
 
 // Label-based fallback for stale localStorage entries
@@ -756,7 +759,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                               e.stopPropagation();
                               toggleFavorite(fav.path, fav.label);
                             }}
-                            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover/fav:opacity-100 transition-opacity duration-150 hover:scale-110 z-10"
+                            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover/fav:opacity-100 transition-opacity duration-150 hover:scale-110 z-20"
                             title="Remove from favorites"
                           >
                             <X className="w-3 h-3" />
@@ -776,7 +779,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                               <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                             </div>
                             {fav.path === '/my-tasks' && newTaskCount > 0 && (
-                              <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground z-10">
+                              <span className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground z-10">
                                 {newTaskCount}
                               </span>
                             )}
