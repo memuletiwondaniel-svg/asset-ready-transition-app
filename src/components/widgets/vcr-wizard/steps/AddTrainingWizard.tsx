@@ -87,6 +87,14 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
   isSaving,
 }) => {
   const [step, setStep] = useState(0);
+  const [highestStep, setHighestStep] = useState(0);
+  const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
+
+  const goToStep = (target: number) => {
+    setStep(target);
+    setHighestStep(prev => Math.max(prev, target));
+    setVisitedSteps(prev => new Set([...prev, target]));
+  };
 
   // Form state
   const [title, setTitle] = useState('');
