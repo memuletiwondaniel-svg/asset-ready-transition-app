@@ -329,8 +329,13 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
               <DmsSitesTab searchQuery={searchQuery} />
             </TabsContent>
 
+            {/* ─── Originator Tab (connected to backend) ─── */}
+            <TabsContent value="originator" className="mt-0">
+              <DmsOriginatorsTab searchQuery={searchQuery} />
+            </TabsContent>
+
             {/* ─── Placeholder tabs ─── */}
-            {TAB_CONFIG.filter(t => t.id !== 'discipline' && t.id !== 'project' && t.id !== 'plant' && t.id !== 'site').map((tab) => (
+            {TAB_CONFIG.filter(t => t.id !== 'discipline' && t.id !== 'project' && t.id !== 'plant' && t.id !== 'site' && t.id !== 'originator').map((tab) => (
               <TabsContent key={tab.id} value={tab.id} className="mt-0">
                 {renderPlaceholderTab(tab.label)}
               </TabsContent>
