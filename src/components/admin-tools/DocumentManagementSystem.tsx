@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DmsProjectsTab from './dms/DmsProjectsTab';
+import DmsPlantsTab from './dms/DmsPlantsTab';
 
 interface DocumentManagementSystemProps {
   onBack: () => void;
