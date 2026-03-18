@@ -22,12 +22,9 @@ interface ProjectRow {
   display_order: number;
 }
 
-interface DmsProjectsTabProps {
-  searchQuery: string;
-}
-
-const DmsProjectsTab: React.FC<DmsProjectsTabProps> = ({ searchQuery }) => {
+const DmsProjectsTab: React.FC = () => {
   const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ProjectRow | null>(null);
   const [formCode, setFormCode] = useState('');
