@@ -773,6 +773,13 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         </Suspense>
       </div>;
   }
+  if (activeView === 'document-management') {
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <DocumentManagementSystem onBack={() => setActiveView('dashboard')} />
+        </Suspense>
+      </div>;
+  }
   
   // Show skeleton while initial data is loading
   if (isInitialLoading) {
