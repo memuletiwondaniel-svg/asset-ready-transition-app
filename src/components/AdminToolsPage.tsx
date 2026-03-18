@@ -496,9 +496,9 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     onClick: () => setActiveView('process-flows')
   }, {
     id: 'document-management',
-    title: 'Document Management System',
+    title: 'Document Management',
     description: 'Configure document types, categories, lifecycle phases, and the Project Lifecycle Information Plan',
-    icon: FolderOpen,
+    icon: Files,
     gradient: 'from-sky-500 to-blue-600',
     tooltip: 'Set up the Document Management System and Project Lifecycle Information Plan',
     stats: {},
