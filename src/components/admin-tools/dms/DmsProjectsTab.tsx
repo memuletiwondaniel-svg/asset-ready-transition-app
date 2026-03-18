@@ -129,9 +129,15 @@ const DmsProjectsTab: React.FC = () => {
             <CardTitle className="text-lg">Project</CardTitle>
             <CardDescription>Manage project codes used in document numbering</CardDescription>
           </div>
-          <Button size="sm" className="gap-1.5" onClick={openAddDialog}>
-            <Plus className="h-4 w-4" /> Add Project
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="relative w-56">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9 h-9" />
+            </div>
+            <Button size="sm" className="gap-1.5" onClick={openAddDialog}>
+              <Plus className="h-4 w-4" /> Add Project
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
