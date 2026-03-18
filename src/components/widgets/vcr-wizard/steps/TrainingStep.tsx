@@ -255,7 +255,7 @@ export const TrainingStep: React.FC<TrainingStepProps> = ({ vcrId }) => {
 
       {/* Delete */}
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[150]">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Training Item</AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>

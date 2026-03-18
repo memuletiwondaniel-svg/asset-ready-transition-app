@@ -183,7 +183,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[580px] p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[580px] p-0 gap-0 overflow-hidden z-[150]">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 bg-gradient-to-br from-blue-500/5 via-violet-500/5 to-transparent">
           <div className="flex items-center gap-3 mb-5">

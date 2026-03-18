@@ -241,7 +241,7 @@ export const TrainingDetailSheet: React.FC<TrainingDetailSheetProps> = ({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[480px] p-0 flex flex-col">
+      <SheetContent className="sm:max-w-[480px] p-0 flex flex-col z-[150]" overlayClassName="z-[150]">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 bg-gradient-to-br from-primary/5 via-secondary/5 to-transparent border-b">
           <SheetHeader className="space-y-1">
