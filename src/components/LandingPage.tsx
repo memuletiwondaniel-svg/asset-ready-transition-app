@@ -776,7 +776,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                               <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                             </div>
                             {fav.path === '/my-tasks' && newTaskCount > 0 && (
-                              <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground z-10">
+                              <span className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground z-10">
                                 {newTaskCount}
                               </span>
                             )}
