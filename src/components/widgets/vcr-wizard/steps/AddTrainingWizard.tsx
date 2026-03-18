@@ -62,8 +62,8 @@ interface WizardStep {
 }
 
 const STEPS: WizardStep[] = [
-  { id: 0, title: 'Training Overview', icon: BookOpen },
-  { id: 1, title: 'Provider & Delivery', icon: Building2 },
+  { id: 0, title: 'Overview', icon: BookOpen },
+  { id: 1, title: 'Delivery', icon: Building2 },
   { id: 2, title: 'Audience & Systems', icon: Users },
   { id: 3, title: 'Schedule', icon: CalendarDays },
   { id: 4, title: 'Review', icon: ClipboardCheck },
