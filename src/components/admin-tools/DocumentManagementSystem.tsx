@@ -472,62 +472,6 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
 
       {/* ===== Dialogs ===== */}
 
-      {/* Document Type Dialog */}
-      <Dialog open={docTypeDialogOpen} onOpenChange={setDocTypeDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingDocType ? 'Edit Document Type' : 'Add Document Type'}</DialogTitle>
-            <DialogDescription>Define a document type for the project lifecycle</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Code *</Label>
-                <Input value={formDocType.code || ''} onChange={e => setFormDocType(p => ({ ...p, code: e.target.value.toUpperCase() }))} placeholder="e.g. PID" />
-              </div>
-              <div className="space-y-2">
-                <Label>Category *</Label>
-                <Select value={formDocType.category || ''} onValueChange={v => setFormDocType(p => ({ ...p, category: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                  <SelectContent>
-                    {categories.filter(c => c.is_active).map(c => (
-                      <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Name *</Label>
-              <Input value={formDocType.name || ''} onChange={e => setFormDocType(p => ({ ...p, name: e.target.value }))} placeholder="e.g. P&ID (Piping & Instrumentation Diagram)" />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea value={formDocType.description || ''} onChange={e => setFormDocType(p => ({ ...p, description: e.target.value }))} placeholder="Brief description..." rows={2} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Retention (years)</Label>
-                <Input type="number" value={formDocType.retention_years ?? ''} onChange={e => setFormDocType(p => ({ ...p, retention_years: e.target.value ? parseInt(e.target.value) : null }))} placeholder="Leave blank for permanent" />
-              </div>
-              <div className="flex flex-col gap-3 pt-2">
-                <div className="flex items-center gap-2">
-                  <Switch checked={formDocType.requires_approval ?? false} onCheckedChange={v => setFormDocType(p => ({ ...p, requires_approval: v }))} />
-                  <Label className="text-sm">Requires Approval</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch checked={formDocType.is_active ?? true} onCheckedChange={v => setFormDocType(p => ({ ...p, is_active: v }))} />
-                  <Label className="text-sm">Active</Label>
-                </div>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDocTypeDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveDocType}>{editingDocType ? 'Update' : 'Create'}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Phase Dialog */}
       <Dialog open={phaseDialogOpen} onOpenChange={setPhaseDialogOpen}>
