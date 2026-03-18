@@ -202,37 +202,25 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
       <div className="flex-1 min-h-0 overflow-auto p-6">
         <div className="max-w-7xl mx-auto">
           <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as TabId); setSearchQuery(''); }} className="w-full">
-            <div className="flex items-center justify-between mb-6">
-              <TabsList className="h-auto flex flex-wrap gap-1 bg-muted/50 p-1.5 rounded-lg">
-                {TAB_CONFIG.map((tab) => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <TabsTrigger
-                      key={tab.id}
-                      value={tab.id}
-                      className="flex items-center gap-2 px-3 py-2 text-sm"
-                    >
-                      <Icon className={cn(
-                        "h-4 w-4 transition-colors",
-                        isActive ? tab.activeColor : "text-muted-foreground"
-                      )} />
-                      {tab.label}
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-
-              <div className="relative w-64 shrink-0">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            </div>
+            <TabsList className="h-auto flex flex-wrap gap-1 bg-muted/50 p-1.5 rounded-lg mb-6">
+              {TAB_CONFIG.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className="flex items-center gap-2 px-3 py-2 text-sm"
+                  >
+                    <Icon className={cn(
+                      "h-4 w-4 transition-colors",
+                      isActive ? tab.activeColor : "text-muted-foreground"
+                    )} />
+                    {tab.label}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
 
             {/* ─── Discipline Tab (connected to backend) ─── */}
             <TabsContent value="discipline" className="mt-0">
