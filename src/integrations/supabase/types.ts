@@ -514,6 +514,42 @@ export type Database = {
         }
         Relationships: []
       }
+      dms_projects: {
+        Row: {
+          cabinet: string | null
+          code: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          project_id: string | null
+          project_name: string
+          updated_at: string
+        }
+        Insert: {
+          cabinet?: string | null
+          code: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          project_id?: string | null
+          project_name: string
+          updated_at?: string
+        }
+        Update: {
+          cabinet?: string | null
+          code?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          project_id?: string | null
+          project_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fac_prerequisites: {
         Row: {
           created_at: string | null

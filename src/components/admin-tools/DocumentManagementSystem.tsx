@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import DmsProjectsTab from './dms/DmsProjectsTab';
 
 interface DocumentManagementSystemProps {
   onBack: () => void;
@@ -310,8 +311,13 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
               </Card>
             </TabsContent>
 
+            {/* ─── Project Tab (connected to backend) ─── */}
+            <TabsContent value="project" className="mt-0">
+              <DmsProjectsTab searchQuery={searchQuery} />
+            </TabsContent>
+
             {/* ─── Placeholder tabs ─── */}
-            {TAB_CONFIG.filter(t => t.id !== 'discipline').map((tab) => (
+            {TAB_CONFIG.filter(t => t.id !== 'discipline' && t.id !== 'project').map((tab) => (
               <TabsContent key={tab.id} value={tab.id} className="mt-0">
                 {renderPlaceholderTab(tab.label)}
               </TabsContent>
