@@ -161,6 +161,24 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
     s.system_id?.toLowerCase().includes(systemSearch.toLowerCase())
   );
 
+  const isStepComplete = (i: number): boolean => {
+    if (i === 0) return title.trim().length > 0;
+    if (i === 1) return provider.trim().length > 0 || deliveryMethods.length > 0;
+    if (i === 2) return targetAudience.length > 0 || selectedSystemIds.length > 0;
+    if (i === 3) return durationDays !== '' || tentativeDate !== '';
+    return false;
+  };
+
+  const isStepSkipped = (i: number): boolean => {
+    // A step is "skipped" if user has gone past it but it has no data
+    return i < highestStep && visitedSteps.has(i) === false && !isStepComplete(i);
+  };
+
+  const isStepIncomplete = (i: number): boolean => {
+    // Visited or passed but not complete
+    return (visitedSteps.has(i) || i < highestStep) && !isStepComplete(i) && i < step;
+  };
+
   const canProceed = (s: number) => {
     if (s === 0) return title.trim().length > 0;
     return true;
