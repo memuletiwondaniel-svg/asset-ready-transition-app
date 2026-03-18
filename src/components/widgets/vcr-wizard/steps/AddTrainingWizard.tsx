@@ -122,6 +122,8 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
   useEffect(() => {
     if (open) {
       setStep(0);
+      setHighestStep(0);
+      setVisitedSteps(new Set([0]));
       setTitle('');
       setOverview('');
       setProvider('');
