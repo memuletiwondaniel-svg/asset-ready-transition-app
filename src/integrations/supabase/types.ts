@@ -514,6 +514,54 @@ export type Database = {
         }
         Relationships: []
       }
+      dms_document_types: {
+        Row: {
+          acceptable_status: string | null
+          code: string
+          created_at: string
+          discipline_code: string | null
+          discipline_name: string | null
+          display_order: number
+          document_description: string | null
+          document_name: string
+          id: string
+          is_active: boolean
+          rlmu: string | null
+          tier: string | null
+          updated_at: string
+        }
+        Insert: {
+          acceptable_status?: string | null
+          code: string
+          created_at?: string
+          discipline_code?: string | null
+          discipline_name?: string | null
+          display_order?: number
+          document_description?: string | null
+          document_name: string
+          id?: string
+          is_active?: boolean
+          rlmu?: string | null
+          tier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acceptable_status?: string | null
+          code?: string
+          created_at?: string
+          discipline_code?: string | null
+          discipline_name?: string | null
+          display_order?: number
+          document_description?: string | null
+          document_name?: string
+          id?: string
+          is_active?: boolean
+          rlmu?: string | null
+          tier?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dms_originators: {
         Row: {
           code: string
