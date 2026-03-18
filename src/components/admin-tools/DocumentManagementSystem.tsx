@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import DmsProjectsTab from './dms/DmsProjectsTab';
 
 interface DocumentManagementSystemProps {
   onBack: () => void;
