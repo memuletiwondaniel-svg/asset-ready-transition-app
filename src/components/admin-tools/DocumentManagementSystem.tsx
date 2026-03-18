@@ -20,6 +20,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DmsProjectsTab from './dms/DmsProjectsTab';
 import DmsPlantsTab from './dms/DmsPlantsTab';
 import DmsSitesTab from './dms/DmsSitesTab';
+import DmsOriginatorsTab from './dms/DmsOriginatorsTab';
 
 interface DocumentManagementSystemProps {
   onBack: () => void;
