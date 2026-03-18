@@ -210,11 +210,6 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
     toast.success('Category deleted');
   };
 
-  const filteredDocTypes = docTypes.filter(d =>
-    d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const filteredMappings = mappings.filter(m =>
     m.phase_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
