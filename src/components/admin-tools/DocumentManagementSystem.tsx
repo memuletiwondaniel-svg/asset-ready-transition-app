@@ -194,10 +194,6 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
     setFormCategory({});
   };
 
-  const deleteDocType = (id: string) => {
-    setDocTypes(prev => prev.filter(d => d.id !== id));
-    toast.success('Document type deleted');
-  };
 
   const deletePhase = (id: string) => {
     setPhases(prev => prev.filter(p => p.id !== id));
