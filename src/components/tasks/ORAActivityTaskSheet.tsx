@@ -266,30 +266,39 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
         ? 'Continue P2A Plan'
         : 'Start P2A Plan';
 
-  // ── VCR Plan status query (mirrors P2A pattern) ──
-  const { data: vcrPlanStatus } = useQuery({
-    queryKey: ['vcr-plan-status-sheet', metaVcrId],
+  // ── VCR Plan status query with draft detection ──
+  const { data: vcrPlanStepCounts } = useQuery({
+    queryKey: ['vcr-plan-draft-check-ora', metaVcrId],
     queryFn: async () => {
-      if (!metaVcrId) return null;
-      const { data } = await (supabase as any)
-        .from('p2a_handover_points')
-        .select('id, execution_plan_status')
-        .eq('id', metaVcrId)
-        .maybeSingle();
-      return data?.execution_plan_status as string | null || 'DRAFT';
+      if (!metaVcrId) return { hasDraft: false, status: 'DRAFT' as string };
+      const [hpResult, training, procedures, criticalDocs, registers, logsheets] = await Promise.all([
+        (supabase as any).from('p2a_handover_points').select('execution_plan_status').eq('id', metaVcrId).maybeSingle(),
+        (supabase as any).from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+        (supabase as any).from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+        (supabase as any).from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+        (supabase as any).from('p2a_vcr_register_selections').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+        (supabase as any).from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
+      ]);
+      const totalItems = (training.count || 0) + (procedures.count || 0) + (criticalDocs.count || 0) + (registers.count || 0) + (logsheets.count || 0);
+      const status = hpResult.data?.execution_plan_status || 'DRAFT';
+      return { hasDraft: totalItems > 0, status };
     },
     enabled: !!metaVcrId && isVCRActivity,
     staleTime: 0,
     refetchOnMount: 'always',
   });
 
+  const vcrHasDraft = vcrPlanStepCounts?.hasDraft || false;
+  const vcrPlanStatus = vcrPlanStepCounts?.status || 'DRAFT';
   const vcrPlanIsApproved = vcrPlanStatus === 'APPROVED';
   const vcrPlanIsSubmitted = vcrPlanStatus === 'SUBMITTED';
   const vcrSheetCtaLabel = vcrPlanIsApproved
     ? 'View VCR Plan'
-    : vcrPlanStatus && vcrPlanStatus !== 'DRAFT'
-      ? 'Continue VCR Plan'
-      : 'Develop VCR Plan';
+    : vcrPlanIsSubmitted
+      ? 'View VCR Plan'
+      : vcrHasDraft
+        ? 'Continue VCR Plan'
+        : 'Develop VCR Plan';
 
   const getVCRStatusBadge = () => {
     if (!vcrPlanStatus) return null;
@@ -1158,7 +1167,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                     ? `The VCR Plan for ${metaVcrName || 'this VCR'} has been approved. Click below to view the finalized plan.`
                     : vcrPlanIsSubmitted
                       ? `The VCR Plan for ${metaVcrName || 'this VCR'} has been submitted and is awaiting approval.`
-                      : `Configure the VCR Plan for ${metaVcrName || 'this VCR'}. Define training, procedures, critical documents, and other building blocks.`}
+                      : vcrHasDraft
+                        ? `You have a saved draft for the VCR Plan for ${metaVcrName || 'this VCR'}. Continue where you left off to define training, procedures, and other building blocks.`
+                        : `Configure the VCR Plan for ${metaVcrName || 'this VCR'}. Define training, procedures, critical documents, and other building blocks.`}
                 </p>
                 {vcrPlanIsSubmitted && (
                   <p className="text-xs text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-md px-3 py-2">
