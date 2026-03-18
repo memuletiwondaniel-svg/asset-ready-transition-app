@@ -20,16 +20,6 @@ interface DocumentManagementSystemProps {
 
 // --- Type definitions ---
 
-interface DocumentType {
-  id: string;
-  name: string;
-  code: string;
-  description: string;
-  category: string;
-  is_active: boolean;
-  requires_approval: boolean;
-  retention_years: number | null;
-}
 
 interface LifecyclePhase {
   id: string;
@@ -70,16 +60,6 @@ const MOCK_CATEGORIES: DocumentCategory[] = [
   { id: '6', name: 'Operations', description: 'Operating procedures, maintenance manuals, and training materials', icon: 'operations', display_order: 6, is_active: true },
 ];
 
-const MOCK_DOC_TYPES: DocumentType[] = [
-  { id: '1', name: 'P&ID (Piping & Instrumentation Diagram)', code: 'PID', description: 'Process flow and instrumentation layout', category: 'Engineering', is_active: true, requires_approval: true, retention_years: 25 },
-  { id: '2', name: 'HAZOP Report', code: 'HAZOP', description: 'Hazard and operability study report', category: 'Safety & Compliance', is_active: true, requires_approval: true, retention_years: 25 },
-  { id: '3', name: 'Material Requisition', code: 'MR', description: 'Material purchase requisition', category: 'Procurement', is_active: true, requires_approval: true, retention_years: 10 },
-  { id: '4', name: 'Inspection Test Plan', code: 'ITP', description: 'Quality inspection and test plan', category: 'Construction', is_active: true, requires_approval: true, retention_years: 15 },
-  { id: '5', name: 'Commissioning Procedure', code: 'CP', description: 'Step-by-step commissioning procedure', category: 'Commissioning', is_active: true, requires_approval: true, retention_years: 25 },
-  { id: '6', name: 'Operating Manual', code: 'OM', description: 'Plant operating manual', category: 'Operations', is_active: true, requires_approval: true, retention_years: null },
-  { id: '7', name: 'Design Basis Memorandum', code: 'DBM', description: 'Design basis and assumptions', category: 'Engineering', is_active: true, requires_approval: true, retention_years: 25 },
-  { id: '8', name: 'SIL Assessment', code: 'SIL', description: 'Safety integrity level assessment', category: 'Safety & Compliance', is_active: true, requires_approval: true, retention_years: 25 },
-];
 
 const MOCK_PHASES: LifecyclePhase[] = [
   { id: '1', name: 'Identify (FEL-1)', code: 'FEL1', description: 'Opportunity identification and concept screening', display_order: 1, is_active: true },
@@ -103,13 +83,9 @@ const MOCK_MAPPINGS: PhaseDocumentMapping[] = [
 ];
 
 const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState('document-types');
+  const [activeTab, setActiveTab] = useState('categories');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // --- Document Types state ---
-  const [docTypes, setDocTypes] = useState<DocumentType[]>(MOCK_DOC_TYPES);
-  const [editingDocType, setEditingDocType] = useState<DocumentType | null>(null);
-  const [docTypeDialogOpen, setDocTypeDialogOpen] = useState(false);
 
   // --- Lifecycle Phases state ---
   const [phases, setPhases] = useState<LifecyclePhase[]>(MOCK_PHASES);
@@ -127,39 +103,13 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
   const [editingCategory, setEditingCategory] = useState<DocumentCategory | null>(null);
 
   // --- Form states ---
-  const [formDocType, setFormDocType] = useState<Partial<DocumentType>>({});
+  
   const [formPhase, setFormPhase] = useState<Partial<LifecyclePhase>>({});
   const [formMapping, setFormMapping] = useState<Partial<PhaseDocumentMapping>>({});
   const [formCategory, setFormCategory] = useState<Partial<DocumentCategory>>({});
 
   // --- Handlers ---
 
-  const handleSaveDocType = () => {
-    if (!formDocType.name || !formDocType.code || !formDocType.category) {
-      toast.error('Name, code, and category are required');
-      return;
-    }
-    if (editingDocType) {
-      setDocTypes(prev => prev.map(d => d.id === editingDocType.id ? { ...d, ...formDocType } as DocumentType : d));
-      toast.success('Document type updated');
-    } else {
-      const newDoc: DocumentType = {
-        id: crypto.randomUUID(),
-        name: formDocType.name,
-        code: formDocType.code,
-        description: formDocType.description || '',
-        category: formDocType.category,
-        is_active: formDocType.is_active ?? true,
-        requires_approval: formDocType.requires_approval ?? false,
-        retention_years: formDocType.retention_years ?? null,
-      };
-      setDocTypes(prev => [...prev, newDoc]);
-      toast.success('Document type created');
-    }
-    setDocTypeDialogOpen(false);
-    setEditingDocType(null);
-    setFormDocType({});
-  };
 
   const handleSavePhase = () => {
     if (!formPhase.name || !formPhase.code) {
@@ -192,7 +142,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
       return;
     }
     const phase = phases.find(p => p.id === formMapping.phase_id);
-    const docType = docTypes.find(d => d.id === formMapping.document_type_id);
+    const docType = null; // Document types removed
     if (editingMapping) {
       setMappings(prev => prev.map(m => m.id === editingMapping.id ? {
         ...m,
@@ -244,10 +194,6 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
     setFormCategory({});
   };
 
-  const deleteDocType = (id: string) => {
-    setDocTypes(prev => prev.filter(d => d.id !== id));
-    toast.success('Document type deleted');
-  };
 
   const deletePhase = (id: string) => {
     setPhases(prev => prev.filter(p => p.id !== id));
@@ -264,11 +210,6 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
     toast.success('Category deleted');
   };
 
-  const filteredDocTypes = docTypes.filter(d =>
-    d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const filteredMappings = mappings.filter(m =>
     m.phase_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -313,11 +254,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
         <div className="max-w-7xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="flex items-center justify-between mb-6">
-              <TabsList className="grid grid-cols-4 max-w-2xl">
-                <TabsTrigger value="document-types" className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Document Types
-                </TabsTrigger>
+              <TabsList className="grid grid-cols-3 max-w-xl">
                 <TabsTrigger value="categories" className="flex items-center gap-2">
                   <FolderOpen className="h-4 w-4" />
                   Categories
@@ -343,78 +280,6 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
               </div>
             </div>
 
-            {/* ===== Document Types Tab ===== */}
-            <TabsContent value="document-types" className="mt-0">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between py-4">
-                  <div>
-                    <CardTitle className="text-lg">Document Types</CardTitle>
-                    <CardDescription>Define the types of documents managed across the project lifecycle</CardDescription>
-                  </div>
-                  <Button size="sm" className="gap-1.5" onClick={() => { setEditingDocType(null); setFormDocType({ is_active: true, requires_approval: false }); setDocTypeDialogOpen(true); }}>
-                    <Plus className="h-4 w-4" /> Add Type
-                  </Button>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-20">Code</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead className="w-24 text-center">Approval</TableHead>
-                        <TableHead className="w-28 text-center">Retention</TableHead>
-                        <TableHead className="w-20 text-center">Status</TableHead>
-                        <TableHead className="w-20 text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredDocTypes.map((dt) => (
-                        <TableRow key={dt.id}>
-                          <TableCell className="font-mono text-xs font-semibold text-primary">{dt.code}</TableCell>
-                          <TableCell className="font-medium">{dt.name}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="text-xs">{dt.category}</Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {dt.requires_approval ? (
-                              <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs">Required</Badge>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center text-sm">
-                            {dt.retention_years ? `${dt.retention_years} years` : <span className="text-muted-foreground">Permanent</span>}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant={dt.is_active ? 'default' : 'secondary'} className="text-xs">
-                              {dt.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingDocType(dt); setFormDocType(dt); setDocTypeDialogOpen(true); }}>
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteDocType(dt.id)}>
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {filteredDocTypes.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                            No document types found
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             {/* ===== Categories Tab ===== */}
             <TabsContent value="categories" className="mt-0">
@@ -447,9 +312,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
                           <TableCell className="font-medium">{cat.name}</TableCell>
                           <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{cat.description}</TableCell>
                           <TableCell className="text-center">
-                            <Badge variant="outline" className="text-xs">
-                              {docTypes.filter(d => d.category === cat.name).length}
-                            </Badge>
+                            <Badge variant="outline" className="text-xs">—</Badge>
                           </TableCell>
                           <TableCell className="text-center">
                             <Badge variant={cat.is_active ? 'default' : 'secondary'} className="text-xs">
@@ -607,62 +470,6 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
 
       {/* ===== Dialogs ===== */}
 
-      {/* Document Type Dialog */}
-      <Dialog open={docTypeDialogOpen} onOpenChange={setDocTypeDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingDocType ? 'Edit Document Type' : 'Add Document Type'}</DialogTitle>
-            <DialogDescription>Define a document type for the project lifecycle</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Code *</Label>
-                <Input value={formDocType.code || ''} onChange={e => setFormDocType(p => ({ ...p, code: e.target.value.toUpperCase() }))} placeholder="e.g. PID" />
-              </div>
-              <div className="space-y-2">
-                <Label>Category *</Label>
-                <Select value={formDocType.category || ''} onValueChange={v => setFormDocType(p => ({ ...p, category: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                  <SelectContent>
-                    {categories.filter(c => c.is_active).map(c => (
-                      <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Name *</Label>
-              <Input value={formDocType.name || ''} onChange={e => setFormDocType(p => ({ ...p, name: e.target.value }))} placeholder="e.g. P&ID (Piping & Instrumentation Diagram)" />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea value={formDocType.description || ''} onChange={e => setFormDocType(p => ({ ...p, description: e.target.value }))} placeholder="Brief description..." rows={2} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Retention (years)</Label>
-                <Input type="number" value={formDocType.retention_years ?? ''} onChange={e => setFormDocType(p => ({ ...p, retention_years: e.target.value ? parseInt(e.target.value) : null }))} placeholder="Leave blank for permanent" />
-              </div>
-              <div className="flex flex-col gap-3 pt-2">
-                <div className="flex items-center gap-2">
-                  <Switch checked={formDocType.requires_approval ?? false} onCheckedChange={v => setFormDocType(p => ({ ...p, requires_approval: v }))} />
-                  <Label className="text-sm">Requires Approval</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch checked={formDocType.is_active ?? true} onCheckedChange={v => setFormDocType(p => ({ ...p, is_active: v }))} />
-                  <Label className="text-sm">Active</Label>
-                </div>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDocTypeDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveDocType}>{editingDocType ? 'Update' : 'Create'}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Phase Dialog */}
       <Dialog open={phaseDialogOpen} onOpenChange={setPhaseDialogOpen}>
@@ -726,9 +533,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
               <Select value={formMapping.document_type_id || ''} onValueChange={v => setFormMapping(p => ({ ...p, document_type_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="Select document type" /></SelectTrigger>
                 <SelectContent>
-                  {docTypes.filter(d => d.is_active).map(d => (
-                    <SelectItem key={d.id} value={d.id}>{d.code} — {d.name}</SelectItem>
-                  ))}
+                  <SelectItem value="manual">Enter manually</SelectItem>
                 </SelectContent>
               </Select>
             </div>
