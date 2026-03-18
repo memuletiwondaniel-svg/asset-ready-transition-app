@@ -312,9 +312,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
                           <TableCell className="font-medium">{cat.name}</TableCell>
                           <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{cat.description}</TableCell>
                           <TableCell className="text-center">
-                            <Badge variant="outline" className="text-xs">
-                              {docTypes.filter(d => d.category === cat.name).length}
-                            </Badge>
+                            <Badge variant="outline" className="text-xs">—</Badge>
                           </TableCell>
                           <TableCell className="text-center">
                             <Badge variant={cat.is_active ? 'default' : 'secondary'} className="text-xs">
