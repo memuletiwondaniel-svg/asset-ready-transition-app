@@ -302,6 +302,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
             />
           )}
         </div>
+        </ScrollArea>
 
         {/* Footer */}
         <div className="px-6 py-4 border-t bg-muted/20 flex items-center justify-between">
