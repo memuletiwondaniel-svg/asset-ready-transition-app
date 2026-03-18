@@ -20,16 +20,6 @@ interface DocumentManagementSystemProps {
 
 // --- Type definitions ---
 
-interface DocumentType {
-  id: string;
-  name: string;
-  code: string;
-  description: string;
-  category: string;
-  is_active: boolean;
-  requires_approval: boolean;
-  retention_years: number | null;
-}
 
 interface LifecyclePhase {
   id: string;
