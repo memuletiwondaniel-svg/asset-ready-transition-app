@@ -347,7 +347,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
             {step === 0 ? 'Cancel' : 'Back'}
           </Button>
           <div className="flex items-center gap-2">
-            {!isLastStep && step < 3 && (
+            {!isLastStep && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -361,7 +361,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
             <Button
               size="sm"
               onClick={isLastStep ? handleSubmit : () => goToStep(step + 1)}
-              disabled={!canProceed(step) || (isLastStep && isSaving)}
+              disabled={!canProceed(step) || (isLastStep && (isSaving || !allStepsComplete))}
               className={cn(
                 'gap-1.5',
                 isLastStep && 'bg-emerald-600 hover:bg-emerald-700 text-white'
