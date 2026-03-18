@@ -242,8 +242,8 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
           </div>
         </div>
 
-        {/* Content */}
-        <div className="px-6 py-5 min-h-[320px]">
+        <ScrollArea className="flex-1 min-h-0">
+        <div className="px-6 py-5">
           {step === 0 && (
             <StepOverview
               title={title}
