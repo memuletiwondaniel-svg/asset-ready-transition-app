@@ -533,9 +533,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
               <Select value={formMapping.document_type_id || ''} onValueChange={v => setFormMapping(p => ({ ...p, document_type_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="Select document type" /></SelectTrigger>
                 <SelectContent>
-                  {docTypes.filter(d => d.is_active).map(d => (
-                    <SelectItem key={d.id} value={d.id}>{d.code} — {d.name}</SelectItem>
-                  ))}
+                  <SelectItem value="manual">Enter manually</SelectItem>
                 </SelectContent>
               </Select>
             </div>
