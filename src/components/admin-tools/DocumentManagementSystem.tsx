@@ -6,223 +6,162 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, FileText, Plus, Pencil, Trash2, Search, FolderOpen, Layers, ClipboardList, Settings2, GripVertical } from 'lucide-react';
+import { 
+  ArrowLeft, FileText, Plus, Pencil, Trash2, Search, 
+  FileStack, Compass, FolderKanban, UserCircle, Factory, MapPin, Box 
+} from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface DocumentManagementSystemProps {
   onBack: () => void;
 }
 
-// --- Type definitions ---
-
-
-interface LifecyclePhase {
+// Generic config item used by all tabs
+interface ConfigItem {
   id: string;
-  name: string;
   code: string;
-  description: string;
-  display_order: number;
-  is_active: boolean;
-}
-
-interface PhaseDocumentMapping {
-  id: string;
-  phase_id: string;
-  phase_name: string;
-  document_type_id: string;
-  document_type_name: string;
-  is_mandatory: boolean;
-  responsible_role: string;
-}
-
-interface DocumentCategory {
-  id: string;
   name: string;
   description: string;
-  icon: string;
   display_order: number;
   is_active: boolean;
 }
 
-// --- Mock data ---
+// Tab configuration
+const TAB_CONFIG = [
+  { id: 'document-type', label: 'Document Type', icon: FileStack, activeColor: 'text-blue-600 dark:text-blue-400' },
+  { id: 'discipline', label: 'Discipline', icon: Compass, activeColor: 'text-emerald-600 dark:text-emerald-400' },
+  { id: 'project', label: 'Project', icon: FolderKanban, activeColor: 'text-violet-600 dark:text-violet-400' },
+  { id: 'originator', label: 'Originator', icon: UserCircle, activeColor: 'text-amber-600 dark:text-amber-400' },
+  { id: 'plant', label: 'Plant', icon: Factory, activeColor: 'text-rose-600 dark:text-rose-400' },
+  { id: 'site', label: 'Site', icon: MapPin, activeColor: 'text-cyan-600 dark:text-cyan-400' },
+  { id: 'unit', label: 'Unit', icon: Box, activeColor: 'text-orange-600 dark:text-orange-400' },
+] as const;
 
-const MOCK_CATEGORIES: DocumentCategory[] = [
-  { id: '1', name: 'Engineering', description: 'Engineering drawings, specifications, and technical documents', icon: 'engineering', display_order: 1, is_active: true },
-  { id: '2', name: 'Safety & Compliance', description: 'Safety studies, HAZOP reports, and regulatory compliance documents', icon: 'safety', display_order: 2, is_active: true },
-  { id: '3', name: 'Procurement', description: 'Purchase orders, vendor documents, and material certifications', icon: 'procurement', display_order: 3, is_active: true },
-  { id: '4', name: 'Construction', description: 'Construction work packs, ITPs, and as-built records', icon: 'construction', display_order: 4, is_active: true },
-  { id: '5', name: 'Commissioning', description: 'Commissioning procedures, test reports, and punch lists', icon: 'commissioning', display_order: 5, is_active: true },
-  { id: '6', name: 'Operations', description: 'Operating procedures, maintenance manuals, and training materials', icon: 'operations', display_order: 6, is_active: true },
-];
+type TabId = typeof TAB_CONFIG[number]['id'];
 
-
-const MOCK_PHASES: LifecyclePhase[] = [
-  { id: '1', name: 'Identify (FEL-1)', code: 'FEL1', description: 'Opportunity identification and concept screening', display_order: 1, is_active: true },
-  { id: '2', name: 'Assess (FEL-2)', code: 'FEL2', description: 'Concept selection and feasibility assessment', display_order: 2, is_active: true },
-  { id: '3', name: 'Select (FEL-3)', code: 'FEL3', description: 'FEED and detailed scope definition', display_order: 3, is_active: true },
-  { id: '4', name: 'Define (Detailed Design)', code: 'DD', description: 'Detailed engineering and design', display_order: 4, is_active: true },
-  { id: '5', name: 'Execute (Construction)', code: 'EX', description: 'Procurement, construction, and installation', display_order: 5, is_active: true },
-  { id: '6', name: 'Commission & Start-up', code: 'CSU', description: 'Pre-commissioning, commissioning, and start-up', display_order: 6, is_active: true },
-  { id: '7', name: 'Operate', code: 'OPS', description: 'Steady-state operations and maintenance', display_order: 7, is_active: true },
-];
-
-const MOCK_MAPPINGS: PhaseDocumentMapping[] = [
-  { id: '1', phase_id: '3', phase_name: 'Select (FEL-3)', document_type_id: '1', document_type_name: 'P&ID', is_mandatory: true, responsible_role: 'Process Engineer' },
-  { id: '2', phase_id: '3', phase_name: 'Select (FEL-3)', document_type_id: '2', document_type_name: 'HAZOP Report', is_mandatory: true, responsible_role: 'Safety Engineer' },
-  { id: '3', phase_id: '4', phase_name: 'Define (Detailed Design)', document_type_id: '7', document_type_name: 'Design Basis Memorandum', is_mandatory: true, responsible_role: 'Lead Engineer' },
-  { id: '4', phase_id: '5', phase_name: 'Execute (Construction)', document_type_id: '3', document_type_name: 'Material Requisition', is_mandatory: true, responsible_role: 'Procurement Lead' },
-  { id: '5', phase_id: '5', phase_name: 'Execute (Construction)', document_type_id: '4', document_type_name: 'Inspection Test Plan', is_mandatory: true, responsible_role: 'QA/QC Engineer' },
-  { id: '6', phase_id: '6', phase_name: 'Commission & Start-up', document_type_id: '5', document_type_name: 'Commissioning Procedure', is_mandatory: true, responsible_role: 'Commissioning Lead' },
-  { id: '7', phase_id: '7', phase_name: 'Operate', document_type_id: '6', document_type_name: 'Operating Manual', is_mandatory: true, responsible_role: 'Operations Manager' },
-  { id: '8', phase_id: '6', phase_name: 'Commission & Start-up', document_type_id: '8', document_type_name: 'SIL Assessment', is_mandatory: false, responsible_role: 'Safety Engineer' },
-];
+// Mock seed data per tab
+const MOCK_DATA: Record<TabId, ConfigItem[]> = {
+  'document-type': [
+    { id: '1', code: 'DWG', name: 'Drawing', description: 'Engineering and technical drawings', display_order: 1, is_active: true },
+    { id: '2', code: 'SPC', name: 'Specification', description: 'Technical specifications', display_order: 2, is_active: true },
+    { id: '3', code: 'RPT', name: 'Report', description: 'Study and analysis reports', display_order: 3, is_active: true },
+    { id: '4', code: 'PRC', name: 'Procedure', description: 'Operating and work procedures', display_order: 4, is_active: true },
+    { id: '5', code: 'MNL', name: 'Manual', description: 'User and reference manuals', display_order: 5, is_active: true },
+  ],
+  'discipline': [
+    { id: '1', code: 'PROC', name: 'Process', description: 'Process engineering discipline', display_order: 1, is_active: true },
+    { id: '2', code: 'MECH', name: 'Mechanical', description: 'Mechanical engineering discipline', display_order: 2, is_active: true },
+    { id: '3', code: 'ELEC', name: 'Electrical', description: 'Electrical engineering discipline', display_order: 3, is_active: true },
+    { id: '4', code: 'INST', name: 'Instrumentation', description: 'Instrumentation and control', display_order: 4, is_active: true },
+    { id: '5', code: 'CIVL', name: 'Civil / Structural', description: 'Civil and structural engineering', display_order: 5, is_active: true },
+  ],
+  'project': [
+    { id: '1', code: 'DP300', name: 'DP300 Expansion', description: 'DP300 plant expansion project', display_order: 1, is_active: true },
+    { id: '2', code: 'GP100', name: 'GP100 Debottleneck', description: 'GP100 debottleneck project', display_order: 2, is_active: true },
+  ],
+  'originator': [
+    { id: '1', code: 'OWN', name: 'Owner', description: 'Asset owner / operator', display_order: 1, is_active: true },
+    { id: '2', code: 'EPC', name: 'EPC Contractor', description: 'EPC main contractor', display_order: 2, is_active: true },
+    { id: '3', code: 'VND', name: 'Vendor', description: 'Equipment vendor / supplier', display_order: 3, is_active: true },
+  ],
+  'plant': [
+    { id: '1', code: 'PLT-A', name: 'Plant Alpha', description: 'Main production plant', display_order: 1, is_active: true },
+    { id: '2', code: 'PLT-B', name: 'Plant Bravo', description: 'Secondary processing plant', display_order: 2, is_active: true },
+  ],
+  'site': [
+    { id: '1', code: 'SITE-N', name: 'North Site', description: 'Northern industrial complex', display_order: 1, is_active: true },
+    { id: '2', code: 'SITE-S', name: 'South Site', description: 'Southern processing area', display_order: 2, is_active: true },
+  ],
+  'unit': [
+    { id: '1', code: 'U-100', name: 'Feed Preparation', description: 'Feed preparation and pre-treatment unit', display_order: 1, is_active: true },
+    { id: '2', code: 'U-200', name: 'Reaction', description: 'Main reaction unit', display_order: 2, is_active: true },
+    { id: '3', code: 'U-300', name: 'Separation', description: 'Product separation and fractionation', display_order: 3, is_active: true },
+  ],
+};
 
 const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState('categories');
+  const [activeTab, setActiveTab] = useState<TabId>('document-type');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Per-tab data
+  const [tabData, setTabData] = useState<Record<TabId, ConfigItem[]>>(MOCK_DATA);
 
-  // --- Lifecycle Phases state ---
-  const [phases, setPhases] = useState<LifecyclePhase[]>(MOCK_PHASES);
-  const [editingPhase, setEditingPhase] = useState<LifecyclePhase | null>(null);
-  const [phaseDialogOpen, setPhaseDialogOpen] = useState(false);
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<ConfigItem | null>(null);
+  const [formItem, setFormItem] = useState<Partial<ConfigItem>>({});
 
-  // --- Phase-Document Mappings state ---
-  const [mappings, setMappings] = useState<PhaseDocumentMapping[]>(MOCK_MAPPINGS);
-  const [mappingDialogOpen, setMappingDialogOpen] = useState(false);
-  const [editingMapping, setEditingMapping] = useState<PhaseDocumentMapping | null>(null);
+  const currentTabConfig = TAB_CONFIG.find(t => t.id === activeTab)!;
+  const currentData = tabData[activeTab] || [];
 
-  // --- Categories state ---
-  const [categories, setCategories] = useState<DocumentCategory[]>(MOCK_CATEGORIES);
-  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<DocumentCategory | null>(null);
-
-  // --- Form states ---
-  
-  const [formPhase, setFormPhase] = useState<Partial<LifecyclePhase>>({});
-  const [formMapping, setFormMapping] = useState<Partial<PhaseDocumentMapping>>({});
-  const [formCategory, setFormCategory] = useState<Partial<DocumentCategory>>({});
-
-  // --- Handlers ---
-
-
-  const handleSavePhase = () => {
-    if (!formPhase.name || !formPhase.code) {
-      toast.error('Name and code are required');
-      return;
-    }
-    if (editingPhase) {
-      setPhases(prev => prev.map(p => p.id === editingPhase.id ? { ...p, ...formPhase } as LifecyclePhase : p));
-      toast.success('Lifecycle phase updated');
-    } else {
-      const newPhase: LifecyclePhase = {
-        id: crypto.randomUUID(),
-        name: formPhase.name,
-        code: formPhase.code,
-        description: formPhase.description || '',
-        display_order: phases.length + 1,
-        is_active: formPhase.is_active ?? true,
-      };
-      setPhases(prev => [...prev, newPhase]);
-      toast.success('Lifecycle phase created');
-    }
-    setPhaseDialogOpen(false);
-    setEditingPhase(null);
-    setFormPhase({});
-  };
-
-  const handleSaveMapping = () => {
-    if (!formMapping.phase_id || !formMapping.document_type_id) {
-      toast.error('Phase and document type are required');
-      return;
-    }
-    const phase = phases.find(p => p.id === formMapping.phase_id);
-    const docType = null; // Document types removed
-    if (editingMapping) {
-      setMappings(prev => prev.map(m => m.id === editingMapping.id ? {
-        ...m,
-        ...formMapping,
-        phase_name: phase?.name || '',
-        document_type_name: docType?.name || '',
-      } as PhaseDocumentMapping : m));
-      toast.success('Mapping updated');
-    } else {
-      const newMapping: PhaseDocumentMapping = {
-        id: crypto.randomUUID(),
-        phase_id: formMapping.phase_id,
-        phase_name: phase?.name || '',
-        document_type_id: formMapping.document_type_id,
-        document_type_name: docType?.name || '',
-        is_mandatory: formMapping.is_mandatory ?? false,
-        responsible_role: formMapping.responsible_role || '',
-      };
-      setMappings(prev => [...prev, newMapping]);
-      toast.success('Mapping created');
-    }
-    setMappingDialogOpen(false);
-    setEditingMapping(null);
-    setFormMapping({});
-  };
-
-  const handleSaveCategory = () => {
-    if (!formCategory.name) {
-      toast.error('Name is required');
-      return;
-    }
-    if (editingCategory) {
-      setCategories(prev => prev.map(c => c.id === editingCategory.id ? { ...c, ...formCategory } as DocumentCategory : c));
-      toast.success('Category updated');
-    } else {
-      const newCat: DocumentCategory = {
-        id: crypto.randomUUID(),
-        name: formCategory.name,
-        description: formCategory.description || '',
-        icon: formCategory.icon || 'default',
-        display_order: categories.length + 1,
-        is_active: formCategory.is_active ?? true,
-      };
-      setCategories(prev => [...prev, newCat]);
-      toast.success('Category created');
-    }
-    setCategoryDialogOpen(false);
-    setEditingCategory(null);
-    setFormCategory({});
-  };
-
-
-  const deletePhase = (id: string) => {
-    setPhases(prev => prev.filter(p => p.id !== id));
-    toast.success('Lifecycle phase deleted');
-  };
-
-  const deleteMapping = (id: string) => {
-    setMappings(prev => prev.filter(m => m.id !== id));
-    toast.success('Mapping deleted');
-  };
-
-  const deleteCategory = (id: string) => {
-    setCategories(prev => prev.filter(c => c.id !== id));
-    toast.success('Category deleted');
-  };
-
-
-  const filteredMappings = mappings.filter(m =>
-    m.phase_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.document_type_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.responsible_role.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredData = currentData.filter(item =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleSave = () => {
+    if (!formItem.name || !formItem.code) {
+      toast.error('Code and name are required');
+      return;
+    }
+    if (editingItem) {
+      setTabData(prev => ({
+        ...prev,
+        [activeTab]: prev[activeTab].map(d => d.id === editingItem.id ? { ...d, ...formItem } as ConfigItem : d),
+      }));
+      toast.success(`${currentTabConfig.label} updated`);
+    } else {
+      const newItem: ConfigItem = {
+        id: crypto.randomUUID(),
+        code: formItem.code,
+        name: formItem.name,
+        description: formItem.description || '',
+        display_order: currentData.length + 1,
+        is_active: formItem.is_active ?? true,
+      };
+      setTabData(prev => ({
+        ...prev,
+        [activeTab]: [...prev[activeTab], newItem],
+      }));
+      toast.success(`${currentTabConfig.label} created`);
+    }
+    setDialogOpen(false);
+    setEditingItem(null);
+    setFormItem({});
+  };
+
+  const handleDelete = (id: string) => {
+    setTabData(prev => ({
+      ...prev,
+      [activeTab]: prev[activeTab].filter(d => d.id !== id),
+    }));
+    toast.success(`${currentTabConfig.label} deleted`);
+  };
+
+  const openAddDialog = () => {
+    setEditingItem(null);
+    setFormItem({ is_active: true });
+    setDialogOpen(true);
+  };
+
+  const openEditDialog = (item: ConfigItem) => {
+    setEditingItem(item);
+    setFormItem(item);
+    setDialogOpen(true);
+  };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl px-6 py-4 sticky top-0 z-10">
         <BreadcrumbNavigation
-          currentPageLabel="Document Management System"
+          currentPageLabel="Document Management"
           favoritePath="/admin-tools/document-management"
           customBreadcrumbs={[
             { label: 'Home', path: '/', onClick: () => window.location.href = '/' },
@@ -239,10 +178,10 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground tracking-tight">
-                Document Management System
+                Document Management
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Configure document types, lifecycle phases, and information plan mappings
+                Configure document numbering attributes and classification codes
               </p>
             </div>
           </div>
@@ -252,24 +191,29 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
       {/* Main Content */}
       <div className="flex-1 min-h-0 overflow-auto p-6">
         <div className="max-w-7xl mx-auto">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as TabId); setSearchQuery(''); }} className="w-full">
             <div className="flex items-center justify-between mb-6">
-              <TabsList className="grid grid-cols-3 max-w-xl">
-                <TabsTrigger value="categories" className="flex items-center gap-2">
-                  <FolderOpen className="h-4 w-4" />
-                  Categories
-                </TabsTrigger>
-                <TabsTrigger value="lifecycle-phases" className="flex items-center gap-2">
-                  <Layers className="h-4 w-4" />
-                  Lifecycle Phases
-                </TabsTrigger>
-                <TabsTrigger value="information-plan" className="flex items-center gap-2">
-                  <ClipboardList className="h-4 w-4" />
-                  Information Plan
-                </TabsTrigger>
+              <TabsList className="h-auto flex flex-wrap gap-1 bg-muted/50 p-1.5 rounded-lg">
+                {TAB_CONFIG.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <TabsTrigger
+                      key={tab.id}
+                      value={tab.id}
+                      className="flex items-center gap-2 px-3 py-2 text-sm"
+                    >
+                      <Icon className={cn(
+                        "h-4 w-4 transition-colors",
+                        isActive ? tab.activeColor : "text-muted-foreground"
+                      )} />
+                      {tab.label}
+                    </TabsTrigger>
+                  );
+                })}
               </TabsList>
 
-              <div className="relative w-64">
+              <div className="relative w-64 shrink-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search..."
@@ -280,303 +224,128 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
               </div>
             </div>
 
-
-            {/* ===== Categories Tab ===== */}
-            <TabsContent value="categories" className="mt-0">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between py-4">
-                  <div>
-                    <CardTitle className="text-lg">Document Categories</CardTitle>
-                    <CardDescription>Organize document types into logical categories</CardDescription>
-                  </div>
-                  <Button size="sm" className="gap-1.5" onClick={() => { setEditingCategory(null); setFormCategory({ is_active: true }); setCategoryDialogOpen(true); }}>
-                    <Plus className="h-4 w-4" /> Add Category
-                  </Button>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">#</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="w-24 text-center">Doc Types</TableHead>
-                        <TableHead className="w-20 text-center">Status</TableHead>
-                        <TableHead className="w-20 text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {categories.map((cat) => (
-                        <TableRow key={cat.id}>
-                          <TableCell className="text-muted-foreground text-sm">{cat.display_order}</TableCell>
-                          <TableCell className="font-medium">{cat.name}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{cat.description}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="outline" className="text-xs">—</Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant={cat.is_active ? 'default' : 'secondary'} className="text-xs">
-                              {cat.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingCategory(cat); setFormCategory(cat); setCategoryDialogOpen(true); }}>
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteCategory(cat.id)}>
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* ===== Lifecycle Phases Tab ===== */}
-            <TabsContent value="lifecycle-phases" className="mt-0">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between py-4">
-                  <div>
-                    <CardTitle className="text-lg">Project Lifecycle Phases</CardTitle>
-                    <CardDescription>Define the project lifecycle stages that drive the information plan</CardDescription>
-                  </div>
-                  <Button size="sm" className="gap-1.5" onClick={() => { setEditingPhase(null); setFormPhase({ is_active: true }); setPhaseDialogOpen(true); }}>
-                    <Plus className="h-4 w-4" /> Add Phase
-                  </Button>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-16">Order</TableHead>
-                        <TableHead className="w-20">Code</TableHead>
-                        <TableHead>Phase Name</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="w-28 text-center">Documents</TableHead>
-                        <TableHead className="w-20 text-center">Status</TableHead>
-                        <TableHead className="w-20 text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {phases.sort((a, b) => a.display_order - b.display_order).map((phase) => (
-                        <TableRow key={phase.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <GripVertical className="h-3.5 w-3.5" />
-                              {phase.display_order}
-                            </div>
-                          </TableCell>
-                          <TableCell className="font-mono text-xs font-semibold text-primary">{phase.code}</TableCell>
-                          <TableCell className="font-medium">{phase.name}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{phase.description}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="outline" className="text-xs">
-                              {mappings.filter(m => m.phase_id === phase.id).length} mapped
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant={phase.is_active ? 'default' : 'secondary'} className="text-xs">
-                              {phase.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingPhase(phase); setFormPhase(phase); setPhaseDialogOpen(true); }}>
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deletePhase(phase.id)}>
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* ===== Information Plan Tab ===== */}
-            <TabsContent value="information-plan" className="mt-0">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between py-4">
-                  <div>
-                    <CardTitle className="text-lg">Project Lifecycle Information Plan</CardTitle>
-                    <CardDescription>Map which documents are required at each project lifecycle phase</CardDescription>
-                  </div>
-                  <Button size="sm" className="gap-1.5" onClick={() => { setEditingMapping(null); setFormMapping({ is_mandatory: false }); setMappingDialogOpen(true); }}>
-                    <Plus className="h-4 w-4" /> Add Mapping
-                  </Button>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Lifecycle Phase</TableHead>
-                        <TableHead>Document Type</TableHead>
-                        <TableHead className="w-28 text-center">Mandatory</TableHead>
-                        <TableHead>Responsible Role</TableHead>
-                        <TableHead className="w-20 text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredMappings.map((mapping) => (
-                        <TableRow key={mapping.id}>
-                          <TableCell>
-                            <Badge variant="outline" className="text-xs">{mapping.phase_name}</Badge>
-                          </TableCell>
-                          <TableCell className="font-medium">{mapping.document_type_name}</TableCell>
-                          <TableCell className="text-center">
-                            {mapping.is_mandatory ? (
-                              <Badge className="bg-red-500/10 text-red-600 border-red-500/20 text-xs">Mandatory</Badge>
-                            ) : (
-                              <Badge variant="secondary" className="text-xs">Optional</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm">{mapping.responsible_role || <span className="text-muted-foreground">—</span>}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingMapping(mapping); setFormMapping(mapping); setMappingDialogOpen(true); }}>
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMapping(mapping.id)}>
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {filteredMappings.length === 0 && (
+            {/* All tabs share the same table layout */}
+            {TAB_CONFIG.map((tab) => (
+              <TabsContent key={tab.id} value={tab.id} className="mt-0">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between py-4">
+                    <div>
+                      <CardTitle className="text-lg">{tab.label}</CardTitle>
+                      <CardDescription>Manage {tab.label.toLowerCase()} codes used in document numbering</CardDescription>
+                    </div>
+                    <Button size="sm" className="gap-1.5" onClick={openAddDialog}>
+                      <Plus className="h-4 w-4" /> Add {tab.label}
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                            No mappings found
-                          </TableCell>
+                          <TableHead className="w-12">#</TableHead>
+                          <TableHead className="w-24">Code</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead className="w-20 text-center">Status</TableHead>
+                          <TableHead className="w-20 text-right">Actions</TableHead>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredData.sort((a, b) => a.display_order - b.display_order).map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="text-muted-foreground text-sm">{item.display_order}</TableCell>
+                            <TableCell className="font-mono text-xs font-semibold text-primary">{item.code}</TableCell>
+                            <TableCell className="font-medium">{item.name}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{item.description}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant={item.is_active ? 'default' : 'secondary'} className="text-xs">
+                                {item.is_active ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(item)}>
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(item.id)}>
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {filteredData.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                              No {tab.label.toLowerCase()} entries found
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            ))}
           </Tabs>
         </div>
       </div>
 
-      {/* ===== Dialogs ===== */}
-
-
-      {/* Phase Dialog */}
-      <Dialog open={phaseDialogOpen} onOpenChange={setPhaseDialogOpen}>
+      {/* Shared Add/Edit Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingPhase ? 'Edit Lifecycle Phase' : 'Add Lifecycle Phase'}</DialogTitle>
-            <DialogDescription>Define a project lifecycle phase</DialogDescription>
+            <DialogTitle>{editingItem ? `Edit ${currentTabConfig.label}` : `Add ${currentTabConfig.label}`}</DialogTitle>
+            <DialogDescription>
+              {editingItem ? `Update this ${currentTabConfig.label.toLowerCase()} entry` : `Create a new ${currentTabConfig.label.toLowerCase()} code`}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Code *</Label>
-                <Input value={formPhase.code || ''} onChange={e => setFormPhase(p => ({ ...p, code: e.target.value.toUpperCase() }))} placeholder="e.g. FEL3" />
+                <Input
+                  value={formItem.code || ''}
+                  onChange={e => setFormItem(p => ({ ...p, code: e.target.value.toUpperCase() }))}
+                  placeholder="e.g. DWG"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Display Order</Label>
-                <Input type="number" value={formPhase.display_order ?? ''} onChange={e => setFormPhase(p => ({ ...p, display_order: parseInt(e.target.value) || 0 }))} />
+                <Input
+                  type="number"
+                  value={formItem.display_order ?? ''}
+                  onChange={e => setFormItem(p => ({ ...p, display_order: parseInt(e.target.value) || 0 }))}
+                />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Name *</Label>
-              <Input value={formPhase.name || ''} onChange={e => setFormPhase(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Select (FEL-3)" />
+              <Input
+                value={formItem.name || ''}
+                onChange={e => setFormItem(p => ({ ...p, name: e.target.value }))}
+                placeholder={`e.g. ${currentTabConfig.label} name`}
+              />
             </div>
             <div className="space-y-2">
               <Label>Description</Label>
-              <Textarea value={formPhase.description || ''} onChange={e => setFormPhase(p => ({ ...p, description: e.target.value }))} rows={2} />
+              <Textarea
+                value={formItem.description || ''}
+                onChange={e => setFormItem(p => ({ ...p, description: e.target.value }))}
+                rows={2}
+                placeholder="Brief description..."
+              />
             </div>
             <div className="flex items-center gap-2">
-              <Switch checked={formPhase.is_active ?? true} onCheckedChange={v => setFormPhase(p => ({ ...p, is_active: v }))} />
+              <Switch
+                checked={formItem.is_active ?? true}
+                onCheckedChange={v => setFormItem(p => ({ ...p, is_active: v }))}
+              />
               <Label className="text-sm">Active</Label>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPhaseDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSavePhase}>{editingPhase ? 'Update' : 'Create'}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Mapping Dialog */}
-      <Dialog open={mappingDialogOpen} onOpenChange={setMappingDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingMapping ? 'Edit Mapping' : 'Add Phase-Document Mapping'}</DialogTitle>
-            <DialogDescription>Map a document type to a lifecycle phase</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Lifecycle Phase *</Label>
-              <Select value={formMapping.phase_id || ''} onValueChange={v => setFormMapping(p => ({ ...p, phase_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Select phase" /></SelectTrigger>
-                <SelectContent>
-                  {phases.filter(p => p.is_active).map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Document Type *</Label>
-              <Select value={formMapping.document_type_id || ''} onValueChange={v => setFormMapping(p => ({ ...p, document_type_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Select document type" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manual">Enter manually</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Responsible Role</Label>
-              <Input value={formMapping.responsible_role || ''} onChange={e => setFormMapping(p => ({ ...p, responsible_role: e.target.value }))} placeholder="e.g. Process Engineer" />
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch checked={formMapping.is_mandatory ?? false} onCheckedChange={v => setFormMapping(p => ({ ...p, is_mandatory: v }))} />
-              <Label className="text-sm">Mandatory Document</Label>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMappingDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveMapping}>{editingMapping ? 'Update' : 'Create'}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Category Dialog */}
-      <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingCategory ? 'Edit Category' : 'Add Category'}</DialogTitle>
-            <DialogDescription>Organize document types into categories</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Name *</Label>
-              <Input value={formCategory.name || ''} onChange={e => setFormCategory(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Engineering" />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea value={formCategory.description || ''} onChange={e => setFormCategory(p => ({ ...p, description: e.target.value }))} rows={2} />
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch checked={formCategory.is_active ?? true} onCheckedChange={v => setFormCategory(p => ({ ...p, is_active: v }))} />
-              <Label className="text-sm">Active</Label>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCategoryDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveCategory}>{editingCategory ? 'Update' : 'Create'}</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave}>{editingItem ? 'Update' : 'Create'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
