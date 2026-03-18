@@ -7,28 +7,19 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { 
   ArrowLeft, FileText, Plus, Pencil, Trash2, Search, 
-  FileStack, Compass, FolderKanban, UserCircle, Factory, MapPin, Box 
+  FileStack, Compass, FolderKanban, UserCircle, Factory, MapPin, Box, Loader2
 } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface DocumentManagementSystemProps {
   onBack: () => void;
-}
-
-// Generic config item used by all tabs
-interface ConfigItem {
-  id: string;
-  code: string;
-  name: string;
-  description: string;
-  display_order: number;
-  is_active: boolean;
 }
 
 // Tab configuration
@@ -44,88 +35,130 @@ const TAB_CONFIG = [
 
 type TabId = typeof TAB_CONFIG[number]['id'];
 
-// Empty data — tabs will be connected to backend tables
-const EMPTY_DATA: Record<TabId, ConfigItem[]> = {
-  'document-type': [],
-  'discipline': [],
-  'project': [],
-  'originator': [],
-  'plant': [],
-  'site': [],
-  'unit': [],
-};
+interface DisciplineRow {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  display_order: number;
+  is_active: boolean;
+}
 
 const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState<TabId>('document-type');
+  const [activeTab, setActiveTab] = useState<TabId>('discipline');
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Per-tab data
-  const [tabData, setTabData] = useState<Record<TabId, ConfigItem[]>>(EMPTY_DATA);
+  const queryClient = useQueryClient();
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<ConfigItem | null>(null);
-  const [formItem, setFormItem] = useState<Partial<ConfigItem>>({});
+  const [editingItem, setEditingItem] = useState<DisciplineRow | null>(null);
+  const [formCode, setFormCode] = useState('');
+  const [formName, setFormName] = useState('');
+  const [formIsActive, setFormIsActive] = useState(true);
 
-  const currentTabConfig = TAB_CONFIG.find(t => t.id === activeTab)!;
-  const currentData = tabData[activeTab] || [];
+  // ─── Discipline CRUD ───
+  const { data: disciplines = [], isLoading: disciplinesLoading } = useQuery({
+    queryKey: ['dms-disciplines'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('dms_disciplines')
+        .select('*')
+        .order('display_order', { ascending: true });
+      if (error) throw error;
+      return data as DisciplineRow[];
+    },
+  });
 
-  const filteredData = currentData.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchQuery.toLowerCase())
+  const createDiscipline = useMutation({
+    mutationFn: async (item: { code: string; name: string; is_active: boolean }) => {
+      const maxOrder = disciplines.length > 0 ? Math.max(...disciplines.map(d => d.display_order)) : 0;
+      const { error } = await supabase
+        .from('dms_disciplines')
+        .insert({ code: item.code, name: item.name, is_active: item.is_active, display_order: maxOrder + 1 });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dms-disciplines'] });
+      toast.success('Discipline created');
+    },
+    onError: (err: any) => toast.error(err.message || 'Failed to create discipline'),
+  });
+
+  const updateDiscipline = useMutation({
+    mutationFn: async (item: { id: string; code: string; name: string; is_active: boolean }) => {
+      const { error } = await supabase
+        .from('dms_disciplines')
+        .update({ code: item.code, name: item.name, is_active: item.is_active, updated_at: new Date().toISOString() })
+        .eq('id', item.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dms-disciplines'] });
+      toast.success('Discipline updated');
+    },
+    onError: (err: any) => toast.error(err.message || 'Failed to update discipline'),
+  });
+
+  const deleteDiscipline = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('dms_disciplines').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dms-disciplines'] });
+      toast.success('Discipline deleted');
+    },
+    onError: (err: any) => toast.error(err.message || 'Failed to delete discipline'),
+  });
+
+  // ─── Filtered data ───
+  const filteredDisciplines = disciplines.filter(d =>
+    d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    d.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // ─── Dialog helpers ───
+  const openAddDialog = () => {
+    setEditingItem(null);
+    setFormCode('');
+    setFormName('');
+    setFormIsActive(true);
+    setDialogOpen(true);
+  };
+
+  const openEditDialog = (item: DisciplineRow) => {
+    setEditingItem(item);
+    setFormCode(item.code);
+    setFormName(item.name);
+    setFormIsActive(item.is_active);
+    setDialogOpen(true);
+  };
+
   const handleSave = () => {
-    if (!formItem.name || !formItem.code) {
+    if (!formCode.trim() || !formName.trim()) {
       toast.error('Code and name are required');
       return;
     }
     if (editingItem) {
-      setTabData(prev => ({
-        ...prev,
-        [activeTab]: prev[activeTab].map(d => d.id === editingItem.id ? { ...d, ...formItem } as ConfigItem : d),
-      }));
-      toast.success(`${currentTabConfig.label} updated`);
+      updateDiscipline.mutate({ id: editingItem.id, code: formCode.trim(), name: formName.trim(), is_active: formIsActive });
     } else {
-      const newItem: ConfigItem = {
-        id: crypto.randomUUID(),
-        code: formItem.code,
-        name: formItem.name,
-        description: formItem.description || '',
-        display_order: currentData.length + 1,
-        is_active: formItem.is_active ?? true,
-      };
-      setTabData(prev => ({
-        ...prev,
-        [activeTab]: [...prev[activeTab], newItem],
-      }));
-      toast.success(`${currentTabConfig.label} created`);
+      createDiscipline.mutate({ code: formCode.trim(), name: formName.trim(), is_active: formIsActive });
     }
     setDialogOpen(false);
-    setEditingItem(null);
-    setFormItem({});
   };
 
-  const handleDelete = (id: string) => {
-    setTabData(prev => ({
-      ...prev,
-      [activeTab]: prev[activeTab].filter(d => d.id !== id),
-    }));
-    toast.success(`${currentTabConfig.label} deleted`);
-  };
+  const isSaving = createDiscipline.isPending || updateDiscipline.isPending;
 
-  const openAddDialog = () => {
-    setEditingItem(null);
-    setFormItem({ is_active: true });
-    setDialogOpen(true);
-  };
-
-  const openEditDialog = (item: ConfigItem) => {
-    setEditingItem(item);
-    setFormItem(item);
-    setDialogOpen(true);
-  };
+  // Placeholder content for non-discipline tabs
+  const renderPlaceholderTab = (tabLabel: string) => (
+    <Card>
+      <CardContent className="py-16 text-center">
+        <p className="text-muted-foreground">
+          {tabLabel} configuration — backend table not yet created.
+        </p>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -195,128 +228,124 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
               </div>
             </div>
 
-            {/* All tabs share the same table layout */}
-            {TAB_CONFIG.map((tab) => (
-              <TabsContent key={tab.id} value={tab.id} className="mt-0">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between py-4">
-                    <div>
-                      <CardTitle className="text-lg">{tab.label}</CardTitle>
-                      <CardDescription>Manage {tab.label.toLowerCase()} codes used in document numbering</CardDescription>
+            {/* ─── Discipline Tab (connected to backend) ─── */}
+            <TabsContent value="discipline" className="mt-0">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between py-4">
+                  <div>
+                    <CardTitle className="text-lg">Discipline</CardTitle>
+                    <CardDescription>Manage discipline codes used in document numbering</CardDescription>
+                  </div>
+                  <Button size="sm" className="gap-1.5" onClick={openAddDialog}>
+                    <Plus className="h-4 w-4" /> Add Discipline
+                  </Button>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {disciplinesLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
-                    <Button size="sm" className="gap-1.5" onClick={openAddDialog}>
-                      <Plus className="h-4 w-4" /> Add {tab.label}
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="p-0">
+                  ) : (
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-12">#</TableHead>
                           <TableHead className="w-24">Code</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Description</TableHead>
+                          <TableHead>Discipline Name</TableHead>
                           <TableHead className="w-20 text-center">Status</TableHead>
-                          <TableHead className="w-20 text-right">Actions</TableHead>
+                          <TableHead className="w-24 text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredData.sort((a, b) => a.display_order - b.display_order).map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="text-muted-foreground text-sm">{item.display_order}</TableCell>
+                        {filteredDisciplines.map((item, idx) => (
+                          <TableRow key={item.id} className="group">
+                            <TableCell className="text-muted-foreground text-sm">{idx + 1}</TableCell>
                             <TableCell className="font-mono text-xs font-semibold text-primary">{item.code}</TableCell>
                             <TableCell className="font-medium">{item.name}</TableCell>
-                            <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{item.description}</TableCell>
                             <TableCell className="text-center">
                               <Badge variant={item.is_active ? 'default' : 'secondary'} className="text-xs">
                                 {item.is_active ? 'Active' : 'Inactive'}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-1">
+                              <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(item)}>
                                   <Pencil className="h-3.5 w-3.5" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(item.id)}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-destructive hover:text-destructive"
+                                  onClick={() => deleteDiscipline.mutate(item.id)}
+                                >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                               </div>
                             </TableCell>
                           </TableRow>
                         ))}
-                        {filteredData.length === 0 && (
+                        {filteredDisciplines.length === 0 && !disciplinesLoading && (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                              No {tab.label.toLowerCase()} entries found
+                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                              No disciplines found
                             </TableCell>
                           </TableRow>
                         )}
                       </TableBody>
                     </Table>
-                  </CardContent>
-                </Card>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ─── Placeholder tabs ─── */}
+            {TAB_CONFIG.filter(t => t.id !== 'discipline').map((tab) => (
+              <TabsContent key={tab.id} value={tab.id} className="mt-0">
+                {renderPlaceholderTab(tab.label)}
               </TabsContent>
             ))}
           </Tabs>
         </div>
       </div>
 
-      {/* Shared Add/Edit Dialog */}
+      {/* Add / Edit Discipline Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingItem ? `Edit ${currentTabConfig.label}` : `Add ${currentTabConfig.label}`}</DialogTitle>
+            <DialogTitle>{editingItem ? 'Edit Discipline' : 'Add Discipline'}</DialogTitle>
             <DialogDescription>
-              {editingItem ? `Update this ${currentTabConfig.label.toLowerCase()} entry` : `Create a new ${currentTabConfig.label.toLowerCase()} code`}
+              {editingItem ? 'Update the discipline code and name' : 'Create a new discipline code'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Code *</Label>
-                <Input
-                  value={formItem.code || ''}
-                  onChange={e => setFormItem(p => ({ ...p, code: e.target.value.toUpperCase() }))}
-                  placeholder="e.g. DWG"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Display Order</Label>
-                <Input
-                  type="number"
-                  value={formItem.display_order ?? ''}
-                  onChange={e => setFormItem(p => ({ ...p, display_order: parseInt(e.target.value) || 0 }))}
-                />
-              </div>
-            </div>
             <div className="space-y-2">
-              <Label>Name *</Label>
+              <Label>Code *</Label>
               <Input
-                value={formItem.name || ''}
-                onChange={e => setFormItem(p => ({ ...p, name: e.target.value }))}
-                placeholder={`e.g. ${currentTabConfig.label} name`}
+                value={formCode}
+                onChange={e => setFormCode(e.target.value.toUpperCase())}
+                placeholder="e.g. EA"
+                maxLength={10}
               />
             </div>
             <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                value={formItem.description || ''}
-                onChange={e => setFormItem(p => ({ ...p, description: e.target.value }))}
-                rows={2}
-                placeholder="Brief description..."
+              <Label>Discipline Name *</Label>
+              <Input
+                value={formName}
+                onChange={e => setFormName(e.target.value)}
+                placeholder="e.g. Electrical"
               />
             </div>
             <div className="flex items-center gap-2">
-              <Switch
-                checked={formItem.is_active ?? true}
-                onCheckedChange={v => setFormItem(p => ({ ...p, is_active: v }))}
-              />
+              <Switch checked={formIsActive} onCheckedChange={setFormIsActive} />
               <Label className="text-sm">Active</Label>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave}>{editingItem ? 'Update' : 'Create'}</Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {editingItem ? 'Update' : 'Create'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
