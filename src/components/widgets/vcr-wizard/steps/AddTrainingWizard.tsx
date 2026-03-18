@@ -196,38 +196,44 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
             </div>
           </div>
 
-          {/* Step Indicator */}
-          <div className="flex items-center gap-1">
+          {/* Step Indicator — Modern horizontal stepper */}
+          <div className="flex items-center w-full">
             {STEPS.map((s, i) => {
-              const Icon = s.icon;
               const isActive = i === step;
               const isComplete = i < step;
+              const isUpcoming = i > step;
               return (
                 <React.Fragment key={s.id}>
                   <button
                     onClick={() => i <= step && setStep(i)}
-                    className={cn(
-                      'flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all',
-                      isActive && 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-                      isComplete && 'text-emerald-600 dark:text-emerald-400 cursor-pointer hover:bg-emerald-500/5',
-                      !isActive && !isComplete && 'text-muted-foreground/50'
-                    )}
                     disabled={i > step}
+                    className={cn(
+                      'flex flex-col items-center gap-1.5 group transition-all min-w-0',
+                      i <= step && 'cursor-pointer',
+                      isUpcoming && 'cursor-default'
+                    )}
                   >
                     <div className={cn(
-                      'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border transition-all shrink-0',
-                      isActive && 'border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400',
-                      isComplete && 'border-emerald-500/30 bg-emerald-500/10',
-                      !isActive && !isComplete && 'border-muted-foreground/20'
+                      'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300 border-2',
+                      isComplete && 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/25',
+                      isActive && 'border-primary bg-primary text-primary-foreground shadow-md shadow-primary/30 scale-110',
+                      isUpcoming && 'border-border bg-muted/50 text-muted-foreground/50'
                     )}>
-                      {isComplete ? <Check className="w-3 h-3" /> : i + 1}
+                      {isComplete ? <Check className="w-4 h-4" /> : i + 1}
                     </div>
-                    <span className="hidden sm:inline text-[11px]">{s.title}</span>
+                    <span className={cn(
+                      'text-[10px] font-medium leading-tight text-center max-w-[64px] whitespace-nowrap truncate transition-colors',
+                      isComplete && 'text-emerald-600 dark:text-emerald-400',
+                      isActive && 'text-foreground font-semibold',
+                      isUpcoming && 'text-muted-foreground/40'
+                    )}>
+                      {s.title}
+                    </span>
                   </button>
                   {i < STEPS.length - 1 && (
                     <div className={cn(
-                      'flex-1 h-px max-w-[12px]',
-                      i < step ? 'bg-emerald-500/30' : 'bg-border'
+                      'flex-1 h-0.5 rounded-full mx-1 mb-5 min-w-3 transition-colors duration-300',
+                      i < step ? 'bg-emerald-500' : 'bg-border'
                     )} />
                   )}
                 </React.Fragment>

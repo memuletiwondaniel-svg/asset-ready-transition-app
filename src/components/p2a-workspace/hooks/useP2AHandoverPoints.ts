@@ -636,7 +636,7 @@ export const useHandoverPointSystems = (handoverPointId: string) => {
       if (error) throw error;
       if (!data?.length) return [];
 
-      // Deduplicate: group by parent system_id, return unique parent systems
+      // Collect unique systems: include both parent systems and subsystems
       const seen = new Map<string, any>();
       for (const row of data) {
         const sys = (row as any).p2a_systems;
@@ -644,6 +644,25 @@ export const useHandoverPointSystems = (handoverPointId: string) => {
           seen.set(sys.id, sys);
         }
       }
+
+      // Also fetch subsystems if subsystem_id is set
+      const subsystemIds = data
+        .map((row: any) => row.subsystem_id)
+        .filter((id: string | null) => id && !seen.has(id));
+
+      if (subsystemIds.length > 0) {
+        const { data: subsystems } = await supabase
+          .from('p2a_systems')
+          .select('*')
+          .in('id', subsystemIds);
+        
+        subsystems?.forEach(sub => {
+          if (!seen.has(sub.id)) {
+            seen.set(sub.id, sub);
+          }
+        });
+      }
+
       return Array.from(seen.values());
     },
     enabled: !!handoverPointId,
