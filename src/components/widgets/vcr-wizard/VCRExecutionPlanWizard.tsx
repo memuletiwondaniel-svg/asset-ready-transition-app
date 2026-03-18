@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
@@ -65,6 +65,9 @@ const STEPS: WizardShellStep[] = [
   { id: 'approvers', label: 'Approvers', icon: UserCheck, color: 'text-primary' },
 ];
 
+const TOTAL_STEPS = STEPS.length; // 8
+const DRAFT_COMPLETE_PROGRESS = 83;
+
 export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   open,
   onOpenChange,
@@ -76,6 +79,51 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const hasPromotedRef = useRef(false);
+
+  // ── Progress sync (mirrors P2A pattern) ──────────────────────────
+  const syncVCRProgress = useCallback(async (progress: number) => {
+    if (!user?.id) return;
+    const clampedProgress = Math.min(progress, DRAFT_COMPLETE_PROGRESS);
+    const activityStatus = clampedProgress >= DRAFT_COMPLETE_PROGRESS ? 'IN_PROGRESS' : 'IN_PROGRESS';
+
+    try {
+      // 1. Update ora_plan_activities row for this VCR delivery plan
+      await (supabase as any)
+        .from('ora_plan_activities')
+        .update({
+          completion_percentage: clampedProgress,
+          status: activityStatus,
+        })
+        .eq('source_type', 'vcr_delivery_plan')
+        .eq('source_ref_id', vcr.id);
+
+      // 2. Update user_tasks row for this VCR delivery plan
+      const { data: tasks } = await (supabase as any)
+        .from('user_tasks')
+        .select('id, metadata')
+        .eq('user_id', user.id)
+        .eq('type', 'vcr_delivery_plan')
+        .filter('metadata->>vcr_id', 'eq', vcr.id)
+        .limit(1);
+
+      if (tasks?.[0]) {
+        const existingMeta = (tasks[0].metadata || {}) as Record<string, any>;
+        await (supabase as any)
+          .from('user_tasks')
+          .update({
+            progress_percentage: clampedProgress,
+            metadata: { ...existingMeta, completion_percentage: clampedProgress },
+          })
+          .eq('id', tasks[0].id);
+      }
+
+      // 3. Invalidate caches so Kanban & Gantt reflect changes
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['project-orp-plans'] });
+    } catch (err) {
+      console.error('[VCR Progress Sync] Failed:', err);
+    }
+  }, [user?.id, vcr.id, queryClient]);
 
   useEffect(() => {
     if (open) {
@@ -145,6 +193,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const goToStep = (step: number) => {
     setCurrentStep(step);
     setVisitedSteps(prev => new Set([...prev, step]));
+    // Sync progress based on furthest step reached
+    const progress = Math.round(((step + 1) / TOTAL_STEPS) * DRAFT_COMPLETE_PROGRESS);
+    syncVCRProgress(progress);
   };
 
   const handleNext = () => {
@@ -153,6 +204,19 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   const handleBack = () => {
     if (currentStep > 0) goToStep(currentStep - 1);
+  };
+
+  const handleSaveAndExit = () => {
+    // Sync current progress before closing
+    const progress = Math.round(((currentStep + 1) / TOTAL_STEPS) * DRAFT_COMPLETE_PROGRESS);
+    syncVCRProgress(progress);
+    onOpenChange(false);
+  };
+
+  const handleDone = () => {
+    // Mark as draft complete (83%)
+    syncVCRProgress(DRAFT_COMPLETE_PROGRESS);
+    onOpenChange(false);
   };
 
   const renderStep = () => {
@@ -213,11 +277,11 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       navigation={{
         onBack: handleBack,
         onNext: handleNext,
-        onSaveAndExit: () => onOpenChange(false),
+        onSaveAndExit: handleSaveAndExit,
         canGoBack: currentStep > 0,
         saveAndExitLabel: 'Save & Exit',
         submitLabel: 'Done',
-        onSubmit: currentStep === STEPS.length - 1 ? () => onOpenChange(false) : undefined,
+        onSubmit: currentStep === STEPS.length - 1 ? handleDone : undefined,
       }}
     >
       <div className="p-3 sm:p-6">
