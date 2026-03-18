@@ -221,7 +221,7 @@ export const OperationalRegistersStep: React.FC<OperationalRegistersStepProps> =
       )}
 
       <Sheet open={addOpen} onOpenChange={setAddOpen}>
-        <SheetContent className="w-[520px] sm:max-w-[520px]">
+        <SheetContent className="w-[520px] sm:max-w-[520px] z-[150]" overlayClassName="z-[150]">
           <SheetHeader><SheetTitle>Add Operational Register</SheetTitle></SheetHeader>
           <AddRegisterForm
             vcrId={vcrId}
