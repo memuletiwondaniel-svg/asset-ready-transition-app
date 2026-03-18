@@ -494,6 +494,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('process-flows')
+  }, {
+    id: 'document-management',
+    title: 'Document Management System',
+    description: 'Configure document types, categories, lifecycle phases, and the Project Lifecycle Information Plan',
+    icon: FolderOpen,
+    gradient: 'from-sky-500 to-blue-600',
+    tooltip: 'Set up the Document Management System and Project Lifecycle Information Plan',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('document-management')
   }];
 
   // Filter admin tools based on search query
