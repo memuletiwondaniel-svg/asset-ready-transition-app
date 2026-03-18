@@ -142,7 +142,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
       return;
     }
     const phase = phases.find(p => p.id === formMapping.phase_id);
-    const docType = docTypes.find(d => d.id === formMapping.document_type_id);
+    const docType = null; // Document types removed
     if (editingMapping) {
       setMappings(prev => prev.map(m => m.id === editingMapping.id ? {
         ...m,
