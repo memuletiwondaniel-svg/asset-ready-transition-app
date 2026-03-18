@@ -103,7 +103,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
   const [editingCategory, setEditingCategory] = useState<DocumentCategory | null>(null);
 
   // --- Form states ---
-  const [formDocType, setFormDocType] = useState<Partial<DocumentType>>({});
+  
   const [formPhase, setFormPhase] = useState<Partial<LifecyclePhase>>({});
   const [formMapping, setFormMapping] = useState<Partial<PhaseDocumentMapping>>({});
   const [formCategory, setFormCategory] = useState<Partial<DocumentCategory>>({});
