@@ -223,7 +223,7 @@ export const TrainingStep: React.FC<TrainingStepProps> = ({ vcrId }) => {
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); setDeleteTarget(item.id); }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
+                        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -255,7 +255,7 @@ export const TrainingStep: React.FC<TrainingStepProps> = ({ vcrId }) => {
 
       {/* Delete */}
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[150]">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Training Item</AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>

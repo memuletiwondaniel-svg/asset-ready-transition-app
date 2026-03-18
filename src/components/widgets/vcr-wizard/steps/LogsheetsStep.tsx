@@ -187,7 +187,7 @@ export const LogsheetsStep: React.FC<LogsheetsStepProps> = ({ vcrId }) => {
 
                     <button
                       onClick={() => setDeleteTarget(item.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
+                      className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -200,7 +200,7 @@ export const LogsheetsStep: React.FC<LogsheetsStepProps> = ({ vcrId }) => {
       )}
 
       <Sheet open={addOpen} onOpenChange={setAddOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px]">
+        <SheetContent className="w-[480px] sm:max-w-[480px] z-[150]" overlayClassName="z-[150]">
           <SheetHeader><SheetTitle>Add Logsheet</SheetTitle></SheetHeader>
           <AddLogsheetForm
             vcrId={vcrId}
@@ -213,7 +213,7 @@ export const LogsheetsStep: React.FC<LogsheetsStepProps> = ({ vcrId }) => {
       </Sheet>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[150]">
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Logsheet</AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>

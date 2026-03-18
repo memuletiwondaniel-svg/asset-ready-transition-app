@@ -238,7 +238,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
 
                     <button
                       onClick={() => setDeleteTarget(item.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
+                      className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -251,7 +251,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
       )}
 
       <Sheet open={addOpen} onOpenChange={setAddOpen}>
-        <SheetContent className="w-[520px] sm:max-w-[520px]">
+        <SheetContent className="w-[520px] sm:max-w-[520px] z-[150]" overlayClassName="z-[150]">
           <SheetHeader><SheetTitle>Add Critical Document</SheetTitle></SheetHeader>
           <AddDocumentForm
             vcrId={vcrId}
@@ -265,7 +265,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
       </Sheet>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[150]">
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Document</AlertDialogTitle>
             <AlertDialogDescription>This will remove the document from this VCR's delivery plan.</AlertDialogDescription>

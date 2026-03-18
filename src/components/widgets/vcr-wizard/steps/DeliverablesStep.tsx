@@ -153,14 +153,14 @@ export const DeliverablesStep: React.FC<DeliverablesStepProps> = ({ vcrId }) => 
       )}
 
       <Sheet open={addOpen} onOpenChange={setAddOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px]">
+        <SheetContent className="w-[480px] sm:max-w-[480px] z-[150]" overlayClassName="z-[150]">
           <SheetHeader><SheetTitle>Add Document</SheetTitle></SheetHeader>
           <AddDeliverableForm onSubmit={(item) => addItem.mutate(item)} isSaving={addItem.isPending} />
         </SheetContent>
       </Sheet>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[150]">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Document</AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>

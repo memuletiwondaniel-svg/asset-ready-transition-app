@@ -192,11 +192,11 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={(e) => { e.stopPropagation(); setDeleteTarget(item.id); }}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive"
+                          className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ChevronRight className="w-4 h-4 text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />
                       </div>
                     </div>
                   </CardContent>
@@ -208,7 +208,7 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
 
       {/* Add Procedure Sheet */}
       <Sheet open={addOpen} onOpenChange={setAddOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col gap-0 p-0 [&>button]:hidden">
+        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col gap-0 p-0 [&>button]:hidden z-[150]" overlayClassName="z-[150]">
           <AddProcedureForm
             vcrId={vcrId}
             onSubmit={(item) => addItem.mutate(item)}
@@ -220,7 +220,7 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
 
       {/* Procedure Detail Sheet */}
       <Sheet open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
-        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col gap-0 p-0 [&>button]:hidden">
+        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col gap-0 p-0 [&>button]:hidden z-[150]" overlayClassName="z-[150]">
           {selectedItem && (
             <ProcedureDetailPanel
               item={selectedItem}
@@ -232,7 +232,7 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
       </Sheet>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[150]">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Procedure</AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
