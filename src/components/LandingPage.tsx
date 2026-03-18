@@ -76,7 +76,6 @@ const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color:
   '/admin-tools/session-timeout': { icon: Timer, color: 'bg-orange-500' },
   '/admin-tools/brute-force': { icon: ShieldAlert, color: 'bg-red-500' },
   '/admin-tools/webhook-security': { icon: Webhook, color: 'bg-teal-600' },
-  '/admin-tools/sso': { icon: Shield, color: 'bg-indigo-500' },
 };
 
 // Label-based fallback for stale localStorage entries
