@@ -110,32 +110,6 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
 
   // --- Handlers ---
 
-  const handleSaveDocType = () => {
-    if (!formDocType.name || !formDocType.code || !formDocType.category) {
-      toast.error('Name, code, and category are required');
-      return;
-    }
-    if (editingDocType) {
-      setDocTypes(prev => prev.map(d => d.id === editingDocType.id ? { ...d, ...formDocType } as DocumentType : d));
-      toast.success('Document type updated');
-    } else {
-      const newDoc: DocumentType = {
-        id: crypto.randomUUID(),
-        name: formDocType.name,
-        code: formDocType.code,
-        description: formDocType.description || '',
-        category: formDocType.category,
-        is_active: formDocType.is_active ?? true,
-        requires_approval: formDocType.requires_approval ?? false,
-        retention_years: formDocType.retention_years ?? null,
-      };
-      setDocTypes(prev => [...prev, newDoc]);
-      toast.success('Document type created');
-    }
-    setDocTypeDialogOpen(false);
-    setEditingDocType(null);
-    setFormDocType({});
-  };
 
   const handleSavePhase = () => {
     if (!formPhase.name || !formPhase.code) {
