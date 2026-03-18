@@ -208,7 +208,7 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
 
       {/* Add Procedure Sheet */}
       <Sheet open={addOpen} onOpenChange={setAddOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col gap-0 p-0 [&>button]:hidden">
+        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col gap-0 p-0 [&>button]:hidden z-[150]" overlayClassName="z-[150]">
           <AddProcedureForm
             vcrId={vcrId}
             onSubmit={(item) => addItem.mutate(item)}
