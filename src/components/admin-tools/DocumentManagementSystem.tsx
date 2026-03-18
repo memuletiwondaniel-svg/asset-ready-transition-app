@@ -327,7 +327,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
 
             {/* ─── Originator Tab (connected to backend) ─── */}
             <TabsContent value="originator" className="mt-0">
-              <DmsOriginatorsTab searchQuery={searchQuery} />
+              <DmsOriginatorsTab />
             </TabsContent>
 
             {/* ─── Unit Tab (connected to backend) ─── */}
