@@ -161,12 +161,12 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
     s.system_id?.toLowerCase().includes(systemSearch.toLowerCase())
   );
 
-  // Step completion checks (data-aware)
+  // Step completion checks — all mandatory fields must be filled
   const isStepComplete = (i: number): boolean => {
     if (i === 0) return title.trim().length > 0;
-    if (i === 1) return provider.trim().length > 0 || deliveryMethods.length > 0;
-    if (i === 2) return targetAudience.length > 0 || selectedSystemIds.length > 0;
-    if (i === 3) return durationDays !== '' || tentativeDate !== '';
+    if (i === 1) return provider.trim().length > 0 && deliveryMethods.length > 0;
+    if (i === 2) return targetAudience.length > 0 && selectedSystemIds.length > 0;
+    if (i === 3) return durationDays !== '';
     return false;
   };
 
@@ -174,6 +174,9 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
   const isStepIncomplete = (i: number): boolean => {
     return (visitedSteps.has(i) || i < highestStep) && !isStepComplete(i) && i < step;
   };
+
+  // All steps (0-3) must be complete to allow submission
+  const allStepsComplete = [0, 1, 2, 3].every(i => isStepComplete(i));
 
   const canProceed = (s: number) => {
     if (s === 0) return title.trim().length > 0;
@@ -344,7 +347,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
             {step === 0 ? 'Cancel' : 'Back'}
           </Button>
           <div className="flex items-center gap-2">
-            {!isLastStep && step < 3 && (
+            {!isLastStep && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -358,7 +361,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
             <Button
               size="sm"
               onClick={isLastStep ? handleSubmit : () => goToStep(step + 1)}
-              disabled={!canProceed(step) || (isLastStep && isSaving)}
+              disabled={!canProceed(step) || (isLastStep && (isSaving || !allStepsComplete))}
               className={cn(
                 'gap-1.5',
                 isLastStep && 'bg-emerald-600 hover:bg-emerald-700 text-white'
