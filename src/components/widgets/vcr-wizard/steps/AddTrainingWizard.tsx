@@ -245,12 +245,7 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
                       !complete && !isActive && !incomplete && isUnreachable && 'border-border bg-muted/50 text-muted-foreground/50',
                       !complete && !isActive && !incomplete && !isUnreachable && 'border-border bg-muted/80 text-muted-foreground'
                     )}>
-                      {complete ? <Check className="w-4 h-4" /> : incomplete && !isActive ? (
-                        <span className="relative flex items-center justify-center">
-                          {i + 1}
-                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400 dark:bg-amber-500" />
-                        </span>
-                      ) : i + 1}
+                      {complete ? <Check className="w-4 h-4" /> : i + 1}
                     </div>
                     <span className={cn(
                       'text-[10px] font-medium leading-tight text-center max-w-[64px] whitespace-nowrap truncate transition-colors',
