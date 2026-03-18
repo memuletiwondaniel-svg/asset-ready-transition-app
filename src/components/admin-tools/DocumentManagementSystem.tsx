@@ -60,7 +60,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
   const [searchQuery, setSearchQuery] = useState('');
 
   // Per-tab data
-  const [tabData, setTabData] = useState<Record<TabId, ConfigItem[]>>(MOCK_DATA);
+  const [tabData, setTabData] = useState<Record<TabId, ConfigItem[]>>(EMPTY_DATA);
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
