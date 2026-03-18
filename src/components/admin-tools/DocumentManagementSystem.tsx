@@ -86,10 +86,6 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
   const [activeTab, setActiveTab] = useState('categories');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // --- Document Types state ---
-  const [docTypes, setDocTypes] = useState<DocumentType[]>(MOCK_DOC_TYPES);
-  const [editingDocType, setEditingDocType] = useState<DocumentType | null>(null);
-  const [docTypeDialogOpen, setDocTypeDialogOpen] = useState(false);
 
   // --- Lifecycle Phases state ---
   const [phases, setPhases] = useState<LifecyclePhase[]>(MOCK_PHASES);
