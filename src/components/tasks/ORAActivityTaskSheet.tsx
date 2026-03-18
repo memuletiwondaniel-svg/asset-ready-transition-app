@@ -1167,7 +1167,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                     ? `The VCR Plan for ${metaVcrName || 'this VCR'} has been approved. Click below to view the finalized plan.`
                     : vcrPlanIsSubmitted
                       ? `The VCR Plan for ${metaVcrName || 'this VCR'} has been submitted and is awaiting approval.`
-                      : `Configure the VCR Plan for ${metaVcrName || 'this VCR'}. Define training, procedures, critical documents, and other building blocks.`}
+                      : vcrHasDraft
+                        ? `You have a saved draft for the VCR Plan for ${metaVcrName || 'this VCR'}. Continue where you left off to define training, procedures, and other building blocks.`
+                        : `Configure the VCR Plan for ${metaVcrName || 'this VCR'}. Define training, procedures, critical documents, and other building blocks.`}
                 </p>
                 {vcrPlanIsSubmitted && (
                   <p className="text-xs text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-md px-3 py-2">
