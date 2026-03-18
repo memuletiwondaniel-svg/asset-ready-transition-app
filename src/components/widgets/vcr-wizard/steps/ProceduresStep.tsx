@@ -220,7 +220,7 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
 
       {/* Procedure Detail Sheet */}
       <Sheet open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
-        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col gap-0 p-0 [&>button]:hidden">
+        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col gap-0 p-0 [&>button]:hidden z-[150]" overlayClassName="z-[150]">
           {selectedItem && (
             <ProcedureDetailPanel
               item={selectedItem}
