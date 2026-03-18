@@ -200,7 +200,7 @@ export const LogsheetsStep: React.FC<LogsheetsStepProps> = ({ vcrId }) => {
       )}
 
       <Sheet open={addOpen} onOpenChange={setAddOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px]">
+        <SheetContent className="w-[480px] sm:max-w-[480px] z-[150]" overlayClassName="z-[150]">
           <SheetHeader><SheetTitle>Add Logsheet</SheetTitle></SheetHeader>
           <AddLogsheetForm
             vcrId={vcrId}
