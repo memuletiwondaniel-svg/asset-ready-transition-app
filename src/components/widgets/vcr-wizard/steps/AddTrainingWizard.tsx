@@ -684,81 +684,128 @@ const StepReview: React.FC<{
 }> = ({ title, overview, provider, deliveryMethods, targetAudience, selectedSystemIds, allSystems, durationDays, tentativeDate, formatDisplayDate }) => {
   const selectedSystems = allSystems.filter(s => selectedSystemIds.includes(s.id));
 
-  const ReviewRow: React.FC<{ label: string; icon: React.ElementType; children: React.ReactNode; empty?: boolean }> = ({ label, icon: Icon, children, empty }) => (
-    <div className="flex gap-3 py-2.5">
-      <div className="w-7 h-7 rounded-lg bg-muted/60 flex items-center justify-center shrink-0 mt-0.5">
-        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-0.5">{label}</p>
-        {empty ? (
-          <p className="text-xs text-muted-foreground/50 italic">Not specified</p>
-        ) : (
-          <div className="text-sm text-foreground">{children}</div>
-        )}
-      </div>
-    </div>
-  );
+  const completedFields = [title, overview, provider, deliveryMethods.length > 0, targetAudience.length > 0, selectedSystems.length > 0, durationDays, tentativeDate].filter(Boolean).length;
+  const totalFields = 8;
 
   return (
-    <div className="space-y-1">
-      <div className="mb-3">
-        <p className="text-sm font-medium text-foreground mb-1">Review your training item</p>
-        <p className="text-xs text-muted-foreground">Confirm the details below before creating.</p>
+    <div className="space-y-4">
+      {/* Header with completion indicator */}
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-semibold text-foreground">Review your training item</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Confirm the details below before creating.</p>
+        </div>
+        <Badge
+          variant={completedFields >= 3 ? 'default' : 'secondary'}
+          className={cn(
+            'text-[10px] font-mono shrink-0',
+            completedFields >= 5 && 'bg-emerald-500 hover:bg-emerald-600 text-white'
+          )}
+        >
+          {completedFields}/{totalFields} completed
+        </Badge>
       </div>
 
-      <ScrollArea className="h-[280px] -mx-1 px-1">
-        <div className="divide-y divide-border/40">
-          <ReviewRow label="Training Title" icon={BookOpen}>
-            <span className="font-semibold">{title}</span>
-          </ReviewRow>
-
-          <ReviewRow label="Objective & Justification" icon={BookOpen} empty={!overview}>
-            <p className="text-xs leading-relaxed line-clamp-3">{overview}</p>
-          </ReviewRow>
-
-          <ReviewRow label="Provider" icon={Building2} empty={!provider}>
-            <span className="font-medium">{provider}</span>
-          </ReviewRow>
-
-          <ReviewRow label="Delivery Format" icon={MapPin} empty={deliveryMethods.length === 0}>
-            <div className="flex flex-wrap gap-1.5">
-              {deliveryMethods.map(dm => {
-                const method = DELIVERY_METHODS.find(m => m.id === dm);
-                return (
-                  <Badge key={dm} variant="secondary" className="text-[10px]">
-                    {method?.label || dm}
-                  </Badge>
-                );
-              })}
-            </div>
-          </ReviewRow>
-
-          <ReviewRow label="Target Audience" icon={Users} empty={targetAudience.length === 0}>
-            <div className="flex flex-wrap gap-1">
-              {targetAudience.map(a => (
-                <Badge key={a} variant="outline" className="text-[10px]">{a}</Badge>
-              ))}
-            </div>
-          </ReviewRow>
-
-          <ReviewRow label="Applicable Systems" icon={Layers} empty={selectedSystems.length === 0}>
-            <div className="flex flex-wrap gap-1">
-              {selectedSystems.map(s => (
-                <Badge key={s.id} variant="secondary" className="text-[10px]">{s.name}</Badge>
-              ))}
-            </div>
-          </ReviewRow>
-
-          <ReviewRow label="Duration" icon={Clock} empty={!durationDays}>
-            <span className="font-medium">{durationDays} day{durationDays && parseFloat(durationDays) !== 1 ? 's' : ''}</span>
-          </ReviewRow>
-
-          <ReviewRow label="Tentative Start" icon={CalendarDays} empty={!tentativeDate}>
-            <span className="font-medium">{formatDisplayDate(tentativeDate)}</span>
-          </ReviewRow>
+      {/* Title card — hero treatment */}
+      <div className="p-4 rounded-xl border bg-gradient-to-br from-primary/5 via-transparent to-transparent">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <GraduationCap className="w-4.5 h-4.5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-base font-semibold text-foreground leading-tight">{title}</p>
+            {overview && (
+              <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">{overview}</p>
+            )}
+          </div>
         </div>
-      </ScrollArea>
+      </div>
+
+      {/* Detail cards grid */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Provider */}
+        <ReviewCard
+          icon={Building2}
+          label="Provider"
+          empty={!provider}
+        >
+          <span className="text-sm font-medium">{provider}</span>
+        </ReviewCard>
+
+        {/* Duration & Date */}
+        <ReviewCard
+          icon={Clock}
+          label="Schedule"
+          empty={!durationDays && !tentativeDate}
+        >
+          <div className="space-y-0.5">
+            {durationDays && (
+              <p className="text-sm font-medium">{durationDays} day{parseFloat(durationDays) !== 1 ? 's' : ''}</p>
+            )}
+            {tentativeDate && (
+              <p className="text-[11px] text-muted-foreground">{formatDisplayDate(tentativeDate)}</p>
+            )}
+          </div>
+        </ReviewCard>
+      </div>
+
+      {/* Delivery Format */}
+      <ReviewCard icon={MapPin} label="Delivery Format" empty={deliveryMethods.length === 0} fullWidth>
+        <div className="flex flex-wrap gap-1.5">
+          {deliveryMethods.map(dm => {
+            const method = DELIVERY_METHODS.find(m => m.id === dm);
+            return (
+              <Badge key={dm} variant="secondary" className="text-[10px] font-medium gap-1">
+                {method?.label || dm}
+              </Badge>
+            );
+          })}
+        </div>
+      </ReviewCard>
+
+      {/* Target Audience */}
+      <ReviewCard icon={Users} label="Target Audience" empty={targetAudience.length === 0} fullWidth>
+        <div className="flex flex-wrap gap-1.5">
+          {targetAudience.map(a => (
+            <Badge key={a} variant="outline" className="text-[10px] font-medium">{a}</Badge>
+          ))}
+        </div>
+      </ReviewCard>
+
+      {/* Systems */}
+      {selectedSystems.length > 0 && (
+        <ReviewCard icon={Layers} label={`Applicable Systems (${selectedSystems.length})`} fullWidth>
+          <div className="flex flex-wrap gap-1.5">
+            {selectedSystems.map(s => (
+              <Badge key={s.id} variant="secondary" className="text-[10px] font-medium font-mono">{s.name}</Badge>
+            ))}
+          </div>
+        </ReviewCard>
+      )}
     </div>
   );
 };
+
+/* ───── Review Card helper ───── */
+const ReviewCard: React.FC<{
+  icon: React.ElementType;
+  label: string;
+  children: React.ReactNode;
+  empty?: boolean;
+  fullWidth?: boolean;
+}> = ({ icon: Icon, label, children, empty, fullWidth }) => (
+  <div className={cn(
+    'p-3 rounded-lg border bg-card',
+    fullWidth && 'col-span-2'
+  )}>
+    <div className="flex items-center gap-1.5 mb-1.5">
+      <Icon className="w-3 h-3 text-muted-foreground" />
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{label}</p>
+    </div>
+    {empty ? (
+      <p className="text-xs text-muted-foreground/40 italic">Not specified</p>
+    ) : (
+      children
+    )}
+  </div>
+);
