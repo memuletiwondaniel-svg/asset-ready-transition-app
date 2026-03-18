@@ -42,7 +42,9 @@ const TAB_CONFIG = [
   { id: 'unit', label: 'Unit', icon: Box, activeColor: 'text-orange-600 dark:text-orange-400' },
 ] as const;
 
-// Mock data cleared — tabs will be connected to backend tables
+type TabId = typeof TAB_CONFIG[number]['id'];
+
+// Empty data — tabs will be connected to backend tables
 const EMPTY_DATA: Record<TabId, ConfigItem[]> = {
   'document-type': [],
   'discipline': [],
