@@ -28,10 +28,6 @@ interface DocTypeRow {
   display_order: number;
 }
 
-interface DmsDocumentTypesTabProps {
-  searchQuery: string;
-}
-
 interface ColumnConfig {
   id: string;
   label: string;
@@ -50,8 +46,9 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'acceptable_status', label: 'Acceptable Status', visible: false, toggleable: true },
 ];
 
-const DmsDocumentTypesTab: React.FC<DmsDocumentTypesTabProps> = ({ searchQuery }) => {
+const DmsDocumentTypesTab: React.FC = () => {
   const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DocTypeRow | null>(null);
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS);
