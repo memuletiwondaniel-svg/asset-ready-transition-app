@@ -20,12 +20,9 @@ interface UnitRow {
   display_order: number;
 }
 
-interface DmsUnitsTabProps {
-  searchQuery: string;
-}
-
-const DmsUnitsTab: React.FC<DmsUnitsTabProps> = ({ searchQuery }) => {
+const DmsUnitsTab: React.FC = () => {
   const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<UnitRow | null>(null);
   const [formCode, setFormCode] = useState('');
