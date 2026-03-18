@@ -251,7 +251,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
       )}
 
       <Sheet open={addOpen} onOpenChange={setAddOpen}>
-        <SheetContent className="w-[520px] sm:max-w-[520px]">
+        <SheetContent className="w-[520px] sm:max-w-[520px] z-[150]" overlayClassName="z-[150]">
           <SheetHeader><SheetTitle>Add Critical Document</SheetTitle></SheetHeader>
           <AddDocumentForm
             vcrId={vcrId}
