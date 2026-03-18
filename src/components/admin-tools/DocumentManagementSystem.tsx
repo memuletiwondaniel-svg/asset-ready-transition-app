@@ -60,16 +60,6 @@ const MOCK_CATEGORIES: DocumentCategory[] = [
   { id: '6', name: 'Operations', description: 'Operating procedures, maintenance manuals, and training materials', icon: 'operations', display_order: 6, is_active: true },
 ];
 
-const MOCK_DOC_TYPES: DocumentType[] = [
-  { id: '1', name: 'P&ID (Piping & Instrumentation Diagram)', code: 'PID', description: 'Process flow and instrumentation layout', category: 'Engineering', is_active: true, requires_approval: true, retention_years: 25 },
-  { id: '2', name: 'HAZOP Report', code: 'HAZOP', description: 'Hazard and operability study report', category: 'Safety & Compliance', is_active: true, requires_approval: true, retention_years: 25 },
-  { id: '3', name: 'Material Requisition', code: 'MR', description: 'Material purchase requisition', category: 'Procurement', is_active: true, requires_approval: true, retention_years: 10 },
-  { id: '4', name: 'Inspection Test Plan', code: 'ITP', description: 'Quality inspection and test plan', category: 'Construction', is_active: true, requires_approval: true, retention_years: 15 },
-  { id: '5', name: 'Commissioning Procedure', code: 'CP', description: 'Step-by-step commissioning procedure', category: 'Commissioning', is_active: true, requires_approval: true, retention_years: 25 },
-  { id: '6', name: 'Operating Manual', code: 'OM', description: 'Plant operating manual', category: 'Operations', is_active: true, requires_approval: true, retention_years: null },
-  { id: '7', name: 'Design Basis Memorandum', code: 'DBM', description: 'Design basis and assumptions', category: 'Engineering', is_active: true, requires_approval: true, retention_years: 25 },
-  { id: '8', name: 'SIL Assessment', code: 'SIL', description: 'Safety integrity level assessment', category: 'Safety & Compliance', is_active: true, requires_approval: true, retention_years: 25 },
-];
 
 const MOCK_PHASES: LifecyclePhase[] = [
   { id: '1', name: 'Identify (FEL-1)', code: 'FEL1', description: 'Opportunity identification and concept screening', display_order: 1, is_active: true },
