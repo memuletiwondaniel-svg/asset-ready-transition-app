@@ -21,6 +21,7 @@ import DmsProjectsTab from './dms/DmsProjectsTab';
 import DmsPlantsTab from './dms/DmsPlantsTab';
 import DmsSitesTab from './dms/DmsSitesTab';
 import DmsOriginatorsTab from './dms/DmsOriginatorsTab';
+import DmsUnitsTab from './dms/DmsUnitsTab';
 
 interface DocumentManagementSystemProps {
   onBack: () => void;
@@ -334,8 +335,13 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
               <DmsOriginatorsTab searchQuery={searchQuery} />
             </TabsContent>
 
+            {/* ─── Unit Tab (connected to backend) ─── */}
+            <TabsContent value="unit" className="mt-0">
+              <DmsUnitsTab searchQuery={searchQuery} />
+            </TabsContent>
+
             {/* ─── Placeholder tabs ─── */}
-            {TAB_CONFIG.filter(t => t.id !== 'discipline' && t.id !== 'project' && t.id !== 'plant' && t.id !== 'site' && t.id !== 'originator').map((tab) => (
+            {TAB_CONFIG.filter(t => t.id !== 'discipline' && t.id !== 'project' && t.id !== 'plant' && t.id !== 'site' && t.id !== 'originator' && t.id !== 'unit').map((tab) => (
               <TabsContent key={tab.id} value={tab.id} className="mt-0">
                 {renderPlaceholderTab(tab.label)}
               </TabsContent>
