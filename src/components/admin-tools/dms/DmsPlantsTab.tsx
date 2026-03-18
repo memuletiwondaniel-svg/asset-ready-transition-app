@@ -21,12 +21,9 @@ interface PlantRow {
   display_order: number;
 }
 
-interface DmsPlantsTabProps {
-  searchQuery: string;
-}
-
-const DmsPlantsTab: React.FC<DmsPlantsTabProps> = ({ searchQuery }) => {
+const DmsPlantsTab: React.FC = () => {
   const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<PlantRow | null>(null);
   const [formCode, setFormCode] = useState('');
