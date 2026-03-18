@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DmsProjectsTab from './dms/DmsProjectsTab';
 import DmsPlantsTab from './dms/DmsPlantsTab';
+import DmsSitesTab from './dms/DmsSitesTab';
 
 interface DocumentManagementSystemProps {
   onBack: () => void;
@@ -322,8 +323,13 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
               <DmsPlantsTab searchQuery={searchQuery} />
             </TabsContent>
 
+            {/* ─── Site Tab (connected to backend) ─── */}
+            <TabsContent value="site" className="mt-0">
+              <DmsSitesTab searchQuery={searchQuery} />
+            </TabsContent>
+
             {/* ─── Placeholder tabs ─── */}
-            {TAB_CONFIG.filter(t => t.id !== 'discipline' && t.id !== 'project' && t.id !== 'plant').map((tab) => (
+            {TAB_CONFIG.filter(t => t.id !== 'discipline' && t.id !== 'project' && t.id !== 'plant' && t.id !== 'site').map((tab) => (
               <TabsContent key={tab.id} value={tab.id} className="mt-0">
                 {renderPlaceholderTab(tab.label)}
               </TabsContent>
