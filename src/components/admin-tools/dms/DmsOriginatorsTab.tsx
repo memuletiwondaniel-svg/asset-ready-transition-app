@@ -20,12 +20,9 @@ interface OriginatorRow {
   display_order: number;
 }
 
-interface DmsOriginatorsTabProps {
-  searchQuery: string;
-}
-
-const DmsOriginatorsTab: React.FC<DmsOriginatorsTabProps> = ({ searchQuery }) => {
+const DmsOriginatorsTab: React.FC = () => {
   const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<OriginatorRow | null>(null);
   const [formCode, setFormCode] = useState('');
