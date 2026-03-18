@@ -248,34 +248,46 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
                   ) : (
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12">#</TableHead>
-                          <TableHead className="w-24">Code</TableHead>
-                          <TableHead>Discipline Name</TableHead>
-                          <TableHead className="w-20 text-center">Status</TableHead>
-                          <TableHead className="w-24 text-right">Actions</TableHead>
+                        <TableRow className="hover:bg-transparent">
+                          <TableHead className="w-12 text-xs font-medium uppercase tracking-wider text-muted-foreground">#</TableHead>
+                          <TableHead className="w-24 text-xs font-medium uppercase tracking-wider text-muted-foreground">Code</TableHead>
+                          <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Discipline Name</TableHead>
+                          <TableHead className="w-20 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                          <TableHead className="w-24 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredDisciplines.map((item, idx) => (
-                          <TableRow key={item.id} className="group">
-                            <TableCell className="text-muted-foreground text-sm">{idx + 1}</TableCell>
-                            <TableCell className="font-mono text-xs font-semibold text-primary">{item.code}</TableCell>
-                            <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableRow key={item.id} className="group border-border/40 hover:bg-muted/30 transition-colors">
+                            <TableCell className="text-muted-foreground text-xs tabular-nums">{idx + 1}</TableCell>
+                            <TableCell>
+                              <span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-foreground">
+                                {item.code}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-sm text-foreground">{item.name}</TableCell>
                             <TableCell className="text-center">
-                              <Badge variant={item.is_active ? 'default' : 'secondary'} className="text-xs">
-                                {item.is_active ? 'Active' : 'Inactive'}
-                              </Badge>
+                              {item.is_active ? (
+                                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                  Active
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+                                  Inactive
+                                </span>
+                              )}
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(item)}>
+                              <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEditDialog(item)}>
                                   <Pencil className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-7 w-7 text-destructive hover:text-destructive"
+                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
                                   onClick={() => deleteDiscipline.mutate(item.id)}
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
