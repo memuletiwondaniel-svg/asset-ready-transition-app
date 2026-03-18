@@ -21,12 +21,9 @@ interface SiteRow {
   display_order: number;
 }
 
-interface DmsSitesTabProps {
-  searchQuery: string;
-}
-
-const DmsSitesTab: React.FC<DmsSitesTabProps> = ({ searchQuery }) => {
+const DmsSitesTab: React.FC = () => {
   const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<SiteRow | null>(null);
   const [formCode, setFormCode] = useState('');
