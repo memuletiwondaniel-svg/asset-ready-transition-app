@@ -187,7 +187,7 @@ export const LogsheetsStep: React.FC<LogsheetsStepProps> = ({ vcrId }) => {
 
                     <button
                       onClick={() => setDeleteTarget(item.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
+                      className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
