@@ -3083,7 +3083,7 @@ function detectAgentDomain(message: string): string {
   const lower = message.toLowerCase();
   
   // Document agent triggers
-  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code)\b/i.test(lower)) {
+  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number)\b/i.test(lower)) {
     return 'document_agent';
   }
   
