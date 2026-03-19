@@ -515,8 +515,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 15. Architecture Portability & Data Sovereignty */}
-          <Section id="portability" icon={<Container className="h-5 w-5 text-primary" />} title="15. Architecture Portability & Data Sovereignty">
+          {/* 16. Architecture Portability & Data Sovereignty */}
+          <Section id="portability" icon={<Container className="h-5 w-5 text-primary" />} title="16. Architecture Portability & Data Sovereignty">
             <p>ORSH is built on a <strong className="text-foreground">100% open-source, standards-based</strong> technology stack with zero proprietary lock-in. Every component can be exported, migrated, or self-hosted.</p>
 
             <p className="font-medium text-foreground mt-3">Data Ownership & Export</p>
