@@ -34,10 +34,7 @@ const DmsPlantsTab: React.FC = () => {
   const { data: plants = [], isLoading } = useQuery({
     queryKey: ['dms-plants'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('dms_plants')
-        .select('*')
-        .order('display_order', { ascending: true });
+      const { data, error } = await supabase.from('dms_plants').select('*').order('display_order', { ascending: true });
       if (error) throw error;
       return data as PlantRow[];
     },
@@ -46,32 +43,25 @@ const DmsPlantsTab: React.FC = () => {
   const createPlant = useMutation({
     mutationFn: async (item: { code: string; plant_name: string; location: string; is_active: boolean }) => {
       const maxOrder = plants.length > 0 ? Math.max(...plants.map(p => p.display_order)) : 0;
-      const { error } = await supabase
-        .from('dms_plants')
-        .insert({ code: item.code, plant_name: item.plant_name, location: item.location, is_active: item.is_active, display_order: maxOrder + 1 });
+      const { error } = await supabase.from('dms_plants').insert({ ...item, display_order: maxOrder + 1 });
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-plants'] }); toast.success('Plant created'); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-plants'] }); toast.success('Plant created'); setDialogOpen(false); },
     onError: (err: any) => toast.error(err.message || 'Failed to create plant'),
   });
 
   const updatePlant = useMutation({
     mutationFn: async (item: { id: string; code: string; plant_name: string; location: string; is_active: boolean }) => {
-      const { error } = await supabase
-        .from('dms_plants')
-        .update({ code: item.code, plant_name: item.plant_name, location: item.location, is_active: item.is_active, updated_at: new Date().toISOString() })
-        .eq('id', item.id);
+      const { id, ...rest } = item;
+      const { error } = await supabase.from('dms_plants').update({ ...rest, updated_at: new Date().toISOString() }).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-plants'] }); toast.success('Plant updated'); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-plants'] }); toast.success('Plant updated'); setDialogOpen(false); },
     onError: (err: any) => toast.error(err.message || 'Failed to update plant'),
   });
 
   const deletePlant = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('dms_plants').delete().eq('id', id);
-      if (error) throw error;
-    },
+    mutationFn: async (id: string) => { const { error } = await supabase.from('dms_plants').delete().eq('id', id); if (error) throw error; },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-plants'] }); toast.success('Plant deleted'); },
     onError: (err: any) => toast.error(err.message || 'Failed to delete plant'),
   });
@@ -82,36 +72,14 @@ const DmsPlantsTab: React.FC = () => {
     (p.location || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const openAddDialog = () => {
-    setEditingItem(null);
-    setFormCode('');
-    setFormPlantName('');
-    setFormLocation('');
-    setFormIsActive(true);
-    setDialogOpen(true);
-  };
-
-  const openEditDialog = (item: PlantRow) => {
-    setEditingItem(item);
-    setFormCode(item.code);
-    setFormPlantName(item.plant_name);
-    setFormLocation(item.location || '');
-    setFormIsActive(item.is_active);
-    setDialogOpen(true);
-  };
+  const openAddDialog = () => { setEditingItem(null); setFormCode(''); setFormPlantName(''); setFormLocation(''); setFormIsActive(true); setDialogOpen(true); };
+  const openEditDialog = (item: PlantRow) => { setEditingItem(item); setFormCode(item.code); setFormPlantName(item.plant_name); setFormLocation(item.location || ''); setFormIsActive(item.is_active); setDialogOpen(true); };
 
   const handleSave = () => {
-    if (!formCode.trim() || !formPlantName.trim()) {
-      toast.error('Code and Plant name are required');
-      return;
-    }
+    if (!formCode.trim() || !formPlantName.trim()) { toast.error('Code and Plant name are required'); return; }
     const payload = { code: formCode.trim(), plant_name: formPlantName.trim(), location: formLocation.trim(), is_active: formIsActive };
-    if (editingItem) {
-      updatePlant.mutate({ id: editingItem.id, ...payload });
-    } else {
-      createPlant.mutate(payload);
-    }
-    setDialogOpen(false);
+    if (editingItem) { updatePlant.mutate({ id: editingItem.id, ...payload }); }
+    else { createPlant.mutate(payload); }
   };
 
   const isSaving = createPlant.isPending || updatePlant.isPending;
@@ -129,16 +97,12 @@ const DmsPlantsTab: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9 h-9" />
             </div>
-            <Button size="sm" className="gap-1.5" onClick={openAddDialog}>
-              <Plus className="h-4 w-4" /> Add Plant
-            </Button>
+            <Button size="sm" className="gap-1.5" onClick={openAddDialog}><Plus className="h-4 w-4" /> Add Plant</Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
+            <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : (
             <Table>
               <TableHeader>
@@ -155,49 +119,24 @@ const DmsPlantsTab: React.FC = () => {
                 {filtered.map((item, idx) => (
                   <TableRow key={item.id} className="group border-border/40 hover:bg-muted/30 transition-colors">
                     <TableCell className="text-muted-foreground text-xs tabular-nums">{idx + 1}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-foreground">
-                        {item.code}
-                      </span>
-                    </TableCell>
+                    <TableCell><span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-foreground">{item.code}</span></TableCell>
                     <TableCell className="text-sm text-foreground">{item.plant_name}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center justify-center h-6 min-w-[2rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-muted-foreground">
-                        {item.location || '—'}
-                      </span>
-                    </TableCell>
+                    <TableCell><span className="inline-flex items-center justify-center h-6 min-w-[2rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-muted-foreground">{item.location || '—'}</span></TableCell>
                     <TableCell className="text-center">
-                      {item.is_active ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-                          Inactive
-                        </span>
-                      )}
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span className={`h-1.5 w-1.5 rounded-full ${item.is_active ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />
+                        {item.is_active ? 'Active' : 'Inactive'}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEditDialog(item)}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deletePlant.mutate(item.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEditDialog(item)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deletePlant.mutate(item.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
-                {filtered.length === 0 && !isLoading && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      No plants found
-                    </TableCell>
-                  </TableRow>
-                )}
+                {filtered.length === 0 && !isLoading && (<TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No plants found</TableCell></TableRow>)}
               </TableBody>
             </Table>
           )}
@@ -205,36 +144,36 @@ const DmsPlantsTab: React.FC = () => {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editingItem ? 'Edit Plant' : 'Add Plant'}</DialogTitle>
-            <DialogDescription>
-              {editingItem ? 'Update the plant details' : 'Create a new plant entry'}
-            </DialogDescription>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="text-lg font-semibold">{editingItem ? 'Edit Plant' : 'Add Plant'}</DialogTitle>
+            <DialogDescription>{editingItem ? 'Modify the plant details below.' : 'Fill in the details to create a new plant.'}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Code *</Label>
-              <Input value={formCode} onChange={e => setFormCode(e.target.value.toUpperCase())} placeholder="e.g. C001" maxLength={10} />
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Code <span className="text-destructive">*</span></Label>
+                <Input value={formCode} onChange={e => setFormCode(e.target.value.toUpperCase())} placeholder="e.g. C001" maxLength={10} className="font-mono" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Location</Label>
+                <Input value={formLocation} onChange={e => setFormLocation(e.target.value)} placeholder="e.g. NR" />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Plant *</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Plant Name <span className="text-destructive">*</span></Label>
               <Input value={formPlantName} onChange={e => setFormPlantName(e.target.value)} placeholder="e.g. North Rumaila CS1" />
             </div>
-            <div className="space-y-2">
-              <Label>Location</Label>
-              <Input value={formLocation} onChange={e => setFormLocation(e.target.value)} placeholder="e.g. NR" />
-            </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div><Label className="text-sm font-medium">Active Status</Label><p className="text-xs text-muted-foreground mt-0.5">Enable or disable this plant</p></div>
               <Switch checked={formIsActive} onCheckedChange={setFormIsActive} />
-              <Label className="text-sm">Active</Label>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+          <DialogFooter className="pt-4 border-t gap-2">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isSaving}>Cancel</Button>
+            <Button onClick={handleSave} disabled={isSaving} className="min-w-[100px]">
               {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {editingItem ? 'Update' : 'Create'}
+              {editingItem ? 'Save Changes' : 'Create Plant'}
             </Button>
           </DialogFooter>
         </DialogContent>

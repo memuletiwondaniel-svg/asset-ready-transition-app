@@ -88,6 +88,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dms-disciplines'] });
       toast.success('Discipline created');
+      setDialogOpen(false);
     },
     onError: (err: any) => toast.error(err.message || 'Failed to create discipline'),
   });
@@ -103,6 +104,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dms-disciplines'] });
       toast.success('Discipline updated');
+      setDialogOpen(false);
     },
     onError: (err: any) => toast.error(err.message || 'Failed to update discipline'),
   });
@@ -152,7 +154,6 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
     } else {
       createDiscipline.mutate({ code: formCode.trim(), name: formName.trim(), is_active: formIsActive });
     }
-    setDialogOpen(false);
   };
 
   const isSaving = createDiscipline.isPending || updateDiscipline.isPending;
@@ -352,41 +353,33 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
 
       {/* Add / Edit Discipline Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editingItem ? 'Edit Discipline' : 'Add Discipline'}</DialogTitle>
-            <DialogDescription>
-              {editingItem ? 'Update the discipline code and name' : 'Create a new discipline code'}
-            </DialogDescription>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="text-lg font-semibold">{editingItem ? 'Edit Discipline' : 'Add Discipline'}</DialogTitle>
+            <DialogDescription>{editingItem ? 'Modify the discipline details below.' : 'Fill in the details to create a new discipline code.'}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Code *</Label>
-              <Input
-                value={formCode}
-                onChange={e => setFormCode(e.target.value.toUpperCase())}
-                placeholder="e.g. EA"
-                maxLength={10}
-              />
+          <div className="space-y-4 py-4">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Code <span className="text-destructive">*</span></Label>
+              <Input value={formCode} onChange={e => setFormCode(e.target.value.toUpperCase())} placeholder="e.g. EA" maxLength={10} className="font-mono" />
             </div>
-            <div className="space-y-2">
-              <Label>Discipline Name *</Label>
-              <Input
-                value={formName}
-                onChange={e => setFormName(e.target.value)}
-                placeholder="e.g. Electrical"
-              />
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Discipline Name <span className="text-destructive">*</span></Label>
+              <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="e.g. Electrical" />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <Label className="text-sm font-medium">Active Status</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">Enable or disable this discipline</p>
+              </div>
               <Switch checked={formIsActive} onCheckedChange={setFormIsActive} />
-              <Label className="text-sm">Active</Label>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+          <DialogFooter className="pt-4 border-t gap-2">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isSaving}>Cancel</Button>
+            <Button onClick={handleSave} disabled={isSaving} className="min-w-[100px]">
               {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {editingItem ? 'Update' : 'Create'}
+              {editingItem ? 'Save Changes' : 'Create Discipline'}
             </Button>
           </DialogFooter>
         </DialogContent>
