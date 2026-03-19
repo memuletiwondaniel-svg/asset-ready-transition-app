@@ -146,6 +146,7 @@ const DmsConfigurationTab: React.FC = () => {
   const [formSeparator, setFormSeparator] = useState('-');
   const [formMinLength, setFormMinLength] = useState(1);
   const [formMaxLength, setFormMaxLength] = useState(10);
+  const [formCharType, setFormCharType] = useState('alphanumeric');
   const [formSourceTable, setFormSourceTable] = useState('none');
   const [formSourceCodeCol, setFormSourceCodeCol] = useState('code');
   const [formSourceNameCol, setFormSourceNameCol] = useState('');
