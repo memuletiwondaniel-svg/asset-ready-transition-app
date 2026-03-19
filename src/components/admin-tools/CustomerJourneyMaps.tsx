@@ -223,6 +223,7 @@ const CustomerJourneyMaps: React.FC<CustomerJourneyMapsProps> = ({ onBack }) => 
         { phase: 'User Management', actions: ['Approve pending accounts', 'Assign roles and hubs', 'Bulk upload users'], touchpoints: ['User Management', 'Bulk Upload', 'Role Assignment'], emotion: 'neutral', outcome: 'Users onboarded correctly' },
         { phase: 'Security Monitoring', actions: ['Review audit logs', 'Check session configs', 'Monitor API key usage'], touchpoints: ['Audit Logs', 'Session Timeout', 'API Key Management'], emotion: 'neutral', outcome: 'Security posture maintained' },
         { phase: 'Configuration', actions: ['Manage roles & permissions', 'Configure feature flags', 'Set up SSO providers'], touchpoints: ['Role Permissions', 'Feature Flags', 'SSO Config'], emotion: 'positive', outcome: 'Platform configured for needs' },
+        { phase: 'AI & DMS Management', actions: ['Review AI Agent Strategy doc', 'Configure DMS metadata (9 tabs)', 'Monitor AI training feedback', 'Review document numbering'], touchpoints: ['AI Strategy Doc', 'DMS Config', 'Admin Tools'], emotion: 'positive', outcome: 'AI and document systems properly configured' },
         { phase: 'Incident Response', actions: ['Follow incident runbook', 'Execute containment', 'Generate post-mortem'], touchpoints: ['Incident Runbook', 'Disaster Recovery', 'Deployment Log'], emotion: 'frustrated', outcome: 'Incidents resolved and documented' },
       ],
     },
