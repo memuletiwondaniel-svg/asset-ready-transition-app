@@ -93,7 +93,12 @@ const useSampleData = () => {
             .select(`${codeCol}, ${nameCol}`)
             .eq('is_active', true)
             .order('display_order', { ascending: true })
-            .limit(1);
+            .limit(5);
+          // Pick the entry with the shortest combined text for better display
+          if (data?.length) {
+            const shortest = data.sort((a: any, b: any) => 
+              (String(a[codeCol]) + a[nameCol]).length - (String(b[codeCol]) + b[nameCol]).length
+            )[0];
           if (data?.[0]) {
             results[table] = { code: data[0][codeCol], name: data[0][nameCol] };
           }
