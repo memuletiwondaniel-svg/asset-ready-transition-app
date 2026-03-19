@@ -66,6 +66,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
     { id: 'certificates', label: 'Certificates (SoF, PAC, FAC)' },
     { id: 'orm', label: 'ORM (Operations Readiness Manpower)' },
     { id: 'training', label: 'Training Management' },
+    { id: 'dms', label: 'Document Management System (DMS)' },
+    { id: 'ai-agent', label: 'AI Agent Architecture (Bob CoPilot)' },
     { id: 'coding-conventions', label: 'Coding Conventions & ID Formats' },
     { id: 'roles', label: 'Roles & Permissions Configuration' },
     { id: 'database-schema', label: 'Database Schema & Tables' },
@@ -74,6 +76,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
     { id: 'integrations', label: 'External Integrations' },
     { id: 'admin-tools', label: 'Admin Tools Reference' },
     { id: 'deployment-portability', label: 'Deployment Architecture & Portability' },
+    { id: 'readiness-scoring', label: 'Readiness Ontology & Scoring Engine (ORIP)' },
     { id: 'appendix-a', label: 'Appendix A — Customer Journey Maps' },
     { id: 'appendix-b', label: 'Appendix B — Process Flow Maps' },
   ];
@@ -97,7 +100,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
             </div>
           </div>
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            v1.0 — March 2026
+            v2.0 — March 2026
           </Badge>
         </div>
       </div>
@@ -150,7 +153,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
                 { name: 'PSSR', desc: 'Pre-Startup Safety Reviews with checklists, approvals, and SoF generation' },
                 { name: 'ORM', desc: 'Operations Readiness Manpower — deliverable tracking and resource planning' },
                 { name: 'Training', desc: 'Training plan management with cost tracking, materials, and approvals' },
+                { name: 'DMS', desc: 'Document Management System — metadata config, numbering, gap analysis' },
                 { name: 'Task Manager', desc: 'Unified task inbox with auto-generated tasks from all modules' },
+                { name: 'AI CoPilot (Bob)', desc: 'Multi-agent AI assistant with specialist sub-agents and autonomous training' },
                 { name: 'Admin Tools', desc: 'User management, roles, security, audit, and platform configuration' },
               ].map(m => (
                 <Card key={m.name} className="bg-muted/30">
@@ -459,8 +464,100 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 9. Coding Conventions */}
-          <Section id="coding-conventions" icon={<Code className="h-5 w-5 text-primary" />} title="9. Coding Conventions & ID Formats">
+          {/* 9. Document Management System */}
+          <Section id="dms" icon={<FileText className="h-5 w-5 text-primary" />} title="9. Document Management System (DMS)">
+            <p>The DMS provides centralized configuration for all document metadata, numbering conventions, and readiness analysis.</p>
+
+            <p className="font-medium text-foreground mt-3">DMS Configuration Tabs (9 tabs)</p>
+            <InfoTable headers={['Tab', 'Table', 'Purpose']} rows={[
+              ['Document', 'dms_document_types', 'Document types with code, discipline, tier, RLMU, acceptable status'],
+              ['Discipline', 'dms_disciplines', 'Engineering discipline codes (Electrical, Mechanical, Civil, etc.)'],
+              ['Project', 'dms_projects', 'Project codes with cabinet mapping'],
+              ['Originator', 'dms_originators', 'Document originator organizations'],
+              ['Plant', 'dms_plants', 'Plant locations with codes'],
+              ['Site', 'dms_sites', 'Site definitions with comments'],
+              ['Unit', 'dms_units', 'Operational unit codes'],
+              ['Status Code', 'dms_status_codes', 'Document lifecycle statuses with revision suffixes'],
+              ['Configuration', 'dms_numbering_segments', 'Visual numbering builder for document ID format'],
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">Document Status Lifecycle</p>
+            <FlowDiagram steps={['Draft', 'IFR (Issued for Review)', 'IFC (Issued for Construction)', 'AFC (Approved for Construction)', 'RLMU (Record Library Master Update)']} />
+
+            <p className="font-medium text-foreground mt-4">Document Numbering Visual Builder</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Drag-and-drop segment ordering with configurable separators</li>
+              <li>Each segment: key, label, min/max length, required flag, source table reference</li>
+              <li>Live preview of generated document number format</li>
+              <li>Supports dynamic lookup from DMS reference tables (plants, disciplines, etc.)</li>
+            </ul>
+
+            <p className="font-medium text-foreground mt-4">Intelligent Features</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong className="text-foreground">Deduplication:</strong> Identical Code + Document Name rows collapsed unless Discipline columns visible</li>
+              <li><strong className="text-foreground">Column Visibility Toggle:</strong> Default columns: Code, Name, Tier</li>
+              <li><strong className="text-foreground">Gap Analysis:</strong> AI agent compares current statuses against acceptable_status rules</li>
+              <li><strong className="text-foreground">Quality Scoring:</strong> 0–100 composite score (completeness 30%, maturity 30%, RLMU compliance 25%, consistency 15%)</li>
+            </ul>
+          </Section>
+
+          <Separator />
+
+          {/* 10. AI Agent Architecture */}
+          <Section id="ai-agent" icon={<Layers className="h-5 w-5 text-primary" />} title="10. AI Agent Architecture (Bob CoPilot)">
+            <p>ORSH embeds a multi-agent AI system with autonomous self-improvement capabilities.</p>
+
+            <p className="font-medium text-foreground mt-3">Architecture Pattern</p>
+            <div className="bg-muted/50 rounded-lg p-4 font-mono text-xs space-y-1">
+              <div className="text-foreground font-semibold mb-2">Multi-Agent Routing</div>
+              <div>User Message → Bob CoPilot (Router)</div>
+              <div className="pl-4">├── Intent Detection (domain classification)</div>
+              <div className="pl-4">├── User Context Loading (ai_user_context)</div>
+              <div className="pl-4">├── Specialist Agent Dispatch:</div>
+              <div className="pl-8">├── Document Specialist (DMS domain — 13 tools)</div>
+              <div className="pl-8">├── PSSR Specialist (safety review domain)</div>
+              <div className="pl-8">├── ORA Specialist (activity planning domain)</div>
+              <div className="pl-8">└── General CoPilot (fallback)</div>
+              <div className="pl-4">└── Response Synthesis + Context Persistence</div>
+            </div>
+
+            <p className="font-medium text-foreground mt-4">Document Specialist Tools (13)</p>
+            <InfoTable headers={['Tool', 'Purpose']} rows={[
+              ['get_document_readiness_summary', 'Overall readiness % against acceptable_status rules'],
+              ['get_document_status_breakdown', 'Distribution of documents across lifecycle statuses'],
+              ['get_document_numbering_config', 'Current numbering segment configuration'],
+              ['get_document_gaps_analysis', 'Documents not meeting acceptable status by type'],
+              ['get_dms_table_info', 'Row counts and metadata for all DMS tables'],
+              ['get_dms_hyperlink', 'Deep links for Assai, Documentum, Wrench DMS systems'],
+              ['get_document_quality_score', 'Composite 0–100 quality score'],
+              ['get_document_ora_linkage', 'Maps document gaps to ORA phase requirements'],
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">Autonomous Training Loop</p>
+            <FlowDiagram steps={['User Feedback', 'Daily Cron Analysis', 'Pattern Detection', 'Auto-Apply Low-Risk Fixes', 'Edge Case Resolution', 'Regression Testing']} />
+            <ul className="list-disc pl-5 space-y-1 mt-2">
+              <li><strong className="text-foreground">Feedback Pipeline:</strong> ThumbsUp/Down + corrections → ai_response_feedback</li>
+              <li><strong className="text-foreground">Auto-Apply:</strong> Low-risk prompt improvements applied without human gate</li>
+              <li><strong className="text-foreground">Self-Healing:</strong> Aged edge cases (7+ days) auto-resolved if matching previous patterns</li>
+              <li><strong className="text-foreground">Context Learning:</strong> User preferences persisted in ai_user_context table</li>
+            </ul>
+
+            <p className="font-medium text-foreground mt-4">AI Infrastructure Tables</p>
+            <InfoTable headers={['Table', 'Purpose']} rows={[
+              ['ai_agent_registry', 'Agent definitions with capabilities, model IDs, domain tags'],
+              ['ai_response_feedback', 'User ratings, corrections, tool call tracking'],
+              ['ai_training_log', 'Versioned prompt deployments and test results'],
+              ['ai_agent_communications', 'Inter-agent message routing with latency tracking'],
+              ['ai_edge_cases', 'Hallucination and tool failure catalog for regression testing'],
+              ['ai_user_context', 'Per-user preference persistence (key-value JSON)'],
+              ['ai_prompt_improvements', 'Suggested and auto-applied prompt changes'],
+            ]} />
+          </Section>
+
+          <Separator />
+
+          {/* 11. Coding Conventions */}
+          <Section id="coding-conventions" icon={<Code className="h-5 w-5 text-primary" />} title="11. Coding Conventions & ID Formats">
             <InfoTable headers={['Entity', 'Format', 'Example', 'Generator Function']} rows={[
               ['Project Code', '{PREFIX}-{NUMBER}', 'DP-300', 'Manual entry'],
               ['VCR Code', 'VCR-{PROJECT}-{SEQ}', 'VCR-DP300-01', 'generate_vcr_code()'],
@@ -490,8 +587,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 10. Roles */}
-          <Section id="roles" icon={<Shield className="h-5 w-5 text-primary" />} title="10. Roles & Permissions Configuration">
+          {/* 12. Roles */}
+          <Section id="roles" icon={<Shield className="h-5 w-5 text-primary" />} title="12. Roles & Permissions Configuration">
             <p>Roles are organized in <strong className="text-foreground">categories</strong> and each role has specific <strong className="text-foreground">permissions</strong> from the <code className="bg-muted px-1 rounded text-xs">app_permission</code> enum.</p>
 
             <p className="font-medium text-foreground mt-3">Role Categories</p>
@@ -537,9 +634,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 11. Database Schema */}
-          <Section id="database-schema" icon={<Table className="h-5 w-5 text-primary" />} title="11. Database Schema & Tables">
-            <p>The ORSH database contains <strong className="text-foreground">70+ tables</strong> organized by module:</p>
+          {/* 13. Database Schema */}
+          <Section id="database-schema" icon={<Table className="h-5 w-5 text-primary" />} title="13. Database Schema & Tables">
+            <p>The ORSH database contains <strong className="text-foreground">90+ tables</strong> organized by module:</p>
 
             <p className="font-medium text-foreground mt-3">Core Tables</p>
             <InfoTable headers={['Table', 'Module', 'Description']} rows={[
@@ -598,6 +695,30 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               ['checklist_items', 'Master checklist configuration'],
             ]} />
 
+            <p className="font-medium text-foreground mt-4">DMS Tables</p>
+            <InfoTable headers={['Table', 'Description']} rows={[
+              ['dms_document_types', 'Document type definitions with acceptable status and tier'],
+              ['dms_disciplines', 'Engineering discipline codes'],
+              ['dms_projects', 'Project codes with cabinet mapping'],
+              ['dms_originators', 'Originator organization codes'],
+              ['dms_plants', 'Plant location codes'],
+              ['dms_sites', 'Site definitions'],
+              ['dms_units', 'Operational unit codes'],
+              ['dms_status_codes', 'Document lifecycle status codes with revision suffixes'],
+              ['dms_numbering_segments', 'Document numbering format segments'],
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">AI Infrastructure Tables</p>
+            <InfoTable headers={['Table', 'Description']} rows={[
+              ['ai_agent_registry', 'Agent definitions (capabilities, model, domain tags)'],
+              ['ai_response_feedback', 'User ratings and corrections'],
+              ['ai_training_log', 'Versioned prompt deployments'],
+              ['ai_agent_communications', 'Inter-agent message routing'],
+              ['ai_edge_cases', 'Hallucination/failure catalog for regression'],
+              ['ai_user_context', 'Per-user preference persistence'],
+              ['ai_prompt_improvements', 'Auto-applied prompt change tracking'],
+            ]} />
+
             <p className="font-medium text-foreground mt-4">Supporting Tables</p>
             <InfoTable headers={['Table', 'Description']} rows={[
               ['user_tasks', 'Unified task inbox (auto-generated + manual)'],
@@ -620,8 +741,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 12. Enums */}
-          <Section id="enums" icon={<Boxes className="h-5 w-5 text-primary" />} title="12. Status Enums & State Machines">
+          {/* 14. Enums */}
+          <Section id="enums" icon={<Boxes className="h-5 w-5 text-primary" />} title="14. Status Enums & State Machines">
             <p>All status values are defined as PostgreSQL enums for type safety:</p>
 
             <InfoTable headers={['Enum', 'Values', 'Used By']} rows={[
@@ -643,8 +764,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 13. Task Automation */}
-          <Section id="task-automation" icon={<Wrench className="h-5 w-5 text-primary" />} title="13. Task Automation & Database Triggers">
+          {/* 15. Task Automation */}
+          <Section id="task-automation" icon={<Wrench className="h-5 w-5 text-primary" />} title="15. Task Automation & Database Triggers">
             <p>ORSH uses PostgreSQL triggers to automate task creation, progress tracking, and workflow transitions:</p>
 
             <InfoTable headers={['Trigger', 'Event', 'Action']} rows={[
@@ -662,6 +783,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               ['log_p2a_audit_trail', 'Any P2A entity change', 'Creates P2A audit entry'],
               ['audit_pssr_status_change', 'PSSR status changes', 'Writes to audit_logs'],
               ['sync_profile_names_to_auth', 'Profile updated', 'Syncs name/avatar to auth.users metadata'],
+              ['trg_sync_p2a_rejection_to_plan', 'Approver rejects P2A plan', 'Syncs rejection metadata (comment, role, timestamp) to parent plan'],
+              ['trg_task_reviewer_insert/delete', 'Reviewer assigned/removed', 'Manages ad-hoc reviewer tasks in user_tasks'],
+              ['handle_task_reviewer_decision', 'Reviewer approves/rejects', 'Syncs decision to user_tasks and reverts owner card on rejection'],
             ]} />
 
             <p className="font-medium text-foreground mt-4">Auto-Generated Code Triggers</p>
@@ -676,8 +800,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 14. External Integrations */}
-          <Section id="integrations" icon={<Layers className="h-5 w-5 text-primary" />} title="14. External Integrations">
+          {/* 16. External Integrations */}
+          <Section id="integrations" icon={<Layers className="h-5 w-5 text-primary" />} title="16. External Integrations">
             <InfoTable headers={['System', 'Integration Type', 'Purpose']} rows={[
               ['GoCompletions (GoHub)', 'API + Edge Functions', 'Import systems/subsystems into P2A plans, sync completion counts'],
               ['SAP4HANA', 'API (planned)', 'Asset register and maintenance data sync'],
@@ -698,9 +822,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 15. Admin Tools */}
-          <Section id="admin-tools" icon={<Wrench className="h-5 w-5 text-primary" />} title="15. Admin Tools Reference">
-            <p>The Admin Tools dashboard provides 22+ management tools:</p>
+          {/* 17. Admin Tools */}
+          <Section id="admin-tools" icon={<Wrench className="h-5 w-5 text-primary" />} title="17. Admin Tools Reference">
+            <p>The Admin Tools dashboard provides 28+ management tools:</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {[
@@ -722,11 +846,16 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
                 { name: 'APIs', desc: 'External system interface config' },
                 { name: 'ORA Configuration', desc: 'Activity catalog and phase management' },
                 { name: 'VCRs and PSSRs', desc: 'Certificate and checklist configuration' },
+                { name: 'Document Management', desc: 'DMS metadata across 9 configuration tabs' },
                 { name: 'Activity Log', desc: 'Platform-wide activity feed' },
                 { name: 'Deployment Log', desc: 'Release tracking with pre-publish checklist' },
                 { name: 'Tenant Feature Flags', desc: 'Per-tenant module toggles' },
-                { name: 'Security & Compliance Doc', desc: 'This living security document' },
-                { name: 'Platform Guide', desc: 'This living platform guide' },
+                { name: 'Security & Compliance Doc', desc: 'Living enterprise security document' },
+                { name: 'Platform Guide', desc: 'Living platform architecture guide' },
+                { name: 'Strategic North Star', desc: 'ORSH → ORIP evolution & positioning' },
+                { name: 'AI Agent Strategy', desc: 'AI training methodology & agent registry' },
+                { name: 'Customer Journey Maps', desc: 'Role-based persona journey maps' },
+                { name: 'Process Flow Maps', desc: 'Visual process and swim lane diagrams' },
               ].map(t => (
                 <div key={t.name} className="flex items-start gap-2 text-sm">
                   <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
@@ -738,8 +867,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 16. Deployment Architecture & Portability */}
-          <Section id="deployment-portability" icon={<Container className="h-5 w-5 text-primary" />} title="16. Deployment Architecture & Portability">
+          {/* 18. Deployment Architecture & Portability */}
+          <Section id="deployment-portability" icon={<Container className="h-5 w-5 text-primary" />} title="18. Deployment Architecture & Portability">
             <p>ORSH is designed for <strong className="text-foreground">full architectural portability</strong> — no proprietary dependencies, no vendor lock-in, and multiple deployment models supported.</p>
 
             <p className="font-medium text-foreground mt-3">Technology Stack Summary</p>
@@ -803,9 +932,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
             </Card>
           </Section>
 
-          {/* 17. Readiness Ontology & Scoring Engine */}
+          {/* 19. Readiness Ontology & Scoring Engine */}
           <Separator />
-          <Section id="readiness-scoring" icon={<Layers className="h-5 w-5 text-primary" />} title="17. Readiness Ontology & Scoring Engine (ORIP)">
+          <Section id="readiness-scoring" icon={<Layers className="h-5 w-5 text-primary" />} title="19. Readiness Ontology & Scoring Engine (ORIP)">
             <p>The ORIP Scoring Engine converts execution data from all modules into a quantified <strong className="text-foreground">Operational Readiness Index (ORI)</strong> and <strong className="text-foreground">Startup Confidence Score (SCS)</strong>.</p>
 
             <p className="font-medium text-foreground mt-3">Readiness Dimensions</p>

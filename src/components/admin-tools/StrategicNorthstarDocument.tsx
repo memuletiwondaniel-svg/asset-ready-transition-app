@@ -55,6 +55,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
     { id: 'board-brief', label: 'Board-Level Strategic Brief' },
     { id: 'target-market', label: 'Target Market & Industry Context' },
     { id: 'evolution-roadmap', label: 'Platform Evolution Roadmap' },
+    { id: 'ai-strategy', label: 'AI & Intelligence Strategy' },
     { id: 'acquisition-positioning', label: 'Acquisition-Positioning Narrative' },
     { id: 'technical-differentiation', label: 'Technical Differentiation' },
     { id: 'module-alignment', label: 'Current Module Alignment' },
@@ -79,7 +80,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
             </div>
           </div>
           <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-            v1.0 — March 2026
+            v2.0 — March 2026
           </Badge>
         </div>
       </div>
@@ -346,8 +347,59 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
 
           <Separator />
 
-          {/* 6. Acquisition-Positioning Narrative */}
-          <Section id="acquisition-positioning" icon={<Layers className="h-5 w-5 text-amber-600" />} title="6. Acquisition-Positioning Narrative">
+          {/* 6. AI & Intelligence Strategy */}
+          <Section id="ai-strategy" icon={<BrainCircuit className="h-5 w-5 text-amber-600" />} title="6. AI & Intelligence Strategy">
+            <p>
+              ORSH embeds a <strong className="text-foreground">multi-agent AI architecture</strong> that evolves from a decision-support copilot 
+              into an autonomous operational intelligence engine — a core differentiator for the ORIP vision.
+            </p>
+            
+            <StatusTable rows={[
+              { label: 'Bob CoPilot (Router)', value: 'Central AI agent with intent detection, user context learning, and specialist dispatch', status: 'active' },
+              { label: 'Document Specialist', value: '13-tool agent for DMS gap analysis, quality scoring, numbering config, and ORA linkage', status: 'active' },
+              { label: 'Autonomous Training Loop', value: 'Daily cron-driven feedback analysis, auto-apply prompt improvements, self-healing edge cases', status: 'active' },
+              { label: 'User Context Persistence', value: 'Per-user preference learning stored in ai_user_context — personalizes responses over time', status: 'active' },
+              { label: 'PSSR Specialist', value: 'Domain-specific agent for safety review guidance and checklist intelligence', status: 'planned' },
+              { label: 'ORA Specialist', value: 'Activity planning optimization and schedule intelligence', status: 'planned' },
+              { label: 'Predictive ORI Agent', value: 'ML-driven readiness trajectory forecasting and risk anomaly detection', status: 'roadmap' },
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">AI Evolution Phases</p>
+            <div className="space-y-3 mt-2">
+              <Card className="border-emerald-500/20">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Current</Badge>
+                    <p className="font-bold text-foreground text-sm">Phase 1 — Rule-Based Specialist Agents</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Intent routing, tool-based queries, feedback collection, autonomous prompt refinement</p>
+                </CardContent>
+              </Card>
+              <Card className="border-amber-500/20">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">Phase 2</Badge>
+                    <p className="font-bold text-foreground text-sm">Cross-Domain Intelligence</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Multi-agent collaboration, cross-module insights (e.g., document gaps → ORA impacts → training needs)</p>
+                </CardContent>
+              </Card>
+              <Card className="border-purple-500/20">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20">Phase 3</Badge>
+                    <p className="font-bold text-foreground text-sm">Predictive & Prescriptive AI</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">ML on historical readiness data, startup probability forecasting, autonomous alerting, natural language risk summaries</p>
+                </CardContent>
+              </Card>
+            </div>
+          </Section>
+
+          <Separator />
+
+          {/* 7. Acquisition-Positioning Narrative */}
+          <Section id="acquisition-positioning" icon={<Layers className="h-5 w-5 text-amber-600" />} title="7. Acquisition-Positioning Narrative">
             <p>
               ORIP is architected as a modular, enterprise-grade Operational Readiness Execution & Intelligence Engine designed to 
               integrate into existing industrial ecosystems.
@@ -404,8 +456,8 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
 
           <Separator />
 
-          {/* 7. Technical Differentiation */}
-          <Section id="technical-differentiation" icon={<Cpu className="h-5 w-5 text-amber-600" />} title="7. Technical Differentiation">
+          {/* 8. Technical Differentiation */}
+          <Section id="technical-differentiation" icon={<Cpu className="h-5 w-5 text-amber-600" />} title="8. Technical Differentiation">
             <p>ORIP's technical architecture is purpose-built for operational readiness intelligence in regulated, sovereign-sensitive environments.</p>
             
             <StatusTable rows={[
@@ -426,8 +478,8 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
 
           <Separator />
 
-          {/* 8. Current Module Alignment */}
-          <Section id="module-alignment" icon={<Blocks className="h-5 w-5 text-amber-600" />} title="8. Current Module Alignment">
+          {/* 9. Current Module Alignment */}
+          <Section id="module-alignment" icon={<Blocks className="h-5 w-5 text-amber-600" />} title="9. Current Module Alignment">
             <p>
               Each existing ORSH module maps directly to a strategic function in the ORIP intelligence framework. 
               The execution layer is the foundation upon which readiness scoring and predictive analytics are built.
@@ -441,7 +493,9 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               { label: 'Training', value: 'Training plan management with cost tracking, materials, approvals → Competency readiness dimension', status: 'active' },
               { label: 'Certificates', value: 'Statement of Fitness (SoF), PAC, FAC issuance → Formal readiness gate', status: 'active' },
               { label: 'Task Manager', value: 'Unified task inbox with auto-generated tasks from all modules → Action closeout velocity metric', status: 'active' },
-              { label: 'Admin Tools', value: '22+ management tools (users, roles, security, audit, config) → Governance & compliance layer', status: 'active' },
+              { label: 'Admin Tools', value: '28+ management tools (users, roles, security, audit, config) → Governance & compliance layer', status: 'active' },
+              { label: 'DMS', value: 'Document metadata config, numbering builder, gap analysis → Document readiness intelligence', status: 'active' },
+              { label: 'AI CoPilot (Bob)', value: 'Multi-agent AI with autonomous training, specialist routing, document intelligence → Embedded decision support', status: 'active' },
             ]} />
 
             <Card className="bg-amber-500/5 border-amber-500/20 mt-4">

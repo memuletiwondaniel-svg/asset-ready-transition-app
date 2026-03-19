@@ -58,6 +58,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
     { id: 'api-security', label: 'API & Webhook Security' },
     { id: 'audit', label: 'Audit Logging & Compliance' },
     { id: 'data-protection', label: 'Data Protection' },
+    { id: 'ai-security', label: 'AI Agent Security & Guardrails' },
     { id: 'backup-dr', label: 'Backup & Disaster Recovery' },
     { id: 'change-mgmt', label: 'Change Management & Deployment' },
     { id: 'feature-flags', label: 'Tenant Feature Flags' },
@@ -89,7 +90,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
             </div>
           </div>
           <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-            v2.0 — March 2026
+            v3.0 — March 2026
           </Badge>
         </div>
       </div>
@@ -330,8 +331,32 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 9. Backup & DR */}
-          <Section id="backup-dr" icon={<Server className="h-5 w-5 text-primary" />} title="9. Backup & Disaster Recovery">
+          {/* 9. AI Agent Security */}
+          <Section id="ai-security" icon={<ShieldCheck className="h-5 w-5 text-primary" />} title="9. AI Agent Security & Guardrails">
+            <p>The AI CoPilot (Bob) operates within strict security boundaries to prevent data leakage, prompt injection, and unauthorized access.</p>
+            <StatusTable rows={[
+              { label: 'RLS-Aware Queries', value: 'All AI database queries execute through the Supabase client with user JWT — RLS policies enforced at query level', status: 'active' },
+              { label: 'Tenant Isolation', value: 'AI agents cannot access cross-tenant data — enforced by database RLS, not application logic', status: 'active' },
+              { label: 'Tool-Based Access', value: 'AI uses predefined tool functions (13 tools) — no raw SQL or arbitrary query generation', status: 'active' },
+              { label: 'Prompt Injection Prevention', value: 'System prompts are versioned and hashed; user input is never interpolated into system context', status: 'active' },
+              { label: 'Feedback Audit Trail', value: 'All user feedback, corrections, and AI responses logged with conversation_id for traceability', status: 'active' },
+              { label: 'Auto-Apply Guardrails', value: 'Only low-risk, non-high-priority prompt improvements are auto-applied; high-impact changes require human review', status: 'active' },
+              { label: 'Edge Case Catalog', value: 'Hallucinations and tool failures cataloged in ai_edge_cases with severity classification and regression testing', status: 'active' },
+              { label: 'Context Persistence', value: 'User preferences stored in ai_user_context — scoped to individual user_id, never shared cross-user', status: 'active' },
+            ]} />
+            <p className="font-medium text-foreground mt-4">Autonomous Training Security</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong className="text-foreground">Version Control:</strong> All prompt changes tracked with before/after state in ai_training_log</li>
+              <li><strong className="text-foreground">Rollback Capability:</strong> Previous prompt versions preserved for instant rollback</li>
+              <li><strong className="text-foreground">Rate Limiting:</strong> Auto-apply limited to daily cron cycle — prevents rapid uncontrolled changes</li>
+              <li><strong className="text-foreground">Model Access:</strong> AI model API keys stored as Edge Function secrets — never exposed to frontend</li>
+            </ul>
+          </Section>
+
+          <Separator />
+
+          {/* 10. Backup & DR */}
+          <Section id="backup-dr" icon={<Server className="h-5 w-5 text-primary" />} title="10. Backup & Disaster Recovery">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="bg-muted/30 text-center">
                 <CardContent className="pt-4">
@@ -366,8 +391,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 10. Change Management — enhanced CI/CD framing */}
-          <Section id="change-mgmt" icon={<RefreshCw className="h-5 w-5 text-primary" />} title="10. Change Management & CI/CD Pipeline">
+          {/* 11. Change Management — enhanced CI/CD framing */}
+          <Section id="change-mgmt" icon={<RefreshCw className="h-5 w-5 text-primary" />} title="11. Change Management & CI/CD Pipeline">
             <div className="bg-muted/50 rounded-lg p-4 font-mono text-xs text-center">
               BUILD (Lovable Chat) → TEST (Preview URL) → VERIFY (Pre-Publish Checklist) → PUBLISH (Production)
             </div>
@@ -408,8 +433,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 11. Feature Flags */}
-          <Section id="feature-flags" icon={<Flag className="h-5 w-5 text-primary" />} title="11. Tenant Feature Flags">
+          {/* 12. Feature Flags */}
+          <Section id="feature-flags" icon={<Flag className="h-5 w-5 text-primary" />} title="12. Tenant Feature Flags">
             <p>Per-tenant feature flags enable controlled rollouts — ship to one tenant first, verify, then enable for all.</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {[
@@ -426,8 +451,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 12. SSO */}
-          <Section id="sso" icon={<Shield className="h-5 w-5 text-primary" />} title="12. Single Sign-On (SSO)">
+          {/* 13. SSO */}
+          <Section id="sso" icon={<Shield className="h-5 w-5 text-primary" />} title="13. Single Sign-On (SSO)">
             <StatusTable rows={[
               { label: 'SAML 2.0', value: 'Per-tenant Entity ID, SSO URL, Certificate configuration', status: 'active' },
               { label: 'OIDC', value: 'OpenID Connect for compatible providers', status: 'active' },
@@ -443,8 +468,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 13. Database Security */}
-          <Section id="db-security" icon={<Database className="h-5 w-5 text-primary" />} title="13. Database Security Architecture">
+          {/* 14. Database Security */}
+          <Section id="db-security" icon={<Database className="h-5 w-5 text-primary" />} title="14. Database Security Architecture">
             <ul className="list-disc pl-5 space-y-1">
               <li><strong>RLS enabled on all tables</strong> containing user or tenant data</li>
               <li>Policies use <code className="bg-muted px-1 rounded text-xs">security definer</code> functions to prevent recursive evaluation</li>
@@ -461,8 +486,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 14. Compliance Summary — enhanced with new rows */}
-          <Section id="compliance" icon={<CheckCircle className="h-5 w-5 text-emerald-500" />} title="14. Enterprise Compliance Summary">
+          {/* 15. Compliance Summary — enhanced with new rows */}
+          <Section id="compliance" icon={<CheckCircle className="h-5 w-5 text-emerald-500" />} title="15. Enterprise Compliance Summary">
             <StatusTable rows={[
               { label: 'Authentication', value: 'Email/password, SAML SSO (Entra/Okta/SAP IAM), OIDC, 2FA', status: 'active' },
               { label: 'Authorization', value: 'Granular RBAC with permission matrix', status: 'active' },
@@ -490,8 +515,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 15. Architecture Portability & Data Sovereignty */}
-          <Section id="portability" icon={<Container className="h-5 w-5 text-primary" />} title="15. Architecture Portability & Data Sovereignty">
+          {/* 16. Architecture Portability & Data Sovereignty */}
+          <Section id="portability" icon={<Container className="h-5 w-5 text-primary" />} title="16. Architecture Portability & Data Sovereignty">
             <p>ORSH is built on a <strong className="text-foreground">100% open-source, standards-based</strong> technology stack with zero proprietary lock-in. Every component can be exported, migrated, or self-hosted.</p>
 
             <p className="font-medium text-foreground mt-3">Data Ownership & Export</p>
@@ -542,8 +567,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 16. Enterprise SaaS Architecture Readiness — NEW */}
-          <Section id="architecture-readiness" icon={<Target className="h-5 w-5 text-primary" />} title="16. Enterprise SaaS Architecture Readiness">
+          {/* 17. Enterprise SaaS Architecture Readiness — NEW */}
+          <Section id="architecture-readiness" icon={<Target className="h-5 w-5 text-primary" />} title="17. Enterprise SaaS Architecture Readiness">
             <p>Consolidated assessment of all enterprise architecture requirements against ORSH current state. Items marked <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 mx-1 text-xs">🔶 Roadmap</Badge> are planned for ORIP evolution.</p>
 
             <p className="font-medium text-foreground mt-3">ORIP Scoring & Intelligence Engine</p>
@@ -595,8 +620,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 17. Security Controls & Hardening — NEW */}
-          <Section id="security-controls" icon={<ShieldCheck className="h-5 w-5 text-primary" />} title="17. Security Controls & Hardening">
+          {/* 18. Security Controls & Hardening — NEW */}
+          <Section id="security-controls" icon={<ShieldCheck className="h-5 w-5 text-primary" />} title="18. Security Controls & Hardening">
             <p>Detailed security controls addressing enterprise procurement requirements for data protection, access governance, and cryptographic standards.</p>
 
             <StatusTable rows={[
@@ -647,8 +672,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 18. Compliance Certifications & ORIP Roadmap — NEW */}
-          <Section id="compliance-roadmap" icon={<AlertTriangle className="h-5 w-5 text-amber-500" />} title="18. Compliance Certifications & ORIP Roadmap">
+          {/* 19. Compliance Certifications & ORIP Roadmap — NEW */}
+          <Section id="compliance-roadmap" icon={<AlertTriangle className="h-5 w-5 text-amber-500" />} title="19. Compliance Certifications & ORIP Roadmap">
             <Card className="border-amber-500/20 bg-amber-500/5">
               <CardContent className="pt-4 text-sm">
                 <p className="font-medium text-foreground">⚠️ Mandatory for ORIP Enterprise Procurement</p>

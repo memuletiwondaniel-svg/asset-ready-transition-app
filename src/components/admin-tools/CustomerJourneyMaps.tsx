@@ -130,6 +130,7 @@ const CustomerJourneyMaps: React.FC<CustomerJourneyMapsProps> = ({ onBack }) => 
       gradient: 'from-violet-500 to-purple-600',
       journeyPhases: [
         { phase: 'Dashboard Review', actions: ['Open ORSH landing page', 'Review favorited projects', 'Check ORI scores'], touchpoints: ['Landing Page', 'Project Cards', 'ORI Widget'], emotion: 'positive', outcome: 'Instant visibility into portfolio readiness' },
+        { phase: 'AI-Assisted Insights', actions: ['Ask Bob CoPilot for project summary', 'Get document readiness score', 'Review AI-flagged blockers'], touchpoints: ['AI Chat', 'ORI Dashboard', 'Notifications'], emotion: 'positive', outcome: 'Data-driven decisions without manual report digging' },
         { phase: 'Director SoF View', actions: ['View My Tasks (Director view)', 'Review pending approvals', 'Check SoF status'], touchpoints: ['My Tasks Page', 'Director SoF View'], emotion: 'neutral', outcome: 'Understand approval backlog' },
         { phase: 'Approval Decisions', actions: ['Review P2A plans', 'Approve/reject ORA plans', 'Sign-off certificates'], touchpoints: ['Task Detail Sheet', 'Approval Controls'], emotion: 'positive', outcome: 'Plans unblocked and progressing' },
         { phase: 'Escalation Review', actions: ['Identify at-risk projects', 'Review overdue activities', 'Engage with hub leads'], touchpoints: ['Project Overview', 'Gantt Chart', 'Comments'], emotion: 'frustrated', outcome: 'Blockers identified and action taken' },
@@ -192,6 +193,7 @@ const CustomerJourneyMaps: React.FC<CustomerJourneyMapsProps> = ({ onBack }) => 
         { phase: 'ORA Plan Creation', actions: ['Open ORA wizard from task CTA', 'Select phase & project type', 'Choose activities from catalog', 'Schedule on Gantt chart'], touchpoints: ['ORA Wizard Steps 1-6', 'Activity Catalog', 'Gantt Chart'], emotion: 'neutral', outcome: 'ORA plan submitted for approval' },
         { phase: 'Activity Execution', actions: ['Open activity task', 'Update progress & status', 'Add comments & evidence', 'Mark as completed'], touchpoints: ['Task Detail Sheet', 'ORA Activity Sheet', 'Gantt Chart'], emotion: 'positive', outcome: 'Activities completed on schedule' },
         { phase: 'P2A Handover', actions: ['Create P2A plan from task', 'Define systems & VCRs', 'Assign handover phases', 'Submit for approval'], touchpoints: ['P2A Wizard', 'VCR Creation', 'System Assignment'], emotion: 'frustrated', outcome: 'P2A plan submitted and tracked' },
+        { phase: 'AI CoPilot Assistance', actions: ['Ask Bob about document gaps', 'Get quality scores for DMS', 'Check ORA linkage for documents', 'Get numbering config help'], touchpoints: ['AI Chat', 'Document Specialist', 'DMS Config'], emotion: 'positive', outcome: 'AI-guided document readiness and gap closure' },
         { phase: 'Training Coordination', actions: ['Create training plan', 'Schedule training items', 'Track PO status', 'Upload evidence'], touchpoints: ['Training Module', 'Training Items', 'Evidence Upload'], emotion: 'neutral', outcome: 'Training requirements fulfilled' },
       ],
     },
@@ -221,6 +223,7 @@ const CustomerJourneyMaps: React.FC<CustomerJourneyMapsProps> = ({ onBack }) => 
         { phase: 'User Management', actions: ['Approve pending accounts', 'Assign roles and hubs', 'Bulk upload users'], touchpoints: ['User Management', 'Bulk Upload', 'Role Assignment'], emotion: 'neutral', outcome: 'Users onboarded correctly' },
         { phase: 'Security Monitoring', actions: ['Review audit logs', 'Check session configs', 'Monitor API key usage'], touchpoints: ['Audit Logs', 'Session Timeout', 'API Key Management'], emotion: 'neutral', outcome: 'Security posture maintained' },
         { phase: 'Configuration', actions: ['Manage roles & permissions', 'Configure feature flags', 'Set up SSO providers'], touchpoints: ['Role Permissions', 'Feature Flags', 'SSO Config'], emotion: 'positive', outcome: 'Platform configured for needs' },
+        { phase: 'AI & DMS Management', actions: ['Review AI Agent Strategy doc', 'Configure DMS metadata (9 tabs)', 'Monitor AI training feedback', 'Review document numbering'], touchpoints: ['AI Strategy Doc', 'DMS Config', 'Admin Tools'], emotion: 'positive', outcome: 'AI and document systems properly configured' },
         { phase: 'Incident Response', actions: ['Follow incident runbook', 'Execute containment', 'Generate post-mortem'], touchpoints: ['Incident Runbook', 'Disaster Recovery', 'Deployment Log'], emotion: 'frustrated', outcome: 'Incidents resolved and documented' },
       ],
     },
