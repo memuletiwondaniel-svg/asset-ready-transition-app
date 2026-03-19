@@ -456,8 +456,8 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
 
           <Separator />
 
-          {/* 7. Technical Differentiation */}
-          <Section id="technical-differentiation" icon={<Cpu className="h-5 w-5 text-amber-600" />} title="7. Technical Differentiation">
+          {/* 8. Technical Differentiation */}
+          <Section id="technical-differentiation" icon={<Cpu className="h-5 w-5 text-amber-600" />} title="8. Technical Differentiation">
             <p>ORIP's technical architecture is purpose-built for operational readiness intelligence in regulated, sovereign-sensitive environments.</p>
             
             <StatusTable rows={[
