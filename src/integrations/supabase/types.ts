@@ -149,6 +149,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_prompt_improvements: {
+        Row: {
+          agent_code: string
+          applied_at: string | null
+          created_at: string
+          current_prompt_hash: string | null
+          feedback_summary: Json
+          id: string
+          reviewed_by: string | null
+          status: string
+          suggested_changes: Json
+        }
+        Insert: {
+          agent_code?: string
+          applied_at?: string | null
+          created_at?: string
+          current_prompt_hash?: string | null
+          feedback_summary?: Json
+          id?: string
+          reviewed_by?: string | null
+          status?: string
+          suggested_changes?: Json
+        }
+        Update: {
+          agent_code?: string
+          applied_at?: string | null
+          created_at?: string
+          current_prompt_hash?: string | null
+          feedback_summary?: Json
+          id?: string
+          reviewed_by?: string | null
+          status?: string
+          suggested_changes?: Json
+        }
+        Relationships: []
+      }
       ai_response_feedback: {
         Row: {
           agent_code: string | null
@@ -248,6 +284,33 @@ export type Database = {
           performed_by?: string | null
           test_results?: Json | null
           version_label?: string | null
+        }
+        Relationships: []
+      }
+      ai_user_context: {
+        Row: {
+          context_key: string
+          context_value: Json
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context_key: string
+          context_value?: Json
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context_key?: string
+          context_value?: Json
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

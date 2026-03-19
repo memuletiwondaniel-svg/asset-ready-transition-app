@@ -2789,6 +2789,65 @@ const tools = [
         required: []
       }
     }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROACTIVE INSIGHTS TOOLS - Detect overdue/stalled items and alert users
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "get_proactive_insights",
+      description: "Get proactive insights about overdue items, stalled plans, and items needing attention. Bob should call this automatically when users ask general questions like 'anything I should know', 'what needs attention', 'any alerts', 'what's overdue', 'health check across projects'.",
+      parameters: {
+        type: "object",
+        properties: {
+          scope: {
+            type: "string",
+            enum: ["all", "pssr", "ora", "p2a"],
+            description: "Scope of insights: 'all' for everything, or specific module"
+          },
+          project_code: {
+            type: "string",
+            description: "Optional project code to limit scope"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_user_context",
+      description: "Get the current user's saved preferences, role, and recent activity context. Call this at conversation start to personalize responses. Use when you need to know user's role, department, or preferences.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "save_user_context",
+      description: "Save a user preference or context for future conversations. Use when user states a preference like 'I work on DP300', 'I prefer brief answers', 'My role is ORA Engineer'.",
+      parameters: {
+        type: "object",
+        properties: {
+          context_key: {
+            type: "string",
+            enum: ["preferred_project", "role", "department", "response_style", "focus_area", "region"],
+            description: "Type of context to save"
+          },
+          context_value: {
+            type: "string",
+            description: "Value to save"
+          }
+        },
+        required: ["context_key", "context_value"]
+      }
+    }
   }
 ];
 
@@ -2940,7 +2999,6 @@ async function logResponseFeedback(
   latencyMs: number
 ): Promise<void> {
   try {
-    // Log to training log for analysis
     await supabaseClient.from('ai_training_log').insert({
       event_type: 'feedback_review',
       agent_code: agentCode,
@@ -2954,6 +3012,196 @@ async function logResponseFeedback(
     });
   } catch (e) {
     console.error('Feedback logging failed:', e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PER-USER MEMORY - Load and save user context for personalization
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function loadUserContext(supabaseClient: any, userId: string): Promise<string> {
+  try {
+    const { data: contextRows } = await supabaseClient
+      .from('ai_user_context')
+      .select('context_key, context_value')
+      .eq('user_id', userId);
+
+    if (!contextRows || contextRows.length === 0) return '';
+
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('full_name, position, department, company, region')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    const contextParts = ['=== USER CONTEXT (Personalization) ==='];
+    
+    if (profile) {
+      contextParts.push(`User: ${profile.full_name || 'Unknown'}`);
+      if (profile.position) contextParts.push(`Position: ${profile.position}`);
+      if (profile.department) contextParts.push(`Department: ${profile.department}`);
+      if (profile.company) contextParts.push(`Company: ${profile.company}`);
+    }
+
+    for (const row of contextRows) {
+      contextParts.push(`${row.context_key}: ${JSON.stringify(row.context_value)}`);
+    }
+
+    contextParts.push('Use this context to personalize responses. Reference their projects and role naturally.');
+    return '\n\n' + contextParts.join('\n');
+  } catch (e) {
+    console.error('Failed to load user context:', e);
+    return '';
+  }
+}
+
+async function saveUserContextTool(supabaseClient: any, userId: string, key: string, value: string): Promise<any> {
+  try {
+    const { error } = await supabaseClient
+      .from('ai_user_context')
+      .upsert({
+        user_id: userId,
+        context_key: key,
+        context_value: { value, updated: new Date().toISOString() }
+      }, { onConflict: 'user_id,context_key' });
+
+    if (error) throw error;
+    return { success: true, message: `Saved preference: ${key} = ${value}` };
+  } catch (e) {
+    return { success: false, error: String(e) };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PROACTIVE INSIGHTS ENGINE - Detect overdue/stalled items
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function getProactiveInsights(supabaseClient: any, scope: string, projectCode?: string): Promise<any> {
+  const insights: any[] = [];
+  const now = new Date();
+
+  try {
+    // 1. Overdue Priority A actions (CRITICAL)
+    if (scope === 'all' || scope === 'pssr') {
+      const { data: overdueActions } = await supabaseClient
+        .from('pssr_priority_actions')
+        .select('id, description, due_date, priority, status, pssr_id')
+        .eq('status', 'open')
+        .eq('priority', 'A')
+        .lt('due_date', now.toISOString())
+        .limit(10);
+
+      if (overdueActions && overdueActions.length > 0) {
+        insights.push({
+          severity: 'critical',
+          category: 'PSSR',
+          type: 'overdue_priority_a',
+          message: `🔴 ${overdueActions.length} overdue Priority A actions need immediate attention`,
+          count: overdueActions.length,
+          items: overdueActions.slice(0, 5).map((a: any) => ({
+            description: a.description?.substring(0, 80),
+            due_date: a.due_date
+          }))
+        });
+      }
+
+      // 2. PSSRs stuck in Draft for >14 days
+      const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+      const { data: stalePssrs } = await supabaseClient
+        .from('pssrs')
+        .select('id, pssr_number, status, created_at')
+        .eq('status', 'Draft')
+        .lt('created_at', twoWeeksAgo.toISOString())
+        .limit(10);
+
+      if (stalePssrs && stalePssrs.length > 0) {
+        insights.push({
+          severity: 'warning',
+          category: 'PSSR',
+          type: 'stale_draft_pssr',
+          message: `🟡 ${stalePssrs.length} PSSRs stuck in Draft for >14 days`,
+          count: stalePssrs.length,
+          items: stalePssrs.slice(0, 5).map((p: any) => ({ pssr_number: p.pssr_number, created_at: p.created_at }))
+        });
+      }
+    }
+
+    // 3. ORA plans with low progress
+    if (scope === 'all' || scope === 'ora') {
+      const { data: stalePlans } = await supabaseClient
+        .from('orp_plans')
+        .select('id, phase, status, created_at')
+        .in('status', ['draft', 'in_progress'])
+        .limit(20);
+
+      if (stalePlans) {
+        const staleCount = stalePlans.filter((p: any) => {
+          const age = now.getTime() - new Date(p.created_at).getTime();
+          return age > 30 * 24 * 60 * 60 * 1000; // >30 days old
+        });
+
+        if (staleCount.length > 0) {
+          insights.push({
+            severity: 'warning',
+            category: 'ORA',
+            type: 'stale_ora_plans',
+            message: `🟡 ${staleCount.length} ORA plans inactive for >30 days`,
+            count: staleCount.length
+          });
+        }
+      }
+    }
+
+    // 4. P2A handovers pending approval
+    if (scope === 'all' || scope === 'p2a') {
+      const { data: pendingP2a } = await supabaseClient
+        .from('p2a_handover_plans')
+        .select('id, status, created_at')
+        .eq('status', 'PENDING_APPROVAL')
+        .limit(10);
+
+      if (pendingP2a && pendingP2a.length > 0) {
+        insights.push({
+          severity: 'info',
+          category: 'P2A',
+          type: 'pending_p2a_approvals',
+          message: `ℹ️ ${pendingP2a.length} P2A handovers awaiting approval`,
+          count: pendingP2a.length
+        });
+      }
+    }
+
+    // 5. Negative AI feedback trend (meta-insight)
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const { data: recentFeedback } = await supabaseClient
+      .from('ai_response_feedback')
+      .select('rating')
+      .gte('created_at', weekAgo.toISOString());
+
+    if (recentFeedback && recentFeedback.length >= 5) {
+      const negCount = recentFeedback.filter((f: any) => f.rating === 'negative').length;
+      const negRate = negCount / recentFeedback.length;
+      if (negRate > 0.3) {
+        insights.push({
+          severity: 'warning',
+          category: 'AI',
+          type: 'high_negative_feedback',
+          message: `🟡 AI response quality concern: ${Math.round(negRate * 100)}% negative feedback this week`,
+          count: negCount
+        });
+      }
+    }
+
+    return {
+      total_insights: insights.length,
+      critical: insights.filter(i => i.severity === 'critical').length,
+      warnings: insights.filter(i => i.severity === 'warning').length,
+      insights,
+      generated_at: now.toISOString()
+    };
+  } catch (e) {
+    console.error('Proactive insights error:', e);
+    return { total_insights: 0, insights: [], error: String(e) };
   }
 }
 
@@ -4899,6 +5147,26 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
     
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PROACTIVE INSIGHTS & USER CONTEXT TOOLS
+    // ═══════════════════════════════════════════════════════════════════════════
+    case "get_proactive_insights": {
+      return await getProactiveInsights(supabaseClient, args.scope || 'all', args.project_code);
+    }
+
+    case "get_user_context": {
+      // Extract user_id from the request context (passed via metadata)
+      const userId = args._user_id;
+      if (!userId) return { message: "No user context available. User is not authenticated." };
+      return await loadUserContext(supabaseClient, userId);
+    }
+
+    case "save_user_context": {
+      const userId = args._user_id;
+      if (!userId) return { error: "User not authenticated" };
+      return await saveUserContextTool(supabaseClient, userId, args.context_key, args.context_value);
+    }
+
     default:
       return { error: "Unknown tool" };
   }
@@ -5215,6 +5483,30 @@ serve(async (req) => {
     // Create Supabase client for database queries
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    // Extract user ID from JWT for personalization
+    let currentUserId: string | null = null;
+    try {
+      const authHeader = req.headers.get('Authorization');
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.slice(7);
+        // Decode JWT payload (base64) to get user_id
+        const payloadB64 = token.split('.')[1];
+        if (payloadB64) {
+          const payload = JSON.parse(atob(payloadB64));
+          // For anon key, sub won't exist. For user tokens, sub = user_id
+          currentUserId = payload.sub || null;
+        }
+      }
+    } catch (e) {
+      console.log('Could not extract user_id from token:', e);
+    }
+
+    // Load personalization context
+    let userContextPrompt = '';
+    if (currentUserId) {
+      userContextPrompt = await loadUserContext(supabase, currentUserId);
+    }
+
     // Check last user message for injection attempts - BLOCK if detected
     const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop();
     if (lastUserMessage && detectInjectionAttempt(lastUserMessage.content)) {
@@ -5289,7 +5581,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "openai/gpt-5-mini",
         messages: [
-          { role: "system", content: BOB_SYSTEM_PROMPT },
+          { role: "system", content: BOB_SYSTEM_PROMPT + userContextPrompt },
           ...transformedMessages,
         ],
         tools: tools,
@@ -5338,6 +5630,10 @@ serve(async (req) => {
         const toolName = toolCall.function.name;
         toolCallNames.push(toolName);
         const toolArgs = JSON.parse(toolCall.function.arguments || '{}');
+        // Inject user_id for user context tools
+        if (['get_user_context', 'save_user_context'].includes(toolName) && currentUserId) {
+          toolArgs._user_id = currentUserId;
+        }
         
         console.log(`Executing tool: ${toolName}`, toolArgs);
         const result = await executeTool(toolName, toolArgs, supabase);
@@ -5368,7 +5664,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "openai/gpt-5-mini",
           messages: [
-            { role: "system", content: BOB_SYSTEM_PROMPT },
+            { role: "system", content: BOB_SYSTEM_PROMPT + userContextPrompt },
             ...transformedMessages,
             assistantMessage,
           ...toolResults,

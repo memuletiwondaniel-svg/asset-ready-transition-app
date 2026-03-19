@@ -73,6 +73,8 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
     { id: 'agent-registry', label: 'Agent Registry' },
     { id: 'tool-registry', label: 'Tool Registry' },
     { id: 'a2a-protocol', label: 'Agent-to-Agent (A2A) Protocol' },
+    { id: 'user-memory', label: 'Per-User Memory & Personalization' },
+    { id: 'proactive-insights', label: 'Proactive Insights Engine' },
     { id: 'development-phases', label: 'Development Phases' },
     { id: 'gaps', label: 'Gaps & Known Limitations' },
     { id: 'training-strategy', label: 'Continuous Training Strategy' },
@@ -80,7 +82,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
     { id: 'training-infrastructure', label: 'Training Infrastructure (Database)' },
     { id: 'evaluation', label: 'Evaluation Framework' },
     { id: 'security', label: 'Security & Guardrails' },
-    { id: 'daily-loop', label: 'Daily Training Loop' },
+    { id: 'daily-loop', label: 'Daily Training Loop (pg_cron)' },
     { id: 'roadmap', label: 'Agent Roadmap' },
   ];
 
@@ -103,7 +105,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             </div>
           </div>
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            v2.0 — March 2026
+            v3.0 — March 2026
           </Badge>
         </div>
       </div>

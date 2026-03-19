@@ -132,3 +132,6 @@ verify_jwt = false
 
 [functions.readiness-api]
 verify_jwt = false
+
+[functions.ai-training-review]
+verify_jwt = false
