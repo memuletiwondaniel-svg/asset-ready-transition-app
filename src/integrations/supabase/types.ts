@@ -14,6 +14,243 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_agent_communications: {
+        Row: {
+          conversation_id: string | null
+          correlation_id: string | null
+          created_at: string | null
+          id: string
+          latency_ms: number | null
+          message_type: string
+          payload: Json
+          source_agent: string
+          status: string | null
+          target_agent: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          correlation_id?: string | null
+          created_at?: string | null
+          id?: string
+          latency_ms?: number | null
+          message_type: string
+          payload?: Json
+          source_agent: string
+          status?: string | null
+          target_agent: string
+        }
+        Update: {
+          conversation_id?: string | null
+          correlation_id?: string | null
+          created_at?: string | null
+          id?: string
+          latency_ms?: number | null
+          message_type?: string
+          payload?: Json
+          source_agent?: string
+          status?: string | null
+          target_agent?: string
+        }
+        Relationships: []
+      }
+      ai_agent_registry: {
+        Row: {
+          agent_code: string
+          capabilities: Json | null
+          configuration: Json | null
+          created_at: string | null
+          description: string | null
+          display_name: string
+          domain_tags: string[] | null
+          id: string
+          limitations: Json | null
+          model_id: string
+          status: string
+          system_prompt_version: string | null
+          tools_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_code: string
+          capabilities?: Json | null
+          configuration?: Json | null
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          domain_tags?: string[] | null
+          id?: string
+          limitations?: Json | null
+          model_id?: string
+          status?: string
+          system_prompt_version?: string | null
+          tools_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_code?: string
+          capabilities?: Json | null
+          configuration?: Json | null
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          domain_tags?: string[] | null
+          id?: string
+          limitations?: Json | null
+          model_id?: string
+          status?: string
+          system_prompt_version?: string | null
+          tools_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ai_edge_cases: {
+        Row: {
+          actual_behavior: string | null
+          added_to_regression: boolean | null
+          agent_code: string | null
+          category: string | null
+          created_at: string | null
+          expected_behavior: string | null
+          id: string
+          is_resolved: boolean | null
+          resolution: string | null
+          resolved_at: string | null
+          severity: string | null
+          trigger_message: string
+        }
+        Insert: {
+          actual_behavior?: string | null
+          added_to_regression?: boolean | null
+          agent_code?: string | null
+          category?: string | null
+          created_at?: string | null
+          expected_behavior?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          resolution?: string | null
+          resolved_at?: string | null
+          severity?: string | null
+          trigger_message: string
+        }
+        Update: {
+          actual_behavior?: string | null
+          added_to_regression?: boolean | null
+          agent_code?: string | null
+          category?: string | null
+          created_at?: string | null
+          expected_behavior?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          resolution?: string | null
+          resolved_at?: string | null
+          severity?: string | null
+          trigger_message?: string
+        }
+        Relationships: []
+      }
+      ai_response_feedback: {
+        Row: {
+          agent_code: string | null
+          conversation_id: string | null
+          correction_text: string | null
+          created_at: string | null
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          rating: string
+          response_latency_ms: number | null
+          tenant_id: string | null
+          tool_calls_used: string[] | null
+          user_id: string
+        }
+        Insert: {
+          agent_code?: string | null
+          conversation_id?: string | null
+          correction_text?: string | null
+          created_at?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          rating: string
+          response_latency_ms?: number | null
+          tenant_id?: string | null
+          tool_calls_used?: string[] | null
+          user_id: string
+        }
+        Update: {
+          agent_code?: string | null
+          conversation_id?: string | null
+          correction_text?: string | null
+          created_at?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          rating?: string
+          response_latency_ms?: number | null
+          tenant_id?: string | null
+          tool_calls_used?: string[] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_response_feedback_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_response_feedback_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_training_log: {
+        Row: {
+          after_state: Json | null
+          agent_code: string | null
+          before_state: Json | null
+          created_at: string | null
+          description: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          performed_by: string | null
+          test_results: Json | null
+          version_label: string | null
+        }
+        Insert: {
+          after_state?: Json | null
+          agent_code?: string | null
+          before_state?: Json | null
+          created_at?: string | null
+          description: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          performed_by?: string | null
+          test_results?: Json | null
+          version_label?: string | null
+        }
+        Update: {
+          after_state?: Json | null
+          agent_code?: string | null
+          before_state?: Json | null
+          created_at?: string | null
+          description?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          performed_by?: string | null
+          test_results?: Json | null
+          version_label?: string | null
+        }
+        Relationships: []
+      }
       annotation_replies: {
         Row: {
           annotation_id: string
