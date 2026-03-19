@@ -5483,6 +5483,30 @@ serve(async (req) => {
     // Create Supabase client for database queries
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    // Extract user ID from JWT for personalization
+    let currentUserId: string | null = null;
+    try {
+      const authHeader = req.headers.get('Authorization');
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.slice(7);
+        // Decode JWT payload (base64) to get user_id
+        const payloadB64 = token.split('.')[1];
+        if (payloadB64) {
+          const payload = JSON.parse(atob(payloadB64));
+          // For anon key, sub won't exist. For user tokens, sub = user_id
+          currentUserId = payload.sub || null;
+        }
+      }
+    } catch (e) {
+      console.log('Could not extract user_id from token:', e);
+    }
+
+    // Load personalization context
+    let userContextPrompt = '';
+    if (currentUserId) {
+      userContextPrompt = await loadUserContext(supabase, currentUserId);
+    }
+
     // Check last user message for injection attempts - BLOCK if detected
     const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop();
     if (lastUserMessage && detectInjectionAttempt(lastUserMessage.content)) {
