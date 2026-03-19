@@ -33,15 +33,15 @@ interface Segment {
 }
 
 const SEGMENT_COLORS = [
-  { bg: 'bg-blue-50 dark:bg-blue-950/40', border: 'border-blue-200 dark:border-blue-800', text: 'text-blue-700 dark:text-blue-300', dot: 'bg-blue-500', ring: 'ring-blue-500/20' },
-  { bg: 'bg-amber-50 dark:bg-amber-950/40', border: 'border-amber-200 dark:border-amber-800', text: 'text-amber-700 dark:text-amber-300', dot: 'bg-amber-500', ring: 'ring-amber-500/20' },
-  { bg: 'bg-rose-50 dark:bg-rose-950/40', border: 'border-rose-200 dark:border-rose-800', text: 'text-rose-700 dark:text-rose-300', dot: 'bg-rose-500', ring: 'ring-rose-500/20' },
-  { bg: 'bg-cyan-50 dark:bg-cyan-950/40', border: 'border-cyan-200 dark:border-cyan-800', text: 'text-cyan-700 dark:text-cyan-300', dot: 'bg-cyan-500', ring: 'ring-cyan-500/20' },
-  { bg: 'bg-orange-50 dark:bg-orange-950/40', border: 'border-orange-200 dark:border-orange-800', text: 'text-orange-700 dark:text-orange-300', dot: 'bg-orange-500', ring: 'ring-orange-500/20' },
-  { bg: 'bg-emerald-50 dark:bg-emerald-950/40', border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-700 dark:text-emerald-300', dot: 'bg-emerald-500', ring: 'ring-emerald-500/20' },
-  { bg: 'bg-violet-50 dark:bg-violet-950/40', border: 'border-violet-200 dark:border-violet-800', text: 'text-violet-700 dark:text-violet-300', dot: 'bg-violet-500', ring: 'ring-violet-500/20' },
-  { bg: 'bg-pink-50 dark:bg-pink-950/40', border: 'border-pink-200 dark:border-pink-800', text: 'text-pink-700 dark:text-pink-300', dot: 'bg-pink-500', ring: 'ring-pink-500/20' },
-  { bg: 'bg-teal-50 dark:bg-teal-950/40', border: 'border-teal-200 dark:border-teal-800', text: 'text-teal-700 dark:text-teal-300', dot: 'bg-teal-500', ring: 'ring-teal-500/20' },
+  { bg: 'bg-muted/50', border: 'border-border', text: 'text-foreground', dot: 'bg-muted-foreground', ring: 'ring-muted-foreground/20' },
+  { bg: 'bg-muted/50', border: 'border-border', text: 'text-foreground', dot: 'bg-muted-foreground', ring: 'ring-muted-foreground/20' },
+  { bg: 'bg-muted/50', border: 'border-border', text: 'text-foreground', dot: 'bg-muted-foreground', ring: 'ring-muted-foreground/20' },
+  { bg: 'bg-muted/50', border: 'border-border', text: 'text-foreground', dot: 'bg-muted-foreground', ring: 'ring-muted-foreground/20' },
+  { bg: 'bg-muted/50', border: 'border-border', text: 'text-foreground', dot: 'bg-muted-foreground', ring: 'ring-muted-foreground/20' },
+  { bg: 'bg-muted/50', border: 'border-border', text: 'text-foreground', dot: 'bg-muted-foreground', ring: 'ring-muted-foreground/20' },
+  { bg: 'bg-muted/50', border: 'border-border', text: 'text-foreground', dot: 'bg-muted-foreground', ring: 'ring-muted-foreground/20' },
+  { bg: 'bg-muted/50', border: 'border-border', text: 'text-foreground', dot: 'bg-muted-foreground', ring: 'ring-muted-foreground/20' },
+  { bg: 'bg-muted/50', border: 'border-border', text: 'text-foreground', dot: 'bg-muted-foreground', ring: 'ring-muted-foreground/20' },
 ];
 
 const SOURCE_TABLE_OPTIONS = [
