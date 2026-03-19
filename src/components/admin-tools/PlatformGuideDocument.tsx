@@ -795,9 +795,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 15. Admin Tools */}
-          <Section id="admin-tools" icon={<Wrench className="h-5 w-5 text-primary" />} title="15. Admin Tools Reference">
-            <p>The Admin Tools dashboard provides 22+ management tools:</p>
+          {/* 17. Admin Tools */}
+          <Section id="admin-tools" icon={<Wrench className="h-5 w-5 text-primary" />} title="17. Admin Tools Reference">
+            <p>The Admin Tools dashboard provides 28+ management tools:</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {[
