@@ -5428,6 +5428,10 @@ serve(async (req) => {
         finalContent += ` ${JSON.stringify(navigationAction)}`;
       }
       
+      // Log response for continuous training pipeline
+      logResponseFeedback(supabase, null, detectedAgent, toolCallNames, Date.now() - requestStartTime)
+        .catch(e => console.error('Feedback log error:', e));
+      
       // Return as SSE format for compatibility with frontend
       const sseData = `data: ${JSON.stringify({
         choices: [{ delta: { content: finalContent } }]
