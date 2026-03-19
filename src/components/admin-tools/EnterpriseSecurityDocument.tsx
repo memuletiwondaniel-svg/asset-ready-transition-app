@@ -620,8 +620,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 17. Security Controls & Hardening — NEW */}
-          <Section id="security-controls" icon={<ShieldCheck className="h-5 w-5 text-primary" />} title="17. Security Controls & Hardening">
+          {/* 18. Security Controls & Hardening — NEW */}
+          <Section id="security-controls" icon={<ShieldCheck className="h-5 w-5 text-primary" />} title="18. Security Controls & Hardening">
             <p>Detailed security controls addressing enterprise procurement requirements for data protection, access governance, and cryptographic standards.</p>
 
             <StatusTable rows={[
