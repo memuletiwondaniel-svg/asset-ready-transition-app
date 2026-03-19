@@ -562,6 +562,74 @@ export type Database = {
         }
         Relationships: []
       }
+      dms_numbering_segments: {
+        Row: {
+          created_at: string
+          description: string | null
+          example_value: string | null
+          id: string
+          is_active: boolean
+          is_required: boolean
+          label: string
+          max_length: number
+          min_length: number
+          position: number
+          segment_key: string
+          separator: string
+          source_code_column: string | null
+          source_name_column: string | null
+          source_table: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          example_value?: string | null
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          label: string
+          max_length?: number
+          min_length?: number
+          position?: number
+          segment_key: string
+          separator?: string
+          source_code_column?: string | null
+          source_name_column?: string | null
+          source_table?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          example_value?: string | null
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          label?: string
+          max_length?: number
+          min_length?: number
+          position?: number
+          segment_key?: string
+          separator?: string
+          source_code_column?: string | null
+          source_name_column?: string | null
+          source_table?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dms_numbering_segments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dms_originators: {
         Row: {
           code: string

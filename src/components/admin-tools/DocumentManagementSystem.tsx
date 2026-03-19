@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Switch } from '@/components/ui/switch';
 import { 
   ArrowLeft, FileText, Plus, Pencil, Trash2, Search, 
-  FileStack, Compass, FolderKanban, UserCircle, Factory, MapPin, Box, Loader2, CheckSquare
+  FileStack, Compass, FolderKanban, UserCircle, Factory, MapPin, Box, Loader2, CheckSquare, Settings2
 } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { toast } from 'sonner';
@@ -24,6 +24,7 @@ import DmsOriginatorsTab from './dms/DmsOriginatorsTab';
 import DmsUnitsTab from './dms/DmsUnitsTab';
 import DmsDocumentTypesTab from './dms/DmsDocumentTypesTab';
 import DmsStatusCodesTab from './dms/DmsStatusCodesTab';
+import DmsConfigurationTab from './dms/DmsConfigurationTab';
 
 interface DocumentManagementSystemProps {
   onBack: () => void;
@@ -39,6 +40,7 @@ const TAB_CONFIG = [
   { id: 'site', label: 'Site', icon: MapPin, activeColor: 'text-cyan-600 dark:text-cyan-400' },
   { id: 'unit', label: 'Unit', icon: Box, activeColor: 'text-orange-600 dark:text-orange-400' },
   { id: 'status-code', label: 'Status Code', icon: CheckSquare, activeColor: 'text-teal-600 dark:text-teal-400' },
+  { id: 'configuration', label: 'Configuration', icon: Settings2, activeColor: 'text-gray-600 dark:text-gray-400' },
 ] as const;
 
 type TabId = typeof TAB_CONFIG[number]['id'];
@@ -346,6 +348,11 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
             {/* ─── Status Code Tab (connected to backend) ─── */}
             <TabsContent value="status-code" className="mt-0">
               <DmsStatusCodesTab />
+            </TabsContent>
+
+            {/* ─── Configuration Tab ─── */}
+            <TabsContent value="configuration" className="mt-0">
+              <DmsConfigurationTab />
             </TabsContent>
           </Tabs>
         </div>
