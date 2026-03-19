@@ -153,7 +153,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
                 { name: 'PSSR', desc: 'Pre-Startup Safety Reviews with checklists, approvals, and SoF generation' },
                 { name: 'ORM', desc: 'Operations Readiness Manpower — deliverable tracking and resource planning' },
                 { name: 'Training', desc: 'Training plan management with cost tracking, materials, and approvals' },
+                { name: 'DMS', desc: 'Document Management System — metadata config, numbering, gap analysis' },
                 { name: 'Task Manager', desc: 'Unified task inbox with auto-generated tasks from all modules' },
+                { name: 'AI CoPilot (Bob)', desc: 'Multi-agent AI assistant with specialist sub-agents and autonomous training' },
                 { name: 'Admin Tools', desc: 'User management, roles, security, audit, and platform configuration' },
               ].map(m => (
                 <Card key={m.name} className="bg-muted/30">
