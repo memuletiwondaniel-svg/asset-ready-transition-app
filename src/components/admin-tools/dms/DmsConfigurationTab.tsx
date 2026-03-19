@@ -211,6 +211,10 @@ const DmsConfigurationTab: React.FC = () => {
   };
 
   const handleSave = () => {
+    if (isCreating) {
+      createSegment.mutate();
+      return;
+    }
     if (!editingSegment) return;
     updateSegment.mutate({
       id: editingSegment.id,
