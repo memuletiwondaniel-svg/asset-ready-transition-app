@@ -5147,6 +5147,26 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
     
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PROACTIVE INSIGHTS & USER CONTEXT TOOLS
+    // ═══════════════════════════════════════════════════════════════════════════
+    case "get_proactive_insights": {
+      return await getProactiveInsights(supabaseClient, args.scope || 'all', args.project_code);
+    }
+
+    case "get_user_context": {
+      // Extract user_id from the request context (passed via metadata)
+      const userId = args._user_id;
+      if (!userId) return { message: "No user context available. User is not authenticated." };
+      return await loadUserContext(supabaseClient, userId);
+    }
+
+    case "save_user_context": {
+      const userId = args._user_id;
+      if (!userId) return { error: "User not authenticated" };
+      return await saveUserContextTool(supabaseClient, userId, args.context_key, args.context_value);
+    }
+
     default:
       return { error: "Unknown tool" };
   }
