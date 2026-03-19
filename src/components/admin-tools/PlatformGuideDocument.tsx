@@ -464,8 +464,100 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 9. Coding Conventions */}
-          <Section id="coding-conventions" icon={<Code className="h-5 w-5 text-primary" />} title="9. Coding Conventions & ID Formats">
+          {/* 9. Document Management System */}
+          <Section id="dms" icon={<FileText className="h-5 w-5 text-primary" />} title="9. Document Management System (DMS)">
+            <p>The DMS provides centralized configuration for all document metadata, numbering conventions, and readiness analysis.</p>
+
+            <p className="font-medium text-foreground mt-3">DMS Configuration Tabs (9 tabs)</p>
+            <InfoTable headers={['Tab', 'Table', 'Purpose']} rows={[
+              ['Document', 'dms_document_types', 'Document types with code, discipline, tier, RLMU, acceptable status'],
+              ['Discipline', 'dms_disciplines', 'Engineering discipline codes (Electrical, Mechanical, Civil, etc.)'],
+              ['Project', 'dms_projects', 'Project codes with cabinet mapping'],
+              ['Originator', 'dms_originators', 'Document originator organizations'],
+              ['Plant', 'dms_plants', 'Plant locations with codes'],
+              ['Site', 'dms_sites', 'Site definitions with comments'],
+              ['Unit', 'dms_units', 'Operational unit codes'],
+              ['Status Code', 'dms_status_codes', 'Document lifecycle statuses with revision suffixes'],
+              ['Configuration', 'dms_numbering_segments', 'Visual numbering builder for document ID format'],
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">Document Status Lifecycle</p>
+            <FlowDiagram steps={['Draft', 'IFR (Issued for Review)', 'IFC (Issued for Construction)', 'AFC (Approved for Construction)', 'RLMU (Record Library Master Update)']} />
+
+            <p className="font-medium text-foreground mt-4">Document Numbering Visual Builder</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Drag-and-drop segment ordering with configurable separators</li>
+              <li>Each segment: key, label, min/max length, required flag, source table reference</li>
+              <li>Live preview of generated document number format</li>
+              <li>Supports dynamic lookup from DMS reference tables (plants, disciplines, etc.)</li>
+            </ul>
+
+            <p className="font-medium text-foreground mt-4">Intelligent Features</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong className="text-foreground">Deduplication:</strong> Identical Code + Document Name rows collapsed unless Discipline columns visible</li>
+              <li><strong className="text-foreground">Column Visibility Toggle:</strong> Default columns: Code, Name, Tier</li>
+              <li><strong className="text-foreground">Gap Analysis:</strong> AI agent compares current statuses against acceptable_status rules</li>
+              <li><strong className="text-foreground">Quality Scoring:</strong> 0–100 composite score (completeness 30%, maturity 30%, RLMU compliance 25%, consistency 15%)</li>
+            </ul>
+          </Section>
+
+          <Separator />
+
+          {/* 10. AI Agent Architecture */}
+          <Section id="ai-agent" icon={<Layers className="h-5 w-5 text-primary" />} title="10. AI Agent Architecture (Bob CoPilot)">
+            <p>ORSH embeds a multi-agent AI system with autonomous self-improvement capabilities.</p>
+
+            <p className="font-medium text-foreground mt-3">Architecture Pattern</p>
+            <div className="bg-muted/50 rounded-lg p-4 font-mono text-xs space-y-1">
+              <div className="text-foreground font-semibold mb-2">Multi-Agent Routing</div>
+              <div>User Message → Bob CoPilot (Router)</div>
+              <div className="pl-4">├── Intent Detection (domain classification)</div>
+              <div className="pl-4">├── User Context Loading (ai_user_context)</div>
+              <div className="pl-4">├── Specialist Agent Dispatch:</div>
+              <div className="pl-8">├── Document Specialist (DMS domain — 13 tools)</div>
+              <div className="pl-8">├── PSSR Specialist (safety review domain)</div>
+              <div className="pl-8">├── ORA Specialist (activity planning domain)</div>
+              <div className="pl-8">└── General CoPilot (fallback)</div>
+              <div className="pl-4">└── Response Synthesis + Context Persistence</div>
+            </div>
+
+            <p className="font-medium text-foreground mt-4">Document Specialist Tools (13)</p>
+            <InfoTable headers={['Tool', 'Purpose']} rows={[
+              ['get_document_readiness_summary', 'Overall readiness % against acceptable_status rules'],
+              ['get_document_status_breakdown', 'Distribution of documents across lifecycle statuses'],
+              ['get_document_numbering_config', 'Current numbering segment configuration'],
+              ['get_document_gaps_analysis', 'Documents not meeting acceptable status by type'],
+              ['get_dms_table_info', 'Row counts and metadata for all DMS tables'],
+              ['get_dms_hyperlink', 'Deep links for Assai, Documentum, Wrench DMS systems'],
+              ['get_document_quality_score', 'Composite 0–100 quality score'],
+              ['get_document_ora_linkage', 'Maps document gaps to ORA phase requirements'],
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">Autonomous Training Loop</p>
+            <FlowDiagram steps={['User Feedback', 'Daily Cron Analysis', 'Pattern Detection', 'Auto-Apply Low-Risk Fixes', 'Edge Case Resolution', 'Regression Testing']} />
+            <ul className="list-disc pl-5 space-y-1 mt-2">
+              <li><strong className="text-foreground">Feedback Pipeline:</strong> ThumbsUp/Down + corrections → ai_response_feedback</li>
+              <li><strong className="text-foreground">Auto-Apply:</strong> Low-risk prompt improvements applied without human gate</li>
+              <li><strong className="text-foreground">Self-Healing:</strong> Aged edge cases (7+ days) auto-resolved if matching previous patterns</li>
+              <li><strong className="text-foreground">Context Learning:</strong> User preferences persisted in ai_user_context table</li>
+            </ul>
+
+            <p className="font-medium text-foreground mt-4">AI Infrastructure Tables</p>
+            <InfoTable headers={['Table', 'Purpose']} rows={[
+              ['ai_agent_registry', 'Agent definitions with capabilities, model IDs, domain tags'],
+              ['ai_response_feedback', 'User ratings, corrections, tool call tracking'],
+              ['ai_training_log', 'Versioned prompt deployments and test results'],
+              ['ai_agent_communications', 'Inter-agent message routing with latency tracking'],
+              ['ai_edge_cases', 'Hallucination and tool failure catalog for regression testing'],
+              ['ai_user_context', 'Per-user preference persistence (key-value JSON)'],
+              ['ai_prompt_improvements', 'Suggested and auto-applied prompt changes'],
+            ]} />
+          </Section>
+
+          <Separator />
+
+          {/* 11. Coding Conventions */}
+          <Section id="coding-conventions" icon={<Code className="h-5 w-5 text-primary" />} title="11. Coding Conventions & ID Formats">
             <InfoTable headers={['Entity', 'Format', 'Example', 'Generator Function']} rows={[
               ['Project Code', '{PREFIX}-{NUMBER}', 'DP-300', 'Manual entry'],
               ['VCR Code', 'VCR-{PROJECT}-{SEQ}', 'VCR-DP300-01', 'generate_vcr_code()'],
