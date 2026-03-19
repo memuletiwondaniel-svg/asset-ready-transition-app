@@ -190,8 +190,7 @@ const DmsDocumentTypesTab: React.FC = () => {
       const { data, error } = await supabase
         .from('dms_document_types')
         .select('*')
-        .order('display_order', { ascending: true })
-        .range(0, 1999);
+        .order('display_order', { ascending: true });
       if (error) throw error;
       return data as DocTypeRow[];
     },
