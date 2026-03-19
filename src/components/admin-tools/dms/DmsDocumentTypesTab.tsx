@@ -119,6 +119,16 @@ const DmsDocumentTypesTab: React.FC = () => {
       (d.discipline_name || '').toLowerCase().includes(q);
   });
 
+  const isDisciplineVisible = columns.some(
+    c => (c.id === 'discipline_code' || c.id === 'discipline_name') && c.visible
+  );
+
+  const displayRows = isDisciplineVisible
+    ? filtered
+    : filtered.filter((item, index, arr) =>
+        arr.findIndex(d => d.code === item.code && d.document_name === item.document_name) === index
+      );
+
   const visibleColumns = columns.filter(c => c.visible);
 
   const toggleColumn = (colId: string) => {
@@ -256,7 +266,7 @@ const DmsDocumentTypesTab: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((item, idx) => (
+                {displayRows.map((item, idx) => (
                   <TableRow key={item.id} className="group border-border/40 hover:bg-muted/30 transition-colors">
                     <TableCell className="text-muted-foreground text-xs tabular-nums">{idx + 1}</TableCell>
                     {visibleColumns.map(col => (
@@ -274,7 +284,7 @@ const DmsDocumentTypesTab: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-                {filtered.length === 0 && !isLoading && (
+                {displayRows.length === 0 && !isLoading && (
                   <TableRow>
                     <TableCell colSpan={visibleColumns.length + 2} className="text-center py-8 text-muted-foreground">
                       No document types found
