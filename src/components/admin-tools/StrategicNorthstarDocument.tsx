@@ -77,6 +77,10 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
                 ORSH Strategic North Star
               </h1>
               <p className="text-sm text-muted-foreground">Living document — ORSH → ORIP evolution & strategic positioning</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <Calendar className="h-3 w-3 text-muted-foreground/70" />
+                <span className="text-xs text-muted-foreground/70">Last updated: 19 March 2026</span>
+              </div>
             </div>
           </div>
           <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">

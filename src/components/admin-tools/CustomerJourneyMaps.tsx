@@ -261,6 +261,10 @@ const CustomerJourneyMaps: React.FC<CustomerJourneyMapsProps> = ({ onBack }) => 
                 Customer Journey Maps — ORSH Personas
               </h1>
               <p className="text-sm text-muted-foreground">Role-based journey maps with real user personas from the platform</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <Calendar className="h-3 w-3 text-muted-foreground/70" />
+                <span className="text-xs text-muted-foreground/70">Last updated: 19 March 2026</span>
+              </div>
             </div>
           </div>
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
