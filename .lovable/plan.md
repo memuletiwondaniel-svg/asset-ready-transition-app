@@ -1,77 +1,70 @@
 
 
-# Plan: ORIP Scoring Engine Using Existing VCR Item Categories
+## Plan: Add Document Numbering Configuration Tab
 
-## Impact Assessment: Zero Breaking Changes
+### Overview
 
-**No existing workflows will be affected.** The approach reuses the existing `vcr_item_categories` table (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety) as the readiness dimensions for ORI scoring. All changes are additive:
+Add a new "Configuration" tab to the DMS that lets users define the document numbering structure. Each segment (e.g., Project Code, Originator, Plant, Site, Unit, Discipline, Document Code, Sequence Number) is a configurable building block. Users can reorder segments, set separators, mark segments as required/optional, define character lengths, and link each segment to its source table. This makes the numbering system tenant-configurable so ORSH can interpret and generate document numbers for any client's DMS.
 
-- The `vcr_item_categories` table gets a `tenant_id` column and weight/confidence fields -- existing rows remain intact
-- The `readiness_nodes` table gets a new nullable `dimension_id` column pointing to `vcr_item_categories`
-- The `sync_readiness_nodes` and `calculate_ori_score` functions are replaced with enhanced versions that use category-based dimensions instead of module-based grouping
-- Existing P2A, ORA, PSSR, ORM workflows are untouched -- the ontology layer only reads from them
+### Database Changes
 
-## Current VCR Item Categories (Become Readiness Dimensions)
+**New table: `dms_numbering_segments`**
 
-| Code | Name | Active |
-|------|------|--------|
-| DI2 | Design Integrity | Yes |
-| TI | Technical Integrity | Yes |
-| OI | Operating Integrity | Yes |
-| MS | Management Systems | Yes |
-| HS | Health & Safety | Yes |
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid PK | |
+| tenant_id | uuid FK | Multi-tenant scoping |
+| segment_key | text | Internal key (e.g. `project`, `originator`, `plant`, `site`, `unit`, `discipline`, `document`, `sequence_1`, `sequence_2`) |
+| label | text | Display label (e.g. "Project Code") |
+| position | int | Order in the numbering pattern (1-9) |
+| separator | text | Character after this segment (default `-`) |
+| min_length | int | Minimum character count |
+| max_length | int | Maximum character count |
+| source_table | text | Which DMS table provides lookup values (e.g. `dms_projects`, `dms_originators`, or `null` for free-text like sequence numbers) |
+| source_code_column | text | Column name for the code value |
+| source_name_column | text | Column name for display name |
+| is_required | boolean | Whether this segment is mandatory |
+| is_active | boolean | Whether this segment is included in the pattern |
+| description | text | Explanation of what this segment represents |
+| example_value | text | Example (e.g. "6529", "AMTS") |
+| created_at / updated_at | timestamptz | Timestamps |
 
-These become the tenant-configurable readiness dimensions. Different tenants can add/rename/reweight their own categories.
+Seed with the 9 default segments matching the user's specification (AAAA-BBBB-CCCC-DDDD-EEEEE-FF-GGGG-HHHHH-III).
 
-## Implementation Tasks
+RLS policies scoped by tenant using `get_user_tenant_id()`.
 
-### Task 1: Extend `vcr_item_categories` for ORI Scoring
-Add columns to make categories serve double duty as readiness dimensions:
-- `tenant_id UUID` (nullable, defaults via trigger -- existing rows get current tenant)
-- `default_weight NUMERIC(5,4)` (e.g., 0.20 = 20%)
-- `confidence_factor_default NUMERIC(3,2)` (default 0.8)
-- `risk_severity_multiplier NUMERIC(3,1)` (default 1.0)
-- `is_readiness_dimension BOOLEAN DEFAULT true`
+### Frontend Changes
 
-Add `dimension_id UUID REFERENCES vcr_item_categories(id)` to `readiness_nodes`.
+**1. New component: `src/components/admin-tools/dms/DmsConfigurationTab.tsx`**
 
-### Task 2: Enhanced ORI Formula
-Replace `calculate_ori_score()` with the full ORIP formula:
+- Displays a visual **document number preview** at the top showing the live pattern (e.g. `6529-AMTS-S003-ISGP-U11000-PX-2365-00001-001`) with each segment color-coded
+- Below, a **sortable list/table** of segments showing: Position, Label, Key, Source Table, Length (min/max), Separator, Required, Active, Example
+- Each segment row is editable inline or via an edit dialog
+- Drag-to-reorder or up/down arrows to change position
+- Add/remove custom segments for flexibility
+- A **settings card** for global config: default separator character, DMS system type (Assai / Documentum / Wrench / Other)
 
-```
-DS_i = (Σ Subcomponent_Weight × Completion%) × Confidence_Factor
-RP_i = Σ (Risk_Severity × Impact_Multiplier)  -- capped at 15%
-ORI  = Σ (Dimension_Weight_i × DS_i) − Global_Risk_Penalty
-SCS  = ORI × Schedule_Adherence × Critical_Path_Stability
-```
+**2. Update `DocumentManagementSystem.tsx`**
 
-Add columns to `ori_scores`: `dimension_scores JSONB`, `risk_penalty_total NUMERIC`, `startup_confidence_score NUMERIC`, `schedule_adherence_index NUMERIC`, `critical_path_stability_index NUMERIC`.
+- Add `{ id: 'configuration', label: 'Configuration', icon: Settings2, activeColor: 'text-gray-600 dark:text-gray-400' }` to `TAB_CONFIG` — placed as the **last** tab
+- Add `<TabsContent>` rendering `<DmsConfigurationTab />`
+- Update `TabId` type accordingly
 
-Add `confidence_factor NUMERIC(3,2) DEFAULT 0.8` and `risk_severity TEXT DEFAULT 'none'` to `readiness_nodes`.
+### UI Design
 
-### Task 3: Update Sync Function
-Update `sync_readiness_nodes()` to auto-assign `dimension_id` by mapping:
-- P2A VCR prerequisites → mapped via their `vcr_items.category_id` directly to `vcr_item_categories`
-- ORA activities → default to "Operating Integrity" or map via metadata
-- PSSR items → map via PSSR checklist category → nearest VCR category
-- ORM deliverables → default to "Management Systems"
-- Training → default to "Operating Integrity"
+The Configuration tab will have three sections:
 
-Set confidence factors: completed/approved = 1.0, in-progress = 0.8, not-started = 0.7.
+1. **Live Preview Card** — Shows the assembled document number pattern with labeled, color-coded segments. Updates in real-time as segments are modified.
 
-### Task 4: Executive Dashboard Enhancement
-Redesign `ExecutiveDashboard.tsx` to match the strategic layout:
-- **Top Banner**: Large ORI + SCS + color coding (Green >85, Amber 70-85, Red <70)
-- **Dimension Breakdown**: Bar/table showing each VCR category's score, trend arrow, risk level
-- **Top 5 Startup Blockers**: Blocked/critical nodes with severity
-- **Predictive Trend**: ORI line chart with dashed target curve
-- **Risk Impact Summary**: 4 stat boxes (Open High Risks, Startup-blocking, Dimensions below 70%, Systems below 60%)
+2. **DMS System Settings Card** — Dropdown to select the target DMS (Assai, Documentum, Wrench, Custom), default separator character, and optional notes field for ORSH instructions.
 
-### Task 5: Tenant-Configurable Weight Profiles
-Update the existing `ori_weight_profiles` to store dimension-based weights keyed by `vcr_item_categories.id` instead of module names. Add a simple admin UI for editing weights per tenant.
+3. **Segments Table** — Editable table with all segments. Each row shows position, label, source table mapping, length constraints, separator, and status toggles. Edit dialog for detailed configuration of each segment.
 
-### Task 6: Update Living Documents
-- **Security & Compliance Doc**: Add rows for Readiness Dimensions, Risk Penalty Engine, Startup Confidence Score (mark as Active)
-- **Platform Guide**: Add "Readiness Ontology & Scoring Engine" section documenting the 6 dimensions, ORI formula, SCS
-- **Strategic North Star**: Update scoring engine status from Planned to Active, add dimension-based architecture detail
+### Files to Create/Modify
+
+| File | Action |
+|------|--------|
+| Migration SQL | Create `dms_numbering_segments` table + seed data + RLS |
+| `src/components/admin-tools/dms/DmsConfigurationTab.tsx` | New component |
+| `src/components/admin-tools/DocumentManagementSystem.tsx` | Add tab entry + import |
 
