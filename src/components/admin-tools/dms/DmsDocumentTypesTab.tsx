@@ -214,7 +214,7 @@ const DmsDocumentTypesTab: React.FC = () => {
         <CardHeader className="flex flex-row items-center justify-between py-4">
           <div>
             <CardTitle className="text-lg">Document Type</CardTitle>
-            <CardDescription>Manage document type codes used in document classification</CardDescription>
+            <CardDescription>Manage document type codes used in document classification · Showing {displayRows.length} of {docTypes.length} entries</CardDescription>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative w-56">
