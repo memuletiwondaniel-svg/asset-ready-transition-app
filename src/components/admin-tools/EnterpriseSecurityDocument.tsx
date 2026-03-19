@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Shield, CheckCircle, FileText, Lock, Users, Database, Globe, Key, Activity, Server, Flag, MonitorCheck, RefreshCw, Container, AlertTriangle, Target, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Shield, CheckCircle, FileText, Lock, Users, Database, Globe, Key, Activity, Server, Flag, MonitorCheck, RefreshCw, Container, AlertTriangle, Target, ShieldCheck, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -87,6 +87,10 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
                 ORSH Enterprise Security & Compliance
               </h1>
               <p className="text-sm text-muted-foreground">Living document — automatically updated as the platform evolves</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <Calendar className="h-3 w-3 text-muted-foreground/70" />
+                <span className="text-xs text-muted-foreground/70">Last updated: 19 March 2026</span>
+              </div>
             </div>
           </div>
           <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">

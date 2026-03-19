@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, BookOpen, Workflow, Database, Users, FolderOpen, ClipboardList, Shield, Layers, Code, Table, GitBranch, CheckCircle, FileText, Boxes, ArrowRight, Wrench, Container } from 'lucide-react';
+import { ArrowLeft, BookOpen, Workflow, Database, Users, FolderOpen, ClipboardList, Shield, Layers, Code, Table, GitBranch, CheckCircle, FileText, Boxes, ArrowRight, Wrench, Container, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -97,6 +97,10 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
                 ORSH Platform Guide — How It Works
               </h1>
               <p className="text-sm text-muted-foreground">Living document — covers all workflows, codes, tables, roles, and automations</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <Calendar className="h-3 w-3 text-muted-foreground/70" />
+                <span className="text-xs text-muted-foreground/70">Last updated: 19 March 2026</span>
+              </div>
             </div>
           </div>
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">

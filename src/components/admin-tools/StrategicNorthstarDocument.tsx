@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Compass, Target, TrendingUp, Globe, Layers, Cpu, BarChart3, Blocks, FileText, Rocket, Building2, Shield, BrainCircuit } from 'lucide-react';
+import { ArrowLeft, Compass, Target, TrendingUp, Globe, Layers, Cpu, BarChart3, Blocks, FileText, Rocket, Building2, Shield, BrainCircuit, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -77,6 +77,10 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
                 ORSH Strategic North Star
               </h1>
               <p className="text-sm text-muted-foreground">Living document — ORSH → ORIP evolution & strategic positioning</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <Calendar className="h-3 w-3 text-muted-foreground/70" />
+                <span className="text-xs text-muted-foreground/70">Last updated: 19 March 2026</span>
+              </div>
             </div>
           </div>
           <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">

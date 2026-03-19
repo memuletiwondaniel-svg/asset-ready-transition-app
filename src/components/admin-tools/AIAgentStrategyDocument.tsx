@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Brain, Bot, Zap, Target, AlertTriangle, GraduationCap, Shield, Workflow, Database, MessageSquare, ArrowRight, TrendingUp, Lightbulb, RefreshCw, Eye, CheckCircle, Clock, BarChart3, Layers, Network, Radio, Cpu } from 'lucide-react';
+import { ArrowLeft, Brain, Bot, Zap, Target, AlertTriangle, GraduationCap, Shield, Workflow, Database, MessageSquare, ArrowRight, TrendingUp, Lightbulb, RefreshCw, Eye, CheckCircle, Clock, BarChart3, Layers, Network, Radio, Cpu, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -103,6 +103,10 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 AI Agent Strategy & Training — Living Document
               </h1>
               <p className="text-sm text-muted-foreground">Multi-agent architecture, A2A protocol, model strategy, and continuous training framework</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <Calendar className="h-3 w-3 text-muted-foreground/70" />
+                <span className="text-xs text-muted-foreground/70">Last updated: 19 March 2026</span>
+              </div>
             </div>
           </div>
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
