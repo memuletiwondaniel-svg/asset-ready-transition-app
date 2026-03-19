@@ -505,6 +505,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('document-management')
+  }, {
+    id: 'ai-agent-strategy',
+    title: 'AI Agent Strategy & Training',
+    description: 'Living document covering AI agent architecture, development phases, training strategy, gaps, and continuous improvement',
+    icon: Brain,
+    gradient: 'from-violet-600 to-purple-700',
+    tooltip: 'View the AI agent strategy, training methodology, and continuous improvement framework',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('ai-agent-strategy')
   }];
 
   // Filter admin tools based on search query
