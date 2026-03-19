@@ -493,7 +493,9 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               { label: 'Training', value: 'Training plan management with cost tracking, materials, approvals → Competency readiness dimension', status: 'active' },
               { label: 'Certificates', value: 'Statement of Fitness (SoF), PAC, FAC issuance → Formal readiness gate', status: 'active' },
               { label: 'Task Manager', value: 'Unified task inbox with auto-generated tasks from all modules → Action closeout velocity metric', status: 'active' },
-              { label: 'Admin Tools', value: '22+ management tools (users, roles, security, audit, config) → Governance & compliance layer', status: 'active' },
+              { label: 'Admin Tools', value: '28+ management tools (users, roles, security, audit, config) → Governance & compliance layer', status: 'active' },
+              { label: 'DMS', value: 'Document metadata config, numbering builder, gap analysis → Document readiness intelligence', status: 'active' },
+              { label: 'AI CoPilot (Bob)', value: 'Multi-agent AI with autonomous training, specialist routing, document intelligence → Embedded decision support', status: 'active' },
             ]} />
 
             <Card className="bg-amber-500/5 border-amber-500/20 mt-4">
