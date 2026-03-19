@@ -694,6 +694,39 @@ export type Database = {
         }
         Relationships: []
       }
+      dms_status_codes: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          display_order: number
+          id: string
+          is_active: boolean
+          rev_suffix: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          rev_suffix?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          rev_suffix?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dms_units: {
         Row: {
           code: string
