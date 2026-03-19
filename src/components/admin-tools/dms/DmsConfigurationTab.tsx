@@ -456,16 +456,16 @@ const DmsConfigurationTab: React.FC = () => {
                 ([key]) => s.label.toLowerCase().includes(key)
               )?.[1];
               const entry = table ? EXAMPLE_CODES[table] : null;
-              if (entry) return { id: s.id, code: entry.code, meaning: entry.meaning, separator: s.separator || '-' };
+              if (entry) return { id: s.id, code: entry.code, meaning: entry.meaning, separator: '-' };
               const lbl = s.label.toLowerCase();
               if (lbl.includes('revision') || lbl.includes('sub-seq')) {
-                return { id: s.id, code: '001', meaning: 'Revision / Sub-Sequence', separator: s.separator || '-' };
+                return { id: s.id, code: '001', meaning: 'Revision / Sub-Sequence', separator: '-' };
               }
               if (lbl.includes('sequence') && !seqUsed) {
                 seqUsed = true;
-                return { id: s.id, code: '20502', meaning: 'Sequence Number', separator: s.separator || '-' };
+                return { id: s.id, code: '20502', meaning: 'Sequence Number', separator: '-' };
               }
-              return { id: s.id, code: '001', meaning: s.label, separator: s.separator || '-' };
+              return { id: s.id, code: '001', meaning: s.label, separator: '-' };
             });
             return (
               <div className="mt-8 pt-4 border-t border-border/50">
