@@ -787,6 +787,32 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                           </div>
                         )}
                       </div>
+                      {message.role === 'assistant' && !isLoading && (
+                        <div className="flex items-center gap-1 mt-1 ml-12">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "h-7 w-7 rounded-full",
+                              message.feedbackGiven === 'positive' && "bg-green-500/10 text-green-600"
+                            )}
+                            onClick={() => handleFeedback(index, 'positive')}
+                          >
+                            <ThumbsUp className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "h-7 w-7 rounded-full",
+                              message.feedbackGiven === 'negative' && "bg-destructive/10 text-destructive"
+                            )}
+                            onClick={() => handleFeedback(index, 'negative')}
+                          >
+                            <ThumbsDown className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      )}
                       {message.role === 'user' && (
                         <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                           <User className="h-4 w-4 text-muted-foreground" />
