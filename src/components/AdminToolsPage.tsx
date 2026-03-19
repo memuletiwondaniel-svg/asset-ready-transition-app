@@ -52,6 +52,7 @@ const DeploymentConfigs = lazy(() => import("./admin-tools/DeploymentConfigs"));
 const CustomerJourneyMaps = lazy(() => import("./admin-tools/CustomerJourneyMaps"));
 const ProcessFlowMaps = lazy(() => import("./admin-tools/ProcessFlowMaps"));
 const DocumentManagementSystem = lazy(() => import("./admin-tools/DocumentManagementSystem"));
+const AIAgentStrategyDocument = lazy(() => import("./admin-tools/AIAgentStrategyDocument"));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
