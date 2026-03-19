@@ -445,7 +445,7 @@ const DmsConfigurationTab: React.FC = () => {
               dms_sites:          { code: 'ISGP',  meaning: 'Iraq South Gas' },
               dms_disciplines:    { code: 'PX',    meaning: 'Process Other' },
               dms_document_types: { code: '2365',  meaning: 'Process Engineering Flow Scheme' },
-              dms_units:          { code: '20502', meaning: 'Unit 20502' },
+              dms_units:          { code: 'U13000', meaning: 'Dehydration Unit' },
             };
             const LABEL_TO_TABLE: Record<string, string> = {
               project: 'dms_projects',
