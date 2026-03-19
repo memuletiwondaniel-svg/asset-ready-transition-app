@@ -105,7 +105,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             </div>
           </div>
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            v3.0 — March 2026
+            v4.0 — March 2026
           </Badge>
         </div>
       </div>
