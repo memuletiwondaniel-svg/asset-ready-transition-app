@@ -567,8 +567,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 16. Enterprise SaaS Architecture Readiness — NEW */}
-          <Section id="architecture-readiness" icon={<Target className="h-5 w-5 text-primary" />} title="16. Enterprise SaaS Architecture Readiness">
+          {/* 17. Enterprise SaaS Architecture Readiness — NEW */}
+          <Section id="architecture-readiness" icon={<Target className="h-5 w-5 text-primary" />} title="17. Enterprise SaaS Architecture Readiness">
             <p>Consolidated assessment of all enterprise architecture requirements against ORSH current state. Items marked <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 mx-1 text-xs">🔶 Roadmap</Badge> are planned for ORIP evolution.</p>
 
             <p className="font-medium text-foreground mt-3">ORIP Scoring & Intelligence Engine</p>
