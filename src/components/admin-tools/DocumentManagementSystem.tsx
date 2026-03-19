@@ -23,6 +23,7 @@ import DmsSitesTab from './dms/DmsSitesTab';
 import DmsOriginatorsTab from './dms/DmsOriginatorsTab';
 import DmsUnitsTab from './dms/DmsUnitsTab';
 import DmsDocumentTypesTab from './dms/DmsDocumentTypesTab';
+import DmsStatusCodesTab from './dms/DmsStatusCodesTab';
 
 interface DocumentManagementSystemProps {
   onBack: () => void;
