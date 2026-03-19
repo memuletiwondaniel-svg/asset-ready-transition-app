@@ -38,6 +38,7 @@ const TAB_CONFIG = [
   { id: 'plant', label: 'Plant', icon: Factory, activeColor: 'text-rose-600 dark:text-rose-400' },
   { id: 'site', label: 'Site', icon: MapPin, activeColor: 'text-cyan-600 dark:text-cyan-400' },
   { id: 'unit', label: 'Unit', icon: Box, activeColor: 'text-orange-600 dark:text-orange-400' },
+  { id: 'status-code', label: 'Status Code', icon: CheckSquare, activeColor: 'text-teal-600 dark:text-teal-400' },
 ] as const;
 
 type TabId = typeof TAB_CONFIG[number]['id'];
