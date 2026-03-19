@@ -404,11 +404,9 @@ const DmsConfigurationTab: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Connector line between boxes */}
+                  {/* Dash separator between boxes */}
                   {idx < sorted.length - 1 && (
-                    <div className="flex items-center text-muted-foreground/30 select-none">
-                      <ChevronRight className="h-4 w-4" />
-                    </div>
+                    <span className="text-sm font-medium text-muted-foreground/40 select-none">—</span>
                   )}
                 </React.Fragment>
               );
