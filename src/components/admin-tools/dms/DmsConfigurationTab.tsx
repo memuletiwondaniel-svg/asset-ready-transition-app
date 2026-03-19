@@ -242,6 +242,7 @@ const DmsConfigurationTab: React.FC = () => {
     setFormSeparator('-');
     setFormMinLength(1);
     setFormMaxLength(10);
+    setFormCharType('alphanumeric');
     setFormSourceTable('none');
     setFormSourceCodeCol('code');
     setFormSourceNameCol('');
