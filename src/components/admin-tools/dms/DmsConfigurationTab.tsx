@@ -360,14 +360,6 @@ const DmsConfigurationTab: React.FC = () => {
                         !seg.is_active && 'opacity-40 grayscale'
                       )}
                     >
-                      {/* Position badge */}
-                      <span className={cn(
-                        'absolute -top-2 -left-2 h-5 w-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white',
-                        color.dot
-                      )}>
-                        {idx + 1}
-                      </span>
-
                       {/* Example value */}
                       <span className={cn('font-mono text-sm font-bold leading-none', color.text)}>
                         {segmentDisplayCode(seg, idx, sampleData)}
@@ -412,11 +404,11 @@ const DmsConfigurationTab: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Separator between boxes */}
+                  {/* Connector line between boxes */}
                   {idx < sorted.length - 1 && (
-                    <span className="text-lg font-bold text-muted-foreground/50 select-none mx-0.5">
-                      {seg.separator || '-'}
-                    </span>
+                    <div className="flex items-center text-muted-foreground/30 select-none">
+                      <ChevronRight className="h-4 w-4" />
+                    </div>
                   )}
                 </React.Fragment>
               );
