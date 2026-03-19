@@ -362,12 +362,12 @@ const DmsConfigurationTab: React.FC = () => {
           </div>
 
           {/* Interactive segment boxes */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-start gap-2">
             {sorted.map((seg, idx) => {
               const color = SEGMENT_COLORS[idx % SEGMENT_COLORS.length];
               return (
                 <React.Fragment key={seg.id}>
-                  <div className="group relative">
+                  <div className="group relative flex flex-col items-center">
                     <button
                       onClick={() => openEdit(seg)}
                       className={cn(
@@ -391,15 +391,8 @@ const DmsConfigurationTab: React.FC = () => {
                         {segmentDisplayCode(seg, idx, sampleData)}
                       </span>
 
-                      {/* Real example name */}
-                      {segmentDisplayName(seg, sampleData) ? (
-                        <span className="text-[9px] text-muted-foreground/70 mt-1 leading-tight max-w-[110px] truncate italic">
-                          {segmentDisplayName(seg, sampleData)}
-                        </span>
-                      ) : null}
-
                       {/* Label */}
-                      <span className="text-[10px] text-muted-foreground mt-1 leading-tight max-w-[100px] truncate font-medium">
+                      <span className="text-[10px] text-muted-foreground mt-1.5 leading-tight max-w-[100px] truncate font-medium">
                         {seg.label}
                       </span>
 
@@ -408,6 +401,13 @@ const DmsConfigurationTab: React.FC = () => {
                         <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive" title="Required" />
                       )}
                     </button>
+
+                    {/* Real example name - outside and under the box */}
+                    {segmentDisplayName(seg, sampleData) && (
+                      <span className="text-[9px] text-muted-foreground/60 mt-1.5 leading-tight max-w-[110px] truncate italic text-center">
+                        {segmentDisplayName(seg, sampleData)}
+                      </span>
+                    )}
 
                     {/* Hover actions */}
                     <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 z-10">
