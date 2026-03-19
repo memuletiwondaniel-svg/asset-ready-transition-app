@@ -391,8 +391,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 10. Change Management — enhanced CI/CD framing */}
-          <Section id="change-mgmt" icon={<RefreshCw className="h-5 w-5 text-primary" />} title="10. Change Management & CI/CD Pipeline">
+          {/* 11. Change Management — enhanced CI/CD framing */}
+          <Section id="change-mgmt" icon={<RefreshCw className="h-5 w-5 text-primary" />} title="11. Change Management & CI/CD Pipeline">
             <div className="bg-muted/50 rounded-lg p-4 font-mono text-xs text-center">
               BUILD (Lovable Chat) → TEST (Preview URL) → VERIFY (Pre-Publish Checklist) → PUBLISH (Production)
             </div>
