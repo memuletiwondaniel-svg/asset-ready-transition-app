@@ -740,8 +740,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 13. Task Automation */}
-          <Section id="task-automation" icon={<Wrench className="h-5 w-5 text-primary" />} title="13. Task Automation & Database Triggers">
+          {/* 15. Task Automation */}
+          <Section id="task-automation" icon={<Wrench className="h-5 w-5 text-primary" />} title="15. Task Automation & Database Triggers">
             <p>ORSH uses PostgreSQL triggers to automate task creation, progress tracking, and workflow transitions:</p>
 
             <InfoTable headers={['Trigger', 'Event', 'Action']} rows={[
