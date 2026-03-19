@@ -396,10 +396,6 @@ const DmsConfigurationTab: React.FC = () => {
                         {seg.label}
                       </span>
 
-                      {/* Required indicator */}
-                      {seg.is_required && (
-                        <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive" title="Required" />
-                      )}
                     </button>
 
                     {/* Real example name - outside and under the box */}
