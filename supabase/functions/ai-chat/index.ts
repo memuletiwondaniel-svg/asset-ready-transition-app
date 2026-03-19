@@ -2999,7 +2999,6 @@ async function logResponseFeedback(
   latencyMs: number
 ): Promise<void> {
   try {
-    // Log to training log for analysis
     await supabaseClient.from('ai_training_log').insert({
       event_type: 'feedback_review',
       agent_code: agentCode,
@@ -3013,6 +3012,196 @@ async function logResponseFeedback(
     });
   } catch (e) {
     console.error('Feedback logging failed:', e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PER-USER MEMORY - Load and save user context for personalization
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function loadUserContext(supabaseClient: any, userId: string): Promise<string> {
+  try {
+    const { data: contextRows } = await supabaseClient
+      .from('ai_user_context')
+      .select('context_key, context_value')
+      .eq('user_id', userId);
+
+    if (!contextRows || contextRows.length === 0) return '';
+
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('full_name, position, department, company, region')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    const contextParts = ['=== USER CONTEXT (Personalization) ==='];
+    
+    if (profile) {
+      contextParts.push(`User: ${profile.full_name || 'Unknown'}`);
+      if (profile.position) contextParts.push(`Position: ${profile.position}`);
+      if (profile.department) contextParts.push(`Department: ${profile.department}`);
+      if (profile.company) contextParts.push(`Company: ${profile.company}`);
+    }
+
+    for (const row of contextRows) {
+      contextParts.push(`${row.context_key}: ${JSON.stringify(row.context_value)}`);
+    }
+
+    contextParts.push('Use this context to personalize responses. Reference their projects and role naturally.');
+    return '\n\n' + contextParts.join('\n');
+  } catch (e) {
+    console.error('Failed to load user context:', e);
+    return '';
+  }
+}
+
+async function saveUserContextTool(supabaseClient: any, userId: string, key: string, value: string): Promise<any> {
+  try {
+    const { error } = await supabaseClient
+      .from('ai_user_context')
+      .upsert({
+        user_id: userId,
+        context_key: key,
+        context_value: { value, updated: new Date().toISOString() }
+      }, { onConflict: 'user_id,context_key' });
+
+    if (error) throw error;
+    return { success: true, message: `Saved preference: ${key} = ${value}` };
+  } catch (e) {
+    return { success: false, error: String(e) };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PROACTIVE INSIGHTS ENGINE - Detect overdue/stalled items
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function getProactiveInsights(supabaseClient: any, scope: string, projectCode?: string): Promise<any> {
+  const insights: any[] = [];
+  const now = new Date();
+
+  try {
+    // 1. Overdue Priority A actions (CRITICAL)
+    if (scope === 'all' || scope === 'pssr') {
+      const { data: overdueActions } = await supabaseClient
+        .from('pssr_priority_actions')
+        .select('id, description, due_date, priority, status, pssr_id')
+        .eq('status', 'open')
+        .eq('priority', 'A')
+        .lt('due_date', now.toISOString())
+        .limit(10);
+
+      if (overdueActions && overdueActions.length > 0) {
+        insights.push({
+          severity: 'critical',
+          category: 'PSSR',
+          type: 'overdue_priority_a',
+          message: `🔴 ${overdueActions.length} overdue Priority A actions need immediate attention`,
+          count: overdueActions.length,
+          items: overdueActions.slice(0, 5).map((a: any) => ({
+            description: a.description?.substring(0, 80),
+            due_date: a.due_date
+          }))
+        });
+      }
+
+      // 2. PSSRs stuck in Draft for >14 days
+      const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+      const { data: stalePssrs } = await supabaseClient
+        .from('pssrs')
+        .select('id, pssr_number, status, created_at')
+        .eq('status', 'Draft')
+        .lt('created_at', twoWeeksAgo.toISOString())
+        .limit(10);
+
+      if (stalePssrs && stalePssrs.length > 0) {
+        insights.push({
+          severity: 'warning',
+          category: 'PSSR',
+          type: 'stale_draft_pssr',
+          message: `🟡 ${stalePssrs.length} PSSRs stuck in Draft for >14 days`,
+          count: stalePssrs.length,
+          items: stalePssrs.slice(0, 5).map((p: any) => ({ pssr_number: p.pssr_number, created_at: p.created_at }))
+        });
+      }
+    }
+
+    // 3. ORA plans with low progress
+    if (scope === 'all' || scope === 'ora') {
+      const { data: stalePlans } = await supabaseClient
+        .from('orp_plans')
+        .select('id, phase, status, created_at')
+        .in('status', ['draft', 'in_progress'])
+        .limit(20);
+
+      if (stalePlans) {
+        const staleCount = stalePlans.filter((p: any) => {
+          const age = now.getTime() - new Date(p.created_at).getTime();
+          return age > 30 * 24 * 60 * 60 * 1000; // >30 days old
+        });
+
+        if (staleCount.length > 0) {
+          insights.push({
+            severity: 'warning',
+            category: 'ORA',
+            type: 'stale_ora_plans',
+            message: `🟡 ${staleCount.length} ORA plans inactive for >30 days`,
+            count: staleCount.length
+          });
+        }
+      }
+    }
+
+    // 4. P2A handovers pending approval
+    if (scope === 'all' || scope === 'p2a') {
+      const { data: pendingP2a } = await supabaseClient
+        .from('p2a_handover_plans')
+        .select('id, status, created_at')
+        .eq('status', 'PENDING_APPROVAL')
+        .limit(10);
+
+      if (pendingP2a && pendingP2a.length > 0) {
+        insights.push({
+          severity: 'info',
+          category: 'P2A',
+          type: 'pending_p2a_approvals',
+          message: `ℹ️ ${pendingP2a.length} P2A handovers awaiting approval`,
+          count: pendingP2a.length
+        });
+      }
+    }
+
+    // 5. Negative AI feedback trend (meta-insight)
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const { data: recentFeedback } = await supabaseClient
+      .from('ai_response_feedback')
+      .select('rating')
+      .gte('created_at', weekAgo.toISOString());
+
+    if (recentFeedback && recentFeedback.length >= 5) {
+      const negCount = recentFeedback.filter((f: any) => f.rating === 'negative').length;
+      const negRate = negCount / recentFeedback.length;
+      if (negRate > 0.3) {
+        insights.push({
+          severity: 'warning',
+          category: 'AI',
+          type: 'high_negative_feedback',
+          message: `🟡 AI response quality concern: ${Math.round(negRate * 100)}% negative feedback this week`,
+          count: negCount
+        });
+      }
+    }
+
+    return {
+      total_insights: insights.length,
+      critical: insights.filter(i => i.severity === 'critical').length,
+      warnings: insights.filter(i => i.severity === 'warning').length,
+      insights,
+      generated_at: now.toISOString()
+    };
+  } catch (e) {
+    console.error('Proactive insights error:', e);
+    return { total_insights: 0, insights: [], error: String(e) };
   }
 }
 
