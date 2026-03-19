@@ -471,7 +471,10 @@ const DmsConfigurationTab: React.FC = () => {
             });
             return (
               <div className="mt-8 pt-4 border-t border-border/50">
-                <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Example</Label>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Example Document Number</Label>
+                </div>
                 <div className="bg-muted/40 rounded-lg px-4 py-3 border border-dashed border-border">
                   <span className="font-mono text-sm tracking-wide text-foreground font-semibold">
                     {exampleSegments.map((e, i) => (
