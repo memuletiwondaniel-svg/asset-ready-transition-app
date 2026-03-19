@@ -445,7 +445,7 @@ const DmsConfigurationTab: React.FC = () => {
               dms_sites:          { code: 'ISGP',  meaning: 'Iraq South Gas' },
               dms_disciplines:    { code: 'PX',    meaning: 'Process Other' },
               dms_document_types: { code: '2365',  meaning: 'Process Engineering Flow Scheme' },
-              dms_units:          { code: '20502', meaning: 'Unit 20502' },
+              dms_units:          { code: 'U13000', meaning: 'Dehydration Unit' },
             };
             const LABEL_TO_TABLE: Record<string, string> = {
               project: 'dms_projects',
@@ -456,17 +456,26 @@ const DmsConfigurationTab: React.FC = () => {
               discipline: 'dms_disciplines',
               document: 'dms_document_types',
             };
+            const LABEL_FALLBACKS: Record<string, { code: string; meaning: string }> = {
+              sequence: { code: '20502', meaning: 'Sequence Number' },
+              revision: { code: '001', meaning: 'Revision / Sub-Sequence' },
+            };
+            let seqUsed = false;
             const exampleSegments = activeSegments.map(s => {
               const table = s.source_table || Object.entries(LABEL_TO_TABLE).find(
                 ([key]) => s.label.toLowerCase().includes(key)
               )?.[1];
               const entry = table ? EXAMPLE_CODES[table] : null;
-              return {
-                id: s.id,
-                code: entry?.code || '001',
-                meaning: entry?.meaning || s.label,
-                separator: s.separator || '-',
-              };
+              if (entry) return { id: s.id, code: entry.code, meaning: entry.meaning, separator: s.separator || '-' };
+              const lbl = s.label.toLowerCase();
+              if (lbl.includes('revision') || lbl.includes('sub-seq')) {
+                return { id: s.id, code: '001', meaning: 'Revision / Sub-Sequence', separator: s.separator || '-' };
+              }
+              if (lbl.includes('sequence') && !seqUsed) {
+                seqUsed = true;
+                return { id: s.id, code: '20502', meaning: 'Sequence Number', separator: s.separator || '-' };
+              }
+              return { id: s.id, code: '001', meaning: s.label, separator: s.separator || '-' };
             });
             return (
               <div className="mt-8 pt-4 border-t border-border/50">
