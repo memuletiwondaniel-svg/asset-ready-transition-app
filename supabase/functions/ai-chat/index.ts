@@ -5274,7 +5274,10 @@ serve(async (req) => {
       return { role: msg.role, content: msg.content };
     });
 
-    console.log("Bob processing request with", transformedMessages.length, "messages");
+    // Detect which agent domain this query belongs to
+    const detectedAgent = lastUserMessage ? detectAgentDomain(lastUserMessage.content) : 'copilot';
+    const requestStartTime = Date.now();
+    console.log(`Bob processing request with ${transformedMessages.length} messages (detected agent: ${detectedAgent})`);
 
     // First API call - with tools enabled (non-streaming for tool handling)
     const initialResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
