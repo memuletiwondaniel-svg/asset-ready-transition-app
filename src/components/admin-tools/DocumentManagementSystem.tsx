@@ -104,6 +104,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dms-disciplines'] });
       toast.success('Discipline updated');
+      setDialogOpen(false);
     },
     onError: (err: any) => toast.error(err.message || 'Failed to update discipline'),
   });
