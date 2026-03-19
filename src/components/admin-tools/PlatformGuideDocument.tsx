@@ -717,8 +717,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 12. Enums */}
-          <Section id="enums" icon={<Boxes className="h-5 w-5 text-primary" />} title="12. Status Enums & State Machines">
+          {/* 14. Enums */}
+          <Section id="enums" icon={<Boxes className="h-5 w-5 text-primary" />} title="14. Status Enums & State Machines">
             <p>All status values are defined as PostgreSQL enums for type safety:</p>
 
             <InfoTable headers={['Enum', 'Values', 'Used By']} rows={[
