@@ -55,6 +55,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
     { id: 'board-brief', label: 'Board-Level Strategic Brief' },
     { id: 'target-market', label: 'Target Market & Industry Context' },
     { id: 'evolution-roadmap', label: 'Platform Evolution Roadmap' },
+    { id: 'ai-strategy', label: 'AI & Intelligence Strategy' },
     { id: 'acquisition-positioning', label: 'Acquisition-Positioning Narrative' },
     { id: 'technical-differentiation', label: 'Technical Differentiation' },
     { id: 'module-alignment', label: 'Current Module Alignment' },
