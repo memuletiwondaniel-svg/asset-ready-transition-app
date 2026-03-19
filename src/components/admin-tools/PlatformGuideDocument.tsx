@@ -695,6 +695,30 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               ['checklist_items', 'Master checklist configuration'],
             ]} />
 
+            <p className="font-medium text-foreground mt-4">DMS Tables</p>
+            <InfoTable headers={['Table', 'Description']} rows={[
+              ['dms_document_types', 'Document type definitions with acceptable status and tier'],
+              ['dms_disciplines', 'Engineering discipline codes'],
+              ['dms_projects', 'Project codes with cabinet mapping'],
+              ['dms_originators', 'Originator organization codes'],
+              ['dms_plants', 'Plant location codes'],
+              ['dms_sites', 'Site definitions'],
+              ['dms_units', 'Operational unit codes'],
+              ['dms_status_codes', 'Document lifecycle status codes with revision suffixes'],
+              ['dms_numbering_segments', 'Document numbering format segments'],
+            ]} />
+
+            <p className="font-medium text-foreground mt-4">AI Infrastructure Tables</p>
+            <InfoTable headers={['Table', 'Description']} rows={[
+              ['ai_agent_registry', 'Agent definitions (capabilities, model, domain tags)'],
+              ['ai_response_feedback', 'User ratings and corrections'],
+              ['ai_training_log', 'Versioned prompt deployments'],
+              ['ai_agent_communications', 'Inter-agent message routing'],
+              ['ai_edge_cases', 'Hallucination/failure catalog for regression'],
+              ['ai_user_context', 'Per-user preference persistence'],
+              ['ai_prompt_improvements', 'Auto-applied prompt change tracking'],
+            ]} />
+
             <p className="font-medium text-foreground mt-4">Supporting Tables</p>
             <InfoTable headers={['Table', 'Description']} rows={[
               ['user_tasks', 'Unified task inbox (auto-generated + manual)'],
