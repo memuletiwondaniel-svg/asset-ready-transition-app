@@ -266,7 +266,7 @@ const DmsDocumentTypesTab: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((item, idx) => (
+                {displayRows.map((item, idx) => (
                   <TableRow key={item.id} className="group border-border/40 hover:bg-muted/30 transition-colors">
                     <TableCell className="text-muted-foreground text-xs tabular-nums">{idx + 1}</TableCell>
                     {visibleColumns.map(col => (
