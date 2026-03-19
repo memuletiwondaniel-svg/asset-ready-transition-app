@@ -105,7 +105,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             </div>
           </div>
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            v3.0 — March 2026
+            v4.0 — March 2026
           </Badge>
         </div>
       </div>
@@ -175,7 +175,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
                       <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
                         <p className="font-semibold text-foreground">Document Agent</p>
-                        <p className="text-muted-foreground">GPT-5-mini | 6 tools | DMS readiness</p>
+                        <p className="text-muted-foreground">GPT-5-mini | 11 tools | DMS readiness</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
                       <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
@@ -330,6 +330,11 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['get_document_gaps_analysis', 'Document', 'dms_document_types', 'Active'],
                 ['get_dms_table_info', 'Document', 'Any dms_* table', 'Active'],
                 ['get_dms_hyperlink', 'Document', 'Configuration-based', 'Active'],
+                ['get_document_cross_discipline_comparison', 'Document', 'dms_document_types', 'Active — v4.0'],
+                ['get_document_search_by_number', 'Document', 'dms_document_types, dms_numbering_segments', 'Active — v4.0'],
+                ['get_document_bulk_status', 'Document', 'dms_document_types', 'Active — v4.0'],
+                ['get_document_trend_analysis', 'Document', 'dms_document_types, dms_status_codes', 'Active — v4.0'],
+                ['create_task_from_document_gap', 'Document', 'dms_document_types, user_tasks', 'Active — v4.0'],
                 ['navigate_to_page', 'CoPilot', 'N/A (frontend action)', 'Active'],
                 ['resolve_entity_for_navigation', 'CoPilot', 'pssrs, projects, orp_plans', 'Active'],
               ]}
