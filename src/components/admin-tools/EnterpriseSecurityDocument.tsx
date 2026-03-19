@@ -468,8 +468,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 13. Database Security */}
-          <Section id="db-security" icon={<Database className="h-5 w-5 text-primary" />} title="13. Database Security Architecture">
+          {/* 14. Database Security */}
+          <Section id="db-security" icon={<Database className="h-5 w-5 text-primary" />} title="14. Database Security Architecture">
             <ul className="list-disc pl-5 space-y-1">
               <li><strong>RLS enabled on all tables</strong> containing user or tenant data</li>
               <li>Policies use <code className="bg-muted px-1 rounded text-xs">security definer</code> functions to prevent recursive evaluation</li>
