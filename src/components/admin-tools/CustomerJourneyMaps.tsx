@@ -130,6 +130,7 @@ const CustomerJourneyMaps: React.FC<CustomerJourneyMapsProps> = ({ onBack }) => 
       gradient: 'from-violet-500 to-purple-600',
       journeyPhases: [
         { phase: 'Dashboard Review', actions: ['Open ORSH landing page', 'Review favorited projects', 'Check ORI scores'], touchpoints: ['Landing Page', 'Project Cards', 'ORI Widget'], emotion: 'positive', outcome: 'Instant visibility into portfolio readiness' },
+        { phase: 'AI-Assisted Insights', actions: ['Ask Bob CoPilot for project summary', 'Get document readiness score', 'Review AI-flagged blockers'], touchpoints: ['AI Chat', 'ORI Dashboard', 'Notifications'], emotion: 'positive', outcome: 'Data-driven decisions without manual report digging' },
         { phase: 'Director SoF View', actions: ['View My Tasks (Director view)', 'Review pending approvals', 'Check SoF status'], touchpoints: ['My Tasks Page', 'Director SoF View'], emotion: 'neutral', outcome: 'Understand approval backlog' },
         { phase: 'Approval Decisions', actions: ['Review P2A plans', 'Approve/reject ORA plans', 'Sign-off certificates'], touchpoints: ['Task Detail Sheet', 'Approval Controls'], emotion: 'positive', outcome: 'Plans unblocked and progressing' },
         { phase: 'Escalation Review', actions: ['Identify at-risk projects', 'Review overdue activities', 'Engage with hub leads'], touchpoints: ['Project Overview', 'Gantt Chart', 'Comments'], emotion: 'frustrated', outcome: 'Blockers identified and action taken' },
