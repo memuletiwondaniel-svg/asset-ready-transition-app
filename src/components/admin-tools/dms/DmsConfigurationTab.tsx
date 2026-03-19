@@ -116,13 +116,14 @@ const segmentDisplayCode = (
   return letter.repeat(len);
 };
 
-/** Get the descriptive name for a segment's sample */
-const segmentDisplayName = (
+/** Get "CODE — Name" string for a segment's sample */
+const segmentDisplayExample = (
   seg: Segment,
   samples: Record<string, { code: string; name: string }> | undefined
 ): string | null => {
   if (seg.source_table && samples?.[seg.source_table]) {
-    return samples[seg.source_table].name;
+    const { code, name } = samples[seg.source_table];
+    return `${code} — ${name}`;
   }
   return null;
 };
