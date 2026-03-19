@@ -587,8 +587,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 10. Roles */}
-          <Section id="roles" icon={<Shield className="h-5 w-5 text-primary" />} title="10. Roles & Permissions Configuration">
+          {/* 12. Roles */}
+          <Section id="roles" icon={<Shield className="h-5 w-5 text-primary" />} title="12. Roles & Permissions Configuration">
             <p>Roles are organized in <strong className="text-foreground">categories</strong> and each role has specific <strong className="text-foreground">permissions</strong> from the <code className="bg-muted px-1 rounded text-xs">app_permission</code> enum.</p>
 
             <p className="font-medium text-foreground mt-3">Role Categories</p>
