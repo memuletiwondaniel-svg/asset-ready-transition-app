@@ -773,8 +773,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 14. External Integrations */}
-          <Section id="integrations" icon={<Layers className="h-5 w-5 text-primary" />} title="14. External Integrations">
+          {/* 16. External Integrations */}
+          <Section id="integrations" icon={<Layers className="h-5 w-5 text-primary" />} title="16. External Integrations">
             <InfoTable headers={['System', 'Integration Type', 'Purpose']} rows={[
               ['GoCompletions (GoHub)', 'API + Edge Functions', 'Import systems/subsystems into P2A plans, sync completion counts'],
               ['SAP4HANA', 'API (planned)', 'Asset register and maintenance data sync'],
