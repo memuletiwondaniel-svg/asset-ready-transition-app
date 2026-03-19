@@ -326,8 +326,16 @@ const DmsConfigurationTab: React.FC = () => {
       {/* Segments Table */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Numbering Segments</CardTitle>
-          <CardDescription>Define, reorder, and configure each segment of the document number</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Numbering Segments</CardTitle>
+              <CardDescription>Define, reorder, and configure each segment of the document number</CardDescription>
+            </div>
+            <Button size="sm" onClick={openCreate}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Add Segment
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0 max-h-[calc(100vh-480px)] overflow-auto">
           {isLoading ? (
