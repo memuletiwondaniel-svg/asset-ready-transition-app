@@ -433,8 +433,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 11. Feature Flags */}
-          <Section id="feature-flags" icon={<Flag className="h-5 w-5 text-primary" />} title="11. Tenant Feature Flags">
+          {/* 12. Feature Flags */}
+          <Section id="feature-flags" icon={<Flag className="h-5 w-5 text-primary" />} title="12. Tenant Feature Flags">
             <p>Per-tenant feature flags enable controlled rollouts — ship to one tenant first, verify, then enable for all.</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {[
