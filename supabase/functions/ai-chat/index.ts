@@ -2876,6 +2876,48 @@ const tools = [
       }
     }
   },
+  {
+    type: "function",
+    function: {
+      name: "get_document_quality_score",
+      description: "Calculate a composite document quality score (0-100) for the overall DMS or a specific discipline. Weights completeness, status maturity, RLMU compliance, and gap severity. Use for 'document quality score', 'how good are our documents', 'DMS health score', 'documentation maturity'.",
+      parameters: {
+        type: "object",
+        properties: {
+          discipline_filter: {
+            type: "string",
+            description: "Optional discipline code or name"
+          },
+          tier_filter: {
+            type: "string",
+            description: "Optional tier filter"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_document_ora_linkage",
+      description: "Show how document readiness links to ORA plan phases and P2A handover requirements. Maps documentation gaps to specific ORA deliverables and P2A blockers. Use for 'how do documents affect ORA', 'document impact on handover', 'link docs to ORA', 'doc readiness vs ORA progress', 'P2A document requirements'.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_code: {
+            type: "string",
+            description: "Optional project code to scope the analysis"
+          },
+          phase_filter: {
+            type: "string",
+            description: "Optional ORA phase filter (ASSESS, SELECT, DEFINE, EXECUTE)"
+          }
+        },
+        required: []
+      }
+    }
+  },
   // ═══════════════════════════════════════════════════════════════════════════
   // EXECUTIVE SUMMARY TOOL - For high-level status assessments
   // ═══════════════════════════════════════════════════════════════════════════
