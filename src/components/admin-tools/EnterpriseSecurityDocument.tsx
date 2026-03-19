@@ -58,6 +58,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
     { id: 'api-security', label: 'API & Webhook Security' },
     { id: 'audit', label: 'Audit Logging & Compliance' },
     { id: 'data-protection', label: 'Data Protection' },
+    { id: 'ai-security', label: 'AI Agent Security & Guardrails' },
     { id: 'backup-dr', label: 'Backup & Disaster Recovery' },
     { id: 'change-mgmt', label: 'Change Management & Deployment' },
     { id: 'feature-flags', label: 'Tenant Feature Flags' },
