@@ -100,7 +100,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
             </div>
           </div>
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            v1.0 — March 2026
+            v2.0 — March 2026
           </Badge>
         </div>
       </div>
