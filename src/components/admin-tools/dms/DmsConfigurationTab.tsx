@@ -512,9 +512,9 @@ const DmsConfigurationTab: React.FC = () => {
           </div>
           <DialogFooter className="pt-4 border-t gap-2">
             <Button variant="outline" onClick={() => setEditDialog(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={updateSegment.isPending} className="min-w-[100px]">
-              {updateSegment.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Save Changes
+            <Button onClick={handleSave} disabled={updateSegment.isPending || createSegment.isPending} className="min-w-[100px]">
+              {(updateSegment.isPending || createSegment.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {isCreating ? 'Add Segment' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </DialogContent>
