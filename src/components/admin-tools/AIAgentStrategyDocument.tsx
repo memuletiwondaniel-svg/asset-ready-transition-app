@@ -741,13 +741,14 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
           <Separator />
 
           {/* 14. Roadmap */}
-          <Section icon={<Target className="h-5 w-5 text-purple-500" />} title="14. Agent Roadmap" id="roadmap">
+          <Section icon={<Target className="h-5 w-5 text-purple-500" />} title="15. Agent Roadmap" id="roadmap">
             <InfoTable
               headers={['Quarter', 'Milestone', 'Deliverables', 'Status']}
               rows={[
                 ['Q1 2026', 'Document Agent + A2A Protocol', '6 DMS tools, A2A protocol, training infrastructure (5 tables), agent registry', 'Complete'],
-                ['Q1 2026', 'Living Strategy Document v2', 'This document with model strategy, A2A protocol, training infrastructure', 'Complete'],
-                ['Q2 2026', 'Feedback Loop MVP', 'Thumbs up/down UI, correction capture, weekly review queue', 'Planned'],
+                ['Q1 2026', 'Living Strategy Document v2', 'Model strategy, A2A protocol, training infrastructure documentation', 'Complete'],
+                ['Q1 2026', 'Advanced Document Tools (v4)', 'Cross-discipline, bulk status, trend analysis, task creation (11 tools)', 'Complete'],
+                ['Q1 2026', 'Autonomous Training + Quality Score (v5)', 'Auto-apply improvements, self-healing edge cases, quality scoring, ORA linkage (13 tools)', 'Complete'],
                 ['Q2 2026', 'Training Agent', 'Training plan tools, competency gap analysis (Gemini 3 Flash)', 'Planned'],
                 ['Q2 2026', 'CMMS Agent', 'Equipment care tools, maintenance readiness (Gemini 3 Flash)', 'Planned'],
                 ['Q2 2026', 'ORM Agent', 'Manpower readiness tools, staffing gaps (Gemini 3 Flash)', 'Planned'],
