@@ -100,7 +100,7 @@ const DmsPlantsTab: React.FC = () => {
             <Button size="sm" className="gap-1.5" onClick={openAddDialog}><Plus className="h-4 w-4" /> Add Plant</Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 max-h-[calc(100vh-280px)] overflow-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : (
