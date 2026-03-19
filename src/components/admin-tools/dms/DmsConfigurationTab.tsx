@@ -350,7 +350,7 @@ const DmsConfigurationTab: React.FC = () => {
                 {activeSegments.map((s, i) => (
                   <React.Fragment key={s.id}>
                     <span className={cn('font-semibold', SEGMENT_COLORS[sorted.indexOf(s) % SEGMENT_COLORS.length].text)}>
-                      {segmentPlaceholder(s, sorted.indexOf(s))}
+                      {segmentDisplayCode(s, sorted.indexOf(s), sampleData)}
                     </span>
                     {i < activeSegments.length - 1 && (
                       <span className="text-muted-foreground mx-0.5">{s.separator || '-'}</span>
