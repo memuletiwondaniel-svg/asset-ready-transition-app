@@ -1,0 +1,1 @@
+DELETE FROM dms_document_types;
