@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Compass, Target, TrendingUp, Globe, Layers, Cpu, BarChart3, Blocks, FileText, Rocket, Building2, Shield, BrainCircuit } from 'lucide-react';
+import { ArrowLeft, Compass, Target, TrendingUp, Globe, Layers, Cpu, BarChart3, Blocks, FileText, Rocket, Building2, Shield, BrainCircuit, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
