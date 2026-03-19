@@ -170,8 +170,31 @@ const DmsConfigurationTab: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ['dms-numbering-segments'] });
   };
 
+  const resetForm = () => {
+    setFormLabel('');
+    setFormKey('');
+    setFormSeparator('-');
+    setFormMinLength(1);
+    setFormMaxLength(10);
+    setFormSourceTable('none');
+    setFormSourceCodeCol('code');
+    setFormSourceNameCol('');
+    setFormRequired(true);
+    setFormActive(true);
+    setFormDescription('');
+    setFormExample('');
+  };
+
+  const openCreate = () => {
+    setEditingSegment(null);
+    setIsCreating(true);
+    resetForm();
+    setEditDialog(true);
+  };
+
   const openEdit = (seg: Segment) => {
     setEditingSegment(seg);
+    setIsCreating(false);
     setFormLabel(seg.label);
     setFormKey(seg.segment_key);
     setFormSeparator(seg.separator);
