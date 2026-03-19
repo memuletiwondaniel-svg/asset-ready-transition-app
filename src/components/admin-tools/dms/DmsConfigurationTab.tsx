@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Pencil, ArrowUp, ArrowDown, Loader2, Info, Eye } from 'lucide-react';
+import { Pencil, ArrowUp, ArrowDown, Loader2, Info, Eye, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -70,6 +70,7 @@ const segmentsTable = () => (supabase as any).from('dms_numbering_segments');
 const DmsConfigurationTab: React.FC = () => {
   const queryClient = useQueryClient();
   const [editDialog, setEditDialog] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [editingSegment, setEditingSegment] = useState<Segment | null>(null);
   const [dmsSystem, setDmsSystem] = useState('assai');
 
@@ -113,6 +114,47 @@ const DmsConfigurationTab: React.FC = () => {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const createSegment = useMutation({
+    mutationFn: async () => {
+      const nextPosition = segments.length > 0 ? Math.max(...segments.map(s => s.position)) + 1 : 1;
+      const { error } = await segmentsTable().insert({
+        segment_key: formKey || `custom_${nextPosition}`,
+        label: formLabel || 'New Segment',
+        position: nextPosition,
+        separator: formSeparator,
+        min_length: formMinLength,
+        max_length: formMaxLength,
+        source_table: formSourceTable === 'none' ? null : formSourceTable,
+        source_code_column: formSourceTable === 'none' ? null : formSourceCodeCol,
+        source_name_column: formSourceTable === 'none' ? null : formSourceNameCol,
+        is_required: formRequired,
+        is_active: formActive,
+        description: formDescription || null,
+        example_value: formExample || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dms-numbering-segments'] });
+      toast.success('Segment added');
+      setEditDialog(false);
+      setIsCreating(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteSegment = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await segmentsTable().delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dms-numbering-segments'] });
+      toast.success('Segment removed');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const moveSegment = async (segId: string, direction: 'up' | 'down') => {
     const sorted = [...segments].sort((a, b) => a.position - b.position);
     const idx = sorted.findIndex(s => s.id === segId);
@@ -128,8 +170,31 @@ const DmsConfigurationTab: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ['dms-numbering-segments'] });
   };
 
+  const resetForm = () => {
+    setFormLabel('');
+    setFormKey('');
+    setFormSeparator('-');
+    setFormMinLength(1);
+    setFormMaxLength(10);
+    setFormSourceTable('none');
+    setFormSourceCodeCol('code');
+    setFormSourceNameCol('');
+    setFormRequired(true);
+    setFormActive(true);
+    setFormDescription('');
+    setFormExample('');
+  };
+
+  const openCreate = () => {
+    setEditingSegment(null);
+    setIsCreating(true);
+    resetForm();
+    setEditDialog(true);
+  };
+
   const openEdit = (seg: Segment) => {
     setEditingSegment(seg);
+    setIsCreating(false);
     setFormLabel(seg.label);
     setFormKey(seg.segment_key);
     setFormSeparator(seg.separator);
@@ -146,6 +211,10 @@ const DmsConfigurationTab: React.FC = () => {
   };
 
   const handleSave = () => {
+    if (isCreating) {
+      createSegment.mutate();
+      return;
+    }
     if (!editingSegment) return;
     updateSegment.mutate({
       id: editingSegment.id,
@@ -257,8 +326,16 @@ const DmsConfigurationTab: React.FC = () => {
       {/* Segments Table */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Numbering Segments</CardTitle>
-          <CardDescription>Define, reorder, and configure each segment of the document number</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Numbering Segments</CardTitle>
+              <CardDescription>Define, reorder, and configure each segment of the document number</CardDescription>
+            </div>
+            <Button size="sm" onClick={openCreate}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Add Segment
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0 max-h-[calc(100vh-480px)] overflow-auto">
           {isLoading ? (
@@ -333,6 +410,9 @@ const DmsConfigurationTab: React.FC = () => {
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(seg)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteSegment.mutate(seg.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -347,8 +427,8 @@ const DmsConfigurationTab: React.FC = () => {
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader className="pb-4 border-b">
-            <DialogTitle>Edit Segment</DialogTitle>
-            <DialogDescription>Configure how this segment behaves in the document number</DialogDescription>
+            <DialogTitle>{isCreating ? 'Add Segment' : 'Edit Segment'}</DialogTitle>
+            <DialogDescription>{isCreating ? 'Define a new segment for the document number' : 'Configure how this segment behaves in the document number'}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
@@ -432,9 +512,9 @@ const DmsConfigurationTab: React.FC = () => {
           </div>
           <DialogFooter className="pt-4 border-t gap-2">
             <Button variant="outline" onClick={() => setEditDialog(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={updateSegment.isPending} className="min-w-[100px]">
-              {updateSegment.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Save Changes
+            <Button onClick={handleSave} disabled={updateSegment.isPending || createSegment.isPending} className="min-w-[100px]">
+              {(updateSegment.isPending || createSegment.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {isCreating ? 'Add Segment' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </DialogContent>
