@@ -412,17 +412,17 @@ const DmsConfigurationTab: React.FC = () => {
               );
             })}
 
-            {/* Add new segment button */}
+            {/* Add new segment */}
             <button
               onClick={openCreate}
               className={cn(
-                'flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary/30 px-5 py-3 min-w-[100px] min-h-[68px]',
-                'hover:border-primary hover:bg-primary/5 transition-all duration-200 cursor-pointer',
-                'text-primary/60 hover:text-primary'
+                'group/add flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 h-[68px]',
+                'hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer',
+                'text-muted-foreground/50 hover:text-primary'
               )}
             >
-              <Plus className="h-5 w-5" />
-              <span className="text-[10px] mt-1 font-medium">Add Segment</span>
+              <Plus className="h-4 w-4" />
+              <span className="text-xs font-medium hidden group-hover/add:inline">Add</span>
             </button>
           </div>
 
