@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Switch } from '@/components/ui/switch';
 import { 
   ArrowLeft, FileText, Plus, Pencil, Trash2, Search, 
-  FileStack, Compass, FolderKanban, UserCircle, Factory, MapPin, Box, Loader2
+  FileStack, Compass, FolderKanban, UserCircle, Factory, MapPin, Box, Loader2, CheckSquare
 } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { toast } from 'sonner';
