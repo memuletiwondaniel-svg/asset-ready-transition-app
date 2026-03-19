@@ -427,8 +427,8 @@ const DmsConfigurationTab: React.FC = () => {
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader className="pb-4 border-b">
-            <DialogTitle>Edit Segment</DialogTitle>
-            <DialogDescription>Configure how this segment behaves in the document number</DialogDescription>
+            <DialogTitle>{isCreating ? 'Add Segment' : 'Edit Segment'}</DialogTitle>
+            <DialogDescription>{isCreating ? 'Define a new segment for the document number' : 'Configure how this segment behaves in the document number'}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
