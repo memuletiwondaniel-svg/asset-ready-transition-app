@@ -447,8 +447,20 @@ const DmsConfigurationTab: React.FC = () => {
               dms_document_types: { code: '2365',  meaning: 'Process Engineering Flow Scheme' },
               dms_units:          { code: '20502', meaning: 'Unit 20502' },
             };
+            const LABEL_TO_TABLE: Record<string, string> = {
+              project: 'dms_projects',
+              originator: 'dms_originators',
+              plant: 'dms_plants',
+              site: 'dms_sites',
+              unit: 'dms_units',
+              discipline: 'dms_disciplines',
+              document: 'dms_document_types',
+            };
             const exampleSegments = activeSegments.map(s => {
-              const entry = s.source_table ? EXAMPLE_CODES[s.source_table] : null;
+              const table = s.source_table || Object.entries(LABEL_TO_TABLE).find(
+                ([key]) => s.label.toLowerCase().includes(key)
+              )?.[1];
+              const entry = table ? EXAMPLE_CODES[table] : null;
               return {
                 id: s.id,
                 code: entry?.code || '001',
