@@ -835,8 +835,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 16. Deployment Architecture & Portability */}
-          <Section id="deployment-portability" icon={<Container className="h-5 w-5 text-primary" />} title="16. Deployment Architecture & Portability">
+          {/* 18. Deployment Architecture & Portability */}
+          <Section id="deployment-portability" icon={<Container className="h-5 w-5 text-primary" />} title="18. Deployment Architecture & Portability">
             <p>ORSH is designed for <strong className="text-foreground">full architectural portability</strong> — no proprietary dependencies, no vendor lock-in, and multiple deployment models supported.</p>
 
             <p className="font-medium text-foreground mt-3">Technology Stack Summary</p>
