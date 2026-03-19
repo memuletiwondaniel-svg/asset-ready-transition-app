@@ -66,6 +66,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
     { id: 'certificates', label: 'Certificates (SoF, PAC, FAC)' },
     { id: 'orm', label: 'ORM (Operations Readiness Manpower)' },
     { id: 'training', label: 'Training Management' },
+    { id: 'dms', label: 'Document Management System (DMS)' },
+    { id: 'ai-agent', label: 'AI Agent Architecture (Bob CoPilot)' },
     { id: 'coding-conventions', label: 'Coding Conventions & ID Formats' },
     { id: 'roles', label: 'Roles & Permissions Configuration' },
     { id: 'database-schema', label: 'Database Schema & Tables' },
@@ -74,6 +76,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
     { id: 'integrations', label: 'External Integrations' },
     { id: 'admin-tools', label: 'Admin Tools Reference' },
     { id: 'deployment-portability', label: 'Deployment Architecture & Portability' },
+    { id: 'readiness-scoring', label: 'Readiness Ontology & Scoring Engine (ORIP)' },
     { id: 'appendix-a', label: 'Appendix A — Customer Journey Maps' },
     { id: 'appendix-b', label: 'Appendix B — Process Flow Maps' },
   ];
