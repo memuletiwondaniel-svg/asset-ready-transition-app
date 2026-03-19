@@ -344,7 +344,7 @@ const DmsConfigurationTab: React.FC = () => {
       <Card className="overflow-hidden">
         <CardContent className="p-6">
           {/* Interactive segment boxes */}
-          <div className="flex flex-wrap items-start gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {sorted.map((seg, idx) => {
               const color = SEGMENT_COLORS[idx % SEGMENT_COLORS.length];
               return (
