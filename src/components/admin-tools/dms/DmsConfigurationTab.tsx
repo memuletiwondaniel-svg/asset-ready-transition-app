@@ -340,7 +340,7 @@ const DmsConfigurationTab: React.FC = () => {
 
                       {/* Example value */}
                       <span className={cn('font-mono text-sm font-bold leading-none', color.text)}>
-                        {segmentPlaceholder(seg)}
+                        {segmentPlaceholder(seg, idx)}
                       </span>
 
                       {/* Label */}
