@@ -2792,6 +2792,171 @@ const tools = [
   }
 ];
 
+// ═══════════════════════════════════════════════════════════════════════════
+// AGENT-TO-AGENT (A2A) COMMUNICATION PROTOCOL
+// Enables specialist agents to request data from each other via the CoPilot
+// Protocol: Google A2A-inspired with JSON-RPC-style message envelope
+// ═══════════════════════════════════════════════════════════════════════════
+
+interface A2AMessage {
+  source_agent: string;
+  target_agent: string;
+  message_type: 'data_request' | 'data_response' | 'insight_share' | 'escalation' | 'context_handoff' | 'cross_reference' | 'alert';
+  payload: Record<string, any>;
+  correlation_id?: string;
+}
+
+interface A2AResponse {
+  success: boolean;
+  data?: any;
+  error?: string;
+  latency_ms?: number;
+}
+
+// Agent capability registry (in-memory, synced from DB on cold start)
+const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; model: string }> = {
+  copilot: { 
+    tools: ['get_pssr_stats', 'get_checklist_item_stats', 'get_priority_action_stats', 'get_team_member_info', 'get_region_info', 'get_project_info', 'get_hub_info', 'navigate_to_page', 'resolve_entity_for_navigation', 'get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_pssr_detailed_summary', 'get_discipline_status', 'get_executive_summary'],
+    domains: ['pssr', 'ora', 'orm', 'platform', 'navigation'],
+    model: 'openai/gpt-5-mini'
+  },
+  document_agent: {
+    tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink'],
+    domains: ['dms', 'document', 'readiness', 'numbering', 'afc', 'ifr', 'rlmu'],
+    model: 'openai/gpt-5-mini'
+  },
+  training_agent: { tools: [], domains: ['training', 'competency', 'learning'], model: 'google/gemini-3-flash-preview' },
+  cmms_agent: { tools: [], domains: ['cmms', 'maintenance', 'equipment', 'spares'], model: 'google/gemini-3-flash-preview' },
+  orm_agent: { tools: [], domains: ['orm', 'manpower', 'staffing', 'organization'], model: 'google/gemini-3-flash-preview' },
+};
+
+// Route an A2A message to the target agent's tools
+async function routeA2AMessage(message: A2AMessage, supabaseClient: any): Promise<A2AResponse> {
+  const startTime = Date.now();
+  const targetCaps = AGENT_CAPABILITIES[message.target_agent];
+  
+  if (!targetCaps) {
+    return { success: false, error: `Unknown target agent: ${message.target_agent}` };
+  }
+
+  try {
+    // For data_request, execute the requested tool on behalf of the source agent
+    if (message.message_type === 'data_request' && message.payload.tool_name) {
+      const toolName = message.payload.tool_name;
+      if (!targetCaps.tools.includes(toolName)) {
+        return { success: false, error: `Agent ${message.target_agent} does not have tool: ${toolName}` };
+      }
+      const result = await executeTool(toolName, message.payload.tool_args || {}, supabaseClient);
+      const latency = Date.now() - startTime;
+      
+      // Log A2A communication
+      await supabaseClient.from('ai_agent_communications').insert({
+        source_agent: message.source_agent,
+        target_agent: message.target_agent,
+        message_type: message.message_type,
+        payload: message.payload,
+        correlation_id: message.correlation_id || crypto.randomUUID(),
+        status: 'completed',
+        latency_ms: latency
+      }).then(() => {}).catch((e: any) => console.error('A2A log failed:', e));
+      
+      return { success: true, data: result, latency_ms: latency };
+    }
+
+    // For cross_reference, gather data from multiple domains
+    if (message.message_type === 'cross_reference') {
+      const results: Record<string, any> = {};
+      for (const toolName of (message.payload.tools || [])) {
+        if (targetCaps.tools.includes(toolName)) {
+          results[toolName] = await executeTool(toolName, message.payload.tool_args || {}, supabaseClient);
+        }
+      }
+      return { success: true, data: results, latency_ms: Date.now() - startTime };
+    }
+
+    // For insight_share, just acknowledge (used for proactive insights)
+    if (message.message_type === 'insight_share') {
+      await supabaseClient.from('ai_agent_communications').insert({
+        source_agent: message.source_agent,
+        target_agent: message.target_agent,
+        message_type: 'insight_share',
+        payload: message.payload,
+        status: 'completed',
+        latency_ms: Date.now() - startTime
+      }).then(() => {}).catch((e: any) => console.error('A2A log failed:', e));
+      
+      return { success: true, data: { acknowledged: true } };
+    }
+
+    return { success: false, error: `Unsupported message type: ${message.message_type}` };
+  } catch (err) {
+    const latency = Date.now() - startTime;
+    await supabaseClient.from('ai_agent_communications').insert({
+      source_agent: message.source_agent,
+      target_agent: message.target_agent,
+      message_type: message.message_type,
+      payload: message.payload,
+      status: 'failed',
+      latency_ms: latency
+    }).then(() => {}).catch(() => {});
+    
+    return { success: false, error: String(err), latency_ms: latency };
+  }
+}
+
+// Determine which agent should handle a query based on intent keywords
+function detectAgentDomain(message: string): string {
+  const lower = message.toLowerCase();
+  
+  // Document agent triggers
+  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code)\b/i.test(lower)) {
+    return 'document_agent';
+  }
+  
+  // Training agent triggers (planned)
+  if (/\b(training|competency|competence|learning|course|certification|skill gap|training plan|training cost)\b/i.test(lower)) {
+    return 'training_agent';
+  }
+  
+  // CMMS agent triggers (planned)
+  if (/\b(cmms|maintenance|equipment care|spare parts|reliability|asset care|preventive maintenance|work order)\b/i.test(lower)) {
+    return 'cmms_agent';
+  }
+  
+  // ORM agent triggers (planned)
+  if (/\b(manpower|staffing|headcount|organizational readiness|manning|recruitment|organizational capability)\b/i.test(lower)) {
+    return 'orm_agent';
+  }
+  
+  return 'copilot';
+}
+
+// Log feedback for continuous training
+async function logResponseFeedback(
+  supabaseClient: any,
+  conversationId: string | null,
+  agentCode: string,
+  toolCallsUsed: string[],
+  latencyMs: number
+): Promise<void> {
+  try {
+    // Log to training log for analysis
+    await supabaseClient.from('ai_training_log').insert({
+      event_type: 'feedback_review',
+      agent_code: agentCode,
+      description: `Agent ${agentCode} responded using tools: ${toolCallsUsed.join(', ') || 'none'}`,
+      metadata: {
+        conversation_id: conversationId,
+        tools_used: toolCallsUsed,
+        latency_ms: latencyMs,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (e) {
+    console.error('Feedback logging failed:', e);
+  }
+}
+
 // Execute tool calls
 async function executeTool(toolName: string, args: any, supabaseClient: any): Promise<any> {
   console.log(`Executing tool: ${toolName} with args:`, args);
@@ -5109,7 +5274,10 @@ serve(async (req) => {
       return { role: msg.role, content: msg.content };
     });
 
-    console.log("Bob processing request with", transformedMessages.length, "messages");
+    // Detect which agent domain this query belongs to
+    const detectedAgent = lastUserMessage ? detectAgentDomain(lastUserMessage.content) : 'copilot';
+    const requestStartTime = Date.now();
+    console.log(`Bob processing request with ${transformedMessages.length} messages (detected agent: ${detectedAgent})`);
 
     // First API call - with tools enabled (non-streaming for tool handling)
     const initialResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -5161,12 +5329,14 @@ serve(async (req) => {
       
       // Execute all tool calls and track navigation actions
       const toolResults = [];
+      const toolCallNames: string[] = [];
       let navigationAction: { action: string; path: string } | null = null;
       let lastToolName: string | null = null;
       let lastToolResult: any = null;
       
       for (const toolCall of assistantMessage.tool_calls) {
         const toolName = toolCall.function.name;
+        toolCallNames.push(toolName);
         const toolArgs = JSON.parse(toolCall.function.arguments || '{}');
         
         console.log(`Executing tool: ${toolName}`, toolArgs);
@@ -5258,6 +5428,10 @@ serve(async (req) => {
         finalContent += ` ${JSON.stringify(navigationAction)}`;
       }
       
+      // Log response for continuous training pipeline
+      logResponseFeedback(supabase, null, detectedAgent, toolCallNames, Date.now() - requestStartTime)
+        .catch(e => console.error('Feedback log error:', e));
+      
       // Return as SSE format for compatibility with frontend
       const sseData = `data: ${JSON.stringify({
         choices: [{ delta: { content: finalContent } }]
@@ -5270,6 +5444,11 @@ serve(async (req) => {
     
     // No tool calls - return direct response as SSE
     const directContent = assistantMessage?.content || "I'm here to help. What would you like to know?";
+    
+    // Log response for continuous training pipeline
+    logResponseFeedback(supabase, null, detectedAgent, [], Date.now() - requestStartTime)
+      .catch(e => console.error('Feedback log error:', e));
+    
     const sseData = `data: ${JSON.stringify({
       choices: [{ delta: { content: directContent } }]
     })}\n\ndata: [DONE]\n\n`;
