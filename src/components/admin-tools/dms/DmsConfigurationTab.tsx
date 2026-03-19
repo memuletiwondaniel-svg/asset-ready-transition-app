@@ -93,9 +93,13 @@ const useSampleData = () => {
             .select(`${codeCol}, ${nameCol}`)
             .eq('is_active', true)
             .order('display_order', { ascending: true })
-            .limit(1);
-          if (data?.[0]) {
-            results[table] = { code: data[0][codeCol], name: data[0][nameCol] };
+            .limit(5);
+          // Pick the entry with the shortest combined text for better display
+          if (data?.length) {
+            const shortest = data.sort((a: any, b: any) => 
+              (String(a[codeCol]) + a[nameCol]).length - (String(b[codeCol]) + b[nameCol]).length
+            )[0];
+            results[table] = { code: shortest[codeCol], name: shortest[nameCol] };
           }
         })
       );
@@ -116,13 +120,14 @@ const segmentDisplayCode = (
   return letter.repeat(len);
 };
 
-/** Get the descriptive name for a segment's sample */
-const segmentDisplayName = (
+/** Get "CODE — Name" string for a segment's sample */
+const segmentDisplayExample = (
   seg: Segment,
   samples: Record<string, { code: string; name: string }> | undefined
 ): string | null => {
   if (seg.source_table && samples?.[seg.source_table]) {
-    return samples[seg.source_table].name;
+    const { code, name } = samples[seg.source_table];
+    return `${code} — ${name}`;
   }
   return null;
 };
@@ -394,10 +399,10 @@ const DmsConfigurationTab: React.FC = () => {
 
                     </button>
 
-                    {/* Real example name - outside and under the box */}
-                    {segmentDisplayName(seg, sampleData) && (
-                      <span className="text-[9px] text-muted-foreground/60 mt-1.5 leading-tight max-w-[110px] truncate italic text-center">
-                        {segmentDisplayName(seg, sampleData)}
+                    {/* Real example - outside and under the box */}
+                    {segmentDisplayExample(seg, sampleData) && (
+                      <span className="text-[9px] text-muted-foreground/60 mt-1.5 leading-tight max-w-[120px] truncate italic text-center">
+                        {segmentDisplayExample(seg, sampleData)}
                       </span>
                     )}
 
