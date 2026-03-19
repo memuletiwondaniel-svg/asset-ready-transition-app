@@ -2626,6 +2626,142 @@ const tools = [
     }
   },
   // ═══════════════════════════════════════════════════════════════════════════
+  // DOCUMENT AI AGENT TOOLS - For DMS queries and document readiness
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "get_document_readiness_summary",
+      description: "Get document readiness summary with overall percentage, breakdown by discipline, and gap analysis. Use for questions like 'document readiness', 'how ready are documents', 'documentation status', 'document progress', 'are documents ready', 'RLMU compliance'.",
+      parameters: {
+        type: "object",
+        properties: {
+          discipline_filter: {
+            type: "string",
+            description: "Optional discipline code or name filter (e.g., 'PX', 'Process', 'EL', 'Electrical')"
+          },
+          tier_filter: {
+            type: "string",
+            description: "Optional tier filter (e.g., 'Tier 1', 'Tier 2', 'Tier 3')"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_document_status_breakdown",
+      description: "Get detailed document status distribution showing how many documents are at each status level. Use for questions like 'how many documents in AFC', 'documents still in IFR', 'status breakdown', 'document status distribution', 'show me AFC documents'.",
+      parameters: {
+        type: "object",
+        properties: {
+          discipline_filter: {
+            type: "string",
+            description: "Optional discipline code or name filter"
+          },
+          status_filter: {
+            type: "string",
+            description: "Optional status code filter (e.g., 'AFC', 'IFR', 'RLMU')"
+          },
+          tier_filter: {
+            type: "string",
+            description: "Optional tier filter"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_document_numbering_config",
+      description: "Get the document numbering structure configuration. Explains how document numbers are constructed from segments. Use for questions like 'how does document numbering work', 'explain document number format', 'what does this document number mean', 'numbering convention', 'document number structure'.",
+      parameters: {
+        type: "object",
+        properties: {
+          tenant_id: {
+            type: "string",
+            description: "Optional tenant ID filter"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_document_gaps_analysis",
+      description: "Identify documentation gaps - documents that are behind schedule or missing for specific disciplines. Use for questions like 'documentation gaps', 'missing documents', 'what documents are behind', 'which disciplines are lagging', 'document gaps by discipline'.",
+      parameters: {
+        type: "object",
+        properties: {
+          discipline_filter: {
+            type: "string",
+            description: "Optional discipline code or name filter"
+          },
+          severity_filter: {
+            type: "string",
+            enum: ["critical", "warning", "all"],
+            description: "Filter by gap severity. 'critical' = still in Draft/IFR, 'warning' = in IFC but needs AFC/RLMU"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_dms_table_info",
+      description: "Query DMS reference tables for codes, descriptions and listings. Use for questions like 'list all disciplines', 'what status codes exist', 'show me plant codes', 'what originators are available', 'DMS reference data'.",
+      parameters: {
+        type: "object",
+        properties: {
+          table_name: {
+            type: "string",
+            enum: ["disciplines", "originators", "plants", "sites", "units", "status_codes", "projects", "document_types"],
+            description: "Which DMS reference table to query"
+          },
+          search_term: {
+            type: "string",
+            description: "Optional search term to filter results by code or name"
+          },
+          active_only: {
+            type: "boolean",
+            description: "Whether to return only active records (default true)"
+          }
+        },
+        required: ["table_name"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_dms_hyperlink",
+      description: "Generate a hyperlink to access a document in an external DMS platform (Assai, Documentum, Wrench). Use when users want to 'open a document', 'link to document', 'access document in Assai/Documentum', 'show me the document link'.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_number: {
+            type: "string",
+            description: "The full document number (e.g., '6529-WGEL-C017-ISGP-U13000-PX-2365-20502-001')"
+          },
+          dms_platform: {
+            type: "string",
+            enum: ["assai", "documentum", "wrench"],
+            description: "Target DMS platform. Default is 'assai'"
+          }
+        },
+        required: ["document_number"]
+      }
+    }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
   // EXECUTIVE SUMMARY TOOL - For high-level status assessments
   // ═══════════════════════════════════════════════════════════════════════════
   {
