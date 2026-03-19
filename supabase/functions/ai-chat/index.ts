@@ -2790,6 +2790,65 @@ const tools = [
       }
     }
   }
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROACTIVE INSIGHTS TOOLS - Detect overdue/stalled items and alert users
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "get_proactive_insights",
+      description: "Get proactive insights about overdue items, stalled plans, and items needing attention. Bob should call this automatically when users ask general questions like 'anything I should know', 'what needs attention', 'any alerts', 'what's overdue', 'health check across projects'.",
+      parameters: {
+        type: "object",
+        properties: {
+          scope: {
+            type: "string",
+            enum: ["all", "pssr", "ora", "p2a"],
+            description: "Scope of insights: 'all' for everything, or specific module"
+          },
+          project_code: {
+            type: "string",
+            description: "Optional project code to limit scope"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_user_context",
+      description: "Get the current user's saved preferences, role, and recent activity context. Call this at conversation start to personalize responses. Use when you need to know user's role, department, or preferences.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "save_user_context",
+      description: "Save a user preference or context for future conversations. Use when user states a preference like 'I work on DP300', 'I prefer brief answers', 'My role is ORA Engineer'.",
+      parameters: {
+        type: "object",
+        properties: {
+          context_key: {
+            type: "string",
+            enum: ["preferred_project", "role", "department", "response_style", "focus_area", "region"],
+            description: "Type of context to save"
+          },
+          context_value: {
+            type: "string",
+            description: "Value to save"
+          }
+        },
+        required: ["context_key", "context_value"]
+      }
+    }
+  }
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
