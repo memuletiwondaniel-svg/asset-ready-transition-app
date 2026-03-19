@@ -119,6 +119,16 @@ const DmsDocumentTypesTab: React.FC = () => {
       (d.discipline_name || '').toLowerCase().includes(q);
   });
 
+  const isDisciplineVisible = columns.some(
+    c => (c.id === 'discipline_code' || c.id === 'discipline_name') && c.visible
+  );
+
+  const displayRows = isDisciplineVisible
+    ? filtered
+    : filtered.filter((item, index, arr) =>
+        arr.findIndex(d => d.code === item.code && d.document_name === item.document_name) === index
+      );
+
   const visibleColumns = columns.filter(c => c.visible);
 
   const toggleColumn = (colId: string) => {
