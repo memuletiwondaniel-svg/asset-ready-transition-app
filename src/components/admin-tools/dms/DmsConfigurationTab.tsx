@@ -388,11 +388,18 @@ const DmsConfigurationTab: React.FC = () => {
 
                       {/* Example value */}
                       <span className={cn('font-mono text-sm font-bold leading-none', color.text)}>
-                        {segmentPlaceholder(seg, idx)}
+                        {segmentDisplayCode(seg, idx, sampleData)}
                       </span>
 
+                      {/* Real example name */}
+                      {segmentDisplayName(seg, sampleData) ? (
+                        <span className="text-[9px] text-muted-foreground/70 mt-1 leading-tight max-w-[110px] truncate italic">
+                          {segmentDisplayName(seg, sampleData)}
+                        </span>
+                      ) : null}
+
                       {/* Label */}
-                      <span className="text-[10px] text-muted-foreground mt-1.5 leading-tight max-w-[100px] truncate">
+                      <span className="text-[10px] text-muted-foreground mt-1 leading-tight max-w-[100px] truncate font-medium">
                         {seg.label}
                       </span>
 
