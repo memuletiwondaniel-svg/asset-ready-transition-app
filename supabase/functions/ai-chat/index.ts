@@ -4173,6 +4173,431 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
     
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DOCUMENT AI AGENT TOOL HANDLERS
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    case "get_document_readiness_summary": {
+      try {
+        let query = supabaseClient
+          .from('dms_document_types')
+          .select('id, code, document_name, discipline_code, discipline_name, tier, rlmu, acceptable_status, is_active')
+          .eq('is_active', true);
+        
+        if (args.discipline_filter) {
+          query = query.or(`discipline_code.ilike.%${args.discipline_filter}%,discipline_name.ilike.%${args.discipline_filter}%`);
+        }
+        if (args.tier_filter) {
+          query = query.ilike('tier', `%${args.tier_filter}%`);
+        }
+        
+        const { data: docTypes, error } = await query.order('discipline_code').order('display_order');
+        if (error) return { error: error.message };
+        
+        // Get all status codes for reference
+        const { data: statusCodes } = await supabaseClient
+          .from('dms_status_codes')
+          .select('code, description, display_order')
+          .eq('is_active', true)
+          .order('display_order');
+        
+        const statusOrder: Record<string, number> = {};
+        (statusCodes || []).forEach((s: any) => { statusOrder[s.code] = s.display_order; });
+        
+        const total = (docTypes || []).length;
+        let readyCount = 0;
+        let rlmuCompliant = 0;
+        let rlmuRequired = 0;
+        const byDiscipline: Record<string, { total: number; ready: number; gaps: number; discipline_name: string }> = {};
+        const byStatus: Record<string, number> = {};
+        const byTier: Record<string, { total: number; ready: number }> = {};
+        
+        (docTypes || []).forEach((doc: any) => {
+          const disc = doc.discipline_code || 'Unknown';
+          const discName = doc.discipline_name || disc;
+          if (!byDiscipline[disc]) byDiscipline[disc] = { total: 0, ready: 0, gaps: 0, discipline_name: discName };
+          byDiscipline[disc].total++;
+          
+          const tier = doc.tier || 'Unclassified';
+          if (!byTier[tier]) byTier[tier] = { total: 0, ready: 0 };
+          byTier[tier].total++;
+          
+          const accStatus = doc.acceptable_status || '';
+          byStatus[accStatus] = (byStatus[accStatus] || 0) + 1;
+          
+          // A document is "ready" if it has an acceptable_status that indicates completion
+          // For now, consider documents with acceptable_status of AFC or RLMU as having a target
+          if (doc.rlmu) rlmuRequired++;
+          if (doc.rlmu && accStatus && (statusOrder[accStatus] >= (statusOrder['RLMU'] || 999))) {
+            rlmuCompliant++;
+          }
+          
+          // Consider a document ready if acceptable_status is set (meaning it has reached target)
+          if (accStatus) {
+            readyCount++;
+            byDiscipline[disc].ready++;
+            byTier[tier].ready++;
+          } else {
+            byDiscipline[disc].gaps++;
+          }
+        });
+        
+        const readinessPercent = total > 0 ? Math.round((readyCount / total) * 100) : 0;
+        
+        // Identify disciplines with lowest readiness
+        const disciplineReadiness = Object.entries(byDiscipline).map(([code, stats]) => ({
+          code,
+          name: stats.discipline_name,
+          total: stats.total,
+          ready: stats.ready,
+          gaps: stats.gaps,
+          readiness_percent: stats.total > 0 ? Math.round((stats.ready / stats.total) * 100) : 0
+        })).sort((a, b) => a.readiness_percent - b.readiness_percent);
+        
+        const criticalDisciplines = disciplineReadiness.filter(d => d.readiness_percent < 50);
+        
+        return {
+          overall_readiness_percent: readinessPercent,
+          total_documents: total,
+          ready_documents: readyCount,
+          gap_documents: total - readyCount,
+          rlmu_compliance: {
+            required: rlmuRequired,
+            compliant: rlmuCompliant,
+            non_compliant: rlmuRequired - rlmuCompliant
+          },
+          by_discipline: disciplineReadiness,
+          by_tier: Object.entries(byTier).map(([tier, stats]) => ({
+            tier,
+            total: stats.total,
+            ready: stats.ready,
+            readiness_percent: stats.total > 0 ? Math.round((stats.ready / stats.total) * 100) : 0
+          })),
+          critical_disciplines: criticalDisciplines,
+          status_distribution: byStatus,
+          status_codes_reference: (statusCodes || []).map((s: any) => ({ code: s.code, description: s.description }))
+        };
+      } catch (err) {
+        console.error('Document readiness summary error:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_document_status_breakdown": {
+      try {
+        let query = supabaseClient
+          .from('dms_document_types')
+          .select('code, document_name, discipline_code, discipline_name, tier, rlmu, acceptable_status')
+          .eq('is_active', true);
+        
+        if (args.discipline_filter) {
+          query = query.or(`discipline_code.ilike.%${args.discipline_filter}%,discipline_name.ilike.%${args.discipline_filter}%`);
+        }
+        if (args.tier_filter) {
+          query = query.ilike('tier', `%${args.tier_filter}%`);
+        }
+        
+        const { data: docTypes, error } = await query.order('discipline_code').order('display_order');
+        if (error) return { error: error.message };
+        
+        // Group by acceptable_status
+        const statusGroups: Record<string, any[]> = {};
+        (docTypes || []).forEach((doc: any) => {
+          const status = doc.acceptable_status || 'No Status Set';
+          if (!statusGroups[status]) statusGroups[status] = [];
+          statusGroups[status].push({
+            code: doc.code,
+            name: doc.document_name,
+            discipline: doc.discipline_name || doc.discipline_code,
+            tier: doc.tier,
+            rlmu: doc.rlmu
+          });
+        });
+        
+        // Apply status_filter if provided
+        if (args.status_filter) {
+          const filtered: Record<string, any[]> = {};
+          Object.entries(statusGroups).forEach(([status, docs]) => {
+            if (status.toLowerCase().includes(args.status_filter.toLowerCase())) {
+              filtered[status] = docs;
+            }
+          });
+          
+          const totalFiltered = Object.values(filtered).reduce((sum, docs) => sum + docs.length, 0);
+          return {
+            filter_applied: args.status_filter,
+            total_matching: totalFiltered,
+            status_groups: Object.entries(filtered).map(([status, docs]) => ({
+              status,
+              count: docs.length,
+              documents: docs.slice(0, 20) // Limit per group
+            }))
+          };
+        }
+        
+        return {
+          total_documents: (docTypes || []).length,
+          status_distribution: Object.entries(statusGroups).map(([status, docs]) => ({
+            status,
+            count: docs.length,
+            sample_documents: docs.slice(0, 5)
+          })).sort((a, b) => b.count - a.count)
+        };
+      } catch (err) {
+        console.error('Document status breakdown error:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_document_numbering_config": {
+      try {
+        let query = supabaseClient
+          .from('dms_numbering_segments')
+          .select('*')
+          .eq('is_active', true);
+        
+        if (args.tenant_id) {
+          query = query.eq('tenant_id', args.tenant_id);
+        }
+        
+        const { data: segments, error } = await query.order('position');
+        if (error) return { error: error.message };
+        
+        if (!segments || segments.length === 0) {
+          return { message: "No numbering segments configured yet.", segments: [] };
+        }
+        
+        // Build example number
+        const exampleParts: string[] = [];
+        const segmentDetails = (segments || []).map((seg: any) => {
+          const example = seg.example_value || seg.segment_key?.toUpperCase() || 'XXXX';
+          exampleParts.push(example);
+          return {
+            position: seg.position,
+            label: seg.label,
+            key: seg.segment_key,
+            source_table: seg.source_table,
+            separator: seg.separator,
+            min_length: seg.min_length,
+            max_length: seg.max_length,
+            is_required: seg.is_required,
+            example_value: example,
+            description: seg.description
+          };
+        });
+        
+        // Join with separators
+        const exampleNumber = segmentDetails.reduce((acc: string, seg: any, idx: number) => {
+          if (idx === 0) return seg.example_value;
+          return acc + (seg.separator || '-') + seg.example_value;
+        }, '');
+        
+        return {
+          total_segments: segmentDetails.length,
+          example_number: exampleNumber,
+          segments: segmentDetails,
+          breakdown: segmentDetails.map((s: any) => `${s.example_value} = ${s.label}${s.source_table ? ` (from ${s.source_table})` : ''}`)
+        };
+      } catch (err) {
+        console.error('Document numbering config error:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_document_gaps_analysis": {
+      try {
+        const { data: docTypes, error } = await supabaseClient
+          .from('dms_document_types')
+          .select('code, document_name, discipline_code, discipline_name, tier, rlmu, acceptable_status')
+          .eq('is_active', true)
+          .order('discipline_code');
+        
+        if (error) return { error: error.message };
+        
+        // Get status code order for severity assessment
+        const { data: statusCodes } = await supabaseClient
+          .from('dms_status_codes')
+          .select('code, description, display_order')
+          .eq('is_active', true)
+          .order('display_order');
+        
+        const statusOrder: Record<string, number> = {};
+        (statusCodes || []).forEach((s: any) => { statusOrder[s.code] = s.display_order; });
+        
+        const gaps: Array<{ severity: string; discipline: string; document: string; code: string; current_status: string; target_status: string; message: string }> = [];
+        
+        (docTypes || []).forEach((doc: any) => {
+          const accStatus = doc.acceptable_status || '';
+          const disc = doc.discipline_name || doc.discipline_code || 'Unknown';
+          
+          // No acceptable_status = gap (no target set)
+          if (!accStatus) {
+            gaps.push({
+              severity: 'warning',
+              discipline: disc,
+              document: doc.document_name,
+              code: doc.code,
+              current_status: 'No status set',
+              target_status: 'Not defined',
+              message: `${doc.document_name} (${doc.code}) has no acceptable status defined`
+            });
+            return;
+          }
+          
+          // RLMU required but status below RLMU
+          if (doc.rlmu && accStatus !== 'RLMU' && (statusOrder[accStatus] || 0) < (statusOrder['RLMU'] || 999)) {
+            gaps.push({
+              severity: 'critical',
+              discipline: disc,
+              document: doc.document_name,
+              code: doc.code,
+              current_status: accStatus,
+              target_status: 'RLMU',
+              message: `${doc.document_name} requires RLMU but is at ${accStatus}`
+            });
+          }
+        });
+        
+        // Apply filters
+        let filteredGaps = gaps;
+        if (args.discipline_filter) {
+          filteredGaps = filteredGaps.filter(g => 
+            g.discipline.toLowerCase().includes(args.discipline_filter.toLowerCase())
+          );
+        }
+        if (args.severity_filter && args.severity_filter !== 'all') {
+          filteredGaps = filteredGaps.filter(g => g.severity === args.severity_filter);
+        }
+        
+        // Group by discipline
+        const byDiscipline: Record<string, { critical: number; warning: number; gaps: any[] }> = {};
+        filteredGaps.forEach(gap => {
+          if (!byDiscipline[gap.discipline]) byDiscipline[gap.discipline] = { critical: 0, warning: 0, gaps: [] };
+          byDiscipline[gap.discipline][gap.severity as 'critical' | 'warning']++;
+          byDiscipline[gap.discipline].gaps.push(gap);
+        });
+        
+        return {
+          total_gaps: filteredGaps.length,
+          critical_count: filteredGaps.filter(g => g.severity === 'critical').length,
+          warning_count: filteredGaps.filter(g => g.severity === 'warning').length,
+          by_discipline: Object.entries(byDiscipline).map(([disc, data]) => ({
+            discipline: disc,
+            critical: data.critical,
+            warning: data.warning,
+            total: data.gaps.length,
+            top_gaps: data.gaps.slice(0, 5)
+          })).sort((a, b) => b.critical - a.critical),
+          top_critical_gaps: filteredGaps.filter(g => g.severity === 'critical').slice(0, 10)
+        };
+      } catch (err) {
+        console.error('Document gaps analysis error:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_dms_table_info": {
+      try {
+        const tableMap: Record<string, { table: string; columns: string }> = {
+          disciplines: { table: 'dms_disciplines', columns: 'id, code, name, description, display_order, is_active' },
+          originators: { table: 'dms_originators', columns: 'id, code, description, display_order, is_active' },
+          plants: { table: 'dms_plants', columns: 'id, code, plant_name, location, display_order, is_active' },
+          sites: { table: 'dms_sites', columns: 'id, code, site_name, comment, display_order, is_active' },
+          units: { table: 'dms_units', columns: 'id, code, unit_name, display_order, is_active' },
+          status_codes: { table: 'dms_status_codes', columns: 'id, code, description, rev_suffix, display_order, is_active' },
+          projects: { table: 'dms_projects', columns: 'id, code, project_name, cabinet, display_order, is_active' },
+          document_types: { table: 'dms_document_types', columns: 'id, code, document_name, discipline_code, discipline_name, tier, rlmu, acceptable_status, display_order, is_active' }
+        };
+        
+        const config = tableMap[args.table_name];
+        if (!config) return { error: `Unknown table: ${args.table_name}. Available: ${Object.keys(tableMap).join(', ')}` };
+        
+        let query = supabaseClient.from(config.table).select(config.columns);
+        
+        if (args.active_only !== false) {
+          query = query.eq('is_active', true);
+        }
+        
+        if (args.search_term) {
+          // Build search across text columns
+          const searchConditions = config.columns.split(', ')
+            .filter(c => !['id', 'display_order', 'is_active'].includes(c))
+            .map(c => `${c}.ilike.%${args.search_term}%`)
+            .join(',');
+          query = query.or(searchConditions);
+        }
+        
+        const { data, error } = await query.order('display_order').limit(100);
+        if (error) return { error: error.message };
+        
+        return {
+          table: args.table_name,
+          total_records: (data || []).length,
+          records: data || []
+        };
+      } catch (err) {
+        console.error('DMS table info error:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_dms_hyperlink": {
+      try {
+        const docNumber = args.document_number;
+        const platform = args.dms_platform || 'assai';
+        
+        // Generate hyperlink based on platform
+        const encodedDocNumber = encodeURIComponent(docNumber);
+        let link = '';
+        let platformName = '';
+        
+        switch (platform) {
+          case 'assai':
+            link = `https://assai.example.com/document/${encodedDocNumber}`;
+            platformName = 'Assai';
+            break;
+          case 'documentum':
+            link = `https://documentum.example.com/dctm-webtop/component/document?docNumber=${encodedDocNumber}`;
+            platformName = 'Documentum';
+            break;
+          case 'wrench':
+            link = `https://wrench.example.com/wrench/document/${encodedDocNumber}`;
+            platformName = 'Wrench';
+            break;
+          default:
+            link = `https://dms.example.com/document/${encodedDocNumber}`;
+            platformName = 'DMS';
+        }
+        
+        // Try to look up document details from the number
+        // Parse first segment as potential document type code
+        const segments = docNumber.split('-');
+        let docInfo = null;
+        if (segments.length > 0) {
+          const lastNumericSegments = segments.filter(s => /^\d+$/.test(s));
+          if (lastNumericSegments.length > 0) {
+            const { data: docType } = await supabaseClient
+              .from('dms_document_types')
+              .select('code, document_name, discipline_name, tier')
+              .eq('code', lastNumericSegments[0])
+              .maybeSingle();
+            if (docType) docInfo = docType;
+          }
+        }
+        
+        return {
+          document_number: docNumber,
+          platform: platformName,
+          hyperlink: link,
+          note: `This is a generated link pattern. The actual URL depends on your organization's ${platformName} instance configuration. Please verify the URL format with your DMS administrator.`,
+          document_info: docInfo
+        };
+      } catch (err) {
+        console.error('DMS hyperlink error:', err);
+        return { error: String(err) };
+      }
+    }
+    
     default:
       return { error: "Unknown tool" };
   }
