@@ -77,12 +77,58 @@ const DMS_SYSTEMS = [
 
 const segmentsTable = () => (supabase as any).from('dms_numbering_segments');
 
-/** Generate placeholder like "AAAA", "BBBB" based on position index and max_length */
-const segmentPlaceholder = (seg: Segment, index: number): string => {
-  if (seg.example_value) return seg.example_value;
-  const letter = String.fromCharCode(65 + (index % 26)); // A, B, C, ...
+/** Fetch one sample row from each source table to use as real examples */
+const SOURCE_TABLES = Object.keys(COL_MAP);
+
+const useSampleData = () => {
+  return useQuery({
+    queryKey: ['dms-sample-data'],
+    queryFn: async () => {
+      const results: Record<string, { code: string; name: string }> = {};
+      await Promise.all(
+        SOURCE_TABLES.map(async (table) => {
+          const [codeCol, nameCol] = COL_MAP[table];
+          const { data } = await (supabase as any)
+            .from(table)
+            .select(`${codeCol}, ${nameCol}`)
+            .eq('is_active', true)
+            .order('display_order', { ascending: true })
+            .limit(1);
+          if (data?.[0]) {
+            results[table] = { code: data[0][codeCol], name: data[0][nameCol] };
+          }
+        })
+      );
+      return results;
+    },
+    staleTime: 60_000,
+  });
+};
+
+/** Generate display text for a segment box using real DB sample or fallback letters */
+const segmentDisplayCode = (
+  seg: Segment,
+  index: number,
+  samples: Record<string, { code: string; name: string }> | undefined
+): string => {
+  if (seg.source_table && samples?.[seg.source_table]) {
+    return samples[seg.source_table].code;
+  }
+  // Fallback: AAAA, BBBB based on position
+  const letter = String.fromCharCode(65 + (index % 26));
   const len = seg.max_length || 4;
   return letter.repeat(len);
+};
+
+/** Get the descriptive name for a segment's sample */
+const segmentDisplayName = (
+  seg: Segment,
+  samples: Record<string, { code: string; name: string }> | undefined
+): string | null => {
+  if (seg.source_table && samples?.[seg.source_table]) {
+    return samples[seg.source_table].name;
+  }
+  return null;
 };
 
 const DmsConfigurationTab: React.FC = () => {
