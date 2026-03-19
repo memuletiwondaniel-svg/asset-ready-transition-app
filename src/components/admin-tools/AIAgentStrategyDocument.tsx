@@ -82,7 +82,8 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
     { id: 'training-infrastructure', label: 'Training Infrastructure (Database)' },
     { id: 'evaluation', label: 'Evaluation Framework' },
     { id: 'security', label: 'Security & Guardrails' },
-    { id: 'daily-loop', label: 'Daily Training Loop (pg_cron)' },
+    { id: 'daily-loop', label: 'Autonomous Training Loop' },
+    { id: 'self-healing', label: 'Self-Healing & Auto-Resolution' },
     { id: 'roadmap', label: 'Agent Roadmap' },
   ];
 
@@ -105,7 +106,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             </div>
           </div>
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            v4.0 — March 2026
+            v5.0 — March 2026
           </Badge>
         </div>
       </div>
@@ -175,7 +176,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
                       <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
                         <p className="font-semibold text-foreground">Document Agent</p>
-                        <p className="text-muted-foreground">GPT-5-mini | 11 tools | DMS readiness</p>
+                        <p className="text-muted-foreground">GPT-5-mini | 13 tools | DMS readiness + quality + ORA linkage</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
                       <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
@@ -281,7 +282,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
               headers={['Agent Code', 'Display Name', 'Model', 'Status', 'Tools', 'Domains']}
               rows={[
                 ['copilot', 'Bob CoPilot', 'openai/gpt-5-mini', 'Active', '14', 'pssr, ora, orm, platform, navigation'],
-                ['document_agent', 'Document AI Agent', 'openai/gpt-5-mini', 'Active', '6', 'dms, document, readiness, numbering'],
+                ['document_agent', 'Document AI Agent', 'openai/gpt-5-mini', 'Active', '13', 'dms, document, readiness, quality, maturity, handover'],
                 ['training_agent', 'Training AI Agent', 'gemini-3-flash-preview', 'Planned', '0', 'training, competency, learning'],
                 ['cmms_agent', 'CMMS AI Agent', 'gemini-3-flash-preview', 'Planned', '0', 'cmms, maintenance, equipment, spares'],
                 ['orm_agent', 'ORM AI Agent', 'gemini-3-flash-preview', 'Planned', '0', 'orm, manpower, staffing, organization'],
@@ -335,6 +336,8 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['get_document_bulk_status', 'Document', 'dms_document_types', 'Active — v4.0'],
                 ['get_document_trend_analysis', 'Document', 'dms_document_types, dms_status_codes', 'Active — v4.0'],
                 ['create_task_from_document_gap', 'Document', 'dms_document_types, user_tasks', 'Active — v4.0'],
+                ['get_document_quality_score', 'Document', 'dms_document_types, dms_status_codes', 'Active — v5.0'],
+                ['get_document_ora_linkage', 'Document', 'dms_document_types, orp_plans, p2a_handover_plans', 'Active — v5.0'],
                 ['navigate_to_page', 'CoPilot', 'N/A (frontend action)', 'Active'],
                 ['resolve_entity_for_navigation', 'CoPilot', 'pssrs, projects, orp_plans', 'Active'],
               ]}
@@ -670,24 +673,67 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
 
           <Separator />
 
-          {/* 13. Daily Training Loop */}
-          <Section icon={<RefreshCw className="h-5 w-5 text-cyan-500" />} title="13. Daily Training Loop" id="daily-loop">
-            <Card className="bg-muted/30 border-border">
-              <CardContent className="pt-4">
-                <FlowDiagram steps={['Review ai_training_log', 'Check ai_edge_cases', 'Review ai_response_feedback', 'Update system prompt', 'Update ai_agent_registry', 'Run regression', 'Deploy Edge Function', 'Monitor 24h']} />
-              </CardContent>
-            </Card>
-
-            <Card className="bg-primary/5 border-primary/20">
+          {/* 13. Autonomous Training Loop */}
+          <Section icon={<RefreshCw className="h-5 w-5 text-cyan-500" />} title="13. Autonomous Training Loop" id="daily-loop">
+            <Card className="bg-emerald-500/5 border-emerald-500/20">
               <CardContent className="pt-4">
                 <div className="flex items-start gap-2">
-                  <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <div className="text-xs">
-                    <strong className="text-foreground">Goal:</strong> Every new ORSH feature automatically makes the AI smarter. 
-                    When a developer adds a new table, workflow, or status — the system prompt, tools, and agent registry 
-                    are updated in the same sprint. The AI should never lag behind the platform by more than one sprint cycle.
-                  </div>
+                  <Zap className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                  <p className="text-xs">
+                    <strong className="text-foreground">v5.0 — Fully Autonomous:</strong> The training loop now runs without human intervention.
+                    Low-risk improvements are auto-applied, edge cases older than 7 days with resolved patterns are auto-closed,
+                    and all changes are logged for audit trail. No manual approval gates remain.
+                  </p>
                 </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-muted/30 border-border">
+              <CardContent className="pt-4">
+                <FlowDiagram steps={['pg_cron (3 AM daily)', 'ai-training-review v2', 'Analyze feedback', 'Generate suggestions via AI', 'Auto-apply low-risk', 'Auto-resolve aged edge cases', 'Log everything', 'Sleep until tomorrow']} />
+              </CardContent>
+            </Card>
+            <InfoTable
+              headers={['Action', 'Trigger', 'Human Required?']}
+              rows={[
+                ['Low-risk prompt improvements', 'AI suggests + auto_applicable=true + priority≠high', 'No — auto-applied'],
+                ['High-risk improvements', 'AI suggests + priority=high', 'No — applied but flagged in audit log'],
+                ['Edge case auto-resolution', 'Unresolved >7 days + same category resolved before', 'No — auto-resolved'],
+                ['Low-severity edge cases', 'severity=low', 'No — auto-resolved on next review'],
+                ['Feedback collection', 'User thumbs up/down', 'No — stored automatically'],
+              ]}
+            />
+          </Section>
+
+          <Separator />
+
+          {/* 14. Self-Healing & Auto-Resolution */}
+          <Section icon={<Cpu className="h-5 w-5 text-violet-500" />} title="14. Self-Healing & Auto-Resolution" id="self-healing">
+            <p>
+              The AI agent ecosystem is designed to be <strong className="text-foreground">self-healing</strong>. When patterns of failure
+              are detected, the system automatically resolves recurring issues and logs corrective actions. This moves the platform
+              from Phase 2 (feedback loops) toward Phase 4 (autonomous self-improvement).
+            </p>
+            <Card className="bg-muted/30 border-border">
+              <CardContent className="pt-4">
+                <h3 className="text-sm font-semibold text-foreground mb-3">Auto-Resolution Logic</h3>
+                <FlowDiagram steps={['Edge case detected', 'Categorized', 'Age check (>7d?)', 'Pattern match (similar resolved?)', 'Auto-resolve + log', 'Remove from active queue']} />
+                <ul className="list-disc list-inside space-y-1 text-xs mt-3">
+                  <li><strong className="text-foreground">Pattern matching:</strong> If an edge case's category has been manually resolved before, new instances are auto-resolved</li>
+                  <li><strong className="text-foreground">Age-based cleanup:</strong> Low-severity edge cases aged over 7 days are auto-resolved</li>
+                  <li><strong className="text-foreground">Audit trail:</strong> Every auto-resolution is logged with reason in the resolution field</li>
+                </ul>
+              </CardContent>
+            </Card>
+            <Card className="bg-muted/30 border-border">
+              <CardContent className="pt-4">
+                <h3 className="text-sm font-semibold text-foreground mb-3">New Document Agent Tools (v5.0)</h3>
+                <InfoTable
+                  headers={['Tool', 'Purpose', 'Cross-Domain']}
+                  rows={[
+                    ['get_document_quality_score', 'Composite 0-100 score: completeness (30%) + maturity (30%) + RLMU compliance (25%) + consistency (15%)', 'No'],
+                    ['get_document_ora_linkage', 'Maps doc gaps to ORA phase requirements and P2A handover blockers', 'Yes — queries orp_plans + p2a_handover_plans'],
+                  ]}
+                />
               </CardContent>
             </Card>
           </Section>
@@ -695,13 +741,14 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
           <Separator />
 
           {/* 14. Roadmap */}
-          <Section icon={<Target className="h-5 w-5 text-purple-500" />} title="14. Agent Roadmap" id="roadmap">
+          <Section icon={<Target className="h-5 w-5 text-purple-500" />} title="15. Agent Roadmap" id="roadmap">
             <InfoTable
               headers={['Quarter', 'Milestone', 'Deliverables', 'Status']}
               rows={[
                 ['Q1 2026', 'Document Agent + A2A Protocol', '6 DMS tools, A2A protocol, training infrastructure (5 tables), agent registry', 'Complete'],
-                ['Q1 2026', 'Living Strategy Document v2', 'This document with model strategy, A2A protocol, training infrastructure', 'Complete'],
-                ['Q2 2026', 'Feedback Loop MVP', 'Thumbs up/down UI, correction capture, weekly review queue', 'Planned'],
+                ['Q1 2026', 'Living Strategy Document v2', 'Model strategy, A2A protocol, training infrastructure documentation', 'Complete'],
+                ['Q1 2026', 'Advanced Document Tools (v4)', 'Cross-discipline, bulk status, trend analysis, task creation (11 tools)', 'Complete'],
+                ['Q1 2026', 'Autonomous Training + Quality Score (v5)', 'Auto-apply improvements, self-healing edge cases, quality scoring, ORA linkage (13 tools)', 'Complete'],
                 ['Q2 2026', 'Training Agent', 'Training plan tools, competency gap analysis (Gemini 3 Flash)', 'Planned'],
                 ['Q2 2026', 'CMMS Agent', 'Equipment care tools, maintenance readiness (Gemini 3 Flash)', 'Planned'],
                 ['Q2 2026', 'ORM Agent', 'Manpower readiness tools, staffing gaps (Gemini 3 Flash)', 'Planned'],
@@ -717,7 +764,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
           <Card className="bg-muted/30 border-border">
             <CardContent className="pt-4">
               <p className="text-xs text-muted-foreground text-center">
-                <strong className="text-foreground">AI Agent Strategy & Training — Living Document v2.0</strong>
+                <strong className="text-foreground">AI Agent Strategy & Training — Living Document v5.0</strong>
                 <br />
                 Continuously updated as new agents are built, tools added, and training strategy evolves.
                 <br />
