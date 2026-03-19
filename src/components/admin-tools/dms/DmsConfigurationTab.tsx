@@ -164,6 +164,8 @@ const DmsConfigurationTab: React.FC = () => {
     },
   });
 
+  const { data: sampleData } = useSampleData();
+
   const updateSegment = useMutation({
     mutationFn: async (seg: Partial<Segment> & { id: string }) => {
       const { id, ...updates } = seg;
