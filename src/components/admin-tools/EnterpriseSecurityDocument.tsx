@@ -672,8 +672,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 18. Compliance Certifications & ORIP Roadmap — NEW */}
-          <Section id="compliance-roadmap" icon={<AlertTriangle className="h-5 w-5 text-amber-500" />} title="18. Compliance Certifications & ORIP Roadmap">
+          {/* 19. Compliance Certifications & ORIP Roadmap — NEW */}
+          <Section id="compliance-roadmap" icon={<AlertTriangle className="h-5 w-5 text-amber-500" />} title="19. Compliance Certifications & ORIP Roadmap">
             <Card className="border-amber-500/20 bg-amber-500/5">
               <CardContent className="pt-4 text-sm">
                 <p className="font-medium text-foreground">⚠️ Mandatory for ORIP Enterprise Procurement</p>
