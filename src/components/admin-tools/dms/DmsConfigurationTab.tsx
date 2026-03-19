@@ -343,25 +343,6 @@ const DmsConfigurationTab: React.FC = () => {
       {/* Segment Boxes */}
       <Card className="overflow-hidden">
         <CardContent className="p-6">
-          {/* Live assembled preview */}
-          <div className="mb-6">
-            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Preview</Label>
-            <div className="bg-muted/40 rounded-lg px-4 py-3 border border-dashed border-border">
-              <span className="font-mono text-sm tracking-wide">
-                {activeSegments.map((s, i) => (
-                  <React.Fragment key={s.id}>
-                    <span className={cn('font-semibold', SEGMENT_COLORS[sorted.indexOf(s) % SEGMENT_COLORS.length].text)}>
-                      {segmentDisplayCode(s, sorted.indexOf(s), sampleData)}
-                    </span>
-                    {i < activeSegments.length - 1 && (
-                      <span className="text-muted-foreground mx-0.5">{s.separator || '-'}</span>
-                    )}
-                  </React.Fragment>
-                ))}
-              </span>
-            </div>
-          </div>
-
           {/* Interactive segment boxes */}
           <div className="flex flex-wrap items-start gap-2">
             {sorted.map((seg, idx) => {
@@ -454,6 +435,27 @@ const DmsConfigurationTab: React.FC = () => {
               <span className="text-[10px] mt-1">Add</span>
             </button>
           </div>
+
+          {/* Example document number */}
+          {activeSegments.length > 0 && (
+            <div className="mt-8 pt-4 border-t border-border/50">
+              <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Example</Label>
+              <span className="font-mono text-sm tracking-wide text-foreground/80">
+                {activeSegments.map((s, i) => {
+                  const sample = s.source_table && sampleData?.[s.source_table];
+                  const code = sample ? sample.code : segmentDisplayCode(s, sorted.indexOf(s), sampleData);
+                  return (
+                    <React.Fragment key={s.id}>
+                      <span>{code}</span>
+                      {i < activeSegments.length - 1 && (
+                        <span className="text-muted-foreground/60">{s.separator || '-'}</span>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </span>
+            </div>
+          )}
 
         </CardContent>
       </Card>
