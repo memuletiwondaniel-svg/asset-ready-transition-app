@@ -77,6 +77,14 @@ const DMS_SYSTEMS = [
 
 const segmentsTable = () => (supabase as any).from('dms_numbering_segments');
 
+/** Generate placeholder like "AAAA" based on max_length, using the first letter of the label */
+const segmentPlaceholder = (seg: Segment): string => {
+  if (seg.example_value) return seg.example_value;
+  const letter = (seg.label?.[0] || 'X').toUpperCase();
+  const len = seg.max_length || 4;
+  return letter.repeat(len);
+};
+
 const DmsConfigurationTab: React.FC = () => {
   const queryClient = useQueryClient();
   const [editDialog, setEditDialog] = useState(false);
@@ -294,7 +302,7 @@ const DmsConfigurationTab: React.FC = () => {
                 {activeSegments.map((s, i) => (
                   <React.Fragment key={s.id}>
                     <span className={cn('font-semibold', SEGMENT_COLORS[sorted.indexOf(s) % SEGMENT_COLORS.length].text)}>
-                      {s.example_value || s.segment_key.toUpperCase()}
+                      {segmentPlaceholder(s)}
                     </span>
                     {i < activeSegments.length - 1 && (
                       <span className="text-muted-foreground mx-0.5">{s.separator || '-'}</span>
@@ -332,7 +340,7 @@ const DmsConfigurationTab: React.FC = () => {
 
                       {/* Example value */}
                       <span className={cn('font-mono text-sm font-bold leading-none', color.text)}>
-                        {seg.example_value || seg.segment_key.toUpperCase()}
+                        {segmentPlaceholder(seg)}
                       </span>
 
                       {/* Label */}
