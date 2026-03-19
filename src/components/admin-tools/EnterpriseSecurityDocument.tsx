@@ -90,7 +90,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
             </div>
           </div>
           <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-            v2.0 — March 2026
+            v3.0 — March 2026
           </Badge>
         </div>
       </div>
