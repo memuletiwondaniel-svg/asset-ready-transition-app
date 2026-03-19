@@ -819,11 +819,16 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
                 { name: 'APIs', desc: 'External system interface config' },
                 { name: 'ORA Configuration', desc: 'Activity catalog and phase management' },
                 { name: 'VCRs and PSSRs', desc: 'Certificate and checklist configuration' },
+                { name: 'Document Management', desc: 'DMS metadata across 9 configuration tabs' },
                 { name: 'Activity Log', desc: 'Platform-wide activity feed' },
                 { name: 'Deployment Log', desc: 'Release tracking with pre-publish checklist' },
                 { name: 'Tenant Feature Flags', desc: 'Per-tenant module toggles' },
-                { name: 'Security & Compliance Doc', desc: 'This living security document' },
-                { name: 'Platform Guide', desc: 'This living platform guide' },
+                { name: 'Security & Compliance Doc', desc: 'Living enterprise security document' },
+                { name: 'Platform Guide', desc: 'Living platform architecture guide' },
+                { name: 'Strategic North Star', desc: 'ORSH → ORIP evolution & positioning' },
+                { name: 'AI Agent Strategy', desc: 'AI training methodology & agent registry' },
+                { name: 'Customer Journey Maps', desc: 'Role-based persona journey maps' },
+                { name: 'Process Flow Maps', desc: 'Visual process and swim lane diagrams' },
               ].map(t => (
                 <div key={t.name} className="flex items-start gap-2 text-sm">
                   <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
