@@ -5659,6 +5659,213 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       return await saveUserContextTool(supabaseClient, userId, args.context_key, args.context_value);
     }
 
+    case "get_document_quality_score": {
+      try {
+        let query = supabaseClient
+          .from('dms_document_types')
+          .select('code, document_name, discipline_code, discipline_name, tier, rlmu, acceptable_status')
+          .eq('is_active', true);
+        
+        if (args.discipline_filter) {
+          query = query.or(`discipline_code.ilike.%${args.discipline_filter}%,discipline_name.ilike.%${args.discipline_filter}%`);
+        }
+        if (args.tier_filter) {
+          query = query.ilike('tier', `%${args.tier_filter}%`);
+        }
+        
+        const { data: docTypes, error } = await query;
+        if (error) return { error: error.message };
+        
+        const { data: statusCodes } = await supabaseClient
+          .from('dms_status_codes')
+          .select('code, display_order')
+          .eq('is_active', true)
+          .order('display_order');
+        
+        const statusOrder: Record<string, number> = {};
+        const maxOrder = (statusCodes || []).reduce((max: number, s: any) => {
+          statusOrder[s.code] = s.display_order;
+          return Math.max(max, s.display_order);
+        }, 0);
+        
+        const total = (docTypes || []).length;
+        if (total === 0) return { score: 0, message: 'No documents found' };
+        
+        // Score components (each 0-100, weighted)
+        let completenessScore = 0; // 30% weight - docs with acceptable_status set
+        let maturityScore = 0;     // 30% weight - average position in lifecycle
+        let rlmuScore = 0;         // 25% weight - RLMU compliance
+        let consistencyScore = 0;  // 15% weight - discipline balance
+        
+        let withStatus = 0;
+        let maturitySum = 0;
+        let rlmuRequired = 0;
+        let rlmuMet = 0;
+        const disciplineCount: Record<string, { total: number; withStatus: number }> = {};
+        
+        (docTypes || []).forEach((doc: any) => {
+          const disc = doc.discipline_code || 'Unknown';
+          if (!disciplineCount[disc]) disciplineCount[disc] = { total: 0, withStatus: 0 };
+          disciplineCount[disc].total++;
+          
+          if (doc.acceptable_status) {
+            withStatus++;
+            disciplineCount[disc].withStatus++;
+            const order = statusOrder[doc.acceptable_status] || 0;
+            maturitySum += maxOrder > 0 ? (order / maxOrder) : 0;
+          }
+          if (doc.rlmu) {
+            rlmuRequired++;
+            if (doc.acceptable_status === 'RLMU') rlmuMet++;
+          }
+        });
+        
+        completenessScore = total > 0 ? (withStatus / total) * 100 : 0;
+        maturityScore = withStatus > 0 ? (maturitySum / withStatus) * 100 : 0;
+        rlmuScore = rlmuRequired > 0 ? (rlmuMet / rlmuRequired) * 100 : 100;
+        
+        // Consistency: how balanced are disciplines (std dev of readiness %)
+        const discReadiness = Object.values(disciplineCount).map(d => d.total > 0 ? (d.withStatus / d.total) * 100 : 0);
+        const avgReadiness = discReadiness.length > 0 ? discReadiness.reduce((a, b) => a + b, 0) / discReadiness.length : 0;
+        const variance = discReadiness.length > 0 ? discReadiness.reduce((sum, r) => sum + Math.pow(r - avgReadiness, 2), 0) / discReadiness.length : 0;
+        const stdDev = Math.sqrt(variance);
+        consistencyScore = Math.max(0, 100 - stdDev * 2); // Lower std dev = higher consistency
+        
+        const overallScore = Math.round(
+          completenessScore * 0.30 +
+          maturityScore * 0.30 +
+          rlmuScore * 0.25 +
+          consistencyScore * 0.15
+        );
+        
+        // Grade
+        let grade = 'F';
+        if (overallScore >= 90) grade = 'A';
+        else if (overallScore >= 80) grade = 'B';
+        else if (overallScore >= 70) grade = 'C';
+        else if (overallScore >= 60) grade = 'D';
+        
+        // Recommendations based on weakest area
+        const recommendations: string[] = [];
+        if (completenessScore < 70) recommendations.push(`Set acceptable_status for ${total - withStatus} documents missing status targets`);
+        if (maturityScore < 50) recommendations.push('Many documents stuck in early lifecycle stages — prioritize progressing IFR→IFC→AFC');
+        if (rlmuScore < 80) recommendations.push(`${rlmuRequired - rlmuMet} documents need RLMU status for operational readiness`);
+        if (consistencyScore < 70) recommendations.push('Large imbalance between disciplines — focus on lagging areas');
+        
+        return {
+          overall_score: overallScore,
+          grade,
+          total_documents: total,
+          components: {
+            completeness: { score: Math.round(completenessScore), weight: '30%', description: `${withStatus}/${total} documents have status targets set` },
+            maturity: { score: Math.round(maturityScore), weight: '30%', description: 'Average lifecycle position across all documents' },
+            rlmu_compliance: { score: Math.round(rlmuScore), weight: '25%', description: `${rlmuMet}/${rlmuRequired} RLMU-required docs at target` },
+            consistency: { score: Math.round(consistencyScore), weight: '15%', description: 'Balance of readiness across disciplines' }
+          },
+          recommendations,
+          interpretation: overallScore >= 80 ? 'Documentation is in good shape for operational readiness.' : overallScore >= 60 ? 'Documentation needs attention in specific areas before handover.' : 'Significant documentation gaps need urgent attention.'
+        };
+      } catch (err) {
+        console.error('Document quality score error:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_document_ora_linkage": {
+      try {
+        // Get document readiness summary
+        const { data: docTypes } = await supabaseClient
+          .from('dms_document_types')
+          .select('code, document_name, discipline_code, discipline_name, tier, acceptable_status, rlmu')
+          .eq('is_active', true);
+        
+        const totalDocs = (docTypes || []).length;
+        const docsWithStatus = (docTypes || []).filter((d: any) => d.acceptable_status).length;
+        const readinessPercent = totalDocs > 0 ? Math.round((docsWithStatus / totalDocs) * 100) : 0;
+        
+        // Get ORA plans
+        let oraQuery = supabaseClient
+          .from('orp_plans')
+          .select('id, phase, status, is_active, project:projects(project_id_prefix, project_id_number, project_title)')
+          .eq('is_active', true);
+        
+        if (args.project_code) {
+          // Filter by project
+          oraQuery = oraQuery.ilike('projects.project_id_prefix', `%${args.project_code}%`);
+        }
+        
+        const { data: oraPlans } = await oraQuery.limit(20);
+        
+        // Get P2A handover plans
+        const { data: p2aPlans } = await supabaseClient
+          .from('p2a_handover_plans')
+          .select('id, status, project_id')
+          .in('status', ['DRAFT', 'IN_PROGRESS', 'PENDING_APPROVAL'])
+          .limit(10);
+        
+        // Map document requirements by ORA phase
+        const phaseDocRequirements: Record<string, { required_status: string; description: string; gap_impact: string }> = {
+          'ASSESS': { required_status: 'Draft', description: 'Initial document inventory and numbering convention established', gap_impact: 'Low — early phase allows time to build document library' },
+          'SELECT': { required_status: 'IFR', description: 'Key documents issued for review, O&M philosophy documented', gap_impact: 'Medium — documents needed for concept selection decisions' },
+          'DEFINE': { required_status: 'IFC', description: 'Documents approved for construction, BDEP documentation complete', gap_impact: 'High — incomplete docs delay engineering and procurement' },
+          'EXECUTE': { required_status: 'AFC', description: 'All documents approved for construction, approaching RLMU readiness', gap_impact: 'Critical — blocks Statement of Fitness and P2A handover' },
+        };
+        
+        // Calculate gaps by discipline
+        const disciplineGaps: Record<string, number> = {};
+        (docTypes || []).forEach((doc: any) => {
+          if (!doc.acceptable_status) {
+            const disc = doc.discipline_name || doc.discipline_code || 'Unknown';
+            disciplineGaps[disc] = (disciplineGaps[disc] || 0) + 1;
+          }
+        });
+        
+        const topGapDisciplines = Object.entries(disciplineGaps)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 5)
+          .map(([disc, count]) => ({ discipline: disc, gap_count: count }));
+        
+        // Determine ORA impact
+        const activePhases = (oraPlans || []).map((p: any) => p.phase);
+        const currentPhaseReqs = activePhases.map((phase: string) => ({
+          phase,
+          ...phaseDocRequirements[phase],
+          document_readiness: readinessPercent
+        }));
+        
+        // P2A impact assessment
+        const pendingP2aCount = (p2aPlans || []).length;
+        const p2aBlocked = readinessPercent < 80 && pendingP2aCount > 0;
+        
+        return {
+          document_readiness_percent: readinessPercent,
+          total_documents: totalDocs,
+          documents_with_target: docsWithStatus,
+          documents_without_target: totalDocs - docsWithStatus,
+          ora_linkage: {
+            active_ora_plans: (oraPlans || []).length,
+            phase_requirements: currentPhaseReqs.length > 0 ? currentPhaseReqs : Object.entries(phaseDocRequirements).map(([phase, req]) => ({ phase, ...req, document_readiness: readinessPercent })),
+            impact_assessment: readinessPercent >= 80 ? 'Documents are well-positioned for current ORA phases.' : readinessPercent >= 50 ? 'Document gaps may delay ORA progression — prioritize critical disciplines.' : 'Significant document gaps threaten ORA timeline — immediate action required.'
+          },
+          p2a_linkage: {
+            pending_handovers: pendingP2aCount,
+            blocked_by_docs: p2aBlocked,
+            impact: p2aBlocked ? `${pendingP2aCount} P2A handovers are at risk due to ${readinessPercent}% document readiness (80% minimum recommended).` : 'Document readiness is sufficient for P2A handover requirements.'
+          },
+          top_gap_disciplines: topGapDisciplines,
+          recommendations: [
+            ...(readinessPercent < 50 ? ['🔴 Critical: Overall document readiness below 50% — escalate to project leadership'] : []),
+            ...(topGapDisciplines.length > 0 ? [`Focus on ${topGapDisciplines[0].discipline} (${topGapDisciplines[0].gap_count} gaps) as highest priority`] : []),
+            ...(p2aBlocked ? ['P2A handovers blocked — accelerate document progression to AFC/RLMU'] : []),
+            'Connect document milestones to ORA plan milestones for integrated tracking'
+          ]
+        };
+      } catch (err) {
+        console.error('Document ORA linkage error:', err);
+        return { error: String(err) };
+      }
+    }
+
     default:
       return { error: "Unknown tool" };
   }
