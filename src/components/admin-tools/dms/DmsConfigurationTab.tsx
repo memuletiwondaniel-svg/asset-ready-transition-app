@@ -114,6 +114,47 @@ const DmsConfigurationTab: React.FC = () => {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const createSegment = useMutation({
+    mutationFn: async () => {
+      const nextPosition = segments.length > 0 ? Math.max(...segments.map(s => s.position)) + 1 : 1;
+      const { error } = await segmentsTable().insert({
+        segment_key: formKey || `custom_${nextPosition}`,
+        label: formLabel || 'New Segment',
+        position: nextPosition,
+        separator: formSeparator,
+        min_length: formMinLength,
+        max_length: formMaxLength,
+        source_table: formSourceTable === 'none' ? null : formSourceTable,
+        source_code_column: formSourceTable === 'none' ? null : formSourceCodeCol,
+        source_name_column: formSourceTable === 'none' ? null : formSourceNameCol,
+        is_required: formRequired,
+        is_active: formActive,
+        description: formDescription || null,
+        example_value: formExample || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dms-numbering-segments'] });
+      toast.success('Segment added');
+      setEditDialog(false);
+      setIsCreating(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteSegment = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await segmentsTable().delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dms-numbering-segments'] });
+      toast.success('Segment removed');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const moveSegment = async (segId: string, direction: 'up' | 'down') => {
     const sorted = [...segments].sort((a, b) => a.position - b.position);
     const idx = sorted.findIndex(s => s.id === segId);
