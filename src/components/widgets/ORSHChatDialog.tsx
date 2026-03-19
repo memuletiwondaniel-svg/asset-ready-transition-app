@@ -29,7 +29,9 @@ import {
   ArrowUp,
   PanelLeftClose,
   PanelLeft,
-  MoreHorizontal
+  MoreHorizontal,
+  ThumbsUp,
+  ThumbsDown
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -55,6 +57,8 @@ interface Message {
   imageUrls?: string[];
   fileUrls?: string[];
   fileNames?: string[];
+  messageId?: string;
+  feedbackGiven?: 'positive' | 'negative' | null;
 }
 
 interface Conversation {
@@ -352,7 +356,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
         },
         body: JSON.stringify({ 
           messages: newMessages.map(m => ({ 
@@ -526,6 +530,35 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     e.stopPropagation();
     setEditingConvId(conv.id);
     setEditingTitle(conv.title);
+  };
+
+  const handleFeedback = async (messageIndex: number, rating: 'positive' | 'negative') => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const message = messages[messageIndex];
+      if (message.feedbackGiven === rating) return;
+
+      const { error } = await supabase
+        .from('ai_response_feedback')
+        .insert({
+          user_id: user.id,
+          conversation_id: currentConversationId,
+          rating,
+          agent_code: 'bob-copilot',
+        });
+
+      if (error) throw error;
+
+      setMessages(prev => prev.map((m, i) => 
+        i === messageIndex ? { ...m, feedbackGiven: rating } : m
+      ));
+
+      toast.success(rating === 'positive' ? 'Thanks for the feedback!' : 'Thanks, we\'ll improve!');
+    } catch (error) {
+      console.error('Error saving feedback:', error);
+    }
   };
 
   const filteredConversations = conversations.filter(conv => 
@@ -754,6 +787,32 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                           </div>
                         )}
                       </div>
+                      {message.role === 'assistant' && !isLoading && (
+                        <div className="flex items-center gap-1 mt-1 ml-12">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "h-7 w-7 rounded-full",
+                              message.feedbackGiven === 'positive' && "bg-green-500/10 text-green-600"
+                            )}
+                            onClick={() => handleFeedback(index, 'positive')}
+                          >
+                            <ThumbsUp className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "h-7 w-7 rounded-full",
+                              message.feedbackGiven === 'negative' && "bg-destructive/10 text-destructive"
+                            )}
+                            onClick={() => handleFeedback(index, 'negative')}
+                          >
+                            <ThumbsDown className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      )}
                       {message.role === 'user' && (
                         <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                           <User className="h-4 w-4 text-muted-foreground" />
