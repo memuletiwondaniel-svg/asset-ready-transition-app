@@ -631,48 +631,6 @@ const DmsConfigurationTab: React.FC = () => {
               </div>
             </div>
 
-            {/* Advanced Settings */}
-            <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-              <CollapsibleTrigger asChild>
-                <button className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors w-full">
-                  <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', advancedOpen && 'rotate-180')} />
-                  Advanced Settings
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-3 space-y-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Internal Key</Label>
-                  <Input
-                    value={formKey}
-                    onChange={e => setFormKey(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
-                    className="h-9 font-mono text-xs"
-                    placeholder="e.g. project, discipline, sequence_1"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Example Value</Label>
-                  <Input
-                    value={formExample}
-                    onChange={e => setFormExample(e.target.value)}
-                    className="h-9 font-mono text-xs"
-                    placeholder="e.g. 6529, AMTS, PX"
-                  />
-                  <p className="text-[11px] text-muted-foreground">Shown inside the segment box in the visual builder</p>
-                </div>
-                {formSourceTable !== 'none' && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Code Column</Label>
-                      <Input value={formSourceCodeCol} onChange={e => setFormSourceCodeCol(e.target.value)} className="h-9 font-mono text-xs" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Display Column</Label>
-                      <Input value={formSourceNameCol} onChange={e => setFormSourceNameCol(e.target.value)} className="h-9 font-mono text-xs" />
-                    </div>
-                  </div>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
           </div>
 
           <DialogFooter className="gap-2 pt-2">
