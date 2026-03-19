@@ -423,96 +423,146 @@ const DmsConfigurationTab: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Edit Dialog */}
+      {/* Add / Edit Dialog */}
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader className="pb-4 border-b">
             <DialogTitle>{isCreating ? 'Add Segment' : 'Edit Segment'}</DialogTitle>
-            <DialogDescription>{isCreating ? 'Define a new segment for the document number' : 'Configure how this segment behaves in the document number'}</DialogDescription>
+            <DialogDescription>
+              {isCreating
+                ? 'A segment is one part of a document number (e.g. the Project Code or Discipline). Fill in the details below.'
+                : `Editing "${editingSegment?.label}" — change how this part of the document number behaves.`}
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-5 py-4">
+
+            {/* Section 1: What is this segment? */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Identity</h4>
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Label</Label>
-                <Input value={formLabel} onChange={e => setFormLabel(e.target.value)} />
+                <Label className="text-sm font-medium">Segment Name <span className="text-destructive">*</span></Label>
+                <Input value={formLabel} onChange={e => setFormLabel(e.target.value)} placeholder="e.g. Project Code, Plant Code, Sequence Number" />
+                <p className="text-xs text-muted-foreground">A human-readable name shown in the preview and table</p>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Key</Label>
-                <Input value={formKey} onChange={e => setFormKey(e.target.value)} className="font-mono" />
+                <Label className="text-sm font-medium">Description</Label>
+                <Textarea value={formDescription} onChange={e => setFormDescription(e.target.value)} rows={2} placeholder="e.g. Identifies the engineering project — sourced from the Projects table" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Example Value</Label>
+                <Input value={formExample} onChange={e => setFormExample(e.target.value)} className="font-mono" placeholder="e.g. 6529, AMTS, PX" />
+                <p className="text-xs text-muted-foreground">Shown in the live preview above the table</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            {/* Section 2: Where does the value come from? */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data Source</h4>
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Min Length</Label>
-                <Input type="number" value={formMinLength} onChange={e => setFormMinLength(Number(e.target.value))} min={1} max={20} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Max Length</Label>
-                <Input type="number" value={formMaxLength} onChange={e => setFormMaxLength(Number(e.target.value))} min={1} max={20} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Separator</Label>
-                <Input value={formSeparator} onChange={e => setFormSeparator(e.target.value)} className="font-mono" maxLength={2} />
+                <Label className="text-sm font-medium">Value comes from</Label>
+                <Select value={formSourceTable} onValueChange={(val) => {
+                  setFormSourceTable(val);
+                  // Auto-fill column names based on table
+                  const colMap: Record<string, [string, string]> = {
+                    dms_projects: ['code', 'project_name'],
+                    dms_originators: ['code', 'description'],
+                    dms_plants: ['code', 'plant_name'],
+                    dms_sites: ['code', 'site_name'],
+                    dms_units: ['code', 'unit_name'],
+                    dms_disciplines: ['code', 'name'],
+                    dms_document_types: ['code', 'document_name'],
+                    dms_status_codes: ['code', 'description'],
+                  };
+                  if (colMap[val]) {
+                    setFormSourceCodeCol(colMap[val][0]);
+                    setFormSourceNameCol(colMap[val][1]);
+                  }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SOURCE_TABLE_OPTIONS.map(o => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {formSourceTable === 'none'
+                    ? 'User types a value manually (e.g. sequence numbers)'
+                    : 'Values are looked up from an existing DMS table'}
+                </p>
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Source Table</Label>
-              <Select value={formSourceTable} onValueChange={setFormSourceTable}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SOURCE_TABLE_OPTIONS.map(o => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {formSourceTable !== 'none' && (
-              <div className="grid grid-cols-2 gap-4">
+            {/* Section 3: Format rules */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Format Rules</h4>
+              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Code Column</Label>
-                  <Input value={formSourceCodeCol} onChange={e => setFormSourceCodeCol(e.target.value)} className="font-mono text-xs" />
+                  <Label className="text-sm font-medium">Min Characters</Label>
+                  <Input type="number" value={formMinLength} onChange={e => setFormMinLength(Number(e.target.value))} min={1} max={20} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Name Column</Label>
-                  <Input value={formSourceNameCol} onChange={e => setFormSourceNameCol(e.target.value)} className="font-mono text-xs" />
+                  <Label className="text-sm font-medium">Max Characters</Label>
+                  <Input type="number" value={formMaxLength} onChange={e => setFormMaxLength(Number(e.target.value))} min={1} max={20} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Separator After</Label>
+                  <Input value={formSeparator} onChange={e => setFormSeparator(e.target.value)} className="font-mono text-center" maxLength={2} placeholder="-" />
                 </div>
               </div>
-            )}
-
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Example Value</Label>
-              <Input value={formExample} onChange={e => setFormExample(e.target.value)} className="font-mono" placeholder="e.g. 6529" />
+              <p className="text-xs text-muted-foreground">Character limits and the separator that follows this segment (usually a dash)</p>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Description</Label>
-              <Textarea value={formDescription} onChange={e => setFormDescription(e.target.value)} rows={2} placeholder="Explain what this segment represents..." />
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <Label className="text-sm font-medium">Required</Label>
-                <p className="text-xs text-muted-foreground">Must be present in every document number</p>
+            {/* Section 4: Behaviour toggles */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Behaviour</h4>
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <Label className="text-sm font-medium">Required</Label>
+                  <p className="text-xs text-muted-foreground">Must be present in every document number</p>
+                </div>
+                <Switch checked={formRequired} onCheckedChange={setFormRequired} />
               </div>
-              <Switch checked={formRequired} onCheckedChange={setFormRequired} />
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <Label className="text-sm font-medium">Active</Label>
+                  <p className="text-xs text-muted-foreground">Include this segment in the numbering pattern</p>
+                </div>
+                <Switch checked={formActive} onCheckedChange={setFormActive} />
+              </div>
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <Label className="text-sm font-medium">Active</Label>
-                <p className="text-xs text-muted-foreground">Include this segment in the numbering pattern</p>
+            {/* Advanced: internal key (collapsed for create, shown for edit) */}
+            <details className="group">
+              <summary className="text-xs font-semibold uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors">
+                Advanced Settings ▸
+              </summary>
+              <div className="mt-3 space-y-3 pl-1">
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Internal Key</Label>
+                  <Input value={formKey} onChange={e => setFormKey(e.target.value.toLowerCase().replace(/\s+/g, '_'))} className="font-mono" placeholder="e.g. project, discipline, sequence_1" />
+                  <p className="text-xs text-muted-foreground">Used by ORSH to identify this segment programmatically</p>
+                </div>
+                {formSourceTable !== 'none' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-medium">Code Column</Label>
+                      <Input value={formSourceCodeCol} onChange={e => setFormSourceCodeCol(e.target.value)} className="font-mono text-xs" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-medium">Display Column</Label>
+                      <Input value={formSourceNameCol} onChange={e => setFormSourceNameCol(e.target.value)} className="font-mono text-xs" />
+                    </div>
+                  </div>
+                )}
               </div>
-              <Switch checked={formActive} onCheckedChange={setFormActive} />
-            </div>
+            </details>
           </div>
           <DialogFooter className="pt-4 border-t gap-2">
             <Button variant="outline" onClick={() => setEditDialog(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={updateSegment.isPending || createSegment.isPending} className="min-w-[100px]">
+            <Button onClick={handleSave} disabled={updateSegment.isPending || createSegment.isPending || !formLabel.trim()} className="min-w-[100px]">
               {(updateSegment.isPending || createSegment.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {isCreating ? 'Add Segment' : 'Save Changes'}
             </Button>
