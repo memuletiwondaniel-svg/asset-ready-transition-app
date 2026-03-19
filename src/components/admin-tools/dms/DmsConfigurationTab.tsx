@@ -99,8 +99,7 @@ const useSampleData = () => {
             const shortest = data.sort((a: any, b: any) => 
               (String(a[codeCol]) + a[nameCol]).length - (String(b[codeCol]) + b[nameCol]).length
             )[0];
-          if (data?.[0]) {
-            results[table] = { code: data[0][codeCol], name: data[0][nameCol] };
+            results[table] = { code: shortest[codeCol], name: shortest[nameCol] };
           }
         })
       );
