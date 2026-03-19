@@ -82,7 +82,8 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
     { id: 'training-infrastructure', label: 'Training Infrastructure (Database)' },
     { id: 'evaluation', label: 'Evaluation Framework' },
     { id: 'security', label: 'Security & Guardrails' },
-    { id: 'daily-loop', label: 'Daily Training Loop (pg_cron)' },
+    { id: 'daily-loop', label: 'Autonomous Training Loop' },
+    { id: 'self-healing', label: 'Self-Healing & Auto-Resolution' },
     { id: 'roadmap', label: 'Agent Roadmap' },
   ];
 
