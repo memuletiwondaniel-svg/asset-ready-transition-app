@@ -900,9 +900,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
             </Card>
           </Section>
 
-          {/* 17. Readiness Ontology & Scoring Engine */}
+          {/* 19. Readiness Ontology & Scoring Engine */}
           <Separator />
-          <Section id="readiness-scoring" icon={<Layers className="h-5 w-5 text-primary" />} title="17. Readiness Ontology & Scoring Engine (ORIP)">
+          <Section id="readiness-scoring" icon={<Layers className="h-5 w-5 text-primary" />} title="19. Readiness Ontology & Scoring Engine (ORIP)">
             <p>The ORIP Scoring Engine converts execution data from all modules into a quantified <strong className="text-foreground">Operational Readiness Index (ORI)</strong> and <strong className="text-foreground">Startup Confidence Score (SCS)</strong>.</p>
 
             <p className="font-medium text-foreground mt-3">Readiness Dimensions</p>
