@@ -154,7 +154,6 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
     } else {
       createDiscipline.mutate({ code: formCode.trim(), name: formName.trim(), is_active: formIsActive });
     }
-    setDialogOpen(false);
   };
 
   const isSaving = createDiscipline.isPending || updateDiscipline.isPending;
