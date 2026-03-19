@@ -80,7 +80,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
             </div>
           </div>
           <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-            v1.0 — March 2026
+            v2.0 — March 2026
           </Badge>
         </div>
       </div>
