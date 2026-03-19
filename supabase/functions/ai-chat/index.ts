@@ -5329,12 +5329,14 @@ serve(async (req) => {
       
       // Execute all tool calls and track navigation actions
       const toolResults = [];
+      const toolCallNames: string[] = [];
       let navigationAction: { action: string; path: string } | null = null;
       let lastToolName: string | null = null;
       let lastToolResult: any = null;
       
       for (const toolCall of assistantMessage.tool_calls) {
         const toolName = toolCall.function.name;
+        toolCallNames.push(toolName);
         const toolArgs = JSON.parse(toolCall.function.arguments || '{}');
         
         console.log(`Executing tool: ${toolName}`, toolArgs);
