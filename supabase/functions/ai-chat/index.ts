@@ -5660,7 +5660,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "openai/gpt-5-mini",
           messages: [
-            { role: "system", content: BOB_SYSTEM_PROMPT },
+            { role: "system", content: BOB_SYSTEM_PROMPT + userContextPrompt },
             ...transformedMessages,
             assistantMessage,
           ...toolResults,
