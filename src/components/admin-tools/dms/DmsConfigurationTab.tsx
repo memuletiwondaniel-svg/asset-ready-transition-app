@@ -322,7 +322,7 @@ const DmsConfigurationTab: React.FC = () => {
         <div>
           <h2 className="text-lg font-semibold text-foreground">Document Numbering Structure</h2>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Click on any segment to configure it. Drag or use arrows to reorder.
+            Click on any segment to configure it. Use arrows to reorder.
           </p>
         </div>
         <div className="flex items-center gap-2">
