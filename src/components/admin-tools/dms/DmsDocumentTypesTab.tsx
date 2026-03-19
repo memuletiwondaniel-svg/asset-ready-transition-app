@@ -70,7 +70,8 @@ const DmsDocumentTypesTab: React.FC = () => {
       const { data, error } = await supabase
         .from('dms_document_types')
         .select('*')
-        .order('display_order', { ascending: true });
+        .order('display_order', { ascending: true })
+        .range(0, 1999);
       if (error) throw error;
       return data as DocTypeRow[];
     },
@@ -213,7 +214,7 @@ const DmsDocumentTypesTab: React.FC = () => {
         <CardHeader className="flex flex-row items-center justify-between py-4">
           <div>
             <CardTitle className="text-lg">Document Type</CardTitle>
-            <CardDescription>Manage document type codes used in document classification</CardDescription>
+            <CardDescription>Manage document type codes used in document classification · Showing {displayRows.length} of {docTypes.length} entries</CardDescription>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative w-56">
