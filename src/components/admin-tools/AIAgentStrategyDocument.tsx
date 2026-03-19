@@ -673,24 +673,67 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
 
           <Separator />
 
-          {/* 13. Daily Training Loop */}
-          <Section icon={<RefreshCw className="h-5 w-5 text-cyan-500" />} title="13. Daily Training Loop" id="daily-loop">
-            <Card className="bg-muted/30 border-border">
-              <CardContent className="pt-4">
-                <FlowDiagram steps={['Review ai_training_log', 'Check ai_edge_cases', 'Review ai_response_feedback', 'Update system prompt', 'Update ai_agent_registry', 'Run regression', 'Deploy Edge Function', 'Monitor 24h']} />
-              </CardContent>
-            </Card>
-
-            <Card className="bg-primary/5 border-primary/20">
+          {/* 13. Autonomous Training Loop */}
+          <Section icon={<RefreshCw className="h-5 w-5 text-cyan-500" />} title="13. Autonomous Training Loop" id="daily-loop">
+            <Card className="bg-emerald-500/5 border-emerald-500/20">
               <CardContent className="pt-4">
                 <div className="flex items-start gap-2">
-                  <Target className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  <div className="text-xs">
-                    <strong className="text-foreground">Goal:</strong> Every new ORSH feature automatically makes the AI smarter. 
-                    When a developer adds a new table, workflow, or status — the system prompt, tools, and agent registry 
-                    are updated in the same sprint. The AI should never lag behind the platform by more than one sprint cycle.
-                  </div>
+                  <Zap className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                  <p className="text-xs">
+                    <strong className="text-foreground">v5.0 — Fully Autonomous:</strong> The training loop now runs without human intervention.
+                    Low-risk improvements are auto-applied, edge cases older than 7 days with resolved patterns are auto-closed,
+                    and all changes are logged for audit trail. No manual approval gates remain.
+                  </p>
                 </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-muted/30 border-border">
+              <CardContent className="pt-4">
+                <FlowDiagram steps={['pg_cron (3 AM daily)', 'ai-training-review v2', 'Analyze feedback', 'Generate suggestions via AI', 'Auto-apply low-risk', 'Auto-resolve aged edge cases', 'Log everything', 'Sleep until tomorrow']} />
+              </CardContent>
+            </Card>
+            <InfoTable
+              headers={['Action', 'Trigger', 'Human Required?']}
+              rows={[
+                ['Low-risk prompt improvements', 'AI suggests + auto_applicable=true + priority≠high', 'No — auto-applied'],
+                ['High-risk improvements', 'AI suggests + priority=high', 'No — applied but flagged in audit log'],
+                ['Edge case auto-resolution', 'Unresolved >7 days + same category resolved before', 'No — auto-resolved'],
+                ['Low-severity edge cases', 'severity=low', 'No — auto-resolved on next review'],
+                ['Feedback collection', 'User thumbs up/down', 'No — stored automatically'],
+              ]}
+            />
+          </Section>
+
+          <Separator />
+
+          {/* 14. Self-Healing & Auto-Resolution */}
+          <Section icon={<Cpu className="h-5 w-5 text-violet-500" />} title="14. Self-Healing & Auto-Resolution" id="self-healing">
+            <p>
+              The AI agent ecosystem is designed to be <strong className="text-foreground">self-healing</strong>. When patterns of failure
+              are detected, the system automatically resolves recurring issues and logs corrective actions. This moves the platform
+              from Phase 2 (feedback loops) toward Phase 4 (autonomous self-improvement).
+            </p>
+            <Card className="bg-muted/30 border-border">
+              <CardContent className="pt-4">
+                <h3 className="text-sm font-semibold text-foreground mb-3">Auto-Resolution Logic</h3>
+                <FlowDiagram steps={['Edge case detected', 'Categorized', 'Age check (>7d?)', 'Pattern match (similar resolved?)', 'Auto-resolve + log', 'Remove from active queue']} />
+                <ul className="list-disc list-inside space-y-1 text-xs mt-3">
+                  <li><strong className="text-foreground">Pattern matching:</strong> If an edge case's category has been manually resolved before, new instances are auto-resolved</li>
+                  <li><strong className="text-foreground">Age-based cleanup:</strong> Low-severity edge cases aged over 7 days are auto-resolved</li>
+                  <li><strong className="text-foreground">Audit trail:</strong> Every auto-resolution is logged with reason in the resolution field</li>
+                </ul>
+              </CardContent>
+            </Card>
+            <Card className="bg-muted/30 border-border">
+              <CardContent className="pt-4">
+                <h3 className="text-sm font-semibold text-foreground mb-3">New Document Agent Tools (v5.0)</h3>
+                <InfoTable
+                  headers={['Tool', 'Purpose', 'Cross-Domain']}
+                  rows={[
+                    ['get_document_quality_score', 'Composite 0-100 score: completeness (30%) + maturity (30%) + RLMU compliance (25%) + consistency (15%)', 'No'],
+                    ['get_document_ora_linkage', 'Maps doc gaps to ORA phase requirements and P2A handover blockers', 'Yes — queries orp_plans + p2a_handover_plans'],
+                  ]}
+                />
               </CardContent>
             </Card>
           </Section>
