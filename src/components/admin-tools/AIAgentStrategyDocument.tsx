@@ -336,6 +336,8 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['get_document_bulk_status', 'Document', 'dms_document_types', 'Active — v4.0'],
                 ['get_document_trend_analysis', 'Document', 'dms_document_types, dms_status_codes', 'Active — v4.0'],
                 ['create_task_from_document_gap', 'Document', 'dms_document_types, user_tasks', 'Active — v4.0'],
+                ['get_document_quality_score', 'Document', 'dms_document_types, dms_status_codes', 'Active — v5.0'],
+                ['get_document_ora_linkage', 'Document', 'dms_document_types, orp_plans, p2a_handover_plans', 'Active — v5.0'],
                 ['navigate_to_page', 'CoPilot', 'N/A (frontend action)', 'Active'],
                 ['resolve_entity_for_navigation', 'CoPilot', 'pssrs, projects, orp_plans', 'Active'],
               ]}
