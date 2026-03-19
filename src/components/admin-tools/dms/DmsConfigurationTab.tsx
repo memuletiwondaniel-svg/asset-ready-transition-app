@@ -64,6 +64,9 @@ const DMS_SYSTEMS = [
   { value: 'custom', label: 'Custom / Other' },
 ];
 
+// Helper to query the new table (not yet in generated types)
+const segmentsTable = () => (supabase as any).from('dms_numbering_segments');
+
 const DmsConfigurationTab: React.FC = () => {
   const queryClient = useQueryClient();
   const [editDialog, setEditDialog] = useState(false);
@@ -87,20 +90,18 @@ const DmsConfigurationTab: React.FC = () => {
   const { data: segments = [], isLoading } = useQuery({
     queryKey: ['dms-numbering-segments'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('dms_numbering_segments')
+      const { data, error } = await segmentsTable()
         .select('*')
         .order('position', { ascending: true });
       if (error) throw error;
-      return data as Segment[];
+      return (data || []) as Segment[];
     },
   });
 
   const updateSegment = useMutation({
     mutationFn: async (seg: Partial<Segment> & { id: string }) => {
       const { id, ...updates } = seg;
-      const { error } = await supabase
-        .from('dms_numbering_segments')
+      const { error } = await segmentsTable()
         .update(updates)
         .eq('id', id);
       if (error) throw error;
@@ -121,8 +122,8 @@ const DmsConfigurationTab: React.FC = () => {
     const a = sorted[idx];
     const b = sorted[swapIdx];
     await Promise.all([
-      supabase.from('dms_numbering_segments').update({ position: b.position }).eq('id', a.id),
-      supabase.from('dms_numbering_segments').update({ position: a.position }).eq('id', b.id),
+      segmentsTable().update({ position: b.position }).eq('id', a.id),
+      segmentsTable().update({ position: a.position }).eq('id', b.id),
     ]);
     queryClient.invalidateQueries({ queryKey: ['dms-numbering-segments'] });
   };

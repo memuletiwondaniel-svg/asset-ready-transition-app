@@ -349,6 +349,11 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
             <TabsContent value="status-code" className="mt-0">
               <DmsStatusCodesTab />
             </TabsContent>
+
+            {/* ─── Configuration Tab ─── */}
+            <TabsContent value="configuration" className="mt-0">
+              <DmsConfigurationTab />
+            </TabsContent>
           </Tabs>
         </div>
       </div>
