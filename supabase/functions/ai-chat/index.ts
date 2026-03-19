@@ -2761,6 +2761,121 @@ const tools = [
       }
     }
   },
+  {
+    type: "function",
+    function: {
+      name: "get_document_cross_discipline_comparison",
+      description: "Compare document readiness across all disciplines side-by-side. Highlights lagging disciplines and ranks them by readiness percentage. Use for questions like 'compare disciplines', 'which disciplines are behind', 'discipline comparison', 'cross-discipline readiness', 'lagging disciplines'.",
+      parameters: {
+        type: "object",
+        properties: {
+          tier_filter: {
+            type: "string",
+            description: "Optional tier filter (e.g., 'Tier 1')"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_document_search_by_number",
+      description: "Search for a specific document by its document number or partial number. Returns full metadata, status, discipline, and tier. Use when user asks 'find document 6529-WGEL...', 'look up document number', 'search document', 'what is document XYZ'.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_number: {
+            type: "string",
+            description: "Full or partial document number to search for (e.g., '6529-WGEL', 'PX-2365')"
+          },
+          search_term: {
+            type: "string",
+            description: "Alternative: search by document name or code"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_document_bulk_status",
+      description: "Query status of multiple document types at once. Accepts a list of document codes or discipline codes and returns their statuses in a consolidated view. Use for 'status of all Process documents', 'check these documents: X, Y, Z', 'bulk document status'.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_codes: {
+            type: "array",
+            items: { type: "string" },
+            description: "Array of document type codes to query"
+          },
+          discipline_codes: {
+            type: "array",
+            items: { type: "string" },
+            description: "Array of discipline codes to query (e.g., ['PX', 'EL', 'ME'])"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_document_trend_analysis",
+      description: "Analyze document status trends and velocity. Shows how many documents have progressed through status stages and estimates completion timelines. Use for 'document trends', 'how fast are documents progressing', 'document velocity', 'when will documents be ready', 'completion estimate'.",
+      parameters: {
+        type: "object",
+        properties: {
+          discipline_filter: {
+            type: "string",
+            description: "Optional discipline code filter"
+          },
+          tier_filter: {
+            type: "string",
+            description: "Optional tier filter"
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_task_from_document_gap",
+      description: "Create a task assignment from an identified document gap. Links the gap to a user_task for tracking. Use when user says 'create a task for this gap', 'assign this document gap', 'make a task for missing documents'.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_code: {
+            type: "string",
+            description: "Document type code with the gap"
+          },
+          document_name: {
+            type: "string",
+            description: "Document name"
+          },
+          discipline: {
+            type: "string",
+            description: "Discipline name"
+          },
+          gap_description: {
+            type: "string",
+            description: "Description of the gap (e.g., 'Needs to reach AFC status')"
+          },
+          assignee_name: {
+            type: "string",
+            description: "Optional: name of person to assign to"
+          }
+        },
+        required: ["document_code", "gap_description"]
+      }
+    }
+  },
   // ═══════════════════════════════════════════════════════════════════════════
   // EXECUTIVE SUMMARY TOOL - For high-level status assessments
   // ═══════════════════════════════════════════════════════════════════════════
