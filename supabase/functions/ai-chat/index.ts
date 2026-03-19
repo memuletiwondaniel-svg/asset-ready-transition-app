@@ -5630,6 +5630,10 @@ serve(async (req) => {
         const toolName = toolCall.function.name;
         toolCallNames.push(toolName);
         const toolArgs = JSON.parse(toolCall.function.arguments || '{}');
+        // Inject user_id for user context tools
+        if (['get_user_context', 'save_user_context'].includes(toolName) && currentUserId) {
+          toolArgs._user_id = currentUserId;
+        }
         
         console.log(`Executing tool: ${toolName}`, toolArgs);
         const result = await executeTool(toolName, toolArgs, supabase);
