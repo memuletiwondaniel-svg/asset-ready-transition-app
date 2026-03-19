@@ -455,17 +455,17 @@ const DmsConfigurationTab: React.FC = () => {
                     );
                   })}
                 </span>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 pt-3 border-t border-border/30">
+                <div className="flex flex-col gap-1 mt-3 pt-3 border-t border-border/30">
                   {activeSegments.map((s) => {
                     const sample = s.source_table && sampleData?.[s.source_table];
                     const code = sample ? sample.code : '001';
                     const meaning = sample ? sample.name : s.label;
                     return (
-                      <span key={s.id} className="text-[11px] text-muted-foreground">
-                        <span className="font-mono font-semibold text-foreground/80">{code}</span>
-                        <span className="mx-1">=</span>
+                      <div key={s.id} className="flex items-baseline gap-2 text-[11px] text-muted-foreground">
+                        <span className="font-mono font-semibold text-foreground/80 min-w-[60px]">{code}</span>
+                        <span>=</span>
                         <span className="italic">{meaning}</span>
-                      </span>
+                      </div>
                     );
                   })}
                 </div>
