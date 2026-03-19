@@ -5,11 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Pencil, ArrowUp, ArrowDown, Loader2, Info, Eye, Plus, Trash2 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Plus, Loader2, GripVertical, Trash2, X, ChevronDown, Settings2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -33,28 +33,39 @@ interface Segment {
 }
 
 const SEGMENT_COLORS = [
-  'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
-  'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
-  'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300',
-  'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
-  'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
-  'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
-  'bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300',
-  'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300',
+  { bg: 'bg-blue-50 dark:bg-blue-950/40', border: 'border-blue-200 dark:border-blue-800', text: 'text-blue-700 dark:text-blue-300', dot: 'bg-blue-500', ring: 'ring-blue-500/20' },
+  { bg: 'bg-amber-50 dark:bg-amber-950/40', border: 'border-amber-200 dark:border-amber-800', text: 'text-amber-700 dark:text-amber-300', dot: 'bg-amber-500', ring: 'ring-amber-500/20' },
+  { bg: 'bg-rose-50 dark:bg-rose-950/40', border: 'border-rose-200 dark:border-rose-800', text: 'text-rose-700 dark:text-rose-300', dot: 'bg-rose-500', ring: 'ring-rose-500/20' },
+  { bg: 'bg-cyan-50 dark:bg-cyan-950/40', border: 'border-cyan-200 dark:border-cyan-800', text: 'text-cyan-700 dark:text-cyan-300', dot: 'bg-cyan-500', ring: 'ring-cyan-500/20' },
+  { bg: 'bg-orange-50 dark:bg-orange-950/40', border: 'border-orange-200 dark:border-orange-800', text: 'text-orange-700 dark:text-orange-300', dot: 'bg-orange-500', ring: 'ring-orange-500/20' },
+  { bg: 'bg-emerald-50 dark:bg-emerald-950/40', border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-700 dark:text-emerald-300', dot: 'bg-emerald-500', ring: 'ring-emerald-500/20' },
+  { bg: 'bg-violet-50 dark:bg-violet-950/40', border: 'border-violet-200 dark:border-violet-800', text: 'text-violet-700 dark:text-violet-300', dot: 'bg-violet-500', ring: 'ring-violet-500/20' },
+  { bg: 'bg-pink-50 dark:bg-pink-950/40', border: 'border-pink-200 dark:border-pink-800', text: 'text-pink-700 dark:text-pink-300', dot: 'bg-pink-500', ring: 'ring-pink-500/20' },
+  { bg: 'bg-teal-50 dark:bg-teal-950/40', border: 'border-teal-200 dark:border-teal-800', text: 'text-teal-700 dark:text-teal-300', dot: 'bg-teal-500', ring: 'ring-teal-500/20' },
 ];
 
 const SOURCE_TABLE_OPTIONS = [
-  { value: 'none', label: 'Free Text (no lookup)' },
-  { value: 'dms_projects', label: 'Projects' },
-  { value: 'dms_originators', label: 'Originators' },
-  { value: 'dms_plants', label: 'Plants' },
-  { value: 'dms_sites', label: 'Sites' },
-  { value: 'dms_units', label: 'Units' },
-  { value: 'dms_disciplines', label: 'Disciplines' },
-  { value: 'dms_document_types', label: 'Document Types' },
-  { value: 'dms_status_codes', label: 'Status Codes' },
+  { value: 'none', label: 'Free Text (no lookup)', example: null },
+  { value: 'dms_projects', label: 'Projects', example: '6529 — Capital Expansion Project' },
+  { value: 'dms_originators', label: 'Originators', example: 'AMTS — AMTS Engineering' },
+  { value: 'dms_plants', label: 'Plants', example: 'S003 — Sasol Secunda Plant 3' },
+  { value: 'dms_sites', label: 'Sites', example: 'ISGP — Integrated Gas Plant' },
+  { value: 'dms_units', label: 'Units', example: 'U11000 — Utilities Unit' },
+  { value: 'dms_disciplines', label: 'Disciplines', example: 'PX — Process Engineering' },
+  { value: 'dms_document_types', label: 'Document Types', example: '2365 — Process Engineering Flow Scheme' },
+  { value: 'dms_status_codes', label: 'Status Codes', example: 'IFR — Issued for Review' },
 ];
+
+const COL_MAP: Record<string, [string, string]> = {
+  dms_projects: ['code', 'project_name'],
+  dms_originators: ['code', 'description'],
+  dms_plants: ['code', 'plant_name'],
+  dms_sites: ['code', 'site_name'],
+  dms_units: ['code', 'unit_name'],
+  dms_disciplines: ['code', 'name'],
+  dms_document_types: ['code', 'document_name'],
+  dms_status_codes: ['code', 'description'],
+};
 
 const DMS_SYSTEMS = [
   { value: 'assai', label: 'Assai' },
@@ -64,7 +75,6 @@ const DMS_SYSTEMS = [
   { value: 'custom', label: 'Custom / Other' },
 ];
 
-// Helper to query the new table (not yet in generated types)
 const segmentsTable = () => (supabase as any).from('dms_numbering_segments');
 
 const DmsConfigurationTab: React.FC = () => {
@@ -73,6 +83,7 @@ const DmsConfigurationTab: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingSegment, setEditingSegment] = useState<Segment | null>(null);
   const [dmsSystem, setDmsSystem] = useState('assai');
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // Form state
   const [formLabel, setFormLabel] = useState('');
@@ -102,9 +113,7 @@ const DmsConfigurationTab: React.FC = () => {
   const updateSegment = useMutation({
     mutationFn: async (seg: Partial<Segment> & { id: string }) => {
       const { id, ...updates } = seg;
-      const { error } = await segmentsTable()
-        .update(updates)
-        .eq('id', id);
+      const { error } = await segmentsTable().update(updates).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -155,12 +164,11 @@ const DmsConfigurationTab: React.FC = () => {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const moveSegment = async (segId: string, direction: 'up' | 'down') => {
+  const moveSegment = async (segId: string, direction: 'left' | 'right') => {
     const sorted = [...segments].sort((a, b) => a.position - b.position);
     const idx = sorted.findIndex(s => s.id === segId);
-    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    const swapIdx = direction === 'left' ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= sorted.length) return;
-
     const a = sorted[idx];
     const b = sorted[swapIdx];
     await Promise.all([
@@ -183,6 +191,7 @@ const DmsConfigurationTab: React.FC = () => {
     setFormActive(true);
     setFormDescription('');
     setFormExample('');
+    setAdvancedOpen(false);
   };
 
   const openCreate = () => {
@@ -207,6 +216,7 @@ const DmsConfigurationTab: React.FC = () => {
     setFormActive(seg.is_active);
     setFormDescription(seg.description || '');
     setFormExample(seg.example_value || '');
+    setAdvancedOpen(false);
     setEditDialog(true);
   };
 
@@ -235,335 +245,370 @@ const DmsConfigurationTab: React.FC = () => {
     });
   };
 
-  const activeSegments = segments.filter(s => s.is_active).sort((a, b) => a.position - b.position);
-  const previewParts = activeSegments.map((s, i) => ({
-    label: s.label,
-    value: s.example_value || s.segment_key.toUpperCase(),
-    separator: i < activeSegments.length - 1 ? s.separator : '',
-    colorClass: SEGMENT_COLORS[i % SEGMENT_COLORS.length],
-  }));
+  const sorted = [...segments].sort((a, b) => a.position - b.position);
+  const activeSegments = sorted.filter(s => s.is_active);
 
-  const sourceTableLabel = (table: string | null) => {
-    if (!table) return 'Free Text';
-    return SOURCE_TABLE_OPTIONS.find(o => o.value === table)?.label || table;
-  };
+  const selectedSourceExample = SOURCE_TABLE_OPTIONS.find(o => o.value === formSourceTable)?.example;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      {/* Live Preview */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <Eye className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-base">Document Number Preview</CardTitle>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Document Numbering Structure</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Click on any segment to configure it. Drag or use arrows to reorder.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select value={dmsSystem} onValueChange={setDmsSystem}>
+            <SelectTrigger className="w-[160px] h-9">
+              <Settings2 className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {DMS_SYSTEMS.map(s => (
+                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Segment Boxes */}
+      <Card className="overflow-hidden">
+        <CardContent className="p-6">
+          {/* Live assembled preview */}
+          <div className="mb-6">
+            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Preview</Label>
+            <div className="bg-muted/40 rounded-lg px-4 py-3 border border-dashed border-border">
+              <span className="font-mono text-sm tracking-wide">
+                {activeSegments.map((s, i) => (
+                  <React.Fragment key={s.id}>
+                    <span className={cn('font-semibold', SEGMENT_COLORS[sorted.indexOf(s) % SEGMENT_COLORS.length].text)}>
+                      {s.example_value || s.segment_key.toUpperCase()}
+                    </span>
+                    {i < activeSegments.length - 1 && (
+                      <span className="text-muted-foreground mx-0.5">{s.separator || '-'}</span>
+                    )}
+                  </React.Fragment>
+                ))}
+              </span>
+            </div>
           </div>
-          <CardDescription>Live preview of the assembled document number pattern</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-muted/50 rounded-lg p-4 border">
-            <div className="flex flex-wrap items-center gap-0.5 font-mono text-sm">
-              {previewParts.map((part, i) => (
-                <React.Fragment key={i}>
-                  <span className={cn('px-2 py-1 rounded font-semibold', part.colorClass)}>
-                    {part.value}
-                  </span>
-                  {part.separator && (
-                    <span className="text-muted-foreground font-bold">{part.separator}</span>
+
+          {/* Interactive segment boxes */}
+          <div className="flex flex-wrap items-center gap-2">
+            {sorted.map((seg, idx) => {
+              const color = SEGMENT_COLORS[idx % SEGMENT_COLORS.length];
+              return (
+                <React.Fragment key={seg.id}>
+                  <div className="group relative">
+                    <button
+                      onClick={() => openEdit(seg)}
+                      className={cn(
+                        'relative flex flex-col items-center rounded-xl border-2 px-4 py-3 min-w-[90px] transition-all duration-200',
+                        'hover:shadow-md hover:scale-[1.03] active:scale-[0.98] cursor-pointer',
+                        'focus:outline-none focus:ring-2 focus:ring-offset-2',
+                        color.bg, color.border, color.ring,
+                        !seg.is_active && 'opacity-40 grayscale'
+                      )}
+                    >
+                      {/* Position badge */}
+                      <span className={cn(
+                        'absolute -top-2 -left-2 h-5 w-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white',
+                        color.dot
+                      )}>
+                        {idx + 1}
+                      </span>
+
+                      {/* Example value */}
+                      <span className={cn('font-mono text-sm font-bold leading-none', color.text)}>
+                        {seg.example_value || seg.segment_key.toUpperCase()}
+                      </span>
+
+                      {/* Label */}
+                      <span className="text-[10px] text-muted-foreground mt-1.5 leading-tight max-w-[100px] truncate">
+                        {seg.label}
+                      </span>
+
+                      {/* Required indicator */}
+                      {seg.is_required && (
+                        <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive" title="Required" />
+                      )}
+                    </button>
+
+                    {/* Hover actions */}
+                    <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 z-10">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 rounded-full bg-background shadow-sm border"
+                        onClick={(e) => { e.stopPropagation(); moveSegment(seg.id, 'left'); }}
+                        disabled={idx === 0}
+                      >
+                        <ArrowLeft className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 rounded-full bg-background shadow-sm border text-muted-foreground hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); deleteSegment.mutate(seg.id); }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 rounded-full bg-background shadow-sm border"
+                        onClick={(e) => { e.stopPropagation(); moveSegment(seg.id, 'right'); }}
+                        disabled={idx === sorted.length - 1}
+                      >
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Separator between boxes */}
+                  {idx < sorted.length - 1 && (
+                    <span className="text-lg font-bold text-muted-foreground/50 select-none mx-0.5">
+                      {seg.separator || '-'}
+                    </span>
                   )}
                 </React.Fragment>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-3 mt-3 text-xs text-muted-foreground">
-              {previewParts.map((part, i) => (
-                <div key={i} className="flex items-center gap-1">
-                  <span className={cn('h-2 w-2 rounded-full', SEGMENT_COLORS[i % SEGMENT_COLORS.length].split(' ')[0])} />
-                  {part.label}
+              );
+            })}
+
+            {/* Add new segment button */}
+            <button
+              onClick={openCreate}
+              className={cn(
+                'flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-muted-foreground/25 px-4 py-3 min-w-[90px] min-h-[68px]',
+                'hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer',
+                'text-muted-foreground hover:text-primary'
+              )}
+            >
+              <Plus className="h-5 w-5" />
+              <span className="text-[10px] mt-1">Add</span>
+            </button>
+          </div>
+
+          {/* Legend */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-8 pt-4 border-t border-border/50">
+            <span className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">Legend:</span>
+            {sorted.map((seg, idx) => {
+              const color = SEGMENT_COLORS[idx % SEGMENT_COLORS.length];
+              return (
+                <div key={seg.id} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className={cn('h-2 w-2 rounded-full', color.dot)} />
+                  <span>{seg.label}</span>
+                  {!seg.is_active && <span className="text-[10px]">(off)</span>}
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
 
-      {/* DMS System Settings */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <Info className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-base">DMS System Settings</CardTitle>
-          </div>
-          <CardDescription>Configure the target Document Management System for integration</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Segment Configuration Modal */}
+      <Dialog open={editDialog} onOpenChange={setEditDialog}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle className="text-lg">
+              {isCreating ? 'Add New Segment' : 'Configure Segment'}
+            </DialogTitle>
+            <DialogDescription>
+              {isCreating
+                ? 'Define a new segment for the document numbering pattern.'
+                : `Editing the "${editingSegment?.label}" segment.`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 py-2">
+            {/* Segment Name */}
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Target DMS</Label>
-              <Select value={dmsSystem} onValueChange={setDmsSystem}>
-                <SelectTrigger>
-                  <SelectValue />
+              <Label className="text-sm font-medium">
+                Segment Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                value={formLabel}
+                onChange={e => setFormLabel(e.target.value)}
+                placeholder="e.g. Project Code, Discipline, Sequence Number"
+                className="h-10"
+              />
+            </div>
+
+            {/* Segment Description */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Description</Label>
+              <Textarea
+                value={formDescription}
+                onChange={e => setFormDescription(e.target.value)}
+                rows={2}
+                placeholder="Briefly describe what this segment represents..."
+                className="resize-none"
+              />
+            </div>
+
+            {/* Data Source */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Data Source</Label>
+              <Select value={formSourceTable} onValueChange={(val) => {
+                setFormSourceTable(val);
+                if (COL_MAP[val]) {
+                  setFormSourceCodeCol(COL_MAP[val][0]);
+                  setFormSourceNameCol(COL_MAP[val][1]);
+                }
+              }}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Select a data source..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {DMS_SYSTEMS.map(s => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  {SOURCE_TABLE_OPTIONS.map(o => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Default Separator</Label>
-              <Input
-                value="-"
-                disabled
-                className="font-mono w-20"
-                maxLength={2}
-              />
-              <p className="text-xs text-muted-foreground">Edit individual separators in the segments table</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Segments Table */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-base">Numbering Segments</CardTitle>
-              <CardDescription>Define, reorder, and configure each segment of the document number</CardDescription>
-            </div>
-            <Button size="sm" onClick={openCreate}>
-              <Plus className="h-4 w-4 mr-1.5" />
-              Add Segment
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0 max-h-[calc(100vh-480px)] overflow-auto">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">#</TableHead>
-                  <TableHead>Label</TableHead>
-                  <TableHead className="hidden md:table-cell">Key</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead className="hidden lg:table-cell">Length</TableHead>
-                  <TableHead className="hidden lg:table-cell">Sep</TableHead>
-                  <TableHead className="w-16">Req</TableHead>
-                  <TableHead className="w-16">Active</TableHead>
-                  <TableHead className="hidden md:table-cell">Example</TableHead>
-                  <TableHead className="w-24 text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {segments.sort((a, b) => a.position - b.position).map((seg, idx) => (
-                  <TableRow key={seg.id} className="group">
-                    <TableCell className="font-mono text-muted-foreground text-xs">{seg.position}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className={cn('h-2 w-2 rounded-full shrink-0', SEGMENT_COLORS[idx % SEGMENT_COLORS.length].split(' ')[0])} />
-                        <span className="font-medium text-sm">{seg.label}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{seg.segment_key}</code>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs font-normal">
-                        {sourceTableLabel(seg.source_table)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell font-mono text-xs text-muted-foreground">
-                      {seg.min_length}–{seg.max_length}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell font-mono text-sm">
-                      {seg.separator || '∅'}
-                    </TableCell>
-                    <TableCell>
-                      {seg.is_required ? (
-                        <Badge variant="default" className="text-[10px] px-1.5">Yes</Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-[10px] px-1.5">No</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={seg.is_active}
-                        onCheckedChange={(checked) => updateSegment.mutate({ id: seg.id, is_active: checked })}
-                        className="scale-75"
-                      />
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell font-mono text-xs text-muted-foreground">
-                      {seg.example_value || '—'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveSegment(seg.id, 'up')} disabled={idx === 0}>
-                          <ArrowUp className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveSegment(seg.id, 'down')} disabled={idx === segments.length - 1}>
-                          <ArrowDown className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(seg)}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteSegment.mutate(seg.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Add / Edit Dialog */}
-      <Dialog open={editDialog} onOpenChange={setEditDialog}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="pb-4 border-b">
-            <DialogTitle>{isCreating ? 'Add Segment' : 'Edit Segment'}</DialogTitle>
-            <DialogDescription>
-              {isCreating
-                ? 'A segment is one part of a document number (e.g. the Project Code or Discipline). Fill in the details below.'
-                : `Editing "${editingSegment?.label}" — change how this part of the document number behaves.`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-5 py-4">
-
-            {/* Section 1: What is this segment? */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Identity</h4>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Segment Name <span className="text-destructive">*</span></Label>
-                <Input value={formLabel} onChange={e => setFormLabel(e.target.value)} placeholder="e.g. Project Code, Plant Code, Sequence Number" />
-                <p className="text-xs text-muted-foreground">A human-readable name shown in the preview and table</p>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Description</Label>
-                <Textarea value={formDescription} onChange={e => setFormDescription(e.target.value)} rows={2} placeholder="e.g. Identifies the engineering project — sourced from the Projects table" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Example Value</Label>
-                <Input value={formExample} onChange={e => setFormExample(e.target.value)} className="font-mono" placeholder="e.g. 6529, AMTS, PX" />
-                <p className="text-xs text-muted-foreground">Shown in the live preview above the table</p>
-              </div>
-            </div>
-
-            {/* Section 2: Where does the value come from? */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data Source</h4>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Value comes from</Label>
-                <Select value={formSourceTable} onValueChange={(val) => {
-                  setFormSourceTable(val);
-                  // Auto-fill column names based on table
-                  const colMap: Record<string, [string, string]> = {
-                    dms_projects: ['code', 'project_name'],
-                    dms_originators: ['code', 'description'],
-                    dms_plants: ['code', 'plant_name'],
-                    dms_sites: ['code', 'site_name'],
-                    dms_units: ['code', 'unit_name'],
-                    dms_disciplines: ['code', 'name'],
-                    dms_document_types: ['code', 'document_name'],
-                    dms_status_codes: ['code', 'description'],
-                  };
-                  if (colMap[val]) {
-                    setFormSourceCodeCol(colMap[val][0]);
-                    setFormSourceNameCol(colMap[val][1]);
-                  }
-                }}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SOURCE_TABLE_OPTIONS.map(o => (
-                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Example preview for selected source */}
+              {selectedSourceExample && (
+                <div className="flex items-start gap-2 rounded-lg bg-muted/50 border border-border/60 px-3 py-2.5">
+                  <span className="text-xs text-muted-foreground leading-relaxed">
+                    <span className="font-medium text-foreground/70">Example:</span>{' '}
+                    <span className="font-mono">{selectedSourceExample}</span>
+                  </span>
+                </div>
+              )}
+              {formSourceTable === 'none' && (
                 <p className="text-xs text-muted-foreground">
-                  {formSourceTable === 'none'
-                    ? 'User types a value manually (e.g. sequence numbers)'
-                    : 'Values are looked up from an existing DMS table'}
+                  Users will type a value manually (e.g. free-text sequence numbers).
                 </p>
-              </div>
+              )}
             </div>
 
-            {/* Section 3: Format rules */}
+            {/* Format Rules */}
             <div className="space-y-3">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Format Rules</h4>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Min Characters</Label>
-                  <Input type="number" value={formMinLength} onChange={e => setFormMinLength(Number(e.target.value))} min={1} max={20} />
+              <Label className="text-sm font-medium">Format Rules</Label>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Min Characters</Label>
+                  <Input
+                    type="number"
+                    value={formMinLength}
+                    onChange={e => setFormMinLength(Number(e.target.value))}
+                    min={1}
+                    max={20}
+                    className="h-9"
+                  />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Max Characters</Label>
-                  <Input type="number" value={formMaxLength} onChange={e => setFormMaxLength(Number(e.target.value))} min={1} max={20} />
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Max Characters</Label>
+                  <Input
+                    type="number"
+                    value={formMaxLength}
+                    onChange={e => setFormMaxLength(Number(e.target.value))}
+                    min={1}
+                    max={20}
+                    className="h-9"
+                  />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Separator After</Label>
-                  <Input value={formSeparator} onChange={e => setFormSeparator(e.target.value)} className="font-mono text-center" maxLength={2} placeholder="-" />
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Separator After</Label>
+                  <Input
+                    value={formSeparator}
+                    onChange={e => setFormSeparator(e.target.value)}
+                    className="h-9 font-mono text-center"
+                    maxLength={2}
+                    placeholder="-"
+                  />
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">Character limits and the separator that follows this segment (usually a dash)</p>
             </div>
 
-            {/* Section 4: Behaviour toggles */}
+            {/* Behaviour */}
             <div className="space-y-3">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Behaviour</h4>
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div>
-                  <Label className="text-sm font-medium">Required</Label>
-                  <p className="text-xs text-muted-foreground">Must be present in every document number</p>
+              <Label className="text-sm font-medium">Behaviour</Label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
+                  <div>
+                    <span className="text-sm font-medium">Required</span>
+                    <p className="text-xs text-muted-foreground">Must be present in every document number</p>
+                  </div>
+                  <Switch checked={formRequired} onCheckedChange={setFormRequired} />
                 </div>
-                <Switch checked={formRequired} onCheckedChange={setFormRequired} />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div>
-                  <Label className="text-sm font-medium">Active</Label>
-                  <p className="text-xs text-muted-foreground">Include this segment in the numbering pattern</p>
+                <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
+                  <div>
+                    <span className="text-sm font-medium">Active</span>
+                    <p className="text-xs text-muted-foreground">Include this segment in the pattern</p>
+                  </div>
+                  <Switch checked={formActive} onCheckedChange={setFormActive} />
                 </div>
-                <Switch checked={formActive} onCheckedChange={setFormActive} />
               </div>
             </div>
 
-            {/* Advanced: internal key (collapsed for create, shown for edit) */}
-            <details className="group">
-              <summary className="text-xs font-semibold uppercase tracking-wider text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors">
-                Advanced Settings ▸
-              </summary>
-              <div className="mt-3 space-y-3 pl-1">
+            {/* Advanced Settings */}
+            <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+              <CollapsibleTrigger asChild>
+                <button className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors w-full">
+                  <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', advancedOpen && 'rotate-180')} />
+                  Advanced Settings
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3 space-y-3">
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Internal Key</Label>
-                  <Input value={formKey} onChange={e => setFormKey(e.target.value.toLowerCase().replace(/\s+/g, '_'))} className="font-mono" placeholder="e.g. project, discipline, sequence_1" />
-                  <p className="text-xs text-muted-foreground">Used by ORSH to identify this segment programmatically</p>
+                  <Label className="text-xs text-muted-foreground">Internal Key</Label>
+                  <Input
+                    value={formKey}
+                    onChange={e => setFormKey(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
+                    className="h-9 font-mono text-xs"
+                    placeholder="e.g. project, discipline, sequence_1"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Example Value</Label>
+                  <Input
+                    value={formExample}
+                    onChange={e => setFormExample(e.target.value)}
+                    className="h-9 font-mono text-xs"
+                    placeholder="e.g. 6529, AMTS, PX"
+                  />
+                  <p className="text-[11px] text-muted-foreground">Shown inside the segment box in the visual builder</p>
                 </div>
                 {formSourceTable !== 'none' && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-sm font-medium">Code Column</Label>
-                      <Input value={formSourceCodeCol} onChange={e => setFormSourceCodeCol(e.target.value)} className="font-mono text-xs" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Code Column</Label>
+                      <Input value={formSourceCodeCol} onChange={e => setFormSourceCodeCol(e.target.value)} className="h-9 font-mono text-xs" />
                     </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-sm font-medium">Display Column</Label>
-                      <Input value={formSourceNameCol} onChange={e => setFormSourceNameCol(e.target.value)} className="font-mono text-xs" />
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Display Column</Label>
+                      <Input value={formSourceNameCol} onChange={e => setFormSourceNameCol(e.target.value)} className="h-9 font-mono text-xs" />
                     </div>
                   </div>
                 )}
-              </div>
-            </details>
+              </CollapsibleContent>
+            </Collapsible>
           </div>
-          <DialogFooter className="pt-4 border-t gap-2">
-            <Button variant="outline" onClick={() => setEditDialog(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={updateSegment.isPending || createSegment.isPending || !formLabel.trim()} className="min-w-[100px]">
-              {(updateSegment.isPending || createSegment.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+
+          <DialogFooter className="gap-2 pt-2">
+            <Button variant="outline" onClick={() => setEditDialog(false)} className="h-9">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={updateSegment.isPending || createSegment.isPending || !formLabel.trim()}
+              className="h-9 min-w-[120px]"
+            >
+              {(updateSegment.isPending || createSegment.isPending) && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
               {isCreating ? 'Add Segment' : 'Save Changes'}
             </Button>
           </DialogFooter>
