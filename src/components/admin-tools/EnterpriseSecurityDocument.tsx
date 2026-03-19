@@ -331,8 +331,32 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 9. Backup & DR */}
-          <Section id="backup-dr" icon={<Server className="h-5 w-5 text-primary" />} title="9. Backup & Disaster Recovery">
+          {/* 9. AI Agent Security */}
+          <Section id="ai-security" icon={<ShieldCheck className="h-5 w-5 text-primary" />} title="9. AI Agent Security & Guardrails">
+            <p>The AI CoPilot (Bob) operates within strict security boundaries to prevent data leakage, prompt injection, and unauthorized access.</p>
+            <StatusTable rows={[
+              { label: 'RLS-Aware Queries', value: 'All AI database queries execute through the Supabase client with user JWT — RLS policies enforced at query level', status: 'active' },
+              { label: 'Tenant Isolation', value: 'AI agents cannot access cross-tenant data — enforced by database RLS, not application logic', status: 'active' },
+              { label: 'Tool-Based Access', value: 'AI uses predefined tool functions (13 tools) — no raw SQL or arbitrary query generation', status: 'active' },
+              { label: 'Prompt Injection Prevention', value: 'System prompts are versioned and hashed; user input is never interpolated into system context', status: 'active' },
+              { label: 'Feedback Audit Trail', value: 'All user feedback, corrections, and AI responses logged with conversation_id for traceability', status: 'active' },
+              { label: 'Auto-Apply Guardrails', value: 'Only low-risk, non-high-priority prompt improvements are auto-applied; high-impact changes require human review', status: 'active' },
+              { label: 'Edge Case Catalog', value: 'Hallucinations and tool failures cataloged in ai_edge_cases with severity classification and regression testing', status: 'active' },
+              { label: 'Context Persistence', value: 'User preferences stored in ai_user_context — scoped to individual user_id, never shared cross-user', status: 'active' },
+            ]} />
+            <p className="font-medium text-foreground mt-4">Autonomous Training Security</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong className="text-foreground">Version Control:</strong> All prompt changes tracked with before/after state in ai_training_log</li>
+              <li><strong className="text-foreground">Rollback Capability:</strong> Previous prompt versions preserved for instant rollback</li>
+              <li><strong className="text-foreground">Rate Limiting:</strong> Auto-apply limited to daily cron cycle — prevents rapid uncontrolled changes</li>
+              <li><strong className="text-foreground">Model Access:</strong> AI model API keys stored as Edge Function secrets — never exposed to frontend</li>
+            </ul>
+          </Section>
+
+          <Separator />
+
+          {/* 10. Backup & DR */}
+          <Section id="backup-dr" icon={<Server className="h-5 w-5 text-primary" />} title="10. Backup & Disaster Recovery">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="bg-muted/30 text-center">
                 <CardContent className="pt-4">
