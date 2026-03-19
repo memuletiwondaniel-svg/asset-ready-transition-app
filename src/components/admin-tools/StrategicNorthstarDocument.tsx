@@ -478,8 +478,8 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
 
           <Separator />
 
-          {/* 8. Current Module Alignment */}
-          <Section id="module-alignment" icon={<Blocks className="h-5 w-5 text-amber-600" />} title="8. Current Module Alignment">
+          {/* 9. Current Module Alignment */}
+          <Section id="module-alignment" icon={<Blocks className="h-5 w-5 text-amber-600" />} title="9. Current Module Alignment">
             <p>
               Each existing ORSH module maps directly to a strategic function in the ORIP intelligence framework. 
               The execution layer is the foundation upon which readiness scoring and predictive analytics are built.
