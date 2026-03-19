@@ -57,6 +57,8 @@ interface Message {
   imageUrls?: string[];
   fileUrls?: string[];
   fileNames?: string[];
+  messageId?: string;
+  feedbackGiven?: 'positive' | 'negative' | null;
 }
 
 interface Conversation {
