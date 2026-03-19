@@ -437,41 +437,52 @@ const DmsConfigurationTab: React.FC = () => {
           </div>
 
           {/* Example document number with breakdown */}
-          {activeSegments.length > 0 && (
-            <div className="mt-8 pt-4 border-t border-border/50">
-              <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Example</Label>
-              <div className="bg-muted/40 rounded-lg px-4 py-3 border border-dashed border-border">
-                <span className="font-mono text-sm tracking-wide text-foreground font-semibold">
-                  {activeSegments.map((s, i) => {
-                    const sample = s.source_table && sampleData?.[s.source_table];
-                    const code = sample ? sample.code : '001';
-                    return (
-                      <React.Fragment key={s.id}>
-                        <span>{code}</span>
-                        {i < activeSegments.length - 1 && (
-                          <span className="text-muted-foreground/60">{s.separator || '-'}</span>
+          {activeSegments.length > 0 && (() => {
+            const EXAMPLE_CODES: Record<string, { code: string; meaning: string }> = {
+              dms_projects:       { code: '6529',  meaning: 'ST/DP300 New Compression Station at Hammar Mishrif' },
+              dms_originators:    { code: 'WGEL',  meaning: 'Wood Group Engineering Ltd' },
+              dms_plants:         { code: 'C017',  meaning: 'Zubair Hammar Mishrif' },
+              dms_sites:          { code: 'ISGP',  meaning: 'Iraq South Gas' },
+              dms_disciplines:    { code: 'PX',    meaning: 'Process Other' },
+              dms_document_types: { code: '2365',  meaning: 'Process Engineering Flow Scheme' },
+              dms_units:          { code: '20502', meaning: 'Unit 20502' },
+            };
+            const exampleSegments = activeSegments.map(s => {
+              const entry = s.source_table ? EXAMPLE_CODES[s.source_table] : null;
+              return {
+                id: s.id,
+                code: entry?.code || '001',
+                meaning: entry?.meaning || s.label,
+                separator: s.separator || '-',
+              };
+            });
+            return (
+              <div className="mt-8 pt-4 border-t border-border/50">
+                <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Example</Label>
+                <div className="bg-muted/40 rounded-lg px-4 py-3 border border-dashed border-border">
+                  <span className="font-mono text-sm tracking-wide text-foreground font-semibold">
+                    {exampleSegments.map((e, i) => (
+                      <React.Fragment key={e.id}>
+                        <span>{e.code}</span>
+                        {i < exampleSegments.length - 1 && (
+                          <span className="text-muted-foreground/60">{e.separator}</span>
                         )}
                       </React.Fragment>
-                    );
-                  })}
-                </span>
-                <div className="flex flex-col gap-1 mt-3 pt-3 border-t border-border/30">
-                  {activeSegments.map((s) => {
-                    const sample = s.source_table && sampleData?.[s.source_table];
-                    const code = sample ? sample.code : '001';
-                    const meaning = sample ? sample.name : s.label;
-                    return (
-                      <div key={s.id} className="flex items-baseline gap-2 text-[11px] text-muted-foreground">
-                        <span className="font-mono font-semibold text-foreground/80 min-w-[60px]">{code}</span>
+                    ))}
+                  </span>
+                  <div className="flex flex-col gap-1 mt-3 pt-3 border-t border-border/30">
+                    {exampleSegments.map((e) => (
+                      <div key={e.id} className="flex items-baseline gap-2 text-[11px] text-muted-foreground">
+                        <span className="font-mono font-semibold text-foreground/80 min-w-[60px]">{e.code}</span>
                         <span>=</span>
-                        <span className="italic">{meaning}</span>
+                        <span className="italic">{e.meaning}</span>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
         </CardContent>
       </Card>
