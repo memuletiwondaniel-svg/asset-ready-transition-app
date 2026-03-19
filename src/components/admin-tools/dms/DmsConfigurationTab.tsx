@@ -77,6 +77,14 @@ const DMS_SYSTEMS = [
 
 const segmentsTable = () => (supabase as any).from('dms_numbering_segments');
 
+/** Generate placeholder like "AAAA" based on max_length, using the first letter of the label */
+const segmentPlaceholder = (seg: Segment): string => {
+  if (seg.example_value) return seg.example_value;
+  const letter = (seg.label?.[0] || 'X').toUpperCase();
+  const len = seg.max_length || 4;
+  return letter.repeat(len);
+};
+
 const DmsConfigurationTab: React.FC = () => {
   const queryClient = useQueryClient();
   const [editDialog, setEditDialog] = useState(false);
