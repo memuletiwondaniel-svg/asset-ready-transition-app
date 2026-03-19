@@ -70,6 +70,7 @@ const segmentsTable = () => (supabase as any).from('dms_numbering_segments');
 const DmsConfigurationTab: React.FC = () => {
   const queryClient = useQueryClient();
   const [editDialog, setEditDialog] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [editingSegment, setEditingSegment] = useState<Segment | null>(null);
   const [dmsSystem, setDmsSystem] = useState('assai');
 
