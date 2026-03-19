@@ -284,7 +284,7 @@ const DmsDocumentTypesTab: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-                {filtered.length === 0 && !isLoading && (
+                {displayRows.length === 0 && !isLoading && (
                   <TableRow>
                     <TableCell colSpan={visibleColumns.length + 2} className="text-center py-8 text-muted-foreground">
                       No document types found
