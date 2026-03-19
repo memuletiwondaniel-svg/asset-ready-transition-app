@@ -399,12 +399,6 @@ const DmsConfigurationTab: React.FC = () => {
 
                     </button>
 
-                    {/* Real example - outside and under the box */}
-                    {segmentDisplayExample(seg, sampleData) && (
-                      <span className="text-[9px] text-muted-foreground/60 mt-1.5 leading-tight max-w-[120px] truncate italic text-center">
-                        {segmentDisplayExample(seg, sampleData)}
-                      </span>
-                    )}
 
                     {/* Hover actions */}
                     <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 z-10">
