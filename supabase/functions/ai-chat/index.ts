@@ -5263,6 +5263,341 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
     }
     
     // ═══════════════════════════════════════════════════════════════════════════
+    // ENHANCED DOCUMENT AGENT TOOLS - Cross-discipline, search, bulk, trends, tasks
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    case "get_document_cross_discipline_comparison": {
+      try {
+        let query = supabaseClient
+          .from('dms_document_types')
+          .select('code, document_name, discipline_code, discipline_name, tier, acceptable_status, rlmu')
+          .eq('is_active', true);
+        
+        if (args.tier_filter) {
+          query = query.ilike('tier', `%${args.tier_filter}%`);
+        }
+        
+        const { data: docTypes, error } = await query.order('discipline_code');
+        if (error) return { error: error.message };
+        
+        // Build discipline comparison matrix
+        const disciplines: Record<string, { name: string; total: number; with_status: number; without_status: number; rlmu_required: number; rlmu_met: number; by_status: Record<string, number> }> = {};
+        
+        (docTypes || []).forEach((doc: any) => {
+          const code = doc.discipline_code || 'Unknown';
+          if (!disciplines[code]) {
+            disciplines[code] = { name: doc.discipline_name || code, total: 0, with_status: 0, without_status: 0, rlmu_required: 0, rlmu_met: 0, by_status: {} };
+          }
+          const d = disciplines[code];
+          d.total++;
+          const status = doc.acceptable_status || '';
+          if (status) {
+            d.with_status++;
+            d.by_status[status] = (d.by_status[status] || 0) + 1;
+          } else {
+            d.without_status++;
+          }
+          if (doc.rlmu) d.rlmu_required++;
+          if (doc.rlmu && status === 'RLMU') d.rlmu_met++;
+        });
+        
+        const comparison = Object.entries(disciplines).map(([code, d]) => ({
+          discipline_code: code,
+          discipline_name: d.name,
+          total_documents: d.total,
+          readiness_percent: d.total > 0 ? Math.round((d.with_status / d.total) * 100) : 0,
+          documents_with_status: d.with_status,
+          documents_without_status: d.without_status,
+          rlmu_compliance_percent: d.rlmu_required > 0 ? Math.round((d.rlmu_met / d.rlmu_required) * 100) : 100,
+          status_breakdown: d.by_status
+        })).sort((a, b) => a.readiness_percent - b.readiness_percent);
+        
+        const avgReadiness = comparison.length > 0 ? Math.round(comparison.reduce((s, d) => s + d.readiness_percent, 0) / comparison.length) : 0;
+        const lagging = comparison.filter(d => d.readiness_percent < avgReadiness - 15);
+        const leading = comparison.filter(d => d.readiness_percent > avgReadiness + 15);
+        
+        return {
+          total_disciplines: comparison.length,
+          average_readiness_percent: avgReadiness,
+          disciplines: comparison,
+          lagging_disciplines: lagging.map(d => ({ code: d.discipline_code, name: d.discipline_name, readiness: d.readiness_percent, gap_from_avg: avgReadiness - d.readiness_percent })),
+          leading_disciplines: leading.map(d => ({ code: d.discipline_code, name: d.discipline_name, readiness: d.readiness_percent })),
+          recommendation: lagging.length > 0 ? `Focus attention on: ${lagging.map(d => d.discipline_name).join(', ')} - these are significantly below the ${avgReadiness}% average.` : 'All disciplines are tracking close to average readiness.'
+        };
+      } catch (err) {
+        console.error('Cross-discipline comparison error:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_document_search_by_number": {
+      try {
+        const searchTerm = args.document_number || args.search_term;
+        if (!searchTerm) return { error: "Please provide a document number or search term" };
+        
+        // Search across document types
+        const { data: results, error } = await supabaseClient
+          .from('dms_document_types')
+          .select('id, code, document_name, document_description, discipline_code, discipline_name, tier, rlmu, acceptable_status, is_active')
+          .or(`code.ilike.%${searchTerm}%,document_name.ilike.%${searchTerm}%`)
+          .order('display_order')
+          .limit(20);
+        
+        if (error) return { error: error.message };
+        
+        if (!results || results.length === 0) {
+          // Try searching numbering segments for context
+          const { data: segments } = await supabaseClient
+            .from('dms_numbering_segments')
+            .select('segment_key, label, example_value')
+            .eq('is_active', true)
+            .order('position');
+          
+          return {
+            found: false,
+            message: `No documents found matching "${searchTerm}".`,
+            hint: 'Try searching by document type code, name, or discipline.',
+            numbering_structure: segments ? segments.map((s: any) => `${s.label}: ${s.example_value || s.segment_key}`) : []
+          };
+        }
+        
+        return {
+          found: true,
+          total_matches: results.length,
+          documents: results.map((doc: any) => ({
+            code: doc.code,
+            name: doc.document_name,
+            description: doc.document_description,
+            discipline: doc.discipline_name || doc.discipline_code,
+            tier: doc.tier,
+            rlmu: doc.rlmu,
+            acceptable_status: doc.acceptable_status,
+            is_active: doc.is_active
+          }))
+        };
+      } catch (err) {
+        console.error('Document search error:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_document_bulk_status": {
+      try {
+        let query = supabaseClient
+          .from('dms_document_types')
+          .select('code, document_name, discipline_code, discipline_name, tier, rlmu, acceptable_status')
+          .eq('is_active', true);
+        
+        if (args.document_codes && args.document_codes.length > 0) {
+          query = query.in('code', args.document_codes);
+        } else if (args.discipline_codes && args.discipline_codes.length > 0) {
+          query = query.in('discipline_code', args.discipline_codes);
+        } else {
+          return { error: "Please provide document_codes or discipline_codes to query" };
+        }
+        
+        const { data: docs, error } = await query.order('discipline_code').order('display_order');
+        if (error) return { error: error.message };
+        
+        // Group by discipline
+        const byDiscipline: Record<string, any[]> = {};
+        (docs || []).forEach((doc: any) => {
+          const disc = doc.discipline_name || doc.discipline_code || 'Unknown';
+          if (!byDiscipline[disc]) byDiscipline[disc] = [];
+          byDiscipline[disc].push({
+            code: doc.code,
+            name: doc.document_name,
+            status: doc.acceptable_status || 'No status',
+            tier: doc.tier,
+            rlmu: doc.rlmu
+          });
+        });
+        
+        // Summary stats
+        const total = (docs || []).length;
+        const withStatus = (docs || []).filter((d: any) => d.acceptable_status).length;
+        const statusCounts: Record<string, number> = {};
+        (docs || []).forEach((d: any) => {
+          const s = d.acceptable_status || 'No Status';
+          statusCounts[s] = (statusCounts[s] || 0) + 1;
+        });
+        
+        return {
+          total_documents: total,
+          readiness_percent: total > 0 ? Math.round((withStatus / total) * 100) : 0,
+          status_summary: statusCounts,
+          by_discipline: Object.entries(byDiscipline).map(([disc, docs]) => ({
+            discipline: disc,
+            count: docs.length,
+            documents: docs
+          }))
+        };
+      } catch (err) {
+        console.error('Bulk status error:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "get_document_trend_analysis": {
+      try {
+        let query = supabaseClient
+          .from('dms_document_types')
+          .select('code, document_name, discipline_code, discipline_name, tier, rlmu, acceptable_status')
+          .eq('is_active', true);
+        
+        if (args.discipline_filter) {
+          query = query.or(`discipline_code.ilike.%${args.discipline_filter}%,discipline_name.ilike.%${args.discipline_filter}%`);
+        }
+        if (args.tier_filter) {
+          query = query.ilike('tier', `%${args.tier_filter}%`);
+        }
+        
+        const { data: docTypes, error } = await query;
+        if (error) return { error: error.message };
+        
+        // Get status codes with their order to define the lifecycle
+        const { data: statusCodes } = await supabaseClient
+          .from('dms_status_codes')
+          .select('code, description, display_order')
+          .eq('is_active', true)
+          .order('display_order');
+        
+        const statusOrder: Record<string, number> = {};
+        const statusNames: Record<string, string> = {};
+        (statusCodes || []).forEach((s: any) => {
+          statusOrder[s.code] = s.display_order;
+          statusNames[s.code] = s.description;
+        });
+        
+        // Analyze current state distribution across lifecycle
+        const total = (docTypes || []).length;
+        const lifecycle: Record<string, number> = {};
+        let noStatus = 0;
+        let rlmuRequired = 0;
+        let rlmuAchieved = 0;
+        
+        (docTypes || []).forEach((doc: any) => {
+          const status = doc.acceptable_status;
+          if (!status) { noStatus++; return; }
+          lifecycle[status] = (lifecycle[status] || 0) + 1;
+          if (doc.rlmu) rlmuRequired++;
+          if (doc.rlmu && status === 'RLMU') rlmuAchieved++;
+        });
+        
+        // Calculate what % of docs are at each stage
+        const stages = (statusCodes || []).map((s: any) => ({
+          code: s.code,
+          name: s.description,
+          order: s.display_order,
+          count: lifecycle[s.code] || 0,
+          percent: total > 0 ? Math.round(((lifecycle[s.code] || 0) / total) * 100) : 0
+        }));
+        
+        // Calculate cumulative progress (docs at or beyond each stage)
+        const cumulativeProgress = stages.map(stage => {
+          const atOrBeyond = stages.filter(s => s.order >= stage.order).reduce((sum, s) => sum + s.count, 0);
+          return { stage: stage.code, name: stage.name, documents_at_or_beyond: atOrBeyond, percent: total > 0 ? Math.round((atOrBeyond / total) * 100) : 0 };
+        });
+        
+        // Identify bottlenecks (stages with highest concentration)
+        const sortedStages = [...stages].sort((a, b) => b.count - a.count);
+        const bottleneck = sortedStages[0];
+        
+        // Estimate completion: how many docs still need to reach final status
+        const finalStatusOrder = Math.max(...Object.values(statusOrder));
+        const atFinalStatus = stages.find(s => s.order === finalStatusOrder)?.count || 0;
+        const needsProgression = total - atFinalStatus - noStatus;
+        
+        return {
+          total_documents: total,
+          documents_with_status: total - noStatus,
+          documents_without_status: noStatus,
+          lifecycle_distribution: stages,
+          cumulative_progress: cumulativeProgress,
+          bottleneck: bottleneck ? { stage: bottleneck.code, name: bottleneck.name, count: bottleneck.count, message: `${bottleneck.count} documents (${bottleneck.percent}%) are concentrated at ${bottleneck.name} stage` } : null,
+          rlmu_progress: { required: rlmuRequired, achieved: rlmuAchieved, remaining: rlmuRequired - rlmuAchieved, percent: rlmuRequired > 0 ? Math.round((rlmuAchieved / rlmuRequired) * 100) : 100 },
+          completion_estimate: { documents_at_final_stage: atFinalStatus, documents_needing_progression: needsProgression, percent_complete: total > 0 ? Math.round((atFinalStatus / (total - noStatus || 1)) * 100) : 0 },
+          recommendation: bottleneck && bottleneck.count > total * 0.3 ? `Bottleneck detected: ${bottleneck.count} documents stuck at "${bottleneck.name}". Consider prioritizing review/progression at this stage.` : 'Document progression appears healthy across lifecycle stages.'
+        };
+      } catch (err) {
+        console.error('Document trend analysis error:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    case "create_task_from_document_gap": {
+      try {
+        const docCode = args.document_code;
+        const docName = args.document_name || docCode;
+        const discipline = args.discipline || 'Document Management';
+        const gapDesc = args.gap_description;
+        
+        // Find assignee if name provided
+        let assigneeId: string | null = null;
+        let assigneeName = args.assignee_name || null;
+        
+        if (assigneeName) {
+          const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('user_id, full_name')
+            .ilike('full_name', `%${assigneeName}%`)
+            .eq('is_active', true)
+            .limit(1)
+            .maybeSingle();
+          
+          if (profile) {
+            assigneeId = profile.user_id;
+            assigneeName = profile.full_name;
+          }
+        }
+        
+        // Create user_task
+        const taskData: any = {
+          title: `[DMS Gap] ${docName} (${docCode})`,
+          description: `Document Gap: ${gapDesc}\n\nDiscipline: ${discipline}\nDocument Code: ${docCode}\nDocument: ${docName}\n\nCreated automatically by Document AI Agent.`,
+          priority: 'high',
+          status: 'todo',
+          source: 'ai_document_agent',
+        };
+        
+        if (assigneeId) {
+          taskData.assigned_to = assigneeId;
+        }
+        
+        const { data: task, error } = await supabaseClient
+          .from('user_tasks')
+          .insert(taskData)
+          .select('id, title, status')
+          .maybeSingle();
+        
+        if (error) {
+          // Table might not exist or column mismatch - return helpful message
+          return {
+            success: false,
+            error: `Could not create task: ${error.message}`,
+            suggestion: 'The task could not be created automatically. Please create it manually in My Tasks.',
+            task_details: { title: taskData.title, description: taskData.description, priority: taskData.priority }
+          };
+        }
+        
+        return {
+          success: true,
+          message: `Task created for document gap: ${docName}`,
+          task: {
+            id: task?.id,
+            title: task?.title,
+            status: task?.status,
+            assigned_to: assigneeName || 'Unassigned'
+          },
+          gap_details: { document_code: docCode, discipline, description: gapDesc }
+        };
+      } catch (err) {
+        console.error('Create task from gap error:', err);
+        return { error: String(err) };
+      }
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════════
     // PROACTIVE INSIGHTS & USER CONTEXT TOOLS
     // ═══════════════════════════════════════════════════════════════════════════
     case "get_proactive_insights": {
