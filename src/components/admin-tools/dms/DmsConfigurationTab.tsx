@@ -455,20 +455,6 @@ const DmsConfigurationTab: React.FC = () => {
             </button>
           </div>
 
-          {/* Legend */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-8 pt-4 border-t border-border/50">
-            <span className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">Legend:</span>
-            {sorted.map((seg, idx) => {
-              const color = SEGMENT_COLORS[idx % SEGMENT_COLORS.length];
-              return (
-                <div key={seg.id} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <span className={cn('h-2 w-2 rounded-full', color.dot)} />
-                  <span>{seg.label}</span>
-                  {!seg.is_active && <span className="text-[10px]">(off)</span>}
-                </div>
-              );
-            })}
-          </div>
         </CardContent>
       </Card>
 
