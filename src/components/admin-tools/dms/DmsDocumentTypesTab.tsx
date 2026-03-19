@@ -9,10 +9,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Pencil, Trash2, Loader2, SlidersHorizontal } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Plus, Pencil, Trash2, Loader2, SlidersHorizontal, X, ChevronsUpDown, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
 
 interface DocTypeRow {
   id: string;
@@ -26,6 +30,18 @@ interface DocTypeRow {
   acceptable_status: string | null;
   is_active: boolean;
   display_order: number;
+}
+
+interface DisciplineOption {
+  id: string;
+  code: string;
+  name: string;
+}
+
+interface StatusCodeOption {
+  id: string;
+  code: string;
+  description: string;
 }
 
 interface ColumnConfig {
@@ -46,6 +62,111 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'acceptable_status', label: 'Acceptable Status', visible: false, toggleable: true },
 ];
 
+const TIER_OPTIONS = [
+  { value: '', label: 'None' },
+  { value: 'Tier 1', label: 'Tier 1' },
+  { value: 'Tier 2', label: 'Tier 2' },
+];
+
+const RLMU_OPTIONS = [
+  { value: '', label: 'None' },
+  { value: 'RLMU', label: 'Yes' },
+];
+
+// Multi-select dropdown component
+const MultiSelectDropdown: React.FC<{
+  label: string;
+  options: { value: string; label: string; sublabel?: string }[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+  placeholder?: string;
+  searchable?: boolean;
+}> = ({ label, options, selected, onChange, placeholder = 'Select...', searchable = true }) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const filtered = searchable && search
+    ? options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()) || o.value.toLowerCase().includes(search.toLowerCase()))
+    : options;
+
+  const toggle = (val: string) => {
+    onChange(selected.includes(val) ? selected.filter(s => s !== val) : [...selected, val]);
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-sm font-medium">{label}</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" role="combobox" className="w-full justify-between h-auto min-h-9 font-normal text-left">
+            {selected.length === 0 ? (
+              <span className="text-muted-foreground">{placeholder}</span>
+            ) : (
+              <div className="flex flex-wrap gap-1 py-0.5">
+                {selected.slice(0, 3).map(s => (
+                  <Badge key={s} variant="secondary" className="text-xs font-mono px-1.5 py-0">
+                    {s}
+                  </Badge>
+                ))}
+                {selected.length > 3 && (
+                  <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                    +{selected.length - 3} more
+                  </Badge>
+                )}
+              </div>
+            )}
+            <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50 ml-2" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[340px] p-0" align="start">
+          {searchable && (
+            <div className="p-2 border-b">
+              <Input
+                placeholder="Search..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="h-8 text-sm"
+              />
+            </div>
+          )}
+          <ScrollArea className="h-[220px]">
+            <div className="p-1">
+              {filtered.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">No results found</p>
+              )}
+              {filtered.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className="flex items-center gap-2 w-full px-2 py-1.5 text-left text-sm rounded hover:bg-accent transition-colors"
+                  onClick={() => toggle(opt.value)}
+                >
+                  <div className={cn(
+                    "h-4 w-4 rounded border flex items-center justify-center shrink-0",
+                    selected.includes(opt.value) ? "bg-primary border-primary" : "border-input"
+                  )}>
+                    {selected.includes(opt.value) && <Check className="h-3 w-3 text-primary-foreground" />}
+                  </div>
+                  <span className="font-mono text-xs text-muted-foreground w-8 shrink-0">{opt.value}</span>
+                  <span className="truncate">{opt.sublabel || opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </ScrollArea>
+          {selected.length > 0 && (
+            <div className="border-t p-2 flex justify-between items-center">
+              <span className="text-xs text-muted-foreground">{selected.length} selected</span>
+              <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => onChange([])}>
+                Clear all
+              </Button>
+            </div>
+          )}
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
+
 const DmsDocumentTypesTab: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,9 +180,8 @@ const DmsDocumentTypesTab: React.FC = () => {
   const [formDocDesc, setFormDocDesc] = useState('');
   const [formTier, setFormTier] = useState('');
   const [formRlmu, setFormRlmu] = useState('');
-  const [formDiscCode, setFormDiscCode] = useState('');
-  const [formDiscName, setFormDiscName] = useState('');
-  const [formAccStatus, setFormAccStatus] = useState('');
+  const [formDisciplines, setFormDisciplines] = useState<string[]>([]);
+  const [formAccStatuses, setFormAccStatuses] = useState<string[]>([]);
   const [formIsActive, setFormIsActive] = useState(true);
 
   const { data: docTypes = [], isLoading } = useQuery({
@@ -77,6 +197,34 @@ const DmsDocumentTypesTab: React.FC = () => {
     },
   });
 
+  // Fetch disciplines for dropdown
+  const { data: disciplineOptions = [] } = useQuery({
+    queryKey: ['dms-disciplines-options'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('dms_disciplines')
+        .select('id, code, name')
+        .eq('is_active', true)
+        .order('code', { ascending: true });
+      if (error) throw error;
+      return data as DisciplineOption[];
+    },
+  });
+
+  // Fetch status codes for dropdown
+  const { data: statusCodeOptions = [] } = useQuery({
+    queryKey: ['dms-status-codes-options'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('dms_status_codes')
+        .select('id, code, description')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+      if (error) throw error;
+      return data as StatusCodeOption[];
+    },
+  });
+
   const createDocType = useMutation({
     mutationFn: async (item: Omit<DocTypeRow, 'id' | 'display_order'>) => {
       const maxOrder = docTypes.length > 0 ? Math.max(...docTypes.map(d => d.display_order)) : 0;
@@ -85,8 +233,12 @@ const DmsDocumentTypesTab: React.FC = () => {
         .insert({ ...item, display_order: maxOrder + 1 });
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-document-types'] }); toast.success('Document type created'); },
-    onError: (err: any) => toast.error(err.message || 'Failed to create'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dms-document-types'] });
+      toast.success('Document type created');
+      setDialogOpen(false);
+    },
+    onError: (err: any) => toast.error(err.message || 'Failed to create document type'),
   });
 
   const updateDocType = useMutation({
@@ -98,8 +250,12 @@ const DmsDocumentTypesTab: React.FC = () => {
         .eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-document-types'] }); toast.success('Document type updated'); },
-    onError: (err: any) => toast.error(err.message || 'Failed to update'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dms-document-types'] });
+      toast.success('Document type updated');
+      setDialogOpen(false);
+    },
+    onError: (err: any) => toast.error(err.message || 'Failed to update document type'),
   });
 
   const deleteDocType = useMutation({
@@ -139,7 +295,7 @@ const DmsDocumentTypesTab: React.FC = () => {
   const openAddDialog = () => {
     setEditingItem(null);
     setFormCode(''); setFormDocName(''); setFormDocDesc(''); setFormTier('');
-    setFormRlmu(''); setFormDiscCode(''); setFormDiscName(''); setFormAccStatus('');
+    setFormRlmu(''); setFormDisciplines([]); setFormAccStatuses([]);
     setFormIsActive(true);
     setDialogOpen(true);
   };
@@ -151,9 +307,14 @@ const DmsDocumentTypesTab: React.FC = () => {
     setFormDocDesc(item.document_description || '');
     setFormTier(item.tier || '');
     setFormRlmu(item.rlmu || '');
-    setFormDiscCode(item.discipline_code || '');
-    setFormDiscName(item.discipline_name || '');
-    setFormAccStatus(item.acceptable_status || '');
+    // Parse existing discipline
+    setFormDisciplines(item.discipline_code ? [item.discipline_code] : []);
+    // Parse acceptable statuses (comma-separated)
+    setFormAccStatuses(
+      item.acceptable_status
+        ? item.acceptable_status.split(',').map(s => s.trim()).filter(Boolean)
+        : []
+    );
     setFormIsActive(item.is_active);
     setDialogOpen(true);
   };
@@ -163,23 +324,27 @@ const DmsDocumentTypesTab: React.FC = () => {
       toast.error('Code and Document Name are required');
       return;
     }
+
+    // Find discipline name from selected code
+    const selectedDisc = disciplineOptions.find(d => formDisciplines.includes(d.code));
+
     const payload = {
       code: formCode.trim(),
       document_name: formDocName.trim(),
       document_description: formDocDesc.trim() || null,
-      tier: formTier.trim() || null,
-      rlmu: formRlmu.trim() || null,
-      discipline_code: formDiscCode.trim() || null,
-      discipline_name: formDiscName.trim() || null,
-      acceptable_status: formAccStatus.trim() || null,
+      tier: formTier || null,
+      rlmu: formRlmu || null,
+      discipline_code: formDisciplines.length > 0 ? formDisciplines[0] : null,
+      discipline_name: selectedDisc ? selectedDisc.name : null,
+      acceptable_status: formAccStatuses.length > 0 ? formAccStatuses.join(', ') : null,
       is_active: formIsActive,
     };
+
     if (editingItem) {
       updateDocType.mutate({ id: editingItem.id, ...payload });
     } else {
       createDocType.mutate(payload as any);
     }
-    setDialogOpen(false);
   };
 
   const isSaving = createDocType.isPending || updateDocType.isPending;
@@ -214,7 +379,7 @@ const DmsDocumentTypesTab: React.FC = () => {
         <CardHeader className="flex flex-row items-center justify-between py-4">
           <div>
             <CardTitle className="text-lg">Document Type</CardTitle>
-            <CardDescription>Manage document type codes used in document classification · Showing {displayRows.length} of {docTypes.length} entries</CardDescription>
+            <CardDescription>Manage document type codes · Showing {displayRows.length} of {docTypes.length} entries</CardDescription>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative w-56">
@@ -233,10 +398,7 @@ const DmsDocumentTypesTab: React.FC = () => {
                 <div className="space-y-2">
                   {columns.filter(c => c.toggleable).map(col => (
                     <label key={col.id} className="flex items-center gap-2 cursor-pointer text-sm">
-                      <Checkbox
-                        checked={col.visible}
-                        onCheckedChange={() => toggleColumn(col.id)}
-                      />
+                      <Checkbox checked={col.visible} onCheckedChange={() => toggleColumn(col.id)} />
                       {col.label}
                     </label>
                   ))}
@@ -298,61 +460,104 @@ const DmsDocumentTypesTab: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* ─── Add / Edit Document Type Modal ─── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingItem ? 'Edit Document Type' : 'Add Document Type'}</DialogTitle>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="text-lg font-semibold">{editingItem ? 'Edit Document Type' : 'Add Document Type'}</DialogTitle>
             <DialogDescription>
-              {editingItem ? 'Update the document type details' : 'Create a new document type entry'}
+              {editingItem ? 'Modify the document type configuration below.' : 'Fill in the details to create a new document type.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+
+          <div className="space-y-5 py-4 max-h-[60vh] overflow-y-auto pr-1">
+            {/* Row 1: Code + Document Name */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Code <span className="text-destructive">*</span></Label>
+                <Input value={formCode} onChange={e => setFormCode(e.target.value)} placeholder="e.g. 4018" maxLength={10} className="font-mono" />
+              </div>
+              <div className="col-span-2 space-y-1.5">
+                <Label className="text-sm font-medium">Document Name <span className="text-destructive">*</span></Label>
+                <Input value={formDocName} onChange={e => setFormDocName(e.target.value)} placeholder="e.g. General Arrangement Diagram" />
+              </div>
+            </div>
+
+            {/* Row 2: Description */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Description</Label>
+              <Input value={formDocDesc} onChange={e => setFormDocDesc(e.target.value)} placeholder="Optional description of the document type" />
+            </div>
+
+            {/* Row 3: Tier + RLMU */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Code *</Label>
-                <Input value={formCode} onChange={e => setFormCode(e.target.value)} placeholder="e.g. 4018" maxLength={10} />
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Tier</Label>
+                <Select value={formTier} onValueChange={setFormTier}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select tier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIER_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value || 'none'}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Tier</Label>
-                <Input value={formTier} onChange={e => setFormTier(e.target.value)} placeholder="e.g. Tier 1" />
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">RLMU</Label>
+                <Select value={formRlmu} onValueChange={setFormRlmu}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select RLMU" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RLMU_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value || 'none'}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Document Name *</Label>
-              <Input value={formDocName} onChange={e => setFormDocName(e.target.value)} placeholder="e.g. General Arrangement Diagram" />
-            </div>
-            <div className="space-y-2">
-              <Label>Document Description</Label>
-              <Input value={formDocDesc} onChange={e => setFormDocDesc(e.target.value)} placeholder="Optional description" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>RLMU</Label>
-                <Input value={formRlmu} onChange={e => setFormRlmu(e.target.value)} placeholder="e.g. RLMU" />
+
+            {/* Row 4: Discipline (multi-select) */}
+            <MultiSelectDropdown
+              label="Discipline"
+              options={disciplineOptions.map(d => ({ value: d.code, label: d.code, sublabel: d.name }))}
+              selected={formDisciplines}
+              onChange={setFormDisciplines}
+              placeholder="Select disciplines..."
+            />
+
+            {/* Row 5: Acceptable Status (multi-select) */}
+            <MultiSelectDropdown
+              label="Acceptable Status"
+              options={statusCodeOptions.map(s => ({ value: s.code, label: s.code, sublabel: s.description }))}
+              selected={formAccStatuses}
+              onChange={setFormAccStatuses}
+              placeholder="Select acceptable statuses..."
+            />
+
+            {/* Row 6: Active toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <Label className="text-sm font-medium">Active Status</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">Enable or disable this document type</p>
               </div>
-              <div className="space-y-2">
-                <Label>Discipline Code</Label>
-                <Input value={formDiscCode} onChange={e => setFormDiscCode(e.target.value.toUpperCase())} placeholder="e.g. AA" maxLength={10} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Discipline Name</Label>
-              <Input value={formDiscName} onChange={e => setFormDiscName(e.target.value)} placeholder="e.g. Management & Project Eng" />
-            </div>
-            <div className="space-y-2">
-              <Label>Acceptable Status</Label>
-              <Input value={formAccStatus} onChange={e => setFormAccStatus(e.target.value)} placeholder="e.g. IFI, AFU, AFP, AFT" />
-            </div>
-            <div className="flex items-center gap-2">
               <Switch checked={formIsActive} onCheckedChange={setFormIsActive} />
-              <Label className="text-sm">Active</Label>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+
+          <DialogFooter className="pt-4 border-t gap-2">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving} className="min-w-[100px]">
               {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {editingItem ? 'Update' : 'Create'}
+              {editingItem ? 'Save Changes' : 'Create Document Type'}
             </Button>
           </DialogFooter>
         </DialogContent>
