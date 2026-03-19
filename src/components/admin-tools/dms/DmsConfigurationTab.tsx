@@ -446,17 +446,6 @@ const DmsConfigurationTab: React.FC = () => {
               />
             </div>
 
-            {/* Segment Description */}
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Description</Label>
-              <Textarea
-                value={formDescription}
-                onChange={e => setFormDescription(e.target.value)}
-                rows={2}
-                placeholder="Briefly describe what this segment represents..."
-                className="resize-none"
-              />
-            </div>
 
             {/* Data Source */}
             <div className="space-y-2">
