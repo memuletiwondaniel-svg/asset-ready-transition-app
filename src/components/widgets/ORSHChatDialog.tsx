@@ -29,7 +29,9 @@ import {
   ArrowUp,
   PanelLeftClose,
   PanelLeft,
-  MoreHorizontal
+  MoreHorizontal,
+  ThumbsUp,
+  ThumbsDown
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
