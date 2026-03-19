@@ -31,7 +31,7 @@ interface DocumentManagementSystemProps {
 
 // Tab configuration
 const TAB_CONFIG = [
-  { id: 'document-type', label: 'Document Type', icon: FileStack, activeColor: 'text-blue-600 dark:text-blue-400' },
+  { id: 'document-type', label: 'Document', icon: FileStack, activeColor: 'text-blue-600 dark:text-blue-400' },
   { id: 'discipline', label: 'Discipline', icon: Compass, activeColor: 'text-emerald-600 dark:text-emerald-400' },
   { id: 'project', label: 'Project', icon: FolderKanban, activeColor: 'text-violet-600 dark:text-violet-400' },
   { id: 'originator', label: 'Originator', icon: UserCircle, activeColor: 'text-amber-600 dark:text-amber-400' },
