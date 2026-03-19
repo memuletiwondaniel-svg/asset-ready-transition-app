@@ -451,8 +451,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 12. SSO */}
-          <Section id="sso" icon={<Shield className="h-5 w-5 text-primary" />} title="12. Single Sign-On (SSO)">
+          {/* 13. SSO */}
+          <Section id="sso" icon={<Shield className="h-5 w-5 text-primary" />} title="13. Single Sign-On (SSO)">
             <StatusTable rows={[
               { label: 'SAML 2.0', value: 'Per-tenant Entity ID, SSO URL, Certificate configuration', status: 'active' },
               { label: 'OIDC', value: 'OpenID Connect for compatible providers', status: 'active' },
