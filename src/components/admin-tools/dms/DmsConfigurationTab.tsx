@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Plus, Loader2, GripVertical, Trash2, X, ChevronDown, Settings2, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Plus, Loader2, GripVertical, Trash2, X, ChevronDown, ChevronRight, Settings2, ArrowLeft, ArrowRight, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -322,7 +322,7 @@ const DmsConfigurationTab: React.FC = () => {
         <div>
           <h2 className="text-lg font-semibold text-foreground">Document Numbering Structure</h2>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Click on any segment to configure it. Drag or use arrows to reorder.
+            Click on any segment to configure it. Use arrows to reorder.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -360,14 +360,6 @@ const DmsConfigurationTab: React.FC = () => {
                         !seg.is_active && 'opacity-40 grayscale'
                       )}
                     >
-                      {/* Position badge */}
-                      <span className={cn(
-                        'absolute -top-2 -left-2 h-5 w-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white',
-                        color.dot
-                      )}>
-                        {idx + 1}
-                      </span>
-
                       {/* Example value */}
                       <span className={cn('font-mono text-sm font-bold leading-none', color.text)}>
                         {segmentDisplayCode(seg, idx, sampleData)}
@@ -412,11 +404,11 @@ const DmsConfigurationTab: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Separator between boxes */}
+                  {/* Connector line between boxes */}
                   {idx < sorted.length - 1 && (
-                    <span className="text-lg font-bold text-muted-foreground/50 select-none mx-0.5">
-                      {seg.separator || '-'}
-                    </span>
+                    <div className="flex items-center text-muted-foreground/30 select-none">
+                      <ChevronRight className="h-4 w-4" />
+                    </div>
                   )}
                 </React.Fragment>
               );
@@ -426,13 +418,13 @@ const DmsConfigurationTab: React.FC = () => {
             <button
               onClick={openCreate}
               className={cn(
-                'flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-muted-foreground/25 px-4 py-3 min-w-[90px] min-h-[68px]',
-                'hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer',
-                'text-muted-foreground hover:text-primary'
+                'flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary/30 px-5 py-3 min-w-[100px] min-h-[68px]',
+                'hover:border-primary hover:bg-primary/5 transition-all duration-200 cursor-pointer',
+                'text-primary/60 hover:text-primary'
               )}
             >
               <Plus className="h-5 w-5" />
-              <span className="text-[10px] mt-1">Add</span>
+              <span className="text-[10px] mt-1 font-medium">Add Segment</span>
             </button>
           </div>
 
@@ -479,7 +471,10 @@ const DmsConfigurationTab: React.FC = () => {
             });
             return (
               <div className="mt-8 pt-4 border-t border-border/50">
-                <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Example</Label>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Example Document Number</Label>
+                </div>
                 <div className="bg-muted/40 rounded-lg px-4 py-3 border border-dashed border-border">
                   <span className="font-mono text-sm tracking-wide text-foreground font-semibold">
                     {exampleSegments.map((e, i) => (
