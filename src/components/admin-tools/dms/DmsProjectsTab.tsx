@@ -36,10 +36,7 @@ const DmsProjectsTab: React.FC = () => {
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ['dms-projects'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('dms_projects')
-        .select('*')
-        .order('display_order', { ascending: true });
+      const { data, error } = await supabase.from('dms_projects').select('*').order('display_order', { ascending: true });
       if (error) throw error;
       return data as ProjectRow[];
     },
@@ -48,32 +45,25 @@ const DmsProjectsTab: React.FC = () => {
   const createProject = useMutation({
     mutationFn: async (item: { code: string; project_id: string; project_name: string; cabinet: string; is_active: boolean }) => {
       const maxOrder = projects.length > 0 ? Math.max(...projects.map(p => p.display_order)) : 0;
-      const { error } = await supabase
-        .from('dms_projects')
-        .insert({ code: item.code, project_id: item.project_id, project_name: item.project_name, cabinet: item.cabinet, is_active: item.is_active, display_order: maxOrder + 1 });
+      const { error } = await supabase.from('dms_projects').insert({ ...item, display_order: maxOrder + 1 });
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-projects'] }); toast.success('Project created'); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-projects'] }); toast.success('Project created'); setDialogOpen(false); },
     onError: (err: any) => toast.error(err.message || 'Failed to create project'),
   });
 
   const updateProject = useMutation({
     mutationFn: async (item: { id: string; code: string; project_id: string; project_name: string; cabinet: string; is_active: boolean }) => {
-      const { error } = await supabase
-        .from('dms_projects')
-        .update({ code: item.code, project_id: item.project_id, project_name: item.project_name, cabinet: item.cabinet, is_active: item.is_active, updated_at: new Date().toISOString() })
-        .eq('id', item.id);
+      const { id, ...rest } = item;
+      const { error } = await supabase.from('dms_projects').update({ ...rest, updated_at: new Date().toISOString() }).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-projects'] }); toast.success('Project updated'); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-projects'] }); toast.success('Project updated'); setDialogOpen(false); },
     onError: (err: any) => toast.error(err.message || 'Failed to update project'),
   });
 
   const deleteProject = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('dms_projects').delete().eq('id', id);
-      if (error) throw error;
-    },
+    mutationFn: async (id: string) => { const { error } = await supabase.from('dms_projects').delete().eq('id', id); if (error) throw error; },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-projects'] }); toast.success('Project deleted'); },
     onError: (err: any) => toast.error(err.message || 'Failed to delete project'),
   });
@@ -85,38 +75,14 @@ const DmsProjectsTab: React.FC = () => {
     (p.cabinet || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const openAddDialog = () => {
-    setEditingItem(null);
-    setFormCode('');
-    setFormProjectId('');
-    setFormProjectName('');
-    setFormCabinet('');
-    setFormIsActive(true);
-    setDialogOpen(true);
-  };
-
-  const openEditDialog = (item: ProjectRow) => {
-    setEditingItem(item);
-    setFormCode(item.code);
-    setFormProjectId(item.project_id || '');
-    setFormProjectName(item.project_name);
-    setFormCabinet(item.cabinet || '');
-    setFormIsActive(item.is_active);
-    setDialogOpen(true);
-  };
+  const openAddDialog = () => { setEditingItem(null); setFormCode(''); setFormProjectId(''); setFormProjectName(''); setFormCabinet(''); setFormIsActive(true); setDialogOpen(true); };
+  const openEditDialog = (item: ProjectRow) => { setEditingItem(item); setFormCode(item.code); setFormProjectId(item.project_id || ''); setFormProjectName(item.project_name); setFormCabinet(item.cabinet || ''); setFormIsActive(item.is_active); setDialogOpen(true); };
 
   const handleSave = () => {
-    if (!formCode.trim() || !formProjectName.trim()) {
-      toast.error('Code and Project Name are required');
-      return;
-    }
+    if (!formCode.trim() || !formProjectName.trim()) { toast.error('Code and Project Name are required'); return; }
     const payload = { code: formCode.trim(), project_id: formProjectId.trim(), project_name: formProjectName.trim(), cabinet: formCabinet.trim(), is_active: formIsActive };
-    if (editingItem) {
-      updateProject.mutate({ id: editingItem.id, ...payload });
-    } else {
-      createProject.mutate(payload);
-    }
-    setDialogOpen(false);
+    if (editingItem) { updateProject.mutate({ id: editingItem.id, ...payload }); }
+    else { createProject.mutate(payload); }
   };
 
   const isSaving = createProject.isPending || updateProject.isPending;
@@ -134,16 +100,12 @@ const DmsProjectsTab: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9 h-9" />
             </div>
-            <Button size="sm" className="gap-1.5" onClick={openAddDialog}>
-              <Plus className="h-4 w-4" /> Add Project
-            </Button>
+            <Button size="sm" className="gap-1.5" onClick={openAddDialog}><Plus className="h-4 w-4" /> Add Project</Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
+            <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : (
             <Table>
               <TableHeader>
@@ -161,55 +123,25 @@ const DmsProjectsTab: React.FC = () => {
                 {filtered.map((item, idx) => (
                   <TableRow key={item.id} className="group border-border/40 hover:bg-muted/30 transition-colors">
                     <TableCell className="text-muted-foreground text-xs tabular-nums">{idx + 1}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-foreground">
-                        {item.code}
-                      </span>
-                    </TableCell>
+                    <TableCell><span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-foreground">{item.code}</span></TableCell>
                     <TableCell className="text-sm text-muted-foreground">{item.project_id || '—'}</TableCell>
                     <TableCell className="text-sm text-foreground">{item.project_name}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-muted-foreground">
-                        {item.cabinet || '—'}
-                      </span>
-                    </TableCell>
+                    <TableCell><span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-muted-foreground">{item.cabinet || '—'}</span></TableCell>
                     <TableCell className="text-center">
-                      {item.is_active ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-                          Inactive
-                        </span>
-                      )}
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span className={`h-1.5 w-1.5 rounded-full ${item.is_active ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />
+                        {item.is_active ? 'Active' : 'Inactive'}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEditDialog(item)}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => deleteProject.mutate(item.id)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEditDialog(item)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteProject.mutate(item.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
-                {filtered.length === 0 && !isLoading && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No projects found
-                    </TableCell>
-                  </TableRow>
-                )}
+                {filtered.length === 0 && !isLoading && (<TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No projects found</TableCell></TableRow>)}
               </TableBody>
             </Table>
           )}
@@ -217,40 +149,40 @@ const DmsProjectsTab: React.FC = () => {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editingItem ? 'Edit Project' : 'Add Project'}</DialogTitle>
-            <DialogDescription>
-              {editingItem ? 'Update the project details' : 'Create a new project entry'}
-            </DialogDescription>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="text-lg font-semibold">{editingItem ? 'Edit Project' : 'Add Project'}</DialogTitle>
+            <DialogDescription>{editingItem ? 'Modify the project details below.' : 'Fill in the details to create a new project.'}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Code *</Label>
-              <Input value={formCode} onChange={e => setFormCode(e.target.value.toUpperCase())} placeholder="e.g. 1001" maxLength={10} />
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Code <span className="text-destructive">*</span></Label>
+                <Input value={formCode} onChange={e => setFormCode(e.target.value.toUpperCase())} placeholder="e.g. 1001" maxLength={10} className="font-mono" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Project ID</Label>
+                <Input value={formProjectId} onChange={e => setFormProjectId(e.target.value)} placeholder="e.g. DP-146" />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Project ID</Label>
-              <Input value={formProjectId} onChange={e => setFormProjectId(e.target.value)} placeholder="e.g. DP-146" />
-            </div>
-            <div className="space-y-2">
-              <Label>Project Name *</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Project Name <span className="text-destructive">*</span></Label>
               <Input value={formProjectName} onChange={e => setFormProjectName(e.target.value)} placeholder="e.g. ST/DP146 Class 1 Metering" />
             </div>
-            <div className="space-y-2">
-              <Label>Cabinet</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Cabinet</Label>
               <Input value={formCabinet} onChange={e => setFormCabinet(e.target.value)} placeholder="e.g. BGC_PROJ" />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div><Label className="text-sm font-medium">Active Status</Label><p className="text-xs text-muted-foreground mt-0.5">Enable or disable this project</p></div>
               <Switch checked={formIsActive} onCheckedChange={setFormIsActive} />
-              <Label className="text-sm">Active</Label>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+          <DialogFooter className="pt-4 border-t gap-2">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isSaving}>Cancel</Button>
+            <Button onClick={handleSave} disabled={isSaving} className="min-w-[100px]">
               {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {editingItem ? 'Update' : 'Create'}
+              {editingItem ? 'Save Changes' : 'Create Project'}
             </Button>
           </DialogFooter>
         </DialogContent>

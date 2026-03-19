@@ -49,7 +49,11 @@ const DmsOriginatorsTab: React.FC = () => {
         .insert({ code: item.code, description: item.description, is_active: item.is_active, display_order: maxOrder + 1 });
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-originators'] }); toast.success('Originator created'); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dms-originators'] });
+      toast.success('Originator created');
+      setDialogOpen(false);
+    },
     onError: (err: any) => toast.error(err.message || 'Failed to create originator'),
   });
 
@@ -61,7 +65,11 @@ const DmsOriginatorsTab: React.FC = () => {
         .eq('id', item.id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-originators'] }); toast.success('Originator updated'); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dms-originators'] });
+      toast.success('Originator updated');
+      setDialogOpen(false);
+    },
     onError: (err: any) => toast.error(err.message || 'Failed to update originator'),
   });
 
@@ -81,9 +89,7 @@ const DmsOriginatorsTab: React.FC = () => {
 
   const openAddDialog = () => {
     setEditingItem(null);
-    setFormCode('');
-    setFormDescription('');
-    setFormIsActive(true);
+    setFormCode(''); setFormDescription(''); setFormIsActive(true);
     setDialogOpen(true);
   };
 
@@ -106,7 +112,6 @@ const DmsOriginatorsTab: React.FC = () => {
     } else {
       createOriginator.mutate(payload);
     }
-    setDialogOpen(false);
   };
 
   const isSaving = createOriginator.isPending || updateOriginator.isPending;
@@ -131,9 +136,7 @@ const DmsOriginatorsTab: React.FC = () => {
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
+            <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : (
             <Table>
               <TableHeader>
@@ -150,42 +153,25 @@ const DmsOriginatorsTab: React.FC = () => {
                   <TableRow key={item.id} className="group border-border/40 hover:bg-muted/30 transition-colors">
                     <TableCell className="text-muted-foreground text-xs tabular-nums">{idx + 1}</TableCell>
                     <TableCell>
-                      <span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-foreground">
-                        {item.code}
-                      </span>
+                      <span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-foreground">{item.code}</span>
                     </TableCell>
                     <TableCell className="text-sm text-foreground">{item.description}</TableCell>
                     <TableCell className="text-center">
-                      {item.is_active ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-                          Inactive
-                        </span>
-                      )}
+                      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span className={`h-1.5 w-1.5 rounded-full ${item.is_active ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />
+                        {item.is_active ? 'Active' : 'Inactive'}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEditDialog(item)}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteOriginator.mutate(item.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEditDialog(item)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteOriginator.mutate(item.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
                 {filtered.length === 0 && !isLoading && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      No originators found
-                    </TableCell>
-                  </TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No originators found</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -194,32 +180,33 @@ const DmsOriginatorsTab: React.FC = () => {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editingItem ? 'Edit Originator' : 'Add Originator'}</DialogTitle>
-            <DialogDescription>
-              {editingItem ? 'Update the originator details' : 'Create a new originator entry'}
-            </DialogDescription>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="text-lg font-semibold">{editingItem ? 'Edit Originator' : 'Add Originator'}</DialogTitle>
+            <DialogDescription>{editingItem ? 'Modify the originator details below.' : 'Fill in the details to create a new originator.'}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Code *</Label>
-              <Input value={formCode} onChange={e => setFormCode(e.target.value.toUpperCase())} placeholder="e.g. ABB" maxLength={10} />
+          <div className="space-y-4 py-4">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Code <span className="text-destructive">*</span></Label>
+              <Input value={formCode} onChange={e => setFormCode(e.target.value.toUpperCase())} placeholder="e.g. ABB" maxLength={10} className="font-mono" />
             </div>
-            <div className="space-y-2">
-              <Label>Description *</Label>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Description <span className="text-destructive">*</span></Label>
               <Input value={formDescription} onChange={e => setFormDescription(e.target.value)} placeholder="e.g. ABB SpA" />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <Label className="text-sm font-medium">Active Status</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">Enable or disable this originator</p>
+              </div>
               <Switch checked={formIsActive} onCheckedChange={setFormIsActive} />
-              <Label className="text-sm">Active</Label>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+          <DialogFooter className="pt-4 border-t gap-2">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isSaving}>Cancel</Button>
+            <Button onClick={handleSave} disabled={isSaving} className="min-w-[100px]">
               {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {editingItem ? 'Update' : 'Create'}
+              {editingItem ? 'Save Changes' : 'Create Originator'}
             </Button>
           </DialogFooter>
         </DialogContent>
