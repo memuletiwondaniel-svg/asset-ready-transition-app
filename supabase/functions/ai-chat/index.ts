@@ -5444,6 +5444,11 @@ serve(async (req) => {
     
     // No tool calls - return direct response as SSE
     const directContent = assistantMessage?.content || "I'm here to help. What would you like to know?";
+    
+    // Log response for continuous training pipeline
+    logResponseFeedback(supabase, null, detectedAgent, [], Date.now() - requestStartTime)
+      .catch(e => console.error('Feedback log error:', e));
+    
     const sseData = `data: ${JSON.stringify({
       choices: [{ delta: { content: directContent } }]
     })}\n\ndata: [DONE]\n\n`;
