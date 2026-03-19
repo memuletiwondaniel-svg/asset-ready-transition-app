@@ -783,6 +783,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               ['log_p2a_audit_trail', 'Any P2A entity change', 'Creates P2A audit entry'],
               ['audit_pssr_status_change', 'PSSR status changes', 'Writes to audit_logs'],
               ['sync_profile_names_to_auth', 'Profile updated', 'Syncs name/avatar to auth.users metadata'],
+              ['trg_sync_p2a_rejection_to_plan', 'Approver rejects P2A plan', 'Syncs rejection metadata (comment, role, timestamp) to parent plan'],
+              ['trg_task_reviewer_insert/delete', 'Reviewer assigned/removed', 'Manages ad-hoc reviewer tasks in user_tasks'],
+              ['handle_task_reviewer_decision', 'Reviewer approves/rejects', 'Syncs decision to user_tasks and reverts owner card on rejection'],
             ]} />
 
             <p className="font-medium text-foreground mt-4">Auto-Generated Code Triggers</p>
