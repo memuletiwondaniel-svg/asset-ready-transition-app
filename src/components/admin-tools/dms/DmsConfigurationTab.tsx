@@ -568,7 +568,7 @@ const DmsConfigurationTab: React.FC = () => {
             {/* Format Rules */}
             <div className="space-y-3">
               <Label className="text-sm font-medium">Format Rules</Label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">Min Characters</Label>
                   <Input
@@ -589,16 +589,6 @@ const DmsConfigurationTab: React.FC = () => {
                     min={1}
                     max={20}
                     className="h-9"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Separator After</Label>
-                  <Input
-                    value={formSeparator}
-                    onChange={e => setFormSeparator(e.target.value)}
-                    className="h-9 font-mono text-center"
-                    maxLength={2}
-                    placeholder="-"
                   />
                 </div>
               </div>
