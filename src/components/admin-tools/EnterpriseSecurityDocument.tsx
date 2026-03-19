@@ -486,8 +486,8 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
-          {/* 14. Compliance Summary — enhanced with new rows */}
-          <Section id="compliance" icon={<CheckCircle className="h-5 w-5 text-emerald-500" />} title="14. Enterprise Compliance Summary">
+          {/* 15. Compliance Summary — enhanced with new rows */}
+          <Section id="compliance" icon={<CheckCircle className="h-5 w-5 text-emerald-500" />} title="15. Enterprise Compliance Summary">
             <StatusTable rows={[
               { label: 'Authentication', value: 'Email/password, SAML SSO (Entra/Okta/SAP IAM), OIDC, 2FA', status: 'active' },
               { label: 'Authorization', value: 'Granular RBAC with permission matrix', status: 'active' },
