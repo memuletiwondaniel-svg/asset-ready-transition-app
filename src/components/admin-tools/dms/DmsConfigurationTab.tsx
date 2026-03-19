@@ -340,7 +340,7 @@ const DmsConfigurationTab: React.FC = () => {
 
                       {/* Example value */}
                       <span className={cn('font-mono text-sm font-bold leading-none', color.text)}>
-                        {seg.example_value || seg.segment_key.toUpperCase()}
+                        {segmentPlaceholder(seg)}
                       </span>
 
                       {/* Label */}
