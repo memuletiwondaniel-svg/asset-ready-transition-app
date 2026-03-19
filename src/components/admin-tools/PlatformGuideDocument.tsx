@@ -634,9 +634,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
-          {/* 11. Database Schema */}
-          <Section id="database-schema" icon={<Table className="h-5 w-5 text-primary" />} title="11. Database Schema & Tables">
-            <p>The ORSH database contains <strong className="text-foreground">70+ tables</strong> organized by module:</p>
+          {/* 13. Database Schema */}
+          <Section id="database-schema" icon={<Table className="h-5 w-5 text-primary" />} title="13. Database Schema & Tables">
+            <p>The ORSH database contains <strong className="text-foreground">90+ tables</strong> organized by module:</p>
 
             <p className="font-medium text-foreground mt-3">Core Tables</p>
             <InfoTable headers={['Table', 'Module', 'Description']} rows={[
