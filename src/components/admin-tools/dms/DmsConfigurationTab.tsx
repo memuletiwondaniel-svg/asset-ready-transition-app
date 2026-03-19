@@ -395,10 +395,10 @@ const DmsConfigurationTab: React.FC = () => {
 
                     </button>
 
-                    {/* Real example name - outside and under the box */}
-                    {segmentDisplayName(seg, sampleData) && (
-                      <span className="text-[9px] text-muted-foreground/60 mt-1.5 leading-tight max-w-[110px] truncate italic text-center">
-                        {segmentDisplayName(seg, sampleData)}
+                    {/* Real example - outside and under the box */}
+                    {segmentDisplayExample(seg, sampleData) && (
+                      <span className="text-[9px] text-muted-foreground/60 mt-1.5 leading-tight max-w-[120px] truncate italic text-center">
+                        {segmentDisplayExample(seg, sampleData)}
                       </span>
                     )}
 
