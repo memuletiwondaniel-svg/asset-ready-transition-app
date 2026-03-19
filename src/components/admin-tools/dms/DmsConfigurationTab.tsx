@@ -570,7 +570,7 @@ const DmsConfigurationTab: React.FC = () => {
             {/* Format Rules */}
             <div className="space-y-3">
               <Label className="text-sm font-medium">Format Rules</Label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">Min Characters</Label>
                   <Input
@@ -592,6 +592,20 @@ const DmsConfigurationTab: React.FC = () => {
                     max={20}
                     className="h-9"
                   />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Character Type</Label>
+                  <Select value={formCharType} onValueChange={setFormCharType}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="numeric">Numeric</SelectItem>
+                      <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                      <SelectItem value="alphanumeric">Alphanumeric</SelectItem>
+                      <SelectItem value="free_text">Free Text</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
