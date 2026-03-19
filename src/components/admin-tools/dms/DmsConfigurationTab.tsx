@@ -105,18 +105,14 @@ const useSampleData = () => {
   });
 };
 
-/** Generate display text for a segment box using real DB sample or fallback letters */
+/** Always show AAAA, BBBB, CCCC pattern based on position index and max_length */
 const segmentDisplayCode = (
-  seg: Segment,
+  _seg: Segment,
   index: number,
-  samples: Record<string, { code: string; name: string }> | undefined
+  _samples?: Record<string, { code: string; name: string }>
 ): string => {
-  if (seg.source_table && samples?.[seg.source_table]) {
-    return samples[seg.source_table].code;
-  }
-  // Fallback: AAAA, BBBB based on position
   const letter = String.fromCharCode(65 + (index % 26));
-  const len = seg.max_length || 4;
+  const len = _seg.max_length || 4;
   return letter.repeat(len);
 };
 
