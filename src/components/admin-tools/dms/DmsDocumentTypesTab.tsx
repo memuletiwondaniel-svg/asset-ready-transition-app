@@ -167,28 +167,28 @@ const MultiSelectDropdown: React.FC<{
   );
 };
 
-type FilterKey = 'tier1' | 'tier2' | 'elect' | 'static' | 'rotating' | 'inst' | 'ops' | 'tech_safety' | 'rlmu';
+type FilterKey = 'tier1' | 'tier2' | 'rlmu' | 'elect' | 'static' | 'rotating' | 'inst' | 'ops' | 'tech_safety';
 
 interface FilterChip {
   key: FilterKey;
   label: string;
-  group: 'tier' | 'discipline' | 'rlmu';
   activeClass: string;
+  countBadgeClass: string;
   dotColor: string;
   hoverClass: string;
   match: (d: DocTypeRow) => boolean;
 }
 
 const FILTER_CHIPS: FilterChip[] = [
-  { key: 'tier1', label: 'Tier 1', group: 'tier', activeClass: 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700', dotColor: 'bg-orange-500', hoverClass: 'hover:border-orange-300 dark:hover:border-orange-700', match: d => d.tier === 'Tier 1' },
-  { key: 'tier2', label: 'Tier 2', group: 'tier', activeClass: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700', dotColor: 'bg-blue-500', hoverClass: 'hover:border-blue-300 dark:hover:border-blue-700', match: d => d.tier === 'Tier 2' },
-  { key: 'elect', label: 'Elect', group: 'discipline', activeClass: 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700', dotColor: 'bg-yellow-500', hoverClass: 'hover:border-yellow-300 dark:hover:border-yellow-700', match: d => d.discipline_name === 'Electrical' },
-  { key: 'static', label: 'Static', group: 'discipline', activeClass: 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700', dotColor: 'bg-teal-500', hoverClass: 'hover:border-teal-300 dark:hover:border-teal-700', match: d => d.discipline_name === 'Mechanical - Static' },
-  { key: 'rotating', label: 'Rotating', group: 'discipline', activeClass: 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700', dotColor: 'bg-cyan-500', hoverClass: 'hover:border-cyan-300 dark:hover:border-cyan-700', match: d => d.discipline_name === 'Rotating Equipment' },
-  { key: 'inst', label: 'Inst', group: 'discipline', activeClass: 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700', dotColor: 'bg-purple-500', hoverClass: 'hover:border-purple-300 dark:hover:border-purple-700', match: d => d.discipline_name === 'Instrumentation' },
-  { key: 'ops', label: 'Ops', group: 'discipline', activeClass: 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700', dotColor: 'bg-emerald-500', hoverClass: 'hover:border-emerald-300 dark:hover:border-emerald-700', match: d => d.discipline_name === 'Operations' },
-  { key: 'tech_safety', label: 'Tech Safety', group: 'discipline', activeClass: 'bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-700', dotColor: 'bg-rose-500', hoverClass: 'hover:border-rose-300 dark:hover:border-rose-700', match: d => d.discipline_name === 'HSE&S General' },
-  { key: 'rlmu', label: 'RLMU', group: 'rlmu', activeClass: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700', dotColor: 'bg-amber-600', hoverClass: 'hover:border-amber-300 dark:hover:border-amber-700', match: d => d.rlmu === 'RLMU' },
+  { key: 'tier1', label: 'Tier 1', activeClass: 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700', countBadgeClass: 'bg-orange-200/60 text-orange-800 dark:bg-orange-800/40 dark:text-orange-300', dotColor: 'bg-orange-500', hoverClass: 'hover:border-orange-300 dark:hover:border-orange-700', match: d => d.tier === 'Tier 1' },
+  { key: 'tier2', label: 'Tier 2', activeClass: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700', countBadgeClass: 'bg-blue-200/60 text-blue-800 dark:bg-blue-800/40 dark:text-blue-300', dotColor: 'bg-blue-500', hoverClass: 'hover:border-blue-300 dark:hover:border-blue-700', match: d => d.tier === 'Tier 2' },
+  { key: 'rlmu', label: 'RLMU', activeClass: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700', countBadgeClass: 'bg-amber-200/60 text-amber-800 dark:bg-amber-800/40 dark:text-amber-300', dotColor: 'bg-amber-600', hoverClass: 'hover:border-amber-300 dark:hover:border-amber-700', match: d => d.rlmu === 'RLMU' },
+  { key: 'elect', label: 'Elect', activeClass: 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700', countBadgeClass: 'bg-yellow-200/60 text-yellow-800 dark:bg-yellow-800/40 dark:text-yellow-300', dotColor: 'bg-yellow-500', hoverClass: 'hover:border-yellow-300 dark:hover:border-yellow-700', match: d => d.discipline_name === 'Electrical' },
+  { key: 'static', label: 'Static', activeClass: 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700', countBadgeClass: 'bg-teal-200/60 text-teal-800 dark:bg-teal-800/40 dark:text-teal-300', dotColor: 'bg-teal-500', hoverClass: 'hover:border-teal-300 dark:hover:border-teal-700', match: d => d.discipline_name === 'Mechanical - Static' },
+  { key: 'rotating', label: 'Rotating', activeClass: 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700', countBadgeClass: 'bg-cyan-200/60 text-cyan-800 dark:bg-cyan-800/40 dark:text-cyan-300', dotColor: 'bg-cyan-500', hoverClass: 'hover:border-cyan-300 dark:hover:border-cyan-700', match: d => d.discipline_name === 'Rotating Equipment' },
+  { key: 'inst', label: 'Inst', activeClass: 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700', countBadgeClass: 'bg-purple-200/60 text-purple-800 dark:bg-purple-800/40 dark:text-purple-300', dotColor: 'bg-purple-500', hoverClass: 'hover:border-purple-300 dark:hover:border-purple-700', match: d => d.discipline_name === 'Instrumentation' },
+  { key: 'ops', label: 'Ops', activeClass: 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700', countBadgeClass: 'bg-emerald-200/60 text-emerald-800 dark:bg-emerald-800/40 dark:text-emerald-300', dotColor: 'bg-emerald-500', hoverClass: 'hover:border-emerald-300 dark:hover:border-emerald-700', match: d => d.discipline_name === 'Operations' },
+  { key: 'tech_safety', label: 'Tech Safety', activeClass: 'bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-700', countBadgeClass: 'bg-rose-200/60 text-rose-800 dark:bg-rose-800/40 dark:text-rose-300', dotColor: 'bg-rose-500', hoverClass: 'hover:border-rose-300 dark:hover:border-rose-700', match: d => d.discipline_name === 'HSE&S General' },
 ];
 
 const DmsDocumentTypesTab: React.FC = () => {
@@ -455,43 +455,34 @@ const DmsDocumentTypesTab: React.FC = () => {
         </CardHeader>
         {/* Filter Chips */}
         <div className="flex flex-wrap items-center gap-1 px-6 pb-3">
-          {FILTER_CHIPS.map((chip, idx) => {
-            const prevGroup = idx > 0 ? FILTER_CHIPS[idx - 1].group : chip.group;
-            const showSeparator = idx > 0 && chip.group !== prevGroup;
-            const isFirstInGroup = idx === 0 || chip.group !== prevGroup;
+          {FILTER_CHIPS.map((chip) => {
             const isActive = activeFilters.has(chip.key);
             const matchCount = isActive ? docTypes.filter(chip.match).length : 0;
-            const groupLabel = chip.group === 'tier' ? 'Tier' : chip.group === 'discipline' ? 'Discipline' : 'RLMU';
 
             return (
-              <React.Fragment key={chip.key}>
-                {showSeparator && (
-                  <div className="h-3.5 w-px bg-border mx-1" />
+              <button
+                key={chip.key}
+                type="button"
+                onClick={() => toggleFilter(chip.key)}
+                className={cn(
+                  "px-2 py-0.5 rounded-full text-[11px] font-medium border transition-all duration-150 flex items-center gap-0.5",
+                  isActive
+                    ? `${chip.activeClass} shadow-sm`
+                    : `bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground ${chip.hoverClass}`
                 )}
-                {isFirstInGroup && (
-                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium mr-0.5">{groupLabel}</span>
+              >
+                <span className={cn(
+                  "rounded-full shrink-0 h-1 w-1",
+                  chip.dotColor,
+                  isActive && "opacity-0 w-0"
+                )} />
+                {chip.label}
+                {isActive && (
+                  <span className={cn("ml-0.5 px-1.5 py-px rounded-full text-[10px] font-semibold leading-none tabular-nums", chip.countBadgeClass)}>
+                    {matchCount}
+                  </span>
                 )}
-                <button
-                  type="button"
-                  onClick={() => toggleFilter(chip.key)}
-                  className={cn(
-                    "px-2 py-0.5 rounded-full text-[11px] font-medium border transition-all duration-150 flex items-center gap-1",
-                    isActive
-                      ? `${chip.activeClass} shadow-sm`
-                      : `bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground ${chip.hoverClass}`
-                  )}
-                >
-                  <span className={cn(
-                    "rounded-full shrink-0",
-                    chip.dotColor,
-                    isActive ? "h-1.5 w-1.5" : "h-1 w-1"
-                  )} />
-                  {chip.label}
-                  {isActive && (
-                    <span className="ml-0.5 px-1 py-px rounded-full bg-current/10 text-[9px] font-normal leading-none">{matchCount}</span>
-                  )}
-                </button>
-              </React.Fragment>
+              </button>
             );
           })}
           {activeFilters.size > 0 && (
