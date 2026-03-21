@@ -365,14 +365,14 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
         </div>
       </div>
 
-      {/* Add / Edit Discipline Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="pb-4 border-b">
-            <DialogTitle className="text-lg font-semibold">{editingItem ? 'Edit Discipline' : 'Add Discipline'}</DialogTitle>
-            <DialogDescription>{editingItem ? 'Modify the discipline details below.' : 'Fill in the details to create a new discipline code.'}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+      {/* Add / Edit Discipline Sheet */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="right" className="sm:max-w-md z-[150] flex flex-col">
+          <SheetHeader className="pb-4 border-b">
+            <SheetTitle className="text-lg font-semibold">{editingItem ? 'Edit Discipline' : 'Add Discipline'}</SheetTitle>
+            <SheetDescription>{editingItem ? 'Modify the discipline details below.' : 'Fill in the details to create a new discipline code.'}</SheetDescription>
+          </SheetHeader>
+          <div className="space-y-4 py-4 flex-1 overflow-y-auto">
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Code <span className="text-destructive">*</span></Label>
               <Input value={formCode} onChange={e => setFormCode(e.target.value.toUpperCase())} placeholder="e.g. EA" maxLength={10} className="font-mono" />
@@ -389,15 +389,15 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
               <Switch checked={formIsActive} onCheckedChange={setFormIsActive} />
             </div>
           </div>
-          <DialogFooter className="pt-4 border-t gap-2">
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isSaving}>Cancel</Button>
+          <SheetFooter className="pt-4 border-t gap-2">
+            <Button variant="outline" onClick={() => setSheetOpen(false)} disabled={isSaving}>Cancel</Button>
             <Button onClick={handleSave} disabled={isSaving} className="min-w-[100px]">
               {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {editingItem ? 'Save Changes' : 'Create Discipline'}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
