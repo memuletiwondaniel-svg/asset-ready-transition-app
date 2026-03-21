@@ -184,7 +184,7 @@ const MultiSelectDropdown: React.FC<{
   );
 };
 
-type FilterKey = 'tier1' | 'tier2' | 'rlmu' | 'elect' | 'static' | 'rotating' | 'inst' | 'ops' | 'tech_safety';
+type FilterKey = 'tier1' | 'tier2' | 'rlmu' | 'elect' | 'static' | 'rotating' | 'inst' | 'ops' | 'tech_safety' | 'vendor';
 
 interface FilterChip {
   key: FilterKey;
