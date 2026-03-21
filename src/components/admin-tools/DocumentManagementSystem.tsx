@@ -185,9 +185,6 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
         />
         <div className="flex items-center justify-between mt-3">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={onBack} className="h-10 w-10">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg">
               <FileText className="w-6 h-6 text-white" />
             </div>

@@ -478,7 +478,7 @@ const DmsDocumentTypesTab: React.FC = () => {
                 )} />
                 {chip.label}
                 {isActive && (
-                  <span className={cn("ml-0.5 px-1.5 py-px rounded-full text-[10px] font-semibold leading-none tabular-nums", chip.countBadgeClass)}>
+                  <span className={cn("ml-1 px-1.5 py-px rounded-full text-[10px] font-semibold leading-none tabular-nums border", chip.countBadgeClass)}>
                     {matchCount}
                   </span>
                 )}
