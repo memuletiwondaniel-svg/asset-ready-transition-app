@@ -338,13 +338,13 @@ const DmsDocumentTypesTab: React.FC = () => {
       (d.discipline_name || '').toLowerCase().includes(q);
   });
 
-  // Apply active filter chips
+  // Apply active filter chips (pass secondaryMap for vendor doc matching)
   const chipFiltered = activeFilters.size === 0
     ? filtered
     : filtered.filter(d => {
         return Array.from(activeFilters).some(key => {
           const chip = FILTER_CHIPS.find(c => c.key === key);
-          return chip ? chip.match(d) : false;
+          return chip ? chip.match(d, secondaryMap) : false;
         });
       });
 
