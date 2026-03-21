@@ -167,9 +167,24 @@ const MultiSelectDropdown: React.FC<{
   );
 };
 
+type FilterKey = 'tier1' | 'tier2' | 'elect' | 'static' | 'rotating' | 'inst' | 'ops' | 'tech_safety' | 'rlmu';
+
+const FILTER_CHIPS: { key: FilterKey; label: string; match: (d: DocTypeRow) => boolean }[] = [
+  { key: 'tier1', label: 'Tier 1', match: d => d.tier === 'Tier 1' },
+  { key: 'tier2', label: 'Tier 2', match: d => d.tier === 'Tier 2' },
+  { key: 'elect', label: 'Elect', match: d => d.discipline_name === 'Electrical' },
+  { key: 'static', label: 'Static', match: d => d.discipline_name === 'Mechanical - Static' },
+  { key: 'rotating', label: 'Rotating', match: d => d.discipline_name === 'Rotating Equipment' },
+  { key: 'inst', label: 'Inst', match: d => d.discipline_name === 'Instrumentation' },
+  { key: 'ops', label: 'Ops', match: d => d.discipline_name === 'Operations' },
+  { key: 'tech_safety', label: 'Tech Safety', match: d => d.discipline_name === 'HSE&S General' },
+  { key: 'rlmu', label: 'RLMU', match: d => d.rlmu === 'RLMU' },
+];
+
 const DmsDocumentTypesTab: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DocTypeRow | null>(null);
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS);
@@ -275,17 +290,36 @@ const DmsDocumentTypesTab: React.FC = () => {
       (d.discipline_name || '').toLowerCase().includes(q);
   });
 
+  // Apply active filter chips
+  const chipFiltered = activeFilters.size === 0
+    ? filtered
+    : filtered.filter(d => {
+        return Array.from(activeFilters).some(key => {
+          const chip = FILTER_CHIPS.find(c => c.key === key);
+          return chip ? chip.match(d) : false;
+        });
+      });
+
   const isDisciplineVisible = columns.some(
     c => (c.id === 'discipline_code' || c.id === 'discipline_name') && c.visible
   );
 
   const displayRows = isDisciplineVisible
-    ? filtered
-    : filtered.filter((item, index, arr) =>
+    ? chipFiltered
+    : chipFiltered.filter((item, index, arr) =>
         arr.findIndex(d => d.code === item.code && d.document_name === item.document_name) === index
       );
 
   const visibleColumns = columns.filter(c => c.visible);
+
+  const toggleFilter = (key: FilterKey) => {
+    setActiveFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   const toggleColumn = (colId: string) => {
     setColumns(prev => prev.map(c => c.id === colId ? { ...c, visible: !c.visible } : c));
@@ -409,7 +443,35 @@ const DmsDocumentTypesTab: React.FC = () => {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0 max-h-[calc(100vh-280px)] overflow-auto">
+        {/* Filter Chips */}
+        <div className="flex flex-wrap items-center gap-1.5 px-6 pb-3">
+          {FILTER_CHIPS.map(chip => (
+            <button
+              key={chip.key}
+              type="button"
+              onClick={() => toggleFilter(chip.key)}
+              className={cn(
+                "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+                activeFilters.has(chip.key)
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+              )}
+            >
+              {chip.label}
+            </button>
+          ))}
+          {activeFilters.size > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveFilters(new Set())}
+              className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              <X className="h-3 w-3" />
+              Clear
+            </button>
+          )}
+        </div>
+        <CardContent className="p-0 max-h-[calc(100vh-320px)] overflow-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
