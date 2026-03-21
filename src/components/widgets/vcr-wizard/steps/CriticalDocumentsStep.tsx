@@ -43,8 +43,9 @@ const RLMU_STATUS_CLS: Record<string, string> = {
   approved: 'bg-emerald-500/10 text-emerald-600',
 };
 
-export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vcrId }) => {
+export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vcrId, projectCode, plantCode, handoverPlanId }) => {
   const queryClient = useQueryClient();
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [tierFilter, setTierFilter] = useState<'all' | 'tier_1' | 'tier_2'>('all');
