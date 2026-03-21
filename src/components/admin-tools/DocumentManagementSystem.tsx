@@ -277,10 +277,10 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
                       <TableHeader>
                         <TableRow className="hover:bg-transparent">
                           <TableHead className="w-12 text-xs font-medium uppercase tracking-wider text-muted-foreground">#</TableHead>
-                          <TableHead className="w-24 text-xs font-medium uppercase tracking-wider text-muted-foreground">Code</TableHead>
-                          <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Discipline Name</TableHead>
-                          <TableHead className="w-20 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                          <TableHead className="w-24 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Actions</TableHead>
+                          <TableHead className="w-24 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('code')}>Code<SortIcon col="code" /></TableHead>
+                          <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('name')}>Discipline Name<SortIcon col="name" /></TableHead>
+                          <TableHead className="w-20 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('is_active')}>Status<SortIcon col="is_active" /></TableHead>
+                          <TableHead className="w-16 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
