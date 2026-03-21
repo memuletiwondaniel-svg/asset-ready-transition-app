@@ -698,6 +698,30 @@ const DmsDocumentTypesTab: React.FC = () => {
               placeholder="Select disciplines..."
             />
 
+            {/* Row 4b: Secondary Discipline Classification (shown for vendor/non-standard discipline codes) */}
+            {isVendorDiscipline(formDisciplines[0] || null) && (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium">Secondary Discipline Classification</Label>
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-amber-600 border-amber-300 dark:text-amber-400 dark:border-amber-700">
+                    Vendor
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Tag this vendor document with applicable engineering disciplines for accurate filtering
+                </p>
+                <MultiSelectDropdown
+                  label=""
+                  options={disciplineOptions
+                    .filter(d => !isVendorDiscipline(d.code))
+                    .map(d => ({ value: d.code, label: d.code, sublabel: d.name }))}
+                  selected={formSecondaryDisciplines}
+                  onChange={setFormSecondaryDisciplines}
+                  placeholder="Select applicable disciplines..."
+                />
+              </div>
+            )}
+
             {/* Row 5: Acceptable Status (multi-select) */}
             <MultiSelectDropdown
               label="Acceptable Status"
