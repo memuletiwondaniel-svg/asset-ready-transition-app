@@ -443,7 +443,35 @@ const DmsDocumentTypesTab: React.FC = () => {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0 max-h-[calc(100vh-280px)] overflow-auto">
+        {/* Filter Chips */}
+        <div className="flex flex-wrap items-center gap-1.5 px-6 pb-3">
+          {FILTER_CHIPS.map(chip => (
+            <button
+              key={chip.key}
+              type="button"
+              onClick={() => toggleFilter(chip.key)}
+              className={cn(
+                "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+                activeFilters.has(chip.key)
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+              )}
+            >
+              {chip.label}
+            </button>
+          ))}
+          {activeFilters.size > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveFilters(new Set())}
+              className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              <X className="h-3 w-3" />
+              Clear
+            </button>
+          )}
+        </div>
+        <CardContent className="p-0 max-h-[calc(100vh-320px)] overflow-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
