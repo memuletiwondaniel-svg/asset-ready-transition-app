@@ -169,16 +169,16 @@ const MultiSelectDropdown: React.FC<{
 
 type FilterKey = 'tier1' | 'tier2' | 'elect' | 'static' | 'rotating' | 'inst' | 'ops' | 'tech_safety' | 'rlmu';
 
-const FILTER_CHIPS: { key: FilterKey; label: string; match: (d: DocTypeRow) => boolean }[] = [
-  { key: 'tier1', label: 'Tier 1', match: d => d.tier === 'Tier 1' },
-  { key: 'tier2', label: 'Tier 2', match: d => d.tier === 'Tier 2' },
-  { key: 'elect', label: 'Elect', match: d => d.discipline_name === 'Electrical' },
-  { key: 'static', label: 'Static', match: d => d.discipline_name === 'Mechanical - Static' },
-  { key: 'rotating', label: 'Rotating', match: d => d.discipline_name === 'Rotating Equipment' },
-  { key: 'inst', label: 'Inst', match: d => d.discipline_name === 'Instrumentation' },
-  { key: 'ops', label: 'Ops', match: d => d.discipline_name === 'Operations' },
-  { key: 'tech_safety', label: 'Tech Safety', match: d => d.discipline_name === 'HSE&S General' },
-  { key: 'rlmu', label: 'RLMU', match: d => d.rlmu === 'RLMU' },
+const FILTER_CHIPS: { key: FilterKey; label: string; activeClass: string; match: (d: DocTypeRow) => boolean }[] = [
+  { key: 'tier1', label: 'Tier 1', activeClass: 'bg-orange-500 text-white border-orange-500', match: d => d.tier === 'Tier 1' },
+  { key: 'tier2', label: 'Tier 2', activeClass: 'bg-blue-500 text-white border-blue-500', match: d => d.tier === 'Tier 2' },
+  { key: 'elect', label: 'Elect', activeClass: 'bg-yellow-500 text-white border-yellow-500', match: d => d.discipline_name === 'Electrical' },
+  { key: 'static', label: 'Static', activeClass: 'bg-teal-500 text-white border-teal-500', match: d => d.discipline_name === 'Mechanical - Static' },
+  { key: 'rotating', label: 'Rotating', activeClass: 'bg-cyan-500 text-white border-cyan-500', match: d => d.discipline_name === 'Rotating Equipment' },
+  { key: 'inst', label: 'Inst', activeClass: 'bg-purple-500 text-white border-purple-500', match: d => d.discipline_name === 'Instrumentation' },
+  { key: 'ops', label: 'Ops', activeClass: 'bg-emerald-500 text-white border-emerald-500', match: d => d.discipline_name === 'Operations' },
+  { key: 'tech_safety', label: 'Tech Safety', activeClass: 'bg-rose-500 text-white border-rose-500', match: d => d.discipline_name === 'HSE&S General' },
+  { key: 'rlmu', label: 'RLMU', activeClass: 'bg-amber-600 text-white border-amber-600', match: d => d.rlmu === 'RLMU' },
 ];
 
 const DmsDocumentTypesTab: React.FC = () => {
