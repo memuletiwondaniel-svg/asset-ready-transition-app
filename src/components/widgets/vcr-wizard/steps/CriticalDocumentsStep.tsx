@@ -293,6 +293,15 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CriticalDocsWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        vcrId={vcrId}
+        projectCode={projectCode}
+        plantCode={plantCode}
+        handoverPlanId={handoverPlanId}
+      />
     </div>
   );
 };
