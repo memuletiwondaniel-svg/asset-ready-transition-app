@@ -455,43 +455,34 @@ const DmsDocumentTypesTab: React.FC = () => {
         </CardHeader>
         {/* Filter Chips */}
         <div className="flex flex-wrap items-center gap-1 px-6 pb-3">
-          {FILTER_CHIPS.map((chip, idx) => {
-            const prevGroup = idx > 0 ? FILTER_CHIPS[idx - 1].group : chip.group;
-            const showSeparator = idx > 0 && chip.group !== prevGroup;
-            const isFirstInGroup = idx === 0 || chip.group !== prevGroup;
+          {FILTER_CHIPS.map((chip) => {
             const isActive = activeFilters.has(chip.key);
             const matchCount = isActive ? docTypes.filter(chip.match).length : 0;
-            const groupLabel = chip.group === 'tier' ? 'Tier' : chip.group === 'discipline' ? 'Discipline' : 'RLMU';
 
             return (
-              <React.Fragment key={chip.key}>
-                {showSeparator && (
-                  <div className="h-3.5 w-px bg-border mx-1" />
+              <button
+                key={chip.key}
+                type="button"
+                onClick={() => toggleFilter(chip.key)}
+                className={cn(
+                  "px-2 py-0.5 rounded-full text-[11px] font-medium border transition-all duration-150 flex items-center gap-0.5",
+                  isActive
+                    ? `${chip.activeClass} shadow-sm`
+                    : `bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground ${chip.hoverClass}`
                 )}
-                {isFirstInGroup && (
-                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium mr-0.5">{groupLabel}</span>
+              >
+                <span className={cn(
+                  "rounded-full shrink-0 h-1 w-1",
+                  chip.dotColor,
+                  isActive && "opacity-0 w-0"
+                )} />
+                {chip.label}
+                {isActive && (
+                  <span className={cn("ml-0.5 px-1.5 py-px rounded-full text-[10px] font-semibold leading-none tabular-nums", chip.countBadgeClass)}>
+                    {matchCount}
+                  </span>
                 )}
-                <button
-                  type="button"
-                  onClick={() => toggleFilter(chip.key)}
-                  className={cn(
-                    "px-2 py-0.5 rounded-full text-[11px] font-medium border transition-all duration-150 flex items-center gap-1",
-                    isActive
-                      ? `${chip.activeClass} shadow-sm`
-                      : `bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground ${chip.hoverClass}`
-                  )}
-                >
-                  <span className={cn(
-                    "rounded-full shrink-0",
-                    chip.dotColor,
-                    isActive ? "h-1.5 w-1.5" : "h-1 w-1"
-                  )} />
-                  {chip.label}
-                  {isActive && (
-                    <span className="ml-0.5 px-1 py-px rounded-full bg-current/10 text-[9px] font-normal leading-none">{matchCount}</span>
-                  )}
-                </button>
-              </React.Fragment>
+              </button>
             );
           })}
           {activeFilters.size > 0 && (
