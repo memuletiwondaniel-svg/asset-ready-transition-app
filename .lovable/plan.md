@@ -1,101 +1,62 @@
 
 
-# Critical Documents Wizard — Integrated with ORSH AI Agent
+# Fix Overly Permissive RLS Policies
 
-## Overview
+## Problem
+79 RLS policies use `USING (true)` or `WITH CHECK (true)` on write operations (INSERT/UPDATE/DELETE), allowing any authenticated user (or even `public` in some cases) to modify data without role verification.
 
-Replace the current simple "Add Document" CTA in VCR Plan Step 4 (Critical Documents) with a 3-step wizard that intelligently guides users through document identification, leveraging the DMS backend tables and ORSH AI Agent integration.
+## Existing Security Functions
+The database already has these security definer functions:
+- `user_is_admin(user_uuid uuid)` — checks `user_roles` for admin role
+- `user_has_role(user_uuid uuid, role_name text)` — checks `user_roles` for any role
+- `has_permission(_user_id uuid, _permission app_permission)` — checks `role_permissions` via profiles
 
-## Current State
+## Strategy
 
-- **CriticalDocumentsStep.tsx** uses a flat list with a side-sheet "Add Document" form pulling from `p2a_vcr_doc_catalog`
-- **DmsDocumentTypesTab.tsx** has 989 document types (36 Tier 1, 66 Tier 2, 887 untiered) with multi-category filter chips (Tier, Discipline, Vendor)
-- VCR systems are linked via `p2a_handover_point_systems` → `p2a_systems`
-- Handover plans store `project_code` and `plant_code`
-- The ORSH AI Agent (Bob CoPilot + Document Specialist) is available via the `ai-chat` edge function
+Categorize the 79 policies into tiers and apply the appropriate check:
 
-## Architecture
+### Tier 1 — Admin-only configuration tables (DMS, ORA catalog)
+Restrict to admin OR moderator. These are reference/master data tables.
 
-```text
-CriticalDocumentsStep.tsx
-  └── [Empty state / toolbar CTA]
-        └── CriticalDocsWizard.tsx (new — 3-step dialog)
-              ├── Step 1: ProjectContextStep  (verify codes + select DMS platforms)
-              ├── Step 2: DocumentSelectionStep (system-by-system doc picker)
-              └── Step 3: ReviewConfirmStep    (summary + confirm)
-```
+**Tables (30 policies):** `dms_disciplines`, `dms_document_types`, `dms_document_type_secondary_disciplines`, `dms_numbering_segments`, `dms_originators`, `dms_plants`, `dms_projects`, `dms_sites`, `dms_status_codes`, `dms_units`, `ora_activity_catalog`, `ora_plan_templates`, `ora_training_system_mappings`, `project_hub_region`, `project_locations`
 
-## Detailed Steps
+**Check:** `public.user_is_admin(auth.uid()) OR public.user_has_role(auth.uid(), 'moderator')`
 
-### Step 1 — Project Context & DMS Configuration
+### Tier 2 — Permission-gated operational tables (P2A/VCR workflow)
+Restrict to users with the relevant `app_permission`.
 
-**Pre-populated fields** (read from `p2a_handover_plans` via the VCR's parent plan):
-- **Project Code** — dropdown from `projects` table, pre-selected based on plan's `project_code`
-- **Plant Code** — dropdown from `plant` table, pre-selected based on plan's `plant_code`
+| Tables | Permission |
+|--------|-----------|
+| `p2a_vcr_critical_docs`, `p2a_vcr_deliverables`, `p2a_vcr_documentation`, `p2a_vcr_item_overrides`, `p2a_vcr_logsheets`, `p2a_vcr_operational_registers`, `p2a_vcr_procedures`, `p2a_vcr_register_selections`, `p2a_vcr_relationships`, `p2a_vcr_training`, `vcr_discipline_assurance`, `vcr_item_delivering_parties`, `p2a_itp_activities` | `manage_p2a` |
+| `p2a_approver_history`, `p2a_audit_trail` | `manage_p2a` (INSERT only, keep append-only) |
+| `outstanding_work_items` | `manage_p2a` |
+| `orm_notifications`, `orm_plans` | `manage_orm` |
+| `pac_prerequisite_delivering_parties`, `pac_prerequisite_receiving_parties` | `manage_p2a` |
+| `pssr_approvers`, `pssr_selected_ati_scopes`, `pssr_walkdown_attendees` | `create_pssr` |
+| `sof_approvers`, `sof_certificates` | `approve_sof` |
 
-**DMS Platform selection** (multi-select checkboxes):
-- Options: Assai, Wrench, Documentum, SharePoint, Aconex, ProArc, Other
-- Stored as metadata on the VCR or handover plan for AI agent context
+### Tier 3 — System/audit tables
+- `audit_logs` INSERT — keep `WITH CHECK (true)` for authenticated (this is correct; audit logs must always be writable)
+- `orp_activity_log`, `orp_approval_history` — system INSERT by `public` role — these are called from edge functions with service_role, keep as-is but change role target from `public` to `service_role`
+- `tenants` — already scoped to `service_role`, no change needed
 
-**UI**: Clean fieldset layout with section headers, pre-populated values highlighted with a subtle "auto-detected" badge. A guidance banner at the top explains the workflow.
+### Special case: `public` role policies
+Several policies target `{public}` role (unauthenticated). These are the most critical to fix:
+- `orm_notifications`, `orm_plans`, `orp_activity_log`, `orp_approval_history`, `p2a_audit_trail` — change to `authenticated` + permission check (or `service_role` for system-generated inserts)
+- `p2a_vcr_deliverables`, `p2a_vcr_documentation`, `p2a_vcr_operational_registers`, `p2a_vcr_procedures`, `p2a_vcr_training` — change from `public` to `authenticated` + `manage_p2a` check
+- `pssr_approvers`, `pssr_walkdown_attendees`, `sof_approvers`, `sof_certificates` — change from `public` to `authenticated` + permission check
 
-### Step 2 — Document Selection (System-by-System)
+## Implementation
 
-This is the core step. Key design decisions:
+Single migration file that:
+1. Drops each permissive policy by name
+2. Re-creates it with the correct `USING` / `WITH CHECK` clause and correct role target
+3. Ensures `search_path` is set on any referenced function
 
-**System-by-system breakdown**:
-- Left sidebar shows the VCR's linked systems (from `p2a_handover_point_systems`)
-- User selects documents per system, with a tab/accordion for each system
-- A "Select All Systems" option for documents common to all systems
+Approximately 75 DROP + CREATE POLICY statements in one migration. The `audit_logs` INSERT policy and `tenants` service_role policy remain unchanged.
 
-**Document table** (reuses DMS filter logic from `DmsDocumentTypesTab`):
-- Pulls from `dms_document_types` table (not the old `p2a_vcr_doc_catalog`)
-- **Default filters ON**: Tier 1, Tier 2, Process (PX), Electrical (EA), Instrumentation (IN), Static equipment disciplines, Rotating equipment disciplines
-- Same multi-category filter chip bar (Tier / Discipline / Vendor) with AND logic
-- Search functionality
-- Multi-select checkboxes on each row
-- Selected count badge per system
-
-**AI Enhancement** (ORSH Document Agent integration):
-- An "AI Suggest" button that calls the ORSH Document Specialist agent to recommend relevant documents based on the system type (hydrocarbon vs non-hydrocarbon), discipline context, and VCR scope
-- AI suggestions appear as pre-checked rows with a sparkle indicator — user can accept/reject
-
-### Step 3 — Review & Confirm
-
-- Grouped summary: documents organized by system
-- Total count badge, breakdown by tier
-- Ability to remove individual selections before confirming
-- "Confirm & Save" bulk-inserts into `p2a_vcr_critical_docs` with system linkage
-
-## Database Changes
-
-1. **Add `system_id` column** to `p2a_vcr_critical_docs` — nullable UUID referencing `p2a_systems(id)`, to track which system a document applies to
-2. **Add `dms_document_type_id` column** to `p2a_vcr_critical_docs` — nullable UUID referencing `dms_document_types(id)`, linking directly to the DMS master list instead of the old catalog
-3. **Add `dms_platforms` column** (text array) to `p2a_handover_plans` — stores selected DMS platforms for AI context
-
-## New Files
-
-| File | Purpose |
-|------|---------|
-| `src/components/widgets/vcr-wizard/steps/critical-docs/CriticalDocsWizard.tsx` | Main 3-step wizard shell using existing `WizardShell` or a simpler horizontal stepper |
-| `src/components/widgets/vcr-wizard/steps/critical-docs/ProjectContextStep.tsx` | Step 1 — project/plant verification + DMS platform selection |
-| `src/components/widgets/vcr-wizard/steps/critical-docs/DocumentSelectionStep.tsx` | Step 2 — system-by-system document picker with DMS filters |
-| `src/components/widgets/vcr-wizard/steps/critical-docs/ReviewConfirmStep.tsx` | Step 3 — review summary with remove capability |
-
-## Modified Files
-
-| File | Change |
-|------|--------|
-| `CriticalDocumentsStep.tsx` | Replace "Add Document" CTA with wizard launcher; keep existing list view for already-selected docs |
-| `VCRExecutionPlanWizard.tsx` | Pass `projectCode` and `plantCode` down to the critical docs step |
-
-## UI/UX Design Approach
-
-- **Wizard dialog**: Fixed `max-w-5xl` / `h-[85vh]` matching existing wizard patterns
-- **Horizontal stepper** at top (3 dots with labels) — clean, minimal, progress-aware
-- **System sidebar** in Step 2: vertical pill tabs on left, document table on right (master-detail)
-- **Filter bar**: Reuse the exact category-label-above-chips pattern from DMS admin
-- **AI suggestions**: Subtle sparkle icon + "AI Recommended" badge on suggested rows, with a floating "Accept All Suggestions" action bar
-- **Empty states**: Contextual guidance per system when no documents selected yet
-- **Responsive**: On mobile, system tabs collapse to a dropdown selector (same pattern as VCR detail overlay)
+## Risk Mitigation
+- All checks use existing `SECURITY DEFINER` functions (`user_is_admin`, `user_has_role`, `has_permission`) — no recursive RLS risk
+- SELECT policies are not touched — read access remains unchanged
+- Edge functions using `service_role` key bypass RLS entirely, so system-generated inserts continue working
 
