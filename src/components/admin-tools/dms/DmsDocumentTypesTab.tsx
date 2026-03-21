@@ -32,6 +32,19 @@ interface DocTypeRow {
   display_order: number;
 }
 
+interface SecondaryDiscipline {
+  id: string;
+  document_type_id: string;
+  discipline_code: string;
+  discipline_name: string | null;
+}
+
+// Check if a discipline code is a vendor/non-standard code (ZV or 3-char alphanumeric)
+const isVendorDiscipline = (code: string | null): boolean => {
+  if (!code) return false;
+  return code === 'ZV' || /^[A-Z0-9]{3,}$/.test(code);
+};
+
 interface DisciplineOption {
   id: string;
   code: string;
