@@ -439,6 +439,8 @@ const DmsConfigurationTab: React.FC = () => {
               dms_document_types: { code: '2365',  meaning: 'Process Engineering Flow Scheme' },
               dms_units:          { code: 'U13000', meaning: 'Dehydration Unit' },
             };
+            // Labels that should NOT map to dms_document_types even though they contain "document"
+            const SEQUENCE_LIKE_LABELS = ['document no', 'document number', 'doc no', 'doc number'];
             const LABEL_TO_TABLE: Record<string, string> = {
               project: 'dms_projects',
               originator: 'dms_originators',
@@ -448,24 +450,36 @@ const DmsConfigurationTab: React.FC = () => {
               discipline: 'dms_disciplines',
               document: 'dms_document_types',
             };
-            const LABEL_FALLBACKS: Record<string, { code: string; meaning: string }> = {
-              sequence: { code: '20502', meaning: 'Sequence Number' },
-              revision: { code: '001', meaning: 'Revision / Sub-Sequence' },
-            };
-            let seqUsed = false;
+            let seqCounter = 0;
             const exampleSegments = activeSegments.map(s => {
-              const table = s.source_table || Object.entries(LABEL_TO_TABLE).find(
-                ([key]) => s.label.toLowerCase().includes(key)
-              )?.[1];
+              const lbl = s.label.toLowerCase();
+              
+              // If segment has example_value from DB, prefer that
+              if (s.example_value) {
+                const table = s.source_table;
+                const entry = table ? EXAMPLE_CODES[table] : null;
+                const meaning = entry?.meaning || s.label;
+                return { id: s.id, code: s.example_value, meaning, separator: '-' };
+              }
+              
+              // Check if this is a sequence-like label (e.g. "Document No.") that should NOT map to document type
+              const isSequenceLike = SEQUENCE_LIKE_LABELS.some(sl => lbl.includes(sl));
+              
+              // Resolve source table — use DB source_table first, then label-based fallback (excluding sequence-like labels)
+              const table = s.source_table || (!isSequenceLike ? Object.entries(LABEL_TO_TABLE).find(
+                ([key]) => lbl.includes(key)
+              )?.[1] : null);
+              
               const entry = table ? EXAMPLE_CODES[table] : null;
               if (entry) return { id: s.id, code: entry.code, meaning: entry.meaning, separator: '-' };
-              const lbl = s.label.toLowerCase();
+              
               if (lbl.includes('revision') || lbl.includes('sub-seq')) {
                 return { id: s.id, code: '001', meaning: 'Revision / Sub-Sequence', separator: '-' };
               }
-              if (lbl.includes('sequence') && !seqUsed) {
-                seqUsed = true;
-                return { id: s.id, code: '20502', meaning: 'Sequence Number', separator: '-' };
+              if (lbl.includes('sequence') || isSequenceLike) {
+                seqCounter++;
+                const code = seqCounter === 1 ? '20502' : String(seqCounter * 100 + 1).padStart(5, '0');
+                return { id: s.id, code, meaning: s.label, separator: '-' };
               }
               return { id: s.id, code: '001', meaning: s.label, separator: '-' };
             });
