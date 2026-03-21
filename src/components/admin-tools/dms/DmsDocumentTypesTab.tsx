@@ -218,8 +218,14 @@ const FILTER_CHIPS: FilterChip[] = [
   { key: 'vendor', label: 'Vendor', category: 'vendor', disciplineName: 'Vendor', activeClass: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-700', countBadgeClass: 'bg-slate-200/60 text-slate-800 dark:bg-slate-800/40 dark:text-slate-300', dotColor: 'bg-slate-500', hoverClass: 'hover:border-slate-300 dark:hover:border-slate-700', match: (d) => d.discipline_code === 'ZV' || isVendorDiscipline(d.discipline_code) },
 ];
 
-// Category display order for rendering with separators
-const CATEGORY_ORDER: FilterCategory[] = ['tier', 'other', 'discipline', 'vendor'];
+// Category display order and labels for rendering
+const CATEGORY_ORDER: FilterCategory[] = ['tier', 'discipline', 'other', 'vendor'];
+const CATEGORY_LABELS: Record<FilterCategory, string> = {
+  tier: 'Tier',
+  discipline: 'Discipline',
+  vendor: 'Vendor',
+  other: '',
+};
 
 const DmsDocumentTypesTab: React.FC = () => {
   const queryClient = useQueryClient();
@@ -600,14 +606,24 @@ const DmsDocumentTypesTab: React.FC = () => {
           </div>
         </CardHeader>
         {/* Filter Chips — grouped by category with separators */}
-        <div className="flex flex-wrap items-center gap-1 px-6 pb-3">
+        <div className="flex flex-wrap items-center gap-1.5 px-6 pb-3">
           {CATEGORY_ORDER.map((cat, catIdx) => {
             const chipsInCat = FILTER_CHIPS.filter(c => c.category === cat);
             if (chipsInCat.length === 0) return null;
+            const catLabel = CATEGORY_LABELS[cat];
+            const hasActiveInCat = chipsInCat.some(c => activeFilters.has(c.key));
             return (
               <React.Fragment key={cat}>
                 {catIdx > 0 && (
-                  <span className="w-px h-4 bg-border/60 mx-1 shrink-0" />
+                  <span className="w-px h-5 bg-border mx-1.5 shrink-0" />
+                )}
+                {catLabel && (
+                  <span className={cn(
+                    "text-[10px] font-semibold uppercase tracking-wider mr-0.5 select-none",
+                    hasActiveInCat ? "text-foreground/70" : "text-muted-foreground/50"
+                  )}>
+                    {catLabel}
+                  </span>
                 )}
                 {chipsInCat.map((chip) => {
                   const isActive = activeFilters.has(chip.key);
