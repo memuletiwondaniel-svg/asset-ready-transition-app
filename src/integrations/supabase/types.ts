@@ -4298,6 +4298,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          dms_platforms: string[] | null
           id: string
           last_rejected_at: string | null
           last_rejected_by_name: string | null
@@ -4316,6 +4317,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          dms_platforms?: string[] | null
           id?: string
           last_rejected_at?: string | null
           last_rejected_by_name?: string | null
@@ -4334,6 +4336,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          dms_platforms?: string[] | null
           id?: string
           last_rejected_at?: string | null
           last_rejected_by_name?: string | null
@@ -5110,6 +5113,7 @@ export type Database = {
           created_at: string
           discipline: string | null
           display_order: number
+          dms_document_type_id: string | null
           doc_code: string | null
           handover_point_id: string
           id: string
@@ -5118,6 +5122,7 @@ export type Database = {
           rlmu_required: boolean
           rlmu_status: string | null
           status: string
+          system_id: string | null
           target_date: string | null
           tier: string | null
           title: string | null
@@ -5128,6 +5133,7 @@ export type Database = {
           created_at?: string
           discipline?: string | null
           display_order?: number
+          dms_document_type_id?: string | null
           doc_code?: string | null
           handover_point_id: string
           id?: string
@@ -5136,6 +5142,7 @@ export type Database = {
           rlmu_required?: boolean
           rlmu_status?: string | null
           status?: string
+          system_id?: string | null
           target_date?: string | null
           tier?: string | null
           title?: string | null
@@ -5146,6 +5153,7 @@ export type Database = {
           created_at?: string
           discipline?: string | null
           display_order?: number
+          dms_document_type_id?: string | null
           doc_code?: string | null
           handover_point_id?: string
           id?: string
@@ -5154,6 +5162,7 @@ export type Database = {
           rlmu_required?: boolean
           rlmu_status?: string | null
           status?: string
+          system_id?: string | null
           target_date?: string | null
           tier?: string | null
           title?: string | null
@@ -5165,6 +5174,20 @@ export type Database = {
             columns: ["catalog_id"]
             isOneToOne: false
             referencedRelation: "p2a_vcr_doc_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_critical_docs_dms_document_type_id_fkey"
+            columns: ["dms_document_type_id"]
+            isOneToOne: false
+            referencedRelation: "dms_document_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_vcr_critical_docs_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_systems"
             referencedColumns: ["id"]
           },
         ]
