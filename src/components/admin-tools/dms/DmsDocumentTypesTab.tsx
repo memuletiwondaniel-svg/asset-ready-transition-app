@@ -184,7 +184,7 @@ const MultiSelectDropdown: React.FC<{
   );
 };
 
-type FilterKey = 'tier1' | 'tier2' | 'rlmu' | 'elect' | 'static' | 'rotating' | 'inst' | 'ops' | 'tech_safety' | 'vendor';
+type FilterKey = 'tier1' | 'tier2' | 'rlmu' | 'process' | 'elect' | 'static' | 'rotating' | 'inst' | 'ops' | 'tech_safety' | 'vendor';
 
 type FilterCategory = 'tier' | 'discipline' | 'vendor' | 'other';
 
@@ -207,6 +207,7 @@ const FILTER_CHIPS: FilterChip[] = [
   // Other
   { key: 'rlmu', label: 'RLMU', category: 'other', activeClass: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700', countBadgeClass: 'bg-amber-200/60 text-amber-800 dark:bg-amber-800/40 dark:text-amber-300', dotColor: 'bg-amber-600', hoverClass: 'hover:border-amber-300 dark:hover:border-amber-700', match: d => d.rlmu === 'RLMU' },
   // Discipline category
+  { key: 'process', label: 'Process', category: 'discipline', disciplineName: 'Process Other', activeClass: 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-700', countBadgeClass: 'bg-indigo-200/60 text-indigo-800 dark:bg-indigo-800/40 dark:text-indigo-300', dotColor: 'bg-indigo-500', hoverClass: 'hover:border-indigo-300 dark:hover:border-indigo-700', match: (d, sm) => d.discipline_code === 'PX' || (sm?.get(d.id)?.some(s => s.discipline_code === 'PX') ?? false) },
   { key: 'elect', label: 'Elect', category: 'discipline', disciplineName: 'Electrical', activeClass: 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700', countBadgeClass: 'bg-yellow-200/60 text-yellow-800 dark:bg-yellow-800/40 dark:text-yellow-300', dotColor: 'bg-yellow-500', hoverClass: 'hover:border-yellow-300 dark:hover:border-yellow-700', match: (d, sm) => d.discipline_name === 'Electrical' || (sm?.get(d.id)?.some(s => s.discipline_code === 'EA') ?? false) },
   { key: 'static', label: 'Static', category: 'discipline', disciplineName: 'Mechanical - Static', activeClass: 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700', countBadgeClass: 'bg-teal-200/60 text-teal-800 dark:bg-teal-800/40 dark:text-teal-300', dotColor: 'bg-teal-500', hoverClass: 'hover:border-teal-300 dark:hover:border-teal-700', match: (d, sm) => d.discipline_name === 'Mechanical - Static' || (sm?.get(d.id)?.some(s => s.discipline_code === 'MS') ?? false) },
   { key: 'rotating', label: 'Rotating', category: 'discipline', disciplineName: 'Rotating Equipment', activeClass: 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700', countBadgeClass: 'bg-cyan-200/60 text-cyan-800 dark:bg-cyan-800/40 dark:text-cyan-300', dotColor: 'bg-cyan-500', hoverClass: 'hover:border-cyan-300 dark:hover:border-cyan-700', match: (d, sm) => d.discipline_name === 'Rotating Equipment' || (sm?.get(d.id)?.some(s => s.discipline_code === 'MR') ?? false) },
