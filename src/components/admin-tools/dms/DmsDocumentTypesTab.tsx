@@ -167,9 +167,24 @@ const MultiSelectDropdown: React.FC<{
   );
 };
 
+type FilterKey = 'tier1' | 'tier2' | 'elect' | 'static' | 'rotating' | 'inst' | 'ops' | 'tech_safety' | 'rlmu';
+
+const FILTER_CHIPS: { key: FilterKey; label: string; match: (d: DocTypeRow) => boolean }[] = [
+  { key: 'tier1', label: 'Tier 1', match: d => d.tier === 'Tier 1' },
+  { key: 'tier2', label: 'Tier 2', match: d => d.tier === 'Tier 2' },
+  { key: 'elect', label: 'Elect', match: d => d.discipline_name === 'Electrical' },
+  { key: 'static', label: 'Static', match: d => d.discipline_name === 'Mechanical - Static' },
+  { key: 'rotating', label: 'Rotating', match: d => d.discipline_name === 'Rotating Equipment' },
+  { key: 'inst', label: 'Inst', match: d => d.discipline_name === 'Instrumentation' },
+  { key: 'ops', label: 'Ops', match: d => d.discipline_name === 'Operations' },
+  { key: 'tech_safety', label: 'Tech Safety', match: d => d.discipline_name === 'HSE&S General' },
+  { key: 'rlmu', label: 'RLMU', match: d => d.rlmu === 'RLMU' },
+];
+
 const DmsDocumentTypesTab: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DocTypeRow | null>(null);
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS);
