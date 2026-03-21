@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,10 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { 
-  ArrowLeft, FileText, Plus, Pencil, Trash2, Search, 
+  ArrowLeft, ArrowUp, ArrowDown, FileText, Plus, Trash2, Search, 
   FileStack, Compass, FolderKanban, UserCircle, Factory, MapPin, Box, Loader2, CheckSquare, Settings2
 } from 'lucide-react';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -54,18 +54,35 @@ interface DisciplineRow {
   is_active: boolean;
 }
 
+type SortCol = 'code' | 'name' | 'is_active' | null;
+
 const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState<TabId>('discipline');
   const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
 
-  // Dialog state
-  const [dialogOpen, setDialogOpen] = useState(false);
+  // Sheet state
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DisciplineRow | null>(null);
   const [formCode, setFormCode] = useState('');
   const [formName, setFormName] = useState('');
   const [formIsActive, setFormIsActive] = useState(true);
 
+  // Sort state
+  const [sortCol, setSortCol] = useState<SortCol>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleSort = (col: SortCol) => {
+    if (sortCol === col) {
+      if (sortDir === 'asc') setSortDir('desc');
+      else { setSortCol(null); setSortDir('asc'); }
+    } else { setSortCol(col); setSortDir('asc'); }
+  };
+
+  const SortIcon = ({ col }: { col: SortCol }) => {
+    if (sortCol !== col) return null;
+    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 inline ml-1" /> : <ArrowDown className="h-3 w-3 inline ml-1" />;
+  };
   // ─── Discipline CRUD ───
   const { data: disciplines = [], isLoading: disciplinesLoading } = useQuery({
     queryKey: ['dms-disciplines'],
@@ -90,7 +107,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dms-disciplines'] });
       toast.success('Discipline created');
-      setDialogOpen(false);
+      setSheetOpen(false);
     },
     onError: (err: any) => toast.error(err.message || 'Failed to create discipline'),
   });
@@ -106,7 +123,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dms-disciplines'] });
       toast.success('Discipline updated');
-      setDialogOpen(false);
+      setSheetOpen(false);
     },
     onError: (err: any) => toast.error(err.message || 'Failed to update discipline'),
   });
@@ -123,41 +140,49 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
     onError: (err: any) => toast.error(err.message || 'Failed to delete discipline'),
   });
 
-  // ─── Filtered data ───
-  const filteredDisciplines = disciplines.filter(d =>
-    d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.code.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // ─── Sorted & filtered data ───
+  const sorted = useMemo(() => {
+    const filtered = disciplines.filter(d =>
+      d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.code.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    if (!sortCol) return filtered;
+    return [...filtered].sort((a, b) => {
+      let cmp = 0;
+      if (sortCol === 'is_active') cmp = (a.is_active === b.is_active ? 0 : a.is_active ? -1 : 1);
+      else cmp = (a[sortCol] || '').localeCompare(b[sortCol] || '');
+      return sortDir === 'desc' ? -cmp : cmp;
+    });
+  }, [disciplines, searchQuery, sortCol, sortDir]);
 
-  // ─── Dialog helpers ───
-  const openAddDialog = () => {
+  // ─── Sheet helpers ───
+  const openAddSheet = () => {
     setEditingItem(null);
     setFormCode('');
     setFormName('');
     setFormIsActive(true);
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
 
-  const openEditDialog = (item: DisciplineRow) => {
+  const openEditSheet = (item: DisciplineRow) => {
     setEditingItem(item);
     setFormCode(item.code);
     setFormName(item.name);
     setFormIsActive(item.is_active);
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
-
   const handleSave = () => {
     if (!formCode.trim() || !formName.trim()) {
       toast.error('Code and name are required');
       return;
     }
+    const payload = { code: formCode.trim(), name: formName.trim(), is_active: formIsActive };
     if (editingItem) {
-      updateDiscipline.mutate({ id: editingItem.id, code: formCode.trim(), name: formName.trim(), is_active: formIsActive });
+      updateDiscipline.mutate({ id: editingItem.id, ...payload });
     } else {
-      createDiscipline.mutate({ code: formCode.trim(), name: formName.trim(), is_active: formIsActive });
+      createDiscipline.mutate(payload);
     }
   };
-
   const isSaving = createDiscipline.isPending || updateDiscipline.isPending;
 
   // Placeholder content for non-discipline tabs
@@ -237,7 +262,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9 h-9" />
                     </div>
-                    <Button size="sm" className="gap-1.5" onClick={openAddDialog}>
+                    <Button size="sm" className="gap-1.5" onClick={openAddSheet}>
                       <Plus className="h-4 w-4" /> Add Discipline
                     </Button>
                   </div>
@@ -252,15 +277,15 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
                       <TableHeader>
                         <TableRow className="hover:bg-transparent">
                           <TableHead className="w-12 text-xs font-medium uppercase tracking-wider text-muted-foreground">#</TableHead>
-                          <TableHead className="w-24 text-xs font-medium uppercase tracking-wider text-muted-foreground">Code</TableHead>
-                          <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Discipline Name</TableHead>
-                          <TableHead className="w-20 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                          <TableHead className="w-24 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Actions</TableHead>
+                          <TableHead className="w-24 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('code')}>Code<SortIcon col="code" /></TableHead>
+                          <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('name')}>Discipline Name<SortIcon col="name" /></TableHead>
+                          <TableHead className="w-20 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('is_active')}>Status<SortIcon col="is_active" /></TableHead>
+                          <TableHead className="w-16 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredDisciplines.map((item, idx) => (
-                          <TableRow key={item.id} className="group border-border/40 hover:bg-muted/30 transition-colors">
+                        {sorted.map((item, idx) => (
+                          <TableRow key={item.id} className="group border-border/40 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEditSheet(item)}>
                             <TableCell className="text-muted-foreground text-xs tabular-nums">{idx + 1}</TableCell>
                             <TableCell>
                               <span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-foreground">
@@ -269,36 +294,21 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
                             </TableCell>
                             <TableCell className="text-sm text-foreground">{item.name}</TableCell>
                             <TableCell className="text-center">
-                              {item.is_active ? (
-                                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                  Active
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-                                  Inactive
-                                </span>
-                              )}
+                              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <span className={`h-1.5 w-1.5 rounded-full ${item.is_active ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />
+                                {item.is_active ? 'Active' : 'Inactive'}
+                              </span>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEditDialog(item)}>
-                                  <Pencil className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                  onClick={() => deleteDiscipline.mutate(item.id)}
-                                >
+                              <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={e => { e.stopPropagation(); deleteDiscipline.mutate(item.id); }}>
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                               </div>
                             </TableCell>
                           </TableRow>
                         ))}
-                        {filteredDisciplines.length === 0 && !disciplinesLoading && (
+                        {sorted.length === 0 && !disciplinesLoading && (
                           <TableRow>
                             <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                               No disciplines found
@@ -355,14 +365,14 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
         </div>
       </div>
 
-      {/* Add / Edit Discipline Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="pb-4 border-b">
-            <DialogTitle className="text-lg font-semibold">{editingItem ? 'Edit Discipline' : 'Add Discipline'}</DialogTitle>
-            <DialogDescription>{editingItem ? 'Modify the discipline details below.' : 'Fill in the details to create a new discipline code.'}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+      {/* Add / Edit Discipline Sheet */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="right" className="sm:max-w-md z-[150] flex flex-col">
+          <SheetHeader className="pb-4 border-b">
+            <SheetTitle className="text-lg font-semibold">{editingItem ? 'Edit Discipline' : 'Add Discipline'}</SheetTitle>
+            <SheetDescription>{editingItem ? 'Modify the discipline details below.' : 'Fill in the details to create a new discipline code.'}</SheetDescription>
+          </SheetHeader>
+          <div className="space-y-4 py-4 flex-1 overflow-y-auto">
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Code <span className="text-destructive">*</span></Label>
               <Input value={formCode} onChange={e => setFormCode(e.target.value.toUpperCase())} placeholder="e.g. EA" maxLength={10} className="font-mono" />
@@ -379,15 +389,15 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
               <Switch checked={formIsActive} onCheckedChange={setFormIsActive} />
             </div>
           </div>
-          <DialogFooter className="pt-4 border-t gap-2">
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isSaving}>Cancel</Button>
+          <SheetFooter className="pt-4 border-t gap-2">
+            <Button variant="outline" onClick={() => setSheetOpen(false)} disabled={isSaving}>Cancel</Button>
             <Button onClick={handleSave} disabled={isSaving} className="min-w-[100px]">
               {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {editingItem ? 'Save Changes' : 'Create Discipline'}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
