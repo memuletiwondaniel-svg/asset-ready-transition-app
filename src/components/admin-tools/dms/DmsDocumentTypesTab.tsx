@@ -605,8 +605,8 @@ const DmsDocumentTypesTab: React.FC = () => {
             </Button>
           </div>
         </CardHeader>
-        {/* Filter Chips — grouped by category with separators */}
-        <div className="flex flex-wrap items-center gap-1.5 px-6 pb-3">
+        {/* Filter Chips — grouped by category with labels above */}
+        <div className="flex items-start gap-5 px-6 pb-3">
           {CATEGORY_ORDER.map((cat, catIdx) => {
             const chipsInCat = FILTER_CHIPS.filter(c => c.category === cat);
             if (chipsInCat.length === 0) return null;
@@ -615,39 +615,41 @@ const DmsDocumentTypesTab: React.FC = () => {
             return (
               <React.Fragment key={cat}>
                 {catIdx > 0 && (
-                  <span className="w-px h-5 bg-border mx-1.5 shrink-0" />
+                  <span className="w-px h-8 bg-border shrink-0 self-center" />
                 )}
-                {catLabel && (
-                  <span className={cn(
-                    "text-[10px] font-semibold uppercase tracking-wider mr-0.5 select-none",
-                    hasActiveInCat ? "text-foreground/70" : "text-muted-foreground/50"
-                  )}>
-                    {catLabel}
-                  </span>
-                )}
-                {chipsInCat.map((chip) => {
-                  const isActive = activeFilters.has(chip.key);
-                  const matchCount = isActive ? docTypes.filter(d => chip.match(d, secondaryMap)).length : 0;
-                  return (
-                    <button
-                      key={chip.key}
-                      type="button"
-                      onClick={() => toggleFilter(chip.key)}
-                      className={cn(
-                        "px-2 py-0.5 rounded-full text-[11px] font-medium border transition-all duration-150 flex items-center gap-0.5",
-                        isActive
-                          ? `${chip.activeClass} shadow-sm`
-                          : `bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground ${chip.hoverClass}`
-                      )}
-                    >
-                      <span className={cn(
-                        "rounded-full shrink-0 h-1 w-1",
-                        chip.dotColor,
-                        isActive && "opacity-0 w-0"
-                      )} />
-                      {chip.label}
-                      {isActive && (
-                        <span className={cn("ml-1 px-1.5 py-px rounded-full text-[10px] font-semibold leading-none tabular-nums border", chip.countBadgeClass)}>
+                <div className="flex flex-col gap-1">
+                  {catLabel && (
+                    <span className={cn(
+                      "text-[10px] font-semibold uppercase tracking-wider select-none transition-colors duration-150",
+                      hasActiveInCat ? "text-foreground/70" : "text-muted-foreground/40"
+                    )}>
+                      {catLabel}
+                    </span>
+                  )}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {chipsInCat.map((chip) => {
+                      const isActive = activeFilters.has(chip.key);
+                      const matchCount = isActive ? docTypes.filter(d => chip.match(d, secondaryMap)).length : 0;
+                      return (
+                        <button
+                          key={chip.key}
+                          type="button"
+                          onClick={() => toggleFilter(chip.key)}
+                          className={cn(
+                            "px-2 py-0.5 rounded-full text-[11px] font-medium border transition-all duration-150 flex items-center gap-0.5",
+                            isActive
+                              ? `${chip.activeClass} shadow-sm`
+                              : `bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground ${chip.hoverClass}`
+                          )}
+                        >
+                          <span className={cn(
+                            "rounded-full shrink-0 h-1 w-1",
+                            chip.dotColor,
+                            isActive && "opacity-0 w-0"
+                          )} />
+                          {chip.label}
+                          {isActive && (
+                            <span className={cn("ml-1 px-1.5 py-px rounded-full text-[10px] font-semibold leading-none tabular-nums border", chip.countBadgeClass)}>
                           {matchCount}
                         </span>
                       )}
