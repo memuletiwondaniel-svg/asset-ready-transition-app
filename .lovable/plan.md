@@ -1,69 +1,50 @@
 
 
-## Login UI/UX Analysis: Current State vs. Enterprise SaaS Best Practices
+## UI/UX Assessment: Filter Chips vs. Enterprise SaaS Standards
 
-### What You're Doing Well
-- Clean centered card with frosted-glass backdrop blur effect
-- ORSH branding prominently displayed
-- Email/password with input icons (Mail, Lock)
-- Password visibility toggle
-- "Remember me" checkbox
-- "Forgot password?" link
-- SSO buttons (BGC/Kent) below the primary form
-- Registration link at bottom
-- Terms/Privacy links
-- Tenant-aware SSO (dynamic config from `tenant_sso_configs`)
+### Current State
+The filter chips use solid filled backgrounds (orange, blue, yellow, teal, etc.) when active, and muted pill buttons when inactive. This is **functional but not aligned with modern enterprise SaaS patterns** used by apps like Linear, Notion, Attio, or Airtable.
 
-### Issues Identified (Compared to Modern Enterprise SaaS)
+### Issues
 
-**1. Visual Hierarchy — SSO Should Be Primary**
-Enterprise SaaS apps (Figma, Notion, Linear, Slack) place SSO/corporate login **above** email/password. For an enterprise tool where 80%+ of users authenticate via corporate SSO, the current layout buries SSO below the form. SSO buttons should be the first thing users see.
+1. **Saturated solid fills are visually heavy** — When multiple chips are active, the row becomes a rainbow of bold colors competing for attention. Enterprise tools use softer tints (light background + colored text/border) to keep the interface calm.
 
-**2. No Visual Divider Between Auth Methods**
-Best practice uses an "or" divider line between SSO and email/password (e.g., `——— or ———`). Currently the SSO buttons just sit below the Sign In button with no visual separation.
+2. **No active count indicators** — Chips don't show how many records match, which is standard in tools like Airtable and Jira for quick data awareness.
 
-**3. Sign In Button Styling**
-The blue gradient button is fine but the shimmer animation on hover is distracting for enterprise contexts. Modern enterprise apps (Linear, Vercel) use solid-color buttons with subtle hover state changes — no shimmer effects.
+3. **Inactive chips lack personality** — All inactive chips look identical gray. Better to hint at each chip's color even in the inactive state (subtle tinted border or dot) so users build color-category associations.
 
-**4. Input Field Contrast**
-The inputs appear to use `bg-input` which may have low contrast against the card. Enterprise SaaS apps (Stripe, Linear) use clearly bordered inputs with distinct background differentiation.
+4. **No grouped visual separation** — Tier, Discipline, and RLMU are conceptually different filter groups but rendered as a flat list. Enterprise tools group related filters or use subtle separators.
 
-**5. Error Handling UX**
-The `loginFailed` state exists but there's no visible error message in the UI when login fails. Enterprise apps show inline contextual errors ("Invalid email or password") below the form, not browser alerts.
+### Recommended Design
 
-**6. Loading State Feedback**
-Only the button text changes to "Signing in...". Modern enterprise apps disable inputs, show a spinner icon, and sometimes dim the form to prevent double-submission.
+**Active state**: Light tinted background + colored text + colored border (e.g., `bg-orange-100 text-orange-700 border-orange-300` for Tier 1) — softer, scannable, professional.
 
-**7. Missing Accessibility Features**
-- No `aria-invalid` on inputs after failed login
-- No `aria-describedby` linking error messages to inputs
-- Password requirements not communicated
+**Inactive state**: Add a small colored dot indicator before the label so each chip hints at its category color even when off.
 
-**8. Mobile Responsiveness**
-The modal uses `max-w-sm` which is good, but the card padding (`p-8`) may be excessive on smaller screens.
+**Group separators**: Add thin vertical dividers between Tier group, Discipline group, and RLMU.
 
-### Recommended Changes (Priority Order)
-
-1. **Restructure layout**: SSO buttons on top → "or" divider → email/password form
-2. **Add inline error banner** below the form when `loginFailed` is true (red alert with icon)
-3. **Remove shimmer animation** from Sign In button; use solid hover with subtle lift
-4. **Add "or" divider** component between SSO and email/password sections
-5. **Add spinner icon** to loading states on all buttons
-6. **Improve input focus states** — thicker ring, slight background shift
-7. **Add aria attributes** for accessibility compliance
-8. **Reduce card padding** on mobile (`p-6 sm:p-8`)
+**Match count badges**: Show record count inside each chip when active (e.g., "Tier 1 · 42").
 
 ### Implementation Plan
 
-**File: `src/components/enhanced-auth/EnhancedAuthModal.tsx`**
+**Single file**: `src/components/admin-tools/dms/DmsDocumentTypesTab.tsx`
 
-- Move SSO buttons section (lines 295-348) to render **before** the email/password form (line 237)
-- Add an `OrDivider` component: `<div className="flex items-center gap-3"><div className="flex-1 h-px bg-border"/><span className="text-xs text-muted-foreground">or</span><div className="flex-1 h-px bg-border"/></div>`
-- Add error alert when `loginFailed`: `<div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">Invalid email or password</div>`
-- Replace shimmer gradient on Sign In button with a clean solid style: remove the `group-hover:translate-x` shimmer div, keep the scale/shadow transitions
-- Add `Loader2` spinner from lucide when `loading` is true
-- Add `aria-invalid={loginFailed}` to email/password inputs
-- Adjust card padding: `p-6 sm:p-8`
+1. **Update FILTER_CHIPS config** — Replace `activeClass` with `activeClass` (tinted) and add `dotColor` and `group` properties:
+   - Tier 1: `bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700`, dot: `bg-orange-500`
+   - Tier 2: `bg-blue-100 text-blue-700 border-blue-300`, dot: `bg-blue-500`
+   - Elect: `bg-yellow-100 text-yellow-700 border-yellow-300`, dot: `bg-yellow-500`
+   - Static: `bg-teal-100 text-teal-700 border-teal-300`, dot: `bg-teal-500`
+   - Rotating: `bg-cyan-100 text-cyan-700 border-cyan-300`, dot: `bg-cyan-500`
+   - Inst: `bg-purple-100 text-purple-700 border-purple-300`, dot: `bg-purple-500`
+   - Ops: `bg-emerald-100 text-emerald-700 border-emerald-300`, dot: `bg-emerald-500`
+   - Tech Safety: `bg-rose-100 text-rose-700 border-rose-300`, dot: `bg-rose-500`
+   - RLMU: `bg-amber-100 text-amber-700 border-amber-300`, dot: `bg-amber-600`
 
-**No new files needed. Single file edit.**
+2. **Add colored dot to inactive chips** — Small 6px circle before label text using the `dotColor` class.
+
+3. **Add group separators** — Insert a thin `h-4 w-px bg-border` divider between Tier chips, Discipline chips, and RLMU chip.
+
+4. **Add match count** — When a chip is active, compute and append ` · {count}` to the label using the existing `filtered` data and the chip's `match` function.
+
+5. **Refine inactive hover** — Use `hover:bg-muted` with a subtle border color hint matching the chip's category.
 
