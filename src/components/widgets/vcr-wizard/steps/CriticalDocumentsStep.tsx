@@ -318,9 +318,9 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
         open={wizardOpen}
         onOpenChange={setWizardOpen}
         vcrId={vcrId}
-        projectCode={projectCode}
-        plantCode={plantCode}
-        handoverPlanId={handoverPlanId}
+        projectCode={projectCode || planContext?.project_code}
+        plantCode={plantCode || planContext?.plant_code}
+        handoverPlanId={handoverPlanId || planContext?.id}
       />
     </div>
   );
