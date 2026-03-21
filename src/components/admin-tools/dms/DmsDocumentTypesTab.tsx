@@ -598,36 +598,46 @@ const DmsDocumentTypesTab: React.FC = () => {
             </Button>
           </div>
         </CardHeader>
-        {/* Filter Chips */}
+        {/* Filter Chips — grouped by category with separators */}
         <div className="flex flex-wrap items-center gap-1 px-6 pb-3">
-          {FILTER_CHIPS.map((chip) => {
-            const isActive = activeFilters.has(chip.key);
-            const matchCount = isActive ? docTypes.filter(d => chip.match(d, secondaryMap)).length : 0;
-
+          {CATEGORY_ORDER.map((cat, catIdx) => {
+            const chipsInCat = FILTER_CHIPS.filter(c => c.category === cat);
+            if (chipsInCat.length === 0) return null;
             return (
-              <button
-                key={chip.key}
-                type="button"
-                onClick={() => toggleFilter(chip.key)}
-                className={cn(
-                  "px-2 py-0.5 rounded-full text-[11px] font-medium border transition-all duration-150 flex items-center gap-0.5",
-                  isActive
-                    ? `${chip.activeClass} shadow-sm`
-                    : `bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground ${chip.hoverClass}`
+              <React.Fragment key={cat}>
+                {catIdx > 0 && (
+                  <span className="w-px h-4 bg-border/60 mx-1 shrink-0" />
                 )}
-              >
-                <span className={cn(
-                  "rounded-full shrink-0 h-1 w-1",
-                  chip.dotColor,
-                  isActive && "opacity-0 w-0"
-                )} />
-                {chip.label}
-                {isActive && (
-                  <span className={cn("ml-1 px-1.5 py-px rounded-full text-[10px] font-semibold leading-none tabular-nums border", chip.countBadgeClass)}>
-                    {matchCount}
-                  </span>
-                )}
-              </button>
+                {chipsInCat.map((chip) => {
+                  const isActive = activeFilters.has(chip.key);
+                  const matchCount = isActive ? docTypes.filter(d => chip.match(d, secondaryMap)).length : 0;
+                  return (
+                    <button
+                      key={chip.key}
+                      type="button"
+                      onClick={() => toggleFilter(chip.key)}
+                      className={cn(
+                        "px-2 py-0.5 rounded-full text-[11px] font-medium border transition-all duration-150 flex items-center gap-0.5",
+                        isActive
+                          ? `${chip.activeClass} shadow-sm`
+                          : `bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground ${chip.hoverClass}`
+                      )}
+                    >
+                      <span className={cn(
+                        "rounded-full shrink-0 h-1 w-1",
+                        chip.dotColor,
+                        isActive && "opacity-0 w-0"
+                      )} />
+                      {chip.label}
+                      {isActive && (
+                        <span className={cn("ml-1 px-1.5 py-px rounded-full text-[10px] font-semibold leading-none tabular-nums border", chip.countBadgeClass)}>
+                          {matchCount}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </React.Fragment>
             );
           })}
           {activeFilters.size > 0 && (
