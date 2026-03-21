@@ -376,7 +376,7 @@ const DmsDocumentTypesTab: React.FC = () => {
   const openAddDialog = () => {
     setEditingItem(null);
     setFormCode(''); setFormDocName(''); setFormDocDesc(''); setFormTier('');
-    setFormRlmu(''); setFormDisciplines([]); setFormAccStatuses([]);
+    setFormRlmu(''); setFormDisciplines([]); setFormSecondaryDisciplines([]); setFormAccStatuses([]);
     setFormIsActive(true);
     setDialogOpen(true);
   };
@@ -388,9 +388,10 @@ const DmsDocumentTypesTab: React.FC = () => {
     setFormDocDesc(item.document_description || '');
     setFormTier(item.tier || '');
     setFormRlmu(item.rlmu || '');
-    // Parse existing discipline
     setFormDisciplines(item.discipline_code ? [item.discipline_code] : []);
-    // Parse acceptable statuses (comma-separated)
+    // Load secondary disciplines for this item
+    const sds = secondaryMap.get(item.id) || [];
+    setFormSecondaryDisciplines(sds.map(s => s.discipline_code));
     setFormAccStatuses(
       item.acceptable_status
         ? item.acceptable_status.split(',').map(s => s.trim()).filter(Boolean)
@@ -400,13 +401,32 @@ const DmsDocumentTypesTab: React.FC = () => {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const saveSecondaryDisciplines = async (docTypeId: string, codes: string[]) => {
+    // Delete existing
+    await supabase
+      .from('dms_document_type_secondary_disciplines')
+      .delete()
+      .eq('document_type_id', docTypeId);
+    // Insert new
+    if (codes.length > 0) {
+      const rows = codes.map(code => {
+        const disc = disciplineOptions.find(d => d.code === code);
+        return {
+          document_type_id: docTypeId,
+          discipline_code: code,
+          discipline_name: disc?.name || null,
+        };
+      });
+      await supabase.from('dms_document_type_secondary_disciplines').insert(rows);
+    }
+  };
+
+  const handleSave = async () => {
     if (!formCode.trim() || !formDocName.trim()) {
       toast.error('Code and Document Name are required');
       return;
     }
 
-    // Find discipline name from selected code
     const selectedDisc = disciplineOptions.find(d => formDisciplines.includes(d.code));
 
     const payload = {
@@ -421,10 +441,32 @@ const DmsDocumentTypesTab: React.FC = () => {
       is_active: formIsActive,
     };
 
-    if (editingItem) {
-      updateDocType.mutate({ id: editingItem.id, ...payload });
-    } else {
-      createDocType.mutate(payload as any);
+    try {
+      if (editingItem) {
+        await updateDocType.mutateAsync({ id: editingItem.id, ...payload });
+        // Save secondary disciplines if this is a vendor doc
+        if (isVendorDiscipline(payload.discipline_code)) {
+          await saveSecondaryDisciplines(editingItem.id, formSecondaryDisciplines);
+        }
+      } else {
+        // For new docs, we need the ID back
+        const maxOrder = docTypes.length > 0 ? Math.max(...docTypes.map(d => d.display_order)) : 0;
+        const { data: newDoc, error } = await supabase
+          .from('dms_document_types')
+          .insert({ ...payload, display_order: maxOrder + 1 })
+          .select('id')
+          .single();
+        if (error) throw error;
+        if (newDoc && isVendorDiscipline(payload.discipline_code)) {
+          await saveSecondaryDisciplines(newDoc.id, formSecondaryDisciplines);
+        }
+        queryClient.invalidateQueries({ queryKey: ['dms-document-types'] });
+        toast.success('Document type created');
+        setDialogOpen(false);
+      }
+      queryClient.invalidateQueries({ queryKey: ['dms-secondary-disciplines'] });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save');
     }
   };
 
