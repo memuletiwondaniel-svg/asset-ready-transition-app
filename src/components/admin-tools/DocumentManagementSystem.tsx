@@ -284,8 +284,8 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredDisciplines.map((item, idx) => (
-                          <TableRow key={item.id} className="group border-border/40 hover:bg-muted/30 transition-colors">
+                        {sorted.map((item, idx) => (
+                          <TableRow key={item.id} className="group border-border/40 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEditSheet(item)}>
                             <TableCell className="text-muted-foreground text-xs tabular-nums">{idx + 1}</TableCell>
                             <TableCell>
                               <span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-foreground">
@@ -294,36 +294,21 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
                             </TableCell>
                             <TableCell className="text-sm text-foreground">{item.name}</TableCell>
                             <TableCell className="text-center">
-                              {item.is_active ? (
-                                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                  Active
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-                                  Inactive
-                                </span>
-                              )}
+                              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <span className={`h-1.5 w-1.5 rounded-full ${item.is_active ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />
+                                {item.is_active ? 'Active' : 'Inactive'}
+                              </span>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEditDialog(item)}>
-                                  <Pencil className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                  onClick={() => deleteDiscipline.mutate(item.id)}
-                                >
+                              <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={e => { e.stopPropagation(); deleteDiscipline.mutate(item.id); }}>
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                               </div>
                             </TableCell>
                           </TableRow>
                         ))}
-                        {filteredDisciplines.length === 0 && !disciplinesLoading && (
+                        {sorted.length === 0 && !disciplinesLoading && (
                           <TableRow>
                             <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                               No disciplines found
