@@ -290,17 +290,36 @@ const DmsDocumentTypesTab: React.FC = () => {
       (d.discipline_name || '').toLowerCase().includes(q);
   });
 
+  // Apply active filter chips
+  const chipFiltered = activeFilters.size === 0
+    ? filtered
+    : filtered.filter(d => {
+        return Array.from(activeFilters).some(key => {
+          const chip = FILTER_CHIPS.find(c => c.key === key);
+          return chip ? chip.match(d) : false;
+        });
+      });
+
   const isDisciplineVisible = columns.some(
     c => (c.id === 'discipline_code' || c.id === 'discipline_name') && c.visible
   );
 
   const displayRows = isDisciplineVisible
-    ? filtered
-    : filtered.filter((item, index, arr) =>
+    ? chipFiltered
+    : chipFiltered.filter((item, index, arr) =>
         arr.findIndex(d => d.code === item.code && d.document_name === item.document_name) === index
       );
 
   const visibleColumns = columns.filter(c => c.visible);
+
+  const toggleFilter = (key: FilterKey) => {
+    setActiveFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   const toggleColumn = (colId: string) => {
     setColumns(prev => prev.map(c => c.id === colId ? { ...c, visible: !c.visible } : c));
