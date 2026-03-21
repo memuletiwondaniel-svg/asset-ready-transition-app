@@ -455,21 +455,36 @@ const DmsDocumentTypesTab: React.FC = () => {
         </CardHeader>
         {/* Filter Chips */}
         <div className="flex flex-wrap items-center gap-1.5 px-6 pb-3">
-          {FILTER_CHIPS.map(chip => (
-            <button
-              key={chip.key}
-              type="button"
-              onClick={() => toggleFilter(chip.key)}
-              className={cn(
-                "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
-                activeFilters.has(chip.key)
-                  ? chip.activeClass
-                  : "bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground"
-              )}
-            >
-              {chip.label}
-            </button>
-          ))}
+          {FILTER_CHIPS.map((chip, idx) => {
+            const prevGroup = idx > 0 ? FILTER_CHIPS[idx - 1].group : chip.group;
+            const showSeparator = idx > 0 && chip.group !== prevGroup;
+            const isActive = activeFilters.has(chip.key);
+            const matchCount = isActive ? docTypes.filter(chip.match).length : 0;
+
+            return (
+              <React.Fragment key={chip.key}>
+                {showSeparator && (
+                  <div className="h-4 w-px bg-border mx-1" />
+                )}
+                <button
+                  type="button"
+                  onClick={() => toggleFilter(chip.key)}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-xs font-medium border transition-all flex items-center gap-1.5",
+                    isActive
+                      ? chip.activeClass
+                      : `bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground ${chip.hoverClass}`
+                  )}
+                >
+                  <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", isActive ? "opacity-0" : chip.dotColor)} />
+                  {chip.label}
+                  {isActive && (
+                    <span className="opacity-70 font-normal">· {matchCount}</span>
+                  )}
+                </button>
+              </React.Fragment>
+            );
+          })}
           {activeFilters.size > 0 && (
             <button
               type="button"
