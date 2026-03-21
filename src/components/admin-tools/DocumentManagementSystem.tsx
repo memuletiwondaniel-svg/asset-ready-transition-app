@@ -54,18 +54,35 @@ interface DisciplineRow {
   is_active: boolean;
 }
 
+type SortCol = 'code' | 'name' | 'is_active' | null;
+
 const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState<TabId>('discipline');
   const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
 
-  // Dialog state
-  const [dialogOpen, setDialogOpen] = useState(false);
+  // Sheet state
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DisciplineRow | null>(null);
   const [formCode, setFormCode] = useState('');
   const [formName, setFormName] = useState('');
   const [formIsActive, setFormIsActive] = useState(true);
 
+  // Sort state
+  const [sortCol, setSortCol] = useState<SortCol>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleSort = (col: SortCol) => {
+    if (sortCol === col) {
+      if (sortDir === 'asc') setSortDir('desc');
+      else { setSortCol(null); setSortDir('asc'); }
+    } else { setSortCol(col); setSortDir('asc'); }
+  };
+
+  const SortIcon = ({ col }: { col: SortCol }) => {
+    if (sortCol !== col) return null;
+    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 inline ml-1" /> : <ArrowDown className="h-3 w-3 inline ml-1" />;
+  };
   // ─── Discipline CRUD ───
   const { data: disciplines = [], isLoading: disciplinesLoading } = useQuery({
     queryKey: ['dms-disciplines'],
