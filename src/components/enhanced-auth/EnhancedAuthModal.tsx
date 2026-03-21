@@ -4,30 +4,33 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, EyeOff, Mail, Lock, ArrowLeft, ArrowRight, Star, X, AlertTriangle, Shield } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowLeft, AlertTriangle, Shield, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { useTenantContext } from '@/contexts/TenantContext';
 import { useTenantSSOConfigPublic } from '@/hooks/useTenantSSOConfig';
 import EnhancedRegistrationForm from '@/components/user-management/EnhancedRegistrationForm';
 import OrshLogo from '@/components/ui/OrshLogo';
+
 interface EnhancedAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAuthenticated: () => void;
 }
+
+const OrDivider = () => (
+  <div className="flex items-center gap-3 my-1">
+    <div className="flex-1 h-px bg-border" />
+    <span className="text-xs text-muted-foreground font-medium">or</span>
+    <div className="flex-1 h-px bg-border" />
+  </div>
+);
+
 const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   isOpen,
   onClose,
   onAuthenticated
 }) => {
-  const {
-    signIn,
-    signUp,
-    signInWithSSO,
-    resetPassword
-  } = useAuth();
+  const { signIn, signUp, signInWithSSO, resetPassword } = useAuth();
   const { subdomainTenant, tenantMismatch } = useTenantContext();
   const { ssoConfig } = useTenantSSOConfigPublic(subdomainTenant?.id ?? null);
   const [activeTab, setActiveTab] = useState('signin');
@@ -38,39 +41,28 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   const [loginFailed, setLoginFailed] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
-  // Form states
-  const [signInData, setSignInData] = useState({
-    email: '',
-    password: ''
-  });
+  const [signInData, setSignInData] = useState({ email: '', password: '' });
   const [signUpData, setSignUpData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: '',
-    fullName: '',
-    company: '',
-    jobTitle: '',
-    department: '',
-    phoneNumber: ''
+    email: '', password: '', confirmPassword: '',
+    firstName: '', lastName: '', fullName: '',
+    company: '', jobTitle: '', department: '', phoneNumber: ''
   });
   const [resetEmail, setResetEmail] = useState('');
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const {
-      error
-    } = await signIn(signInData.email, signInData.password, rememberMe);
+    setLoginFailed(false);
+    const { error } = await signIn(signInData.email, signInData.password, rememberMe);
     if (!error) {
       onAuthenticated();
       onClose();
-      setLoginFailed(false);
     } else {
       setLoginFailed(true);
     }
     setLoading(false);
   };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (signUpData.password !== signUpData.confirmPassword) {
@@ -78,67 +70,56 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
       return;
     }
     setLoading(true);
-    const userData = {
-      ...signUpData,
-      fullName: `${signUpData.firstName} ${signUpData.lastName}`
-    };
-    const {
-      error
-    } = await signUp(userData);
+    const userData = { ...signUpData, fullName: `${signUpData.firstName} ${signUpData.lastName}` };
+    const { error } = await signUp(userData);
     if (!error) {
       setActiveTab('signin');
     }
     setLoading(false);
   };
+
   const handleSSO = async (provider: string) => {
     setLoading(true);
-    const {
-      error
-    } = await signInWithSSO(provider);
+    const { error } = await signInWithSSO(provider);
     if (!error) {
       onAuthenticated();
       onClose();
     }
     setLoading(false);
   };
+
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const {
-      error
-    } = await resetPassword(resetEmail);
+    const { error } = await resetPassword(resetEmail);
     if (!error) {
       setResetEmailSent(true);
     }
     setLoading(false);
   };
-  return <Dialog open={isOpen} onOpenChange={onClose}>
+
+  const hasSSOButtons = !!ssoConfig || !ssoConfig; // always true — fallback buttons shown
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContentNoOverlay className="max-w-none max-h-none w-screen h-screen p-0 bg-transparent border-none shadow-none overflow-hidden [&>button]:hidden" aria-describedby="enhanced-auth-description">
         <DialogHeader className="sr-only">
           <DialogTitle>Authentication</DialogTitle>
           <DialogDescription id="enhanced-auth-description">Sign in or register</DialogDescription>
         </DialogHeader>
         
-        {/* Clickable backdrop to close modal */}
-        <div 
-          className="absolute inset-0 z-[5]" 
-          onClick={onClose}
-          aria-hidden="true"
-        />
+        <div className="absolute inset-0 z-[5]" onClick={onClose} aria-hidden="true" />
         
         <div className="w-screen h-screen flex items-center justify-center p-4 relative z-10 pointer-events-none">
-          
           <div className="w-full max-w-sm relative z-10 pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-            {/* Modern Fluent Design Card */}
-            <div className="bg-card/80 backdrop-blur-2xl rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] border border-border/20 p-8 relative overflow-hidden transition-all duration-500 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.3)] hover:bg-card/85">
+            <div className="bg-card/80 backdrop-blur-2xl rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] border border-border/20 p-6 sm:p-8 relative overflow-hidden transition-all duration-500 hover:shadow-[0_40px_80px_-12px_rgba(0,0,0,0.3)] hover:bg-card/85">
               
               {/* Fluent Design Acrylic Effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-card/40 to-accent/6 rounded-2xl"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-background/5 to-foreground/3 rounded-2xl"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-card/40 to-accent/6 rounded-2xl" />
+              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-background/5 to-foreground/3 rounded-2xl" />
               
-              {/* Content */}
               <div className="relative z-10">
-                {/* Sign In Header */}
+                {/* Header */}
                 <div className="text-center mb-6">
                   <div className="flex justify-center mb-3">
                     {subdomainTenant?.logo_url ? (
@@ -163,9 +144,8 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                   </div>
                 )}
 
-              <div className="space-y-4">
+                <div className="space-y-4">
                   {activeTab === 'reset' ? (
-                    /* Password Reset Form */
                     resetEmailSent ? (
                       <div className="text-center space-y-4 py-6">
                         <div className="mx-auto w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center">
@@ -178,11 +158,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                         <Button
                           variant="outline"
                           size="default"
-                          onClick={() => {
-                            setActiveTab('signin');
-                            setResetEmailSent(false);
-                            setResetEmail('');
-                          }}
+                          onClick={() => { setActiveTab('signin'); setResetEmailSent(false); setResetEmail(''); }}
                           className="w-full h-10 text-sm"
                         >
                           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -192,9 +168,7 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                     ) : (
                       <form onSubmit={handlePasswordReset} className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="reset-email" className="text-sm font-medium">
-                            Email Address
-                          </Label>
+                          <Label htmlFor="reset-email" className="text-sm font-medium">Email Address</Label>
                           <div className="relative">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
@@ -208,23 +182,14 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                             />
                           </div>
                         </div>
-
-                        <Button
-                          type="submit"
-                          className="w-full h-10 text-sm font-semibold bg-gradient-to-r from-primary to-primary-hover text-primary-foreground"
-                          disabled={loading}
-                        >
-                          {loading ? 'Sending...' : 'Send Reset Link'}
+                        <Button type="submit" className="w-full h-10 text-sm font-semibold" disabled={loading}>
+                          {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending...</> : 'Send Reset Link'}
                         </Button>
-
                         <Button
                           type="button"
                           variant="ghost"
                           size="default"
-                          onClick={() => {
-                            setActiveTab('signin');
-                            setResetEmail('');
-                          }}
+                          onClick={() => { setActiveTab('signin'); setResetEmail(''); }}
                           className="w-full h-10 text-sm"
                         >
                           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -233,139 +198,147 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
                       </form>
                     )
                   ) : (
-                  /* Email/Password Sign In */
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-email" className="text-sm font-medium">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input id="signin-email" type="email" placeholder="your.email@bgc.com" value={signInData.email} onChange={e => setSignInData({
-                        ...signInData,
-                        email: e.target.value
-                      })} className="pl-10 h-10 text-sm border-border bg-input" required />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-password" className="text-sm font-medium">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input id="signin-password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={signInData.password} onChange={e => setSignInData({
-                        ...signInData,
-                        password: e.target.value
-                      })} className="pl-10 pr-10 h-10 text-sm border-border bg-input" required />
-                        <button 
-                          type="button" 
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" 
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="remember-me"
-                          checked={rememberMe}
-                          onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                          className="h-4 w-4"
-                        />
-                        <Label htmlFor="remember-me" className="text-sm text-muted-foreground cursor-pointer">
-                          Remember me
-                        </Label>
-                      </div>
-                      <Button variant="link" className="p-0 h-auto text-primary text-sm" onClick={() => setActiveTab('reset')}>
-                        Forgot password?
-                      </Button>
-                    </div>
-
-                    <Button type="submit" className="w-full h-11 text-sm font-semibold bg-gradient-to-r from-primary to-primary-hover text-primary-foreground
-                                 shadow-lg hover:shadow-xl transition-all duration-300 ease-out
-                                 hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98]
-                                 border border-primary/20 hover:border-primary/40
-                                 relative overflow-hidden group" disabled={loading}>
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                      <span className="relative z-10">{loading ? 'Signing in...' : 'Sign In'}</span>
-                    </Button>
-                  </form>
-                  )}
-
-                  {activeTab === 'signin' && (
                     <>
-                      {/* Dynamic SSO Button from tenant config */}
-                      {ssoConfig && (
-                        <div className="space-y-3 pt-2">
+                      {/* ===== SSO BUTTONS FIRST (Enterprise Priority) ===== */}
+                      {ssoConfig ? (
+                        <div className="space-y-2">
                           <Button 
                             onClick={() => handleSSO(ssoConfig.supabase_sso_provider_id || 'saml')} 
                             disabled={loading} 
-                            className="w-full h-10 text-sm font-semibold bg-muted/40 text-muted-foreground 
-                                         hover:bg-gradient-to-r hover:from-primary hover:to-primary/90 hover:text-primary-foreground
-                                         shadow-sm hover:shadow-lg transition-all duration-300 ease-out
-                                         hover:scale-[1.02] active:scale-[0.98]
-                                         border border-border/40 hover:border-primary/40
-                                         relative overflow-hidden group"
+                            variant="outline"
+                            className="w-full h-11 text-sm font-semibold border-border hover:bg-muted/60 transition-all duration-200"
                           >
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                            <div className="relative z-10 flex items-center justify-center">
-                              <Shield className="w-4 h-4 mr-2 opacity-60 group-hover:opacity-100 transition-all duration-300" />
-                              {ssoConfig.button_label || 'Sign in with SSO'}
-                            </div>
+                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shield className="w-4 h-4 mr-2 text-muted-foreground" />}
+                            {ssoConfig.button_label || 'Sign in with SSO'}
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Button 
+                            onClick={() => handleSSO('azure')} 
+                            disabled={loading} 
+                            variant="outline"
+                            className="w-full h-11 text-sm font-semibold border-border hover:bg-muted/60 transition-all duration-200"
+                          >
+                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
+                              <img src="/lovable-uploads/6e3cd7e2-9a08-4d20-88f7-d3a2ab9f4f7b.png" alt="BGC Logo" className="w-5 h-5 mr-2" />
+                            )}
+                            Continue with BGC
+                          </Button>
+                          <Button 
+                            onClick={() => handleSSO('google')} 
+                            disabled={loading} 
+                            variant="outline"
+                            className="w-full h-11 text-sm font-semibold border-border hover:bg-muted/60 transition-all duration-200"
+                          >
+                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
+                              <img src="/lovable-uploads/dc6cee89-84f7-416a-b996-ec5cbb00d683.png" alt="Kent Logo" className="w-5 h-5 mr-2" />
+                            )}
+                            Continue with Kent
                           </Button>
                         </div>
                       )}
 
-                      {/* Fallback SSO Buttons (shown when no tenant SSO config) */}
-                      {!ssoConfig && (
-                  <div className="space-y-3 pt-2">
-                    <Button onClick={() => handleSSO('azure')} disabled={loading} className="w-full h-10 text-sm font-semibold bg-muted/40 text-muted-foreground 
-                                 hover:bg-gradient-to-r hover:from-bgc hover:to-bgc/90 hover:text-bgc-foreground
-                                 shadow-sm hover:shadow-lg transition-all duration-300 ease-out
-                                 hover:scale-[1.02] active:scale-[0.98]
-                                 border border-border/40 hover:border-bgc/40
-                                 relative overflow-hidden group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                      <div className="relative z-10 flex items-center justify-center">
-                        <img src="/lovable-uploads/6e3cd7e2-9a08-4d20-88f7-d3a2ab9f4f7b.png" alt="BGC Logo" className="w-5 h-5 mr-2 opacity-60 group-hover:opacity-100 transition-all duration-300" />
-                        Continue with BGC
-                      </div>
-                    </Button>
-                    
-                    <Button onClick={() => handleSSO('google')} disabled={loading} className="w-full h-10 text-sm font-semibold bg-muted/40 text-muted-foreground 
-                                 hover:bg-gradient-to-r hover:from-kent hover:to-kent/90 hover:text-kent-foreground
-                                 shadow-sm hover:shadow-lg transition-all duration-300 ease-out
-                                 hover:scale-[1.02] active:scale-[0.98]
-                                 border border-border/40 hover:border-kent/40
-                                 relative overflow-hidden group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                      <div className="relative z-10 flex items-center justify-center">
-                        <img src="/lovable-uploads/dc6cee89-84f7-416a-b996-ec5cbb00d683.png" alt="Kent Logo" className="w-5 h-5 mr-2 opacity-60 group-hover:opacity-100 transition-all duration-300" />
-                        Continue with Kent
-                      </div>
-                    </Button>
-                  </div>
+                      {/* ===== OR DIVIDER ===== */}
+                      <OrDivider />
+
+                      {/* ===== EMAIL/PASSWORD FORM ===== */}
+
+                      {/* Inline error banner */}
+                      {loginFailed && (
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm" role="alert" id="login-error">
+                          <AlertCircle className="h-4 w-4 shrink-0" />
+                          <span>Invalid email or password. Please try again.</span>
+                        </div>
                       )}
 
-                  {/* New to ORSH Text */}
-                  <div className="text-center text-sm text-muted-foreground pt-3">
-                    New to ORSH?{' '}
-                    <Button variant="link" className="p-0 h-auto text-primary text-sm font-medium" onClick={() => setShowRegistrationForm(true)}>
-                      Create your account
-                    </Button>
-                  </div>
+                      <form onSubmit={handleSignIn} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="signin-email" className="text-sm font-medium">Email</Label>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="signin-email"
+                              type="email"
+                              placeholder="your.email@bgc.com"
+                              value={signInData.email}
+                              onChange={e => { setSignInData({ ...signInData, email: e.target.value }); setLoginFailed(false); }}
+                              className="pl-10 h-10 text-sm border-border bg-input focus-visible:ring-2 focus-visible:ring-ring"
+                              required
+                              aria-invalid={loginFailed}
+                              aria-describedby={loginFailed ? 'login-error' : undefined}
+                              disabled={loading}
+                            />
+                          </div>
+                        </div>
 
-                  {/* Terms */}
-                  <div className="text-center text-xs text-muted-foreground pt-2">
-                    By signing in, you agree to our{' '}
-                    <Button variant="link" className="p-0 h-auto text-primary text-xs">
-                      Terms
-                    </Button>{' '}
-                    and{' '}
-                    <Button variant="link" className="p-0 h-auto text-primary text-xs">
-                      Privacy Policy
-                    </Button>
-                  </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="signin-password" className="text-sm font-medium">Password</Label>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              id="signin-password"
+                              type={showPassword ? 'text' : 'password'}
+                              placeholder="Enter your password"
+                              value={signInData.password}
+                              onChange={e => { setSignInData({ ...signInData, password: e.target.value }); setLoginFailed(false); }}
+                              className="pl-10 pr-10 h-10 text-sm border-border bg-input focus-visible:ring-2 focus-visible:ring-ring"
+                              required
+                              aria-invalid={loginFailed}
+                              aria-describedby={loginFailed ? 'login-error' : undefined}
+                              disabled={loading}
+                            />
+                            <button 
+                              type="button" 
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors" 
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="remember-me"
+                              checked={rememberMe}
+                              onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                              className="h-4 w-4"
+                            />
+                            <Label htmlFor="remember-me" className="text-sm text-muted-foreground cursor-pointer">
+                              Remember me
+                            </Label>
+                          </div>
+                          <Button variant="link" className="p-0 h-auto text-primary text-sm" onClick={() => setActiveTab('reset')}>
+                            Forgot password?
+                          </Button>
+                        </div>
+
+                        <Button
+                          type="submit"
+                          className="w-full h-11 text-sm font-semibold transition-all duration-200 hover:scale-[1.01] active:scale-[0.98]"
+                          disabled={loading}
+                        >
+                          {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</> : 'Sign In'}
+                        </Button>
+                      </form>
+
+                      {/* Register link */}
+                      <div className="text-center text-sm text-muted-foreground pt-3">
+                        New to ORSH?{' '}
+                        <Button variant="link" className="p-0 h-auto text-primary text-sm font-medium" onClick={() => setShowRegistrationForm(true)}>
+                          Create your account
+                        </Button>
+                      </div>
+
+                      {/* Terms */}
+                      <div className="text-center text-xs text-muted-foreground pt-2">
+                        By signing in, you agree to our{' '}
+                        <Button variant="link" className="p-0 h-auto text-primary text-xs">Terms</Button>{' '}
+                        and{' '}
+                        <Button variant="link" className="p-0 h-auto text-primary text-xs">Privacy Policy</Button>
+                      </div>
                     </>
                   )}
                 </div>
@@ -375,10 +348,14 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         </div>
       </DialogContentNoOverlay>
       
-      <EnhancedRegistrationForm isOpen={showRegistrationForm} onClose={() => setShowRegistrationForm(false)} onSuccess={() => {
-      setShowRegistrationForm(false);
-      setActiveTab('signin');
-    }} isAdminCreated={false} />
-    </Dialog>;
+      <EnhancedRegistrationForm
+        isOpen={showRegistrationForm}
+        onClose={() => setShowRegistrationForm(false)}
+        onSuccess={() => { setShowRegistrationForm(false); setActiveTab('signin'); }}
+        isAdminCreated={false}
+      />
+    </Dialog>
+  );
 };
+
 export default EnhancedAuthModal;
