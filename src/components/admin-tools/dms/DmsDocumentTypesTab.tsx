@@ -264,6 +264,29 @@ const DmsDocumentTypesTab: React.FC = () => {
     },
   });
 
+  // Fetch secondary disciplines for vendor documents
+  const { data: secondaryDisciplines = [] } = useQuery({
+    queryKey: ['dms-secondary-disciplines'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('dms_document_type_secondary_disciplines')
+        .select('*');
+      if (error) throw error;
+      return data as SecondaryDiscipline[];
+    },
+  });
+
+  // Build a map: document_type_id -> SecondaryDiscipline[]
+  const secondaryMap = React.useMemo(() => {
+    const map = new Map<string, SecondaryDiscipline[]>();
+    secondaryDisciplines.forEach(sd => {
+      const existing = map.get(sd.document_type_id) || [];
+      existing.push(sd);
+      map.set(sd.document_type_id, existing);
+    });
+    return map;
+  }, [secondaryDisciplines]);
+
   const createDocType = useMutation({
     mutationFn: async (item: Omit<DocTypeRow, 'id' | 'display_order'>) => {
       const maxOrder = docTypes.length > 0 ? Math.max(...docTypes.map(d => d.display_order)) : 0;
