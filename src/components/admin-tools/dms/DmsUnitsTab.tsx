@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Search, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
+import { Plus, Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -20,14 +20,27 @@ interface UnitRow {
   display_order: number;
 }
 
+type SortCol = 'code' | 'unit_name' | 'is_active' | null;
+
 const DmsUnitsTab: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<UnitRow | null>(null);
   const [formCode, setFormCode] = useState('');
   const [formUnitName, setFormUnitName] = useState('');
   const [formIsActive, setFormIsActive] = useState(true);
+  const [sortCol, setSortCol] = useState<SortCol>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleSort = (col: SortCol) => {
+    if (sortCol === col) { if (sortDir === 'asc') setSortDir('desc'); else { setSortCol(null); setSortDir('asc'); } }
+    else { setSortCol(col); setSortDir('asc'); }
+  };
+  const SortIcon = ({ col }: { col: SortCol }) => {
+    if (sortCol !== col) return null;
+    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 inline ml-1" /> : <ArrowDown className="h-3 w-3 inline ml-1" />;
+  };
 
   const { data: units = [], isLoading } = useQuery({
     queryKey: ['dms-units'],
@@ -44,7 +57,7 @@ const DmsUnitsTab: React.FC = () => {
       const { error } = await supabase.from('dms_units').insert({ ...item, display_order: maxOrder + 1 });
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-units'] }); toast.success('Unit created'); setDialogOpen(false); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-units'] }); toast.success('Unit created'); setSheetOpen(false); },
     onError: (err: any) => toast.error(err.message || 'Failed to create unit'),
   });
 
@@ -54,7 +67,7 @@ const DmsUnitsTab: React.FC = () => {
       const { error } = await supabase.from('dms_units').update({ ...rest, updated_at: new Date().toISOString() }).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-units'] }); toast.success('Unit updated'); setDialogOpen(false); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['dms-units'] }); toast.success('Unit updated'); setSheetOpen(false); },
     onError: (err: any) => toast.error(err.message || 'Failed to update unit'),
   });
 
@@ -64,13 +77,22 @@ const DmsUnitsTab: React.FC = () => {
     onError: (err: any) => toast.error(err.message || 'Failed to delete unit'),
   });
 
-  const filtered = units.filter(u =>
-    u.unit_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.code.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const sorted = useMemo(() => {
+    const filtered = units.filter(u =>
+      u.unit_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.code.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    if (!sortCol) return filtered;
+    return [...filtered].sort((a, b) => {
+      let cmp = 0;
+      if (sortCol === 'is_active') cmp = (a.is_active === b.is_active ? 0 : a.is_active ? -1 : 1);
+      else cmp = (a[sortCol] || '').localeCompare(b[sortCol] || '');
+      return sortDir === 'desc' ? -cmp : cmp;
+    });
+  }, [units, searchQuery, sortCol, sortDir]);
 
-  const openAddDialog = () => { setEditingItem(null); setFormCode(''); setFormUnitName(''); setFormIsActive(true); setDialogOpen(true); };
-  const openEditDialog = (item: UnitRow) => { setEditingItem(item); setFormCode(item.code); setFormUnitName(item.unit_name); setFormIsActive(item.is_active); setDialogOpen(true); };
+  const openAddSheet = () => { setEditingItem(null); setFormCode(''); setFormUnitName(''); setFormIsActive(true); setSheetOpen(true); };
+  const openEditSheet = (item: UnitRow) => { setEditingItem(item); setFormCode(item.code); setFormUnitName(item.unit_name); setFormIsActive(item.is_active); setSheetOpen(true); };
 
   const handleSave = () => {
     if (!formCode.trim() || !formUnitName.trim()) { toast.error('Code and Unit name are required'); return; }
@@ -94,7 +116,7 @@ const DmsUnitsTab: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9 h-9" />
             </div>
-            <Button size="sm" className="gap-1.5" onClick={openAddDialog}><Plus className="h-4 w-4" /> Add Unit</Button>
+            <Button size="sm" className="gap-1.5" onClick={openAddSheet}><Plus className="h-4 w-4" /> Add Unit</Button>
           </div>
         </CardHeader>
         <CardContent className="p-0 max-h-[calc(100vh-280px)] overflow-auto">
@@ -105,15 +127,15 @@ const DmsUnitsTab: React.FC = () => {
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-12 text-xs font-medium uppercase tracking-wider text-muted-foreground">#</TableHead>
-                  <TableHead className="w-24 text-xs font-medium uppercase tracking-wider text-muted-foreground">Code</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Unit</TableHead>
-                  <TableHead className="w-20 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                  <TableHead className="w-24 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Actions</TableHead>
+                  <TableHead className="w-24 text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('code')}>Code<SortIcon col="code" /></TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('unit_name')}>Unit<SortIcon col="unit_name" /></TableHead>
+                  <TableHead className="w-20 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('is_active')}>Status<SortIcon col="is_active" /></TableHead>
+                  <TableHead className="w-16 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((item, idx) => (
-                  <TableRow key={item.id} className="group border-border/40 hover:bg-muted/30 transition-colors">
+                {sorted.map((item, idx) => (
+                  <TableRow key={item.id} className="group border-border/40 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEditSheet(item)}>
                     <TableCell className="text-muted-foreground text-xs tabular-nums">{idx + 1}</TableCell>
                     <TableCell><span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-foreground">{item.code}</span></TableCell>
                     <TableCell className="text-sm text-foreground">{item.unit_name}</TableCell>
@@ -124,27 +146,26 @@ const DmsUnitsTab: React.FC = () => {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEditDialog(item)}><Pencil className="h-3.5 w-3.5" /></Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteUnit.mutate(item.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                      <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={e => { e.stopPropagation(); deleteUnit.mutate(item.id); }}><Trash2 className="h-3.5 w-3.5" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
-                {filtered.length === 0 && !isLoading && (<TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No units found</TableCell></TableRow>)}
+                {sorted.length === 0 && !isLoading && (<TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No units found</TableCell></TableRow>)}
               </TableBody>
             </Table>
           )}
         </CardContent>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="pb-4 border-b">
-            <DialogTitle className="text-lg font-semibold">{editingItem ? 'Edit Unit' : 'Add Unit'}</DialogTitle>
-            <DialogDescription>{editingItem ? 'Modify the unit details below.' : 'Fill in the details to create a new unit.'}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="right" className="sm:max-w-md z-[150] flex flex-col">
+          <SheetHeader className="pb-4 border-b">
+            <SheetTitle className="text-lg font-semibold">{editingItem ? 'Edit Unit' : 'Add Unit'}</SheetTitle>
+            <SheetDescription>{editingItem ? 'Modify the unit details below.' : 'Fill in the details to create a new unit.'}</SheetDescription>
+          </SheetHeader>
+          <div className="space-y-4 py-4 flex-1 overflow-y-auto">
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Code <span className="text-destructive">*</span></Label>
               <Input value={formCode} onChange={e => setFormCode(e.target.value.toUpperCase())} placeholder="e.g. U11000" maxLength={10} className="font-mono" />
@@ -158,15 +179,15 @@ const DmsUnitsTab: React.FC = () => {
               <Switch checked={formIsActive} onCheckedChange={setFormIsActive} />
             </div>
           </div>
-          <DialogFooter className="pt-4 border-t gap-2">
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isSaving}>Cancel</Button>
+          <SheetFooter className="pt-4 border-t gap-2">
+            <Button variant="outline" onClick={() => setSheetOpen(false)} disabled={isSaving}>Cancel</Button>
             <Button onClick={handleSave} disabled={isSaving} className="min-w-[100px]">
               {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {editingItem ? 'Save Changes' : 'Create Unit'}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </>
   );
 };
