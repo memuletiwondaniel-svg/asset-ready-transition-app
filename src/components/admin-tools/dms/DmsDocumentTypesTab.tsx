@@ -495,7 +495,7 @@ const DmsDocumentTypesTab: React.FC = () => {
         <div className="flex flex-wrap items-center gap-1 px-6 pb-3">
           {FILTER_CHIPS.map((chip) => {
             const isActive = activeFilters.has(chip.key);
-            const matchCount = isActive ? docTypes.filter(chip.match).length : 0;
+            const matchCount = isActive ? docTypes.filter(d => chip.match(d, secondaryMap)).length : 0;
 
             return (
               <button
