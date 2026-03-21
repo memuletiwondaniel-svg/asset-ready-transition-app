@@ -18,13 +18,17 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  FileText, Plus, Trash2, User, Calendar, Search, X, Stamp,
+  FileText, Plus, Trash2, User, Calendar, Search, X, Stamp, Wand2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { CriticalDocsWizard } from './critical-docs/CriticalDocsWizard';
 
 interface CriticalDocumentsStepProps {
   vcrId: string;
+  projectCode?: string;
+  plantCode?: string;
+  handoverPlanId?: string;
 }
 
 const TIER_COLORS: Record<string, string> = {
@@ -39,12 +43,33 @@ const RLMU_STATUS_CLS: Record<string, string> = {
   approved: 'bg-emerald-500/10 text-emerald-600',
 };
 
-export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vcrId }) => {
+export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vcrId, projectCode, plantCode, handoverPlanId }) => {
   const queryClient = useQueryClient();
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [tierFilter, setTierFilter] = useState<'all' | 'tier_1' | 'tier_2'>('all');
   const [search, setSearch] = useState('');
+
+  // Fetch handover plan context for the wizard if not passed
+  const { data: planContext } = useQuery({
+    queryKey: ['vcr-handover-plan-context', vcrId],
+    queryFn: async () => {
+      const { data: hp } = await (supabase as any)
+        .from('p2a_handover_points')
+        .select('handover_plan_id')
+        .eq('id', vcrId)
+        .maybeSingle();
+      if (!hp?.handover_plan_id) return null;
+      const { data: plan } = await (supabase as any)
+        .from('p2a_handover_plans')
+        .select('id, project_code, plant_code')
+        .eq('id', hp.handover_plan_id)
+        .maybeSingle();
+      return plan;
+    },
+    enabled: !handoverPlanId,
+  });
 
   const { data: items = [] } = useQuery({
     queryKey: ['vcr-critical-docs', vcrId],
@@ -126,9 +151,14 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
           </Tabs>
         </div>
         {items.length > 0 && (
-          <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
-            <Plus className="w-4 h-4" /> Add Document
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => setAddOpen(true)} className="gap-1.5">
+              <Plus className="w-4 h-4" /> Quick Add
+            </Button>
+            <Button size="sm" onClick={() => setWizardOpen(true)} className="gap-1.5">
+              <Wand2 className="w-4 h-4" /> Document Wizard
+            </Button>
+          </div>
         )}
       </div>
 
@@ -157,10 +187,10 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
             </div>
             <h3 className="font-medium">No Critical Documents</h3>
             <p className="text-xs text-muted-foreground mt-1 text-center max-w-xs">
-              Select Tier 1 and Tier 2 documents from the standard list or add custom ones.
+              Use the Document Wizard to intelligently identify required Tier 1 & Tier 2 documents, system by system.
             </p>
-            <Button size="sm" onClick={() => setAddOpen(true)} className="mt-3 gap-1.5">
-              <Plus className="w-4 h-4" /> Add Document
+            <Button size="sm" onClick={() => setWizardOpen(true)} className="mt-3 gap-1.5">
+              <Wand2 className="w-4 h-4" /> Launch Document Wizard
             </Button>
           </CardContent>
         </Card>
@@ -283,6 +313,15 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CriticalDocsWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        vcrId={vcrId}
+        projectCode={projectCode || planContext?.project_code}
+        plantCode={plantCode || planContext?.plant_code}
+        handoverPlanId={handoverPlanId || planContext?.id}
+      />
     </div>
   );
 };
