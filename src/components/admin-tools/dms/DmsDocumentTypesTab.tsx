@@ -733,109 +733,123 @@ const DmsDocumentTypesTab: React.FC = () => {
             </SheetDescription>
           </SheetHeader>
 
-          <div className="space-y-5 py-4 flex-1 overflow-y-auto pr-1">
-            {/* Row 1: Code + Document Name */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Code <span className="text-destructive">*</span></Label>
-                <Input value={formCode} onChange={e => setFormCode(e.target.value)} placeholder="e.g. 4018" maxLength={10} className="font-mono" />
-              </div>
-              <div className="col-span-2 space-y-1.5">
-                <Label className="text-sm font-medium">Document Name <span className="text-destructive">*</span></Label>
-                <Input value={formDocName} onChange={e => setFormDocName(e.target.value)} placeholder="e.g. General Arrangement Diagram" />
-              </div>
-            </div>
-
-            {/* Row 2: Description */}
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Description</Label>
-              <Input value={formDocDesc} onChange={e => setFormDocDesc(e.target.value)} placeholder="Optional description of the document type" />
-            </div>
-
-            {/* Row 3: Tier + RLMU */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Tier</Label>
-                <Select value={formTier} onValueChange={setFormTier}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select tier" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[200]">
-                    {TIER_OPTIONS.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value || 'none'}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">RLMU</Label>
-                <Select value={formRlmu} onValueChange={setFormRlmu}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select RLMU" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[200]">
-                    {RLMU_OPTIONS.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value || 'none'}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Row 4: Discipline (multi-select) */}
-            <MultiSelectDropdown
-              label="Discipline"
-              options={disciplineOptions.map(d => ({ value: d.code, label: d.code, sublabel: d.name }))}
-              selected={formDisciplines}
-              onChange={setFormDisciplines}
-              placeholder="Select disciplines..."
-            />
-
-            {/* Row 4b: Secondary Discipline Classification */}
-            {isVendorDiscipline(formDisciplines[0] || null) && (
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium">Secondary Discipline Classification</Label>
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-amber-600 border-amber-300 dark:text-amber-400 dark:border-amber-700">
-                    Vendor
-                  </Badge>
+          <div className="space-y-6 py-5 flex-1 overflow-y-auto pr-1">
+            {/* Section: Core Details */}
+            <fieldset className="space-y-4">
+              <legend className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Core Details</legend>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Code <span className="text-destructive">*</span></Label>
+                  <Input value={formCode} onChange={e => setFormCode(e.target.value)} placeholder="e.g. 4018" maxLength={10} className="font-mono" />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Tag this vendor document with applicable engineering disciplines for accurate filtering
-                </p>
-                <MultiSelectDropdown
-                  label=""
-                  options={disciplineOptions
-                    .filter(d => !isVendorDiscipline(d.code))
-                    .map(d => ({ value: d.code, label: d.code, sublabel: d.name }))}
-                  selected={formSecondaryDisciplines}
-                  onChange={setFormSecondaryDisciplines}
-                  placeholder="Select applicable disciplines..."
-                />
+                <div className="col-span-2 space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Document Name <span className="text-destructive">*</span></Label>
+                  <Input value={formDocName} onChange={e => setFormDocName(e.target.value)} placeholder="e.g. General Arrangement Diagram" />
+                </div>
               </div>
-            )}
-
-            {/* Row 5: Acceptable Status (multi-select) */}
-            <MultiSelectDropdown
-              label="Acceptable Status"
-              options={statusCodeOptions.map(s => ({ value: s.code, label: s.code, sublabel: s.description }))}
-              selected={formAccStatuses}
-              onChange={setFormAccStatuses}
-              placeholder="Select acceptable statuses..."
-            />
-
-            {/* Row 6: Active toggle */}
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <Label className="text-sm font-medium">Active Status</Label>
-                <p className="text-xs text-muted-foreground mt-0.5">Enable or disable this document type</p>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground">Description</Label>
+                <Input value={formDocDesc} onChange={e => setFormDocDesc(e.target.value)} placeholder="Optional description of the document type" />
               </div>
-              <Switch checked={formIsActive} onCheckedChange={setFormIsActive} />
-            </div>
+            </fieldset>
+
+            <div className="h-px bg-border" />
+
+            {/* Section: Classification */}
+            <fieldset className="space-y-4">
+              <legend className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Classification</legend>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Tier</Label>
+                  <Select value={formTier} onValueChange={setFormTier}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select tier" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[200]">
+                      {TIER_OPTIONS.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value || 'none'}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">RLMU</Label>
+                  <Select value={formRlmu} onValueChange={setFormRlmu}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select RLMU" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[200]">
+                      {RLMU_OPTIONS.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value || 'none'}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </fieldset>
+
+            <div className="h-px bg-border" />
+
+            {/* Section: Discipline */}
+            <fieldset className="space-y-4">
+              <legend className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Discipline</legend>
+              <MultiSelectDropdown
+                label=""
+                options={disciplineOptions.map(d => ({ value: d.code, label: d.code, sublabel: d.name }))}
+                selected={formDisciplines}
+                onChange={setFormDisciplines}
+                placeholder="Select disciplines..."
+              />
+
+              {isVendorDiscipline(formDisciplines[0] || null) && (
+                <div className="space-y-1.5 rounded-md border border-dashed border-amber-300/60 bg-amber-50/30 dark:bg-amber-950/10 dark:border-amber-700/40 p-3">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs font-medium text-muted-foreground">Secondary Discipline Classification</Label>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-amber-600 border-amber-300 dark:text-amber-400 dark:border-amber-700">
+                      Vendor
+                    </Badge>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground/70">
+                    Tag this vendor document with applicable engineering disciplines for accurate filtering
+                  </p>
+                  <MultiSelectDropdown
+                    label=""
+                    options={disciplineOptions
+                      .filter(d => !isVendorDiscipline(d.code))
+                      .map(d => ({ value: d.code, label: d.code, sublabel: d.name }))}
+                    selected={formSecondaryDisciplines}
+                    onChange={setFormSecondaryDisciplines}
+                    placeholder="Select applicable disciplines..."
+                  />
+                </div>
+              )}
+            </fieldset>
+
+            <div className="h-px bg-border" />
+
+            {/* Section: Status */}
+            <fieldset className="space-y-4">
+              <legend className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Status</legend>
+              <MultiSelectDropdown
+                label=""
+                options={statusCodeOptions.map(s => ({ value: s.code, label: s.code, sublabel: s.description }))}
+                selected={formAccStatuses}
+                onChange={setFormAccStatuses}
+                placeholder="Select acceptable statuses..."
+              />
+
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <Label className="text-xs font-medium text-foreground">Active Status</Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Enable or disable this document type</p>
+                </div>
+                <Switch checked={formIsActive} onCheckedChange={setFormIsActive} />
+              </div>
+            </fieldset>
           </div>
 
           <SheetFooter className="pt-4 border-t gap-2">
