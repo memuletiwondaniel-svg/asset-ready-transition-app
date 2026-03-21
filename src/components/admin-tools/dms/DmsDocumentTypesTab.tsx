@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Search, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Pencil, Trash2, Loader2, SlidersHorizontal, X, ChevronsUpDown, Check } from 'lucide-react';
+import { Plus, Trash2, Loader2, SlidersHorizontal, X, ChevronsUpDown, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -108,7 +108,7 @@ const MultiSelectDropdown: React.FC<{
 
   return (
     <div className="space-y-1.5">
-      <Label className="text-sm font-medium">{label}</Label>
+      {label && <Label className="text-sm font-medium">{label}</Label>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline" role="combobox" className="w-full justify-between h-auto min-h-9 font-normal text-left">
@@ -135,7 +135,7 @@ const MultiSelectDropdown: React.FC<{
             <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50 ml-2" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[340px] p-0" align="start">
+        <PopoverContent className="w-[340px] p-0 z-[200]" align="start">
           {searchable && (
             <div className="p-2 border-b">
               <Input
@@ -193,7 +193,7 @@ interface FilterChip {
   countBadgeClass: string;
   dotColor: string;
   hoverClass: string;
-  disciplineName?: string; // Used for secondary discipline matching
+  disciplineName?: string;
   match: (d: DocTypeRow, secondaryMap?: Map<string, SecondaryDiscipline[]>) => boolean;
 }
 
@@ -213,9 +213,11 @@ const DmsDocumentTypesTab: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(new Set());
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<DocTypeRow | null>(null);
   const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS);
+  const [sortCol, setSortCol] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   // Form state
   const [formCode, setFormCode] = useState('');
@@ -227,6 +229,15 @@ const DmsDocumentTypesTab: React.FC = () => {
   const [formSecondaryDisciplines, setFormSecondaryDisciplines] = useState<string[]>([]);
   const [formAccStatuses, setFormAccStatuses] = useState<string[]>([]);
   const [formIsActive, setFormIsActive] = useState(true);
+
+  const toggleSort = (col: string) => {
+    if (sortCol === col) { if (sortDir === 'asc') setSortDir('desc'); else { setSortCol(null); setSortDir('asc'); } }
+    else { setSortCol(col); setSortDir('asc'); }
+  };
+  const SortIcon = ({ col }: { col: string }) => {
+    if (sortCol !== col) return null;
+    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 inline ml-1" /> : <ArrowDown className="h-3 w-3 inline ml-1" />;
+  };
 
   const { data: docTypes = [], isLoading } = useQuery({
     queryKey: ['dms-document-types'],
@@ -240,7 +251,6 @@ const DmsDocumentTypesTab: React.FC = () => {
     },
   });
 
-  // Fetch disciplines for dropdown
   const { data: disciplineOptions = [] } = useQuery({
     queryKey: ['dms-disciplines-options'],
     queryFn: async () => {
@@ -254,7 +264,6 @@ const DmsDocumentTypesTab: React.FC = () => {
     },
   });
 
-  // Fetch status codes for dropdown
   const { data: statusCodeOptions = [] } = useQuery({
     queryKey: ['dms-status-codes-options'],
     queryFn: async () => {
@@ -268,7 +277,6 @@ const DmsDocumentTypesTab: React.FC = () => {
     },
   });
 
-  // Fetch secondary disciplines for vendor documents
   const { data: secondaryDisciplines = [] } = useQuery({
     queryKey: ['dms-secondary-disciplines'],
     queryFn: async () => {
@@ -280,7 +288,6 @@ const DmsDocumentTypesTab: React.FC = () => {
     },
   });
 
-  // Build a map: document_type_id -> SecondaryDiscipline[]
   const secondaryMap = React.useMemo(() => {
     const map = new Map<string, SecondaryDiscipline[]>();
     secondaryDisciplines.forEach(sd => {
@@ -302,7 +309,7 @@ const DmsDocumentTypesTab: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dms-document-types'] });
       toast.success('Document type created');
-      setDialogOpen(false);
+      setSheetOpen(false);
     },
     onError: (err: any) => toast.error(err.message || 'Failed to create document type'),
   });
@@ -319,7 +326,7 @@ const DmsDocumentTypesTab: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dms-document-types'] });
       toast.success('Document type updated');
-      setDialogOpen(false);
+      setSheetOpen(false);
     },
     onError: (err: any) => toast.error(err.message || 'Failed to update document type'),
   });
@@ -342,7 +349,6 @@ const DmsDocumentTypesTab: React.FC = () => {
       (d.discipline_name || '').toLowerCase().includes(q);
   });
 
-  // Apply active filter chips (pass secondaryMap for vendor doc matching)
   const chipFiltered = activeFilters.size === 0
     ? filtered
     : filtered.filter(d => {
@@ -356,11 +362,27 @@ const DmsDocumentTypesTab: React.FC = () => {
     c => (c.id === 'discipline_code' || c.id === 'discipline_name') && c.visible
   );
 
-  const displayRows = isDisciplineVisible
+  const deduped = isDisciplineVisible
     ? chipFiltered
     : chipFiltered.filter((item, index, arr) =>
         arr.findIndex(d => d.code === item.code && d.document_name === item.document_name) === index
       );
+
+  // Apply sorting
+  const displayRows = useMemo(() => {
+    if (!sortCol) return deduped;
+    return [...deduped].sort((a, b) => {
+      let cmp = 0;
+      if (sortCol === 'is_active') {
+        cmp = (a.is_active === b.is_active ? 0 : a.is_active ? -1 : 1);
+      } else {
+        const aVal = (a as any)[sortCol] || '';
+        const bVal = (b as any)[sortCol] || '';
+        cmp = String(aVal).localeCompare(String(bVal));
+      }
+      return sortDir === 'desc' ? -cmp : cmp;
+    });
+  }, [deduped, sortCol, sortDir]);
 
   const visibleColumns = columns.filter(c => c.visible);
 
@@ -377,15 +399,15 @@ const DmsDocumentTypesTab: React.FC = () => {
     setColumns(prev => prev.map(c => c.id === colId ? { ...c, visible: !c.visible } : c));
   };
 
-  const openAddDialog = () => {
+  const openAddSheet = () => {
     setEditingItem(null);
     setFormCode(''); setFormDocName(''); setFormDocDesc(''); setFormTier('');
     setFormRlmu(''); setFormDisciplines([]); setFormSecondaryDisciplines([]); setFormAccStatuses([]);
     setFormIsActive(true);
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
 
-  const openEditDialog = (item: DocTypeRow) => {
+  const openEditSheet = (item: DocTypeRow) => {
     setEditingItem(item);
     setFormCode(item.code);
     setFormDocName(item.document_name);
@@ -393,7 +415,6 @@ const DmsDocumentTypesTab: React.FC = () => {
     setFormTier(item.tier || '');
     setFormRlmu(item.rlmu || '');
     setFormDisciplines(item.discipline_code ? [item.discipline_code] : []);
-    // Load secondary disciplines for this item
     const sds = secondaryMap.get(item.id) || [];
     setFormSecondaryDisciplines(sds.map(s => s.discipline_code));
     setFormAccStatuses(
@@ -402,16 +423,14 @@ const DmsDocumentTypesTab: React.FC = () => {
         : []
     );
     setFormIsActive(item.is_active);
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
 
   const saveSecondaryDisciplines = async (docTypeId: string, codes: string[]) => {
-    // Delete existing
     await supabase
       .from('dms_document_type_secondary_disciplines')
       .delete()
       .eq('document_type_id', docTypeId);
-    // Insert new
     if (codes.length > 0) {
       const rows = codes.map(code => {
         const disc = disciplineOptions.find(d => d.code === code);
@@ -448,12 +467,10 @@ const DmsDocumentTypesTab: React.FC = () => {
     try {
       if (editingItem) {
         await updateDocType.mutateAsync({ id: editingItem.id, ...payload });
-        // Save secondary disciplines if this is a vendor doc
         if (isVendorDiscipline(payload.discipline_code)) {
           await saveSecondaryDisciplines(editingItem.id, formSecondaryDisciplines);
         }
       } else {
-        // For new docs, we need the ID back
         const maxOrder = docTypes.length > 0 ? Math.max(...docTypes.map(d => d.display_order)) : 0;
         const { data: newDoc, error } = await supabase
           .from('dms_document_types')
@@ -466,7 +483,7 @@ const DmsDocumentTypesTab: React.FC = () => {
         }
         queryClient.invalidateQueries({ queryKey: ['dms-document-types'] });
         toast.success('Document type created');
-        setDialogOpen(false);
+        setSheetOpen(false);
       }
       queryClient.invalidateQueries({ queryKey: ['dms-secondary-disciplines'] });
     } catch (err: any) {
@@ -552,7 +569,7 @@ const DmsDocumentTypesTab: React.FC = () => {
                 </div>
               </PopoverContent>
             </Popover>
-            <Button size="sm" className="gap-1.5" onClick={openAddDialog}>
+            <Button size="sm" className="gap-1.5" onClick={openAddSheet}>
               <Plus className="h-4 w-4" /> Add Document
             </Button>
           </div>
@@ -611,26 +628,27 @@ const DmsDocumentTypesTab: React.FC = () => {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-12 text-xs font-medium uppercase tracking-wider text-muted-foreground">#</TableHead>
                   {visibleColumns.map(col => (
-                    <TableHead key={col.id} className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      {col.label}
+                    <TableHead
+                      key={col.id}
+                      className="text-xs font-medium uppercase tracking-wider text-muted-foreground cursor-pointer select-none"
+                      onClick={() => toggleSort(col.id)}
+                    >
+                      {col.label}<SortIcon col={col.id} />
                     </TableHead>
                   ))}
-                  <TableHead className="w-24 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Actions</TableHead>
+                  <TableHead className="w-16 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {displayRows.map((item, idx) => (
-                  <TableRow key={item.id} className="group border-border/40 hover:bg-muted/30 transition-colors">
+                  <TableRow key={item.id} className="group border-border/40 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => openEditSheet(item)}>
                     <TableCell className="text-muted-foreground text-xs tabular-nums">{idx + 1}</TableCell>
                     {visibleColumns.map(col => (
                       <TableCell key={col.id}>{getCellValue(item, col.id)}</TableCell>
                     ))}
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEditDialog(item)}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteDocType.mutate(item.id)}>
+                      <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={e => { e.stopPropagation(); deleteDocType.mutate(item.id); }}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -650,17 +668,17 @@ const DmsDocumentTypesTab: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* ─── Add / Edit Document Type Modal ─── */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader className="pb-4 border-b">
-            <DialogTitle className="text-lg font-semibold">{editingItem ? 'Edit Document Type' : 'Add Document Type'}</DialogTitle>
-            <DialogDescription>
+      {/* ─── Add / Edit Document Type Side Sheet ─── */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="right" className="sm:max-w-xl z-[150] flex flex-col">
+          <SheetHeader className="pb-4 border-b">
+            <SheetTitle className="text-lg font-semibold">{editingItem ? 'Edit Document Type' : 'Add Document Type'}</SheetTitle>
+            <SheetDescription>
               {editingItem ? 'Modify the document type configuration below.' : 'Fill in the details to create a new document type.'}
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
 
-          <div className="space-y-5 py-4 max-h-[60vh] overflow-y-auto pr-1">
+          <div className="space-y-5 py-4 flex-1 overflow-y-auto pr-1">
             {/* Row 1: Code + Document Name */}
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1.5">
@@ -687,7 +705,7 @@ const DmsDocumentTypesTab: React.FC = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select tier" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[200]">
                     {TIER_OPTIONS.map(opt => (
                       <SelectItem key={opt.value} value={opt.value || 'none'}>
                         {opt.label}
@@ -702,7 +720,7 @@ const DmsDocumentTypesTab: React.FC = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select RLMU" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[200]">
                     {RLMU_OPTIONS.map(opt => (
                       <SelectItem key={opt.value} value={opt.value || 'none'}>
                         {opt.label}
@@ -722,7 +740,7 @@ const DmsDocumentTypesTab: React.FC = () => {
               placeholder="Select disciplines..."
             />
 
-            {/* Row 4b: Secondary Discipline Classification (shown for vendor/non-standard discipline codes) */}
+            {/* Row 4b: Secondary Discipline Classification */}
             {isVendorDiscipline(formDisciplines[0] || null) && (
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
@@ -765,17 +783,17 @@ const DmsDocumentTypesTab: React.FC = () => {
             </div>
           </div>
 
-          <DialogFooter className="pt-4 border-t gap-2">
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isSaving}>
+          <SheetFooter className="pt-4 border-t gap-2">
+            <Button variant="outline" onClick={() => setSheetOpen(false)} disabled={isSaving}>
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={isSaving} className="min-w-[100px]">
               {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {editingItem ? 'Save Changes' : 'Create Document Type'}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </>
   );
 };
