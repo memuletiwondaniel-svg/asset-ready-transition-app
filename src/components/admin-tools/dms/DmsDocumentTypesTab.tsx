@@ -453,7 +453,7 @@ const DmsDocumentTypesTab: React.FC = () => {
               className={cn(
                 "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
                 activeFilters.has(chip.key)
-                  ? "bg-primary text-primary-foreground border-primary"
+                  ? chip.activeClass
                   : "bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground"
               )}
             >
