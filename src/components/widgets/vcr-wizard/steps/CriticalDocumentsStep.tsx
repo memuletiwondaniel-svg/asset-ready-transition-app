@@ -18,13 +18,17 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  FileText, Plus, Trash2, User, Calendar, Search, X, Stamp,
+  FileText, Plus, Trash2, User, Calendar, Search, X, Stamp, Wand2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { CriticalDocsWizard } from './critical-docs/CriticalDocsWizard';
 
 interface CriticalDocumentsStepProps {
   vcrId: string;
+  projectCode?: string;
+  plantCode?: string;
+  handoverPlanId?: string;
 }
 
 const TIER_COLORS: Record<string, string> = {
