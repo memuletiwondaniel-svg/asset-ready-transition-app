@@ -115,15 +115,19 @@ const MultiSelectDropdown: React.FC<{
             {selected.length === 0 ? (
               <span className="text-muted-foreground">{placeholder}</span>
             ) : (
-              <div className="flex flex-wrap gap-1 py-0.5">
-                {selected.slice(0, 3).map(s => (
-                  <Badge key={s} variant="secondary" className="text-xs font-mono px-1.5 py-0">
-                    {s}
-                  </Badge>
-                ))}
-                {selected.length > 3 && (
+              <div className="flex flex-col gap-0.5 py-0.5">
+                {selected.slice(0, 5).map(s => {
+                  const opt = options.find(o => o.value === s);
+                  return (
+                    <Badge key={s} variant="secondary" className="text-xs px-1.5 py-0.5 w-fit">
+                      <span className="font-mono mr-1">{s}</span>
+                      {opt?.sublabel && <span className="text-muted-foreground font-normal">{opt.sublabel}</span>}
+                    </Badge>
+                  );
+                })}
+                {selected.length > 5 && (
                   <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                    +{selected.length - 3} more
+                    +{selected.length - 5} more
                   </Badge>
                 )}
               </div>
