@@ -32,6 +32,19 @@ interface DocTypeRow {
   display_order: number;
 }
 
+interface SecondaryDiscipline {
+  id: string;
+  document_type_id: string;
+  discipline_code: string;
+  discipline_name: string | null;
+}
+
+// Check if a discipline code is a vendor/non-standard code (ZV or 3-char alphanumeric)
+const isVendorDiscipline = (code: string | null): boolean => {
+  if (!code) return false;
+  return code === 'ZV' || /^[A-Z0-9]{3,}$/.test(code);
+};
+
 interface DisciplineOption {
   id: string;
   code: string;
@@ -176,19 +189,20 @@ interface FilterChip {
   countBadgeClass: string;
   dotColor: string;
   hoverClass: string;
-  match: (d: DocTypeRow) => boolean;
+  disciplineName?: string; // Used for secondary discipline matching
+  match: (d: DocTypeRow, secondaryMap?: Map<string, SecondaryDiscipline[]>) => boolean;
 }
 
 const FILTER_CHIPS: FilterChip[] = [
   { key: 'tier1', label: 'Tier 1', activeClass: 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700', countBadgeClass: 'bg-orange-200/80 text-orange-800 border-orange-300/60 dark:bg-orange-800/40 dark:text-orange-300 dark:border-orange-700/50', dotColor: 'bg-orange-500', hoverClass: 'hover:border-orange-300 dark:hover:border-orange-700', match: d => d.tier === 'Tier 1' },
   { key: 'tier2', label: 'Tier 2', activeClass: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700', countBadgeClass: 'bg-blue-200/80 text-blue-800 border-blue-300/60 dark:bg-blue-800/40 dark:text-blue-300 dark:border-blue-700/50', dotColor: 'bg-blue-500', hoverClass: 'hover:border-blue-300 dark:hover:border-blue-700', match: d => d.tier === 'Tier 2' },
   { key: 'rlmu', label: 'RLMU', activeClass: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700', countBadgeClass: 'bg-amber-200/60 text-amber-800 dark:bg-amber-800/40 dark:text-amber-300', dotColor: 'bg-amber-600', hoverClass: 'hover:border-amber-300 dark:hover:border-amber-700', match: d => d.rlmu === 'RLMU' },
-  { key: 'elect', label: 'Elect', activeClass: 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700', countBadgeClass: 'bg-yellow-200/60 text-yellow-800 dark:bg-yellow-800/40 dark:text-yellow-300', dotColor: 'bg-yellow-500', hoverClass: 'hover:border-yellow-300 dark:hover:border-yellow-700', match: d => d.discipline_name === 'Electrical' },
-  { key: 'static', label: 'Static', activeClass: 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700', countBadgeClass: 'bg-teal-200/60 text-teal-800 dark:bg-teal-800/40 dark:text-teal-300', dotColor: 'bg-teal-500', hoverClass: 'hover:border-teal-300 dark:hover:border-teal-700', match: d => d.discipline_name === 'Mechanical - Static' },
-  { key: 'rotating', label: 'Rotating', activeClass: 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700', countBadgeClass: 'bg-cyan-200/60 text-cyan-800 dark:bg-cyan-800/40 dark:text-cyan-300', dotColor: 'bg-cyan-500', hoverClass: 'hover:border-cyan-300 dark:hover:border-cyan-700', match: d => d.discipline_name === 'Rotating Equipment' },
-  { key: 'inst', label: 'Inst', activeClass: 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700', countBadgeClass: 'bg-purple-200/60 text-purple-800 dark:bg-purple-800/40 dark:text-purple-300', dotColor: 'bg-purple-500', hoverClass: 'hover:border-purple-300 dark:hover:border-purple-700', match: d => d.discipline_name === 'Instrumentation' },
-  { key: 'ops', label: 'Ops', activeClass: 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700', countBadgeClass: 'bg-emerald-200/60 text-emerald-800 dark:bg-emerald-800/40 dark:text-emerald-300', dotColor: 'bg-emerald-500', hoverClass: 'hover:border-emerald-300 dark:hover:border-emerald-700', match: d => d.discipline_name === 'Operations' },
-  { key: 'tech_safety', label: 'Tech Safety', activeClass: 'bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-700', countBadgeClass: 'bg-rose-200/60 text-rose-800 dark:bg-rose-800/40 dark:text-rose-300', dotColor: 'bg-rose-500', hoverClass: 'hover:border-rose-300 dark:hover:border-rose-700', match: d => d.discipline_name === 'HSE&S General' },
+  { key: 'elect', label: 'Elect', disciplineName: 'Electrical', activeClass: 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700', countBadgeClass: 'bg-yellow-200/60 text-yellow-800 dark:bg-yellow-800/40 dark:text-yellow-300', dotColor: 'bg-yellow-500', hoverClass: 'hover:border-yellow-300 dark:hover:border-yellow-700', match: (d, sm) => d.discipline_name === 'Electrical' || (sm?.get(d.id)?.some(s => s.discipline_code === 'EA') ?? false) },
+  { key: 'static', label: 'Static', disciplineName: 'Mechanical - Static', activeClass: 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700', countBadgeClass: 'bg-teal-200/60 text-teal-800 dark:bg-teal-800/40 dark:text-teal-300', dotColor: 'bg-teal-500', hoverClass: 'hover:border-teal-300 dark:hover:border-teal-700', match: (d, sm) => d.discipline_name === 'Mechanical - Static' || (sm?.get(d.id)?.some(s => s.discipline_code === 'MS') ?? false) },
+  { key: 'rotating', label: 'Rotating', disciplineName: 'Rotating Equipment', activeClass: 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700', countBadgeClass: 'bg-cyan-200/60 text-cyan-800 dark:bg-cyan-800/40 dark:text-cyan-300', dotColor: 'bg-cyan-500', hoverClass: 'hover:border-cyan-300 dark:hover:border-cyan-700', match: (d, sm) => d.discipline_name === 'Rotating Equipment' || (sm?.get(d.id)?.some(s => s.discipline_code === 'MR') ?? false) },
+  { key: 'inst', label: 'Inst', disciplineName: 'Instrumentation', activeClass: 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700', countBadgeClass: 'bg-purple-200/60 text-purple-800 dark:bg-purple-800/40 dark:text-purple-300', dotColor: 'bg-purple-500', hoverClass: 'hover:border-purple-300 dark:hover:border-purple-700', match: (d, sm) => d.discipline_name === 'Instrumentation' || (sm?.get(d.id)?.some(s => s.discipline_code === 'IN') ?? false) },
+  { key: 'ops', label: 'Ops', disciplineName: 'Operations', activeClass: 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700', countBadgeClass: 'bg-emerald-200/60 text-emerald-800 dark:bg-emerald-800/40 dark:text-emerald-300', dotColor: 'bg-emerald-500', hoverClass: 'hover:border-emerald-300 dark:hover:border-emerald-700', match: (d, sm) => d.discipline_name === 'Operations' || (sm?.get(d.id)?.some(s => s.discipline_code === 'OA') ?? false) },
+  { key: 'tech_safety', label: 'Tech Safety', disciplineName: 'HSE&S General', activeClass: 'bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-700', countBadgeClass: 'bg-rose-200/60 text-rose-800 dark:bg-rose-800/40 dark:text-rose-300', dotColor: 'bg-rose-500', hoverClass: 'hover:border-rose-300 dark:hover:border-rose-700', match: (d, sm) => d.discipline_name === 'HSE&S General' || (sm?.get(d.id)?.some(s => s.discipline_code === 'HX') ?? false) },
 ];
 
 const DmsDocumentTypesTab: React.FC = () => {
@@ -206,6 +220,7 @@ const DmsDocumentTypesTab: React.FC = () => {
   const [formTier, setFormTier] = useState('');
   const [formRlmu, setFormRlmu] = useState('');
   const [formDisciplines, setFormDisciplines] = useState<string[]>([]);
+  const [formSecondaryDisciplines, setFormSecondaryDisciplines] = useState<string[]>([]);
   const [formAccStatuses, setFormAccStatuses] = useState<string[]>([]);
   const [formIsActive, setFormIsActive] = useState(true);
 
@@ -248,6 +263,29 @@ const DmsDocumentTypesTab: React.FC = () => {
       return data as StatusCodeOption[];
     },
   });
+
+  // Fetch secondary disciplines for vendor documents
+  const { data: secondaryDisciplines = [] } = useQuery({
+    queryKey: ['dms-secondary-disciplines'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('dms_document_type_secondary_disciplines')
+        .select('*');
+      if (error) throw error;
+      return data as SecondaryDiscipline[];
+    },
+  });
+
+  // Build a map: document_type_id -> SecondaryDiscipline[]
+  const secondaryMap = React.useMemo(() => {
+    const map = new Map<string, SecondaryDiscipline[]>();
+    secondaryDisciplines.forEach(sd => {
+      const existing = map.get(sd.document_type_id) || [];
+      existing.push(sd);
+      map.set(sd.document_type_id, existing);
+    });
+    return map;
+  }, [secondaryDisciplines]);
 
   const createDocType = useMutation({
     mutationFn: async (item: Omit<DocTypeRow, 'id' | 'display_order'>) => {
@@ -300,13 +338,13 @@ const DmsDocumentTypesTab: React.FC = () => {
       (d.discipline_name || '').toLowerCase().includes(q);
   });
 
-  // Apply active filter chips
+  // Apply active filter chips (pass secondaryMap for vendor doc matching)
   const chipFiltered = activeFilters.size === 0
     ? filtered
     : filtered.filter(d => {
         return Array.from(activeFilters).some(key => {
           const chip = FILTER_CHIPS.find(c => c.key === key);
-          return chip ? chip.match(d) : false;
+          return chip ? chip.match(d, secondaryMap) : false;
         });
       });
 
@@ -338,7 +376,7 @@ const DmsDocumentTypesTab: React.FC = () => {
   const openAddDialog = () => {
     setEditingItem(null);
     setFormCode(''); setFormDocName(''); setFormDocDesc(''); setFormTier('');
-    setFormRlmu(''); setFormDisciplines([]); setFormAccStatuses([]);
+    setFormRlmu(''); setFormDisciplines([]); setFormSecondaryDisciplines([]); setFormAccStatuses([]);
     setFormIsActive(true);
     setDialogOpen(true);
   };
@@ -350,9 +388,10 @@ const DmsDocumentTypesTab: React.FC = () => {
     setFormDocDesc(item.document_description || '');
     setFormTier(item.tier || '');
     setFormRlmu(item.rlmu || '');
-    // Parse existing discipline
     setFormDisciplines(item.discipline_code ? [item.discipline_code] : []);
-    // Parse acceptable statuses (comma-separated)
+    // Load secondary disciplines for this item
+    const sds = secondaryMap.get(item.id) || [];
+    setFormSecondaryDisciplines(sds.map(s => s.discipline_code));
     setFormAccStatuses(
       item.acceptable_status
         ? item.acceptable_status.split(',').map(s => s.trim()).filter(Boolean)
@@ -362,13 +401,32 @@ const DmsDocumentTypesTab: React.FC = () => {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const saveSecondaryDisciplines = async (docTypeId: string, codes: string[]) => {
+    // Delete existing
+    await supabase
+      .from('dms_document_type_secondary_disciplines')
+      .delete()
+      .eq('document_type_id', docTypeId);
+    // Insert new
+    if (codes.length > 0) {
+      const rows = codes.map(code => {
+        const disc = disciplineOptions.find(d => d.code === code);
+        return {
+          document_type_id: docTypeId,
+          discipline_code: code,
+          discipline_name: disc?.name || null,
+        };
+      });
+      await supabase.from('dms_document_type_secondary_disciplines').insert(rows);
+    }
+  };
+
+  const handleSave = async () => {
     if (!formCode.trim() || !formDocName.trim()) {
       toast.error('Code and Document Name are required');
       return;
     }
 
-    // Find discipline name from selected code
     const selectedDisc = disciplineOptions.find(d => formDisciplines.includes(d.code));
 
     const payload = {
@@ -383,10 +441,32 @@ const DmsDocumentTypesTab: React.FC = () => {
       is_active: formIsActive,
     };
 
-    if (editingItem) {
-      updateDocType.mutate({ id: editingItem.id, ...payload });
-    } else {
-      createDocType.mutate(payload as any);
+    try {
+      if (editingItem) {
+        await updateDocType.mutateAsync({ id: editingItem.id, ...payload });
+        // Save secondary disciplines if this is a vendor doc
+        if (isVendorDiscipline(payload.discipline_code)) {
+          await saveSecondaryDisciplines(editingItem.id, formSecondaryDisciplines);
+        }
+      } else {
+        // For new docs, we need the ID back
+        const maxOrder = docTypes.length > 0 ? Math.max(...docTypes.map(d => d.display_order)) : 0;
+        const { data: newDoc, error } = await supabase
+          .from('dms_document_types')
+          .insert({ ...payload, display_order: maxOrder + 1 })
+          .select('id')
+          .single();
+        if (error) throw error;
+        if (newDoc && isVendorDiscipline(payload.discipline_code)) {
+          await saveSecondaryDisciplines(newDoc.id, formSecondaryDisciplines);
+        }
+        queryClient.invalidateQueries({ queryKey: ['dms-document-types'] });
+        toast.success('Document type created');
+        setDialogOpen(false);
+      }
+      queryClient.invalidateQueries({ queryKey: ['dms-secondary-disciplines'] });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save');
     }
   };
 
@@ -399,7 +479,27 @@ const DmsDocumentTypesTab: React.FC = () => {
           {item.code}
         </span>
       );
-      case 'document_name': return <span className="text-sm text-foreground">{item.document_name}</span>;
+      case 'document_name': {
+        const sds = secondaryMap.get(item.id);
+        const hasSecondary = isVendorDiscipline(item.discipline_code) && sds && sds.length > 0;
+        return (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-foreground">{item.document_name}</span>
+            {hasSecondary && (
+              <div className="flex items-center gap-0.5">
+                {sds.slice(0, 3).map(sd => (
+                  <Badge key={sd.discipline_code} variant="outline" className="text-[10px] px-1 py-0 font-mono text-muted-foreground border-border">
+                    {sd.discipline_code}
+                  </Badge>
+                ))}
+                {sds.length > 3 && (
+                  <span className="text-[10px] text-muted-foreground">+{sds.length - 3}</span>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
       case 'document_description': return <span className="text-sm text-muted-foreground max-w-[300px] truncate block">{item.document_description || '—'}</span>;
       case 'tier': return <span className="text-sm text-muted-foreground">{item.tier || '—'}</span>;
       case 'rlmu': return <span className="text-sm text-muted-foreground">{item.rlmu || '—'}</span>;
@@ -457,7 +557,7 @@ const DmsDocumentTypesTab: React.FC = () => {
         <div className="flex flex-wrap items-center gap-1 px-6 pb-3">
           {FILTER_CHIPS.map((chip) => {
             const isActive = activeFilters.has(chip.key);
-            const matchCount = isActive ? docTypes.filter(chip.match).length : 0;
+            const matchCount = isActive ? docTypes.filter(d => chip.match(d, secondaryMap)).length : 0;
 
             return (
               <button
@@ -617,6 +717,30 @@ const DmsDocumentTypesTab: React.FC = () => {
               onChange={setFormDisciplines}
               placeholder="Select disciplines..."
             />
+
+            {/* Row 4b: Secondary Discipline Classification (shown for vendor/non-standard discipline codes) */}
+            {isVendorDiscipline(formDisciplines[0] || null) && (
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium">Secondary Discipline Classification</Label>
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-amber-600 border-amber-300 dark:text-amber-400 dark:border-amber-700">
+                    Vendor
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Tag this vendor document with applicable engineering disciplines for accurate filtering
+                </p>
+                <MultiSelectDropdown
+                  label=""
+                  options={disciplineOptions
+                    .filter(d => !isVendorDiscipline(d.code))
+                    .map(d => ({ value: d.code, label: d.code, sublabel: d.name }))}
+                  selected={formSecondaryDisciplines}
+                  onChange={setFormSecondaryDisciplines}
+                  placeholder="Select applicable disciplines..."
+                />
+              </div>
+            )}
 
             {/* Row 5: Acceptable Status (multi-select) */}
             <MultiSelectDropdown

@@ -814,6 +814,38 @@ export type Database = {
         }
         Relationships: []
       }
+      dms_document_type_secondary_disciplines: {
+        Row: {
+          created_at: string
+          discipline_code: string
+          discipline_name: string | null
+          document_type_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          discipline_code: string
+          discipline_name?: string | null
+          document_type_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          discipline_code?: string
+          discipline_name?: string | null
+          document_type_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dms_document_type_secondary_disciplines_document_type_id_fkey"
+            columns: ["document_type_id"]
+            isOneToOne: false
+            referencedRelation: "dms_document_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dms_document_types: {
         Row: {
           acceptable_status: string | null
