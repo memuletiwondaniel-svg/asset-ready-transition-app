@@ -51,6 +51,26 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
   const [tierFilter, setTierFilter] = useState<'all' | 'tier_1' | 'tier_2'>('all');
   const [search, setSearch] = useState('');
 
+  // Fetch handover plan context for the wizard if not passed
+  const { data: planContext } = useQuery({
+    queryKey: ['vcr-handover-plan-context', vcrId],
+    queryFn: async () => {
+      const { data: hp } = await (supabase as any)
+        .from('p2a_handover_points')
+        .select('handover_plan_id')
+        .eq('id', vcrId)
+        .maybeSingle();
+      if (!hp?.handover_plan_id) return null;
+      const { data: plan } = await (supabase as any)
+        .from('p2a_handover_plans')
+        .select('id, project_code, plant_code')
+        .eq('id', hp.handover_plan_id)
+        .maybeSingle();
+      return plan;
+    },
+    enabled: !handoverPlanId,
+  });
+
   const { data: items = [] } = useQuery({
     queryKey: ['vcr-critical-docs', vcrId],
     queryFn: async () => {
