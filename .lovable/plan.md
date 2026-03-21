@@ -1,31 +1,66 @@
 
 
-## Filter Chips Redesign
+## Side Sheet + Row Click + Sortable Columns — All DMS Tabs
 
-### Problems Identified
-1. **"Tier 1" + count "36" reads as "1 36"** — the numeral in the label clashes with the match count
-2. **Group labels (TIER, DISCIPLINE, RLMU) add clutter** — user wants them removed
-3. **RLMU should sit next to Tier 2** — remove group-based ordering/separators
-4. **Dots inside active chips waste horizontal space** — unnecessary when the tinted background already signals selection
-5. **Overall design can be tighter and more modern**
+### Summary
+Convert all 7 DMS admin tabs from centered Dialog modals to right-side Sheet overlays, add row-click-to-open on every table row, and make every column header sortable (ascending/descending toggle with arrow indicator).
 
-### Design Solution
+### Affected Files (7 tabs)
+1. `DmsDocumentTypesTab.tsx` (783 lines — most complex, has secondary disciplines)
+2. `DmsPlantsTab.tsx`
+3. `DmsProjectsTab.tsx`
+4. `DmsOriginatorsTab.tsx`
+5. `DmsStatusCodesTab.tsx`
+6. `DmsSitesTab.tsx`
+7. `DmsUnitsTab.tsx`
 
-**Fix the count clash**: Move the match count into a clearly separated badge with a contrasting background (not `bg-current/10` which is too subtle). Use a `·` separator character before the count, or place the count in a distinct pill with slightly darker tint.
+### Changes Per Tab
 
-**Remove group labels & separators**: Delete the `isFirstInGroup` label rendering and the vertical divider logic entirely. Render all chips as a flat row: Tier 1, Tier 2, RLMU, Elect, Static, Rotating, Inst, Ops, Tech Safety.
+**1. Replace Dialog with Sheet**
+- Swap `Dialog`/`DialogContent`/`DialogHeader`/`DialogFooter` imports for `Sheet`/`SheetContent`/`SheetHeader`/`SheetFooter` from `@/components/ui/sheet`
+- SheetContent side="right" with width ~`sm:max-w-md` (matching current dialog width)
+- Keep all form fields and save/cancel logic identical
 
-**Remove dot from active chips**: Only show the colored dot on inactive chips (restoring `opacity-0` when active). The tinted background + colored text is sufficient active indication.
+**2. Row Click to Open**
+- Add `onClick={() => openEditDialog(item)}` and `cursor-pointer` to each `<TableRow>` in the body
+- Remove the pencil edit button from the actions column (row click replaces it)
+- Keep the delete button visible on hover
 
-**Tighter active count badge**: Use a solid semi-transparent background that contrasts with the chip color (e.g., for orange chip: `bg-orange-200/60 dark:bg-orange-800/40`) and render as `(36)` or a distinct pill.
+**3. Sortable Column Headers**
+- Add state: `sortColumn` (string | null) and `sortDirection` ('asc' | 'desc')
+- Make each `<TableHead>` clickable: clicking toggles asc → desc → no sort
+- Show `ArrowUp`/`ArrowDown` icon (from lucide) next to active sort column header
+- Apply `Array.sort()` on the filtered data before rendering, using locale-aware string comparison for text and numeric comparison for numbers/booleans
 
-### Changes
+### Shared Pattern (applied identically to each tab)
 
-**File**: `src/components/admin-tools/dms/DmsDocumentTypesTab.tsx`
+```text
+// Sort state
+const [sortCol, setSortCol] = useState<string | null>(null);
+const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
-1. **Reorder FILTER_CHIPS array**: Tier 1, Tier 2, RLMU, then disciplines — remove `group` property usage
-2. **Remove group label rendering** (lines 468-473): Delete the separator divider and uppercase group label spans
-3. **Hide dot when active**: Restore `opacity-0` on active state for the dot
-4. **Redesign count badge**: Change from `bg-current/10 text-[9px]` to a more visible, separated badge — use chip-specific darker tint background class (e.g., `bg-orange-200 dark:bg-orange-800/50`) and slightly larger text. Add `countBadgeClass` to each chip config.
-5. **Simplify chip padding**: Keep `px-2 py-0.5` but reduce inner `gap` to `gap-0.5` since dot is hidden when active
+// Toggle handler
+const toggleSort = (col: string) => {
+  if (sortCol === col) {
+    sortDir === 'asc' ? setSortDir('desc') : (setSortCol(null), setSortDir('asc'));
+  } else {
+    setSortCol(col); setSortDir('asc');
+  }
+};
+
+// Sortable header component inline
+<TableHead onClick={() => toggleSort('code')} className="cursor-pointer select-none">
+  Code {sortCol === 'code' && (sortDir === 'asc' ? <ArrowUp/> : <ArrowDown/>)}
+</TableHead>
+
+// Apply sort to filtered array
+const sorted = [...filtered].sort((a, b) => { ... });
+```
+
+### Technical Details
+- Sheet z-index follows existing layering standard (z-150 for side sheets)
+- `DmsDocumentTypesTab` keeps its secondary discipline multi-select inside the Sheet form — no structural changes to that logic
+- The `#` column (row index) is not sortable
+- Status column sorts by boolean (active first or last)
+- All existing create/update/delete mutations remain unchanged
 
