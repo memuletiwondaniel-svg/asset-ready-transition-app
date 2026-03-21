@@ -219,7 +219,7 @@ const FILTER_CHIPS: FilterChip[] = [
 ];
 
 // Category display order and labels for rendering
-const CATEGORY_ORDER: FilterCategory[] = ['tier', 'discipline', 'other', 'vendor'];
+const CATEGORY_ORDER: FilterCategory[] = ['tier', 'discipline', 'vendor'];
 const CATEGORY_LABELS: Record<FilterCategory, string> = {
   tier: 'Tier',
   discipline: 'Discipline',
