@@ -606,14 +606,24 @@ const DmsDocumentTypesTab: React.FC = () => {
           </div>
         </CardHeader>
         {/* Filter Chips — grouped by category with separators */}
-        <div className="flex flex-wrap items-center gap-1 px-6 pb-3">
+        <div className="flex flex-wrap items-center gap-1.5 px-6 pb-3">
           {CATEGORY_ORDER.map((cat, catIdx) => {
             const chipsInCat = FILTER_CHIPS.filter(c => c.category === cat);
             if (chipsInCat.length === 0) return null;
+            const catLabel = CATEGORY_LABELS[cat];
+            const hasActiveInCat = chipsInCat.some(c => activeFilters.has(c.key));
             return (
               <React.Fragment key={cat}>
                 {catIdx > 0 && (
-                  <span className="w-px h-4 bg-border/60 mx-1 shrink-0" />
+                  <span className="w-px h-5 bg-border mx-1.5 shrink-0" />
+                )}
+                {catLabel && (
+                  <span className={cn(
+                    "text-[10px] font-semibold uppercase tracking-wider mr-0.5 select-none",
+                    hasActiveInCat ? "text-foreground/70" : "text-muted-foreground/50"
+                  )}>
+                    {catLabel}
+                  </span>
                 )}
                 {chipsInCat.map((chip) => {
                   const isActive = activeFilters.has(chip.key);
