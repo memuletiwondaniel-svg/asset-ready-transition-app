@@ -458,28 +458,37 @@ const DmsDocumentTypesTab: React.FC = () => {
           {FILTER_CHIPS.map((chip, idx) => {
             const prevGroup = idx > 0 ? FILTER_CHIPS[idx - 1].group : chip.group;
             const showSeparator = idx > 0 && chip.group !== prevGroup;
+            const isFirstInGroup = idx === 0 || chip.group !== prevGroup;
             const isActive = activeFilters.has(chip.key);
             const matchCount = isActive ? docTypes.filter(chip.match).length : 0;
+            const groupLabel = chip.group === 'tier' ? 'Tier' : chip.group === 'discipline' ? 'Discipline' : 'RLMU';
 
             return (
               <React.Fragment key={chip.key}>
                 {showSeparator && (
-                  <div className="h-4 w-px bg-border mx-1" />
+                  <div className="h-4 w-px bg-border mx-1.5" />
+                )}
+                {isFirstInGroup && (
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mr-0.5">{groupLabel}</span>
                 )}
                 <button
                   type="button"
                   onClick={() => toggleFilter(chip.key)}
                   className={cn(
-                    "px-3 py-1 rounded-full text-xs font-medium border transition-all flex items-center gap-1.5",
+                    "px-3 py-1 rounded-full text-xs font-medium border transition-all duration-150 flex items-center gap-1.5",
                     isActive
-                      ? chip.activeClass
+                      ? `${chip.activeClass} shadow-sm`
                       : `bg-muted/50 text-muted-foreground border-border hover:bg-muted hover:text-foreground ${chip.hoverClass}`
                   )}
                 >
-                  <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", isActive ? "opacity-0" : chip.dotColor)} />
+                  <span className={cn(
+                    "rounded-full shrink-0",
+                    chip.dotColor,
+                    isActive ? "h-2 w-2" : "h-1.5 w-1.5"
+                  )} />
                   {chip.label}
                   {isActive && (
-                    <span className="opacity-70 font-normal">· {matchCount}</span>
+                    <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-current/10 text-[10px] font-normal leading-none">{matchCount}</span>
                   )}
                 </button>
               </React.Fragment>
@@ -489,7 +498,7 @@ const DmsDocumentTypesTab: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveFilters(new Set())}
-              className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+              className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors duration-150 flex items-center gap-1"
             >
               <X className="h-3 w-3" />
               Clear
