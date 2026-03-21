@@ -140,29 +140,37 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
     onError: (err: any) => toast.error(err.message || 'Failed to delete discipline'),
   });
 
-  // ─── Filtered data ───
-  const filteredDisciplines = disciplines.filter(d =>
-    d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.code.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // ─── Sorted & filtered data ───
+  const sorted = useMemo(() => {
+    const filtered = disciplines.filter(d =>
+      d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.code.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    if (!sortCol) return filtered;
+    return [...filtered].sort((a, b) => {
+      let cmp = 0;
+      if (sortCol === 'is_active') cmp = (a.is_active === b.is_active ? 0 : a.is_active ? -1 : 1);
+      else cmp = (a[sortCol] || '').localeCompare(b[sortCol] || '');
+      return sortDir === 'desc' ? -cmp : cmp;
+    });
+  }, [disciplines, searchQuery, sortCol, sortDir]);
 
-  // ─── Dialog helpers ───
-  const openAddDialog = () => {
+  // ─── Sheet helpers ───
+  const openAddSheet = () => {
     setEditingItem(null);
     setFormCode('');
     setFormName('');
     setFormIsActive(true);
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
 
-  const openEditDialog = (item: DisciplineRow) => {
+  const openEditSheet = (item: DisciplineRow) => {
     setEditingItem(item);
     setFormCode(item.code);
     setFormName(item.name);
     setFormIsActive(item.is_active);
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
-
   const handleSave = () => {
     if (!formCode.trim() || !formName.trim()) {
       toast.error('Code and name are required');
