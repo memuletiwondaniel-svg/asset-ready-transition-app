@@ -360,14 +360,27 @@ const DmsDocumentTypesTab: React.FC = () => {
       (d.discipline_name || '').toLowerCase().includes(q);
   });
 
-  const chipFiltered = activeFilters.size === 0
-    ? filtered
-    : filtered.filter(d => {
-        return Array.from(activeFilters).some(key => {
-          const chip = FILTER_CHIPS.find(c => c.key === key);
-          return chip ? chip.match(d, secondaryMap) : false;
-        });
-      });
+  const chipFiltered = useMemo(() => {
+    if (activeFilters.size === 0) return filtered;
+    // Group active filters by category
+    const activeByCategory = new Map<FilterCategory, FilterChip[]>();
+    activeFilters.forEach(key => {
+      const chip = FILTER_CHIPS.find(c => c.key === key);
+      if (chip) {
+        const list = activeByCategory.get(chip.category) || [];
+        list.push(chip);
+        activeByCategory.set(chip.category, list);
+      }
+    });
+    // AND between categories, OR within each category
+    return filtered.filter(d => {
+      for (const [, chips] of activeByCategory) {
+        const matchesCategory = chips.some(chip => chip.match(d, secondaryMap));
+        if (!matchesCategory) return false;
+      }
+      return true;
+    });
+  }, [filtered, activeFilters, secondaryMap]);
 
   const isDisciplineVisible = columns.some(
     c => (c.id === 'discipline_code' || c.id === 'discipline_name') && c.visible
