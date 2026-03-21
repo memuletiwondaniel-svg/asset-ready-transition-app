@@ -167,10 +167,10 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
             </div>
             <h3 className="font-medium">No Critical Documents</h3>
             <p className="text-xs text-muted-foreground mt-1 text-center max-w-xs">
-              Select Tier 1 and Tier 2 documents from the standard list or add custom ones.
+              Use the Document Wizard to intelligently identify required Tier 1 & Tier 2 documents, system by system.
             </p>
-            <Button size="sm" onClick={() => setAddOpen(true)} className="mt-3 gap-1.5">
-              <Plus className="w-4 h-4" /> Add Document
+            <Button size="sm" onClick={() => setWizardOpen(true)} className="mt-3 gap-1.5">
+              <Wand2 className="w-4 h-4" /> Launch Document Wizard
             </Button>
           </CardContent>
         </Card>
