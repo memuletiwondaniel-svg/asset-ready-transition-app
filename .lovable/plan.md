@@ -1,50 +1,36 @@
 
 
-## UI/UX Assessment: Filter Chips vs. Enterprise SaaS Standards
+## Filter Chips: Final Polish to Match Top-Tier Enterprise SaaS
 
-### Current State
-The filter chips use solid filled backgrounds (orange, blue, yellow, teal, etc.) when active, and muted pill buttons when inactive. This is **functional but not aligned with modern enterprise SaaS patterns** used by apps like Linear, Notion, Attio, or Airtable.
+### Current Assessment
+The implementation already follows 80% of best practices: soft tints, colored dots, group separators, match counts. The remaining gaps are subtle but noticeable in side-by-side comparisons with Linear, Airtable, and Notion.
 
-### Issues
+### Remaining Improvements
 
-1. **Saturated solid fills are visually heavy** — When multiple chips are active, the row becomes a rainbow of bold colors competing for attention. Enterprise tools use softer tints (light background + colored text/border) to keep the interface calm.
+**1. Active chip dot should stay visible (not hidden)**
+Currently `opacity-0` when active. Linear and Airtable keep the dot visible in both states -- it anchors the color identity. When active, the dot should match the text color or stay as-is.
 
-2. **No active count indicators** — Chips don't show how many records match, which is standard in tools like Airtable and Jira for quick data awareness.
+**2. Active chip needs a subtle checkmark or filled dot instead of hiding it**
+Replace the invisible dot with a slightly larger filled dot (2px -> 2.5px) when active, reinforcing selection state beyond just background color.
 
-3. **Inactive chips lack personality** — All inactive chips look identical gray. Better to hint at each chip's color even in the inactive state (subtle tinted border or dot) so users build color-category associations.
+**3. Match count should use a semi-transparent pill badge**
+Instead of inline ` · 42` text, wrap the count in a small `rounded-full bg-current/10 px-1.5` mini-badge. This is the Airtable/Jira pattern -- makes counts scannable at a glance.
 
-4. **No grouped visual separation** — Tier, Discipline, and RLMU are conceptually different filter groups but rendered as a flat list. Enterprise tools group related filters or use subtle separators.
+**4. Group labels above separators**
+Add tiny `text-[10px] uppercase tracking-wider text-muted-foreground` labels ("Tier", "Discipline", "RLMU") above each group for first-time discoverability. Optional but used by Attio.
 
-### Recommended Design
-
-**Active state**: Light tinted background + colored text + colored border (e.g., `bg-orange-100 text-orange-700 border-orange-300` for Tier 1) — softer, scannable, professional.
-
-**Inactive state**: Add a small colored dot indicator before the label so each chip hints at its category color even when off.
-
-**Group separators**: Add thin vertical dividers between Tier group, Discipline group, and RLMU.
-
-**Match count badges**: Show record count inside each chip when active (e.g., "Tier 1 · 42").
+**5. Transition polish**
+Add `duration-150` to the chip transitions and a subtle `shadow-sm` on active chips for depth -- standard in Linear's filter bar.
 
 ### Implementation Plan
 
 **Single file**: `src/components/admin-tools/dms/DmsDocumentTypesTab.tsx`
 
-1. **Update FILTER_CHIPS config** — Replace `activeClass` with `activeClass` (tinted) and add `dotColor` and `group` properties:
-   - Tier 1: `bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700`, dot: `bg-orange-500`
-   - Tier 2: `bg-blue-100 text-blue-700 border-blue-300`, dot: `bg-blue-500`
-   - Elect: `bg-yellow-100 text-yellow-700 border-yellow-300`, dot: `bg-yellow-500`
-   - Static: `bg-teal-100 text-teal-700 border-teal-300`, dot: `bg-teal-500`
-   - Rotating: `bg-cyan-100 text-cyan-700 border-cyan-300`, dot: `bg-cyan-500`
-   - Inst: `bg-purple-100 text-purple-700 border-purple-300`, dot: `bg-purple-500`
-   - Ops: `bg-emerald-100 text-emerald-700 border-emerald-300`, dot: `bg-emerald-500`
-   - Tech Safety: `bg-rose-100 text-rose-700 border-rose-300`, dot: `bg-rose-500`
-   - RLMU: `bg-amber-100 text-amber-700 border-amber-300`, dot: `bg-amber-600`
+1. **Keep dot visible when active** -- Remove `isActive ? "opacity-0"` logic, instead show the dot always with appropriate color
+2. **Wrap match count in mini-badge** -- `<span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-current/10 text-[10px]">{count}</span>`
+3. **Add shadow to active chips** -- Append `shadow-sm` to each `activeClass`
+4. **Add group labels** -- Insert small uppercase text labels before the first chip of each group
+5. **Smooth transitions** -- Ensure `duration-150` is on the chip `transition-all`
 
-2. **Add colored dot to inactive chips** — Small 6px circle before label text using the `dotColor` class.
-
-3. **Add group separators** — Insert a thin `h-4 w-px bg-border` divider between Tier chips, Discipline chips, and RLMU chip.
-
-4. **Add match count** — When a chip is active, compute and append ` · {count}` to the label using the existing `filtered` data and the chip's `match` function.
-
-5. **Refine inactive hover** — Use `hover:bg-muted` with a subtle border color hint matching the chip's category.
+No new files. No structural changes. Purely visual refinement.
 
