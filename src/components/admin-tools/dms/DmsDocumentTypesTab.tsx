@@ -655,7 +655,9 @@ const DmsDocumentTypesTab: React.FC = () => {
                       )}
                     </button>
                   );
-                })}
+                    })}
+                  </div>
+                </div>
               </React.Fragment>
             );
           })}
