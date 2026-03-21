@@ -180,8 +180,8 @@ interface FilterChip {
 }
 
 const FILTER_CHIPS: FilterChip[] = [
-  { key: 'tier1', label: 'Tier 1', activeClass: 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700', countBadgeClass: 'bg-orange-200/60 text-orange-800 dark:bg-orange-800/40 dark:text-orange-300', dotColor: 'bg-orange-500', hoverClass: 'hover:border-orange-300 dark:hover:border-orange-700', match: d => d.tier === 'Tier 1' },
-  { key: 'tier2', label: 'Tier 2', activeClass: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700', countBadgeClass: 'bg-blue-200/60 text-blue-800 dark:bg-blue-800/40 dark:text-blue-300', dotColor: 'bg-blue-500', hoverClass: 'hover:border-blue-300 dark:hover:border-blue-700', match: d => d.tier === 'Tier 2' },
+  { key: 'tier1', label: 'Tier 1', activeClass: 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700', countBadgeClass: 'bg-orange-200/80 text-orange-800 border-orange-300/60 dark:bg-orange-800/40 dark:text-orange-300 dark:border-orange-700/50', dotColor: 'bg-orange-500', hoverClass: 'hover:border-orange-300 dark:hover:border-orange-700', match: d => d.tier === 'Tier 1' },
+  { key: 'tier2', label: 'Tier 2', activeClass: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700', countBadgeClass: 'bg-blue-200/80 text-blue-800 border-blue-300/60 dark:bg-blue-800/40 dark:text-blue-300 dark:border-blue-700/50', dotColor: 'bg-blue-500', hoverClass: 'hover:border-blue-300 dark:hover:border-blue-700', match: d => d.tier === 'Tier 2' },
   { key: 'rlmu', label: 'RLMU', activeClass: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700', countBadgeClass: 'bg-amber-200/60 text-amber-800 dark:bg-amber-800/40 dark:text-amber-300', dotColor: 'bg-amber-600', hoverClass: 'hover:border-amber-300 dark:hover:border-amber-700', match: d => d.rlmu === 'RLMU' },
   { key: 'elect', label: 'Elect', activeClass: 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700', countBadgeClass: 'bg-yellow-200/60 text-yellow-800 dark:bg-yellow-800/40 dark:text-yellow-300', dotColor: 'bg-yellow-500', hoverClass: 'hover:border-yellow-300 dark:hover:border-yellow-700', match: d => d.discipline_name === 'Electrical' },
   { key: 'static', label: 'Static', activeClass: 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700', countBadgeClass: 'bg-teal-200/60 text-teal-800 dark:bg-teal-800/40 dark:text-teal-300', dotColor: 'bg-teal-500', hoverClass: 'hover:border-teal-300 dark:hover:border-teal-700', match: d => d.discipline_name === 'Mechanical - Static' },
@@ -478,7 +478,7 @@ const DmsDocumentTypesTab: React.FC = () => {
                 )} />
                 {chip.label}
                 {isActive && (
-                  <span className={cn("ml-0.5 px-1.5 py-px rounded-full text-[10px] font-semibold leading-none tabular-nums", chip.countBadgeClass)}>
+                  <span className={cn("ml-1 px-1.5 py-px rounded-full text-[10px] font-semibold leading-none tabular-nums border", chip.countBadgeClass)}>
                     {matchCount}
                   </span>
                 )}
