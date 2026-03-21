@@ -184,7 +184,7 @@ const MultiSelectDropdown: React.FC<{
   );
 };
 
-type FilterKey = 'tier1' | 'tier2' | 'rlmu' | 'elect' | 'static' | 'rotating' | 'inst' | 'ops' | 'tech_safety';
+type FilterKey = 'tier1' | 'tier2' | 'rlmu' | 'elect' | 'static' | 'rotating' | 'inst' | 'ops' | 'tech_safety' | 'vendor';
 
 interface FilterChip {
   key: FilterKey;
@@ -207,6 +207,7 @@ const FILTER_CHIPS: FilterChip[] = [
   { key: 'inst', label: 'Inst', disciplineName: 'Instrumentation', activeClass: 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700', countBadgeClass: 'bg-purple-200/60 text-purple-800 dark:bg-purple-800/40 dark:text-purple-300', dotColor: 'bg-purple-500', hoverClass: 'hover:border-purple-300 dark:hover:border-purple-700', match: (d, sm) => d.discipline_name === 'Instrumentation' || (sm?.get(d.id)?.some(s => s.discipline_code === 'IN') ?? false) },
   { key: 'ops', label: 'Ops', disciplineName: 'Operations', activeClass: 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700', countBadgeClass: 'bg-emerald-200/60 text-emerald-800 dark:bg-emerald-800/40 dark:text-emerald-300', dotColor: 'bg-emerald-500', hoverClass: 'hover:border-emerald-300 dark:hover:border-emerald-700', match: (d, sm) => d.discipline_name === 'Operations' || (sm?.get(d.id)?.some(s => s.discipline_code === 'OA') ?? false) },
   { key: 'tech_safety', label: 'Tech Safety', disciplineName: 'HSE&S General', activeClass: 'bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-700', countBadgeClass: 'bg-rose-200/60 text-rose-800 dark:bg-rose-800/40 dark:text-rose-300', dotColor: 'bg-rose-500', hoverClass: 'hover:border-rose-300 dark:hover:border-rose-700', match: (d, sm) => d.discipline_name === 'HSE&S General' || (sm?.get(d.id)?.some(s => s.discipline_code === 'HX') ?? false) },
+  { key: 'vendor', label: 'Vendor', disciplineName: 'Vendor', activeClass: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-700', countBadgeClass: 'bg-slate-200/60 text-slate-800 dark:bg-slate-800/40 dark:text-slate-300', dotColor: 'bg-slate-500', hoverClass: 'hover:border-slate-300 dark:hover:border-slate-700', match: (d) => d.discipline_code === 'ZV' },
 ];
 
 const DmsDocumentTypesTab: React.FC = () => {
