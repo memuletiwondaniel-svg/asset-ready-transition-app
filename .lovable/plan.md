@@ -1,36 +1,31 @@
 
 
-## Filter Chips: Final Polish to Match Top-Tier Enterprise SaaS
+## Filter Chips Redesign
 
-### Current Assessment
-The implementation already follows 80% of best practices: soft tints, colored dots, group separators, match counts. The remaining gaps are subtle but noticeable in side-by-side comparisons with Linear, Airtable, and Notion.
+### Problems Identified
+1. **"Tier 1" + count "36" reads as "1 36"** — the numeral in the label clashes with the match count
+2. **Group labels (TIER, DISCIPLINE, RLMU) add clutter** — user wants them removed
+3. **RLMU should sit next to Tier 2** — remove group-based ordering/separators
+4. **Dots inside active chips waste horizontal space** — unnecessary when the tinted background already signals selection
+5. **Overall design can be tighter and more modern**
 
-### Remaining Improvements
+### Design Solution
 
-**1. Active chip dot should stay visible (not hidden)**
-Currently `opacity-0` when active. Linear and Airtable keep the dot visible in both states -- it anchors the color identity. When active, the dot should match the text color or stay as-is.
+**Fix the count clash**: Move the match count into a clearly separated badge with a contrasting background (not `bg-current/10` which is too subtle). Use a `·` separator character before the count, or place the count in a distinct pill with slightly darker tint.
 
-**2. Active chip needs a subtle checkmark or filled dot instead of hiding it**
-Replace the invisible dot with a slightly larger filled dot (2px -> 2.5px) when active, reinforcing selection state beyond just background color.
+**Remove group labels & separators**: Delete the `isFirstInGroup` label rendering and the vertical divider logic entirely. Render all chips as a flat row: Tier 1, Tier 2, RLMU, Elect, Static, Rotating, Inst, Ops, Tech Safety.
 
-**3. Match count should use a semi-transparent pill badge**
-Instead of inline ` · 42` text, wrap the count in a small `rounded-full bg-current/10 px-1.5` mini-badge. This is the Airtable/Jira pattern -- makes counts scannable at a glance.
+**Remove dot from active chips**: Only show the colored dot on inactive chips (restoring `opacity-0` when active). The tinted background + colored text is sufficient active indication.
 
-**4. Group labels above separators**
-Add tiny `text-[10px] uppercase tracking-wider text-muted-foreground` labels ("Tier", "Discipline", "RLMU") above each group for first-time discoverability. Optional but used by Attio.
+**Tighter active count badge**: Use a solid semi-transparent background that contrasts with the chip color (e.g., for orange chip: `bg-orange-200/60 dark:bg-orange-800/40`) and render as `(36)` or a distinct pill.
 
-**5. Transition polish**
-Add `duration-150` to the chip transitions and a subtle `shadow-sm` on active chips for depth -- standard in Linear's filter bar.
+### Changes
 
-### Implementation Plan
+**File**: `src/components/admin-tools/dms/DmsDocumentTypesTab.tsx`
 
-**Single file**: `src/components/admin-tools/dms/DmsDocumentTypesTab.tsx`
-
-1. **Keep dot visible when active** -- Remove `isActive ? "opacity-0"` logic, instead show the dot always with appropriate color
-2. **Wrap match count in mini-badge** -- `<span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-current/10 text-[10px]">{count}</span>`
-3. **Add shadow to active chips** -- Append `shadow-sm` to each `activeClass`
-4. **Add group labels** -- Insert small uppercase text labels before the first chip of each group
-5. **Smooth transitions** -- Ensure `duration-150` is on the chip `transition-all`
-
-No new files. No structural changes. Purely visual refinement.
+1. **Reorder FILTER_CHIPS array**: Tier 1, Tier 2, RLMU, then disciplines — remove `group` property usage
+2. **Remove group label rendering** (lines 468-473): Delete the separator divider and uppercase group label spans
+3. **Hide dot when active**: Restore `opacity-0` on active state for the dot
+4. **Redesign count badge**: Change from `bg-current/10 text-[9px]` to a more visible, separated badge — use chip-specific darker tint background class (e.g., `bg-orange-200 dark:bg-orange-800/50`) and slightly larger text. Add `countBadgeClass` to each chip config.
+5. **Simplify chip padding**: Keep `px-2 py-0.5` but reduce inner `gap` to `gap-0.5` since dot is hidden when active
 
