@@ -176,13 +176,13 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
       toast.error('Code and name are required');
       return;
     }
+    const payload = { code: formCode.trim(), name: formName.trim(), is_active: formIsActive };
     if (editingItem) {
-      updateDiscipline.mutate({ id: editingItem.id, code: formCode.trim(), name: formName.trim(), is_active: formIsActive });
+      updateDiscipline.mutate({ id: editingItem.id, ...payload });
     } else {
-      createDiscipline.mutate({ code: formCode.trim(), name: formName.trim(), is_active: formIsActive });
+      createDiscipline.mutate(payload);
     }
   };
-
   const isSaving = createDiscipline.isPending || updateDiscipline.isPending;
 
   // Placeholder content for non-discipline tabs
