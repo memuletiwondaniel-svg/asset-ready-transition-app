@@ -131,9 +131,14 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
           </Tabs>
         </div>
         {items.length > 0 && (
-          <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
-            <Plus className="w-4 h-4" /> Add Document
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => setAddOpen(true)} className="gap-1.5">
+              <Plus className="w-4 h-4" /> Quick Add
+            </Button>
+            <Button size="sm" onClick={() => setWizardOpen(true)} className="gap-1.5">
+              <Wand2 className="w-4 h-4" /> Document Wizard
+            </Button>
+          </div>
         )}
       </div>
 
