@@ -107,7 +107,7 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dms-disciplines'] });
       toast.success('Discipline created');
-      setDialogOpen(false);
+      setSheetOpen(false);
     },
     onError: (err: any) => toast.error(err.message || 'Failed to create discipline'),
   });
