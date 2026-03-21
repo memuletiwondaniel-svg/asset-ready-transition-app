@@ -479,7 +479,27 @@ const DmsDocumentTypesTab: React.FC = () => {
           {item.code}
         </span>
       );
-      case 'document_name': return <span className="text-sm text-foreground">{item.document_name}</span>;
+      case 'document_name': {
+        const sds = secondaryMap.get(item.id);
+        const hasSecondary = isVendorDiscipline(item.discipline_code) && sds && sds.length > 0;
+        return (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-foreground">{item.document_name}</span>
+            {hasSecondary && (
+              <div className="flex items-center gap-0.5">
+                {sds.slice(0, 3).map(sd => (
+                  <Badge key={sd.discipline_code} variant="outline" className="text-[10px] px-1 py-0 font-mono text-muted-foreground border-border">
+                    {sd.discipline_code}
+                  </Badge>
+                ))}
+                {sds.length > 3 && (
+                  <span className="text-[10px] text-muted-foreground">+{sds.length - 3}</span>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
       case 'document_description': return <span className="text-sm text-muted-foreground max-w-[300px] truncate block">{item.document_description || '—'}</span>;
       case 'tier': return <span className="text-sm text-muted-foreground">{item.tier || '—'}</span>;
       case 'rlmu': return <span className="text-sm text-muted-foreground">{item.rlmu || '—'}</span>;
