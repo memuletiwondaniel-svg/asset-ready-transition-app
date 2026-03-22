@@ -349,14 +349,29 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
     return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 inline ml-0.5" /> : <ArrowDown className="h-3 w-3 inline ml-0.5" />;
   };
 
+  const getSelectionCount = (memberIds: string[]) => {
+    const merged = new Set<string>();
+    memberIds.forEach((memberId) => {
+      (selections[memberId] || []).forEach((docId) => merged.add(docId));
+    });
+    return merged.size;
+  };
+
   const systemTabs = [
-    { id: '__all__', label: 'All Systems', count: (selections['__all__'] || []).length },
-    ...systems.map((s: any) => ({
-      id: s.id,
-      label: s.name || s.system_id,
-      count: (selections[s.id] || []).length,
-      isHydrocarbon: s.is_hydrocarbon,
-    })),
+    { id: '__all__', label: 'All Systems', count: (selections['__all__'] || []).length, memberIds: ['__all__'] },
+    ...systems.map((system: any) => {
+      const memberIds = (system.memberIds as string[] | undefined)?.length
+        ? system.memberIds
+        : [system.id];
+
+      return {
+        id: system.id,
+        label: system.name || system.system_id,
+        count: getSelectionCount(memberIds),
+        memberIds,
+        isHydrocarbon: system.is_hydrocarbon,
+      };
+    }),
   ];
 
   return (
