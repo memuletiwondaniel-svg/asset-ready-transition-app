@@ -72,7 +72,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-cyan-500/10",
     status: "complete" as const,
     summary: "Rotating equipment alignment verified. Vibration baselines established for all critical pumps and compressors. Lubrication systems charged and verified. Mechanical seals installed per specifications. Coupling guards and safety shields in place.",
-    reviewer: "Nathan Roberts - Rotating TA2 (P&E)",
+    reviewer: "Rotating TA2 (P&E)",
     date: "Dec 3, 2024"
   },
   static: {
