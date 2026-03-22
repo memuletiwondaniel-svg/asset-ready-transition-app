@@ -181,7 +181,6 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                 {/* Text */}
                 <div className="min-w-0 pr-6">
                   <p className={cn('text-sm font-medium leading-tight', isSelected && 'text-primary')}>{platform.label}</p>
-                  <p className="text-xs text-muted-foreground leading-snug mt-0.5">{platform.description}</p>
                 </div>
               </button>
             );
