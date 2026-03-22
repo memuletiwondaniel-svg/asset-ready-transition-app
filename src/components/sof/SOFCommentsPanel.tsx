@@ -62,7 +62,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-blue-500/10",
     status: "complete" as const,
     summary: "All piping systems pressure tested and certified. Instrument calibrations complete with certificates filed. Control valve stroking verified. P&ID walk-downs completed with no discrepancies. Flange management program implemented for all critical connections.",
-    reviewer: "David Brown - PACO TA2 (P&E)",
+    reviewer: "PACO TA2 (P&E)",
     date: "Dec 4, 2024"
   },
   rotating: {
