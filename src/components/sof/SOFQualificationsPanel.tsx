@@ -206,7 +206,7 @@ const dp385Deviations: QualificationDetail[] = [
     description: 'Operations personnel require familiarization training on CS6/7 compressor station control systems and emergency procedures prior to independent operation.',
     severity: 'low',
     status: 'approved',
-    approvedBy: 'Ewan McConnachie',
+    approvedBy: 'ORA Lead',
     approverRole: 'ORA Lead',
     approvedAt: '2026-01-28',
     mitigationMeasures: 'Experienced operators from sister facility providing on-site support. Buddy system in place for all shifts. Formal training scheduled for completion by Mar 1st.',
