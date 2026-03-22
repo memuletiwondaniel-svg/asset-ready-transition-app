@@ -20,7 +20,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
-import * as XLSX from 'xlsx';
+import { readExcelFile, writeExcelFile } from '@/utils/excelUtils';
 import { P2ASystem } from '../hooks/useP2ASystems';
 
 interface AddSystemDialogProps {
