@@ -7,6 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useDirectorRedirect } from '@/hooks/useDirectorRedirect';
 import { Loader2 } from 'lucide-react';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
+import { MobileBottomNav } from '@/components/mobile/MobileBottomNav';
 
 /**
  * Persistent layout for authenticated pages.
