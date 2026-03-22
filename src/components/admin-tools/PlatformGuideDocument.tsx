@@ -99,7 +99,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               <p className="text-sm text-muted-foreground">Living document — covers all workflows, codes, tables, roles, and automations</p>
               <div className="flex items-center gap-1.5 mt-1">
                 <Calendar className="h-3 w-3 text-muted-foreground/70" />
-                <span className="text-xs text-muted-foreground/70">Last updated: 19 March 2026</span>
+                <span className="text-xs text-muted-foreground/70">Last updated: 22 March 2026</span>
               </div>
             </div>
           </div>
@@ -640,7 +640,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           {/* 13. Database Schema */}
           <Section id="database-schema" icon={<Table className="h-5 w-5 text-primary" />} title="13. Database Schema & Tables">
-            <p>The ORSH database contains <strong className="text-foreground">90+ tables</strong> organized by module:</p>
+            <p>The ORSH database contains <strong className="text-foreground">90+ tables</strong> organized by module. All tables are protected by Row Level Security (RLS) with performance-optimized policies — <code className="bg-muted px-1 rounded text-xs">auth.uid()</code> wrapped as <code className="bg-muted px-1 rounded text-xs">(select auth.uid())</code> for once-per-query evaluation across 416+ policies.</p>
 
             <p className="font-medium text-foreground mt-3">Core Tables</p>
             <InfoTable headers={['Table', 'Module', 'Description']} rows={[

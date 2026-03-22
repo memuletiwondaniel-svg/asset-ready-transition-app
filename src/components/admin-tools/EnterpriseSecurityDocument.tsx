@@ -89,12 +89,12 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
               <p className="text-sm text-muted-foreground">Living document — automatically updated as the platform evolves</p>
               <div className="flex items-center gap-1.5 mt-1">
                 <Calendar className="h-3 w-3 text-muted-foreground/70" />
-                <span className="text-xs text-muted-foreground/70">Last updated: 19 March 2026</span>
+                <span className="text-xs text-muted-foreground/70">Last updated: 22 March 2026</span>
               </div>
             </div>
           </div>
           <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-            v3.0 — March 2026
+            v3.1 — March 2026
           </Badge>
         </div>
       </div>
@@ -160,7 +160,9 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
                 <p className="font-medium text-foreground">Password Security</p>
                 <ul className="list-disc pl-5 space-y-1">
                   <li>Server-side bcrypt hashing managed by Supabase Auth</li>
+                  <li><strong className="text-foreground">Leaked password protection enabled</strong> — prevents users from setting passwords found in known breach databases (HaveIBeenPwned integration via Supabase Auth)</li>
                   <li>Admin-initiated password resets via secure, time-limited tokens (1-hour expiry)</li>
+                  <li><strong className="text-foreground">OTP expiry hardened to 600 seconds (10 minutes)</strong> — reduced from default to minimize token replay window</li>
                   <li>Expired/used tokens automatically cleaned up</li>
                   <li>Temporary passwords cleared from database after use</li>
                 </ul>
@@ -486,6 +488,18 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
               <div className="pl-16 mt-1">↓</div>
               <div className="pl-4">Security Definer Function → user_roles / role_permissions</div>
             </div>
+
+            <p className="font-medium text-foreground mt-4">RLS Performance Hardening (March 2026)</p>
+            <Card className="bg-emerald-500/5 border-emerald-500/20">
+              <CardContent className="pt-4 text-sm space-y-2">
+                <p className="text-muted-foreground">Two major RLS hardening migrations applied across the entire schema:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong className="text-foreground">auth.uid() subquery optimization (416 policies):</strong> All RLS policies updated to wrap <code className="bg-muted px-1 rounded text-xs">auth.uid()</code> as <code className="bg-muted px-1 rounded text-xs">(select auth.uid())</code>, telling PostgreSQL to evaluate the auth function once per query rather than once per row — significant performance improvement at scale.</li>
+                  <li><strong className="text-foreground">Multiple permissive policy consolidation (~100 overlaps):</strong> Eliminated duplicate permissive policies across ~90 tables. ALL-command policies split into per-command (SELECT, INSERT, UPDATE, DELETE) policies. Direct duplicates consolidated using OR conditions within single policies.</li>
+                  <li><strong className="text-foreground">Zero Supabase advisor warnings:</strong> Both "Auth RLS Initialization Plan" and "Multiple Permissive Policies" warnings fully resolved.</li>
+                </ul>
+              </CardContent>
+            </Card>
           </Section>
 
           <Separator />
@@ -635,6 +649,9 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
               { label: 'Encryption in Transit (TLS 1.2+)', value: 'All client-server communication enforced via TLS 1.2+ (HTTPS). Database connections use SSL/TLS. No plaintext channels permitted.', status: 'active' },
               { label: 'Role Inheritance Controls', value: 'Permissions are assigned to roles (not users directly). Users inherit permissions from their assigned role. Role changes propagate immediately.', status: 'active' },
               { label: 'Least-Privilege Defaults', value: 'New user accounts auto-assigned "Viewer" role (view-only) via database trigger. Elevated access requires explicit admin grant with audit log entry.', status: 'active' },
+              { label: 'RLS Performance Hardening', value: '416 policies optimized with (select auth.uid()) subquery pattern; ~100 duplicate permissive policy overlaps consolidated into single policies — zero Supabase advisor warnings.', status: 'active' },
+              { label: 'Leaked Password Protection', value: 'Supabase Auth HaveIBeenPwned integration enabled — prevents setting passwords found in known data breaches.', status: 'active' },
+              { label: 'OTP Expiry Hardening', value: 'OTP token expiry reduced to 600 seconds (10 minutes) — minimizes replay attack window for email/SMS verification codes.', status: 'active' },
             ]} />
 
             <Card className="bg-muted/30 mt-4">

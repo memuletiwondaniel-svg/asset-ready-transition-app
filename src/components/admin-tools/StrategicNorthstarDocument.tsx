@@ -79,7 +79,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               <p className="text-sm text-muted-foreground">Living document — ORSH → ORIP evolution & strategic positioning</p>
               <div className="flex items-center gap-1.5 mt-1">
                 <Calendar className="h-3 w-3 text-muted-foreground/70" />
-                <span className="text-xs text-muted-foreground/70">Last updated: 19 March 2026</span>
+                <span className="text-xs text-muted-foreground/70">Last updated: 22 March 2026</span>
               </div>
             </div>
           </div>
@@ -477,6 +477,8 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               { label: 'Multi-Tenant Isolation', value: 'Row-level security, tenant-stamped data, subdomain resolution', status: 'active' },
               { label: 'Enterprise Auditability', value: 'Database-triggered audit trails, retention policies, compliance reporting', status: 'active' },
               { label: 'Open-Source Stack', value: 'React, TypeScript, Vite, PostgreSQL — zero vendor lock-in', status: 'active' },
+              { label: 'RLS Performance Hardening', value: '416 policies optimized with subquery pattern; permissive policy consolidation — zero advisor warnings', status: 'active' },
+              { label: 'Credential Security', value: 'Leaked password protection, OTP hardened to 10min expiry, bcrypt hashing', status: 'active' },
             ]} />
           </Section>
 
