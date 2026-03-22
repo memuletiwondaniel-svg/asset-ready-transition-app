@@ -350,7 +350,7 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
         </div>
 
         {/* Step Content */}
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="overflow-y-auto min-h-0 flex-shrink-1">
           {currentStep === 0 && (
             <ProjectContextStep
               projectCode={selectedProjectCode}
