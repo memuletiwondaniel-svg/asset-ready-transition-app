@@ -76,8 +76,8 @@ const PSSRActivityFeed: React.FC<PSSRActivityFeedProps> = ({
         pssrId: 'PSSR-2024-002',
         projectName: 'LPG Unit 12.1 Rehabilitation',
         user: {
-          name: 'Ahmed Al-Rashid',
-          avatar: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=150&h=150&fit=crop&crop=face'
+          name: 'Plant Director',
+          avatar: ''
         },
         message: 'changed status',
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
