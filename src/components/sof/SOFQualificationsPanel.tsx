@@ -19,7 +19,7 @@ const mockDeviations: QualificationDetail[] = [
     description: 'Pressure Safety Valve PSV-1234 bypass installed pending replacement valve delivery. Manual monitoring procedure in place.',
     severity: 'medium',
     status: 'approved',
-    approvedBy: 'Stuart Lugo',
+    approvedBy: 'Static TA2 (P&E)',
     approverRole: 'Static TA2 (P&E)',
     approvedAt: '2026-01-28',
     mitigationMeasures: 'Continuous operator monitoring every 2 hours. Backup manual relief procedure documented.',
