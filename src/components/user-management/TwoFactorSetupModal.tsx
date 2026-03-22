@@ -127,26 +127,11 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
   const handleComplete = async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: 'Error',
-          description: 'Please sign in to complete 2FA setup.',
-          variant: 'destructive'
-        });
-        return;
-      }
 
-      // Save secret and backup codes to database
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          two_factor_secret: secret,
-          two_factor_enabled: true,
-          two_factor_backup_codes: backupCodes
-        })
-        .eq('user_id', user.id);
+      // Store encrypted secret + backup codes via edge function
+      const { error } = await supabase.functions.invoke('setup-totp', {
+        body: { secret, backupCodes }
+      });
 
       if (error) throw error;
 

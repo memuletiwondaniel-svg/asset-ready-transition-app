@@ -1,10 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { decrypt, encrypt, isEncrypted } from "../_shared/crypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -85,8 +86,22 @@ serve(async (req) => {
     }
 
     if (isBackupCode) {
-      // Verify backup code
-      const backupCodes: string[] = profile.two_factor_backup_codes || [];
+      // Decrypt backup codes
+      const rawBackupCodes = profile.two_factor_backup_codes;
+      let backupCodes: string[] = [];
+
+      if (Array.isArray(rawBackupCodes) && rawBackupCodes.length > 0) {
+        const firstEntry = rawBackupCodes[0];
+        if (typeof firstEntry === "string" && isEncrypted(firstEntry)) {
+          // New encrypted format: single encrypted JSON blob stored as first array element
+          const decryptedJson = await decrypt(firstEntry);
+          backupCodes = JSON.parse(decryptedJson);
+        } else {
+          // Legacy plaintext format: array of plain strings
+          backupCodes = rawBackupCodes as string[];
+        }
+      }
+
       const normalizedCode = code.trim().toLowerCase();
       const codeIndex = backupCodes.findIndex(
         (bc: string) => bc.toLowerCase() === normalizedCode
@@ -102,13 +117,14 @@ serve(async (req) => {
         );
       }
 
-      // Remove used backup code
+      // Remove used backup code and re-encrypt
       const updatedCodes = [...backupCodes];
       updatedCodes.splice(codeIndex, 1);
+      const encryptedUpdated = await encrypt(JSON.stringify(updatedCodes));
 
       await adminClient
         .from("profiles")
-        .update({ two_factor_backup_codes: updatedCodes })
+        .update({ two_factor_backup_codes: [encryptedUpdated] })
         .eq("user_id", user.id);
 
       return new Response(
@@ -122,11 +138,11 @@ serve(async (req) => {
         }
       );
     } else {
-      // Verify TOTP code using otplib
+      // Verify TOTP code
       const { authenticator } = await import("https://esm.sh/otplib@12.0.1");
-      authenticator.options = { window: 1 }; // Allow 1 step drift
+      authenticator.options = { window: 1 };
 
-      const secret = profile.two_factor_secret;
+      let secret = profile.two_factor_secret;
       if (!secret) {
         return new Response(
           JSON.stringify({ valid: false, error: "No 2FA secret configured" }),
@@ -135,6 +151,11 @@ serve(async (req) => {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
+      }
+
+      // Decrypt if encrypted, otherwise handle legacy plaintext
+      if (isEncrypted(secret)) {
+        secret = await decrypt(secret);
       }
 
       const isValid = authenticator.verify({ token: code, secret });
