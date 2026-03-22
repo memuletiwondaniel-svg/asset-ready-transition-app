@@ -20,10 +20,10 @@ interface ProjectContextStepProps {
 }
 
 const DMS_PLATFORMS = [
-  { id: 'assai', label: 'Assai', description: 'Document management for oil & gas', logo: assaiIcon },
-  { id: 'wrench', label: 'Wrench', description: 'Engineering document management', logo: wrenchIcon },
-  { id: 'documentum', label: 'Documentum', description: 'Enterprise content platform', logo: documentumLogo },
-  { id: 'sharepoint', label: 'SharePoint', description: 'Microsoft collaboration platform', logo: sharepointLogo },
+  { id: 'assai', label: 'Assai', logo: assaiIcon },
+  { id: 'wrench', label: 'Wrench', logo: wrenchIcon },
+  { id: 'documentum', label: 'Documentum', logo: documentumLogo },
+  { id: 'sharepoint', label: 'SharePoint', logo: sharepointLogo },
 ];
 
 export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
@@ -35,7 +35,7 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('dms_projects')
-        .select('code, project_name')
+        .select('code, project_id, project_name')
         .eq('is_active', true)
         .order('display_order');
       if (error) throw error;
@@ -66,7 +66,9 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
 
   const projectOptions = projects.map((p: any) => ({
     value: p.code,
-    label: `${p.code} ${p.project_name}`,
+    label: p.project_id
+      ? `${p.code} ${p.project_id} — ${p.project_name}`
+      : `${p.code} — ${p.project_name}`,
     displayValue: p.code,
   }));
 
@@ -108,7 +110,11 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
               className="h-9"
             />
             {selectedProject && (
-              <p className="text-[11px] text-muted-foreground pl-1 leading-tight">{selectedProject.project_name}</p>
+              <p className="text-[11px] text-muted-foreground pl-1 leading-tight">
+                {selectedProject.project_id
+                  ? `${selectedProject.project_id} — ${selectedProject.project_name}`
+                  : selectedProject.project_name}
+              </p>
             )}
           </div>
 
@@ -169,12 +175,9 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                   />
                 </div>
 
-                <div className="min-w-0">
-                  <p className={cn('text-[13px] font-medium leading-tight', isSelected && 'text-primary')}>
-                    {platform.label}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{platform.description}</p>
-                </div>
+                <p className={cn('text-[13px] font-medium leading-tight', isSelected && 'text-primary')}>
+                  {platform.label}
+                </p>
               </button>
             );
           })}
