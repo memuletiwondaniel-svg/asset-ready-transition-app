@@ -1233,7 +1233,18 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       </div>
                       <Slider
                     value={[progressPct]}
-                    onValueChange={(val) => !isReadOnly && setProgressPct(val[0])}
+                    onValueChange={(val) => {
+                      if (isReadOnly) return;
+                      setProgressPct(val[0]);
+                      // Auto-promote status when user starts working (progress > 0)
+                      if (val[0] > 0 && status === 'NOT_STARTED') {
+                        setStatus('IN_PROGRESS');
+                      }
+                      // Auto-demote status if user sets progress back to 0
+                      if (val[0] === 0 && status === 'IN_PROGRESS') {
+                        setStatus('NOT_STARTED');
+                      }
+                    }}
                     max={100}
                     step={5}
                     disabled={isReadOnly}
