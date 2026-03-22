@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.52.0";
+import { encrypt, decrypt, isEncrypted } from "../_shared/crypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,12 +22,23 @@ const SCOPES = [
   "User.Read",
 ].join(" ");
 
+const ACCESS_TOKEN_PLACEHOLDER = "[not-stored]";
+
 interface TokenResponse {
   access_token: string;
   refresh_token: string;
   expires_in: number;
   token_type: string;
   scope: string;
+}
+
+/** Decrypt a refresh token, handling legacy plaintext gracefully */
+async function decryptRefreshToken(storedValue: string): Promise<string> {
+  if (isEncrypted(storedValue)) {
+    return await decrypt(storedValue);
+  }
+  // Legacy plaintext — return as-is (will be re-encrypted on next write)
+  return storedValue;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -38,7 +50,6 @@ const handler = async (req: Request): Promise<Response> => {
     const url = new URL(req.url);
     const action = url.pathname.split("/").pop();
 
-    // Validate required environment variables
     if (!MICROSOFT_CLIENT_ID || !MICROSOFT_CLIENT_SECRET) {
       console.error("Missing Microsoft OAuth credentials");
       return new Response(
@@ -59,7 +70,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     switch (action) {
       case "authorize": {
-        // Generate authorization URL for Microsoft OAuth
         const { redirectUri, state } = await req.json();
         
         const authUrl = new URL(`https://login.microsoftonline.com/${MICROSOFT_TENANT_ID}/oauth2/v2.0/authorize`);
@@ -80,7 +90,6 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       case "callback": {
-        // Exchange authorization code for tokens
         const { code, redirectUri, userId } = await req.json();
 
         if (!code || !redirectUri || !userId) {
@@ -119,13 +128,16 @@ const handler = async (req: Request): Promise<Response> => {
         const tokens: TokenResponse = await tokenResponse.json();
         const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
 
-        // Store tokens in database (upsert)
+        // Encrypt refresh token before storage
+        const encryptedRefreshToken = await encrypt(tokens.refresh_token);
+
+        // Store encrypted refresh token; access_token is NOT persisted
         const { error: upsertError } = await supabase
           .from("microsoft_oauth_tokens")
           .upsert({
             user_id: userId,
-            access_token: tokens.access_token,
-            refresh_token: tokens.refresh_token,
+            access_token: ACCESS_TOKEN_PLACEHOLDER,
+            refresh_token: encryptedRefreshToken,
             expires_at: expiresAt.toISOString(),
             scope: tokens.scope,
             updated_at: new Date().toISOString(),
@@ -139,7 +151,7 @@ const handler = async (req: Request): Promise<Response> => {
           );
         }
 
-        console.log("Successfully stored Microsoft OAuth tokens for user:", userId);
+        console.log("Successfully stored encrypted Microsoft OAuth tokens for user:", userId);
 
         return new Response(
           JSON.stringify({ success: true, expiresAt: expiresAt.toISOString() }),
@@ -148,7 +160,6 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       case "refresh": {
-        // Refresh expired access token
         const { userId } = await req.json();
 
         if (!userId) {
@@ -158,7 +169,7 @@ const handler = async (req: Request): Promise<Response> => {
           );
         }
 
-        // Get current tokens
+        // Service role bypasses column-level revoke
         const { data: tokenData, error: fetchError } = await supabase
           .from("microsoft_oauth_tokens")
           .select("*")
@@ -172,12 +183,15 @@ const handler = async (req: Request): Promise<Response> => {
           );
         }
 
+        // Decrypt stored refresh token
+        const plaintextRefreshToken = await decryptRefreshToken(tokenData.refresh_token);
+
         const tokenUrl = `https://login.microsoftonline.com/${MICROSOFT_TENANT_ID}/oauth2/v2.0/token`;
         
         const refreshParams = new URLSearchParams({
           client_id: MICROSOFT_CLIENT_ID,
           client_secret: MICROSOFT_CLIENT_SECRET,
-          refresh_token: tokenData.refresh_token,
+          refresh_token: plaintextRefreshToken,
           grant_type: "refresh_token",
           scope: SCOPES,
         });
@@ -192,7 +206,6 @@ const handler = async (req: Request): Promise<Response> => {
           const errorData = await refreshResponse.text();
           console.error("Token refresh failed:", errorData);
           
-          // Delete invalid tokens
           await supabase
             .from("microsoft_oauth_tokens")
             .delete()
@@ -207,12 +220,16 @@ const handler = async (req: Request): Promise<Response> => {
         const tokens: TokenResponse = await refreshResponse.json();
         const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
 
-        // Update tokens in database
+        // Encrypt the new (or existing) refresh token
+        const newRefreshToken = tokens.refresh_token || plaintextRefreshToken;
+        const encryptedRefreshToken = await encrypt(newRefreshToken);
+
+        // Update with encrypted refresh token; access_token NOT persisted
         const { error: updateError } = await supabase
           .from("microsoft_oauth_tokens")
           .update({
-            access_token: tokens.access_token,
-            refresh_token: tokens.refresh_token || tokenData.refresh_token,
+            access_token: ACCESS_TOKEN_PLACEHOLDER,
+            refresh_token: encryptedRefreshToken,
             expires_at: expiresAt.toISOString(),
             scope: tokens.scope,
             updated_at: new Date().toISOString(),
@@ -229,6 +246,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         console.log("Successfully refreshed Microsoft OAuth tokens for user:", userId);
 
+        // Return fresh access token directly (never stored)
         return new Response(
           JSON.stringify({ 
             success: true, 
@@ -240,7 +258,6 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       case "status": {
-        // Check if user has connected Microsoft account
         const authHeader = req.headers.get("Authorization");
         if (!authHeader) {
           return new Response(
@@ -259,6 +276,7 @@ const handler = async (req: Request): Promise<Response> => {
           );
         }
 
+        // Only need safe columns for status check
         const { data: tokenData, error: fetchError } = await supabase
           .from("microsoft_oauth_tokens")
           .select("expires_at")
@@ -285,7 +303,6 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       case "disconnect": {
-        // Remove user's Microsoft connection
         const authHeader = req.headers.get("Authorization");
         if (!authHeader) {
           return new Response(

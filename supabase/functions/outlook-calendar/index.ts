@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.52.0";
+import { encrypt, decrypt, isEncrypted } from "../_shared/crypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,7 +39,16 @@ interface UpdateEventRequest {
   attendees?: WalkdownAttendee[];
 }
 
+/** Decrypt a refresh token, handling legacy plaintext gracefully */
+async function decryptRefreshToken(storedValue: string): Promise<string> {
+  if (isEncrypted(storedValue)) {
+    return await decrypt(storedValue);
+  }
+  return storedValue;
+}
+
 async function getValidAccessToken(supabase: any, userId: string): Promise<string | null> {
+  // Service role bypasses column-level revoke — can read encrypted tokens
   const { data: tokenData, error } = await supabase
     .from("microsoft_oauth_tokens")
     .select("*")
@@ -53,20 +63,24 @@ async function getValidAccessToken(supabase: any, userId: string): Promise<strin
   const now = new Date();
   const expiresAt = new Date(tokenData.expires_at);
 
-  // If token expires in less than 5 minutes, refresh it
-  if (expiresAt.getTime() - now.getTime() < 5 * 60 * 1000) {
-    console.log("Token expiring soon, attempting refresh...");
+  // Always refresh since we no longer store access tokens
+  // (or if token expires in less than 5 minutes)
+  if (tokenData.access_token === "[not-stored]" || expiresAt.getTime() - now.getTime() < 5 * 60 * 1000) {
+    console.log("Fetching fresh access token via refresh flow...");
     
     const MICROSOFT_CLIENT_ID = Deno.env.get("MICROSOFT_CLIENT_ID");
     const MICROSOFT_CLIENT_SECRET = Deno.env.get("MICROSOFT_CLIENT_SECRET");
     const MICROSOFT_TENANT_ID = Deno.env.get("MICROSOFT_TENANT_ID") || "common";
+    
+    // Decrypt the stored refresh token
+    const plaintextRefreshToken = await decryptRefreshToken(tokenData.refresh_token);
     
     const tokenUrl = `https://login.microsoftonline.com/${MICROSOFT_TENANT_ID}/oauth2/v2.0/token`;
     
     const refreshParams = new URLSearchParams({
       client_id: MICROSOFT_CLIENT_ID!,
       client_secret: MICROSOFT_CLIENT_SECRET!,
-      refresh_token: tokenData.refresh_token,
+      refresh_token: plaintextRefreshToken,
       grant_type: "refresh_token",
       scope: "openid profile email offline_access Calendars.ReadWrite User.Read",
     });
@@ -85,19 +99,25 @@ async function getValidAccessToken(supabase: any, userId: string): Promise<strin
     const tokens = await refreshResponse.json();
     const newExpiresAt = new Date(Date.now() + tokens.expires_in * 1000);
 
+    // Encrypt the new (or existing) refresh token before storing
+    const newRefreshToken = tokens.refresh_token || plaintextRefreshToken;
+    const encryptedRefreshToken = await encrypt(newRefreshToken);
+
     await supabase
       .from("microsoft_oauth_tokens")
       .update({
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token || tokenData.refresh_token,
+        access_token: "[not-stored]",
+        refresh_token: encryptedRefreshToken,
         expires_at: newExpiresAt.toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", userId);
 
+    // Return the fresh access token directly (never stored)
     return tokens.access_token;
   }
 
+  // Legacy path: if access_token was stored before migration
   return tokenData.access_token;
 }
 
@@ -151,7 +171,6 @@ const handler = async (req: Request): Promise<Response> => {
         const body: CreateEventRequest = await req.json();
         const { walkdownEventId, title, description, location, startDateTime, endDateTime, attendees, pssrId } = body;
 
-        // Create Outlook calendar event
         const eventPayload = {
           subject: title,
           body: {
@@ -201,7 +220,6 @@ const handler = async (req: Request): Promise<Response> => {
         const outlookEvent = await createResponse.json();
         console.log("Created Outlook event:", outlookEvent.id);
 
-        // Update walkdown event with Outlook event ID
         const { error: updateError } = await supabase
           .from("pssr_walkdown_events")
           .update({
@@ -215,7 +233,6 @@ const handler = async (req: Request): Promise<Response> => {
           console.error("Failed to update walkdown event:", updateError);
         }
 
-        // Insert/update attendees in database
         for (const att of attendees) {
           await supabase
             .from("pssr_walkdown_attendees")
@@ -243,7 +260,6 @@ const handler = async (req: Request): Promise<Response> => {
         const body: UpdateEventRequest = await req.json();
         const { walkdownEventId, ...updates } = body;
 
-        // Get walkdown event with Outlook ID
         const { data: walkdownEvent, error: fetchError } = await supabase
           .from("pssr_walkdown_events")
           .select("outlook_event_id")
@@ -257,7 +273,6 @@ const handler = async (req: Request): Promise<Response> => {
           );
         }
 
-        // Build update payload
         const updatePayload: any = {};
         if (updates.title) updatePayload.subject = updates.title;
         if (updates.description) updatePayload.body = { contentType: "HTML", content: updates.description };
@@ -292,7 +307,6 @@ const handler = async (req: Request): Promise<Response> => {
           );
         }
 
-        // Update sync timestamp
         await supabase
           .from("pssr_walkdown_events")
           .update({ last_synced_at: new Date().toISOString() })
@@ -309,7 +323,6 @@ const handler = async (req: Request): Promise<Response> => {
       case "delete-event": {
         const { walkdownEventId } = await req.json();
 
-        // Get walkdown event with Outlook ID
         const { data: walkdownEvent, error: fetchError } = await supabase
           .from("pssr_walkdown_events")
           .select("outlook_event_id")
@@ -342,7 +355,6 @@ const handler = async (req: Request): Promise<Response> => {
           );
         }
 
-        // Clear Outlook IDs from walkdown event
         await supabase
           .from("pssr_walkdown_events")
           .update({
@@ -363,7 +375,6 @@ const handler = async (req: Request): Promise<Response> => {
       case "sync-rsvp": {
         const { walkdownEventId } = await req.json();
 
-        // Get walkdown event with Outlook ID
         const { data: walkdownEvent, error: fetchError } = await supabase
           .from("pssr_walkdown_events")
           .select("outlook_event_id")
@@ -377,7 +388,6 @@ const handler = async (req: Request): Promise<Response> => {
           );
         }
 
-        // Fetch event from Outlook to get attendee responses
         const eventResponse = await fetch(
           `${MICROSOFT_GRAPH_URL}/me/events/${walkdownEvent.outlook_event_id}?$select=attendees`,
           {
@@ -399,7 +409,6 @@ const handler = async (req: Request): Promise<Response> => {
         const eventData = await eventResponse.json();
         const attendeeUpdates: any[] = [];
 
-        // Map Outlook response status to our status
         const statusMap: Record<string, string> = {
           accepted: "accepted",
           declined: "declined",
@@ -431,7 +440,6 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
 
-        // Update sync timestamp
         await supabase
           .from("pssr_walkdown_events")
           .update({ last_synced_at: new Date().toISOString() })
@@ -448,7 +456,6 @@ const handler = async (req: Request): Promise<Response> => {
       case "get-attendees": {
         const { walkdownEventId } = await req.json();
 
-        // Get attendees from database
         const { data: attendees, error: fetchError } = await supabase
           .from("pssr_walkdown_attendees")
           .select("*")
