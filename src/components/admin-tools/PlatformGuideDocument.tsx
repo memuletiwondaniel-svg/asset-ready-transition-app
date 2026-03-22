@@ -105,9 +105,12 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               </div>
             </div>
           </div>
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            v2.0 — March 2026
-          </Badge>
+          <div className="flex items-center gap-2">
+            <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-Platform-Guide" />
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+              v2.0 — March 2026
+            </Badge>
+          </div>
         </div>
       </div>
 
