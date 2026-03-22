@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff, Mail, Lock, ArrowLeft, AlertTriangle, Shield, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from './AuthProvider';
+import { TwoFactorVerifyModal } from '@/components/user-management/TwoFactorVerifyModal';
 import { useTenantContext } from '@/contexts/TenantContext';
 import { useTenantSSOConfigPublic } from '@/hooks/useTenantSSOConfig';
 import EnhancedRegistrationForm from '@/components/user-management/EnhancedRegistrationForm';
@@ -30,8 +31,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   onClose,
   onAuthenticated
 }) => {
-  const { signIn, signUp, signInWithSSO, resetPassword } = useAuth();
+  const { signIn, signUp, signInWithSSO, resetPassword, complete2FA, cancel2FA } = useAuth();
   const { subdomainTenant, tenantMismatch } = useTenantContext();
+  const [show2FA, setShow2FA] = useState(false);
   const { ssoConfig } = useTenantSSOConfigPublic(subdomainTenant?.id ?? null);
   const [activeTab, setActiveTab] = useState('signin');
   const [showPassword, setShowPassword] = useState(false);
@@ -53,10 +55,14 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     e.preventDefault();
     setLoading(true);
     setLoginFailed(false);
-    const { error } = await signIn(signInData.email, signInData.password, rememberMe);
+    const { error, requires2FA } = await signIn(signInData.email, signInData.password, rememberMe);
     if (!error) {
-      onAuthenticated();
-      onClose();
+      if (requires2FA) {
+        setShow2FA(true);
+      } else {
+        onAuthenticated();
+        onClose();
+      }
     } else {
       setLoginFailed(true);
     }
@@ -353,6 +359,20 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         onClose={() => setShowRegistrationForm(false)}
         onSuccess={() => { setShowRegistrationForm(false); setActiveTab('signin'); }}
         isAdminCreated={false}
+      />
+
+      <TwoFactorVerifyModal
+        open={show2FA}
+        onVerified={() => {
+          setShow2FA(false);
+          complete2FA();
+          onAuthenticated();
+          onClose();
+        }}
+        onCancel={async () => {
+          setShow2FA(false);
+          await cancel2FA();
+        }}
       />
     </Dialog>
   );

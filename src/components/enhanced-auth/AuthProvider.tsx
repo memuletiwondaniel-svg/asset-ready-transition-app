@@ -7,12 +7,15 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error: any }>;
+  pending2FA: boolean;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error: any; requires2FA?: boolean }>;
   signUp: (userData: any) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   signInWithSSO: (provider: string) => Promise<{ error: any }>;
   updateProfile: (updates: any) => Promise<{ error: any }>;
+  complete2FA: () => void;
+  cancel2FA: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,6 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pending2FA, setPending2FA] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener
@@ -105,7 +109,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string, rememberMe: boolean = true) => {
+  const complete2FA = () => {
+    setPending2FA(false);
+    toast.success('Successfully signed in!');
+  };
+
+  const cancel2FA = async () => {
+    setPending2FA(false);
+    await supabase.auth.signOut();
+  };
+
+  const signIn = async (email: string, password: string, rememberMe: boolean = true): Promise<{ error: any; requires2FA?: boolean }> => {
     try {
       // Check if account is locked BEFORE attempting sign-in
       try {
@@ -179,6 +193,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         sessionStorage.setItem('rememberMe', 'false');
         localStorage.removeItem('rememberMe');
+      }
+
+      // Check if 2FA is enabled for this user
+      if (data.user) {
+        try {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('two_factor_enabled')
+            .eq('user_id', data.user.id)
+            .single();
+
+          if (profileData?.two_factor_enabled) {
+            setPending2FA(true);
+            return { error: null, requires2FA: true };
+          }
+        } catch {
+          // If profile check fails, proceed without 2FA
+        }
       }
 
       toast.success('Successfully signed in!');
@@ -361,12 +393,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     loading,
+    pending2FA,
     signIn,
     signUp,
     signOut,
     resetPassword,
     signInWithSSO,
-    updateProfile
+    updateProfile,
+    complete2FA,
+    cancel2FA,
   };
 
   return (

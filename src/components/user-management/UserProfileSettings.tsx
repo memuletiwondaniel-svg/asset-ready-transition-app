@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { TwoFactorSetupModal } from '@/components/user-management/TwoFactorSetupModal';
+import { DisableTwoFactorModal } from '@/components/user-management/DisableTwoFactorModal';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
@@ -56,6 +58,8 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
   const { allFields, getFieldsByPlant, isLoading: fieldsLoading } = useFields();
   const { allStations, getStationsByField, isLoading: stationsLoading } = useStations();
   const [stationSearchOpen, setStationSearchOpen] = useState(false);
+  const [showSetup2FA, setShowSetup2FA] = useState(false);
+  const [showDisable2FA, setShowDisable2FA] = useState(false);
 
   const [profileData, setProfileData] = useState({
     full_name: '',
@@ -655,13 +659,24 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
                     <p className="text-sm text-muted-foreground">
                       Add an extra layer of security to your account
                     </p>
-                    <Switch 
-                      checked={profile?.two_factor_enabled || false}
-                      disabled 
-                    />
+                    <Button
+                      variant={profile?.two_factor_enabled ? "destructive" : "default"}
+                      size="sm"
+                      onClick={() => {
+                        if (profile?.two_factor_enabled) {
+                          setShowDisable2FA(true);
+                        } else {
+                          setShowSetup2FA(true);
+                        }
+                      }}
+                    >
+                      {profile?.two_factor_enabled ? 'Disable 2FA' : 'Enable 2FA'}
+                    </Button>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Contact your administrator to enable 2FA
+                    {profile?.two_factor_enabled
+                      ? 'Two-factor authentication is active on your account.'
+                      : 'Protect your account with an authenticator app.'}
                   </p>
                 </div>
 
@@ -768,6 +783,16 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
           </TabsContent>
         </Tabs>
       </DialogContent>
+      <TwoFactorSetupModal
+        open={showSetup2FA}
+        onOpenChange={setShowSetup2FA}
+        onSetupComplete={() => { setShowSetup2FA(false); fetchUserProfile(); }}
+      />
+      <DisableTwoFactorModal
+        open={showDisable2FA}
+        onOpenChange={setShowDisable2FA}
+        onDisabled={() => { setShowDisable2FA(false); fetchUserProfile(); }}
+      />
     </Dialog>
   );
 };
