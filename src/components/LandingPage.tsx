@@ -182,6 +182,14 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [initialPrompt, setInitialPrompt] = useState<string>('');
+  const { needsSetup } = useTenantSetupStatus();
+  const [tenantSetupOpen, setTenantSetupOpen] = useState(false);
+  const [setupDismissed, setSetupDismissed] = useState(false);
+
+  // Auto-show tenant setup wizard for unconfigured tenants
+  React.useEffect(() => {
+    if (needsSetup && !setupDismissed) setTenantSetupOpen(true);
+  }, [needsSetup, setupDismissed]);
 
   // Sample questions for rotating placeholder
   const sampleQuestions = [
