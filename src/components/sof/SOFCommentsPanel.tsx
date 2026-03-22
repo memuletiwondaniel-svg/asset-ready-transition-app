@@ -42,7 +42,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-red-500/10",
     status: "complete" as const,
     summary: "All safety instrumented systems (SIS) have been tested and verified. Emergency shutdown sequences confirmed operational. Fire & gas detection systems commissioned and integrated with DCS. HAZOP recommendations fully implemented. Safety relief valves tested and certified.",
-    reviewer: "Andrew Banford - Tech Safety TA2",
+    reviewer: "Tech Safety TA2",
     date: "Dec 5, 2024"
   },
   process: {
