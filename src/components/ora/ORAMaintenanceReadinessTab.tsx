@@ -94,7 +94,7 @@ const MOCK_COMPONENT_NARRATIVES: Record<string, {
   },
   BOM: {
     lastUpdated: '2024-01-05',
-    updatedBy: 'Fatima Al-Rashid (Materials Lead)',
+    updatedBy: 'Materials Lead',
     narrative: 'Bill of Materials population is approximately 40% complete. Initial spare parts lists have been uploaded for major equipment. Currently coordinating with vendors to obtain recommended spare parts lists for specialized equipment. Long-lead items have been identified and procurement process initiated.'
   },
   IMS: {
