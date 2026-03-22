@@ -297,7 +297,7 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-[600px] sm:max-w-[600px] w-full h-auto max-h-[85vh] p-0 flex flex-col gap-0 z-[150] overflow-hidden"
+        className="max-w-[600px] sm:max-w-[600px] w-full h-auto max-h-[90vh] p-0 flex flex-col gap-0 z-[150] overflow-hidden"
         overlayClassName="z-[140]"
       >
         <VisuallyHidden>
@@ -308,7 +308,7 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
         </VisuallyHidden>
 
         {/* Modern Stepper Header */}
-        <div className="px-6 pt-4 pb-3 border-b bg-muted/20">
+        <div className="px-6 pt-3 pb-2 border-b bg-muted/20">
           <div className="flex items-center justify-center max-w-sm mx-auto">
             {STEPS.map((step, idx) => {
               const isActive = idx === currentStep;
