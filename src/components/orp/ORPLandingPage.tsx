@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Plus, CalendarCheck, Search, Calendar } from 'lucide-react';
 import { CreateORPModal } from '@/components/orp/CreateORPModal';
 import { useORPRealtime } from '@/hooks/useORPRealtime';
+import { GlossaryTerm } from '@/components/ui/GlossaryTerm';
 import { useORPPlans } from '@/hooks/useORPPlans';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { useLanguage } from '@/contexts/LanguageContext';
