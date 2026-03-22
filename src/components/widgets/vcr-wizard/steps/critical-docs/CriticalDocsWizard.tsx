@@ -165,15 +165,75 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
     resolveProjectPlant(code);
   }, []);
 
+  // Shared plant resolution: uses DMS project name to disambiguate when plant.name is generic (e.g. "CS")
+  const resolveDmsPlant = async (plantName: string, dmsProjectName: string): Promise<{ code: string; plant_name: string } | null> => {
+    const { data: dmsPlants } = await (supabase as any)
+      .from('dms_plants')
+      .select('code, plant_name')
+      .eq('is_active', true)
+      .order('display_order');
+
+    if (!dmsPlants?.length) return null;
+
+    // 1. Exact code match (e.g. plant.name = "BNGL", dms_plants.code = "BNGL")
+    const exactMatch = dmsPlants.find((dp: any) => dp.code.toLowerCase() === plantName.toLowerCase());
+    if (exactMatch) return exactMatch;
+
+    // 2. Filter all dms_plants whose name contains the plant category
+    const candidates = dmsPlants.filter((dp: any) =>
+      dp.plant_name?.toLowerCase().includes(plantName.toLowerCase())
+    );
+
+    if (candidates.length === 0) return null;
+    if (candidates.length === 1) return candidates[0];
+
+    // 3. Multiple candidates — use DMS project name to disambiguate
+    // Extract meaningful words from project name (3+ chars) for matching
+    if (dmsProjectName) {
+      const projectWords = dmsProjectName.toLowerCase().split(/[\s\-\/,]+/).filter((w: string) => w.length >= 3);
+
+      // Score each candidate by how many project name words appear in the plant name
+      let bestScore = 0;
+      let bestCandidate: any = null;
+
+      for (const candidate of candidates) {
+        const pName = candidate.plant_name?.toLowerCase() || '';
+        let score = 0;
+        for (const word of projectWords) {
+          if (pName.includes(word)) score++;
+        }
+        if (score > bestScore) {
+          bestScore = score;
+          bestCandidate = candidate;
+        }
+      }
+
+      if (bestCandidate && bestScore > 0) {
+        console.log(`[CriticalDocsWizard] Disambiguated plant using project name: "${dmsProjectName}" → ${bestCandidate.code} (${bestCandidate.plant_name}) [score=${bestScore}/${projectWords.length}]`);
+        return bestCandidate;
+      }
+    }
+
+    // 4. Try "Multi" prefix match as last resort (e.g. C000 Multi Compressor Stations)
+    const multiMatch = candidates.find((dp: any) =>
+      dp.plant_name?.toLowerCase().includes('multi')
+    );
+    if (multiMatch) return multiMatch;
+
+    // 5. Cannot disambiguate — do NOT default to first match (that causes wrong data)
+    console.warn(`[CriticalDocsWizard] ${candidates.length} DMS plants match "${plantName}" but cannot disambiguate. Candidates:`, candidates.map((c: any) => `${c.code}:${c.plant_name}`));
+    return null;
+  };
+
   const resolveProjectPlant = async (dmsProjectCode: string) => {
     try {
       setPlantAutoDetected(false);
       setSelectedPlantCode('');
 
-      // Get dms_projects.project_id for this code
+      // Get dms_projects.project_id and project_name for this code
       const { data: dmsProject } = await (supabase as any)
         .from('dms_projects')
-        .select('project_id')
+        .select('project_id, project_name')
         .eq('code', dmsProjectCode)
         .maybeSingle();
 
@@ -200,26 +260,9 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
 
       if (!plant?.name) return;
 
-      const { data: dmsPlants } = await (supabase as any)
-        .from('dms_plants')
-        .select('code, plant_name')
-        .eq('is_active', true)
-        .order('display_order');
-
-      if (!dmsPlants?.length) return;
-
-      const exactMatch = dmsPlants.find((dp: any) => dp.code === plant.name);
-      const multiMatch = dmsPlants.find((dp: any) =>
-        dp.plant_name?.toLowerCase().includes('multi') &&
-        dp.plant_name?.toLowerCase().includes(plant.name.toLowerCase())
-      );
-      const nameMatch = dmsPlants.find((dp: any) =>
-        dp.plant_name?.toLowerCase().includes(plant.name.toLowerCase())
-      );
-
-      const bestMatch = exactMatch || multiMatch || nameMatch;
-      if (bestMatch) {
-        setSelectedPlantCode(bestMatch.code);
+      const resolved = await resolveDmsPlant(plant.name, dmsProject.project_name || '');
+      if (resolved) {
+        setSelectedPlantCode(resolved.code);
         setPlantAutoDetected(true);
       }
     } catch (err) {
