@@ -27,6 +27,7 @@ import {
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { format } from 'date-fns';
 import { Users, Calendar, FileText, Building2, MapPin, Target } from 'lucide-react';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // Column visibility configuration
 interface ColumnVisibility {
