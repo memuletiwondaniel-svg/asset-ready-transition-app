@@ -32,7 +32,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-primary/10",
     status: "complete" as const,
     summary: "All disciplines have completed their reviews and confirmed readiness for startup. Cross-functional verification meetings held on Dec 5th with all discipline leads present. No outstanding interdisciplinary conflicts or dependencies remain. Safety systems integration verified across all disciplines. P&IDs, electrical diagrams, and process flows are aligned and approved.",
-    reviewer: "Daniel Memuletiwon - PSSR Lead",
+    reviewer: "PSSR Lead",
     date: "Dec 6, 2024"
   },
   techSafety: {
