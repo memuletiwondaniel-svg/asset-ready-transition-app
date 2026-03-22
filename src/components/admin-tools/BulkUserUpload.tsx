@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import * as XLSX from 'xlsx';
+import { readExcelFile } from '@/utils/excelUtils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -66,24 +66,19 @@ export const BulkUserUpload: React.FC<BulkUserUploadProps> = ({ onBack }) => {
   const [summary, setSummary] = useState<{ total: number; created: number; updated: number; failed: number } | null>(null);
   const [fileName, setFileName] = useState<string>('');
 
-  const parseExcelFile = useCallback((file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        
-        // Get all data as array of arrays to find header row
-        const allRows = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
-        console.log('Total rows:', allRows.length);
-        console.log('First 5 rows:', allRows.slice(0, 5));
-        
-        // Find the header row by looking for a row containing expected column names
-        const expectedHeaders = ['firstname', 'lastname', 'email', 'password', 'company'];
-        let headerRowIndex = 0;
-        
+  const parseExcelFile = useCallback(async (file: File) => {
+    try {
+      const buffer = await file.arrayBuffer();
+      
+      // First pass: read raw rows to find header
+      const { rawRows: allRows } = await readExcelFile(buffer, { rawArrays: true });
+      console.log('Total rows:', allRows?.length);
+      console.log('First 5 rows:', allRows?.slice(0, 5));
+      
+      const expectedHeaders = ['firstname', 'lastname', 'email', 'password', 'company'];
+      let headerRowIndex = 0;
+      
+      if (allRows) {
         for (let i = 0; i < Math.min(10, allRows.length); i++) {
           const row = allRows[i];
           if (Array.isArray(row)) {
@@ -96,106 +91,97 @@ export const BulkUserUpload: React.FC<BulkUserUploadProps> = ({ onBack }) => {
             }
           }
         }
-        
-        // Parse with the correct header row
-        const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { range: headerRowIndex });
-        
-        console.log('Sheet names:', workbook.SheetNames);
-        console.log('Raw JSON data sample:', jsonData.slice(0, 3));
-        console.log('First row keys:', jsonData[0] ? Object.keys(jsonData[0]) : 'No data');
-
-        // Helper function to get field value with flexible column name matching
-        const getField = (row: Record<string, any>, fieldName: string): any => {
-          // Normalize the target field name
-          const normalizedFieldName = fieldName.toLowerCase().replace(/[\s_-]/g, '');
-          
-          // Try to find a matching key
-          const key = Object.keys(row).find(k => {
-            const normalizedKey = k.toLowerCase().trim().replace(/[\s_-]/g, '');
-            return normalizedKey === normalizedFieldName;
-          });
-          
-          const value = key ? row[key] : undefined;
-          return value;
-        };
-
-        // Log all column names found for debugging
-        const foundColumns = jsonData[0] ? Object.keys(jsonData[0]) : [];
-        console.log('Found columns:', foundColumns);
-        console.log('Expected columns: firstName, lastName, email, password, company, personalEmail, isFunctionalEmail, role, plant, commission, phone, systemRole, hub');
-
-        const parsed: ParsedUser[] = jsonData
-          .filter(row => {
-            // Skip completely empty rows - only check if ANY value exists
-            return Object.values(row).some(v => v !== null && v !== undefined && v.toString().trim() !== '');
-          })
-          .map(row => {
-            const validationErrors: string[] = [];
-            
-            const firstName = getField(row, 'firstName');
-            const lastName = getField(row, 'lastName');
-            const email = getField(row, 'email');
-            const password = getField(row, 'password');
-            const company = getField(row, 'company');
-            const personalEmail = getField(row, 'personalEmail');
-            const isFunctionalEmailRaw = getField(row, 'isFunctionalEmail');
-            const role = getField(row, 'role');
-            const plant = getField(row, 'plant');
-            const commission = getField(row, 'commission');
-            const phone = getField(row, 'phone');
-            const systemRole = getField(row, 'systemRole');
-            const hub = getField(row, 'hub');
-
-            if (!firstName) validationErrors.push('Missing first name');
-            if (!lastName) validationErrors.push('Missing last name');
-            if (!email) validationErrors.push('Missing email');
-            if (!password) validationErrors.push('Missing password');
-            if (!company) validationErrors.push('Missing company');
-
-            const isFunctional = typeof isFunctionalEmailRaw === 'boolean' 
-              ? isFunctionalEmailRaw 
-              : isFunctionalEmailRaw?.toString().toUpperCase() === 'TRUE';
-
-            if (isFunctional && !personalEmail) {
-              validationErrors.push('Functional email requires personal email');
-            }
-
-            return {
-              firstName: firstName?.toString().trim() || '',
-              lastName: lastName?.toString().trim() || '',
-              password: password?.toString() || '',
-              personalEmail: personalEmail?.toString().replace(/<|>/g, '').trim() || '',
-              email: email?.toString().replace(/<|>/g, '').trim() || '',
-              isFunctionalEmail: isFunctional,
-              company: company?.toString().trim() || '',
-              role: role?.toString().trim() || '',
-              plant: plant?.toString().trim() || undefined,
-              commission: commission?.toString().trim() || undefined,
-              phone: phone?.toString().trim() || undefined,
-              systemRole: systemRole?.toString().trim() || 'user',
-              hub: hub?.toString().trim() || undefined,
-              isValid: validationErrors.length === 0,
-              validationErrors,
-            };
-          });
-
-        setParsedUsers(parsed);
-        setFileName(file.name);
-        setUploadResults(null);
-        setSummary(null);
-        
-        if (parsed.length === 0) {
-          console.error('No users parsed. Raw data sample:', jsonData.slice(0, 5));
-          toast.error('No valid users found. Check console for debugging info.');
-        } else {
-          toast.success(`Parsed ${parsed.length} users from ${file.name}`);
-        }
-      } catch (error) {
-        console.error('Error parsing Excel file:', error);
-        toast.error('Failed to parse Excel file');
       }
-    };
-    reader.readAsArrayBuffer(file);
+      
+      // Second pass: parse with correct header row
+      const { sheetNames, data: jsonData } = await readExcelFile<Record<string, any>>(buffer, { range: headerRowIndex });
+        
+      console.log('Sheet names:', sheetNames);
+      console.log('Raw JSON data sample:', jsonData.slice(0, 3));
+      console.log('First row keys:', jsonData[0] ? Object.keys(jsonData[0]) : 'No data');
+
+      // Helper function to get field value with flexible column name matching
+      const getField = (row: Record<string, any>, fieldName: string): any => {
+        const normalizedFieldName = fieldName.toLowerCase().replace(/[\s_-]/g, '');
+        const key = Object.keys(row).find(k => {
+          const normalizedKey = k.toLowerCase().trim().replace(/[\s_-]/g, '');
+          return normalizedKey === normalizedFieldName;
+        });
+        return key ? row[key] : undefined;
+      };
+
+      const foundColumns = jsonData[0] ? Object.keys(jsonData[0]) : [];
+      console.log('Found columns:', foundColumns);
+
+      const parsed: ParsedUser[] = jsonData
+        .filter(row => {
+          return Object.values(row).some(v => v !== null && v !== undefined && v.toString().trim() !== '');
+        })
+        .map(row => {
+          const validationErrors: string[] = [];
+          
+          const firstName = getField(row, 'firstName');
+          const lastName = getField(row, 'lastName');
+          const email = getField(row, 'email');
+          const password = getField(row, 'password');
+          const company = getField(row, 'company');
+          const personalEmail = getField(row, 'personalEmail');
+          const isFunctionalEmailRaw = getField(row, 'isFunctionalEmail');
+          const role = getField(row, 'role');
+          const plant = getField(row, 'plant');
+          const commission = getField(row, 'commission');
+          const phone = getField(row, 'phone');
+          const systemRole = getField(row, 'systemRole');
+          const hub = getField(row, 'hub');
+
+          if (!firstName) validationErrors.push('Missing first name');
+          if (!lastName) validationErrors.push('Missing last name');
+          if (!email) validationErrors.push('Missing email');
+          if (!password) validationErrors.push('Missing password');
+          if (!company) validationErrors.push('Missing company');
+
+          const isFunctional = typeof isFunctionalEmailRaw === 'boolean' 
+            ? isFunctionalEmailRaw 
+            : isFunctionalEmailRaw?.toString().toUpperCase() === 'TRUE';
+
+          if (isFunctional && !personalEmail) {
+            validationErrors.push('Functional email requires personal email');
+          }
+
+          return {
+            firstName: firstName?.toString().trim() || '',
+            lastName: lastName?.toString().trim() || '',
+            password: password?.toString() || '',
+            personalEmail: personalEmail?.toString().replace(/<|>/g, '').trim() || '',
+            email: email?.toString().replace(/<|>/g, '').trim() || '',
+            isFunctionalEmail: isFunctional,
+            company: company?.toString().trim() || '',
+            role: role?.toString().trim() || '',
+            plant: plant?.toString().trim() || undefined,
+            commission: commission?.toString().trim() || undefined,
+            phone: phone?.toString().trim() || undefined,
+            systemRole: systemRole?.toString().trim() || 'user',
+            hub: hub?.toString().trim() || undefined,
+            isValid: validationErrors.length === 0,
+            validationErrors,
+          };
+        });
+
+      setParsedUsers(parsed);
+      setFileName(file.name);
+      setUploadResults(null);
+      setSummary(null);
+      
+      if (parsed.length === 0) {
+        console.error('No users parsed. Raw data sample:', jsonData.slice(0, 5));
+        toast.error('No valid users found. Check console for debugging info.');
+      } else {
+        toast.success(`Parsed ${parsed.length} users from ${file.name}`);
+      }
+    } catch (error) {
+      console.error('Error parsing Excel file:', error);
+      toast.error('Failed to parse Excel file');
+    }
   }, []);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {

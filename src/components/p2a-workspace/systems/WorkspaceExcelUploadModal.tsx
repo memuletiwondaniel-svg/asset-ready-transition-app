@@ -12,7 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Upload, FileSpreadsheet, X, Loader2, Download, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { cn } from '@/lib/utils';
-import * as XLSX from 'xlsx';
+import { readExcelFile, writeExcelFile } from '@/utils/excelUtils';
 import { P2ASystem } from '../hooks/useP2ASystems';
 
 interface ParsedSystem {
@@ -56,10 +56,7 @@ export const WorkspaceExcelUploadModal: React.FC<WorkspaceExcelUploadModalProps>
 
     try {
       const data = await f.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      const { data: jsonData } = await readExcelFile(data);
 
       if (jsonData.length === 0) {
         setImportError('No data found in file');
@@ -120,10 +117,7 @@ export const WorkspaceExcelUploadModal: React.FC<WorkspaceExcelUploadModalProps>
       },
     ];
 
-    const ws = XLSX.utils.json_to_sheet(template);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Systems');
-    XLSX.writeFile(wb, 'systems_import_template.xlsx');
+    writeExcelFile('systems_import_template.xlsx', [{ name: 'Systems', data: template }]);
   };
 
   const handleImport = () => {

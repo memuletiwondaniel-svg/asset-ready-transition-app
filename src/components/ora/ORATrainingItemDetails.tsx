@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import * as XLSX from 'xlsx';
+import { readExcelFile } from '@/utils/excelUtils';
 import { ORATrainingItem, ORATrainingMaterial } from '@/hooks/useORATrainingPlan';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { useQuery } from '@tanstack/react-query';
@@ -358,9 +358,7 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
 
     try {
       const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json<Record<string, string>>(worksheet);
+      const { data: jsonData } = await readExcelFile<Record<string, string>>(data);
 
       const newTrainees = jsonData.map(row => {
         const name = row['Name'] || row['name'] || row['NAME'] || '';

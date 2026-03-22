@@ -19,7 +19,7 @@ import { useVCRItems, useCreateVCRItem, useUpdateVCRItem, useDeleteVCRItem, VCRI
 import { useVCRItemCategories } from '@/hooks/useVCRItemCategories';
 import { useCategorizedRoles } from '@/hooks/useCategorizedRoles';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
+import { writeExcelFile } from '@/utils/excelUtils';
 
 const categoryColors: Record<string, string> = {
   'DI': 'bg-blue-50 text-blue-700/80 border-blue-200/60 dark:bg-blue-950/30 dark:text-blue-300/80 dark:border-blue-800/40',
@@ -221,12 +221,10 @@ const VCRItemsTab: React.FC = () => {
       'Supporting Evidence': item.supporting_evidence || '',
       'Guidance Notes': item.guidance_notes || '',
     }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'VCR Items');
     const filename = `VCR_Items_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, filename);
-    toast.success(`Exported to ${filename}`);
+    writeExcelFile(filename, [{ name: 'VCR Items', data: rows }])
+      .then(() => toast.success(`Exported to ${filename}`))
+      .catch(() => toast.error('Export failed'));
   };
 
   const toggleApprover = (roleId: string) => {
