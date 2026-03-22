@@ -649,6 +649,9 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
               { label: 'Encryption in Transit (TLS 1.2+)', value: 'All client-server communication enforced via TLS 1.2+ (HTTPS). Database connections use SSL/TLS. No plaintext channels permitted.', status: 'active' },
               { label: 'Role Inheritance Controls', value: 'Permissions are assigned to roles (not users directly). Users inherit permissions from their assigned role. Role changes propagate immediately.', status: 'active' },
               { label: 'Least-Privilege Defaults', value: 'New user accounts auto-assigned "Viewer" role (view-only) via database trigger. Elevated access requires explicit admin grant with audit log entry.', status: 'active' },
+              { label: 'RLS Performance Hardening', value: '416 policies optimized with (select auth.uid()) subquery pattern; ~100 duplicate permissive policy overlaps consolidated into single policies — zero Supabase advisor warnings.', status: 'active' },
+              { label: 'Leaked Password Protection', value: 'Supabase Auth HaveIBeenPwned integration enabled — prevents setting passwords found in known data breaches.', status: 'active' },
+              { label: 'OTP Expiry Hardening', value: 'OTP token expiry reduced to 600 seconds (10 minutes) — minimizes replay attack window for email/SMS verification codes.', status: 'active' },
             ]} />
 
             <Card className="bg-muted/30 mt-4">
