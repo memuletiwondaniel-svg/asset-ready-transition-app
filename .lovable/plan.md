@@ -1,62 +1,195 @@
 
 
-# Fix Overly Permissive RLS Policies
+# Secure Edge Functions — JWT Validation & Rate Limiting
 
-## Problem
-79 RLS policies use `USING (true)` or `WITH CHECK (true)` on write operations (INSERT/UPDATE/DELETE), allowing any authenticated user (or even `public` in some cases) to modify data without role verification.
+## Current State
 
-## Existing Security Functions
-The database already has these security definer functions:
-- `user_is_admin(user_uuid uuid)` — checks `user_roles` for admin role
-- `user_has_role(user_uuid uuid, role_name text)` — checks `user_roles` for any role
-- `has_permission(_user_id uuid, _permission app_permission)` — checks `role_permissions` via profiles
+All 33 edge functions have `verify_jwt = false` (or no config entry at all). Of these, only 4 already validate JWTs in code: `admin-reset-password`, `gohub-import`, `gohub-sync-counts`, `readiness-api`. The remaining 29 have zero authentication.
 
-## Strategy
+## Classification
 
-Categorize the 79 policies into tiers and apply the appropriate check:
+### Category A — Client-called, need JWT validation in code (20 functions)
 
-### Tier 1 — Admin-only configuration tables (DMS, ORA catalog)
-Restrict to admin OR moderator. These are reference/master data tables.
+These are invoked from the frontend via `supabase.functions.invoke()` by authenticated users. Add the `getClaims()` auth guard pattern to each.
 
-**Tables (30 policies):** `dms_disciplines`, `dms_document_types`, `dms_document_type_secondary_disciplines`, `dms_numbering_segments`, `dms_originators`, `dms_plants`, `dms_projects`, `dms_sites`, `dms_status_codes`, `dms_units`, `ora_activity_catalog`, `ora_plan_templates`, `ora_training_system_mappings`, `project_hub_region`, `project_locations`
+| Function | Role check needed |
+|----------|------------------|
+| `translate-content` | Any authenticated user |
+| `ai-chat` | Any authenticated user (currently does optional JWT decode) |
+| `ai-training-review` | Any authenticated user |
+| `parse-document` | Any authenticated user |
+| `assign-user-privilege` | Admin only |
+| `bulk-create-users` | Admin only |
+| `admin-create-user` | Admin only |
+| `update-user-profile` | Admin or self |
+| `update-user-avatar` | Admin or self |
+| `upload-user-avatar` | Admin or self |
+| `send-notification` | Any authenticated user |
+| `send-pssr-approval-ready` | Any authenticated user |
+| `send-pssr-item-review-notification` | Any authenticated user |
+| `send-orm-workflow-notification` | Any authenticated user |
+| `send-orm-digest` | Any authenticated user |
+| `send-orp-comment-notification` | Any authenticated user |
+| `send-p2a-notification` | Any authenticated user |
+| `send-p2a-reminder` | Any authenticated user |
+| `send-calendar-invitation` | Any authenticated user |
+| `create-orm-notification` | Any authenticated user |
 
-**Check:** `public.user_is_admin(auth.uid()) OR public.user_has_role(auth.uid(), 'moderator')`
+### Category B — Already have JWT validation (4 functions, no changes needed)
 
-### Tier 2 — Permission-gated operational tables (P2A/VCR workflow)
-Restrict to users with the relevant `app_permission`.
+`admin-reset-password`, `gohub-import`, `gohub-sync-counts`, `readiness-api`
 
-| Tables | Permission |
-|--------|-----------|
-| `p2a_vcr_critical_docs`, `p2a_vcr_deliverables`, `p2a_vcr_documentation`, `p2a_vcr_item_overrides`, `p2a_vcr_logsheets`, `p2a_vcr_operational_registers`, `p2a_vcr_procedures`, `p2a_vcr_register_selections`, `p2a_vcr_relationships`, `p2a_vcr_training`, `vcr_discipline_assurance`, `vcr_item_delivering_parties`, `p2a_itp_activities` | `manage_p2a` |
-| `p2a_approver_history`, `p2a_audit_trail` | `manage_p2a` (INSERT only, keep append-only) |
-| `outstanding_work_items` | `manage_p2a` |
-| `orm_notifications`, `orm_plans` | `manage_orm` |
-| `pac_prerequisite_delivering_parties`, `pac_prerequisite_receiving_parties` | `manage_p2a` |
-| `pssr_approvers`, `pssr_selected_ati_scopes`, `pssr_walkdown_attendees` | `create_pssr` |
-| `sof_approvers`, `sof_certificates` | `approve_sof` |
+### Category C — Server-to-server only, called from other edge functions (3 functions)
 
-### Tier 3 — System/audit tables
-- `audit_logs` INSERT — keep `WITH CHECK (true)` for authenticated (this is correct; audit logs must always be writable)
-- `orp_activity_log`, `orp_approval_history` — system INSERT by `public` role — these are called from edge functions with service_role, keep as-is but change role target from `public` to `service_role`
-- `tenants` — already scoped to `service_role`, no change needed
+These are invoked by other edge functions using `service_role` key. They should validate that calls come with the service role key rather than being open.
 
-### Special case: `public` role policies
-Several policies target `{public}` role (unauthenticated). These are the most critical to fix:
-- `orm_notifications`, `orm_plans`, `orp_activity_log`, `orp_approval_history`, `p2a_audit_trail` — change to `authenticated` + permission check (or `service_role` for system-generated inserts)
-- `p2a_vcr_deliverables`, `p2a_vcr_documentation`, `p2a_vcr_operational_registers`, `p2a_vcr_procedures`, `p2a_vcr_training` — change from `public` to `authenticated` + `manage_p2a` check
-- `pssr_approvers`, `pssr_walkdown_attendees`, `sof_approvers`, `sof_certificates` — change from `public` to `authenticated` + permission check
+| Function | Called from |
+|----------|-----------|
+| `send-welcome-email` | `process-user-approval` + client (`UserAuthenticationPage`) |
+| `send-rejection-email` | `process-user-approval` + client (`UserAuthenticationPage`) |
+| `send-user-approval-request` | `submit-registration-request` |
+
+Since `send-welcome-email` and `send-rejection-email` are also called from the client, they need JWT validation too.
+
+`send-user-approval-request` is only called server-to-server from `submit-registration-request` — keep unauthenticated but it's not directly exposed to users (only called internally).
+
+### Category D — Pre-authentication / genuinely public (4 functions)
+
+| Function | Reason |
+|----------|--------|
+| `submit-registration-request` | Used before user has an account |
+| `validate-auth-token` | Used during registration flow, before login |
+| `use-auth-token` | Used during registration flow, before login |
+| `process-user-approval` | Admin approval link, may be called without session |
+
+These get **rate limiting** instead of JWT checks.
+
+### Category E — OAuth/external (2 functions)
+
+| Function | Reason |
+|----------|--------|
+| `microsoft-oauth` | OAuth callback handler, validates via OAuth flow |
+| `outlook-calendar` | Needs JWT validation added |
 
 ## Implementation
 
-Single migration file that:
-1. Drops each permissive policy by name
-2. Re-creates it with the correct `USING` / `WITH CHECK` clause and correct role target
-3. Ensures `search_path` is set on any referenced function
+### Auth guard pattern (reusable snippet added to each function)
 
-Approximately 75 DROP + CREATE POLICY statements in one migration. The `audit_logs` INSERT policy and `tenants` service_role policy remain unchanged.
+```typescript
+// After CORS check, before business logic:
+const authHeader = req.headers.get('Authorization');
+if (!authHeader?.startsWith('Bearer ')) {
+  return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  });
+}
 
-## Risk Mitigation
-- All checks use existing `SECURITY DEFINER` functions (`user_is_admin`, `user_has_role`, `has_permission`) — no recursive RLS risk
-- SELECT policies are not touched — read access remains unchanged
-- Edge functions using `service_role` key bypass RLS entirely, so system-generated inserts continue working
+const supabaseClient = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_ANON_KEY')!,
+  { global: { headers: { Authorization: authHeader } } }
+);
+
+const token = authHeader.replace('Bearer ', '');
+const { data: claims, error: claimsError } = await supabaseClient.auth.getClaims(token);
+if (claimsError || !claims?.claims) {
+  return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  });
+}
+const userId = claims.claims.sub;
+```
+
+For admin-only functions, add after the above:
+```typescript
+const { data: adminRole } = await adminClient.from('user_roles')
+  .select('role').eq('user_id', userId).eq('role', 'admin').maybeSingle();
+if (!adminRole) {
+  return new Response(JSON.stringify({ error: 'Forbidden: Admin access required' }), {
+    status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  });
+}
+```
+
+### Rate limiting pattern (for Category D functions)
+
+```typescript
+// Simple in-memory rate limiter
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 10; // requests per window
+const RATE_WINDOW = 60_000; // 1 minute
+
+function checkRateLimit(identifier: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(identifier);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(identifier, { count: 1, resetAt: now + RATE_WINDOW });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT) return false;
+  entry.count++;
+  return true;
+}
+
+// Use IP or forwarded header as identifier
+const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+if (!checkRateLimit(clientIP)) {
+  return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+    status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  });
+}
+```
+
+### Files to modify
+
+**20 edge functions** get the JWT auth guard added (Category A):
+- `supabase/functions/translate-content/index.ts`
+- `supabase/functions/ai-chat/index.ts`
+- `supabase/functions/ai-training-review/index.ts`
+- `supabase/functions/parse-document/index.ts`
+- `supabase/functions/assign-user-privilege/index.ts`
+- `supabase/functions/bulk-create-users/index.ts`
+- `supabase/functions/admin-create-user/index.ts`
+- `supabase/functions/update-user-profile/index.ts`
+- `supabase/functions/update-user-avatar/index.ts`
+- `supabase/functions/upload-user-avatar/index.ts`
+- `supabase/functions/send-notification/index.ts`
+- `supabase/functions/send-pssr-approval-ready/index.ts`
+- `supabase/functions/send-pssr-item-review-notification/index.ts`
+- `supabase/functions/send-orm-workflow-notification/index.ts`
+- `supabase/functions/send-orm-digest/index.ts`
+- `supabase/functions/send-orp-comment-notification/index.ts`
+- `supabase/functions/send-p2a-notification/index.ts`
+- `supabase/functions/send-p2a-reminder/index.ts`
+- `supabase/functions/send-calendar-invitation/index.ts`
+- `supabase/functions/create-orm-notification/index.ts`
+
+Plus: `send-welcome-email/index.ts`, `send-rejection-email/index.ts`, `outlook-calendar/index.ts`
+
+**4 edge functions** get rate limiting added (Category D):
+- `supabase/functions/submit-registration-request/index.ts`
+- `supabase/functions/validate-auth-token/index.ts`
+- `supabase/functions/use-auth-token/index.ts`
+- `supabase/functions/process-user-approval/index.ts`
+
+**1 config file** updated:
+- `supabase/config.toml` — keep `verify_jwt = false` for all (per Lovable's signing-keys system, JWT validation happens in code)
+
+### No changes needed
+- `admin-reset-password` — already has full auth guard
+- `gohub-import` — already has auth guard
+- `gohub-sync-counts` — already has auth guard
+- `readiness-api` — already has API key + JWT auth
+- `microsoft-oauth` — OAuth callback, authentication via OAuth flow
+- `send-user-approval-request` — only called server-to-server
+
+## Summary
+
+| Category | Count | Action |
+|----------|-------|--------|
+| Add JWT validation | 23 | `getClaims()` auth guard |
+| Add rate limiting | 4 | IP-based rate limiter |
+| Already secured | 4 | No changes |
+| OAuth/special | 2 | No changes |
+| **Total** | **33** | |
 
