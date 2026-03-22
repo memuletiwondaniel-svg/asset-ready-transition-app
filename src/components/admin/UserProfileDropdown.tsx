@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { User, Settings, Shield, LogOut, ChevronDown, Key, Bell, UserCog } from 'lucide-react';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import { NotificationPreferencesPanel } from '@/components/NotificationPreferencesPanel';
 interface UserProfileDropdownProps {
   className?: string;
