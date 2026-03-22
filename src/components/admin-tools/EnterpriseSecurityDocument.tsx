@@ -104,7 +104,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto" ref={contentRef}>
         <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 space-y-10">
 
           {/* Executive Summary */}
