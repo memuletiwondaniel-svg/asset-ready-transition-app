@@ -19,7 +19,7 @@ import { useVCRItems, useCreateVCRItem, useUpdateVCRItem, useDeleteVCRItem, VCRI
 import { useVCRItemCategories } from '@/hooks/useVCRItemCategories';
 import { useCategorizedRoles } from '@/hooks/useCategorizedRoles';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
+import { writeExcelFile } from '@/utils/excelUtils';
 
 const categoryColors: Record<string, string> = {
   'DI': 'bg-blue-50 text-blue-700/80 border-blue-200/60 dark:bg-blue-950/30 dark:text-blue-300/80 dark:border-blue-800/40',
