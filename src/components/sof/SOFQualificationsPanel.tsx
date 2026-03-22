@@ -27,8 +27,8 @@ const mockDeviations: QualificationDetail[] = [
     punchlistRef: 'PL-2026-0187',
     riskDescription: 'Potential over-pressure condition if bypass left open during process upset',
     riskRating: 'Medium',
-    actionOwner: 'Victor Liew',
-    actionOwnerRole: 'Project Hub Lead Zubair',
+    actionOwner: 'Project Hub Lead',
+    actionOwnerRole: 'Project Hub Lead',
     attachments: [
       { name: 'PSV-1234_Bypass_Procedure.pdf', type: 'PDF' },
       { name: 'Risk_Assessment_Form.xlsx', type: 'Excel' },
