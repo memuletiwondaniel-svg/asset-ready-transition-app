@@ -160,7 +160,9 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
                 <p className="font-medium text-foreground">Password Security</p>
                 <ul className="list-disc pl-5 space-y-1">
                   <li>Server-side bcrypt hashing managed by Supabase Auth</li>
+                  <li><strong className="text-foreground">Leaked password protection enabled</strong> — prevents users from setting passwords found in known breach databases (HaveIBeenPwned integration via Supabase Auth)</li>
                   <li>Admin-initiated password resets via secure, time-limited tokens (1-hour expiry)</li>
+                  <li><strong className="text-foreground">OTP expiry hardened to 600 seconds (10 minutes)</strong> — reduced from default to minimize token replay window</li>
                   <li>Expired/used tokens automatically cleaned up</li>
                   <li>Temporary passwords cleared from database after use</li>
                 </ul>
