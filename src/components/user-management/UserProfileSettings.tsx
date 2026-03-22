@@ -56,6 +56,8 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
   const { allFields, getFieldsByPlant, isLoading: fieldsLoading } = useFields();
   const { allStations, getStationsByField, isLoading: stationsLoading } = useStations();
   const [stationSearchOpen, setStationSearchOpen] = useState(false);
+  const [showSetup2FA, setShowSetup2FA] = useState(false);
+  const [showDisable2FA, setShowDisable2FA] = useState(false);
 
   const [profileData, setProfileData] = useState({
     full_name: '',
