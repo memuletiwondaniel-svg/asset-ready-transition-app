@@ -232,7 +232,13 @@ export const SidebarContent = memo<SidebarContentProps>(({
                         "mr-2 h-4 w-4 transition-colors flex-shrink-0",
                         isActive ? "text-primary" : "text-muted-foreground"
                       )} />
-                      <span className="truncate">{getLabel(item.labelKey)}</span>
+                      {sectionGlossaryTerm[item.section || ''] ? (
+                        <GlossaryTerm term={sectionGlossaryTerm[item.section || '']}>
+                          <span className="truncate">{getLabel(item.labelKey)}</span>
+                        </GlossaryTerm>
+                      ) : (
+                        <span className="truncate">{getLabel(item.labelKey)}</span>
+                      )}
                       {item.section === 'ask-orsh' && unreadChatCount > 0 && (
                         <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
                           {unreadChatCount}
