@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 
 interface ORPListWidgetProps {
   onSelectORP: (id: string) => void;
+  onCreateNew?: () => void;
 }
 
 export const ORPListWidget: React.FC<ORPListWidgetProps> = ({ onSelectORP }) => {
