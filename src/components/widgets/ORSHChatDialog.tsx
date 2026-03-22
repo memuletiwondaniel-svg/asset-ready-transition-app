@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -38,6 +38,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { cn } from '@/lib/utils';
 import { processUserInput, getBlockedResponse } from '@/lib/security';
+import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import {
   Tooltip,
   TooltipContent,
@@ -104,6 +105,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { isListening, startListening, stopListening, isSupported } = useVoiceInput();
+  const { data: roleData } = useCurrentUserRole();
+  const welcomeSentRef = useRef(false);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -144,9 +147,68 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     };
   }, []);
 
+  // Check if user is new and inject proactive welcome message
+  const checkAndSendWelcome = useCallback(async () => {
+    if (welcomeSentRef.current) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Check if account is < 7 days old
+      const createdAt = new Date(user.created_at);
+      const daysSinceCreation = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceCreation > 7) return;
+
+      // Check flag in ai_user_context
+      const { data: ctxData } = await supabase
+        .from('ai_user_context')
+        .select('context_value')
+        .eq('user_id', user.id)
+        .eq('context_key', 'bob_welcome_sent')
+        .maybeSingle();
+
+      if (ctxData?.context_value === true) return;
+
+      // Check if user has any previous conversations
+      const { count } = await supabase
+        .from('chat_conversations')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      if ((count || 0) > 0) return;
+
+      // Get first name from profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user.id)
+        .single();
+
+      const firstName = profile?.full_name?.split(' ')[0] || 'there';
+
+      const welcomeMsg = `Hi ${firstName}! 👋 I'm Bob, your ORSH CoPilot. I can see you're just getting started. Would you like me to walk you through ORSH based on your role? Just say **"yes"** and I'll guide you step by step.`;
+
+      welcomeSentRef.current = true;
+      setMessages([{ role: 'assistant', content: welcomeMsg }]);
+
+      // Store flag so it only appears once
+      await (supabase.from('ai_user_context' as any).upsert({
+        user_id: user.id,
+        context_key: 'bob_welcome_sent',
+        context_value: true,
+      }, { onConflict: 'user_id,context_key' }) as any);
+    } catch (err) {
+      console.error('Welcome check error:', err);
+    }
+  }, []);
+
   useEffect(() => {
     if (open) {
       loadConversations();
+      // Only trigger welcome check when opening a fresh chat (no conversation loaded)
+      if (!currentConversationId && messages.length === 0) {
+        checkAndSendWelcome();
+      }
     }
   }, [open]);
 
