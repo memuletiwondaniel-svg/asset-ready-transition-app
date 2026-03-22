@@ -27,6 +27,7 @@ import {
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { format } from 'date-fns';
 import { Users, Calendar, FileText, Building2, MapPin, Target } from 'lucide-react';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // Column visibility configuration
 interface ColumnVisibility {
@@ -271,19 +272,17 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
 
           {/* Empty State */}
           {!isLoading && filteredProjects.length === 0 && (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Key className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  {searchQuery ? 'No projects found' : 'No projects available'}
-                </h3>
-                <p className="text-muted-foreground text-center max-w-md">
-                  {searchQuery 
-                    ? 'Try adjusting your search query to find what you\'re looking for.'
-                    : 'You don\'t have any projects assigned yet. Contact your administrator for access.'}
-                </p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={Key}
+              title={searchQuery ? 'No projects found' : 'No projects yet'}
+              description={
+                searchQuery
+                  ? 'Try adjusting your search query to find what you\'re looking for.'
+                  : 'Create your first project to begin managing Verification Certificates of Readiness and track operational milestones.'
+              }
+              actionLabel={!searchQuery && canPerformActions ? 'Create New Project' : undefined}
+              onAction={!searchQuery && canPerformActions ? () => setIsAddModalOpen(true) : undefined}
+            />
           )}
 
           {/* Grid View */}

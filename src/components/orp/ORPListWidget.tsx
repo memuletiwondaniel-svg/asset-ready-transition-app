@@ -4,13 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarCheck, Calendar, User } from 'lucide-react';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { format } from 'date-fns';
 
 interface ORPListWidgetProps {
   onSelectORP: (id: string) => void;
+  onCreateNew?: () => void;
 }
 
-export const ORPListWidget: React.FC<ORPListWidgetProps> = ({ onSelectORP }) => {
+export const ORPListWidget: React.FC<ORPListWidgetProps> = ({ onSelectORP, onCreateNew }) => {
   const { plans, isLoading } = useORPPlans();
 
   const getStatusColor = (status: string) => {
@@ -63,11 +65,14 @@ export const ORPListWidget: React.FC<ORPListWidgetProps> = ({ onSelectORP }) => 
       </CardHeader>
       <CardContent>
         {!plans || plans.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <CalendarCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No ORA plans created yet</p>
-            <p className="text-sm mt-2">Click "Create New ORA" to get started</p>
-          </div>
+          <EmptyState
+            icon={CalendarCheck}
+            title="No ORA Plans yet"
+            description="Create your first plan to start tracking operational readiness activities across project phases."
+            actionLabel={onCreateNew ? "Create New ORA Plan" : undefined}
+            onAction={onCreateNew}
+            inline
+          />
         ) : (
           <div className="space-y-3">
             {plans.map((plan) => (
