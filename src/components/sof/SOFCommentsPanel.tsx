@@ -122,7 +122,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-rose-500/10",
     status: "complete" as const,
     summary: "Job Safety Analysis (JSA) completed for all startup activities. PPE requirements verified and communicated. Environmental permits confirmed active. Spill response equipment staged at designated locations. First aid stations stocked and accessible. Toolbox talks scheduled for startup crew.",
-    reviewer: "Ahmed Kadhum - Ops HSE Manager",
+    reviewer: "Ops HSE Manager",
     date: "Dec 5, 2024"
   }
 };
@@ -136,7 +136,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-primary/10",
     status: "complete" as const,
     summary: "All disciplines have confirmed readiness for gas feed operations to CS6 and CS7. Integration testing completed between OT2/3 systems and receiving facilities. Cross-discipline walkdowns verified tie-in points and isolation boundaries. No outstanding interdisciplinary issues. Final coordination meeting held with all TAs present.",
-    reviewer: "Roaa Abdullah - PSSR Lead",
+    reviewer: "PSSR Lead",
     date: "Jan 28, 2026"
   },
   techSafety: {
