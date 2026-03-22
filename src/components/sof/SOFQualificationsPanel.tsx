@@ -168,7 +168,7 @@ const dp385Deviations: QualificationDetail[] = [
     expiryDate: '2026-03-15',
     riskDescription: 'Potential for missed preventive maintenance activities leading to unplanned equipment failures',
     riskRating: 'Low',
-    actionOwner: 'Hassan Ibrahim',
+    actionOwner: 'SAP Maintenance Planner',
     actionOwnerRole: 'SAP Maintenance Planner',
     attachments: [
       { name: 'CS7_PM_Strategy_Approved.pdf', type: 'PDF' },
