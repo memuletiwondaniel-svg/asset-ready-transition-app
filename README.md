@@ -29,12 +29,19 @@ git clone <YOUR_GIT_URL>
 # Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
+# Step 3: Set up environment variables.
+# Copy the example file and fill in your Supabase credentials.
+# NEVER commit your .env file — it is git-ignored.
+cp .env.example .env
+
+# Step 4: Install the necessary dependencies.
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Step 5: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
+
+> **⚠️ Security Note:** The `.env` file must never be committed to version control. It is listed in `.gitignore`. Use `.env.example` as a template — it contains only placeholder values and is safe to commit.
 
 **Edit a file directly in GitHub**
 
