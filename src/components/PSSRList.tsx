@@ -1,6 +1,8 @@
 
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 import PSSRCard from './PSSRCard';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface PSSR {
   id: string;
