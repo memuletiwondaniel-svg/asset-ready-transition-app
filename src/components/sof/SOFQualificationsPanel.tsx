@@ -42,7 +42,7 @@ const mockDeviations: QualificationDetail[] = [
     description: 'Maintenance technicians require specialized training on Waukesha gas engine overhaul procedures before performing independent maintenance. Training scheduled with vendor for Feb 25th 2026.',
     severity: 'low',
     status: 'approved',
-    approvedBy: 'Lyle Koch',
+    approvedBy: 'CS Deputy Director',
     approverRole: 'CS Deputy Dir.',
     approvedAt: '2026-01-29',
     mitigationMeasures: 'Vendor technical support available on-call until training complete. All Waukesha engine maintenance to be performed under supervision of certified personnel.',
