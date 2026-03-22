@@ -58,6 +58,7 @@ const FlowDiagram: React.FC<{ steps: string[] }> = ({ steps }) => (
 );
 
 const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
   const tocItems = [
     { id: 'overview', label: 'Platform Overview' },
     { id: 'project-lifecycle', label: 'Project Lifecycle & Workflows' },
