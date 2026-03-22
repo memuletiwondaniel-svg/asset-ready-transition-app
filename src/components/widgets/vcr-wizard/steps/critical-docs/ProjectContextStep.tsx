@@ -7,10 +7,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Info, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import assaiLogo from '@/assets/assai-logo.png';
-import wrenchLogo from '@/assets/wrench-logo.png';
-import documentumLogo from '@/assets/documentum-logo.png';
-import sharepointLogo from '@/assets/sharepoint-logo.png';
+import assaiLogo from '@/assets/assai-logo-clean.png';
+import wrenchLogo from '@/assets/wrench-logo-clean.png';
+import documentumLogo from '@/assets/documentum-logo-clean.png';
+import sharepointLogo from '@/assets/sharepoint-logo-clean.png';
 
 interface ProjectContextStepProps {
   projectCode: string;
