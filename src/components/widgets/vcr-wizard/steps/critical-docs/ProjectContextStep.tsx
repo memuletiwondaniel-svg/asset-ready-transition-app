@@ -66,8 +66,8 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
 
   const projectOptions = projects.map((p: any) => ({
     value: p.code,
-    label: p.project_id
-      ? `${p.code} ${p.project_id} — ${p.project_name}`
+    label: p.project_id && p.project_id.trim()
+      ? `${p.code} — ${p.project_id} — ${p.project_name}`
       : `${p.code} — ${p.project_name}`,
     displayValue: p.code,
   }));
@@ -167,11 +167,11 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                   </div>
                 )}
 
-                <div className="w-9 h-9 shrink-0 overflow-hidden flex items-center justify-center">
+                <div className="shrink-0 overflow-hidden flex items-center justify-center" style={{ width: 36, height: 36 }}>
                   <img
                     src={platform.logo}
                     alt={platform.label}
-                    className="w-9 h-9 rounded-lg object-contain"
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                   />
                 </div>
 

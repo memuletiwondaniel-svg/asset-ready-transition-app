@@ -99,7 +99,7 @@ export const EnhancedSearchableCombobox: React.FC<EnhancedSearchableComboboxProp
                   value={option.value}
                   onSelect={() => handleSelect(option.value)}
                   title={option.label}
-                  className="cursor-pointer hover:bg-accent/10 transition-colors duration-200 h-9 min-h-[36px] max-h-[36px] text-[13px] whitespace-nowrap overflow-hidden text-ellipsis"
+                  className="cursor-pointer hover:bg-accent/10 transition-colors duration-200 h-9 min-h-[36px] max-h-[36px] text-[12px] whitespace-nowrap overflow-hidden text-ellipsis"
                 >
                   <Check
                     className={cn(
