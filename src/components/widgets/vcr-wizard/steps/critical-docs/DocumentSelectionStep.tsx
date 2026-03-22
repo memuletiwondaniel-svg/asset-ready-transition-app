@@ -90,8 +90,10 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
         .eq('handover_point_id', vcrId);
       if (assignmentsError) throw assignmentsError;
 
-      const assignedIds = Array.from(new Set(
-        (assignments || []).flatMap((row: any) => [row.system_id, row.subsystem_id]).filter(Boolean)
+      const assignedIds = Array.from(new Set<string>(
+        (assignments || [])
+          .flatMap((row: any) => [row.system_id, row.subsystem_id])
+          .filter((id: string | null | undefined): id is string => Boolean(id))
       ));
 
       if (!assignedIds.length) return [];
