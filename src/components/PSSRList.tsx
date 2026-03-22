@@ -46,9 +46,11 @@ const PSSRList: React.FC<PSSRListProps> = ({ pssrs, onViewDetails, totalCount })
       </div>
 
       {pssrs.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">No PSSRs match your current filters.</p>
-        </div>
+        <EmptyState
+          icon={AlertTriangle}
+          title="No PSSRs yet"
+          description="Start a Pre-Startup Safety Review to ensure safe commissioning and startup of your facilities."
+        />
       )}
     </>
   );
