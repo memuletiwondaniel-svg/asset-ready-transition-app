@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Plus, CalendarCheck, Search, Calendar } from 'lucide-react';
 import { CreateORPModal } from '@/components/orp/CreateORPModal';
 import { useORPRealtime } from '@/hooks/useORPRealtime';
+import { GlossaryTerm } from '@/components/ui/GlossaryTerm';
 import { useORPPlans } from '@/hooks/useORPPlans';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -137,7 +138,7 @@ export const ORPLandingPage: React.FC = () => {
                 <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">{t.oraPlansTitle || 'ORA Plans'}</h1>
+                <h1 className="text-2xl font-bold text-foreground"><GlossaryTerm term="ORA Plan">{t.oraPlansTitle || 'ORA Plans'}</GlossaryTerm></h1>
                 <p className="text-sm text-muted-foreground mt-1">
                   {t.oraPlansSubtitle || 'Manage and track operation readiness activities'}
                 </p>

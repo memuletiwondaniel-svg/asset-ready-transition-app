@@ -13,6 +13,7 @@ import { OnlineUsersIndicator } from '@/components/sidebar/OnlineUsersIndicator'
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useNewTaskCount } from '@/hooks/useNewTaskCount';
+import { GlossaryTerm } from '@/components/ui/GlossaryTerm';
 
 interface NavigationItem {
   labelKey: string;
@@ -65,6 +66,16 @@ interface SidebarContentProps {
   onLogout: () => void;
   onToggleCollapse?: () => void;
 }
+
+// Map sidebar sections to glossary terms for tooltip definitions
+const sectionGlossaryTerm: Record<string, string> = {
+  'projects': 'Projects',
+  'pssr': 'PSSR',
+  'my-tasks': 'My Tasks',
+  'executive-dashboard': 'Executive Dashboard',
+  'or-maintenance': 'OR Maintenance',
+  'ask-orsh': 'Ask Bob',
+};
 
 const navigationItems: (NavigationItem & { requiresLeadership?: boolean })[] = [
   { labelKey: 'navHome', icon: Home, path: '/', section: 'home' },
@@ -221,7 +232,13 @@ export const SidebarContent = memo<SidebarContentProps>(({
                         "mr-2 h-4 w-4 transition-colors flex-shrink-0",
                         isActive ? "text-primary" : "text-muted-foreground"
                       )} />
-                      <span className="truncate">{getLabel(item.labelKey)}</span>
+                      {sectionGlossaryTerm[item.section || ''] ? (
+                        <GlossaryTerm term={sectionGlossaryTerm[item.section || '']}>
+                          <span className="truncate">{getLabel(item.labelKey)}</span>
+                        </GlossaryTerm>
+                      ) : (
+                        <span className="truncate">{getLabel(item.labelKey)}</span>
+                      )}
                       {item.section === 'ask-orsh' && unreadChatCount > 0 && (
                         <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
                           {unreadChatCount}

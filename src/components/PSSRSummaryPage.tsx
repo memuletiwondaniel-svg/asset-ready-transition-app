@@ -12,6 +12,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Settings, Home, FileText, FolderOpen } from 'lucide-react';
+import { GlossaryTerm } from '@/components/ui/GlossaryTerm';
 import { PSSRQuickStatsBar } from './widgets/PSSRQuickStatsBar';
 
 import { PSSRReviewsWidget } from './widgets/PSSRReviewsWidget';
@@ -740,7 +741,7 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">
-                    {t.pssrTitle || 'Pre-Startup Safety Review (PSSR)'}
+                    <GlossaryTerm term="PSSR">{t.pssrTitle || 'Pre-Startup Safety Review (PSSR)'}</GlossaryTerm>
                   </h1>
                   <p className="text-sm text-muted-foreground mt-1">
                     {t.pssrSubtitle || 'Manage Process Safety Risk and ensure Safe Start-up'}
