@@ -743,7 +743,6 @@ const PSSRSummaryPage: React.FC<PSSRSummaryPageProps> = ({
                   <h1 className="text-2xl font-bold text-foreground">
                     <GlossaryTerm term="PSSR">{t.pssrTitle || 'Pre-Startup Safety Review (PSSR)'}</GlossaryTerm>
                   </h1>
-                  </h1>
                   <p className="text-sm text-muted-foreground mt-1">
                     {t.pssrSubtitle || 'Manage Process Safety Risk and ensure Safe Start-up'}
                   </p>
