@@ -159,7 +159,7 @@ export function useKanbanDragDrop() {
           // For P2A tasks: when reverting from Done → In Progress, set 86% (6/7 wizard steps).
           // For P2A tasks in any other non-done move, preserve current progress (don't reset to 0).
           // For non-P2A tasks, reset to 0.
-          const newCompletion = isP2aRevert ? 86 : (isP2aTask ? undefined : 0);
+          const newCompletion = isP2aRevert ? 86 : (isP2aTask ? undefined : undefined);
 
           const updatePayload: Record<string, any> = { status: newOraStatus };
           if (newCompletion !== undefined) updatePayload.completion_percentage = newCompletion;
