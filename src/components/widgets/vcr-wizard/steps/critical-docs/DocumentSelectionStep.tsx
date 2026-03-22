@@ -365,10 +365,10 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
                       <TableCell className="px-2 py-1.5">
                         {doc.tier && (
                           <span className={cn(
-                            'inline-flex items-center text-[11px] px-1.5 py-[2px] rounded-[4px] border font-medium',
+                            'inline-flex items-center justify-center w-[28px] h-[18px] rounded-[4px] text-[11px] font-medium',
                             doc.tier === 'Tier 1'
-                              ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800'
-                              : 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800'
+                              ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400'
+                              : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                           )}>
                             {doc.tier === 'Tier 1' ? 'T1' : 'T2'}
                           </span>
