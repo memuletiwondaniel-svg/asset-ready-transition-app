@@ -86,7 +86,7 @@ const mockDocuments: VCRDocument[] = [
     category: 'rlmu',
     status: 'in_review',
     version: '1.8',
-    owner: 'Mike Chen',
+    owner: 'Electrical Engineer 1',
     lastUpdated: '2024-01-10',
     systems: ['STG-001']
   },
