@@ -414,7 +414,7 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
                     </div>
                     <div className="flex-1">
                       <p className="text-xs font-medium">Team member assigned</p>
-                      <p className="text-xs text-gray-600">John Smith assigned as Technical Safety TA</p>
+                      <p className="text-xs text-gray-600">Technical Safety TA assigned</p>
                       <p className="text-xs text-gray-500 mt-1">1 day ago</p>
                     </div>
                   </div>
