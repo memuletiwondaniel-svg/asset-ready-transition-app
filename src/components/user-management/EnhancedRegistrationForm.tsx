@@ -122,13 +122,13 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
       
       if (error) throw error;
       
-      // Set default authenticator (Daniel Memuletiwon)
-      const defaultAuth = { 
-        user_id: 'default-authenticator', 
-        full_name: 'Daniel Memuletiwon', 
-        email: 'daniel.memuletiwon@bgc.com', 
-        job_title: 'ORA Lead' 
-      };
+      // Set default authenticator from first available ORA Lead
+      const defaultAuth = data?.[0] ? {
+        user_id: data[0].user_id,
+        full_name: data[0].full_name,
+        email: data[0].email || '',
+        job_title: 'ORA Lead'
+      } : null;
       
       setAuthenticators([defaultAuth, ...(data || [])]);
     } catch (error) {
