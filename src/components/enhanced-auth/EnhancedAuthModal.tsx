@@ -360,6 +360,20 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
         onSuccess={() => { setShowRegistrationForm(false); setActiveTab('signin'); }}
         isAdminCreated={false}
       />
+
+      <TwoFactorVerifyModal
+        open={show2FA}
+        onVerified={() => {
+          setShow2FA(false);
+          complete2FA();
+          onAuthenticated();
+          onClose();
+        }}
+        onCancel={async () => {
+          setShow2FA(false);
+          await cancel2FA();
+        }}
+      />
     </Dialog>
   );
 };

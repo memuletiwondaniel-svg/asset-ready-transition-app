@@ -655,13 +655,24 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
                     <p className="text-sm text-muted-foreground">
                       Add an extra layer of security to your account
                     </p>
-                    <Switch 
-                      checked={profile?.two_factor_enabled || false}
-                      disabled 
-                    />
+                    <Button
+                      variant={profile?.two_factor_enabled ? "destructive" : "default"}
+                      size="sm"
+                      onClick={() => {
+                        if (profile?.two_factor_enabled) {
+                          setShowDisable2FA(true);
+                        } else {
+                          setShowSetup2FA(true);
+                        }
+                      }}
+                    >
+                      {profile?.two_factor_enabled ? 'Disable 2FA' : 'Enable 2FA'}
+                    </Button>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Contact your administrator to enable 2FA
+                    {profile?.two_factor_enabled
+                      ? 'Two-factor authentication is active on your account.'
+                      : 'Protect your account with an authenticator app.'}
                   </p>
                 </div>
 

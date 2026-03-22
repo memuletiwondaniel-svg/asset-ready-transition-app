@@ -393,12 +393,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     loading,
+    pending2FA,
     signIn,
     signUp,
     signOut,
     resetPassword,
     signInWithSSO,
-    updateProfile
+    updateProfile,
+    complete2FA,
+    cancel2FA,
   };
 
   return (
