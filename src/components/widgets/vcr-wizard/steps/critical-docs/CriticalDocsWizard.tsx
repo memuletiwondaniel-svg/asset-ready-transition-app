@@ -378,7 +378,7 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t bg-muted/20 flex items-center justify-between">
+        <div className="px-6 py-3 border-t bg-muted/20 flex items-center justify-between">
           <div className="text-xs text-muted-foreground">
             {totalSelected > 0 && (
               <span className="font-medium text-foreground">{totalSelected} document{totalSelected !== 1 ? 's' : ''} selected</span>

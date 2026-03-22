@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Label } from '@/components/ui/label';
-import { Check, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EnhancedSearchableCombobox } from '@/components/ui/enhanced-searchable-combobox';
 import assaiIcon from '@/assets/assai-icon.png';
@@ -20,10 +20,10 @@ interface ProjectContextStepProps {
 }
 
 const DMS_PLATFORMS = [
-  { id: 'assai', label: 'Assai', logo: assaiIcon, iconScale: 1 },
-  { id: 'wrench', label: 'Wrench', logo: wrenchIcon, iconScale: 1 },
-  { id: 'documentum', label: 'Documentum', logo: documentumLogo, iconScale: 1 },
-  { id: 'sharepoint', label: 'SharePoint', logo: sharepointLogo, iconScale: 1.15 },
+  { id: 'assai', label: 'Assai', logo: assaiIcon, iconScale: 0.85 },
+  { id: 'wrench', label: 'Wrench', logo: wrenchIcon, iconScale: 0.85 },
+  { id: 'documentum', label: 'Documentum', logo: documentumLogo, iconScale: 0.85 },
+  { id: 'sharepoint', label: 'SharePoint', logo: sharepointLogo, iconScale: 1.0 },
 ];
 
 export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
@@ -155,19 +155,13 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                 type="button"
                 onClick={() => togglePlatform(platform.id)}
                 className={cn(
-                  'relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-150 min-h-[72px]',
+                  'relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 min-h-[64px]',
                   isSelected
-                    ? 'border-2 border-primary bg-primary/5'
-                    : 'border border-border/50 hover:border-muted-foreground/40 hover:bg-muted/30'
+                    ? 'bg-primary/8 ring-1 ring-primary/40 shadow-sm shadow-primary/10'
+                    : 'bg-muted/30 hover:bg-muted/60 ring-1 ring-transparent hover:ring-border/60'
                 )}
               >
-                {isSelected && (
-                  <div className="absolute top-2 right-2">
-                    <Check className="w-3.5 h-3.5 text-primary" />
-                  </div>
-                )}
-
-                <div className="shrink-0 overflow-hidden flex items-center justify-center" style={{ width: 36, height: 36 }}>
+                <div className="shrink-0 overflow-hidden flex items-center justify-center" style={{ width: 32, height: 32 }}>
                   <img
                     src={platform.logo}
                     alt={platform.label}
@@ -175,7 +169,7 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                   />
                 </div>
 
-                <p className={cn('text-[13px] font-medium leading-tight', isSelected && 'text-primary')}>
+                <p className={cn('text-[13px] font-medium leading-tight', isSelected ? 'text-primary' : 'text-foreground')}>
                   {platform.label}
                 </p>
               </button>
