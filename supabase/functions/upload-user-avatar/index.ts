@@ -29,6 +29,22 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // --- JWT Auth Guard ---
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+  const _authClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authHeader } } });
+  const { data: _claimsData, error: _claimsError } = await _authClient.auth.getClaims(authHeader.replace('Bearer ', ''));
+  if (_claimsError || !_claimsData?.claims) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+  const _callerUserId = _claimsData.claims.sub as string;
+
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -44,6 +60,16 @@ serve(async (req) => {
 
     const body: UploadAvatarRequest = await req.json();
     const { userId, fileExt, contentType, base64 } = body || ({} as any);
+
+    // --- Self or Admin Check ---
+    if (_callerUserId !== userId) {
+      const { data: _role } = await admin.from('user_roles').select('role').eq('user_id', _callerUserId).eq('role', 'admin').maybeSingle();
+      if (!_role) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
 
     if (!userId || !fileExt || !contentType || !base64) {
       return new Response(
