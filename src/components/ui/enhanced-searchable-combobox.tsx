@@ -66,6 +66,7 @@ export const EnhancedSearchableCombobox: React.FC<EnhancedSearchableComboboxProp
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="outline"
           role="combobox"
           aria-expanded={open}
@@ -81,7 +82,7 @@ export const EnhancedSearchableCombobox: React.FC<EnhancedSearchableComboboxProp
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0 bg-popover/95 backdrop-blur-lg border border-border/40 shadow-lg pointer-events-auto z-[200]" align="start">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-popover/95 backdrop-blur-lg border border-border/40 shadow-lg pointer-events-auto z-[200]" align="start">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder={searchPlaceholder}

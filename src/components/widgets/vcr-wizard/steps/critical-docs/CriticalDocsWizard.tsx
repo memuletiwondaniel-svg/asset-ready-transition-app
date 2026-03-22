@@ -144,11 +144,11 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
   }, []);
 
   /**
-   * Improved plant resolution: scores ALL active dms_plants against the DMS project name.
-   * Phase 1: exact code match
-   * Phase 2: score all plants by keyword overlap with dmsProjectName
-   * Phase 3: require minimum score >= 2 to accept
-   * Phase 4: return null if no reliable match (never defaults to first)
+   * Plant resolution strategy:
+   * 1) Exact code match
+   * 2) Keyword matching with generic terms removed
+   * 3) Tie-break toward plant-level names (fewer unmatched words)
+   * 4) Return null when confidence is too low
    */
   const resolveDmsPlant = async (plantName: string, dmsProjectName: string): Promise<{ code: string; plant_name: string } | null> => {
     const { data: dmsPlants } = await (supabase as any)
@@ -159,41 +159,55 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
 
     if (!dmsPlants?.length) return null;
 
-    // Phase 1: Exact code match
-    const exactMatch = dmsPlants.find((dp: any) => dp.code.toLowerCase() === plantName.toLowerCase());
-    if (exactMatch) return exactMatch;
+    const exactCodeMatch = dmsPlants.find((dp: any) => dp.code.toLowerCase() === plantName.toLowerCase());
+    if (exactCodeMatch) return exactCodeMatch;
 
-    // Phase 2: Score ALL dms_plants against the combined context (project name + plant name)
-    const contextWords = `${dmsProjectName} ${plantName}`
+    const genericWords = new Set([
+      'new', 'compression', 'station', 'project', 'facility', 'unit',
+      'installation', 'pipeline', 'replacement', 'gas', 'lp', 'at', 'cs'
+    ]);
+
+    const rawContextWords = `${dmsProjectName} ${plantName}`
       .toLowerCase()
-      .split(/[\s\-\/,]+/)
-      .filter((w: string) => w.length >= 3);
+      .split(/[^a-z0-9]+/)
+      .filter((word: string) => word.length >= 3);
 
-    if (contextWords.length === 0) return null;
+    const contextWords = Array.from(new Set(rawContextWords.filter((word: string) => !genericWords.has(word))));
+    if (!contextWords.length) return null;
 
-    let bestScore = 0;
     let bestCandidate: any = null;
+    let bestScore = 0;
+    let bestUnmatchedWords = Number.POSITIVE_INFINITY;
 
     for (const candidate of dmsPlants) {
-      const pName = candidate.plant_name?.toLowerCase() || '';
-      let score = 0;
-      for (const word of contextWords) {
-        if (pName.includes(word)) score++;
-      }
-      if (score > bestScore) {
-        bestScore = score;
+      const candidateWords = (candidate.plant_name || '')
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter((word: string) => word.length >= 3);
+
+      const matchedWordCount = contextWords.filter((word: string) => candidateWords.includes(word)).length;
+      const unmatchedWordCount = Math.max(candidateWords.length - matchedWordCount, 0);
+
+      const isBetterCandidate =
+        matchedWordCount > bestScore ||
+        (matchedWordCount === bestScore && unmatchedWordCount < bestUnmatchedWords) ||
+        (matchedWordCount === bestScore && unmatchedWordCount === bestUnmatchedWords && (candidate.plant_name || '').length < (bestCandidate?.plant_name || '').length);
+
+      if (isBetterCandidate) {
         bestCandidate = candidate;
+        bestScore = matchedWordCount;
+        bestUnmatchedWords = unmatchedWordCount;
       }
     }
 
-    // Phase 3: Require minimum score of 2 words matched
-    if (bestCandidate && bestScore >= 2) {
-      console.log(`[CriticalDocsWizard] Resolved plant: "${dmsProjectName}" + "${plantName}" → ${bestCandidate.code} (${bestCandidate.plant_name}) [score=${bestScore}/${contextWords.length}]`);
+    const minimumScore = Math.min(2, contextWords.length);
+
+    if (bestCandidate && bestScore >= minimumScore) {
+      console.log(`[CriticalDocsWizard] Resolved plant: "${dmsProjectName}" + "${plantName}" → ${bestCandidate.code} (${bestCandidate.plant_name}) [score=${bestScore}, unmatched=${bestUnmatchedWords}]`);
       return bestCandidate;
     }
 
-    // Phase 4: No reliable match
-    console.warn(`[CriticalDocsWizard] No reliable DMS plant match for plant="${plantName}", project="${dmsProjectName}". Best score=${bestScore}`);
+    console.warn(`[CriticalDocsWizard] No reliable DMS plant match for plant="${plantName}", project="${dmsProjectName}"`);
     return null;
   };
 
