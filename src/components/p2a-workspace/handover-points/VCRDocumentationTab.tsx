@@ -72,7 +72,7 @@ const mockDocuments: VCRDocument[] = [
     category: 'afc',
     status: 'approved',
     version: '2.5',
-    owner: 'Sarah Johnson',
+    owner: 'Process Engineer',
     lastUpdated: '2024-01-12',
     systems: ['GTG-001']
   },

@@ -739,7 +739,7 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
       plant: '',
       field: '',
       station: '',
-      authenticator: 'Daniel Memuletiwon',
+      authenticator: '',
       ops_manager_plant: '',
       ops_manager_sub_area: '',
       mtce_manager_plant: '',

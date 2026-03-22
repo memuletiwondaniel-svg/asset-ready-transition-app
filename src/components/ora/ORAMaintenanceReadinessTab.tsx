@@ -84,7 +84,7 @@ const MOCK_COMPONENT_NARRATIVES: Record<string, {
 }> = {
   ARB: {
     lastUpdated: '2024-01-08',
-    updatedBy: 'Ahmed Hassan (CMMS Lead)',
+    updatedBy: 'CMMS Lead',
     narrative: 'Asset Register Build is progressing well. Batch 1 (Critical Equipment) has been completed with all 847 assets validated. Batch 2 is currently in progress with 65% of rotating equipment entered. We are on track to complete ARB by end of Q1. Key risk: awaiting final P&ID revisions for static equipment classification.'
   },
   PMS: {

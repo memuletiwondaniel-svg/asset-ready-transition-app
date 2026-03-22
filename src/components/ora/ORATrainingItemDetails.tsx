@@ -120,7 +120,7 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
       material_type: 'PRESENTATION',
       uploaded_by: 'user-001',
       is_approved: true,
-      approved_by: 'Mohammed Hassan, TA2 - Process - Asset',
+      approved_by: 'TA2 - Process - Asset',
       approved_at: '2026-01-06T09:00:00Z',
       created_at: '2026-01-04T08:00:00Z'
     },

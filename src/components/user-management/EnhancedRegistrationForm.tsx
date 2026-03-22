@@ -130,7 +130,7 @@ const EnhancedRegistrationForm: React.FC<RegistrationFormProps> = ({
         job_title: 'ORA Lead'
       } : null;
       
-      setAuthenticators([defaultAuth, ...(data || [])]);
+      setAuthenticators([...(defaultAuth ? [defaultAuth] : []), ...(data || [])]);
     } catch (error) {
       console.error('Error fetching authenticators:', error);
     }

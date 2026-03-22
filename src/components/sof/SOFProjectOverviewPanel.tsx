@@ -73,10 +73,10 @@ const defaultProjectData = {
   hub: 'Zubair',
   projectImage: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&auto=format&fit=crop&q=60',
   teamMembers: [
-    { name: 'Victor Liew', role: 'Project Hub Lead', isLead: true, avatarUrl: '73734adc-61dd-4557-b613-84fe0ed2f49f/1757605348385.png' },
-    { name: 'Ali Zachi', role: 'Construction Lead', isLead: false, avatarUrl: '08fab8c4-9ac1-4646-a823-b62761fd1c58/1764599870575.png' },
-    { name: 'Abel Maouche', role: 'Commissioning Lead', isLead: false, avatarUrl: null },
-    { name: 'Anuarbek Bagytzhan', role: 'Snr. ORA Engr.', isLead: false, avatarUrl: '49d052ff-e30f-4b1f-b10b-7edeb83db97e/1768914755356.jpg' },
+    { name: 'Project Hub Lead', role: 'Project Hub Lead', isLead: true, avatarUrl: '' },
+    { name: 'Construction Lead', role: 'Construction Lead', isLead: false, avatarUrl: '' },
+    { name: 'Commissioning Lead', role: 'Commissioning Lead', isLead: false, avatarUrl: null },
+    { name: 'Snr. ORA Engr.', role: 'Snr. ORA Engr.', isLead: false, avatarUrl: '' },
   ],
   oraActivities: [
     { id: '1', name: 'HAZOP Review', dateRange: 'Nov 1 - Dec 15', progress: 100, status: 'completed' },

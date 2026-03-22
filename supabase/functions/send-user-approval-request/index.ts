@@ -55,7 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('user_id', authenticatorId)
       .single();
     
-    const authenticatorEmail = authenticatorData?.email || "daniel.memuletiwon@bgc.com"; // Fallback to default
+    const authenticatorEmail = authenticatorData?.email; // No hardcoded fallback
 
     const emailHtml = `
       <!DOCTYPE html>
