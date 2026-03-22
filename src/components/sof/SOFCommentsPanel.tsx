@@ -166,7 +166,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-blue-500/10",
     status: "complete" as const,
     summary: "All gas feed instrumentation calibrated and loop-checked. Flow metering accuracy verified to custody transfer standards. Control system graphics updated for new tie-ins. Pressure transmitters tested at operating conditions. Analyzer shelters commissioned with sample systems operational.",
-    reviewer: "Collin Hand - PACO TA2 (P&E)",
+    reviewer: "PACO TA2 (P&E)",
     date: "Jan 26, 2026"
   },
   rotating: {
