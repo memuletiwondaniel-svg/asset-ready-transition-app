@@ -92,7 +92,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-amber-500/10",
     status: "complete" as const,
     summary: "Motor rotation checks completed. Electrical isolation procedures verified. Ground fault protection tested. UPS systems commissioned. Emergency lighting operational. Cable terminations torqued and verified. Arc flash labels installed.",
-    reviewer: "Mohammed Yassar - Elect TA2 (P&E)",
+    reviewer: "Electrical TA2 (P&E)",
     date: "Dec 3, 2024"
   },
   civil: {
