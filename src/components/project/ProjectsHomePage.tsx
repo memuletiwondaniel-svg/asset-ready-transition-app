@@ -280,7 +280,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                   : 'Create your first project to begin managing Verification Certificates of Readiness and track operational milestones.'
               }
               actionLabel={!searchQuery && canPerformActions ? 'Create New Project' : undefined}
-              onAction={!searchQuery && canPerformActions ? () => setShowAddProject(true) : undefined}
+              onAction={!searchQuery && canPerformActions ? () => setIsAddModalOpen(true) : undefined}
             />
           )}
 
