@@ -7,12 +7,15 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error: any }>;
+  pending2FA: boolean;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error: any; requires2FA?: boolean }>;
   signUp: (userData: any) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   signInWithSSO: (provider: string) => Promise<{ error: any }>;
   updateProfile: (updates: any) => Promise<{ error: any }>;
+  complete2FA: () => void;
+  cancel2FA: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
