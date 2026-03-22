@@ -1,8 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Button } from '@/components/ui/button';
-import { Check, ChevronRight, Loader2 } from 'lucide-react';
+import { Check, ChevronLeft, Loader2, ArrowRight, FileSearch, ListChecks, ClipboardCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,9 +21,9 @@ interface CriticalDocsWizardProps {
 }
 
 const STEPS = [
-  { id: 'context', label: 'Project Context', number: 1 },
-  { id: 'selection', label: 'Document Selection', number: 2 },
-  { id: 'review', label: 'Review & Confirm', number: 3 },
+  { id: 'context', label: 'Project Context', icon: FileSearch },
+  { id: 'selection', label: 'Document Selection', icon: ListChecks },
+  { id: 'review', label: 'Review & Confirm', icon: ClipboardCheck },
 ];
 
 export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
@@ -33,10 +33,18 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Step 1 state
+  // Step 1 state — sync from props when dialog opens
   const [selectedProjectCode, setSelectedProjectCode] = useState(projectCode || '');
   const [selectedPlantCode, setSelectedPlantCode] = useState(plantCode || '');
   const [dmsPlatforms, setDmsPlatforms] = useState<string[]>([]);
+
+  // Sync props into state when wizard opens or props change
+  useEffect(() => {
+    if (open) {
+      if (projectCode) setSelectedProjectCode(projectCode);
+      if (plantCode) setSelectedPlantCode(plantCode);
+    }
+  }, [open, projectCode, plantCode]);
 
   // Step 2 state
   const [selections, setSelections] = useState<SystemDocSelections>({});
@@ -62,7 +70,6 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
   const handleConfirm = useCallback(async () => {
     setIsSaving(true);
     try {
-      // Save DMS platforms to handover plan
       if (handoverPlanId) {
         await (supabase as any)
           .from('p2a_handover_plans')
@@ -70,7 +77,6 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
           .eq('id', handoverPlanId);
       }
 
-      // Bulk insert all selected documents
       const inserts: any[] = [];
       for (const [systemId, docTypeIds] of Object.entries(selections)) {
         for (const docTypeId of docTypeIds) {
@@ -95,7 +101,6 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
       queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcrId] });
       toast.success(`${inserts.length} documents added successfully`);
       onOpenChange(false);
-      // Reset
       setCurrentStep(0);
       setSelections({});
     } catch (e: any) {
@@ -107,7 +112,10 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-[95vw] h-[85vh] max-h-[800px] p-0 flex flex-col gap-0 z-[150] overflow-hidden">
+      <DialogContent
+        className="max-w-6xl w-[96vw] h-[88vh] max-h-[850px] p-0 flex flex-col gap-0 z-[150] overflow-hidden"
+        overlayClassName="z-[140]"
+      >
         <VisuallyHidden>
           <DialogHeader>
             <DialogTitle>Critical Documents Wizard</DialogTitle>
@@ -115,38 +123,43 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
           </DialogHeader>
         </VisuallyHidden>
 
-        {/* Horizontal Stepper */}
-        <div className="px-6 pt-5 pb-4 border-b bg-muted/30">
-          <div className="flex items-center justify-center gap-0">
+        {/* Modern Stepper Header */}
+        <div className="px-6 pt-5 pb-4 border-b bg-gradient-to-b from-muted/40 to-background">
+          <div className="flex items-center justify-center max-w-xl mx-auto">
             {STEPS.map((step, idx) => {
               const isActive = idx === currentStep;
               const isComplete = idx < currentStep;
+              const StepIcon = step.icon;
               return (
                 <React.Fragment key={step.id}>
                   <button
                     onClick={() => idx < currentStep && setCurrentStep(idx)}
                     disabled={idx > currentStep}
                     className={cn(
-                      'flex items-center gap-2.5 px-3 py-1.5 rounded-full transition-all text-sm',
-                      isActive && 'bg-primary/10 text-primary font-semibold',
-                      isComplete && 'text-emerald-600 dark:text-emerald-400 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/20',
+                      'flex items-center gap-2.5 px-4 py-2 rounded-lg transition-all text-sm group relative',
+                      isActive && 'bg-primary text-primary-foreground font-semibold shadow-md',
+                      isComplete && 'text-emerald-600 dark:text-emerald-400 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/30',
                       !isActive && !isComplete && 'text-muted-foreground/50'
                     )}
                   >
                     <span className={cn(
-                      'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all shrink-0',
-                      isActive && 'border-primary bg-primary text-primary-foreground',
-                      isComplete && 'border-emerald-500 bg-emerald-500 text-white',
-                      !isActive && !isComplete && 'border-muted-foreground/30'
+                      'w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0',
+                      isActive && 'bg-primary-foreground/20',
+                      isComplete && 'bg-emerald-100 dark:bg-emerald-900/40',
+                      !isActive && !isComplete && 'bg-muted'
                     )}>
-                      {isComplete ? <Check className="w-3.5 h-3.5" /> : step.number}
+                      {isComplete ? (
+                        <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      ) : (
+                        <StepIcon className={cn('w-4 h-4', isActive ? 'text-primary-foreground' : 'text-muted-foreground/50')} />
+                      )}
                     </span>
                     <span className="hidden sm:inline whitespace-nowrap">{step.label}</span>
                   </button>
                   {idx < STEPS.length - 1 && (
-                    <ChevronRight className={cn(
-                      'w-4 h-4 mx-1 shrink-0',
-                      idx < currentStep ? 'text-emerald-400' : 'text-muted-foreground/30'
+                    <div className={cn(
+                      'w-8 sm:w-12 h-0.5 mx-1 rounded-full transition-colors shrink-0',
+                      idx < currentStep ? 'bg-emerald-400' : 'bg-border'
                     )} />
                   )}
                 </React.Fragment>
@@ -193,12 +206,14 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
           <div className="flex items-center gap-2">
             {currentStep > 0 && (
               <Button variant="outline" size="sm" onClick={handleBack}>
+                <ChevronLeft className="w-3.5 h-3.5 mr-1" />
                 Back
               </Button>
             )}
             {currentStep < STEPS.length - 1 ? (
               <Button size="sm" onClick={handleNext} disabled={!canProceed()}>
                 Continue
+                <ArrowRight className="w-3.5 h-3.5 ml-1" />
               </Button>
             ) : (
               <Button size="sm" onClick={handleConfirm} disabled={isSaving || totalSelected === 0}>
