@@ -100,7 +100,7 @@ const mockDocuments: VCRDocument[] = [
     category: 'asb',
     status: 'draft',
     version: '1.0',
-    owner: 'Lisa Wong',
+    owner: 'Maintenance Engineer 1',
     lastUpdated: '2024-01-08',
     systems: ['CMP-001']
   },
