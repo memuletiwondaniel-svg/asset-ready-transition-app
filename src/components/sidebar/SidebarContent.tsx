@@ -67,6 +67,16 @@ interface SidebarContentProps {
   onToggleCollapse?: () => void;
 }
 
+// Map sidebar sections to glossary terms for tooltip definitions
+const sectionGlossaryTerm: Record<string, string> = {
+  'projects': 'Projects',
+  'pssr': 'PSSR',
+  'my-tasks': 'My Tasks',
+  'executive-dashboard': 'Executive Dashboard',
+  'or-maintenance': 'OR Maintenance',
+  'ask-orsh': 'Ask Bob',
+};
+
 const navigationItems: (NavigationItem & { requiresLeadership?: boolean })[] = [
   { labelKey: 'navHome', icon: Home, path: '/', section: 'home' },
   { labelKey: 'navProjects', icon: Key, path: '/vcrs', section: 'projects' },
