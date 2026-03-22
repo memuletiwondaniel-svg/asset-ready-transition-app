@@ -56,10 +56,7 @@ export const WorkspaceExcelUploadModal: React.FC<WorkspaceExcelUploadModalProps>
 
     try {
       const data = await f.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      const { data: jsonData } = await readExcelFile(data);
 
       if (jsonData.length === 0) {
         setImportError('No data found in file');
