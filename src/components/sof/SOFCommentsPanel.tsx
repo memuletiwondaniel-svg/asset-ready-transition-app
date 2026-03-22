@@ -146,7 +146,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-red-500/10",
     status: "complete" as const,
     summary: "Gas detection systems at tie-in locations commissioned and integrated. ESD logic verified for new gas feed isolation. HAZOP action items from gas routing study closed. Pressure relief sizing confirmed for upstream conditions. Flare capacity validated for emergency scenarios.",
-    reviewer: "Antoine Segret - Tech Safety TA2",
+    reviewer: "Tech Safety TA2",
     date: "Jan 27, 2026"
   },
   process: {
