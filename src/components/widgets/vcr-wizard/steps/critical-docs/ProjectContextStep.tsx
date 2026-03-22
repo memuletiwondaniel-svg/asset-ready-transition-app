@@ -160,7 +160,7 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                 type="button"
                 onClick={() => togglePlatform(platform.id)}
                 className={cn(
-                  'relative flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all min-h-[80px]',
+                  'relative flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all min-h-[88px]',
                   isSelected
                     ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
                     : 'border-border hover:border-muted-foreground/40 hover:bg-muted/40'
@@ -175,14 +175,14 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                 <img
                   src={platform.logo}
                   alt={platform.label}
-                  className="w-10 h-10 rounded-lg object-contain shrink-0"
+                  className="w-11 h-11 rounded-lg object-contain shrink-0"
                 />
 
-                {platform.label && (
-                  <div className="min-w-0 pr-6">
-                    <p className={cn('text-sm font-medium leading-tight', isSelected && 'text-primary')}>{platform.label}</p>
-                  </div>
-                )}
+                {/* Text */}
+                <div className="min-w-0 pr-6">
+                  <p className={cn('text-sm font-medium leading-tight', isSelected && 'text-primary')}>{platform.label}</p>
+                  <p className="text-xs text-muted-foreground leading-snug mt-0.5">{platform.description}</p>
+                </div>
               </button>
             );
           })}
