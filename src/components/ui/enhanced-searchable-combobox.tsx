@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 interface EnhancedSearchableComboboxOption {
   value: string;
   label: string;
+  displayValue?: string;
 }
 
 interface EnhancedSearchableComboboxProps {
@@ -75,13 +76,13 @@ export const EnhancedSearchableCombobox: React.FC<EnhancedSearchableComboboxProp
           disabled={disabled}
         >
           <span className="truncate">
-            {selectedOption ? selectedOption.label : placeholder}
+            {selectedOption ? (selectedOption.displayValue || selectedOption.label) : placeholder}
           </span>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0 bg-popover/95 backdrop-blur-lg border border-border/40 shadow-lg" align="start">
-        <Command>
+      <PopoverContent className="w-full p-0 bg-popover/95 backdrop-blur-lg border border-border/40 shadow-lg pointer-events-auto z-[200]" align="start">
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder={searchPlaceholder}
             value={searchValue}
@@ -95,7 +96,7 @@ export const EnhancedSearchableCombobox: React.FC<EnhancedSearchableComboboxProp
                 <CommandItem
                   key={option.value}
                   value={option.value}
-                  onSelect={handleSelect}
+                  onSelect={() => handleSelect(option.value)}
                   className="cursor-pointer hover:bg-accent/10 transition-colors duration-200"
                 >
                   <Check
