@@ -52,7 +52,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-orange-500/10",
     status: "complete" as const,
     summary: "Process control loops tuned and verified. Operating procedures reviewed and approved. Start-up sequence documented and validated with operations team. Material balance confirmed. Heat exchanger performance verified against design specifications.",
-    reviewer: "Chris Johnsen - Process TA2 (P&E)",
+    reviewer: "Process TA2 (P&E)",
     date: "Dec 4, 2024"
   },
   paco: {
