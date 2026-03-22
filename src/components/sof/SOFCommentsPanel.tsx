@@ -102,7 +102,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-slate-500/10",
     status: "complete" as const,
     summary: "Structural integrity assessments completed for all new installations. Foundation bolt torque verification documented. Drainage systems tested and operational. Fire escape routes verified clear and properly marked. Secondary containment areas inspected and certified. All civil punch list items closed out.",
-    reviewer: "Satya Borra - Civil TA2",
+    reviewer: "Civil TA2",
     date: "Dec 5, 2024"
   },
   operations: {
