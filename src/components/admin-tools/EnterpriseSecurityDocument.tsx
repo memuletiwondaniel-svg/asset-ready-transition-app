@@ -488,6 +488,18 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
               <div className="pl-16 mt-1">↓</div>
               <div className="pl-4">Security Definer Function → user_roles / role_permissions</div>
             </div>
+
+            <p className="font-medium text-foreground mt-4">RLS Performance Hardening (March 2026)</p>
+            <Card className="bg-emerald-500/5 border-emerald-500/20">
+              <CardContent className="pt-4 text-sm space-y-2">
+                <p className="text-muted-foreground">Two major RLS hardening migrations applied across the entire schema:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong className="text-foreground">auth.uid() subquery optimization (416 policies):</strong> All RLS policies updated to wrap <code className="bg-muted px-1 rounded text-xs">auth.uid()</code> as <code className="bg-muted px-1 rounded text-xs">(select auth.uid())</code>, telling PostgreSQL to evaluate the auth function once per query rather than once per row — significant performance improvement at scale.</li>
+                  <li><strong className="text-foreground">Multiple permissive policy consolidation (~100 overlaps):</strong> Eliminated duplicate permissive policies across ~90 tables. ALL-command policies split into per-command (SELECT, INSERT, UPDATE, DELETE) policies. Direct duplicates consolidated using OR conditions within single policies.</li>
+                  <li><strong className="text-foreground">Zero Supabase advisor warnings:</strong> Both "Auth RLS Initialization Plan" and "Multiple Permissive Policies" warnings fully resolved.</li>
+                </ul>
+              </CardContent>
+            </Card>
           </Section>
 
           <Separator />
