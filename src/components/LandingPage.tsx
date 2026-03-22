@@ -12,6 +12,7 @@ import { useTypingEffect } from '@/hooks/useTypingEffect';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
+import { OnboardingChecklist } from '@/components/OnboardingChecklist';
 import { QuickActionsWidget } from '@/components/widgets/QuickActionsWidget';
 import { WidgetCard } from '@/components/widgets/WidgetCard';
 import { WidgetManagement } from '@/components/WidgetManagement';
