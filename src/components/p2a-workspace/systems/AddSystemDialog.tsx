@@ -144,10 +144,7 @@ export const AddSystemDialog: React.FC<AddSystemDialogProps> = ({
 
     try {
       const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      const { data: jsonData } = await readExcelFile(data);
 
       if (jsonData.length === 0) {
         setImportError('No data found in file');
