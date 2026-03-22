@@ -50,6 +50,7 @@ interface FilterChip {
   category: 'tier' | 'discipline';
   activeClass: string;
   dotColor: string;
+  inactiveClass?: string;
   match: (d: DocTypeRow, sm?: Map<string, SecondaryDiscipline[]>) => boolean;
 }
 
