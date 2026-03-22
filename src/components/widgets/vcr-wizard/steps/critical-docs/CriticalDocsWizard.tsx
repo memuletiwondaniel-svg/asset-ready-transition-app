@@ -15,7 +15,7 @@ interface CriticalDocsWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vcrId: string;
-  projectCode?: string; // DP-xxx format from handover plans
+  projectCode?: string;
   plantCode?: string;
   handoverPlanId?: string;
 }
@@ -33,25 +33,17 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Step 1 state — these hold dms_projects.code and dms_plants.code
+  // Step 1 state
   const [selectedProjectCode, setSelectedProjectCode] = useState('');
   const [selectedPlantCode, setSelectedPlantCode] = useState('');
   const [dmsPlatforms, setDmsPlatforms] = useState<string[]>([]);
 
-  // Track whether values were auto-resolved
-  const [projectAutoDetected, setProjectAutoDetected] = useState(false);
-  const [plantAutoDetected, setPlantAutoDetected] = useState(false);
-
-  // Resolve project code (DP-xxx) → dms_projects.code and plant on wizard open
   useEffect(() => {
     if (!open) return;
 
-    // Reset state on open
     setCurrentStep(0);
     setSelections({});
     setDmsPlatforms([]);
-    setProjectAutoDetected(false);
-    setPlantAutoDetected(false);
     setSelectedProjectCode('');
     setSelectedPlantCode('');
 
@@ -62,7 +54,6 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
 
     const resolveContext = async () => {
       try {
-        // Step 1: Resolve DP-xxx → dms_projects.code and get project name for plant disambiguation
         const { data: dmsProject } = await (supabase as any)
           .from('dms_projects')
           .select('code, project_name')
@@ -75,13 +66,9 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
 
         if (dmsProject?.code) {
           setSelectedProjectCode(dmsProject.code);
-          setProjectAutoDetected(true);
           console.log(`[CriticalDocsWizard] Auto-resolved project ${projectCode} → DMS code ${dmsProject.code}`);
-        } else {
-          console.warn(`[CriticalDocsWizard] No DMS project found for project_id="${projectCode}"`);
         }
 
-        // Step 2: If plant code was passed directly, validate it
         if (plantCode) {
           const { data: dmsPlant } = await (supabase as any)
             .from('dms_plants')
@@ -92,13 +79,10 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
 
           if (dmsPlant?.code) {
             setSelectedPlantCode(dmsPlant.code);
-            setPlantAutoDetected(true);
-            console.log(`[CriticalDocsWizard] Auto-resolved plant code ${plantCode}`);
             return;
           }
         }
 
-        // Step 3: Resolve plant via projects table → plant table → dms_plants
         const match = projectCode.match(/^([A-Z]+)-(.+)$/i);
         if (match) {
           const [, prefix, number] = match;
@@ -120,10 +104,7 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
               const resolved = await resolveDmsPlant(plant.name, dmsProjectName);
               if (resolved) {
                 setSelectedPlantCode(resolved.code);
-                setPlantAutoDetected(true);
                 console.log(`[CriticalDocsWizard] Auto-resolved plant "${plant.name}" → DMS plant ${resolved.code} (${resolved.plant_name})`);
-              } else {
-                console.warn(`[CriticalDocsWizard] No unique DMS plant match for plant "${plant.name}" and project "${dmsProjectName}" — leaving empty`);
               }
             }
           }
@@ -157,15 +138,18 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
     if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
 
-  // When user manually changes project code, clear plant auto-detection
   const handleProjectCodeChange = useCallback((code: string) => {
     setSelectedProjectCode(code);
-    setProjectAutoDetected(false);
-    // Auto-resolve plant when project changes
     resolveProjectPlant(code);
   }, []);
 
-  // Shared plant resolution: uses DMS project name to disambiguate when plant.name is generic (e.g. "CS")
+  /**
+   * Improved plant resolution: scores ALL active dms_plants against the DMS project name.
+   * Phase 1: exact code match
+   * Phase 2: score all plants by keyword overlap with dmsProjectName
+   * Phase 3: require minimum score >= 2 to accept
+   * Phase 4: return null if no reliable match (never defaults to first)
+   */
   const resolveDmsPlant = async (plantName: string, dmsProjectName: string): Promise<{ code: string; plant_name: string } | null> => {
     const { data: dmsPlants } = await (supabase as any)
       .from('dms_plants')
@@ -175,62 +159,48 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
 
     if (!dmsPlants?.length) return null;
 
-    // 1. Exact code match (e.g. plant.name = "BNGL", dms_plants.code = "BNGL")
+    // Phase 1: Exact code match
     const exactMatch = dmsPlants.find((dp: any) => dp.code.toLowerCase() === plantName.toLowerCase());
     if (exactMatch) return exactMatch;
 
-    // 2. Filter all dms_plants whose name contains the plant category
-    const candidates = dmsPlants.filter((dp: any) =>
-      dp.plant_name?.toLowerCase().includes(plantName.toLowerCase())
-    );
+    // Phase 2: Score ALL dms_plants against the combined context (project name + plant name)
+    const contextWords = `${dmsProjectName} ${plantName}`
+      .toLowerCase()
+      .split(/[\s\-\/,]+/)
+      .filter((w: string) => w.length >= 3);
 
-    if (candidates.length === 0) return null;
-    if (candidates.length === 1) return candidates[0];
+    if (contextWords.length === 0) return null;
 
-    // 3. Multiple candidates — use DMS project name to disambiguate
-    // Extract meaningful words from project name (3+ chars) for matching
-    if (dmsProjectName) {
-      const projectWords = dmsProjectName.toLowerCase().split(/[\s\-\/,]+/).filter((w: string) => w.length >= 3);
+    let bestScore = 0;
+    let bestCandidate: any = null;
 
-      // Score each candidate by how many project name words appear in the plant name
-      let bestScore = 0;
-      let bestCandidate: any = null;
-
-      for (const candidate of candidates) {
-        const pName = candidate.plant_name?.toLowerCase() || '';
-        let score = 0;
-        for (const word of projectWords) {
-          if (pName.includes(word)) score++;
-        }
-        if (score > bestScore) {
-          bestScore = score;
-          bestCandidate = candidate;
-        }
+    for (const candidate of dmsPlants) {
+      const pName = candidate.plant_name?.toLowerCase() || '';
+      let score = 0;
+      for (const word of contextWords) {
+        if (pName.includes(word)) score++;
       }
-
-      if (bestCandidate && bestScore > 0) {
-        console.log(`[CriticalDocsWizard] Disambiguated plant using project name: "${dmsProjectName}" → ${bestCandidate.code} (${bestCandidate.plant_name}) [score=${bestScore}/${projectWords.length}]`);
-        return bestCandidate;
+      if (score > bestScore) {
+        bestScore = score;
+        bestCandidate = candidate;
       }
     }
 
-    // 4. Try "Multi" prefix match as last resort (e.g. C000 Multi Compressor Stations)
-    const multiMatch = candidates.find((dp: any) =>
-      dp.plant_name?.toLowerCase().includes('multi')
-    );
-    if (multiMatch) return multiMatch;
+    // Phase 3: Require minimum score of 2 words matched
+    if (bestCandidate && bestScore >= 2) {
+      console.log(`[CriticalDocsWizard] Resolved plant: "${dmsProjectName}" + "${plantName}" → ${bestCandidate.code} (${bestCandidate.plant_name}) [score=${bestScore}/${contextWords.length}]`);
+      return bestCandidate;
+    }
 
-    // 5. Cannot disambiguate — do NOT default to first match (that causes wrong data)
-    console.warn(`[CriticalDocsWizard] ${candidates.length} DMS plants match "${plantName}" but cannot disambiguate. Candidates:`, candidates.map((c: any) => `${c.code}:${c.plant_name}`));
+    // Phase 4: No reliable match
+    console.warn(`[CriticalDocsWizard] No reliable DMS plant match for plant="${plantName}", project="${dmsProjectName}". Best score=${bestScore}`);
     return null;
   };
 
   const resolveProjectPlant = async (dmsProjectCode: string) => {
     try {
-      setPlantAutoDetected(false);
       setSelectedPlantCode('');
 
-      // Get dms_projects.project_id and project_name for this code
       const { data: dmsProject } = await (supabase as any)
         .from('dms_projects')
         .select('project_id, project_name')
@@ -263,7 +233,6 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
       const resolved = await resolveDmsPlant(plant.name, dmsProject.project_name || '');
       if (resolved) {
         setSelectedPlantCode(resolved.code);
-        setPlantAutoDetected(true);
       }
     } catch (err) {
       console.warn('[CriticalDocsWizard] Plant resolution failed:', err);
@@ -373,14 +342,9 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
               projectCode={selectedProjectCode}
               onProjectCodeChange={handleProjectCodeChange}
               plantCode={selectedPlantCode}
-              onPlantCodeChange={(code) => {
-                setSelectedPlantCode(code);
-                setPlantAutoDetected(false);
-              }}
+              onPlantCodeChange={setSelectedPlantCode}
               dmsPlatforms={dmsPlatforms}
               onDmsPlatformsChange={setDmsPlatforms}
-              projectAutoDetected={projectAutoDetected}
-              plantAutoDetected={plantAutoDetected}
             />
           )}
           {currentStep === 1 && (
