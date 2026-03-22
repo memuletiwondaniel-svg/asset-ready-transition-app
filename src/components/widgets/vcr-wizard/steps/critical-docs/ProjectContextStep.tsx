@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Label } from '@/components/ui/label';
-import { Check, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EnhancedSearchableCombobox } from '@/components/ui/enhanced-searchable-combobox';
 import assaiIcon from '@/assets/assai-icon.png';
