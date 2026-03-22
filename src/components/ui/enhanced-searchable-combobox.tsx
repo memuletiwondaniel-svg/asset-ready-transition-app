@@ -90,7 +90,7 @@ export const EnhancedSearchableCombobox: React.FC<EnhancedSearchableComboboxProp
             onValueChange={setSearchValue}
             className="border-0 focus:ring-0"
           />
-          <CommandList className="max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50">
+          <CommandList className="max-h-[240px] overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50">
             <CommandEmpty>No options found.</CommandEmpty>
             <CommandGroup>
               {filteredOptions.map((option) => (
@@ -98,15 +98,16 @@ export const EnhancedSearchableCombobox: React.FC<EnhancedSearchableComboboxProp
                   key={option.value}
                   value={option.value}
                   onSelect={() => handleSelect(option.value)}
-                  className="cursor-pointer hover:bg-accent/10 transition-colors duration-200"
+                  title={option.label}
+                  className="cursor-pointer hover:bg-accent/10 transition-colors duration-200 h-9 min-h-[36px] max-h-[36px] text-[13px] whitespace-nowrap overflow-hidden text-ellipsis"
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4",
+                      "mr-2 h-4 w-4 shrink-0",
                       value === option.value ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {option.label}
+                  <span className="truncate">{option.label}</span>
                 </CommandItem>
               ))}
               {showCreateOption && (
