@@ -15,20 +15,17 @@ interface AuditLogEntry {
 export const useAuditLog = () => {
   const log = useCallback(async (entry: AuditLogEntry) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      await supabase.from('audit_logs').insert({
-        user_id: user.id,
-        user_email: user.email,
-        category: entry.category,
-        action: entry.action,
-        severity: entry.severity || 'info',
-        entity_type: entry.entity_type,
-        entity_id: entry.entity_id,
-        entity_label: entry.entity_label,
-        description: entry.description,
-        metadata: entry.metadata || {},
+      await supabase.functions.invoke('write-audit-log', {
+        body: {
+          category: entry.category,
+          action: entry.action,
+          severity: entry.severity || 'info',
+          entity_type: entry.entity_type,
+          entity_id: entry.entity_id,
+          entity_label: entry.entity_label,
+          description: entry.description,
+          metadata: entry.metadata || {},
+        },
       });
     } catch (error) {
       console.error('Failed to write audit log:', error);

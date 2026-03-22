@@ -171,14 +171,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return { error };
               }
             }
-            // Audit log: failed login
-            await supabase.from('audit_logs').insert({
-              user_email: email,
-              category: 'auth',
-              action: 'login_failed',
-              severity: 'warning',
-              description: 'Failed login attempt for ' + email,
-              metadata: { reason: error.message, user_agent: navigator.userAgent },
+            // Audit log: failed login (via edge function for IP/UA capture)
+            await supabase.functions.invoke('write-audit-log', {
+              body: {
+                user_email: email,
+                category: 'auth',
+                action: 'login_failed',
+                severity: 'warning',
+                description: 'Failed login attempt for ' + email,
+                metadata: { reason: error.message },
+              },
             });
           } catch (e) {
             console.error('Failed to track failed login:', e);
