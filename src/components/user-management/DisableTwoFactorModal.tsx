@@ -52,15 +52,10 @@ export const DisableTwoFactorModal: React.FC<DisableTwoFactorModalProps> = ({
         return;
       }
 
-      // Disable 2FA
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          two_factor_secret: null,
-          two_factor_enabled: false,
-          two_factor_backup_codes: null
-        })
-        .eq('user_id', user.id);
+      // Disable 2FA via edge function
+      const { error } = await supabase.functions.invoke('setup-totp', {
+        body: { disable: true }
+      });
 
       if (error) throw error;
 
