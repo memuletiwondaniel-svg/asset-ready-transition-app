@@ -24,10 +24,10 @@ interface ProjectContextStepProps {
 }
 
 const DMS_PLATFORMS = [
-  { id: 'assai', label: 'Assai', description: 'Document management for oil & gas', logo: assaiLogo },
-  { id: 'wrench', label: 'Wrench', description: 'Engineering document management', logo: wrenchLogo },
-  { id: 'documentum', label: 'Documentum', description: 'Enterprise content platform', logo: documentumLogo },
-  { id: 'sharepoint', label: 'SharePoint', description: 'Microsoft collaboration platform', logo: sharepointLogo },
+  { id: 'assai', label: '', logo: assaiLogo },
+  { id: 'wrench', label: '', logo: wrenchLogo },
+  { id: 'documentum', label: 'Documentum', logo: documentumLogo },
+  { id: 'sharepoint', label: 'SharePoint', logo: sharepointLogo },
 ];
 
 export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
@@ -178,11 +178,11 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                   className="w-10 h-10 rounded-lg object-contain shrink-0"
                 />
 
-                {/* Text */}
-                <div className="min-w-0 pr-6">
-                  <p className={cn('text-sm font-medium leading-tight', isSelected && 'text-primary')}>{platform.label}</p>
-                  <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{platform.description}</p>
-                </div>
+                {platform.label && (
+                  <div className="min-w-0 pr-6">
+                    <p className={cn('text-sm font-medium leading-tight', isSelected && 'text-primary')}>{platform.label}</p>
+                  </div>
+                )}
               </button>
             );
           })}
