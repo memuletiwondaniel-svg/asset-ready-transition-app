@@ -62,14 +62,16 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
 
     const resolveContext = async () => {
       try {
-        // Step 1: Resolve DP-xxx → dms_projects.code
+        // Step 1: Resolve DP-xxx → dms_projects.code and get project name for plant disambiguation
         const { data: dmsProject } = await (supabase as any)
           .from('dms_projects')
-          .select('code')
+          .select('code, project_name')
           .eq('project_id', projectCode)
           .eq('is_active', true)
           .limit(1)
           .maybeSingle();
+
+        const dmsProjectName = dmsProject?.project_name || '';
 
         if (dmsProject?.code) {
           setSelectedProjectCode(dmsProject.code);
@@ -79,9 +81,8 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
           console.warn(`[CriticalDocsWizard] No DMS project found for project_id="${projectCode}"`);
         }
 
-        // Step 2: Resolve plant from the projects table
+        // Step 2: If plant code was passed directly, validate it
         if (plantCode) {
-          // If plant code was passed directly, try to match it against dms_plants
           const { data: dmsPlant } = await (supabase as any)
             .from('dms_plants')
             .select('code')
@@ -97,8 +98,7 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
           }
         }
 
-        // Step 3: Try to resolve plant via projects table → plant table → dms_plants
-        // Parse project code to look up the projects table
+        // Step 3: Resolve plant via projects table → plant table → dms_plants
         const match = projectCode.match(/^([A-Z]+)-(.+)$/i);
         if (match) {
           const [, prefix, number] = match;
@@ -117,35 +117,13 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
               .maybeSingle();
 
             if (plant?.name) {
-              // Match plant.name (e.g. "CS") against dms_plants.plant_name using containment
-              // Use a multi-station code if available (e.g. C000 for "Multi Compressor Stations")
-              const { data: dmsPlants } = await (supabase as any)
-                .from('dms_plants')
-                .select('code, plant_name')
-                .eq('is_active', true)
-                .order('display_order');
-
-              if (dmsPlants?.length) {
-                // First try exact code match
-                const exactMatch = dmsPlants.find((dp: any) => dp.code === plant.name);
-                // Then try "Multi" prefix match (e.g. C000 Multi Compressor Stations)
-                const multiMatch = dmsPlants.find((dp: any) =>
-                  dp.plant_name?.toLowerCase().includes('multi') &&
-                  dp.plant_name?.toLowerCase().includes(plant.name.toLowerCase())
-                );
-                // Then try name containment
-                const nameMatch = dmsPlants.find((dp: any) =>
-                  dp.plant_name?.toLowerCase().includes(plant.name.toLowerCase())
-                );
-
-                const bestMatch = exactMatch || multiMatch || nameMatch;
-                if (bestMatch) {
-                  setSelectedPlantCode(bestMatch.code);
-                  setPlantAutoDetected(true);
-                  console.log(`[CriticalDocsWizard] Auto-resolved plant "${plant.name}" → DMS plant ${bestMatch.code} (${bestMatch.plant_name})`);
-                } else {
-                  console.warn(`[CriticalDocsWizard] No DMS plant match found for plant name "${plant.name}". Available:`, dmsPlants.map((p: any) => p.code + ':' + p.plant_name));
-                }
+              const resolved = await resolveDmsPlant(plant.name, dmsProjectName);
+              if (resolved) {
+                setSelectedPlantCode(resolved.code);
+                setPlantAutoDetected(true);
+                console.log(`[CriticalDocsWizard] Auto-resolved plant "${plant.name}" → DMS plant ${resolved.code} (${resolved.plant_name})`);
+              } else {
+                console.warn(`[CriticalDocsWizard] No unique DMS plant match for plant "${plant.name}" and project "${dmsProjectName}" — leaving empty`);
               }
             }
           }
