@@ -33,13 +33,13 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
     pendingApprovals: 3,
     teamMembers: {
       technicalAuthorities: [
-        { name: 'Dr. Sarah Wilson', role: 'Process Engineering TA', status: 'Approved' },
-        { name: 'John Smith', role: 'Technical Safety TA', status: 'Pending' },
-        { name: 'Maria Garcia', role: 'Mechanical Static TA', status: 'Under Review' }
+        { name: 'Process Engineering TA', role: 'Process Engineering TA', status: 'Approved' },
+        { name: 'Technical Safety TA', role: 'Technical Safety TA', status: 'Pending' },
+        { name: 'Mechanical Static TA', role: 'Mechanical Static TA', status: 'Under Review' }
       ],
       assetTeam: [
-        { name: 'Omar Hassan', role: 'Deputy Plant Director', status: 'Approved' },
-        { name: 'Lisa Chen', role: 'Site Engineer', status: 'Approved' }
+        { name: 'Deputy Plant Director', role: 'Deputy Plant Director', status: 'Approved' },
+        { name: 'Site Engineer', role: 'Site Engineer', status: 'Approved' }
       ],
       projectTeam: [
         { name: 'Michael Brown', role: 'Project Manager', status: 'Approved' },
