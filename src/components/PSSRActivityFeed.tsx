@@ -104,8 +104,8 @@ const PSSRActivityFeed: React.FC<PSSRActivityFeedProps> = ({
         pssrId: 'PSSR-2024-003',
         projectName: 'UQ Jetty 2 Export Terminal',
         user: {
-          name: 'Admin User',
-          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+          name: 'System Administrator',
+          avatar: ''
         },
         message: 'assigned John Davis as reviewer',
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8), // 8 hours ago
