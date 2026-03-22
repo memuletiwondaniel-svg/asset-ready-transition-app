@@ -35,31 +35,31 @@ interface ScheduleActivityModalProps {
 const mockAttendees: Attendee[] = [
   {
     id: '1',
-    name: 'Dr. Sarah Wilson',
+    name: 'Process Engineering TA',
     role: 'Process Engineering TA',
-    avatar: '/lovable-uploads/a115d6ee-9a4b-412e-993e-37839ae158ea.png',
-    email: 'sarah.wilson@company.com'
+    avatar: '',
+    email: 'process.ta@company.com'
   },
   {
     id: '2',
-    name: 'John Smith',
+    name: 'Technical Safety TA',
     role: 'Technical Safety TA',
-    avatar: '/lovable-uploads/b229716e-e39e-41cb-91d3-2c30dd517fa8.png',
-    email: 'john.smith@company.com'
+    avatar: '',
+    email: 'safety.ta@company.com'
   },
   {
     id: '3',
-    name: 'Maria Garcia',
+    name: 'Mechanical Static TA',
     role: 'Mechanical Static TA',
-    avatar: '/lovable-uploads/c25af318-1854-4091-9988-8579bc708185.png',
-    email: 'maria.garcia@company.com'
+    avatar: '',
+    email: 'mechanical.ta@company.com'
   },
   {
     id: '4',
-    name: 'Omar Hassan',
+    name: 'Deputy Plant Director',
     role: 'Deputy Plant Director',
-    avatar: '/lovable-uploads/cddd513b-3271-4c91-900a-87e4e290c4a9.png',
-    email: 'omar.hassan@company.com'
+    avatar: '',
+    email: 'deputy.director@company.com'
   }
 ];
 
