@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import * as XLSX from 'xlsx';
+import { readExcelFile } from '@/utils/excelUtils';
 import { ORATrainingItem, ORATrainingMaterial } from '@/hooks/useORATrainingPlan';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { useQuery } from '@tanstack/react-query';
