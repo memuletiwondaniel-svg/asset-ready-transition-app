@@ -12,6 +12,7 @@ import { useTypingEffect } from '@/hooks/useTypingEffect';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
+import { OnboardingChecklist } from '@/components/OnboardingChecklist';
 import { QuickActionsWidget } from '@/components/widgets/QuickActionsWidget';
 import { WidgetCard } from '@/components/widgets/WidgetCard';
 import { WidgetManagement } from '@/components/WidgetManagement';
@@ -737,6 +738,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                 </div>
               </div>
             </Card>
+
+            {/* Onboarding Checklist */}
+            <div className="animate-fade-in max-w-md mx-auto w-full" style={{ animationDelay: '80ms' }}>
+              <OnboardingChecklist />
+            </div>
 
             {/* Favorites / Quick Actions Section */}
             <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>

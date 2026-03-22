@@ -6477,6 +6477,7 @@ export type Database = {
           offboard_notes: string | null
           offboarded_at: string | null
           offboarded_by: string | null
+          onboarding_completed: boolean | null
           password_change_required: boolean | null
           password_changed_at: string | null
           password_reset_required: boolean | null
@@ -6530,6 +6531,7 @@ export type Database = {
           offboard_notes?: string | null
           offboarded_at?: string | null
           offboarded_by?: string | null
+          onboarding_completed?: boolean | null
           password_change_required?: boolean | null
           password_changed_at?: string | null
           password_reset_required?: boolean | null
@@ -6583,6 +6585,7 @@ export type Database = {
           offboard_notes?: string | null
           offboarded_at?: string | null
           offboarded_by?: string | null
+          onboarding_completed?: boolean | null
           password_change_required?: boolean | null
           password_changed_at?: string | null
           password_reset_required?: boolean | null
@@ -9639,6 +9642,33 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      user_onboarding_progress: {
+        Row: {
+          checklist_key: string
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          checklist_key: string
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          checklist_key?: string
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_privileges: {
         Row: {
