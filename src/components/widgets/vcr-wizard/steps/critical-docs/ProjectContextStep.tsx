@@ -177,11 +177,9 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
           })}
         </div>
 
-        {dmsPlatforms.length > 0 && (
-          <p className="text-[11px] text-muted-foreground mt-2">
-            {dmsPlatforms.length} platform{dmsPlatforms.length !== 1 ? 's' : ''} selected
-          </p>
-        )}
+        <p className={cn("text-[11px] text-muted-foreground mt-2", dmsPlatforms.length === 0 && "invisible")}>
+          {dmsPlatforms.length} platform{dmsPlatforms.length !== 1 ? 's' : ''} selected
+        </p>
       </fieldset>
     </div>
   );
