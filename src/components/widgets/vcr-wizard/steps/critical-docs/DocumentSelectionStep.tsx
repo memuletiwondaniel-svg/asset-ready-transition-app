@@ -461,13 +461,15 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {chips.map(chip => {
                       const isOn = activeFilters.has(chip.key);
+                      const hasResults = availableFilters.has(chip.key);
                       return (
                         <button
                           key={chip.key}
                           onClick={() => toggleFilter(chip.key)}
                           className={cn(
                             'inline-flex items-center justify-center h-6 px-2.5 rounded-[12px] text-[11px] font-medium border transition-all',
-                            isOn ? chip.activeClass : (chip.inactiveClass || 'border-border text-muted-foreground hover:border-muted-foreground/40')
+                            !hasResults && 'opacity-30 cursor-default',
+                            isOn && hasResults ? chip.activeClass : (chip.inactiveClass || 'border-border text-muted-foreground hover:border-muted-foreground/40')
                           )}
                         >
                           {chip.label}
