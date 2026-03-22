@@ -15,6 +15,8 @@ interface ProjectContextStepProps {
   onPlantCodeChange: (code: string) => void;
   dmsPlatforms: string[];
   onDmsPlatformsChange: (platforms: string[]) => void;
+  projectAutoDetected?: boolean;
+  plantAutoDetected?: boolean;
 }
 
 const DMS_PLATFORMS = [
@@ -27,6 +29,7 @@ const DMS_PLATFORMS = [
 export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
   projectCode, onProjectCodeChange, plantCode, onPlantCodeChange,
   dmsPlatforms, onDmsPlatformsChange,
+  projectAutoDetected = false, plantAutoDetected = false,
 }) => {
   const { data: projects = [] } = useQuery({
     queryKey: ['dms-projects-active'],
@@ -86,7 +89,7 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Label className="text-xs font-medium text-muted-foreground">Project Code *</Label>
-              {projectCode && (
+              {projectAutoDetected && projectCode && (
                 <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">
                   <Sparkles className="w-2.5 h-2.5 mr-0.5" /> Auto-detected
                 </Badge>
@@ -110,7 +113,7 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Label className="text-xs font-medium text-muted-foreground">Plant Code *</Label>
-              {plantCode && (
+              {plantAutoDetected && plantCode && (
                 <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">
                   <Sparkles className="w-2.5 h-2.5 mr-0.5" /> Auto-detected
                 </Badge>

@@ -15,7 +15,7 @@ interface CriticalDocsWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vcrId: string;
-  projectCode?: string;
+  projectCode?: string; // DP-xxx format from handover plans
   plantCode?: string;
   handoverPlanId?: string;
 }
@@ -33,17 +33,129 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Step 1 state — sync from props when dialog opens
-  const [selectedProjectCode, setSelectedProjectCode] = useState(projectCode || '');
-  const [selectedPlantCode, setSelectedPlantCode] = useState(plantCode || '');
+  // Step 1 state — these hold dms_projects.code and dms_plants.code
+  const [selectedProjectCode, setSelectedProjectCode] = useState('');
+  const [selectedPlantCode, setSelectedPlantCode] = useState('');
   const [dmsPlatforms, setDmsPlatforms] = useState<string[]>([]);
 
-  // Sync props into state when wizard opens or props change
+  // Track whether values were auto-resolved
+  const [projectAutoDetected, setProjectAutoDetected] = useState(false);
+  const [plantAutoDetected, setPlantAutoDetected] = useState(false);
+
+  // Resolve project code (DP-xxx) → dms_projects.code and plant on wizard open
   useEffect(() => {
-    if (open) {
-      if (projectCode) setSelectedProjectCode(projectCode);
-      if (plantCode) setSelectedPlantCode(plantCode);
+    if (!open) return;
+
+    // Reset state on open
+    setCurrentStep(0);
+    setSelections({});
+    setDmsPlatforms([]);
+    setProjectAutoDetected(false);
+    setPlantAutoDetected(false);
+    setSelectedProjectCode('');
+    setSelectedPlantCode('');
+
+    if (!projectCode) {
+      console.log('[CriticalDocsWizard] No project context available — skipping auto-detection');
+      return;
     }
+
+    const resolveContext = async () => {
+      try {
+        // Step 1: Resolve DP-xxx → dms_projects.code
+        const { data: dmsProject } = await (supabase as any)
+          .from('dms_projects')
+          .select('code')
+          .eq('project_id', projectCode)
+          .eq('is_active', true)
+          .limit(1)
+          .maybeSingle();
+
+        if (dmsProject?.code) {
+          setSelectedProjectCode(dmsProject.code);
+          setProjectAutoDetected(true);
+          console.log(`[CriticalDocsWizard] Auto-resolved project ${projectCode} → DMS code ${dmsProject.code}`);
+        } else {
+          console.warn(`[CriticalDocsWizard] No DMS project found for project_id="${projectCode}"`);
+        }
+
+        // Step 2: Resolve plant from the projects table
+        if (plantCode) {
+          // If plant code was passed directly, try to match it against dms_plants
+          const { data: dmsPlant } = await (supabase as any)
+            .from('dms_plants')
+            .select('code')
+            .eq('code', plantCode)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          if (dmsPlant?.code) {
+            setSelectedPlantCode(dmsPlant.code);
+            setPlantAutoDetected(true);
+            console.log(`[CriticalDocsWizard] Auto-resolved plant code ${plantCode}`);
+            return;
+          }
+        }
+
+        // Step 3: Try to resolve plant via projects table → plant table → dms_plants
+        // Parse project code to look up the projects table
+        const match = projectCode.match(/^([A-Z]+)-(.+)$/i);
+        if (match) {
+          const [, prefix, number] = match;
+          const { data: project } = await supabase
+            .from('projects')
+            .select('plant_id')
+            .eq('project_id_prefix', prefix)
+            .eq('project_id_number', number)
+            .maybeSingle();
+
+          if (project?.plant_id) {
+            const { data: plant } = await (supabase as any)
+              .from('plant')
+              .select('name')
+              .eq('id', project.plant_id)
+              .maybeSingle();
+
+            if (plant?.name) {
+              // Match plant.name (e.g. "CS") against dms_plants.plant_name using containment
+              // Use a multi-station code if available (e.g. C000 for "Multi Compressor Stations")
+              const { data: dmsPlants } = await (supabase as any)
+                .from('dms_plants')
+                .select('code, plant_name')
+                .eq('is_active', true)
+                .order('display_order');
+
+              if (dmsPlants?.length) {
+                // First try exact code match
+                const exactMatch = dmsPlants.find((dp: any) => dp.code === plant.name);
+                // Then try "Multi" prefix match (e.g. C000 Multi Compressor Stations)
+                const multiMatch = dmsPlants.find((dp: any) =>
+                  dp.plant_name?.toLowerCase().includes('multi') &&
+                  dp.plant_name?.toLowerCase().includes(plant.name.toLowerCase())
+                );
+                // Then try name containment
+                const nameMatch = dmsPlants.find((dp: any) =>
+                  dp.plant_name?.toLowerCase().includes(plant.name.toLowerCase())
+                );
+
+                const bestMatch = exactMatch || multiMatch || nameMatch;
+                if (bestMatch) {
+                  setSelectedPlantCode(bestMatch.code);
+                  setPlantAutoDetected(true);
+                  console.log(`[CriticalDocsWizard] Auto-resolved plant "${plant.name}" → DMS plant ${bestMatch.code} (${bestMatch.plant_name})`);
+                } else {
+                  console.warn(`[CriticalDocsWizard] No DMS plant match found for plant name "${plant.name}". Available:`, dmsPlants.map((p: any) => p.code + ':' + p.plant_name));
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[CriticalDocsWizard] Auto-detection failed:', err);
+      }
+    };
+
+    resolveContext();
   }, [open, projectCode, plantCode]);
 
   // Step 2 state
@@ -65,6 +177,76 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
 
   const handleBack = () => {
     if (currentStep > 0) setCurrentStep(currentStep - 1);
+  };
+
+  // When user manually changes project code, clear plant auto-detection
+  const handleProjectCodeChange = useCallback((code: string) => {
+    setSelectedProjectCode(code);
+    setProjectAutoDetected(false);
+    // Auto-resolve plant when project changes
+    resolveProjectPlant(code);
+  }, []);
+
+  const resolveProjectPlant = async (dmsProjectCode: string) => {
+    try {
+      setPlantAutoDetected(false);
+      setSelectedPlantCode('');
+
+      // Get dms_projects.project_id for this code
+      const { data: dmsProject } = await (supabase as any)
+        .from('dms_projects')
+        .select('project_id')
+        .eq('code', dmsProjectCode)
+        .maybeSingle();
+
+      if (!dmsProject?.project_id) return;
+
+      const match = dmsProject.project_id.match(/^([A-Z]+)-(.+)$/i);
+      if (!match) return;
+
+      const [, prefix, number] = match;
+      const { data: project } = await supabase
+        .from('projects')
+        .select('plant_id')
+        .eq('project_id_prefix', prefix)
+        .eq('project_id_number', number)
+        .maybeSingle();
+
+      if (!project?.plant_id) return;
+
+      const { data: plant } = await (supabase as any)
+        .from('plant')
+        .select('name')
+        .eq('id', project.plant_id)
+        .maybeSingle();
+
+      if (!plant?.name) return;
+
+      const { data: dmsPlants } = await (supabase as any)
+        .from('dms_plants')
+        .select('code, plant_name')
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (!dmsPlants?.length) return;
+
+      const exactMatch = dmsPlants.find((dp: any) => dp.code === plant.name);
+      const multiMatch = dmsPlants.find((dp: any) =>
+        dp.plant_name?.toLowerCase().includes('multi') &&
+        dp.plant_name?.toLowerCase().includes(plant.name.toLowerCase())
+      );
+      const nameMatch = dmsPlants.find((dp: any) =>
+        dp.plant_name?.toLowerCase().includes(plant.name.toLowerCase())
+      );
+
+      const bestMatch = exactMatch || multiMatch || nameMatch;
+      if (bestMatch) {
+        setSelectedPlantCode(bestMatch.code);
+        setPlantAutoDetected(true);
+      }
+    } catch (err) {
+      console.warn('[CriticalDocsWizard] Plant resolution failed:', err);
+    }
   };
 
   const handleConfirm = useCallback(async () => {
@@ -101,8 +283,6 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
       queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcrId] });
       toast.success(`${inserts.length} documents added successfully`);
       onOpenChange(false);
-      setCurrentStep(0);
-      setSelections({});
     } catch (e: any) {
       toast.error(e.message || 'Failed to save documents');
     } finally {
@@ -170,11 +350,16 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
           {currentStep === 0 && (
             <ProjectContextStep
               projectCode={selectedProjectCode}
-              onProjectCodeChange={setSelectedProjectCode}
+              onProjectCodeChange={handleProjectCodeChange}
               plantCode={selectedPlantCode}
-              onPlantCodeChange={setSelectedPlantCode}
+              onPlantCodeChange={(code) => {
+                setSelectedPlantCode(code);
+                setPlantAutoDetected(false);
+              }}
               dmsPlatforms={dmsPlatforms}
               onDmsPlatformsChange={setDmsPlatforms}
+              projectAutoDetected={projectAutoDetected}
+              plantAutoDetected={plantAutoDetected}
             />
           )}
           {currentStep === 1 && (
