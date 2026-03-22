@@ -1237,14 +1237,12 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       if (isReadOnly) return;
                       const newPct = val[0];
                       setProgressPct(newPct);
-                      const currentStatus = status;
-                      // Auto-promote status when user starts working (progress > 0)
-                      if (newPct > 0 && currentStatus === 'NOT_STARTED') {
-                        setStatus('IN_PROGRESS');
-                      } else if (newPct === 0 && currentStatus === 'IN_PROGRESS') {
-                        // Auto-demote status if user sets progress back to 0
-                        setStatus('NOT_STARTED');
-                      }
+                      // Auto-promote/demote status based on progress
+                      setStatus((prev) => {
+                        if (newPct > 0 && prev === 'NOT_STARTED') return 'IN_PROGRESS';
+                        if (newPct === 0 && prev === 'IN_PROGRESS') return 'NOT_STARTED';
+                        return prev;
+                      });
                     }}
                     max={100}
                     step={5}
