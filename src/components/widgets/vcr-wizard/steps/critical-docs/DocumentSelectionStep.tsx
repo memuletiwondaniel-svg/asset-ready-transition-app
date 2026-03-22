@@ -238,15 +238,31 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
     return map;
   }, [secondaryDisciplines]);
 
+  // Pre-filter by search only (used for filter chip availability)
+  const searchFiltered = useMemo(() => {
+    if (!search.trim()) return docTypes;
+    const q = search.toLowerCase();
+    return docTypes.filter(d =>
+      d.code.toLowerCase().includes(q) ||
+      d.document_name.toLowerCase().includes(q) ||
+      (d.discipline_name || '').toLowerCase().includes(q)
+    );
+  }, [docTypes, search]);
+
+  // Which filter chips have matching docs in the current search results?
+  const availableFilters = useMemo(() => {
+    const available = new Set<FilterKey>();
+    FILTER_CHIPS.forEach(chip => {
+      if (searchFiltered.some(d => chip.match(d, secondaryMap))) {
+        available.add(chip.key);
+      }
+    });
+    return available;
+  }, [searchFiltered, secondaryMap]);
+
   // Filter + sort
   const filtered = useMemo(() => {
-    let result = docTypes.filter(d => {
-      // Search
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        if (!d.code.toLowerCase().includes(q) && !d.document_name.toLowerCase().includes(q) &&
-            !(d.discipline_name || '').toLowerCase().includes(q)) return false;
-      }
+    let result = searchFiltered.filter(d => {
       // Category filters (OR within, AND between)
       if (activeFilters.size === 0) return true;
       const groupedByCategory = new Map<string, FilterChip[]>();
@@ -274,7 +290,7 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
       });
     }
     return result;
-  }, [docTypes, search, activeFilters, secondaryMap, sortCol, sortDir]);
+  }, [searchFiltered, activeFilters, secondaryMap, sortCol, sortDir]);
 
   const toggleFilter = (key: FilterKey) => {
     const next = new Set(activeFilters);
@@ -375,7 +391,7 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
   ];
 
   return (
-    <div className="flex h-full min-h-0">
+    <div className="flex h-[420px] min-h-0">
       {/* System Sidebar */}
       <div className="w-[140px] shrink-0 border-r bg-muted/20 flex flex-col">
         <div className="px-2 py-2 border-b">
@@ -445,13 +461,15 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {chips.map(chip => {
                       const isOn = activeFilters.has(chip.key);
+                      const hasResults = availableFilters.has(chip.key);
                       return (
                         <button
                           key={chip.key}
                           onClick={() => toggleFilter(chip.key)}
                           className={cn(
                             'inline-flex items-center justify-center h-6 px-2.5 rounded-[12px] text-[11px] font-medium border transition-all',
-                            isOn ? chip.activeClass : (chip.inactiveClass || 'border-border text-muted-foreground hover:border-muted-foreground/40')
+                            !hasResults && 'opacity-30 cursor-default',
+                            isOn && hasResults ? chip.activeClass : (chip.inactiveClass || 'border-border text-muted-foreground hover:border-muted-foreground/40')
                           )}
                         >
                           {chip.label}
