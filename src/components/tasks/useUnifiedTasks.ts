@@ -87,7 +87,7 @@ function mapToKanbanColumn(task: KanbanMappingInput): 'todo' | 'in_progress' | '
   if (task.isWaiting) return 'waiting';
   const s = task.status.toLowerCase();
   if (['completed', 'done', 'approved', 'closed', 'sof_approved'].includes(s)) return 'done';
-  if (['in_progress', 'in progress', 'under_review', 'pending review', 'pending_lead_review'].includes(s) || (task.progressPercentage && task.progressPercentage > 0 && task.progressPercentage < 100)) return 'in_progress';
+  if (['in_progress', 'in progress', 'under_review', 'pending review', 'pending_lead_review'].includes(s)) return 'in_progress';
   if (s === 'waiting') return 'waiting';
   return 'todo';
 }
