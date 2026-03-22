@@ -7,8 +7,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Info, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import assaiLogo from '@/assets/assai-logo-clean.png';
-import wrenchLogo from '@/assets/wrench-logo-clean.png';
+import assaiIcon from '@/assets/assai-icon.png';
+import wrenchIcon from '@/assets/wrench-icon.png';
 import documentumLogo from '@/assets/documentum-logo-clean.png';
 import sharepointLogo from '@/assets/sharepoint-logo-clean.png';
 
