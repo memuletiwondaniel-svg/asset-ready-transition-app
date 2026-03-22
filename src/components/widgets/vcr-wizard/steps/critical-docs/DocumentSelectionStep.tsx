@@ -80,24 +80,126 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
   const [sortCol, setSortCol] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
-  // Fetch systems for this VCR
+  // Fetch systems for this VCR (parent-level only, with child aggregation)
   const { data: systems = [] } = useQuery({
     queryKey: ['vcr-systems', vcrId],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data: assignments, error: assignmentsError } = await (supabase as any)
         .from('p2a_handover_point_systems')
-        .select('system_id, p2a_systems(id, name, system_id, is_hydrocarbon)')
+        .select('system_id, subsystem_id')
         .eq('handover_point_id', vcrId);
-      if (error) throw error;
-      const raw = (data || []).map((r: any) => r.p2a_systems).filter(Boolean);
-      // Deduplicate systems by id
-      const seen = new Set<string>();
-      return raw.filter((s: any) => {
-        const key = s.id || s.system_id;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
+      if (assignmentsError) throw assignmentsError;
+
+      const assignedIds = Array.from(new Set<string>(
+        (assignments || [])
+          .flatMap((row: any) => [row.system_id, row.subsystem_id])
+          .filter((id: string | null | undefined): id is string => Boolean(id))
+      ));
+
+      if (!assignedIds.length) return [];
+
+      const [systemsResult, parentLinksResult, childLinksResult] = await Promise.all([
+        (supabase as any)
+          .from('p2a_systems')
+          .select('id, name, system_id, is_hydrocarbon')
+          .in('id', assignedIds),
+        (supabase as any)
+          .from('p2a_subsystems')
+          .select('system_id, subsystem_id')
+          .in('system_id', assignedIds),
+        (supabase as any)
+          .from('p2a_subsystems')
+          .select('system_id, subsystem_id')
+          .in('subsystem_id', assignedIds),
+      ]);
+
+      if (systemsResult.error) throw systemsResult.error;
+      if (parentLinksResult.error) throw parentLinksResult.error;
+      if (childLinksResult.error) throw childLinksResult.error;
+
+      const subsystemLinks = [
+        ...(parentLinksResult.data || []),
+        ...(childLinksResult.data || []),
+      ];
+
+      const parentByChild = new Map<string, string>();
+      subsystemLinks.forEach((link: any) => {
+        if (link.subsystem_id && link.system_id) {
+          parentByChild.set(link.subsystem_id, link.system_id);
+        }
       });
+
+      const rootIds = Array.from(new Set(assignedIds.map(id => parentByChild.get(id) || id)));
+      const loadedSystems = systemsResult.data || [];
+      const loadedIds = new Set(loadedSystems.map((system: any) => system.id));
+      const missingRootIds = rootIds.filter(id => !loadedIds.has(id));
+
+      let missingRoots: any[] = [];
+      if (missingRootIds.length > 0) {
+        const { data: rootsData, error: rootsError } = await (supabase as any)
+          .from('p2a_systems')
+          .select('id, name, system_id, is_hydrocarbon')
+          .in('id', missingRootIds);
+        if (rootsError) throw rootsError;
+        missingRoots = rootsData || [];
+      }
+
+      const systemsById = new Map<string, any>(
+        [...loadedSystems, ...missingRoots].map((system: any) => [system.id, system])
+      );
+
+      const groupedByRoot = new Map<string, {
+        id: string;
+        name: string;
+        system_id: string;
+        is_hydrocarbon: boolean;
+        memberIds: Set<string>;
+      }>();
+
+      assignedIds.forEach((id) => {
+        const rootId = parentByChild.get(id) || id;
+        const rootSystem = systemsById.get(rootId) || systemsById.get(id);
+        if (!rootSystem) return;
+
+        const existing = groupedByRoot.get(rootSystem.id) || {
+          id: rootSystem.id,
+          name: rootSystem.name || rootSystem.system_id,
+          system_id: rootSystem.system_id,
+          is_hydrocarbon: !!rootSystem.is_hydrocarbon,
+          memberIds: new Set<string>(),
+        };
+
+        existing.memberIds.add(id);
+        existing.memberIds.add(rootSystem.id);
+        groupedByRoot.set(rootSystem.id, existing);
+      });
+
+      // Fallback dedupe by name if hierarchy data is incomplete
+      const dedupedByName = new Map<string, {
+        id: string;
+        name: string;
+        system_id: string;
+        is_hydrocarbon: boolean;
+        memberIds: Set<string>;
+      }>();
+
+      groupedByRoot.forEach((system) => {
+        const nameKey = (system.name || '').trim().toLowerCase();
+        if (!nameKey) return;
+        const existing = dedupedByName.get(nameKey);
+        if (existing) {
+          system.memberIds.forEach((memberId) => existing.memberIds.add(memberId));
+          return;
+        }
+        dedupedByName.set(nameKey, system);
+      });
+
+      return Array.from(dedupedByName.values())
+        .map(system => ({
+          ...system,
+          memberIds: Array.from(system.memberIds),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
     },
   });
 
@@ -180,26 +282,59 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
     setActiveFilters(next);
   };
 
-  const currentSelections = selections[activeSystemId] || [];
+  const activeSystemMemberIds = useMemo(() => {
+    if (activeSystemId === '__all__') return ['__all__'];
+    const activeSystem = systems.find((system: any) => system.id === activeSystemId);
+    const members = activeSystem?.memberIds as string[] | undefined;
+    return members && members.length > 0 ? members : [activeSystemId];
+  }, [activeSystemId, systems]);
+
+  const currentSelections = useMemo(() => {
+    const merged = new Set<string>();
+    activeSystemMemberIds.forEach((systemId) => {
+      (selections[systemId] || []).forEach((docId) => merged.add(docId));
+    });
+    return Array.from(merged);
+  }, [activeSystemMemberIds, selections]);
+
   const isSelected = (docId: string) => currentSelections.includes(docId);
 
   const toggleDoc = (docId: string) => {
-    const current = selections[activeSystemId] || [];
-    const next = current.includes(docId)
-      ? current.filter(id => id !== docId)
-      : [...current, docId];
-    onSelectionsChange({ ...selections, [activeSystemId]: next });
+    const next = currentSelections.includes(docId)
+      ? currentSelections.filter(id => id !== docId)
+      : [...currentSelections, docId];
+
+    if (activeSystemId === '__all__') {
+      onSelectionsChange({ ...selections, [activeSystemId]: next });
+      return;
+    }
+
+    const nextSelections: SystemDocSelections = { ...selections, [activeSystemId]: next };
+    activeSystemMemberIds.forEach((memberId) => {
+      if (memberId !== activeSystemId) delete nextSelections[memberId];
+    });
+
+    onSelectionsChange(nextSelections);
   };
 
   const toggleAll = () => {
     const allIds = filtered.map(d => d.id);
     const allSelected = allIds.every(id => currentSelections.includes(id));
-    if (allSelected) {
-      onSelectionsChange({ ...selections, [activeSystemId]: currentSelections.filter(id => !allIds.includes(id)) });
-    } else {
-      const merged = [...new Set([...currentSelections, ...allIds])];
-      onSelectionsChange({ ...selections, [activeSystemId]: merged });
+    const next = allSelected
+      ? currentSelections.filter(id => !allIds.includes(id))
+      : [...new Set([...currentSelections, ...allIds])];
+
+    if (activeSystemId === '__all__') {
+      onSelectionsChange({ ...selections, [activeSystemId]: next });
+      return;
     }
+
+    const nextSelections: SystemDocSelections = { ...selections, [activeSystemId]: next };
+    activeSystemMemberIds.forEach((memberId) => {
+      if (memberId !== activeSystemId) delete nextSelections[memberId];
+    });
+
+    onSelectionsChange(nextSelections);
   };
 
   const allVisibleSelected = filtered.length > 0 && filtered.every(d => isSelected(d.id));
@@ -214,14 +349,29 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
     return sortDir === 'asc' ? <ArrowUp className="h-3 w-3 inline ml-0.5" /> : <ArrowDown className="h-3 w-3 inline ml-0.5" />;
   };
 
+  const getSelectionCount = (memberIds: string[]) => {
+    const merged = new Set<string>();
+    memberIds.forEach((memberId) => {
+      (selections[memberId] || []).forEach((docId) => merged.add(docId));
+    });
+    return merged.size;
+  };
+
   const systemTabs = [
-    { id: '__all__', label: 'All Systems', count: (selections['__all__'] || []).length },
-    ...systems.map((s: any) => ({
-      id: s.id,
-      label: s.name || s.system_id,
-      count: (selections[s.id] || []).length,
-      isHydrocarbon: s.is_hydrocarbon,
-    })),
+    { id: '__all__', label: 'All Systems', count: (selections['__all__'] || []).length, memberIds: ['__all__'] },
+    ...systems.map((system: any) => {
+      const memberIds = (system.memberIds as string[] | undefined)?.length
+        ? system.memberIds
+        : [system.id];
+
+      return {
+        id: system.id,
+        label: system.name || system.system_id,
+        count: getSelectionCount(memberIds),
+        memberIds,
+        isHydrocarbon: system.is_hydrocarbon,
+      };
+    }),
   ];
 
   return (
