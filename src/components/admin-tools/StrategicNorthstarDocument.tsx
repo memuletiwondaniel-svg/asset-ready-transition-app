@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
+import DocumentDownloadButton from './DocumentDownloadButton';
 
 interface StrategicNorthstarDocumentProps {
   onBack: () => void;
