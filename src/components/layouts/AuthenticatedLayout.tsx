@@ -7,6 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useDirectorRedirect } from '@/hooks/useDirectorRedirect';
 import { Loader2 } from 'lucide-react';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
+import { MobileBottomNav } from '@/components/mobile/MobileBottomNav';
 
 /**
  * Persistent layout for authenticated pages.
@@ -72,17 +73,22 @@ export const AuthenticatedLayout: React.FC = () => {
   const { language, setLanguage } = useLanguage();
 
   return (
-    <div className="h-screen flex w-full overflow-hidden">
-      <OrshSidebar
-        currentPage={currentPage}
-        language={language}
-        onLanguageChange={setLanguage}
-        onNavigate={handleNavigate}
-        onLogout={handleLogout}
-      />
-      <AnimatedBackground className="flex-1 flex flex-col overflow-auto">
+    <div className="h-[100dvh] flex w-full overflow-hidden">
+      {/* Sidebar — hidden on mobile, visible on md+ */}
+      <div className="hidden md:block">
+        <OrshSidebar
+          currentPage={currentPage}
+          language={language}
+          onLanguageChange={setLanguage}
+          onNavigate={handleNavigate}
+          onLogout={handleLogout}
+        />
+      </div>
+      <AnimatedBackground className="flex-1 flex flex-col overflow-auto pb-16 md:pb-0">
         <Outlet />
       </AnimatedBackground>
+      {/* Bottom nav — visible on mobile only */}
+      <MobileBottomNav />
     </div>
   );
 };
