@@ -1,47 +1,62 @@
 
+## Step 2 Fix Plan (all requested issues)
 
-## Redesign Step 2: Document Selection Table
+### Findings from current code
+- `DocumentSelectionStep.tsx` still uses `rounded-full` for filter chips, which is why Tier/Discipline filters look circular.
+- Filter groups are rendered in one horizontal row (`flex items-center gap-4`) with no wrap strategy, causing right-side cutoff/cramping.
+- Tier row badges are not fixed-size pills yet (currently auto-size with padding), so they can still appear rounded.
+- Systems sidebar data is mapped directly from `p2a_handover_point_systems` join rows without dedupe, so duplicate join rows create duplicate system entries.
+- Header currently shows `Disc.`; we need a cleaner non-cutoff label (`DISC`).
 
-### Problem
-The document selection table is cluttered — rows are too tall, badges too large, sidebar too wide, a column is cut off, and only ~4 rows are visible at a time.
+## Implementation scope
+Single file update: `src/components/widgets/vcr-wizard/steps/critical-docs/DocumentSelectionStep.tsx`  
+(No behavior changes to search, row height, checkbox behavior, navigation, or footer buttons.)
 
-### Changes (single file: `DocumentSelectionStep.tsx`)
+## Changes to implement
 
-**1. Compact 40px rows**
-- Set `h-10` on every `TableRow` in the body
-- Add `whitespace-nowrap overflow-hidden text-ellipsis max-w-0` to the Document Name `TableCell`, with a `title={doc.document_name}` attribute for hover tooltip
-- Reduce cell padding from `p-4` to `px-2 py-1.5` on all cells
+1. **Tier filter pills (compact rectangular)**
+   - Replace current chip button class with fixed compact pill sizing:
+     - `h-6` (24px), `text-[11px]`, `font-medium`, `px-2.5` (10px), `rounded-[12px]`, `border`.
+   - Remove circular visuals entirely (`rounded-full` removed).
+   - Tier color states:
+     - Tier 1 inactive: light orange border/text; active: filled light orange.
+     - Tier 2 inactive: light blue border/text; active: filled light blue.
+     - RLMU inactive: light gray border/text; active: filled gray.
 
-**2. Tier badges → inline pills**
-- Replace the rounded `Badge` with a plain `<span>` using `text-[11px] px-1.5 py-[2px] rounded-[4px] border font-medium` and tier-specific light background/text colors (orange for Tier 1, blue for Tier 2, grey for RLMU). Max height ~20px, no circles.
+2. **Discipline filter pills (same compact treatment)**
+   - Apply the same 24px/11px/10px/12px pill geometry to Process, Elect, Inst, Static, Rotating.
+   - Keep each discipline’s existing color identity via active/inactive class pairs.
+   - Remove any leftover circular/dot visual references from chip rendering.
 
-**3. Compact discipline filter pills**
-- Reduce filter chip buttons from `px-2.5 py-1 text-[11px]` to `px-2 py-0.5 text-[11px]` — roughly half height
-- Remove the colored dot span entirely for cleaner look
-- Keep single/two-row flex-wrap layout
+3. **Filter row layout + overflow fix**
+   - Rework filter area into clean grouped rows with explicit order:
+     - Row 1: `TIER` label + tier pills.
+     - Row 2: `DISCIPLINE` label + discipline pills.
+   - Use compact spacing (`gap-2`, i.e. 8px between groups/chips).
+   - Add a thin divider line under filter rows before table header (`border-t`/`h-px bg-border` equivalent).
+   - Keep search bar unchanged above filters.
 
-**4. Fix cut-off column**
-- The 5th column "Discipline" is being cut off to show only "D". Fix by constraining all columns to explicit widths and ensuring the table uses `table-fixed` layout with `w-full`.
+4. **Tier badge pills in table rows**
+   - Replace current tier badge style with fixed rectangular chips:
+     - `w-[28px] h-[18px] rounded-[4px] text-[11px] font-medium inline-flex items-center justify-center`.
+   - Color mapping:
+     - T1: light orange fill + orange text.
+     - T2: light blue fill + blue text.
+   - No circular shape classes.
 
-**5. Sidebar width: 140px**
-- Change `w-52` (208px) to `w-[140px]` on the sidebar container
-- Reduce sidebar text to `text-xs`
+5. **Systems sidebar deduplication**
+   - In systems query transform, dedupe returned systems before building `systemTabs`.
+   - Primary dedupe key: system ID (`id`, fallback `system_id`) to eliminate duplicate join rows.
+   - Secondary guard: normalized name dedupe to prevent duplicate labels from data anomalies.
+   - Result: only unique system names shown in sidebar (fixes duplicate “Gas Compressors”).
 
-**6. Column sizing**
-- Apply `table-fixed w-full` to the `<Table>` element
-- Checkbox: `w-8` (32px)
-- Code: `w-[60px]`
-- Document Name: no explicit width (flex/remaining)
-- Tier: `w-[60px]`
-- Discipline: `w-[80px]`
-- Header text: `text-[11px] uppercase tracking-wider text-muted-foreground` on all `TableHead` cells
+6. **DISC header cleanup**
+   - Change last column header text to `DISC` (11px uppercase muted style retained) so it renders cleanly in the 80px column without awkward truncation.
 
-**7. Consistent 16×16 checkboxes**
-- Checkboxes already use the default `h-4 w-4` (16px) from the Checkbox component — no change needed, just ensure no overrides exist.
-
-**8. Header row**
-- Reduce header row height to match compact style: `h-9` instead of default `h-12`
-
-### Result
-With 40px rows and compact filters, 8-10 document rows will be visible without scrolling on a standard screen. No functionality changes — filtering, search, system nav, and selection logic remain identical.
-
+## Verification checklist after implementation
+- Tier filters are compact 24px pills, not circles.
+- Discipline filters are compact, color-coded, and no right-side cutoff.
+- Filter section is clean (2-row grouped layout) with divider before table.
+- Row tier badges are small rectangular pills (28x18), not circular.
+- Sidebar shows unique systems only (single “Gas Compressors” entry).
+- Table row height remains exactly 40px; search, checkbox behavior, navigation, and footer CTAs unchanged.
