@@ -183,7 +183,7 @@ const dp385Deviations: QualificationDetail[] = [
     description: 'The BGC-WQ1FOD Interface document is yet to be updated. Transfer of custody, care and control of BGC-installed facilities within the WQ1FOD fence is still pending formal handover.',
     severity: 'medium',
     status: 'approved',
-    approvedBy: 'Abdulaziz Abdulrahman',
+    approvedBy: 'BOM West Qurna',
     approverRole: 'BOM West Qurna',
     approvedAt: '2026-01-27',
     mitigationMeasures: 'Interim operating agreement in place between BGC and WQ1FOD. Weekly coordination meetings established. Draft interface document under review.',
