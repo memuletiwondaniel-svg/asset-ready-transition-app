@@ -132,14 +132,14 @@ const IncidentResponseRunbook: React.FC<IncidentResponseRunbookProps> = ({ onBac
                   <tbody>
                     <tr className="border-t border-border">
                       <td className="px-4 py-2.5 font-medium text-foreground">Primary — Admin / DBA / Security</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">Daniel Memuletiwon</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">System Administrator</td>
                       <td className="px-4 py-2.5">
                         <div className="flex flex-col gap-1">
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Mail className="h-3 w-3" /> memuletiwondaniel@gmail.com
+                            <Mail className="h-3 w-3" /> Configure in admin settings
                           </span>
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Phone className="h-3 w-3" /> +1 (905) 242-9978
+                            <Phone className="h-3 w-3" /> Configure in admin settings
                           </span>
                         </div>
                       </td>

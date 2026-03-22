@@ -392,7 +392,7 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
                     </div>
                     <div className="flex-1">
                       <p className="text-xs font-medium">Technical Authority approval received</p>
-                      <p className="text-xs text-gray-600">Dr. Sarah Wilson approved Process Engineering review</p>
+                      <p className="text-xs text-gray-600">Process Engineering TA approved review</p>
                       <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
                     </div>
                   </div>

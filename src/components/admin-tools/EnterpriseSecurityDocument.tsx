@@ -711,7 +711,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
                   <li><strong className="text-foreground">Post-Mortem:</strong> Root cause analysis documented in audit log with corrective actions</li>
                 </ul>
                 <p className="text-xs text-muted-foreground mt-2">
-                  <strong className="text-foreground">Primary Contact:</strong> Daniel Memuletiwon — memuletiwondaniel@gmail.com | +1 (905) 242-9978
+                  <strong className="text-foreground">Primary Contact:</strong> System Administrator — configure in admin settings
                 </p>
               </CardContent>
             </Card>

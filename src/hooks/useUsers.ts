@@ -41,9 +41,9 @@ export const useUsers = () => {
       const sampleUsers: User[] = [
         {
           id: "1",
-          firstName: "Ahmed",
-          lastName: "Al-Rashid",
-          email: "ahmed.rashid@bgc.iq",
+          firstName: "User",
+          lastName: "One",
+          email: "user1@company.com",
           phoneNumbers: [{ countryCode: "+964", number: "770 123 4567" }],
           company: "BGC",
           role: "Plant Director",
@@ -56,9 +56,9 @@ export const useUsers = () => {
         },
         {
           id: "2",
-          firstName: "Sarah",
-          lastName: "Mitchell",
-          email: "sarah.mitchell@kent.com",
+          firstName: "User",
+          lastName: "Two",
+          email: "user2@company.com",
           phoneNumbers: [{ countryCode: "+44", number: "20 7946 0958" }],
           company: "Kent",
           role: "Technical Authority (TA2)",
@@ -73,11 +73,11 @@ export const useUsers = () => {
         },
         {
           id: "3",
-          firstName: "Omar",
-          lastName: "Hassan",
-          email: "omar.hassan@contractor.com",
+          firstName: "User",
+          lastName: "Three",
+          email: "user3@company.com",
           isFunctionalEmail: true,
-          personalEmail: "omar.personal@gmail.com",
+          personalEmail: "user3.personal@gmail.com",
           phoneNumbers: [{ countryCode: "+964", number: "771 987 6543" }],
           company: "Others",
           role: "Commissioning Lead",
@@ -86,7 +86,7 @@ export const useUsers = () => {
           associatedProjects: [],
           pendingActions: 1,
           createdAt: "2024-03-05T09:15:00Z",
-          authenticator: "Daniel Memuletiwon",
+          authenticator: "ORA Lead",
           createdBy: "self"
         }
       ];

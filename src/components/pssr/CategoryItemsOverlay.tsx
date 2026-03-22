@@ -145,7 +145,7 @@ export const CategoryItemsOverlay: React.FC<CategoryItemsOverlayProps> = ({
     justification: null,
     submitted_at: response ? '2024-01-15T10:00:00Z' : null,
     approved_at: approval_status === 'approved' || approval_status === 'approved_with_action' ? '2024-01-16T14:30:00Z' : null,
-    approver_name: approval_status ? 'Dr. Sarah Wilson' : null,
+    approver_name: approval_status ? 'Process Engineering TA' : null,
     approval_comments: approval_status === 'approved_with_action' ? 'Approved contingent on completion of corrective action' : null,
     attachments: response ? ['https://example.com/evidence-1.pdf'] : null,
   });
