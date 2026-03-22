@@ -335,7 +335,7 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
                   Tier <SortIcon col="tier" />
                 </TableHead>
                 <TableHead className="w-[80px] px-2 py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('discipline_code')}>
-                  Disc. <SortIcon col="discipline_code" />
+                  DISC <SortIcon col="discipline_code" />
                 </TableHead>
               </TableRow>
             </TableHeader>
