@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff, Mail, Lock, ArrowLeft, AlertTriangle, Shield, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from './AuthProvider';
+import { TwoFactorVerifyModal } from '@/components/user-management/TwoFactorVerifyModal';
 import { useTenantContext } from '@/contexts/TenantContext';
 import { useTenantSSOConfigPublic } from '@/hooks/useTenantSSOConfig';
 import EnhancedRegistrationForm from '@/components/user-management/EnhancedRegistrationForm';
