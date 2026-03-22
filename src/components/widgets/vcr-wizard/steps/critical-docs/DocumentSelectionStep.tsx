@@ -218,29 +218,29 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
   return (
     <div className="flex h-full min-h-0">
       {/* System Sidebar */}
-      <div className="w-52 shrink-0 border-r bg-muted/20 flex flex-col">
-        <div className="px-3 py-3 border-b">
+      <div className="w-[140px] shrink-0 border-r bg-muted/20 flex flex-col">
+        <div className="px-2 py-2 border-b">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Systems</p>
         </div>
         <ScrollArea className="flex-1">
-          <div className="p-1.5 space-y-0.5">
+          <div className="p-1 space-y-0.5">
             {systemTabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveSystemId(tab.id)}
                 className={cn(
-                  'w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between gap-2',
+                  'w-full text-left px-2 py-1.5 rounded-md text-xs transition-all flex items-center justify-between gap-1',
                   activeSystemId === tab.id
                     ? 'bg-primary/10 text-primary font-medium'
                     : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                 )}
               >
-                <span className="truncate flex items-center gap-1.5">
-                  {tab.id === '__all__' && <Layers className="w-3.5 h-3.5 shrink-0" />}
+                <span className="truncate flex items-center gap-1">
+                  {tab.id === '__all__' && <Layers className="w-3 h-3 shrink-0" />}
                   {tab.label}
                 </span>
                 {tab.count > 0 && (
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
+                  <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 shrink-0">
                     {tab.count}
                   </Badge>
                 )}
@@ -253,7 +253,7 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Filter Bar */}
-        <div className="px-4 py-3 border-b space-y-2.5">
+        <div className="px-3 py-2 border-b space-y-1.5">
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
@@ -270,37 +270,34 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
             )}
           </div>
 
-          {/* Category-label-above-chips */}
-          <div className="flex items-start gap-6">
+          {/* Compact filter chips */}
+          <div className="flex items-center gap-4">
             {CATEGORY_ORDER.map(cat => {
               const chips = FILTER_CHIPS.filter(c => c.category === cat);
               const hasActive = chips.some(c => activeFilters.has(c.key));
               return (
-                <div key={cat} className="space-y-1">
-                  <p className={cn(
-                    'text-[10px] font-semibold uppercase tracking-wider transition-colors',
+                <div key={cat} className="flex items-center gap-1">
+                  <span className={cn(
+                    'text-[10px] font-semibold uppercase tracking-wider mr-0.5',
                     hasActive ? 'text-foreground/70' : 'text-muted-foreground/40'
                   )}>
                     {CATEGORY_LABELS[cat]}
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {chips.map(chip => {
-                      const isOn = activeFilters.has(chip.key);
-                      return (
-                        <button
-                          key={chip.key}
-                          onClick={() => toggleFilter(chip.key)}
-                          className={cn(
-                            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all',
-                            isOn ? chip.activeClass : 'border-border text-muted-foreground hover:border-muted-foreground/40'
-                          )}
-                        >
-                          <span className={cn('w-1.5 h-1.5 rounded-full', isOn ? chip.dotColor : 'bg-muted-foreground/30')} />
-                          {chip.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  </span>
+                  {chips.map(chip => {
+                    const isOn = activeFilters.has(chip.key);
+                    return (
+                      <button
+                        key={chip.key}
+                        onClick={() => toggleFilter(chip.key)}
+                        className={cn(
+                          'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border transition-all',
+                          isOn ? chip.activeClass : 'border-border text-muted-foreground hover:border-muted-foreground/40'
+                        )}
+                      >
+                        {chip.label}
+                      </button>
+                    );
+                  })}
                 </div>
               );
             })}
@@ -309,30 +306,30 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
 
         {/* Document Table */}
         <ScrollArea className="flex-1">
-          <Table>
+          <Table className="table-fixed w-full">
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">
+              <TableRow className="h-9">
+                <TableHead className="w-8 px-2 py-1.5">
                   <Checkbox checked={allVisibleSelected} onCheckedChange={toggleAll} />
                 </TableHead>
-                <TableHead className="cursor-pointer select-none w-24" onClick={() => toggleSort('code')}>
+                <TableHead className="w-[60px] px-2 py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('code')}>
                   Code <SortIcon col="code" />
                 </TableHead>
-                <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('document_name')}>
+                <TableHead className="px-2 py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('document_name')}>
                   Document Name <SortIcon col="document_name" />
                 </TableHead>
-                <TableHead className="cursor-pointer select-none w-20" onClick={() => toggleSort('tier')}>
+                <TableHead className="w-[60px] px-2 py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('tier')}>
                   Tier <SortIcon col="tier" />
                 </TableHead>
-                <TableHead className="cursor-pointer select-none w-28" onClick={() => toggleSort('discipline_code')}>
-                  Discipline <SortIcon col="discipline_code" />
+                <TableHead className="w-[80px] px-2 py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('discipline_code')}>
+                  Disc. <SortIcon col="discipline_code" />
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12 text-sm text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-12 text-xs text-muted-foreground">
                     No documents match your filters. Try adjusting the filter criteria.
                   </TableCell>
                 </TableRow>
@@ -342,25 +339,29 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
                   return (
                     <TableRow
                       key={doc.id}
-                      className={cn('cursor-pointer', checked && 'bg-primary/5')}
+                      className={cn('cursor-pointer h-10', checked && 'bg-primary/5')}
                       onClick={() => toggleDoc(doc.id)}
                     >
-                      <TableCell onClick={e => e.stopPropagation()}>
+                      <TableCell className="px-2 py-1.5" onClick={e => e.stopPropagation()}>
                         <Checkbox checked={checked} onCheckedChange={() => toggleDoc(doc.id)} />
                       </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{doc.code}</TableCell>
-                      <TableCell className="text-sm">{doc.document_name}</TableCell>
-                      <TableCell>
+                      <TableCell className="px-2 py-1.5 font-mono text-[11px] text-muted-foreground">{doc.code}</TableCell>
+                      <TableCell className="px-2 py-1.5 text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-0" title={doc.document_name}>
+                        {doc.document_name}
+                      </TableCell>
+                      <TableCell className="px-2 py-1.5">
                         {doc.tier && (
-                          <Badge variant="outline" className={cn(
-                            'text-[10px]',
-                            doc.tier === 'Tier 1' ? 'border-orange-300 text-orange-600' : 'border-blue-300 text-blue-600'
+                          <span className={cn(
+                            'inline-flex items-center text-[11px] px-1.5 py-[2px] rounded-[4px] border font-medium',
+                            doc.tier === 'Tier 1'
+                              ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800'
+                              : 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800'
                           )}>
-                            {doc.tier}
-                          </Badge>
+                            {doc.tier === 'Tier 1' ? 'T1' : 'T2'}
+                          </span>
                         )}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
+                      <TableCell className="px-2 py-1.5 text-[11px] text-muted-foreground">
                         {doc.discipline_code && (
                           <span className="font-mono">{doc.discipline_code}</span>
                         )}
