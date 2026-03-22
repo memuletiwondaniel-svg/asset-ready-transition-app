@@ -31,8 +31,9 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
   onClose,
   onAuthenticated
 }) => {
-  const { signIn, signUp, signInWithSSO, resetPassword } = useAuth();
+  const { signIn, signUp, signInWithSSO, resetPassword, complete2FA, cancel2FA } = useAuth();
   const { subdomainTenant, tenantMismatch } = useTenantContext();
+  const [show2FA, setShow2FA] = useState(false);
   const { ssoConfig } = useTenantSSOConfigPublic(subdomainTenant?.id ?? null);
   const [activeTab, setActiveTab] = useState('signin');
   const [showPassword, setShowPassword] = useState(false);
