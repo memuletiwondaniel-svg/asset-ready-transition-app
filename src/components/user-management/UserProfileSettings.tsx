@@ -783,6 +783,16 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({ isOpen, onClo
           </TabsContent>
         </Tabs>
       </DialogContent>
+      <TwoFactorSetupModal
+        open={showSetup2FA}
+        onOpenChange={setShowSetup2FA}
+        onSetupComplete={() => { setShowSetup2FA(false); fetchUserProfile(); }}
+      />
+      <DisableTwoFactorModal
+        open={showDisable2FA}
+        onOpenChange={setShowDisable2FA}
+        onDisabled={() => { setShowDisable2FA(false); fetchUserProfile(); }}
+      />
     </Dialog>
   );
 };
