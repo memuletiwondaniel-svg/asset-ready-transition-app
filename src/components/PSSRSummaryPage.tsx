@@ -12,6 +12,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Plus, ClipboardList, AlertTriangle, CheckCircle, Clock, Settings, Home, FileText, FolderOpen } from 'lucide-react';
+import { GlossaryTerm } from '@/components/ui/GlossaryTerm';
 import { PSSRQuickStatsBar } from './widgets/PSSRQuickStatsBar';
 
 import { PSSRReviewsWidget } from './widgets/PSSRReviewsWidget';
