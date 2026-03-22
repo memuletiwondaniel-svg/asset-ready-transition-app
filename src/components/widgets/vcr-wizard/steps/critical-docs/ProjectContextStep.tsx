@@ -22,9 +22,6 @@ const DMS_PLATFORMS = [
   { id: 'wrench', label: 'Wrench', description: 'Engineering document management' },
   { id: 'documentum', label: 'Documentum', description: 'Enterprise content platform' },
   { id: 'sharepoint', label: 'SharePoint', description: 'Microsoft collaboration platform' },
-  { id: 'aconex', label: 'Aconex', description: 'Construction project management' },
-  { id: 'proarc', label: 'ProArc', description: 'Engineering document control' },
-  { id: 'other', label: 'Other', description: 'Custom or in-house system' },
 ];
 
 export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
