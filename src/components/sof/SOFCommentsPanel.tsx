@@ -156,7 +156,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-orange-500/10",
     status: "complete" as const,
     summary: "Gas composition analysis verified compatible with CS6/7 processing requirements. Flow control valves sized and tuned for design throughput. Pressure drop calculations validated during commissioning. Slug catcher performance confirmed. Operating envelope documented and communicated to operations.",
-    reviewer: "Ghassan Majdalani - Process TA2 (P&E)",
+    reviewer: "Process TA2 (P&E)",
     date: "Jan 26, 2026"
   },
   paco: {
