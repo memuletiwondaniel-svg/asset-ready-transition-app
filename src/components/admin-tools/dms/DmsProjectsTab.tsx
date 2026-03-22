@@ -100,9 +100,12 @@ const DmsProjectsTab: React.FC = () => {
   const openAddSheet = () => { setEditingItem(null); setFormCode(''); setFormProjectId(''); setFormProjectName(''); setFormCabinet(''); setFormIsActive(true); setSheetOpen(true); };
   const openEditSheet = (item: ProjectRow) => { setEditingItem(item); setFormCode(item.code); setFormProjectId(item.project_id || ''); setFormProjectName(item.project_name); setFormCabinet(item.cabinet || ''); setFormIsActive(item.is_active); setSheetOpen(true); };
 
+  const stripProjectPrefix = (name: string) => name.replace(/^ST\/DP[0-9]+\s*[-–]?\s*/i, '').trim();
+
   const handleSave = () => {
     if (!formCode.trim() || !formProjectName.trim()) { toast.error('Code and Project Name are required'); return; }
-    const payload = { code: formCode.trim(), project_id: formProjectId.trim(), project_name: formProjectName.trim(), cabinet: formCabinet.trim(), is_active: formIsActive };
+    const cleanedName = stripProjectPrefix(formProjectName.trim());
+    const payload = { code: formCode.trim(), project_id: formProjectId.trim(), project_name: cleanedName, cabinet: formCabinet.trim(), is_active: formIsActive };
     if (editingItem) { updateProject.mutate({ id: editingItem.id, ...payload }); }
     else { createProject.mutate(payload); }
   };
@@ -147,7 +150,7 @@ const DmsProjectsTab: React.FC = () => {
                     <TableCell className="text-muted-foreground text-xs tabular-nums">{idx + 1}</TableCell>
                     <TableCell><span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-foreground">{item.code}</span></TableCell>
                     <TableCell className="text-sm text-muted-foreground">{item.project_id || '—'}</TableCell>
-                    <TableCell className="text-sm text-foreground">{item.project_name}</TableCell>
+                    <TableCell className="text-sm text-foreground">{stripProjectPrefix(item.project_name)}</TableCell>
                     <TableCell><span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-muted-foreground">{item.cabinet || '—'}</span></TableCell>
                     <TableCell className="text-center">
                       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
