@@ -66,8 +66,8 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
 
   const projectOptions = projects.map((p: any) => ({
     value: p.code,
-    label: p.project_id
-      ? `${p.code} ${p.project_id} — ${p.project_name}`
+    label: p.project_id && p.project_id.trim()
+      ? `${p.code} — ${p.project_id} — ${p.project_name}`
       : `${p.code} — ${p.project_name}`,
     displayValue: p.code,
   }));
