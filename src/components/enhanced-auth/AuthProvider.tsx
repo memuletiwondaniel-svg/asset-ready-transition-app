@@ -109,7 +109,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string, rememberMe: boolean = true) => {
+  const complete2FA = () => {
+    setPending2FA(false);
+    toast.success('Successfully signed in!');
+  };
+
+  const cancel2FA = async () => {
+    setPending2FA(false);
+    await supabase.auth.signOut();
+  };
+
+  const signIn = async (email: string, password: string, rememberMe: boolean = true): Promise<{ error: any; requires2FA?: boolean }> => {
     try {
       // Check if account is locked BEFORE attempting sign-in
       try {
@@ -183,6 +193,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         sessionStorage.setItem('rememberMe', 'false');
         localStorage.removeItem('rememberMe');
+      }
+
+      // Check if 2FA is enabled for this user
+      if (data.user) {
+        try {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('two_factor_enabled')
+            .eq('user_id', data.user.id)
+            .single();
+
+          if (profileData?.two_factor_enabled) {
+            setPending2FA(true);
+            return { error: null, requires2FA: true };
+          }
+        } catch {
+          // If profile check fails, proceed without 2FA
+        }
       }
 
       toast.success('Successfully signed in!');
