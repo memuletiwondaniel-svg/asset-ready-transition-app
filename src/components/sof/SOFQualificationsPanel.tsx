@@ -190,7 +190,7 @@ const dp385Deviations: QualificationDetail[] = [
     expiryDate: '2026-03-31',
     riskDescription: 'Potential for no maintenance activity being executed on BGC-installed facilities due to unclear custody and responsibility',
     riskRating: 'Medium',
-    actionOwner: 'Khalid Rahman',
+    actionOwner: 'Project Interface Manager',
     actionOwnerRole: 'Project Interface Manager',
     attachments: [
       { name: 'Interim_Operating_Agreement.pdf', type: 'PDF' },
