@@ -12,7 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Upload, FileSpreadsheet, X, Loader2, Download, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { cn } from '@/lib/utils';
-import * as XLSX from 'xlsx';
+import { readExcelFile, writeExcelFile } from '@/utils/excelUtils';
 import { P2ASystem } from '../hooks/useP2ASystems';
 
 interface ParsedSystem {
