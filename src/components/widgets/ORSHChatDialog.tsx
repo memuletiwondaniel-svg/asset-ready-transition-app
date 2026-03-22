@@ -38,6 +38,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { cn } from '@/lib/utils';
 import { processUserInput, getBlockedResponse } from '@/lib/security';
+import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import {
   Tooltip,
   TooltipContent,
