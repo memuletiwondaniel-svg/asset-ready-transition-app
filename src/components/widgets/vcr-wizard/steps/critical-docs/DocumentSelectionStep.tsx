@@ -282,26 +282,59 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
     setActiveFilters(next);
   };
 
-  const currentSelections = selections[activeSystemId] || [];
+  const activeSystemMemberIds = useMemo(() => {
+    if (activeSystemId === '__all__') return ['__all__'];
+    const activeSystem = systems.find((system: any) => system.id === activeSystemId);
+    const members = activeSystem?.memberIds as string[] | undefined;
+    return members && members.length > 0 ? members : [activeSystemId];
+  }, [activeSystemId, systems]);
+
+  const currentSelections = useMemo(() => {
+    const merged = new Set<string>();
+    activeSystemMemberIds.forEach((systemId) => {
+      (selections[systemId] || []).forEach((docId) => merged.add(docId));
+    });
+    return Array.from(merged);
+  }, [activeSystemMemberIds, selections]);
+
   const isSelected = (docId: string) => currentSelections.includes(docId);
 
   const toggleDoc = (docId: string) => {
-    const current = selections[activeSystemId] || [];
-    const next = current.includes(docId)
-      ? current.filter(id => id !== docId)
-      : [...current, docId];
-    onSelectionsChange({ ...selections, [activeSystemId]: next });
+    const next = currentSelections.includes(docId)
+      ? currentSelections.filter(id => id !== docId)
+      : [...currentSelections, docId];
+
+    if (activeSystemId === '__all__') {
+      onSelectionsChange({ ...selections, [activeSystemId]: next });
+      return;
+    }
+
+    const nextSelections: SystemDocSelections = { ...selections, [activeSystemId]: next };
+    activeSystemMemberIds.forEach((memberId) => {
+      if (memberId !== activeSystemId) delete nextSelections[memberId];
+    });
+
+    onSelectionsChange(nextSelections);
   };
 
   const toggleAll = () => {
     const allIds = filtered.map(d => d.id);
     const allSelected = allIds.every(id => currentSelections.includes(id));
-    if (allSelected) {
-      onSelectionsChange({ ...selections, [activeSystemId]: currentSelections.filter(id => !allIds.includes(id)) });
-    } else {
-      const merged = [...new Set([...currentSelections, ...allIds])];
-      onSelectionsChange({ ...selections, [activeSystemId]: merged });
+    const next = allSelected
+      ? currentSelections.filter(id => !allIds.includes(id))
+      : [...new Set([...currentSelections, ...allIds])];
+
+    if (activeSystemId === '__all__') {
+      onSelectionsChange({ ...selections, [activeSystemId]: next });
+      return;
     }
+
+    const nextSelections: SystemDocSelections = { ...selections, [activeSystemId]: next };
+    activeSystemMemberIds.forEach((memberId) => {
+      if (memberId !== activeSystemId) delete nextSelections[memberId];
+    });
+
+    onSelectionsChange(nextSelections);
   };
 
   const allVisibleSelected = filtered.length > 0 && filtered.every(d => isSelected(d.id));
