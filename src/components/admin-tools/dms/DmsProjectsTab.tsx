@@ -100,9 +100,12 @@ const DmsProjectsTab: React.FC = () => {
   const openAddSheet = () => { setEditingItem(null); setFormCode(''); setFormProjectId(''); setFormProjectName(''); setFormCabinet(''); setFormIsActive(true); setSheetOpen(true); };
   const openEditSheet = (item: ProjectRow) => { setEditingItem(item); setFormCode(item.code); setFormProjectId(item.project_id || ''); setFormProjectName(item.project_name); setFormCabinet(item.cabinet || ''); setFormIsActive(item.is_active); setSheetOpen(true); };
 
+  const stripProjectPrefix = (name: string) => name.replace(/^ST\/DP[0-9]+\s*[-–]?\s*/i, '').trim();
+
   const handleSave = () => {
     if (!formCode.trim() || !formProjectName.trim()) { toast.error('Code and Project Name are required'); return; }
-    const payload = { code: formCode.trim(), project_id: formProjectId.trim(), project_name: formProjectName.trim(), cabinet: formCabinet.trim(), is_active: formIsActive };
+    const cleanedName = stripProjectPrefix(formProjectName.trim());
+    const payload = { code: formCode.trim(), project_id: formProjectId.trim(), project_name: cleanedName, cabinet: formCabinet.trim(), is_active: formIsActive };
     if (editingItem) { updateProject.mutate({ id: editingItem.id, ...payload }); }
     else { createProject.mutate(payload); }
   };
