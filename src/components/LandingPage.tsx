@@ -739,6 +739,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               </div>
             </Card>
 
+            {/* Onboarding Checklist */}
+            <div className="animate-fade-in max-w-md mx-auto w-full" style={{ animationDelay: '80ms' }}>
+              <OnboardingChecklist />
+            </div>
+
             {/* Favorites / Quick Actions Section */}
             <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
               {favorites.length > 0 ? (
