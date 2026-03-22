@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { processUserInput, getBlockedResponse } from '@/lib/security';
 import { useFavoritePages } from '@/hooks/useFavoritePages';
 import { useNewTaskCount } from '@/hooks/useNewTaskCount';
+import { useTenantSetupStatus } from '@/hooks/useTenantSetupStatus';
+
+const TenantSetupWizardLazy = lazy(() => import('./tenant-setup/TenantSetupWizard').then(m => ({ default: m.TenantSetupWizard })));
 
 // Maps favorite paths to appropriate icons and colors matching page headers
 const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color: string }> = {
@@ -179,6 +182,14 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [initialPrompt, setInitialPrompt] = useState<string>('');
+  const { needsSetup } = useTenantSetupStatus();
+  const [tenantSetupOpen, setTenantSetupOpen] = useState(false);
+  const [setupDismissed, setSetupDismissed] = useState(false);
+
+  // Auto-show tenant setup wizard for unconfigured tenants
+  React.useEffect(() => {
+    if (needsSetup && !setupDismissed) setTenantSetupOpen(true);
+  }, [needsSetup, setupDismissed]);
 
   // Sample questions for rotating placeholder
   const sampleQuestions = [
@@ -869,6 +880,19 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
       {/* ORSH Chat Dialog */}
       <ORSHChatDialog open={chatOpen} onOpenChange={setChatOpen} initialMessage={initialPrompt} />
+
+      {/* Tenant Setup Wizard — auto-shows for new tenants */}
+      <Suspense fallback={null}>
+        {tenantSetupOpen && (
+          <TenantSetupWizardLazy
+            open={tenantSetupOpen}
+            onOpenChange={(open) => {
+              setTenantSetupOpen(open);
+              if (!open) setSetupDismissed(true);
+            }}
+          />
+        )}
+      </Suspense>
     </div>
   );
 };

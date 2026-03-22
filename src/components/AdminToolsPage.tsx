@@ -53,6 +53,7 @@ const CustomerJourneyMaps = lazy(() => import("./admin-tools/CustomerJourneyMaps
 const ProcessFlowMaps = lazy(() => import("./admin-tools/ProcessFlowMaps"));
 const DocumentManagementSystem = lazy(() => import("./admin-tools/DocumentManagementSystem"));
 const AIAgentStrategyDocument = lazy(() => import("./admin-tools/AIAgentStrategyDocument"));
+const TenantSetupWizardLazy = lazy(() => import("./tenant-setup/TenantSetupWizard").then(m => ({ default: m.TenantSetupWizard })));
 
 // Loading fallback component
 const ViewLoadingFallback = () => (
@@ -83,7 +84,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows' | 'document-management' | 'ai-agent-strategy'>(() => {
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'apis' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows' | 'document-management' | 'ai-agent-strategy' | 'tenant-setup'>(() => {
     // Check if navigated with a specific activeView from favorites
     const state = location.state as any;
     return state?.activeView || 'dashboard';
@@ -97,6 +98,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     }
   }, [(location.state as any)?.navKey]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [tenantSetupOpen, setTenantSetupOpen] = useState(false);
   const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<{
@@ -515,6 +517,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('ai-agent-strategy')
+  }, {
+    id: 'tenant-setup',
+    title: 'Tenant Setup Wizard',
+    description: 'Guided 7-step wizard to configure plants, fields, hubs, commissions, roles, and invite users for a new organisation',
+    icon: Compass,
+    gradient: 'from-teal-500 to-cyan-600',
+    tooltip: 'Launch the guided tenant setup wizard to configure your organisation',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setTenantSetupOpen(true)
   }];
 
   // Filter admin tools based on search query
@@ -845,7 +857,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     </div>;
   }
   
-  return <div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
+  return <><div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
         {/* Header */}
         <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
           <BreadcrumbNavigation currentPageLabel="Administration" favoritePath="/admin-tools" />
@@ -1031,7 +1043,11 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         </TooltipProvider>
         </div>
       </div>
-    </div>;
+    </div>
+    <Suspense fallback={null}>
+      {tenantSetupOpen && <TenantSetupWizardLazy open={tenantSetupOpen} onOpenChange={setTenantSetupOpen} />}
+    </Suspense>
+    </>;
 };
 const AdminToolsPage: React.FC<AdminToolsPageProps> = props => {
   return <AdminToolsPageContent {...props} />;
