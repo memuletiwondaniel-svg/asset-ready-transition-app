@@ -817,7 +817,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     </button>
                     <button
                       onClick={() => onNavigate('projects')}
-                      className="group flex flex-col items-center gap-2 sm:gap-2.5 p-3 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[75px] sm:min-w-[100px]"
+                      className="group flex flex-col items-center gap-2 sm:gap-2.5 p-4 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 min-w-[80px] sm:min-w-[100px] min-h-[72px] touch-manipulation"
                     >
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center bg-violet-500 transition-transform duration-200 group-hover:scale-110">
                         <Key className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
