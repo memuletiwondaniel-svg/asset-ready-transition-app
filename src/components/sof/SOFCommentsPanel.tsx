@@ -176,7 +176,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-cyan-500/10",
     status: "complete" as const,
     summary: "Booster compressor alignment verified and baseline vibration recorded. Seal gas system operational with correct differential pressures. Lube oil analysis within specifications. Performance test completed at design conditions. Auxiliary systems including cooling water verified operational.",
-    reviewer: "Tim Brown - Rotating TA2 (P&E)",
+    reviewer: "Rotating TA2 (P&E)",
     date: "Jan 25, 2026"
   },
   static: {
