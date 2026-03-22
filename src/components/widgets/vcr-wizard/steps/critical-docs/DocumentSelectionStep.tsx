@@ -306,30 +306,30 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
 
         {/* Document Table */}
         <ScrollArea className="flex-1">
-          <Table>
+          <Table className="table-fixed w-full">
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">
+              <TableRow className="h-9">
+                <TableHead className="w-8 px-2 py-1.5">
                   <Checkbox checked={allVisibleSelected} onCheckedChange={toggleAll} />
                 </TableHead>
-                <TableHead className="cursor-pointer select-none w-24" onClick={() => toggleSort('code')}>
+                <TableHead className="w-[60px] px-2 py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('code')}>
                   Code <SortIcon col="code" />
                 </TableHead>
-                <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('document_name')}>
+                <TableHead className="px-2 py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('document_name')}>
                   Document Name <SortIcon col="document_name" />
                 </TableHead>
-                <TableHead className="cursor-pointer select-none w-20" onClick={() => toggleSort('tier')}>
+                <TableHead className="w-[60px] px-2 py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('tier')}>
                   Tier <SortIcon col="tier" />
                 </TableHead>
-                <TableHead className="cursor-pointer select-none w-28" onClick={() => toggleSort('discipline_code')}>
-                  Discipline <SortIcon col="discipline_code" />
+                <TableHead className="w-[80px] px-2 py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('discipline_code')}>
+                  Disc. <SortIcon col="discipline_code" />
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12 text-sm text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-12 text-xs text-muted-foreground">
                     No documents match your filters. Try adjusting the filter criteria.
                   </TableCell>
                 </TableRow>
@@ -339,25 +339,29 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
                   return (
                     <TableRow
                       key={doc.id}
-                      className={cn('cursor-pointer', checked && 'bg-primary/5')}
+                      className={cn('cursor-pointer h-10', checked && 'bg-primary/5')}
                       onClick={() => toggleDoc(doc.id)}
                     >
-                      <TableCell onClick={e => e.stopPropagation()}>
+                      <TableCell className="px-2 py-1.5" onClick={e => e.stopPropagation()}>
                         <Checkbox checked={checked} onCheckedChange={() => toggleDoc(doc.id)} />
                       </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{doc.code}</TableCell>
-                      <TableCell className="text-sm">{doc.document_name}</TableCell>
-                      <TableCell>
+                      <TableCell className="px-2 py-1.5 font-mono text-[11px] text-muted-foreground">{doc.code}</TableCell>
+                      <TableCell className="px-2 py-1.5 text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-0" title={doc.document_name}>
+                        {doc.document_name}
+                      </TableCell>
+                      <TableCell className="px-2 py-1.5">
                         {doc.tier && (
-                          <Badge variant="outline" className={cn(
-                            'text-[10px]',
-                            doc.tier === 'Tier 1' ? 'border-orange-300 text-orange-600' : 'border-blue-300 text-blue-600'
+                          <span className={cn(
+                            'inline-flex items-center text-[11px] px-1.5 py-[2px] rounded-[4px] border font-medium',
+                            doc.tier === 'Tier 1'
+                              ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800'
+                              : 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800'
                           )}>
-                            {doc.tier}
-                          </Badge>
+                            {doc.tier === 'Tier 1' ? 'T1' : 'T2'}
+                          </span>
                         )}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
+                      <TableCell className="px-2 py-1.5 text-[11px] text-muted-foreground">
                         {doc.discipline_code && (
                           <span className="font-mono">{doc.discipline_code}</span>
                         )}
