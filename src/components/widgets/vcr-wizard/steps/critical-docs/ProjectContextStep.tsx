@@ -7,8 +7,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Info, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import assaiLogo from '@/assets/assai-logo-clean.png';
-import wrenchLogo from '@/assets/wrench-logo-clean.png';
+import assaiIcon from '@/assets/assai-icon.png';
+import wrenchIcon from '@/assets/wrench-icon.png';
 import documentumLogo from '@/assets/documentum-logo-clean.png';
 import sharepointLogo from '@/assets/sharepoint-logo-clean.png';
 
@@ -24,10 +24,10 @@ interface ProjectContextStepProps {
 }
 
 const DMS_PLATFORMS = [
-  { id: 'assai', label: '', logo: assaiLogo },
-  { id: 'wrench', label: '', logo: wrenchLogo },
-  { id: 'documentum', label: 'Documentum', logo: documentumLogo },
-  { id: 'sharepoint', label: 'SharePoint', logo: sharepointLogo },
+  { id: 'assai', label: 'Assai', description: 'Document management for oil & gas', logo: assaiIcon },
+  { id: 'wrench', label: 'Wrench', description: 'Engineering document management', logo: wrenchIcon },
+  { id: 'documentum', label: 'Documentum', description: 'Enterprise content platform', logo: documentumLogo },
+  { id: 'sharepoint', label: 'SharePoint', description: 'Microsoft collaboration platform', logo: sharepointLogo },
 ];
 
 export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
@@ -160,7 +160,7 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                 type="button"
                 onClick={() => togglePlatform(platform.id)}
                 className={cn(
-                  'relative flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all min-h-[80px]',
+                  'relative flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all min-h-[88px]',
                   isSelected
                     ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
                     : 'border-border hover:border-muted-foreground/40 hover:bg-muted/40'
@@ -175,14 +175,14 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                 <img
                   src={platform.logo}
                   alt={platform.label}
-                  className="w-10 h-10 rounded-lg object-contain shrink-0"
+                  className="w-11 h-11 rounded-lg object-contain shrink-0"
                 />
 
-                {platform.label && (
-                  <div className="min-w-0 pr-6">
-                    <p className={cn('text-sm font-medium leading-tight', isSelected && 'text-primary')}>{platform.label}</p>
-                  </div>
-                )}
+                {/* Text */}
+                <div className="min-w-0 pr-6">
+                  <p className={cn('text-sm font-medium leading-tight', isSelected && 'text-primary')}>{platform.label}</p>
+                  <p className="text-xs text-muted-foreground leading-snug mt-0.5">{platform.description}</p>
+                </div>
               </button>
             );
           })}
