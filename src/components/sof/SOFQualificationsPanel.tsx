@@ -71,7 +71,7 @@ const mockDeviations: QualificationDetail[] = [
     expiryDate: '2026-03-01',
     riskDescription: 'Potential confusion during emergency response if drawings not accurate',
     riskRating: 'Low',
-    actionOwner: 'Sarah Chen',
+    actionOwner: 'Document Control Lead',
     actionOwnerRole: 'Document Control Lead',
     attachments: [],
   },
