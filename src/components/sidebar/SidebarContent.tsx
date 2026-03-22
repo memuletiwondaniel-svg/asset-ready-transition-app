@@ -13,6 +13,7 @@ import { OnlineUsersIndicator } from '@/components/sidebar/OnlineUsersIndicator'
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useNewTaskCount } from '@/hooks/useNewTaskCount';
+import { GlossaryTerm } from '@/components/ui/GlossaryTerm';
 
 interface NavigationItem {
   labelKey: string;
