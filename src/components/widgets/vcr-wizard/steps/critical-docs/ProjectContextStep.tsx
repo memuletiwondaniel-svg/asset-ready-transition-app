@@ -67,11 +67,13 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
   const projectOptions = projects.map((p: any) => ({
     value: p.code,
     label: `${p.code} ${p.project_name}`,
+    displayValue: p.code,
   }));
 
   const plantOptions = plants.map((p: any) => ({
     value: p.code,
     label: `${p.code} — ${p.plant_name}`,
+    displayValue: p.code,
   }));
 
   const selectedProject = projects.find((p: any) => p.code === projectCode);
