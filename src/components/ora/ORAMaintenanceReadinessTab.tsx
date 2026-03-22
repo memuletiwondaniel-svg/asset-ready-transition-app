@@ -89,7 +89,7 @@ const MOCK_COMPONENT_NARRATIVES: Record<string, {
   },
   PMS: {
     lastUpdated: '2024-01-07',
-    updatedBy: 'Ahmed Hassan (CMMS Lead)',
+    updatedBy: 'CMMS Lead',
     narrative: 'Preventive Maintenance routines setup is underway. We have completed PM strategies for all critical rotating equipment. Currently working on developing task lists for electrical systems. Vendor maintenance manuals for new compressor packages have been received and are being reviewed.'
   },
   BOM: {
