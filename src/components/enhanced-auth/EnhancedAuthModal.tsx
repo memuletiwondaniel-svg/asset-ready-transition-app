@@ -55,10 +55,14 @@ const EnhancedAuthModal: React.FC<EnhancedAuthModalProps> = ({
     e.preventDefault();
     setLoading(true);
     setLoginFailed(false);
-    const { error } = await signIn(signInData.email, signInData.password, rememberMe);
+    const { error, requires2FA } = await signIn(signInData.email, signInData.password, rememberMe);
     if (!error) {
-      onAuthenticated();
-      onClose();
+      if (requires2FA) {
+        setShow2FA(true);
+      } else {
+        onAuthenticated();
+        onClose();
+      }
     } else {
       setLoginFailed(true);
     }
