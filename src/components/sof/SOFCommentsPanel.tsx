@@ -206,7 +206,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-teal-500/10",
     status: "complete" as const,
     summary: "Gas feed operating procedures developed and approved. Control room operators trained on new system configuration. Alarm setpoints rationalized and documented. Emergency isolation procedures tested during tabletop exercise. Coordination established with OT2/3 operations team for startup.",
-    reviewer: "Ewan McConnachie - CS Deputy Director",
+    reviewer: "CS Deputy Director",
     date: "Jan 28, 2026"
   },
   hse: {
