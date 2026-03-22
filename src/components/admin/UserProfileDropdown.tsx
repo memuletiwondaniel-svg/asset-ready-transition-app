@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { User, Settings, Shield, LogOut, ChevronDown, Key, Bell, UserCog } from 'lucide-react';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import { NotificationPreferencesPanel } from '@/components/NotificationPreferencesPanel';
 interface UserProfileDropdownProps {
   className?: string;
@@ -19,18 +20,19 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
     session,
     signOut
   } = useAuth();
+  const { data: userRoleData } = useCurrentUserRole();
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
 
-  // Mock user data - in real app this would come from session/profile
+  const userEmail = session?.user?.email || '';
   const user = {
-    name: session?.user?.email?.split('@')[0] || 'Admin User',
-    email: session?.user?.email || 'admin@bgc.com',
-    role: 'Administrator',
+    name: session?.user?.email?.split('@')[0] || 'User',
+    email: userEmail,
+    role: userRoleData?.role || userRoleData?.position || 'User',
     avatar: '',
-    initials: session?.user?.email?.slice(0, 2).toUpperCase() || 'AU',
+    initials: userEmail?.slice(0, 2).toUpperCase() || 'U',
     company: 'Basrah Gas Company',
-    department: 'ORSH Operations'
+    department: userRoleData?.position || ''
   };
   const handleSignOut = async () => {
     try {

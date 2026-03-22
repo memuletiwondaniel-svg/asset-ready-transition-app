@@ -32,7 +32,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-primary/10",
     status: "complete" as const,
     summary: "All disciplines have completed their reviews and confirmed readiness for startup. Cross-functional verification meetings held on Dec 5th with all discipline leads present. No outstanding interdisciplinary conflicts or dependencies remain. Safety systems integration verified across all disciplines. P&IDs, electrical diagrams, and process flows are aligned and approved.",
-    reviewer: "Daniel Memuletiwon - PSSR Lead",
+    reviewer: "PSSR Lead",
     date: "Dec 6, 2024"
   },
   techSafety: {
@@ -42,7 +42,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-red-500/10",
     status: "complete" as const,
     summary: "All safety instrumented systems (SIS) have been tested and verified. Emergency shutdown sequences confirmed operational. Fire & gas detection systems commissioned and integrated with DCS. HAZOP recommendations fully implemented. Safety relief valves tested and certified.",
-    reviewer: "Andrew Banford - Tech Safety TA2",
+    reviewer: "Tech Safety TA2",
     date: "Dec 5, 2024"
   },
   process: {
@@ -52,7 +52,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-orange-500/10",
     status: "complete" as const,
     summary: "Process control loops tuned and verified. Operating procedures reviewed and approved. Start-up sequence documented and validated with operations team. Material balance confirmed. Heat exchanger performance verified against design specifications.",
-    reviewer: "Chris Johnsen - Process TA2 (P&E)",
+    reviewer: "Process TA2 (P&E)",
     date: "Dec 4, 2024"
   },
   paco: {
@@ -62,7 +62,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-blue-500/10",
     status: "complete" as const,
     summary: "All piping systems pressure tested and certified. Instrument calibrations complete with certificates filed. Control valve stroking verified. P&ID walk-downs completed with no discrepancies. Flange management program implemented for all critical connections.",
-    reviewer: "David Brown - PACO TA2 (P&E)",
+    reviewer: "PACO TA2 (P&E)",
     date: "Dec 4, 2024"
   },
   rotating: {
@@ -72,7 +72,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-cyan-500/10",
     status: "complete" as const,
     summary: "Rotating equipment alignment verified. Vibration baselines established for all critical pumps and compressors. Lubrication systems charged and verified. Mechanical seals installed per specifications. Coupling guards and safety shields in place.",
-    reviewer: "Nathan Roberts - Rotating TA2 (P&E)",
+    reviewer: "Rotating TA2 (P&E)",
     date: "Dec 3, 2024"
   },
   static: {
@@ -82,7 +82,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-purple-500/10",
     status: "complete" as const,
     summary: "All static equipment inspections completed including pressure vessels, heat exchangers, and storage tanks. Thickness measurements verified against minimum requirements. Relief device certifications current. Vessel internals inspected and reinstalled per specifications. Piping flexibility analysis confirmed.",
-    reviewer: "Stuart Lugo - Static TA2 (P&E)",
+    reviewer: "Static TA2 (P&E)",
     date: "Dec 4, 2024"
   },
   electrical: {
@@ -92,7 +92,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-amber-500/10",
     status: "complete" as const,
     summary: "Motor rotation checks completed. Electrical isolation procedures verified. Ground fault protection tested. UPS systems commissioned. Emergency lighting operational. Cable terminations torqued and verified. Arc flash labels installed.",
-    reviewer: "Mohammed Yassar - Elect TA2 (P&E)",
+    reviewer: "Electrical TA2 (P&E)",
     date: "Dec 3, 2024"
   },
   civil: {
@@ -102,7 +102,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-slate-500/10",
     status: "complete" as const,
     summary: "Structural integrity assessments completed for all new installations. Foundation bolt torque verification documented. Drainage systems tested and operational. Fire escape routes verified clear and properly marked. Secondary containment areas inspected and certified. All civil punch list items closed out.",
-    reviewer: "Satya Borra - Civil TA2",
+    reviewer: "Civil TA2",
     date: "Dec 5, 2024"
   },
   operations: {
@@ -112,7 +112,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-teal-500/10",
     status: "complete" as const,
     summary: "Operating procedures reviewed and approved by shift supervisors. Control room displays configured and verified. Alarm rationalization completed. Operator training for DP300 completed with 100% attendance. Shift handover protocols established. Emergency response drills conducted successfully.",
-    reviewer: "Lyle Koch - CS Deputy Director",
+    reviewer: "CS Deputy Director",
     date: "Dec 6, 2024"
   },
   hse: {
@@ -122,7 +122,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-rose-500/10",
     status: "complete" as const,
     summary: "Job Safety Analysis (JSA) completed for all startup activities. PPE requirements verified and communicated. Environmental permits confirmed active. Spill response equipment staged at designated locations. First aid stations stocked and accessible. Toolbox talks scheduled for startup crew.",
-    reviewer: "Ahmed Kadhum - Ops HSE Manager",
+    reviewer: "Ops HSE Manager",
     date: "Dec 5, 2024"
   }
 };
@@ -136,7 +136,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-primary/10",
     status: "complete" as const,
     summary: "All disciplines have confirmed readiness for gas feed operations to CS6 and CS7. Integration testing completed between OT2/3 systems and receiving facilities. Cross-discipline walkdowns verified tie-in points and isolation boundaries. No outstanding interdisciplinary issues. Final coordination meeting held with all TAs present.",
-    reviewer: "Roaa Abdullah - PSSR Lead",
+    reviewer: "PSSR Lead",
     date: "Jan 28, 2026"
   },
   techSafety: {
@@ -146,7 +146,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-red-500/10",
     status: "complete" as const,
     summary: "Gas detection systems at tie-in locations commissioned and integrated. ESD logic verified for new gas feed isolation. HAZOP action items from gas routing study closed. Pressure relief sizing confirmed for upstream conditions. Flare capacity validated for emergency scenarios.",
-    reviewer: "Antoine Segret - Tech Safety TA2",
+    reviewer: "Tech Safety TA2",
     date: "Jan 27, 2026"
   },
   process: {
@@ -156,7 +156,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-orange-500/10",
     status: "complete" as const,
     summary: "Gas composition analysis verified compatible with CS6/7 processing requirements. Flow control valves sized and tuned for design throughput. Pressure drop calculations validated during commissioning. Slug catcher performance confirmed. Operating envelope documented and communicated to operations.",
-    reviewer: "Ghassan Majdalani - Process TA2 (P&E)",
+    reviewer: "Process TA2 (P&E)",
     date: "Jan 26, 2026"
   },
   paco: {
@@ -166,7 +166,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-blue-500/10",
     status: "complete" as const,
     summary: "All gas feed instrumentation calibrated and loop-checked. Flow metering accuracy verified to custody transfer standards. Control system graphics updated for new tie-ins. Pressure transmitters tested at operating conditions. Analyzer shelters commissioned with sample systems operational.",
-    reviewer: "Collin Hand - PACO TA2 (P&E)",
+    reviewer: "PACO TA2 (P&E)",
     date: "Jan 26, 2026"
   },
   rotating: {
@@ -176,7 +176,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-cyan-500/10",
     status: "complete" as const,
     summary: "Booster compressor alignment verified and baseline vibration recorded. Seal gas system operational with correct differential pressures. Lube oil analysis within specifications. Performance test completed at design conditions. Auxiliary systems including cooling water verified operational.",
-    reviewer: "Tim Brown - Rotating TA2 (P&E)",
+    reviewer: "Rotating TA2 (P&E)",
     date: "Jan 25, 2026"
   },
   static: {
@@ -186,7 +186,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-purple-500/10",
     status: "complete" as const,
     summary: "New piping tie-ins hydrotested and certified. Pig launcher/receiver installations inspected. Flange integrity verification completed for all new connections. Corrosion allowance confirmed adequate for gas service. Support and hanger adjustments completed per stress analysis.",
-    reviewer: "Prakash Princeton - Static TA2 (P&E)",
+    reviewer: "Static TA2 (P&E)",
     date: "Jan 26, 2026"
   },
   civil: {
@@ -196,7 +196,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-slate-500/10",
     status: "complete" as const,
     summary: "Pipe rack modifications structurally certified. New foundations for metering skid inspected and approved. Access platforms installed with proper egress. Drainage provisions verified for new equipment areas. Wind load calculations confirmed for elevated piping sections.",
-    reviewer: "Satya Borra - Civil TA2",
+    reviewer: "Civil TA2",
     date: "Jan 27, 2026"
   },
   operations: {
@@ -206,7 +206,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-teal-500/10",
     status: "complete" as const,
     summary: "Gas feed operating procedures developed and approved. Control room operators trained on new system configuration. Alarm setpoints rationalized and documented. Emergency isolation procedures tested during tabletop exercise. Coordination established with OT2/3 operations team for startup.",
-    reviewer: "Ewan McConnachie - CS Deputy Director",
+    reviewer: "CS Deputy Director",
     date: "Jan 28, 2026"
   },
   hse: {
@@ -216,7 +216,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-rose-500/10",
     status: "complete" as const,
     summary: "Gas release scenarios reviewed and emergency response updated. Portable gas monitors positioned at work locations. Environmental permit modifications approved. Simultaneous operations assessment completed. Toolbox talks conducted for all startup personnel.",
-    reviewer: "Ahmed Kadhum - Ops HSE Manager",
+    reviewer: "Ops HSE Manager",
     date: "Jan 27, 2026"
   }
 };
