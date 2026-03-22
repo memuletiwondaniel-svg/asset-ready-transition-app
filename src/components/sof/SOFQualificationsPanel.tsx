@@ -49,7 +49,7 @@ const mockDeviations: QualificationDetail[] = [
     expiryDate: '2026-03-15',
     riskDescription: 'Improper maintenance procedures could lead to engine failure or safety incidents',
     riskRating: 'Low',
-    actionOwner: 'Mohamed Ali',
+    actionOwner: 'ORA Engineer',
     actionOwnerRole: 'ORA Engr.',
     attachments: [
       { name: 'Waukesha_Training_Schedule.pdf', type: 'PDF' },
