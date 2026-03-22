@@ -1,10 +1,11 @@
-import React from 'react';
-import { ArrowLeft, ArrowRight, GitBranch, Layers, Shield, ClipboardList, FolderOpen, Wrench, BookOpen, Users, FileText, CheckCircle, AlertTriangle, Clock, LayoutTemplate } from 'lucide-react';
+import React, { useRef } from 'react';
+import { ArrowLeft, ArrowRight, GitBranch, Layers, Shield, ClipboardList, FolderOpen, Wrench, BookOpen, Users, FileText, CheckCircle, AlertTriangle, Clock, LayoutTemplate, Database, Lock, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
+import DocumentDownloadButton from './DocumentDownloadButton';
 
 interface ProcessFlowMapsProps {
   onBack: () => void;
@@ -92,6 +93,8 @@ const InfoTable: React.FC<{ headers: string[]; rows: string[][] }> = ({ headers,
 );
 
 const ProcessFlowMaps: React.FC<ProcessFlowMapsProps> = ({ onBack }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
+
   const tocItems = [
     { id: 'user-lifecycle', label: 'User Lifecycle & Onboarding' },
     { id: 'project-creation', label: 'Project Creation & Team Setup' },
@@ -105,6 +108,8 @@ const ProcessFlowMaps: React.FC<ProcessFlowMapsProps> = ({ onBack }) => {
     { id: 'task-automation', label: 'Task Automation Engine' },
     { id: 'approval-chains', label: 'Approval Chain Patterns' },
     { id: 'ori-calculation', label: 'ORI Scoring Process' },
+    { id: 'dms-workflow', label: 'Document Management System' },
+    { id: 'rls-security', label: 'RLS & Security Architecture' },
   ];
 
   return (
@@ -125,13 +130,16 @@ const ProcessFlowMaps: React.FC<ProcessFlowMapsProps> = ({ onBack }) => {
               <p className="text-sm text-muted-foreground">Complete process documentation for all ORSH workflows</p>
             </div>
           </div>
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            {tocItems.length} Processes
-          </Badge>
+          <div className="flex items-center gap-2">
+            <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-Process-Flow-Maps" title="Download Process Flow Maps as PDF" />
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+              {tocItems.length} Processes
+            </Badge>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto" ref={contentRef}>
         <div className="max-w-6xl mx-auto px-4 md:px-8 py-8 space-y-10">
 
           {/* Table of Contents */}
@@ -174,6 +182,7 @@ const ProcessFlowMaps: React.FC<ProcessFlowMapsProps> = ({ onBack }) => {
                   <li>• <strong className="text-foreground">Auto-assign:</strong> New users receive default "Viewer" role via trigger</li>
                   <li>• <strong className="text-foreground">Profile Sync:</strong> <code className="bg-muted px-1 rounded text-[10px]">sync_profile_names_to_auth()</code> keeps auth metadata in sync</li>
                   <li>• <strong className="text-foreground">Offboarding:</strong> <code className="bg-muted px-1 rounded text-[10px]">offboard_user()</code> deactivates, cancels tasks, revokes API keys</li>
+                  <li>• <strong className="text-foreground">Leaked Password Protection:</strong> HIBP integration checks passwords against known breaches on registration</li>
                 </ul>
               </CardContent>
             </Card>
@@ -462,10 +471,80 @@ const ProcessFlowMaps: React.FC<ProcessFlowMapsProps> = ({ onBack }) => {
             <SwimLane role="Output" color="bg-violet-600" steps={['ORI Score (0-100)', 'SCS (0-100)', 'Dimension Breakdown', 'Risk Penalties', 'Confidence Level']} />
           </ProcessSection>
 
+          <Separator />
+
+          {/* 13. DMS Workflow */}
+          <ProcessSection id="dms-workflow" icon={<FolderOpen className="h-5 w-5 text-primary" />} title="13. Document Management System" description="Structured document numbering, registration, and lifecycle">
+            <FlowDiagram steps={[
+              { label: 'Initiate Document', type: 'start' },
+              { label: 'Select Segments', type: 'process' },
+              { label: 'Auto-Generate Number', type: 'auto' },
+              { label: 'Upload Attachment', type: 'process' },
+              { label: 'Set Status Code', type: 'process' },
+              { label: 'Review & Approve', type: 'decision' },
+              { label: 'Document Registered', type: 'end' },
+            ]} />
+            <Card className="bg-muted/30">
+              <CardContent className="pt-4">
+                <p className="text-xs font-semibold text-foreground mb-2">Numbering Segments</p>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>• <strong className="text-foreground">Configurable segments:</strong> Site, Plant, Project, Unit, Discipline, Originator, Document Type, Sequential Number</li>
+                  <li>• <strong className="text-foreground">Lookup tables:</strong> <code className="bg-muted px-1 rounded text-[10px]">dms_sites</code>, <code className="bg-muted px-1 rounded text-[10px]">dms_plants</code>, <code className="bg-muted px-1 rounded text-[10px]">dms_projects</code>, <code className="bg-muted px-1 rounded text-[10px]">dms_units</code>, <code className="bg-muted px-1 rounded text-[10px]">dms_disciplines</code>, <code className="bg-muted px-1 rounded text-[10px]">dms_originators</code></li>
+                  <li>• <strong className="text-foreground">Status codes:</strong> Managed via <code className="bg-muted px-1 rounded text-[10px]">dms_status_codes</code> with revision suffixes</li>
+                  <li>• <strong className="text-foreground">Document types:</strong> Multi-discipline mapping with tier and RLMU classification</li>
+                </ul>
+              </CardContent>
+            </Card>
+            <InfoTable headers={['Segment', 'Source Table', 'Example']} rows={[
+              ['Site', 'dms_sites', 'RLC'],
+              ['Plant', 'dms_plants', 'GPL'],
+              ['Project', 'dms_projects', 'DP300'],
+              ['Unit', 'dms_units', 'U01'],
+              ['Discipline', 'dms_disciplines', 'PROC'],
+              ['Originator', 'dms_originators', 'EPC'],
+              ['Document Type', 'dms_document_types', 'PFD'],
+              ['Sequential', 'Auto-increment', '0001'],
+            ]} />
+          </ProcessSection>
+
+          <Separator />
+
+          {/* 14. RLS & Security Architecture */}
+          <ProcessSection id="rls-security" icon={<Lock className="h-5 w-5 text-primary" />} title="14. RLS & Security Architecture" description="Row-Level Security patterns and performance optimizations">
+            <FlowDiagram steps={[
+              { label: 'User Request', type: 'start' },
+              { label: 'Auth Token Validated', type: 'process' },
+              { label: '(select auth.uid())', type: 'auto' },
+              { label: 'RLS Policy Evaluated', type: 'process' },
+              { label: 'Tenant Isolation Check', type: 'decision' },
+              { label: 'Role-Based Access', type: 'process' },
+              { label: 'Data Returned', type: 'end' },
+            ]} />
+            <Card className="bg-muted/30">
+              <CardContent className="pt-4">
+                <p className="text-xs font-semibold text-foreground mb-2">Performance Hardening (March 2026)</p>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>• <strong className="text-foreground">416 policies optimized:</strong> All <code className="bg-muted px-1 rounded text-[10px]">auth.uid()</code> calls wrapped as <code className="bg-muted px-1 rounded text-[10px]">(select auth.uid())</code> — evaluated once per query, not once per row</li>
+                  <li>• <strong className="text-foreground">~100 policy overlaps resolved:</strong> Multiple permissive policies consolidated into single policies per role/operation</li>
+                  <li>• <strong className="text-foreground">ALL→specific split:</strong> Generic ALL policies replaced with per-command (SELECT/INSERT/UPDATE/DELETE) policies to prevent unintended OR widening</li>
+                  <li>• <strong className="text-foreground">Zero advisor warnings:</strong> Both "Auth RLS Initialization Plan" and "Multiple Permissive Policies" warnings eliminated</li>
+                </ul>
+              </CardContent>
+            </Card>
+            <InfoTable headers={['Pattern', 'Description', 'Tables Using']} rows={[
+              ['Tenant Isolation', 'tenant_id = (select auth.jwt()->>"tenant_id")', '~90% of tables'],
+              ['Owner Access', 'user_id = (select auth.uid())', 'profiles, tasks, preferences'],
+              ['Role-Based (has_role)', 'SECURITY DEFINER function checks user_roles table', 'Admin-gated tables'],
+              ['Public Read', 'is_active = true for SELECT, restricted for write', 'commission, discipline, field'],
+              ['Progressive Activation', 'Status-dependent access for workflow gating', 'VCR bundles, approval chains'],
+            ]} />
+          </ProcessSection>
+
           {/* Footer */}
           <div className="text-center text-xs text-muted-foreground py-6 border-t border-border">
             <p>This is a living document maintained within the ORSH platform.</p>
             <p>Process flows are updated as new workflows, automations, and modules are added.</p>
+            <p className="mt-1 font-medium">Last updated: 22 March 2026</p>
           </div>
         </div>
       </div>
