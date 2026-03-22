@@ -50,6 +50,7 @@ const StatusTable: React.FC<{ rows: { label: string; value: string; status: 'act
 );
 
 const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({ onBack }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
   const tocItems = [
     { id: 'executive-summary', label: 'Executive Summary' },
     { id: 'investor-pitch', label: '60-Second Investor Pitch' },
