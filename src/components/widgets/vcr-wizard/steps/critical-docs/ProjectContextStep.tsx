@@ -2,11 +2,9 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Info, Sparkles } from 'lucide-react';
+import { Check, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { EnhancedSearchableCombobox } from '@/components/ui/enhanced-searchable-combobox';
 import assaiIcon from '@/assets/assai-icon.png';
 import wrenchIcon from '@/assets/wrench-icon.png';
 import documentumLogo from '@/assets/documentum-logo-clean.png';
@@ -19,21 +17,18 @@ interface ProjectContextStepProps {
   onPlantCodeChange: (code: string) => void;
   dmsPlatforms: string[];
   onDmsPlatformsChange: (platforms: string[]) => void;
-  projectAutoDetected?: boolean;
-  plantAutoDetected?: boolean;
 }
 
 const DMS_PLATFORMS = [
-  { id: 'assai', label: 'Assai', description: 'Document management for oil & gas', logo: assaiIcon },
-  { id: 'wrench', label: 'Wrench', description: 'Engineering document management', logo: wrenchIcon },
-  { id: 'documentum', label: 'Documentum', description: 'Enterprise content platform', logo: documentumLogo },
-  { id: 'sharepoint', label: 'SharePoint', description: 'Microsoft collaboration platform', logo: sharepointLogo },
+  { id: 'assai', label: 'Assai', logo: assaiIcon },
+  { id: 'wrench', label: 'Wrench', logo: wrenchIcon },
+  { id: 'documentum', label: 'Documentum', logo: documentumLogo },
+  { id: 'sharepoint', label: 'SharePoint', logo: sharepointLogo },
 ];
 
 export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
   projectCode, onProjectCodeChange, plantCode, onPlantCodeChange,
   dmsPlatforms, onDmsPlatformsChange,
-  projectAutoDetected = false, plantAutoDetected = false,
 }) => {
   const { data: projects = [] } = useQuery({
     queryKey: ['dms-projects-active'],
@@ -69,6 +64,19 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
     );
   };
 
+  const projectOptions = projects.map((p: any) => ({
+    value: p.code,
+    label: `${p.code} ${p.project_name}`,
+  }));
+
+  const plantOptions = plants.map((p: any) => ({
+    value: p.code,
+    label: `${p.code} — ${p.plant_name}`,
+  }));
+
+  const selectedProject = projects.find((p: any) => p.code === projectCode);
+  const selectedPlant = plants.find((p: any) => p.code === plantCode);
+
   return (
     <div className="p-6 space-y-8 max-w-2xl mx-auto">
       {/* Guidance Banner */}
@@ -91,51 +99,37 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label className="text-xs font-medium text-muted-foreground">Project Code *</Label>
-              {projectAutoDetected && projectCode && (
-                <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">
-                  <Sparkles className="w-2.5 h-2.5 mr-0.5" /> Auto-detected
-                </Badge>
-              )}
-            </div>
-            <Select value={projectCode} onValueChange={onProjectCodeChange}>
-              <SelectTrigger className="h-10">
-                <SelectValue placeholder="Select project…" />
-              </SelectTrigger>
-              <SelectContent className="z-[200]">
-                {projects.map((p: any) => (
-                  <SelectItem key={p.code} value={p.code}>
-                    <span className="font-mono text-xs mr-2">{p.code}</span>
-                    <span className="text-muted-foreground">{p.project_name}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label className="text-xs font-medium text-muted-foreground">Project Code *</Label>
+            <EnhancedSearchableCombobox
+              options={projectOptions}
+              value={projectCode}
+              onValueChange={onProjectCodeChange}
+              placeholder="Select project…"
+              searchPlaceholder="Search projects…"
+              className="h-10"
+            />
+            {selectedProject && (
+              <div className="pl-1">
+                <p className="text-[12px] text-muted-foreground">{selectedProject.project_name}</p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label className="text-xs font-medium text-muted-foreground">Plant Code *</Label>
-              {plantAutoDetected && plantCode && (
-                <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">
-                  <Sparkles className="w-2.5 h-2.5 mr-0.5" /> Auto-detected
-                </Badge>
-              )}
-            </div>
-            <Select value={plantCode} onValueChange={onPlantCodeChange}>
-              <SelectTrigger className="h-10">
-                <SelectValue placeholder="Select plant…" />
-              </SelectTrigger>
-              <SelectContent className="z-[200]">
-                {plants.map((p: any) => (
-                  <SelectItem key={p.code} value={p.code}>
-                    <span className="font-mono text-xs mr-2">{p.code}</span>
-                    <span className="text-muted-foreground">{p.plant_name}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label className="text-xs font-medium text-muted-foreground">Plant Code *</Label>
+            <EnhancedSearchableCombobox
+              options={plantOptions}
+              value={plantCode}
+              onValueChange={onPlantCodeChange}
+              placeholder="Select plant…"
+              searchPlaceholder="Search plants…"
+              className="h-10"
+            />
+            {selectedPlant && (
+              <div className="pl-1">
+                <p className="text-[12px] text-muted-foreground">{selectedPlant.plant_name}</p>
+              </div>
+            )}
           </div>
         </div>
       </fieldset>
@@ -160,28 +154,30 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                 type="button"
                 onClick={() => togglePlatform(platform.id)}
                 className={cn(
-                  'relative flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all min-h-[88px]',
+                  'relative flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-150 min-h-[64px]',
                   isSelected
-                    ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
-                    : 'border-border hover:border-muted-foreground/40 hover:bg-muted/40'
+                    ? 'border-2 border-primary bg-primary/5'
+                    : 'border border-border/50 hover:border-muted-foreground/40 hover:bg-muted/30'
                 )}
               >
-                {/* Checkbox top-right */}
-                <div className="absolute top-2.5 right-2.5">
-                  <Checkbox checked={isSelected} className="pointer-events-none" />
-                </div>
+                {/* Checkmark top-right — only when selected */}
+                {isSelected && (
+                  <div className="absolute top-2 right-2">
+                    <Check className="w-4 h-4 text-primary" />
+                  </div>
+                )}
 
                 {/* Platform logo */}
                 <img
                   src={platform.logo}
                   alt={platform.label}
-                  className="w-11 h-11 rounded-lg object-contain shrink-0"
+                  className="w-9 h-9 rounded-lg object-contain shrink-0"
                 />
 
-                {/* Text */}
-                <div className="min-w-0 pr-6">
-                  <p className={cn('text-sm font-medium leading-tight', isSelected && 'text-primary')}>{platform.label}</p>
-                </div>
+                {/* Name */}
+                <p className={cn('text-[13px] font-medium leading-tight', isSelected && 'text-primary')}>
+                  {platform.label}
+                </p>
               </button>
             );
           })}
