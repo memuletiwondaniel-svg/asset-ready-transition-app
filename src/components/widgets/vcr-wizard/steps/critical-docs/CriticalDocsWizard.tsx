@@ -21,9 +21,9 @@ interface CriticalDocsWizardProps {
 }
 
 const STEPS = [
-  { id: 'context', label: 'Project Context', icon: FileSearch },
-  { id: 'selection', label: 'Document Selection', icon: ListChecks },
-  { id: 'review', label: 'Review & Confirm', icon: ClipboardCheck },
+  { id: 'context', label: 'Project Context' },
+  { id: 'selection', label: 'Document Selection' },
+  { id: 'review', label: 'Review & Confirm' },
 ];
 
 export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
