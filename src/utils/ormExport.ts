@@ -1,11 +1,8 @@
-import * as XLSX from 'xlsx';
+import { writeExcelFile } from '@/utils/excelUtils';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-export const exportToExcel = (data: any[], filename: string) => {
-  // Create workbook
-  const wb = XLSX.utils.book_new();
-
+export const exportToExcel = async (data: any[], filename: string) => {
   // Summary sheet
   const summaryData = [
     ['ORM Analytics Report'],
@@ -18,10 +15,8 @@ export const exportToExcel = (data: any[], filename: string) => {
       sum + (p.deliverables?.filter((d: any) => d.workflow_stage === 'APPROVED').length || 0), 0
     )],
   ];
-  const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-  XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
 
-  // Plans sheet
+  // Plans data
   const plansData = data.map(plan => ({
     'Project': plan.project?.project_title || 'N/A',
     'Project ID': `${plan.project?.project_id_prefix}-${plan.project?.project_id_number}`,
@@ -38,10 +33,8 @@ export const exportToExcel = (data: any[], filename: string) => {
     ) + '%',
     'Created': new Date(plan.created_at).toLocaleDateString(),
   }));
-  const wsPlans = XLSX.utils.json_to_sheet(plansData);
-  XLSX.utils.book_append_sheet(wb, wsPlans, 'Plans');
 
-  // Deliverables sheet
+  // Deliverables data
   const deliverablesData: any[] = [];
   data.forEach(plan => {
     plan.deliverables?.forEach((del: any) => {
@@ -59,24 +52,23 @@ export const exportToExcel = (data: any[], filename: string) => {
       });
     });
   });
-  const wsDeliverables = XLSX.utils.json_to_sheet(deliverablesData);
-  XLSX.utils.book_append_sheet(wb, wsDeliverables, 'Deliverables');
 
-  // Save file
-  XLSX.writeFile(wb, `${filename}.xlsx`);
+  await writeExcelFile(`${filename}.xlsx`, [
+    { name: 'Summary', aoa: summaryData },
+    { name: 'Plans', data: plansData },
+    { name: 'Deliverables', data: deliverablesData },
+  ]);
 };
 
 export const exportToPDF = (data: any[], filename: string) => {
   const doc = new jsPDF();
   
-  // Title
   doc.setFontSize(18);
   doc.text('ORM Analytics Report', 14, 20);
   
   doc.setFontSize(10);
   doc.text(`Generated on ${new Date().toLocaleDateString()}`, 14, 28);
   
-  // Summary section
   doc.setFontSize(14);
   doc.text('Summary', 14, 40);
   
@@ -97,7 +89,6 @@ export const exportToPDF = (data: any[], filename: string) => {
     headStyles: { fillColor: [59, 130, 246] },
   });
   
-  // Plans section
   doc.addPage();
   doc.setFontSize(14);
   doc.text('Projects Overview', 14, 20);
@@ -122,7 +113,6 @@ export const exportToPDF = (data: any[], filename: string) => {
     headStyles: { fillColor: [59, 130, 246] },
   });
   
-  // Deliverables section
   doc.addPage();
   doc.setFontSize(14);
   doc.text('Deliverables Details', 14, 20);
@@ -149,6 +139,5 @@ export const exportToPDF = (data: any[], filename: string) => {
     styles: { fontSize: 8 },
   });
   
-  // Save PDF
   doc.save(`${filename}.pdf`);
 };
