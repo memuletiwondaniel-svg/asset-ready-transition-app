@@ -105,6 +105,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { isListening, startListening, stopListening, isSupported } = useVoiceInput();
+  const { data: roleData } = useCurrentUserRole();
+  const welcomeSentRef = useRef(false);
 
   // Auto-resize textarea
   useEffect(() => {
