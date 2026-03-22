@@ -1,65 +1,51 @@
 
 
-# Consolidate Multiple Permissive RLS Policies
+# Plan: Fix Plant Resolution + UI Improvements for Step 1
 
-## Problem
+## Root Cause Analysis
 
-The Supabase advisor flags "Multiple Permissive Policies" when a table has more than one permissive policy for the same role and operation. Postgres ORs these together, which can cause unintended access widening. There are **100 overlapping cases** across **~90 tables**, falling into two categories.
+**Bug**: Plant "CS" from the `plant` table is used as a substring filter against `dms_plants.plant_name`. C033 "Hammar Mishrif New Compression Station" does NOT contain the literal substring "cs", so it gets filtered out. The algorithm then incorrectly picks C008 "South Rumaila CS Quarainat Mishrif" because "mishrif" matches a project name word.
 
-## Scope
+## Changes
 
-### Category A: ALL + Specific Command Overlaps (88 tables)
+### 1. Fix plant resolution in `CriticalDocsWizard.tsx`
 
-Tables have an `ALL` policy (which covers SELECT/INSERT/UPDATE/DELETE) plus separate specific-command policies for the same role. Example: `commission` has "Admin users can manage commissions" (ALL, public) plus "All users can view active commissions" (SELECT, public).
+Rewrite `resolveDmsPlant` to use a two-phase approach:
+- **Phase 1**: Keep exact code match (unchanged)
+- **Phase 2**: Score ALL active dms_plants against the DMS project name (not just those matching the plant.name substring). Use the full project name words (3+ chars) to score each dms_plant. This ensures C033 "Hammar Mishrif New Compression Station" scores 5/5 for project "New Compression Station at Hammar Mishrif"
+- **Phase 3**: If the best score is >= 2 words matched, use it. Otherwise fall back to the old substring filter + scoring as a secondary attempt
+- **Phase 4**: If still no match, return null (never default to first)
 
-**Fix**: Replace each ALL policy with individual per-command policies (INSERT, UPDATE, DELETE only) for commands that don't already have their own policy. The ALL policy's USING/WITH CHECK clauses carry over. Commands that already have specific policies keep their existing policy unchanged.
+Remove `projectAutoDetected` / `plantAutoDetected` state and props entirely since badges are being removed.
 
-### Category B: Direct Duplicate Commands (3 tables, 5 groups)
+### 2. Remove Auto-detected badges in `ProjectContextStep.tsx`
 
-| Table | Command | Role | Policies | Fix |
-|-------|---------|------|----------|-----|
-| `profiles` | SELECT | authenticated | 3 policies (admin, tenant, own) | Already OR'd correctly — drop "Users can view only their own profile" since "Tenant: view profiles" already includes `user_id = auth.uid()` in its OR condition |
-| `projects` | SELECT | public | "All users can view projects" + "Anyone can view active projects" | Identical `is_active = true` — drop duplicate |
-| `projects` | INSERT | authenticated | 3 policies (permission, tenant, owner) | Consolidate into single policy with combined WITH CHECK |
-| `projects` | UPDATE | authenticated | 3 policies (tenant, delete-named, update) | "Users can delete their own projects" and "Users can update their own projects" have same qual — drop the misnamed one |
-| `pssrs` | INSERT | authenticated | 2 policies (permission, tenant) | Consolidate into single WITH CHECK using OR |
+- Remove the `projectAutoDetected` and `plantAutoDetected` props
+- Remove the two `Badge` elements with "Auto-detected" text
+- Remove the `Badge` and `Sparkles` imports
 
-## Migration Approach
+### 3. Convert dropdowns to searchable comboboxes in `ProjectContextStep.tsx`
 
-A single migration file with two parts:
+Replace both `Select` components with `EnhancedSearchableCombobox`:
+- **Project Code**: options show `{code} {project_name}`, value is the code
+- **Plant Code**: options show `{code} — {plant_name}`, value is the code
 
-**Part 1 — Dynamic ALL→specific split**: A PL/pgSQL DO block that iterates all ALL policies, checks which specific commands already exist for the same table+role, drops the ALL policy, and creates individual policies for the missing commands only.
+### 4. Show full names below selected values in `ProjectContextStep.tsx`
 
-**Part 2 — Manual duplicate consolidation**: Explicit DROP/CREATE statements for the 5 direct-duplicate groups listed above.
+After each combobox, show a small muted text line:
+- Project: find the selected project in the loaded list, display its `project_name` in 12px muted text
+- Plant: find the selected plant in the loaded list, display its `plant_name` in 12px muted text
 
-## Technical Detail
+### 5. DMS card redesign in `ProjectContextStep.tsx`
 
-The ALL→specific split logic:
+- `min-h-[64px]`, icon `w-9 h-9` (36px), name `text-[13px] font-medium`
+- Remove `Checkbox` import and element
+- Selected: `border-2 border-primary bg-primary/5`, show `Check` icon (16px) in top-right
+- Unselected: `border border-border/50`, hover `border-muted-foreground/40 bg-muted/30`, 150ms transition
+- Unselected: check icon hidden
 
-```text
-For each ALL policy:
-  commands_with_existing_policy = SELECT cmd FROM pg_policies 
-    WHERE same table+role AND cmd != 'ALL'
-  
-  For each cmd in {SELECT, INSERT, UPDATE, DELETE}:
-    IF cmd NOT IN commands_with_existing_policy:
-      CREATE POLICY "original_name (cmd)" ... FOR cmd ...
-  
-  DROP the ALL policy
-```
+### Files Modified
 
-This preserves the ALL policy's access logic but splits it into non-overlapping per-command policies.
-
-## Files
-
-| File | Action |
-|------|--------|
-| New migration SQL | Create — single file with dynamic ALL-split + manual duplicate consolidation |
-
-## Expected Outcome
-
-- ~100 policy overlaps resolved
-- ALL policies replaced with per-command equivalents
-- Direct duplicates consolidated
-- Zero "Multiple Permissive Policies" warnings in Supabase advisor
+1. **`CriticalDocsWizard.tsx`** — Fix `resolveDmsPlant`, remove auto-detected state/props
+2. **`ProjectContextStep.tsx`** — Remove badges, searchable comboboxes, full names, card redesign
 
