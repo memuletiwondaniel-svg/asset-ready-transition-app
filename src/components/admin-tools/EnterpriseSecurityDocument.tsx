@@ -50,6 +50,7 @@ const StatusTable: React.FC<{ rows: { label: string; value: string; status: 'act
 );
 
 const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({ onBack }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
   const tocItems = [
     { id: 'auth', label: 'Authentication & Identity' },
     { id: 'rbac', label: 'Role-Based Access Control' },
