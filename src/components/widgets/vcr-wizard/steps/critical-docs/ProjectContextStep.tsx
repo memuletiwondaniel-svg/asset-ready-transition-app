@@ -7,6 +7,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Info, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import assaiLogo from '@/assets/assai-logo.png';
+import wrenchLogo from '@/assets/wrench-logo.png';
+import documentumLogo from '@/assets/documentum-logo.png';
+import sharepointLogo from '@/assets/sharepoint-logo.png';
 
 interface ProjectContextStepProps {
   projectCode: string;
@@ -20,10 +24,10 @@ interface ProjectContextStepProps {
 }
 
 const DMS_PLATFORMS = [
-  { id: 'assai', label: 'Assai', description: 'Document management for oil & gas', letter: 'A', color: '#1B6EC2' },
-  { id: 'wrench', label: 'Wrench', description: 'Engineering document management', letter: 'W', color: '#E8600A' },
-  { id: 'documentum', label: 'Documentum', description: 'Enterprise content platform', letter: 'D', color: '#1A2B5F' },
-  { id: 'sharepoint', label: 'SharePoint', description: 'Microsoft collaboration platform', letter: 'S', color: '#0078D4' },
+  { id: 'assai', label: 'Assai', description: 'Document management for oil & gas', logo: assaiLogo },
+  { id: 'wrench', label: 'Wrench', description: 'Engineering document management', logo: wrenchLogo },
+  { id: 'documentum', label: 'Documentum', description: 'Enterprise content platform', logo: documentumLogo },
+  { id: 'sharepoint', label: 'SharePoint', description: 'Microsoft collaboration platform', logo: sharepointLogo },
 ];
 
 export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
@@ -167,13 +171,12 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                   <Checkbox checked={isSelected} className="pointer-events-none" />
                 </div>
 
-                {/* Platform logo avatar */}
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 text-white font-bold text-base"
-                  style={{ backgroundColor: platform.color }}
-                >
-                  {platform.letter}
-                </div>
+                {/* Platform logo */}
+                <img
+                  src={platform.logo}
+                  alt={platform.label}
+                  className="w-10 h-10 rounded-lg object-contain shrink-0"
+                />
 
                 {/* Text */}
                 <div className="min-w-0 pr-6">
