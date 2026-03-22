@@ -29,14 +29,6 @@ interface ApprovalRecord {
   comments: string | null;
 }
 
-// Role to user mapping - maps approval roles to user emails
-const ROLE_USER_MAPPING: Record<string, string> = {
-  'ORA Lead': 'roaa.abdullah@basrahgas.iq',
-  'Project Manager': 'willem.Moelker@basrahgas.iq',
-  'Deputy Plant Director': 'ewan.mcconnachie2@basrahgas.iq',
-  'Plant Director': 'yesr.tamoul@basrahgas.iq'
-};
-
 const APPROVAL_SEQUENCE = [
   { role: 'ORA Lead', defaultPosition: 'Operations Readiness Lead' },
   { role: 'Project Manager', defaultPosition: 'Senior Project Manager' },
@@ -51,18 +43,42 @@ const getFullAvatarUrl = (avatarUrl: string | null) => {
   return data.publicUrl;
 };
 
+/**
+ * Dynamically resolves approver profiles by querying the roles table
+ * and joining to profiles, instead of hardcoding email addresses.
+ */
 const useApproverProfiles = () => {
   return useQuery({
-    queryKey: ['ora-approver-profiles'],
+    queryKey: ['ora-approver-profiles-by-role'],
     queryFn: async () => {
-      const emails = Object.values(ROLE_USER_MAPPING);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('email, full_name, first_name, last_name, position, avatar_url')
-        .in('email', emails);
+      const roleNames = APPROVAL_SEQUENCE.map(s => s.role);
 
-      if (error) throw error;
-      return data || [];
+      // Get role IDs for the approval role names
+      const { data: roles, error: rolesError } = await supabase
+        .from('roles')
+        .select('id, name')
+        .in('name', roleNames);
+
+      if (rolesError) throw rolesError;
+      if (!roles || roles.length === 0) return [];
+
+      const roleIds = roles.map(r => r.id);
+
+      // Get profiles that have one of these roles assigned
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('role, full_name, first_name, last_name, position, avatar_url, email')
+        .in('role', roleIds);
+
+      if (profilesError) throw profilesError;
+
+      // Map role ID back to role name for lookup
+      const roleIdToName = new Map(roles.map(r => [r.id, r.name]));
+
+      return (profiles || []).map(p => ({
+        ...p,
+        roleName: roleIdToName.get(p.role || '') || null,
+      }));
     }
   });
 };
@@ -115,16 +131,13 @@ const ApprovalCard = ({ approval, isLast }: ApprovalCardProps) => {
 
   return (
     <div className="relative">
-      {/* Timeline connector */}
       {!isLast && (
         <div className="absolute left-[3px] top-[36px] bottom-[-8px] w-px bg-border" />
       )}
       
       <div className="flex gap-2.5">
-        {/* Card content */}
         <Card className={cn("flex-1 border-l-2", config.accentClass)}>
           <CardContent className="p-4">
-            {/* Header row */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <Avatar className="h-9 w-9 flex-shrink-0">
@@ -155,7 +168,6 @@ const ApprovalCard = ({ approval, isLast }: ApprovalCardProps) => {
               </div>
             </div>
 
-            {/* Comments */}
             {approval.comments && (
               <div className="mt-2 ml-12 text-sm">
                 <p className="text-muted-foreground">"{approval.comments}"</p>
@@ -171,11 +183,14 @@ const ApprovalCard = ({ approval, isLast }: ApprovalCardProps) => {
 export const ORAApprovalsPanel: React.FC<ORAApprovalsPanelProps> = ({ planId }) => {
   const { data: profiles, isLoading } = useApproverProfiles();
 
-  // Build approvals list with real user data
   const approvals = useMemo((): ApprovalRecord[] => {
-    const profileMap = new Map(
-      profiles?.map(p => [p.email?.toLowerCase(), p]) || []
-    );
+    // Build a map from role name to profile
+    const roleProfileMap = new Map<string, typeof profiles extends (infer T)[] ? T : never>();
+    profiles?.forEach(p => {
+      if (p.roleName && !roleProfileMap.has(p.roleName)) {
+        roleProfileMap.set(p.roleName, p);
+      }
+    });
 
     // Mock approval data - in production this would come from the database
     const mockApprovalData = [
@@ -186,8 +201,7 @@ export const ORAApprovalsPanel: React.FC<ORAApprovalsPanelProps> = ({ planId }) 
     ];
 
     return APPROVAL_SEQUENCE.map((seq, index) => {
-      const email = ROLE_USER_MAPPING[seq.role]?.toLowerCase();
-      const profile = profileMap.get(email);
+      const profile = roleProfileMap.get(seq.role);
       const approvalData = mockApprovalData[index];
       
       const fullName = profile?.full_name || 
@@ -231,7 +245,6 @@ export const ORAApprovalsPanel: React.FC<ORAApprovalsPanelProps> = ({ planId }) 
 
   return (
     <div className="p-6 space-y-5 max-w-3xl mx-auto">
-      {/* Header */}
       <div className="flex items-center justify-between gap-4 pb-4 border-b">
         <div className="flex items-center gap-2">
           <CheckCircle2 className={cn(
@@ -251,7 +264,6 @@ export const ORAApprovalsPanel: React.FC<ORAApprovalsPanelProps> = ({ planId }) 
         </div>
       </div>
 
-      {/* Approval Cards */}
       <div className="space-y-2">
         {approvals.map((approval, index) => (
           <ApprovalCard 

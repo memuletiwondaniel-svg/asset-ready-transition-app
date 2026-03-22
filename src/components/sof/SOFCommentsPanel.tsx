@@ -216,7 +216,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-rose-500/10",
     status: "complete" as const,
     summary: "Gas release scenarios reviewed and emergency response updated. Portable gas monitors positioned at work locations. Environmental permit modifications approved. Simultaneous operations assessment completed. Toolbox talks conducted for all startup personnel.",
-    reviewer: "Ahmed Kadhum - Ops HSE Manager",
+    reviewer: "Ops HSE Manager",
     date: "Jan 27, 2026"
   }
 };

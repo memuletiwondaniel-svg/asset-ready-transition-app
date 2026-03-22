@@ -14,25 +14,25 @@ export const ORSH_PROJECTS = [
   { id: 'dp-310', name: 'CS3/4 Compressor Reliability', code: 'DP-310' },
 ] as const;
 
-// Real ORSH personnel for realistic assignments
+// Generic ORSH personnel placeholders for demo/mock data
 export const ORSH_PERSONNEL = {
   directors: [
-    { id: 'paul-vdh', name: 'Paul Van Den Hemel', role: 'P&M Director', email: 'Paul.VanDenHemel@basrahgas.iq' },
-    { id: 'martyn-t', name: 'Martyn Turner', role: 'P&E Director', email: 'Martyn.Turner@basrahgas.iq' },
+    { id: 'director-1', name: 'Director 1', role: 'P&M Director' },
+    { id: 'director-2', name: 'Director 2', role: 'P&E Director' },
   ],
   engineers: [
-    { id: 'wolfgang-p', name: 'Wolfgang Probst', role: 'Project Engineer' },
-    { id: 'ahmed-r', name: 'Ahmed Raheem', role: 'Commissioning Lead' },
-    { id: 'ghassan-m', name: 'Ghassan Majdalani', role: 'Process Lead' },
-    { id: 'david-i', name: 'David Ireland', role: 'MCI Lead' },
-    { id: 'prakash-p', name: 'Prakash Prinston', role: 'Mechanical Lead' },
-    { id: 'chan-cp', name: 'Chan Chew Ping', role: 'Electrical Lead' },
+    { id: 'engineer-1', name: 'Engineer 1', role: 'Project Engineer' },
+    { id: 'engineer-2', name: 'Engineer 2', role: 'Commissioning Lead' },
+    { id: 'engineer-3', name: 'Engineer 3', role: 'Process Lead' },
+    { id: 'engineer-4', name: 'Engineer 4', role: 'MCI Lead' },
+    { id: 'engineer-5', name: 'Engineer 5', role: 'Mechanical Lead' },
+    { id: 'engineer-6', name: 'Engineer 6', role: 'Electrical Lead' },
   ],
   techAuthority: [
-    { id: 'satya-b', name: 'Satya Borra', role: 'Process TA2' },
-    { id: 'nathan-r', name: 'Nathan Roberts', role: 'Rotating TA2' },
-    { id: 'kersha-a', name: 'Kersha Andrews', role: 'PACO TA2' },
-    { id: 'yasser-m', name: 'Yasser Mohamed', role: 'Electrical TA2' },
+    { id: 'ta-1', name: 'TA Engineer 1', role: 'Process TA2' },
+    { id: 'ta-2', name: 'TA Engineer 2', role: 'Rotating TA2' },
+    { id: 'ta-3', name: 'TA Engineer 3', role: 'PACO TA2' },
+    { id: 'ta-4', name: 'TA Engineer 4', role: 'Electrical TA2' },
   ],
 };
 
