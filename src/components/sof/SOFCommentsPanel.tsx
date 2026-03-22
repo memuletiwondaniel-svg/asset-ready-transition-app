@@ -196,7 +196,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-slate-500/10",
     status: "complete" as const,
     summary: "Pipe rack modifications structurally certified. New foundations for metering skid inspected and approved. Access platforms installed with proper egress. Drainage provisions verified for new equipment areas. Wind load calculations confirmed for elevated piping sections.",
-    reviewer: "Satya Borra - Civil TA2",
+    reviewer: "Civil TA2",
     date: "Jan 27, 2026"
   },
   operations: {
