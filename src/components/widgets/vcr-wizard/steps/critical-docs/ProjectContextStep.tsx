@@ -157,7 +157,7 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                 className={cn(
                   'relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 min-h-[64px] group',
                   isSelected
-                    ? 'bg-primary/8 ring-1 ring-primary/30 shadow-sm'
+                    ? 'bg-primary/9 ring-1 ring-primary/[0.32] shadow-sm'
                     : 'bg-muted/20 ring-1 ring-border/30 hover:bg-accent/40 hover:ring-border hover:shadow-sm hover:-translate-y-[1px]'
                 )}
               >
