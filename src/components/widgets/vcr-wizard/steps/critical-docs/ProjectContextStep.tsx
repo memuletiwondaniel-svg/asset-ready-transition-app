@@ -20,10 +20,10 @@ interface ProjectContextStepProps {
 }
 
 const DMS_PLATFORMS = [
-  { id: 'assai', label: 'Assai', logo: assaiIcon },
-  { id: 'wrench', label: 'Wrench', logo: wrenchIcon },
-  { id: 'documentum', label: 'Documentum', logo: documentumLogo },
-  { id: 'sharepoint', label: 'SharePoint', logo: sharepointLogo },
+  { id: 'assai', label: 'Assai', logo: assaiIcon, iconScale: 1 },
+  { id: 'wrench', label: 'Wrench', logo: wrenchIcon, iconScale: 1 },
+  { id: 'documentum', label: 'Documentum', logo: documentumLogo, iconScale: 1 },
+  { id: 'sharepoint', label: 'SharePoint', logo: sharepointLogo, iconScale: 1.15 },
 ];
 
 export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
