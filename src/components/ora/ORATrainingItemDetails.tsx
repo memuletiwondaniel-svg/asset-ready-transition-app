@@ -106,7 +106,7 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
       material_type: 'DOCUMENT',
       uploaded_by: 'user-001',
       is_approved: true,
-      approved_by: 'Ahmed Al-Rashid, TA2 - Rotating - Asset',
+      approved_by: 'TA2 - Rotating - Asset',
       approved_at: '2026-01-05T11:15:00Z',
       created_at: '2026-01-03T10:00:00Z'
     },

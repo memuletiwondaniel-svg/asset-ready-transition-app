@@ -36,11 +36,11 @@ const dp385ProjectData = {
   hub: 'South Hub - BGC Integration',
   projectImage: dp385PipelineImage,
   teamMembers: [
-    { name: 'Mousa Al-Tarazi', role: 'Project Hub Lead', isLead: true, avatarUrl: '0e5dfc5e-070d-49f5-87e1-dd410145decd/1764587235433.jpg' },
-    { name: 'Azamat Kenzhin', role: 'Snr. ORA Engr.', isLead: false, avatarUrl: '8ce8256c-b708-4c32-878b-623a56d596ce/1768916655721.jpg' },
-    { name: 'Ahmed Salah', role: 'CSU Lead', isLead: false, avatarUrl: '3f3993ec-f7f3-4f07-990c-180ddb897761/1764587082751.png' },
-    { name: 'Ali Zachi', role: 'Construction Lead', isLead: false, avatarUrl: '08fab8c4-9ac1-4646-a823-b62761fd1c58/1764599870575.png' },
-    { name: 'Ahmed Raheem', role: 'Project Engr.', isLead: false, avatarUrl: '5f1600b1-8b23-4a5c-9a31-774d3dc7181e/1764591721491.png' },
+    { name: 'Project Hub Lead', role: 'Project Hub Lead', isLead: true, avatarUrl: '' },
+    { name: 'Snr. ORA Engr.', role: 'Snr. ORA Engr.', isLead: false, avatarUrl: '' },
+    { name: 'CSU Lead', role: 'CSU Lead', isLead: false, avatarUrl: '' },
+    { name: 'Construction Lead', role: 'Construction Lead', isLead: false, avatarUrl: '' },
+    { name: 'Project Engr.', role: 'Project Engr.', isLead: false, avatarUrl: '' },
   ],
   oraActivities: [
     { id: '1', name: 'Commissioning Safety Review', dateRange: 'Jan 5 - Jan 20', progress: 100, status: 'completed' },

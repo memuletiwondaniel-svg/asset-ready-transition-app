@@ -213,7 +213,7 @@ const dp385Deviations: QualificationDetail[] = [
     expiryDate: '2026-03-01',
     riskDescription: 'Potential for operational errors or delayed emergency response due to unfamiliarity with new systems',
     riskRating: 'Low',
-    actionOwner: 'Omar Al-Shammari',
+    actionOwner: 'Training Coordinator',
     actionOwnerRole: 'Training Coordinator',
     attachments: [
       { name: 'Training_Schedule_CS6_7.pdf', type: 'PDF' },

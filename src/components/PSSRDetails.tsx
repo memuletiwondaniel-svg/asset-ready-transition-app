@@ -28,7 +28,7 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
     progress: 75,
     created: '2024-01-15',
     dueDate: '2024-02-15',
-    initiator: 'Ahmed Al-Rashid',
+    initiator: 'Plant Director',
     scope: 'Pre-start-up safety review for the commissioning of new natural gas processing units including safety systems, process controls, and emergency shutdown procedures.',
     pendingApprovals: 3,
     teamMembers: {

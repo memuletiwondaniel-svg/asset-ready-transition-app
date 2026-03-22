@@ -111,11 +111,11 @@ const MOCK_COMPONENT_NARRATIVES: Record<string, {
 
 // Mock responsible engineers by component
 const MOCK_RESPONSIBLE_ENGINEERS: Record<string, string[]> = {
-  ARB: ['Mushtaq Nawaz', 'Ben Chiong'],
-  PMS: ['Ben Chiong', 'Mushtaq Nawaz'],
-  IMS: ['Mushtaq Nawaz', 'Ben Chiong'],
-  BOM: ['Poojan Joshi', 'Maharsh Seth'],
-  '2Y_SPARES': ['Maharsh Seth', 'Poojan Joshi']
+  ARB: ['CMMS Engineer 1', 'CMMS Engineer 2'],
+  PMS: ['CMMS Engineer 2', 'CMMS Engineer 1'],
+  IMS: ['CMMS Engineer 1', 'CMMS Engineer 2'],
+  BOM: ['Materials Engineer 1', 'Materials Engineer 2'],
+  '2Y_SPARES': ['Materials Engineer 2', 'Materials Engineer 1']
 };
 
 // Helper to get responsible engineer for a batch

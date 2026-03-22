@@ -209,9 +209,9 @@ const EnhancedCreateUserModal: React.FC<EnhancedCreateUserModalProps> = ({
   ];
 
   const authenticators = [
-    'Daniel Memuletiwon (ORA Lead)',
-    'Ahmed Al-Rashid (Plant Director)',
-    'Sarah Mitchell (TA2)',
+    'ORA Lead',
+    'Plant Director',
+    'TA2 Engineer',
   ];
 
   // Role requirement helper functions (matching Edit modal)
