@@ -68,6 +68,7 @@ const StatusBadge: React.FC<{ status: 'active' | 'planned' | 'in-progress' | 'ga
 };
 
 const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBack }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
   const tocItems = [
     { id: 'architecture', label: 'Multi-Agent Architecture' },
     { id: 'model-strategy', label: 'Model Selection Strategy' },
