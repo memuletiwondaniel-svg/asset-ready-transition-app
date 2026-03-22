@@ -390,7 +390,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
               <li>Verify RLS policies are intact after restore</li>
               <li>Update connection strings if restored to new project</li>
             </ol>
-            <p className="text-xs mt-2"><strong className="text-foreground">Primary Emergency Contact:</strong> Daniel Memuletiwon (memuletiwondaniel@gmail.com)</p>
+            <p className="text-xs mt-2"><strong className="text-foreground">Primary Emergency Contact:</strong> System Administrator (configure in admin settings)</p>
           </Section>
 
           <Separator />
