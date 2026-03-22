@@ -26,6 +26,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { processUserInput, getBlockedResponse } from '@/lib/security';
 import { useFavoritePages } from '@/hooks/useFavoritePages';
 import { useNewTaskCount } from '@/hooks/useNewTaskCount';
+import { useTenantSetupStatus } from '@/hooks/useTenantSetupStatus';
+
+const TenantSetupWizardLazy = lazy(() => import('./tenant-setup/TenantSetupWizard').then(m => ({ default: m.TenantSetupWizard })));
 
 // Maps favorite paths to appropriate icons and colors matching page headers
 const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color: string }> = {
