@@ -515,6 +515,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     stats: {},
     height: 'md:row-span-2',
     onClick: () => setActiveView('ai-agent-strategy')
+  }, {
+    id: 'tenant-setup',
+    title: 'Tenant Setup Wizard',
+    description: 'Guided 7-step wizard to configure plants, fields, hubs, commissions, roles, and invite users for a new organisation',
+    icon: Compass,
+    gradient: 'from-teal-500 to-cyan-600',
+    tooltip: 'Launch the guided tenant setup wizard to configure your organisation',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setTenantSetupOpen(true)
   }];
 
   // Filter admin tools based on search query
