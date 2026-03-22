@@ -80,9 +80,9 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
   const selectedPlant = plants.find((p: any) => p.code === plantCode);
 
   return (
-    <div className="px-6 py-4 space-y-4 max-w-2xl mx-auto">
-      {/* Guidance Banner — compact */}
-      <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-primary/5 border border-primary/10">
+    <div className="px-6 py-5 max-w-2xl mx-auto">
+      {/* Guidance Banner — compact single line */}
+      <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-primary/5 border border-primary/10">
         <Info className="w-4 h-4 text-primary shrink-0" />
         <p className="text-[12px] text-muted-foreground leading-snug">
           <span className="font-medium text-foreground">Document Identification Workflow</span>
@@ -91,8 +91,8 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
       </div>
 
       {/* Project Context Fields */}
-      <fieldset className="space-y-1.5">
-        <legend className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 mt-2 mb-1.5">
+      <fieldset className="mt-5">
+        <legend className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-3">
           Project Context
         </legend>
 
@@ -129,14 +129,14 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
         </div>
       </fieldset>
 
-      <div className="h-px bg-border" />
+      <div className="h-px bg-border mt-5" />
 
       {/* DMS Platform Selection */}
-      <fieldset className="space-y-2">
-        <legend className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 mt-1 mb-1">
+      <fieldset className="mt-5">
+        <legend className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-2">
           Document Management Systems *
         </legend>
-        <p className="text-[11px] text-muted-foreground -mt-1">
+        <p className="text-[11px] text-muted-foreground mb-3">
           Select one or more DMS platforms used on this project.
         </p>
 
@@ -149,36 +149,39 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                 type="button"
                 onClick={() => togglePlatform(platform.id)}
                 className={cn(
-                  'relative flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all duration-150 min-h-[56px]',
+                  'relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-150 min-h-[72px]',
                   isSelected
                     ? 'border-2 border-primary bg-primary/5'
                     : 'border border-border/50 hover:border-muted-foreground/40 hover:bg-muted/30'
                 )}
               >
                 {isSelected && (
-                  <div className="absolute top-1.5 right-1.5">
+                  <div className="absolute top-2 right-2">
                     <Check className="w-3.5 h-3.5 text-primary" />
                   </div>
                 )}
 
-                <div className="w-8 h-8 shrink-0 overflow-hidden flex items-center justify-center">
+                <div className="w-9 h-9 shrink-0 overflow-hidden flex items-center justify-center">
                   <img
                     src={platform.logo}
                     alt={platform.label}
-                    className="w-8 h-8 rounded-md object-contain"
+                    className="w-9 h-9 rounded-lg object-contain"
                   />
                 </div>
 
-                <p className={cn('text-[13px] font-medium leading-tight', isSelected && 'text-primary')}>
-                  {platform.label}
-                </p>
+                <div className="min-w-0">
+                  <p className={cn('text-[13px] font-medium leading-tight', isSelected && 'text-primary')}>
+                    {platform.label}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{platform.description}</p>
+                </div>
               </button>
             );
           })}
         </div>
 
         {dmsPlatforms.length > 0 && (
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground mt-2">
             {dmsPlatforms.length} platform{dmsPlatforms.length !== 1 ? 's' : ''} selected
           </p>
         )}
