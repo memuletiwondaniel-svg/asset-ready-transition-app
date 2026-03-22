@@ -64,8 +64,8 @@ const PSSRActivityFeed: React.FC<PSSRActivityFeedProps> = ({
         pssrId: 'PSSR-2024-004',
         projectName: 'Majnoon New Gas Tie-in',
         user: {
-          name: 'Omar Al-Basri',
-          avatar: 'https://images.unsplash.com/photo-1501286353178-1ec881214838?w=150&h=150&fit=crop&crop=face'
+          name: 'PSSR Reviewer',
+          avatar: ''
         },
         message: 'added a comment: "Need to review pressure test results before approval"',
         timestamp: new Date(Date.now() - 1000 * 60 * 45), // 45 minutes ago
