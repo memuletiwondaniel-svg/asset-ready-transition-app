@@ -84,6 +84,7 @@ const PhaseCard: React.FC<{ phase: JourneyPhase; index: number; total: number }>
 };
 
 const CustomerJourneyMaps: React.FC<CustomerJourneyMapsProps> = ({ onBack }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
   // Fetch real users grouped by role
   const { data: roleUsers = {} } = useQuery({
     queryKey: ['journey-map-role-users'],
