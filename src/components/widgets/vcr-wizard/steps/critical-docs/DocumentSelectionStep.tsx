@@ -89,7 +89,15 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
         .select('system_id, p2a_systems(id, name, system_id, is_hydrocarbon)')
         .eq('handover_point_id', vcrId);
       if (error) throw error;
-      return (data || []).map((r: any) => r.p2a_systems).filter(Boolean);
+      const raw = (data || []).map((r: any) => r.p2a_systems).filter(Boolean);
+      // Deduplicate systems by id
+      const seen = new Set<string>();
+      return raw.filter((s: any) => {
+        const key = s.id || s.system_id;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     },
   });
 
