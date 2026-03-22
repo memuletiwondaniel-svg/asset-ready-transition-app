@@ -1043,7 +1043,11 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         </TooltipProvider>
         </div>
       </div>
-    </div>;
+    </div>
+    <Suspense fallback={null}>
+      {tenantSetupOpen && <TenantSetupWizardLazy open={tenantSetupOpen} onOpenChange={setTenantSetupOpen} />}
+    </Suspense>
+    </>;
 };
 const AdminToolsPage: React.FC<AdminToolsPageProps> = props => {
   return <AdminToolsPageContent {...props} />;
