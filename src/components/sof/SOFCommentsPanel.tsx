@@ -82,7 +82,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-purple-500/10",
     status: "complete" as const,
     summary: "All static equipment inspections completed including pressure vessels, heat exchangers, and storage tanks. Thickness measurements verified against minimum requirements. Relief device certifications current. Vessel internals inspected and reinstalled per specifications. Piping flexibility analysis confirmed.",
-    reviewer: "Stuart Lugo - Static TA2 (P&E)",
+    reviewer: "Static TA2 (P&E)",
     date: "Dec 4, 2024"
   },
   electrical: {
