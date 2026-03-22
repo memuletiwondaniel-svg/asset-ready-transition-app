@@ -155,19 +155,13 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                 type="button"
                 onClick={() => togglePlatform(platform.id)}
                 className={cn(
-                  'relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-150 min-h-[72px]',
+                  'relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 min-h-[64px]',
                   isSelected
-                    ? 'border-2 border-primary bg-primary/5'
-                    : 'border border-border/50 hover:border-muted-foreground/40 hover:bg-muted/30'
+                    ? 'bg-primary/8 ring-1 ring-primary/40 shadow-sm shadow-primary/10'
+                    : 'bg-muted/30 hover:bg-muted/60 ring-1 ring-transparent hover:ring-border/60'
                 )}
               >
-                {isSelected && (
-                  <div className="absolute top-2 right-2">
-                    <Check className="w-3.5 h-3.5 text-primary" />
-                  </div>
-                )}
-
-                <div className="shrink-0 overflow-hidden flex items-center justify-center" style={{ width: 36, height: 36 }}>
+                <div className="shrink-0 overflow-hidden flex items-center justify-center" style={{ width: 32, height: 32 }}>
                   <img
                     src={platform.logo}
                     alt={platform.label}
@@ -175,7 +169,7 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                   />
                 </div>
 
-                <p className={cn('text-[13px] font-medium leading-tight', isSelected && 'text-primary')}>
+                <p className={cn('text-[13px] font-medium leading-tight', isSelected ? 'text-primary' : 'text-foreground')}>
                   {platform.label}
                 </p>
               </button>
