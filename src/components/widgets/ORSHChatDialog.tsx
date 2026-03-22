@@ -414,11 +414,15 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     await saveMessage('user', textToSend);
 
     try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const accessToken = currentSession?.access_token;
+      if (!accessToken) throw new Error('Not authenticated');
+
       const response = await fetch(`https://kgnrjqjbonuvpxxfvfjq.supabase.co/functions/v1/ai-chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+          'Authorization': `Bearer ${accessToken}`
         },
         body: JSON.stringify({ 
           messages: newMessages.map(m => ({ 
