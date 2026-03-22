@@ -238,15 +238,31 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
     return map;
   }, [secondaryDisciplines]);
 
+  // Pre-filter by search only (used for filter chip availability)
+  const searchFiltered = useMemo(() => {
+    if (!search.trim()) return docTypes;
+    const q = search.toLowerCase();
+    return docTypes.filter(d =>
+      d.code.toLowerCase().includes(q) ||
+      d.document_name.toLowerCase().includes(q) ||
+      (d.discipline_name || '').toLowerCase().includes(q)
+    );
+  }, [docTypes, search]);
+
+  // Which filter chips have matching docs in the current search results?
+  const availableFilters = useMemo(() => {
+    const available = new Set<FilterKey>();
+    FILTER_CHIPS.forEach(chip => {
+      if (searchFiltered.some(d => chip.match(d, secondaryMap))) {
+        available.add(chip.key);
+      }
+    });
+    return available;
+  }, [searchFiltered, secondaryMap]);
+
   // Filter + sort
   const filtered = useMemo(() => {
-    let result = docTypes.filter(d => {
-      // Search
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        if (!d.code.toLowerCase().includes(q) && !d.document_name.toLowerCase().includes(q) &&
-            !(d.discipline_name || '').toLowerCase().includes(q)) return false;
-      }
+    let result = searchFiltered.filter(d => {
       // Category filters (OR within, AND between)
       if (activeFilters.size === 0) return true;
       const groupedByCategory = new Map<string, FilterChip[]>();
@@ -274,7 +290,7 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
       });
     }
     return result;
-  }, [docTypes, search, activeFilters, secondaryMap, sortCol, sortDir]);
+  }, [searchFiltered, activeFilters, secondaryMap, sortCol, sortDir]);
 
   const toggleFilter = (key: FilterKey) => {
     const next = new Set(activeFilters);
