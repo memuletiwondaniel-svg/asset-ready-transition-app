@@ -104,7 +104,7 @@ const MOCK_COMPONENT_NARRATIVES: Record<string, {
   },
   '2Y_SPARES': {
     lastUpdated: '2024-01-04',
-    updatedBy: 'Fatima Al-Rashid (Materials Lead)',
+    updatedBy: 'Materials Lead',
     narrative: 'Two-year operating spares procurement is in planning phase. Initial spares list has been compiled based on equipment criticality analysis. Working with Operations to validate consumption estimates. Budget allocation confirmed for Phase 1 items.'
   }
 };
