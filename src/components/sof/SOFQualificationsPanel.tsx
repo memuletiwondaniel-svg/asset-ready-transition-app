@@ -123,7 +123,7 @@ const dp385Deviations: QualificationDetail[] = [
     punchlistRef: 'PL-2026-0412',
     riskDescription: 'Potential overpressure scenario at downstream facility if ESD valve fails to actuate during process upset',
     riskRating: 'High',
-    actionOwner: 'Rashid Al-Mansour',
+    actionOwner: 'I&C Lead Engineer',
     actionOwnerRole: 'I&C Lead Engineer',
     attachments: [
       { name: 'ESD_Override_Risk_Assessment.pdf', type: 'PDF' },
