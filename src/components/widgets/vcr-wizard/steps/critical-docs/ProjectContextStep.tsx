@@ -20,10 +20,10 @@ interface ProjectContextStepProps {
 }
 
 const DMS_PLATFORMS = [
-  { id: 'assai', label: 'Assai', description: 'Document management for oil & gas' },
-  { id: 'wrench', label: 'Wrench', description: 'Engineering document management' },
-  { id: 'documentum', label: 'Documentum', description: 'Enterprise content platform' },
-  { id: 'sharepoint', label: 'SharePoint', description: 'Microsoft collaboration platform' },
+  { id: 'assai', label: 'Assai', description: 'Document management for oil & gas', letter: 'A', color: '#1B6EC2' },
+  { id: 'wrench', label: 'Wrench', description: 'Engineering document management', letter: 'W', color: '#E8600A' },
+  { id: 'documentum', label: 'Documentum', description: 'Enterprise content platform', letter: 'D', color: '#1A2B5F' },
+  { id: 'sharepoint', label: 'SharePoint', description: 'Microsoft collaboration platform', letter: 'S', color: '#0078D4' },
 ];
 
 export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
