@@ -1,69 +1,82 @@
 
 
-# Fix Audit Log IP/User-Agent Capture
+# Encrypt TOTP Secrets at Application Level
 
 ## Problem
 
-5 client-side audit log insert points never populate `ip_address` or `user_agent` columns because browsers cannot reliably determine the client's external IP. The `user_agent` is sometimes passed in `metadata` but never in the dedicated column.
+`two_factor_secret` and `two_factor_backup_codes` are stored as plaintext in the `profiles` table. If the database is compromised, an attacker can generate valid TOTP codes for any user. These should be encrypted with an application-level key before storage and decrypted only server-side when verification is needed.
 
-## Audit Log Insert Locations (all client-side today)
+## Approach
 
-| Location | Event | File |
-|----------|-------|------|
-| AuthProvider L57 | `login` (SIGNED_IN) | `AuthProvider.tsx` |
-| AuthProvider L75 | `logout` (SIGNED_OUT) | `AuthProvider.tsx` |
-| AuthProvider L173 | `login_failed` | `AuthProvider.tsx` |
-| useSessionTimeout L59 | `session_timeout` | `useSessionTimeout.ts` |
-| useAuditLog L21 | Generic audit log (used for data modifications) | `useAuditLog.ts` |
+Use AES-256-GCM encryption with a dedicated secret key stored as a Supabase edge function secret (`TOTP_ENCRYPTION_KEY`). Encryption and decryption happen exclusively in edge functions — the client never touches ciphertext directly.
 
-## Solution
+### Encryption scheme
 
-### 1. Create `write-audit-log` edge function
+- Algorithm: AES-256-GCM (authenticated encryption)
+- Format stored in DB: `iv:ciphertext:authTag` (base64-encoded, colon-separated)
+- Key: 256-bit key stored as `TOTP_ENCRYPTION_KEY` edge function secret
+- Backup codes array: JSON-serialized, then encrypted as a single string
 
-A single edge function that accepts audit log payloads and enriches them with `ip_address` and `user_agent` from request headers before inserting into the `audit_logs` table using a service-role client.
+## Changes
 
-- Extracts `ip_address` from `x-forwarded-for` or `x-real-ip` headers
-- Extracts `user_agent` from the `user-agent` header
-- Accepts the same fields as the current client-side inserts: `category`, `action`, `severity`, `entity_type`, `entity_id`, `entity_label`, `description`, `metadata`, `old_values`, `new_values`
-- JWT auth required — extracts `user_id` and `user_email` from the authenticated user (prevents spoofing)
-- For pre-auth events (login_failed), accepts `user_email` in the body since there's no JWT yet — but still captures IP/UA from headers
+### 1. Add `TOTP_ENCRYPTION_KEY` secret
 
-### 2. Modify `AuthProvider.tsx`
+A new edge function secret for the encryption key. The user will be prompted to add it.
 
-Replace all 3 direct `supabase.from('audit_logs').insert(...)` calls with `supabase.functions.invoke('write-audit-log', { body: {...} })`:
+### 2. Create new edge function: `setup-totp`
 
-- **login** (L57): Pass category/action/description, JWT is available from the session
-- **logout** (L75): Pass category/action/description, JWT still valid at this point
-- **login_failed** (L173): Pass with `user_email` only (no JWT), edge function handles this as an unauthenticated audit write
+Move the "save secret + backup codes" step from the client (`TwoFactorSetupModal.tsx` `handleComplete`) to a new edge function. This function:
 
-### 3. Modify `useSessionTimeout.ts`
+- Accepts `{ secret, backupCodes }` from the authenticated client
+- Encrypts `secret` using AES-256-GCM with `TOTP_ENCRYPTION_KEY`
+- Encrypts `backupCodes` (JSON-serialized array) the same way
+- Writes encrypted values to `profiles` via service-role client
+- Returns `{ success: true }`
 
-Replace the direct insert (L59) with `supabase.functions.invoke('write-audit-log', ...)`.
+### 3. Update `verify-totp` edge function
 
-### 4. Modify `useAuditLog.ts`
+- After reading `two_factor_secret` from the DB, decrypt it before passing to `authenticator.verify()`
+- After reading `two_factor_backup_codes`, decrypt the blob, parse JSON, compare
+- When removing a used backup code, re-encrypt the updated array before writing back
 
-Replace the direct insert (L21) with `supabase.functions.invoke('write-audit-log', ...)`. This covers all generic audit logging (data modifications on sensitive tables).
+### 4. Update `TwoFactorSetupModal.tsx`
 
-### Edge Function Design
+- Replace the direct `supabase.from('profiles').update(...)` in `handleComplete` with `supabase.functions.invoke('setup-totp', { body: { secret, backupCodes } })`
+- The client still generates the secret and QR code (needed for the user to scan), but storage goes through the edge function which encrypts before writing
 
+### 5. Update `DisableTwoFactorModal.tsx`
+
+- Replace the direct `supabase.from('profiles').update(...)` with `supabase.functions.invoke('setup-totp', { body: { disable: true } })` (or a dedicated action in the same function)
+- The edge function sets `two_factor_secret: null`, `two_factor_enabled: false`, `two_factor_backup_codes: null`
+
+### 6. Data migration for existing users
+
+- Any existing users with plaintext `two_factor_secret` need their secrets re-encrypted
+- Create a one-time edge function or script that reads all profiles with `two_factor_enabled = true`, encrypts their secrets, and writes them back
+- Alternatively, detect plaintext vs encrypted format in `verify-totp` (encrypted values contain colons as separators) and handle both during a transition period
+
+## Shared crypto utility
+
+Both `setup-totp` and `verify-totp` need the same encrypt/decrypt functions. These will be defined as a shared module:
+
+```typescript
+// Encrypt: generates random IV, encrypts with AES-256-GCM, returns "iv:ciphertext:tag"
+// Decrypt: splits on ":", extracts IV/ciphertext/tag, decrypts
 ```
-POST /write-audit-log
-Headers: Authorization (optional for login_failed), user-agent, x-forwarded-for
-Body: { category, action, severity, description, entity_type?, entity_id?, 
-        entity_label?, metadata?, old_values?, new_values?, user_email? }
-```
 
-- If JWT present: extract `user_id` + `user_email` from claims (authoritative)
-- If no JWT but `action === 'login_failed'`: allow unauthenticated, use `user_email` from body, apply rate limiting
-- All other unauthenticated requests: reject with 401
-- Insert via service-role client to bypass RLS
+Since Deno edge functions support the Web Crypto API natively, no external dependencies needed.
 
-### Files
+## Files
 
 | File | Action |
 |------|--------|
-| `supabase/functions/write-audit-log/index.ts` | Create |
-| `src/components/enhanced-auth/AuthProvider.tsx` | Modify — replace 3 direct inserts |
-| `src/hooks/useSessionTimeout.ts` | Modify — replace 1 direct insert |
-| `src/hooks/useAuditLog.ts` | Modify — replace 1 direct insert |
+| `supabase/functions/_shared/crypto.ts` | Create — shared AES-256-GCM encrypt/decrypt helpers |
+| `supabase/functions/setup-totp/index.ts` | Create — encrypt and store secret + backup codes |
+| `supabase/functions/verify-totp/index.ts` | Modify — decrypt before verification, handle legacy plaintext |
+| `src/components/user-management/TwoFactorSetupModal.tsx` | Modify — call `setup-totp` instead of direct DB write |
+| `src/components/user-management/DisableTwoFactorModal.tsx` | Modify — call `setup-totp` with disable flag instead of direct DB write |
+
+## Secret needed
+
+`TOTP_ENCRYPTION_KEY` — a 256-bit (32-byte) key, base64-encoded. Will prompt user to add via secret management.
 
