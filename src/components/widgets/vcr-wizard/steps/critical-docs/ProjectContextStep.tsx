@@ -178,11 +178,11 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                   className="w-10 h-10 rounded-lg object-contain shrink-0"
                 />
 
-                {/* Text */}
-                <div className="min-w-0 pr-6">
-                  <p className={cn('text-sm font-medium leading-tight', isSelected && 'text-primary')}>{platform.label}</p>
-                  <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{platform.description}</p>
-                </div>
+                {platform.label && (
+                  <div className="min-w-0 pr-6">
+                    <p className={cn('text-sm font-medium leading-tight', isSelected && 'text-primary')}>{platform.label}</p>
+                  </div>
+                )}
               </button>
             );
           })}
