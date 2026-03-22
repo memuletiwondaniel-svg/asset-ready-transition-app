@@ -92,8 +92,8 @@ const PSSRActivityFeed: React.FC<PSSRActivityFeedProps> = ({
         pssrId: 'PSSR-DP300-001',
         projectName: 'HM Additional Compressors',
         user: {
-          name: 'Mohammed Hassan',
-          avatar: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face'
+          name: 'ORA Engineer',
+          avatar: ''
         },
         message: 'updated equipment inspection results',
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
