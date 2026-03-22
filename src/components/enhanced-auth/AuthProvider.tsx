@@ -72,11 +72,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (event === 'SIGNED_OUT') {
           setTimeout(async () => {
             try {
-              await supabase.from('audit_logs').insert({
-                category: 'auth',
-                action: 'logout',
-                severity: 'info',
-                description: 'User signed out',
+              await supabase.functions.invoke('write-audit-log', {
+                body: {
+                  category: 'auth',
+                  action: 'logout',
+                  severity: 'info',
+                  description: 'User signed out',
+                },
               });
             } catch {
               // Silent fail - user is signing out
