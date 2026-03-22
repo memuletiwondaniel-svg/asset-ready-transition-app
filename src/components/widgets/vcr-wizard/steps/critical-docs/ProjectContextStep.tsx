@@ -171,7 +171,7 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                   <img
                     src={platform.logo}
                     alt={platform.label}
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    style={{ width: `${100 * platform.iconScale}%`, height: `${100 * platform.iconScale}%`, objectFit: 'contain' }}
                   />
                 </div>
 
