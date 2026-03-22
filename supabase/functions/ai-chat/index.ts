@@ -6165,6 +6165,21 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // --- JWT Auth Guard ---
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+  const _authClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authHeader } } });
+  const { data: _claimsData, error: _claimsError } = await _authClient.auth.getClaims(authHeader.replace('Bearer ', ''));
+  if (_claimsError || !_claimsData?.claims) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
   try {
     const { messages } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -6182,23 +6197,8 @@ serve(async (req) => {
     // Create Supabase client for database queries
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Extract user ID from JWT for personalization
-    let currentUserId: string | null = null;
-    try {
-      const authHeader = req.headers.get('Authorization');
-      if (authHeader?.startsWith('Bearer ')) {
-        const token = authHeader.slice(7);
-        // Decode JWT payload (base64) to get user_id
-        const payloadB64 = token.split('.')[1];
-        if (payloadB64) {
-          const payload = JSON.parse(atob(payloadB64));
-          // For anon key, sub won't exist. For user tokens, sub = user_id
-          currentUserId = payload.sub || null;
-        }
-      }
-    } catch (e) {
-      console.log('Could not extract user_id from token:', e);
-    }
+    // User ID from verified JWT
+    const currentUserId: string | null = (_claimsData.claims.sub as string) || null;
 
     // Load personalization context
     let userContextPrompt = '';
