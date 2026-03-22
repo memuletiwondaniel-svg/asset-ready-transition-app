@@ -200,7 +200,9 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
       }
     }
 
-    if (bestCandidate && bestScore >= 1) {
+    const minimumScore = Math.min(2, contextWords.length);
+
+    if (bestCandidate && bestScore >= minimumScore) {
       console.log(`[CriticalDocsWizard] Resolved plant: "${dmsProjectName}" + "${plantName}" → ${bestCandidate.code} (${bestCandidate.plant_name}) [score=${bestScore}, unmatched=${bestUnmatchedWords}]`);
       return bestCandidate;
     }
