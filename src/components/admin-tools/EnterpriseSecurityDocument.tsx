@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ArrowLeft, Shield, CheckCircle, FileText, Lock, Users, Database, Globe, Key, Activity, Server, Flag, MonitorCheck, RefreshCw, Container, AlertTriangle, Target, ShieldCheck, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
+import DocumentDownloadButton from './DocumentDownloadButton';
 
 interface EnterpriseSecurityDocumentProps {
   onBack: () => void;
@@ -49,6 +50,7 @@ const StatusTable: React.FC<{ rows: { label: string; value: string; status: 'act
 );
 
 const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({ onBack }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
   const tocItems = [
     { id: 'auth', label: 'Authentication & Identity' },
     { id: 'rbac', label: 'Role-Based Access Control' },
@@ -93,13 +95,16 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
               </div>
             </div>
           </div>
-          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-            v3.1 — March 2026
-          </Badge>
+          <div className="flex items-center gap-2">
+            <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-Enterprise-Security-Compliance" />
+            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+              v3.1 — March 2026
+            </Badge>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto" ref={contentRef}>
         <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 space-y-10">
 
           {/* Executive Summary */}

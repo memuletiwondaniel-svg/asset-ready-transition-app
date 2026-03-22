@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ArrowLeft, BookOpen, Workflow, Database, Users, FolderOpen, ClipboardList, Shield, Layers, Code, Table, GitBranch, CheckCircle, FileText, Boxes, ArrowRight, Wrench, Container, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
+import DocumentDownloadButton from './DocumentDownloadButton';
 
 interface PlatformGuideDocumentProps {
   onBack: () => void;
@@ -57,6 +58,7 @@ const FlowDiagram: React.FC<{ steps: string[] }> = ({ steps }) => (
 );
 
 const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
   const tocItems = [
     { id: 'overview', label: 'Platform Overview' },
     { id: 'project-lifecycle', label: 'Project Lifecycle & Workflows' },
@@ -103,13 +105,16 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               </div>
             </div>
           </div>
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            v2.0 — March 2026
-          </Badge>
+          <div className="flex items-center gap-2">
+            <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-Platform-Guide" />
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+              v2.0 — March 2026
+            </Badge>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto" ref={contentRef}>
         <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 space-y-10">
 
           {/* Executive Summary */}

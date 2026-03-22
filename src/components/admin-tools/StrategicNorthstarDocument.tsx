@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ArrowLeft, Compass, Target, TrendingUp, Globe, Layers, Cpu, BarChart3, Blocks, FileText, Rocket, Building2, Shield, BrainCircuit, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
+import DocumentDownloadButton from './DocumentDownloadButton';
 
 interface StrategicNorthstarDocumentProps {
   onBack: () => void;
@@ -49,6 +50,7 @@ const StatusTable: React.FC<{ rows: { label: string; value: string; status: 'act
 );
 
 const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({ onBack }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
   const tocItems = [
     { id: 'executive-summary', label: 'Executive Summary' },
     { id: 'investor-pitch', label: '60-Second Investor Pitch' },
@@ -83,13 +85,16 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               </div>
             </div>
           </div>
-          <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-            v2.0 — March 2026
-          </Badge>
+          <div className="flex items-center gap-2">
+            <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-Strategic-North-Star" />
+            <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
+              v2.0 — March 2026
+            </Badge>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto" ref={contentRef}>
         <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 space-y-10">
 
           {/* Executive Summary Card */}

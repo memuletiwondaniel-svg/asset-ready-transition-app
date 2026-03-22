@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { ArrowLeft, ArrowRight, Users, MapPin, BookOpen, CheckCircle, Clock, Star, Shield, Wrench, ClipboardList, FolderOpen, LayoutTemplate, FileText, Layers, AlertTriangle, UserCheck, Eye, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
+import DocumentDownloadButton from './DocumentDownloadButton';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
@@ -83,6 +84,7 @@ const PhaseCard: React.FC<{ phase: JourneyPhase; index: number; total: number }>
 };
 
 const CustomerJourneyMaps: React.FC<CustomerJourneyMapsProps> = ({ onBack }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
   // Fetch real users grouped by role
   const { data: roleUsers = {} } = useQuery({
     queryKey: ['journey-map-role-users'],
@@ -267,13 +269,16 @@ const CustomerJourneyMaps: React.FC<CustomerJourneyMapsProps> = ({ onBack }) => 
               </div>
             </div>
           </div>
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            {rolePersonas.length} Personas
-          </Badge>
+          <div className="flex items-center gap-2">
+            <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-Customer-Journey-Maps" />
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+              {rolePersonas.length} Personas
+            </Badge>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto" ref={contentRef}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-10">
 
           {/* Executive Summary */}

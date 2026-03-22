@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ArrowLeft, Brain, Bot, Zap, Target, AlertTriangle, GraduationCap, Shield, Workflow, Database, MessageSquare, ArrowRight, TrendingUp, Lightbulb, RefreshCw, Eye, CheckCircle, Clock, BarChart3, Layers, Network, Radio, Cpu, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
+import DocumentDownloadButton from './DocumentDownloadButton';
 
 interface AIAgentStrategyDocumentProps {
   onBack: () => void;
@@ -67,6 +68,7 @@ const StatusBadge: React.FC<{ status: 'active' | 'planned' | 'in-progress' | 'ga
 };
 
 const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBack }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
   const tocItems = [
     { id: 'architecture', label: 'Multi-Agent Architecture' },
     { id: 'model-strategy', label: 'Model Selection Strategy' },
@@ -109,13 +111,16 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
               </div>
             </div>
           </div>
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            v5.0 — March 2026
-          </Badge>
+          <div className="flex items-center gap-2">
+            <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-AI-Agent-Strategy" />
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+              v5.0 — March 2026
+            </Badge>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto" ref={contentRef}>
         <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 space-y-10">
 
           {/* Executive Summary */}
