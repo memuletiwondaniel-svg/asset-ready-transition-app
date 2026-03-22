@@ -161,7 +161,7 @@ const dp385Deviations: QualificationDetail[] = [
     description: 'Preventive Maintenance (PM) work orders for CS7 equipment have not yet been activated in SAP. PM strategy approved but awaiting system configuration.',
     severity: 'low',
     status: 'approved',
-    approvedBy: 'Dean Nye',
+    approvedBy: 'Central MTCE Lead',
     approverRole: 'Central MTCE Lead',
     approvedAt: '2026-01-30',
     mitigationMeasures: 'Manual PM tracking in place via spreadsheet. Critical equipment identified for priority activation. SAP configuration scheduled for completion by Mar 15th.',
