@@ -10427,6 +10427,7 @@ export type Database = {
         Row: {
           account_status: string | null
           avatar_url: string | null
+          backup_email: string | null
           commission: string | null
           company: Database["public"]["Enums"]["user_company"] | null
           country_code: string | null
@@ -10445,6 +10446,9 @@ export type Database = {
           last_name: string | null
           manager_id: string | null
           notification_preferences: Json | null
+          password_change_required: boolean | null
+          password_reset_required: boolean | null
+          personal_email: string | null
           phone_number: string | null
           plant: string | null
           position: string | null
@@ -10455,6 +10459,7 @@ export type Database = {
           sso_enabled: boolean | null
           station: string | null
           status: Database["public"]["Enums"]["user_status"] | null
+          tenant_id: string | null
           two_factor_enabled: boolean | null
           updated_at: string | null
           user_id: string | null
@@ -10462,6 +10467,7 @@ export type Database = {
         Insert: {
           account_status?: string | null
           avatar_url?: string | null
+          backup_email?: string | null
           commission?: string | null
           company?: Database["public"]["Enums"]["user_company"] | null
           country_code?: string | null
@@ -10480,6 +10486,9 @@ export type Database = {
           last_name?: string | null
           manager_id?: string | null
           notification_preferences?: Json | null
+          password_change_required?: boolean | null
+          password_reset_required?: boolean | null
+          personal_email?: string | null
           phone_number?: string | null
           plant?: string | null
           position?: string | null
@@ -10490,6 +10499,7 @@ export type Database = {
           sso_enabled?: boolean | null
           station?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
+          tenant_id?: string | null
           two_factor_enabled?: boolean | null
           updated_at?: string | null
           user_id?: string | null
@@ -10497,6 +10507,7 @@ export type Database = {
         Update: {
           account_status?: string | null
           avatar_url?: string | null
+          backup_email?: string | null
           commission?: string | null
           company?: Database["public"]["Enums"]["user_company"] | null
           country_code?: string | null
@@ -10515,6 +10526,9 @@ export type Database = {
           last_name?: string | null
           manager_id?: string | null
           notification_preferences?: Json | null
+          password_change_required?: boolean | null
+          password_reset_required?: boolean | null
+          personal_email?: string | null
           phone_number?: string | null
           plant?: string | null
           position?: string | null
@@ -10525,6 +10539,7 @@ export type Database = {
           sso_enabled?: boolean | null
           station?: string | null
           status?: Database["public"]["Enums"]["user_status"] | null
+          tenant_id?: string | null
           two_factor_enabled?: boolean | null
           updated_at?: string | null
           user_id?: string | null
@@ -10577,6 +10592,13 @@ export type Database = {
             columns: ["station"]
             isOneToOne: false
             referencedRelation: "station"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
