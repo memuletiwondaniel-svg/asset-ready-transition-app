@@ -269,9 +269,12 @@ const CustomerJourneyMaps: React.FC<CustomerJourneyMapsProps> = ({ onBack }) => 
               </div>
             </div>
           </div>
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            {rolePersonas.length} Personas
-          </Badge>
+          <div className="flex items-center gap-2">
+            <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-Customer-Journey-Maps" />
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+              {rolePersonas.length} Personas
+            </Badge>
+          </div>
         </div>
       </div>
 
