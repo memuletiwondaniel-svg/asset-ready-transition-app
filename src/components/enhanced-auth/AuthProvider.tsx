@@ -53,15 +53,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   user_agent: navigator.userAgent
                 }
               });
-              // Audit log: successful login
-              await supabase.from('audit_logs').insert({
-                user_id: session.user.id,
-                user_email: session.user.email,
-                category: 'auth',
-                action: 'login',
-                severity: 'info',
-                description: 'User signed in successfully',
-                metadata: { user_agent: navigator.userAgent },
+              // Audit log: successful login (via edge function for IP/UA capture)
+              await supabase.functions.invoke('write-audit-log', {
+                body: {
+                  category: 'auth',
+                  action: 'login',
+                  severity: 'info',
+                  description: 'User signed in successfully',
+                  metadata: { user_agent: navigator.userAgent },
+                },
               });
             } catch (error) {
               console.error('Failed to track login:', error);
