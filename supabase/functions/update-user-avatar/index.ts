@@ -48,6 +48,16 @@ serve(async (req) => {
     const body: UpdateAvatarRequest = await req.json();
     const { userId, avatarPath } = body || {} as any;
 
+    // --- Self or Admin Check ---
+    if (_callerUserId !== userId) {
+      const { data: _role } = await admin.from('user_roles').select('role').eq('user_id', _callerUserId).eq('role', 'admin').maybeSingle();
+      if (!_role) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
     if (!userId || !avatarPath) {
       return new Response(JSON.stringify({ error: "userId and avatarPath are required" }), {
         status: 400,

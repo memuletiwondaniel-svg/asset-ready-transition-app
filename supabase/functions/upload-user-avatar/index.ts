@@ -61,6 +61,16 @@ serve(async (req) => {
     const body: UploadAvatarRequest = await req.json();
     const { userId, fileExt, contentType, base64 } = body || ({} as any);
 
+    // --- Self or Admin Check ---
+    if (_callerUserId !== userId) {
+      const { data: _role } = await admin.from('user_roles').select('role').eq('user_id', _callerUserId).eq('role', 'admin').maybeSingle();
+      if (!_role) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
     if (!userId || !fileExt || !contentType || !base64) {
       return new Response(
         JSON.stringify({ error: "userId, fileExt, contentType and base64 are required" }),
