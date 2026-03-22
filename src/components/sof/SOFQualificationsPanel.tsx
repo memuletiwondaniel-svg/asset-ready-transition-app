@@ -146,7 +146,7 @@ const dp385Deviations: QualificationDetail[] = [
     expiryDate: '2026-02-28',
     riskDescription: 'Risk of extended downtime in case of control system failure requiring software restoration',
     riskRating: 'Medium',
-    actionOwner: 'Fatima Al-Rashid',
+    actionOwner: 'Control Systems Engineer',
     actionOwnerRole: 'Control Systems Engineer',
     attachments: [
       { name: 'Vendor_Support_Agreement.pdf', type: 'PDF' },
