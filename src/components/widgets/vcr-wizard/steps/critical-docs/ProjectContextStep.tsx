@@ -170,11 +170,13 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                 )}
 
                 {/* Platform logo */}
-                <img
-                  src={platform.logo}
-                  alt={platform.label}
-                  className="w-9 h-9 rounded-lg object-contain shrink-0"
-                />
+                <div className="w-9 h-9 shrink-0 overflow-hidden flex items-center justify-center">
+                  <img
+                    src={platform.logo}
+                    alt={platform.label}
+                    className="w-9 h-9 rounded-lg object-contain"
+                  />
+                </div>
 
                 {/* Name */}
                 <p className={cn('text-[13px] font-medium leading-tight', isSelected && 'text-primary')}>
