@@ -50,18 +50,19 @@ interface FilterChip {
   category: 'tier' | 'discipline';
   activeClass: string;
   dotColor: string;
+  inactiveClass?: string;
   match: (d: DocTypeRow, sm?: Map<string, SecondaryDiscipline[]>) => boolean;
 }
 
 const FILTER_CHIPS: FilterChip[] = [
-  { key: 'tier1', label: 'Tier 1', category: 'tier', activeClass: 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700', dotColor: 'bg-orange-500', match: d => d.tier === 'Tier 1' },
-  { key: 'tier2', label: 'Tier 2', category: 'tier', activeClass: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700', dotColor: 'bg-blue-500', match: d => d.tier === 'Tier 2' },
-  { key: 'rlmu', label: 'RLMU', category: 'tier', activeClass: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700', dotColor: 'bg-amber-600', match: d => d.rlmu === 'RLMU' },
-  { key: 'process', label: 'Process', category: 'discipline', activeClass: 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-700', dotColor: 'bg-indigo-500', match: (d, sm) => d.discipline_code === 'PX' || (sm?.get(d.id)?.some(s => s.discipline_code === 'PX') ?? false) },
-  { key: 'elect', label: 'Elect', category: 'discipline', activeClass: 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700', dotColor: 'bg-yellow-500', match: (d, sm) => d.discipline_name === 'Electrical' || (sm?.get(d.id)?.some(s => s.discipline_code === 'EA') ?? false) },
-  { key: 'inst', label: 'Inst', category: 'discipline', activeClass: 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700', dotColor: 'bg-purple-500', match: (d, sm) => d.discipline_name === 'Instrumentation' || (sm?.get(d.id)?.some(s => s.discipline_code === 'IN') ?? false) },
-  { key: 'static', label: 'Static', category: 'discipline', activeClass: 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700', dotColor: 'bg-teal-500', match: (d, sm) => d.discipline_name === 'Mechanical - Static' || (sm?.get(d.id)?.some(s => s.discipline_code === 'MS') ?? false) },
-  { key: 'rotating', label: 'Rotating', category: 'discipline', activeClass: 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700', dotColor: 'bg-cyan-500', match: (d, sm) => d.discipline_name === 'Rotating Equipment' || (sm?.get(d.id)?.some(s => s.discipline_code === 'MR') ?? false) },
+  { key: 'tier1', label: 'Tier 1', category: 'tier', activeClass: 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700', dotColor: '', inactiveClass: 'border-orange-200 text-orange-500 dark:border-orange-800 dark:text-orange-600', match: d => d.tier === 'Tier 1' },
+  { key: 'tier2', label: 'Tier 2', category: 'tier', activeClass: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700', dotColor: '', inactiveClass: 'border-blue-200 text-blue-500 dark:border-blue-800 dark:text-blue-600', match: d => d.tier === 'Tier 2' },
+  { key: 'rlmu', label: 'RLMU', category: 'tier', activeClass: 'bg-muted text-foreground border-border', dotColor: '', inactiveClass: 'border-border text-muted-foreground', match: d => d.rlmu === 'RLMU' },
+  { key: 'process', label: 'Process', category: 'discipline', activeClass: 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-700', dotColor: '', inactiveClass: 'border-indigo-200 text-indigo-500 dark:border-indigo-800 dark:text-indigo-600', match: (d, sm) => d.discipline_code === 'PX' || (sm?.get(d.id)?.some(s => s.discipline_code === 'PX') ?? false) },
+  { key: 'elect', label: 'Elect', category: 'discipline', activeClass: 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700', dotColor: '', inactiveClass: 'border-yellow-200 text-yellow-500 dark:border-yellow-800 dark:text-yellow-600', match: (d, sm) => d.discipline_name === 'Electrical' || (sm?.get(d.id)?.some(s => s.discipline_code === 'EA') ?? false) },
+  { key: 'inst', label: 'Inst', category: 'discipline', activeClass: 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700', dotColor: '', inactiveClass: 'border-purple-200 text-purple-500 dark:border-purple-800 dark:text-purple-600', match: (d, sm) => d.discipline_name === 'Instrumentation' || (sm?.get(d.id)?.some(s => s.discipline_code === 'IN') ?? false) },
+  { key: 'static', label: 'Static', category: 'discipline', activeClass: 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700', dotColor: '', inactiveClass: 'border-teal-200 text-teal-500 dark:border-teal-800 dark:text-teal-600', match: (d, sm) => d.discipline_name === 'Mechanical - Static' || (sm?.get(d.id)?.some(s => s.discipline_code === 'MS') ?? false) },
+  { key: 'rotating', label: 'Rotating', category: 'discipline', activeClass: 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700', dotColor: '', inactiveClass: 'border-cyan-200 text-cyan-500 dark:border-cyan-800 dark:text-cyan-600', match: (d, sm) => d.discipline_name === 'Rotating Equipment' || (sm?.get(d.id)?.some(s => s.discipline_code === 'MR') ?? false) },
 ];
 
 // Default ON filters
@@ -88,7 +89,15 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
         .select('system_id, p2a_systems(id, name, system_id, is_hydrocarbon)')
         .eq('handover_point_id', vcrId);
       if (error) throw error;
-      return (data || []).map((r: any) => r.p2a_systems).filter(Boolean);
+      const raw = (data || []).map((r: any) => r.p2a_systems).filter(Boolean);
+      // Deduplicate systems by id
+      const seen = new Set<string>();
+      return raw.filter((s: any) => {
+        const key = s.id || s.system_id;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     },
   });
 
@@ -270,38 +279,42 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
             )}
           </div>
 
-          {/* Compact filter chips */}
-          <div className="flex items-center gap-4">
+          {/* Compact filter chips — two rows */}
+          <div className="flex flex-col gap-1.5">
             {CATEGORY_ORDER.map(cat => {
               const chips = FILTER_CHIPS.filter(c => c.category === cat);
               const hasActive = chips.some(c => activeFilters.has(c.key));
               return (
-                <div key={cat} className="flex items-center gap-1">
+                <div key={cat} className="flex items-center gap-2">
                   <span className={cn(
-                    'text-[10px] font-semibold uppercase tracking-wider mr-0.5',
+                    'text-[10px] font-semibold uppercase tracking-wider shrink-0 w-[52px]',
                     hasActive ? 'text-foreground/70' : 'text-muted-foreground/40'
                   )}>
                     {CATEGORY_LABELS[cat]}
                   </span>
-                  {chips.map(chip => {
-                    const isOn = activeFilters.has(chip.key);
-                    return (
-                      <button
-                        key={chip.key}
-                        onClick={() => toggleFilter(chip.key)}
-                        className={cn(
-                          'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border transition-all',
-                          isOn ? chip.activeClass : 'border-border text-muted-foreground hover:border-muted-foreground/40'
-                        )}
-                      >
-                        {chip.label}
-                      </button>
-                    );
-                  })}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {chips.map(chip => {
+                      const isOn = activeFilters.has(chip.key);
+                      return (
+                        <button
+                          key={chip.key}
+                          onClick={() => toggleFilter(chip.key)}
+                          className={cn(
+                            'inline-flex items-center justify-center h-6 px-2.5 rounded-[12px] text-[11px] font-medium border transition-all',
+                            isOn ? chip.activeClass : (chip.inactiveClass || 'border-border text-muted-foreground hover:border-muted-foreground/40')
+                          )}
+                        >
+                          {chip.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               );
             })}
           </div>
+          {/* Divider before table */}
+          <div className="h-px bg-border -mx-3 mt-1" />
         </div>
 
         {/* Document Table */}
@@ -322,7 +335,7 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
                   Tier <SortIcon col="tier" />
                 </TableHead>
                 <TableHead className="w-[80px] px-2 py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground cursor-pointer select-none" onClick={() => toggleSort('discipline_code')}>
-                  Disc. <SortIcon col="discipline_code" />
+                  DISC <SortIcon col="discipline_code" />
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -352,10 +365,10 @@ export const DocumentSelectionStep: React.FC<DocumentSelectionStepProps> = ({
                       <TableCell className="px-2 py-1.5">
                         {doc.tier && (
                           <span className={cn(
-                            'inline-flex items-center text-[11px] px-1.5 py-[2px] rounded-[4px] border font-medium',
+                            'inline-flex items-center justify-center w-[28px] h-[18px] rounded-[4px] text-[11px] font-medium',
                             doc.tier === 'Tier 1'
-                              ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800'
-                              : 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800'
+                              ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400'
+                              : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                           )}>
                             {doc.tier === 'Tier 1' ? 'T1' : 'T2'}
                           </span>
