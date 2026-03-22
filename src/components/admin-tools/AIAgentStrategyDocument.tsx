@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ArrowLeft, Brain, Bot, Zap, Target, AlertTriangle, GraduationCap, Shield, Workflow, Database, MessageSquare, ArrowRight, TrendingUp, Lightbulb, RefreshCw, Eye, CheckCircle, Clock, BarChart3, Layers, Network, Radio, Cpu, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

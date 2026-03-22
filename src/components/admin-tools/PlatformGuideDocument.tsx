@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ArrowLeft, BookOpen, Workflow, Database, Users, FolderOpen, ClipboardList, Shield, Layers, Code, Table, GitBranch, CheckCircle, FileText, Boxes, ArrowRight, Wrench, Container, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
