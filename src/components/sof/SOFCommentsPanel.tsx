@@ -112,7 +112,7 @@ const DEMO_COMMENTS_DP300 = {
     bgColor: "bg-teal-500/10",
     status: "complete" as const,
     summary: "Operating procedures reviewed and approved by shift supervisors. Control room displays configured and verified. Alarm rationalization completed. Operator training for DP300 completed with 100% attendance. Shift handover protocols established. Emergency response drills conducted successfully.",
-    reviewer: "Lyle Koch - CS Deputy Director",
+    reviewer: "CS Deputy Director",
     date: "Dec 6, 2024"
   },
   hse: {
