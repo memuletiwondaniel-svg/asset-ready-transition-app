@@ -9,7 +9,11 @@ export const RolesStep: React.FC<RolesStepProps> = ({ onComplete }) => {
   const { data: roles = [], isLoading } = useQuery({
     queryKey: ['setup-roles'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('roles').select('id, name, description, category').eq('is_active', true).order('name');
+      const { data, error } = await supabase
+        .from('roles')
+        .select('id, name, description, category_id, role_categories(name)')
+        .eq('is_active', true)
+        .order('name');
       if (error) throw error;
       return data;
     },
@@ -20,7 +24,7 @@ export const RolesStep: React.FC<RolesStepProps> = ({ onComplete }) => {
   const grouped = React.useMemo(() => {
     const map = new Map<string, typeof roles>();
     roles.forEach(r => {
-      const cat = r.category || 'Other';
+      const cat = (r.role_categories as any)?.name || 'Other';
       if (!map.has(cat)) map.set(cat, []);
       map.get(cat)!.push(r);
     });
