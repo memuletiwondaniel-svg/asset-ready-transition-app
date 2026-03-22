@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 interface EnhancedSearchableComboboxOption {
   value: string;
   label: string;
+  displayValue?: string;
 }
 
 interface EnhancedSearchableComboboxProps {
