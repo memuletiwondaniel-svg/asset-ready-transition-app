@@ -99,7 +99,7 @@ const MOCK_COMPONENT_NARRATIVES: Record<string, {
   },
   IMS: {
     lastUpdated: '2024-01-06',
-    updatedBy: 'Ahmed Hassan (CMMS Lead)',
+    updatedBy: 'CMMS Lead',
     narrative: 'Integrity Management System setup has commenced. RBI study results are being integrated into CMMS. Inspection points for pressure vessels and piping have been defined. Awaiting final corrosion loop definitions from the Integrity team.'
   },
   '2Y_SPARES': {
