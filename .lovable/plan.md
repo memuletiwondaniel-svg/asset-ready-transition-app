@@ -1,48 +1,53 @@
 
 
-# Remove Hardcoded Email/Personnel Patterns
+# Remove Remaining Hardcoded Personal Names
 
-## Problem
+## Findings
 
-While the specific `ewan@ora.ai` admin email reference no longer exists in the codebase, several hardcoded personnel patterns remain that violate the principle of purely role-based access:
+Line 209 in `SOFQualificationsPanel.tsx` has `approvedBy: 'Ewan McConnachie'` and line 216 has `actionOwner: 'Omar Al-Shammari'`. Beyond that, **8 other non-migration files** still contain hardcoded personal names in mock data:
 
-1. **`ORAApprovalsPanel.tsx`** — `ROLE_USER_MAPPING` maps approval roles to specific user emails (e.g., `roaa.abdullah@basrahgas.iq`, `ewan.mcconnachie2@basrahgas.iq`). Approvers should be resolved dynamically from the database by role.
-2. **`UserProfileDropdown.tsx`** — Hardcodes `role: 'Administrator'` and `email: 'admin@bgc.com'` as fallbacks instead of fetching the user's actual role from `user_roles`/`profiles`.
-3. **`useMyTasksMockData.ts`** — `ORSH_PERSONNEL` hardcodes real personnel names and emails. This is mock data but references real people, which is a data hygiene issue.
-4. **`SOFQualificationsPanel.tsx`** / **`SOFCommentsPanel.tsx`** — Hardcoded reviewer names in mock/demo data.
+| File | Names Found |
+|------|-------------|
+| `SOFQualificationsPanel.tsx` | Ewan McConnachie (L209), Omar Al-Shammari (L216) |
+| `SOFProjectOverviewPanel.tsx` | Mousa Al-Tarazi, Azamat Kenzhin, Ahmed Salah (L39-41) |
+| `PSSRActivityFeed.tsx` | Omar Al-Basri (L67), Ahmed Al-Rashid (L79) |
+| `PSSRDashboard.tsx` | Ahmed Al-Rashid (L190) |
+| `PSSRDetails.tsx` | Ahmed Al-Rashid (L31) |
+| `EnhancedCreateUserModal.tsx` | Daniel Memuletiwon, Ahmed Al-Rashid, Sarah Mitchell (L212-214) |
+| `ORAMaintenanceReadinessTab.tsx` | Fatima Al-Rashid (L97, L107) |
+| `ORATrainingItemDetails.tsx` | Ahmed Al-Rashid (L109) |
+
+Note: "OMAR" references in `ai-chat/index.ts` are the acronym for "Operating Modes Analysis Review" — not a person. No action needed there.
 
 ## Changes
 
-### 1. `ORAApprovalsPanel.tsx` — Dynamic approver resolution
+Replace all hardcoded personal names with role-based labels following the same pattern already applied to `SOFCommentsPanel.tsx`:
 
-Remove `ROLE_USER_MAPPING` constant. Instead, query the database for users by their role (via the `roles` table joined to `profiles`). The `APPROVAL_SEQUENCE` array of role names stays, but user resolution becomes a DB lookup:
+| Original Name | Replacement |
+|---------------|-------------|
+| Ewan McConnachie | ORA Lead |
+| Omar Al-Shammari | Training Coordinator |
+| Mousa Al-Tarazi | Project Hub Lead |
+| Azamat Kenzhin | Snr. ORA Engr. |
+| Ahmed Salah | CSU Lead |
+| Omar Al-Basri | PSSR Reviewer |
+| Ahmed Al-Rashid | Plant Director |
+| Daniel Memuletiwon | ORA Lead |
+| Sarah Mitchell | TA2 Engineer |
+| Fatima Al-Rashid | Materials Lead |
 
-```
-profiles JOIN roles ON profiles.role = roles.id
-WHERE roles.name IN ('ORA Lead', 'Project Manager', 'Deputy Plant Director', 'Plant Director')
-```
-
-This ensures that when personnel change, the UI automatically reflects the correct approvers.
-
-### 2. `UserProfileDropdown.tsx` — Fetch real role from DB
-
-Replace the mock user object with data from the authenticated user's profile and role. Use the existing `useCurrentUserRole` hook or query `profiles` + `user_roles` to get the actual role name, company, and department instead of hardcoding `'Administrator'`.
-
-### 3. `useMyTasksMockData.ts` — Anonymize mock data
-
-Replace real personnel names/emails with generic placeholders (e.g., "Director 1", "Engineer 1") or fetch assignee data from the database. Since this is mock data for the My Tasks page, genericizing the names is sufficient.
-
-### 4. `SOFQualificationsPanel.tsx` / `SOFCommentsPanel.tsx` — Genericize demo data
-
-Replace hardcoded reviewer names with role-based labels (e.g., "Deputy Plant Director" instead of "Ewan McConnachie") or fetch from the database if these panels use real data.
+Each file's mock data `name`/`initiator`/`approvedBy`/`actionOwner` fields get replaced with the role title. Where a role is already present alongside the name (e.g., `'Ahmed Al-Rashid, TA2 - Rotating - Asset'`), the name portion is removed and only the role remains.
 
 ## Files
 
 | File | Action |
 |------|--------|
-| `src/components/ora/ORAApprovalsPanel.tsx` | Modify — replace `ROLE_USER_MAPPING` with dynamic DB query by role |
-| `src/components/admin/UserProfileDropdown.tsx` | Modify — fetch real role/profile instead of hardcoded mock |
-| `src/hooks/useMyTasksMockData.ts` | Modify — anonymize personnel names/emails |
-| `src/components/sof/SOFQualificationsPanel.tsx` | Modify — remove hardcoded reviewer name |
-| `src/components/sof/SOFCommentsPanel.tsx` | Modify — remove hardcoded reviewer name |
+| `src/components/sof/SOFQualificationsPanel.tsx` | Replace 2 names |
+| `src/components/sof/SOFProjectOverviewPanel.tsx` | Replace 3 names |
+| `src/components/PSSRActivityFeed.tsx` | Replace 2 names |
+| `src/components/PSSRDashboard.tsx` | Replace 1 name |
+| `src/components/PSSRDetails.tsx` | Replace 1 name |
+| `src/components/user-management/EnhancedCreateUserModal.tsx` | Replace 3 names |
+| `src/components/ora/ORAMaintenanceReadinessTab.tsx` | Replace 2 names |
+| `src/components/ora/ORATrainingItemDetails.tsx` | Replace 1 name |
 
