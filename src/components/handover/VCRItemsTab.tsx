@@ -221,12 +221,10 @@ const VCRItemsTab: React.FC = () => {
       'Supporting Evidence': item.supporting_evidence || '',
       'Guidance Notes': item.guidance_notes || '',
     }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'VCR Items');
     const filename = `VCR_Items_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, filename);
-    toast.success(`Exported to ${filename}`);
+    writeExcelFile(filename, [{ name: 'VCR Items', data: rows }])
+      .then(() => toast.success(`Exported to ${filename}`))
+      .catch(() => toast.error('Export failed'));
   };
 
   const toggleApprover = (roleId: string) => {

@@ -66,24 +66,19 @@ export const BulkUserUpload: React.FC<BulkUserUploadProps> = ({ onBack }) => {
   const [summary, setSummary] = useState<{ total: number; created: number; updated: number; failed: number } | null>(null);
   const [fileName, setFileName] = useState<string>('');
 
-  const parseExcelFile = useCallback((file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        
-        // Get all data as array of arrays to find header row
-        const allRows = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
-        console.log('Total rows:', allRows.length);
-        console.log('First 5 rows:', allRows.slice(0, 5));
-        
-        // Find the header row by looking for a row containing expected column names
-        const expectedHeaders = ['firstname', 'lastname', 'email', 'password', 'company'];
-        let headerRowIndex = 0;
-        
+  const parseExcelFile = useCallback(async (file: File) => {
+    try {
+      const buffer = await file.arrayBuffer();
+      
+      // First pass: read raw rows to find header
+      const { rawRows: allRows } = await readExcelFile(buffer, { rawArrays: true });
+      console.log('Total rows:', allRows?.length);
+      console.log('First 5 rows:', allRows?.slice(0, 5));
+      
+      const expectedHeaders = ['firstname', 'lastname', 'email', 'password', 'company'];
+      let headerRowIndex = 0;
+      
+      if (allRows) {
         for (let i = 0; i < Math.min(10, allRows.length); i++) {
           const row = allRows[i];
           if (Array.isArray(row)) {
@@ -96,9 +91,10 @@ export const BulkUserUpload: React.FC<BulkUserUploadProps> = ({ onBack }) => {
             }
           }
         }
-        
-        // Parse with the correct header row
-        const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { range: headerRowIndex });
+      }
+      
+      // Second pass: parse with correct header row
+      const { sheetNames, data: jsonData } = await readExcelFile<Record<string, any>>(buffer, { range: headerRowIndex });
         
         console.log('Sheet names:', workbook.SheetNames);
         console.log('Raw JSON data sample:', jsonData.slice(0, 3));

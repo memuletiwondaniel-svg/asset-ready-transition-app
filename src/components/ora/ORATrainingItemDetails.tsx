@@ -358,9 +358,7 @@ export const ORATrainingItemDetails: React.FC<ORATrainingItemDetailsProps> = ({
 
     try {
       const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json<Record<string, string>>(worksheet);
+      const { data: jsonData } = await readExcelFile<Record<string, string>>(data);
 
       const newTrainees = jsonData.map(row => {
         const name = row['Name'] || row['name'] || row['NAME'] || '';

@@ -206,10 +206,7 @@ export const AddSystemDialog: React.FC<AddSystemDialogProps> = ({
       },
     ];
 
-    const ws = XLSX.utils.json_to_sheet(template);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Systems');
-    XLSX.writeFile(wb, 'systems_import_template.xlsx');
+    writeExcelFile('systems_import_template.xlsx', [{ name: 'Systems', data: template }]);
   };
 
   return (

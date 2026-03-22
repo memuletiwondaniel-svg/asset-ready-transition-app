@@ -117,10 +117,7 @@ export const WorkspaceExcelUploadModal: React.FC<WorkspaceExcelUploadModalProps>
       },
     ];
 
-    const ws = XLSX.utils.json_to_sheet(template);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Systems');
-    XLSX.writeFile(wb, 'systems_import_template.xlsx');
+    writeExcelFile('systems_import_template.xlsx', [{ name: 'Systems', data: template }]);
   };
 
   const handleImport = () => {
