@@ -150,7 +150,7 @@ const DmsProjectsTab: React.FC = () => {
                     <TableCell className="text-muted-foreground text-xs tabular-nums">{idx + 1}</TableCell>
                     <TableCell><span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-foreground">{item.code}</span></TableCell>
                     <TableCell className="text-sm text-muted-foreground">{item.project_id || '—'}</TableCell>
-                    <TableCell className="text-sm text-foreground">{item.project_name}</TableCell>
+                    <TableCell className="text-sm text-foreground">{stripProjectPrefix(item.project_name)}</TableCell>
                     <TableCell><span className="inline-flex items-center justify-center h-6 min-w-[2.5rem] px-1.5 rounded bg-muted text-xs font-mono font-medium text-muted-foreground">{item.cabinet || '—'}</span></TableCell>
                     <TableCell className="text-center">
                       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
