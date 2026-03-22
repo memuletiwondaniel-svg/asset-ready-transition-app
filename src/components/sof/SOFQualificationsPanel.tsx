@@ -92,7 +92,7 @@ const mockDeviations: QualificationDetail[] = [
     expiryDate: '2026-11-30',
     riskDescription: 'Extended downtime if critical failure occurs before spares delivery',
     riskRating: 'Medium',
-    actionOwner: 'Alex Burulin',
+    actionOwner: 'CMMS Lead',
     actionOwnerRole: 'CMMS Lead',
     attachments: [
       { name: 'BOM_MinMax_Approval.pdf', type: 'PDF' },
