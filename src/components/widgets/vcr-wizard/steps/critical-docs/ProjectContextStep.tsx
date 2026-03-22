@@ -20,10 +20,10 @@ interface ProjectContextStepProps {
 }
 
 const DMS_PLATFORMS = [
-  { id: 'assai', label: 'Assai', description: 'Document management for oil & gas' },
-  { id: 'wrench', label: 'Wrench', description: 'Engineering document management' },
-  { id: 'documentum', label: 'Documentum', description: 'Enterprise content platform' },
-  { id: 'sharepoint', label: 'SharePoint', description: 'Microsoft collaboration platform' },
+  { id: 'assai', label: 'Assai', description: 'Document management for oil & gas', letter: 'A', color: '#1B6EC2' },
+  { id: 'wrench', label: 'Wrench', description: 'Engineering document management', letter: 'W', color: '#E8600A' },
+  { id: 'documentum', label: 'Documentum', description: 'Enterprise content platform', letter: 'D', color: '#1A2B5F' },
+  { id: 'sharepoint', label: 'SharePoint', description: 'Microsoft collaboration platform', letter: 'S', color: '#0078D4' },
 ];
 
 export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
@@ -147,7 +147,7 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
           Select one or more DMS platforms used on this project.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {DMS_PLATFORMS.map(platform => {
             const isSelected = dmsPlatforms.includes(platform.id);
             return (
@@ -156,15 +156,28 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                 type="button"
                 onClick={() => togglePlatform(platform.id)}
                 className={cn(
-                  'flex items-start gap-3 p-3.5 rounded-xl border text-left transition-all',
+                  'relative flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all min-h-[80px]',
                   isSelected
-                    ? 'border-primary/40 bg-primary/5 shadow-sm'
-                    : 'border-border hover:border-muted-foreground/30 hover:bg-muted/30'
+                    ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
+                    : 'border-border hover:border-muted-foreground/40 hover:bg-muted/40'
                 )}
               >
-                <Checkbox checked={isSelected} className="mt-0.5 pointer-events-none" />
-                <div className="min-w-0">
-                  <p className={cn('text-sm font-medium', isSelected && 'text-primary')}>{platform.label}</p>
+                {/* Checkbox top-right */}
+                <div className="absolute top-2.5 right-2.5">
+                  <Checkbox checked={isSelected} className="pointer-events-none" />
+                </div>
+
+                {/* Platform logo avatar */}
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 text-white font-bold text-base"
+                  style={{ backgroundColor: platform.color }}
+                >
+                  {platform.letter}
+                </div>
+
+                {/* Text */}
+                <div className="min-w-0 pr-6">
+                  <p className={cn('text-sm font-medium leading-tight', isSelected && 'text-primary')}>{platform.label}</p>
                   <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{platform.description}</p>
                 </div>
               </button>
