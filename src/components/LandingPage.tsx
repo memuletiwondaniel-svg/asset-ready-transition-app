@@ -753,7 +753,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                       return (
                         <div
                           key={fav.path}
-                          className="group/fav relative flex flex-col items-center gap-2 sm:gap-2.5 p-3 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-200 min-w-[80px] sm:min-w-[100px]"
+                          className="group/fav relative flex flex-col items-center gap-2 sm:gap-2.5 p-4 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 min-w-[88px] sm:min-w-[100px] min-h-[72px] touch-manipulation"
                         >
                           <button
                             onClick={(e) => {
