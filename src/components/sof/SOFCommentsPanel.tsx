@@ -186,7 +186,7 @@ const DEMO_COMMENTS_DP385 = {
     bgColor: "bg-purple-500/10",
     status: "complete" as const,
     summary: "New piping tie-ins hydrotested and certified. Pig launcher/receiver installations inspected. Flange integrity verification completed for all new connections. Corrosion allowance confirmed adequate for gas service. Support and hanger adjustments completed per stress analysis.",
-    reviewer: "Prakash Princeton - Static TA2 (P&E)",
+    reviewer: "Static TA2 (P&E)",
     date: "Jan 26, 2026"
   },
   civil: {
