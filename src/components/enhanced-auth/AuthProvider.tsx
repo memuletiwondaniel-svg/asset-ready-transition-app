@@ -53,15 +53,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   user_agent: navigator.userAgent
                 }
               });
-              // Audit log: successful login
-              await supabase.from('audit_logs').insert({
-                user_id: session.user.id,
-                user_email: session.user.email,
-                category: 'auth',
-                action: 'login',
-                severity: 'info',
-                description: 'User signed in successfully',
-                metadata: { user_agent: navigator.userAgent },
+              // Audit log: successful login (via edge function for IP/UA capture)
+              await supabase.functions.invoke('write-audit-log', {
+                body: {
+                  category: 'auth',
+                  action: 'login',
+                  severity: 'info',
+                  description: 'User signed in successfully',
+                  metadata: { user_agent: navigator.userAgent },
+                },
               });
             } catch (error) {
               console.error('Failed to track login:', error);
@@ -72,11 +72,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (event === 'SIGNED_OUT') {
           setTimeout(async () => {
             try {
-              await supabase.from('audit_logs').insert({
-                category: 'auth',
-                action: 'logout',
-                severity: 'info',
-                description: 'User signed out',
+              await supabase.functions.invoke('write-audit-log', {
+                body: {
+                  category: 'auth',
+                  action: 'logout',
+                  severity: 'info',
+                  description: 'User signed out',
+                },
               });
             } catch {
               // Silent fail - user is signing out
@@ -169,14 +171,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return { error };
               }
             }
-            // Audit log: failed login
-            await supabase.from('audit_logs').insert({
-              user_email: email,
-              category: 'auth',
-              action: 'login_failed',
-              severity: 'warning',
-              description: 'Failed login attempt for ' + email,
-              metadata: { reason: error.message, user_agent: navigator.userAgent },
+            // Audit log: failed login (via edge function for IP/UA capture)
+            await supabase.functions.invoke('write-audit-log', {
+              body: {
+                user_email: email,
+                category: 'auth',
+                action: 'login_failed',
+                severity: 'warning',
+                description: 'Failed login attempt for ' + email,
+                metadata: { reason: error.message },
+              },
             });
           } catch (e) {
             console.error('Failed to track failed login:', e);

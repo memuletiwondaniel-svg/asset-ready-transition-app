@@ -54,16 +54,16 @@ export const useSessionTimeout = () => {
     clearAllTimers();
     setShowWarning(false);
     
-    // Audit log
+    // Audit log (via edge function for IP/UA capture)
     try {
-      await supabase.from('audit_logs').insert({
-        user_id: user?.id,
-        user_email: user?.email,
-        category: 'auth',
-        action: 'session_timeout',
-        severity: 'warning',
-        description: `Session timed out after ${config.timeout_minutes} minutes of inactivity`,
-        metadata: { timeout_minutes: config.timeout_minutes },
+      await supabase.functions.invoke('write-audit-log', {
+        body: {
+          category: 'auth',
+          action: 'session_timeout',
+          severity: 'warning',
+          description: `Session timed out after ${config.timeout_minutes} minutes of inactivity`,
+          metadata: { timeout_minutes: config.timeout_minutes },
+        },
       });
     } catch { /* silent */ }
 
