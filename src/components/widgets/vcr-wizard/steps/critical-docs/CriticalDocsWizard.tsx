@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Button } from '@/components/ui/button';
-import { Check, ChevronLeft, Loader2, ArrowRight, FileSearch, ListChecks, ClipboardCheck } from 'lucide-react';
+import { Check, ChevronLeft, Loader2, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,9 +21,9 @@ interface CriticalDocsWizardProps {
 }
 
 const STEPS = [
-  { id: 'context', label: 'Project Context', icon: FileSearch },
-  { id: 'selection', label: 'Document Selection', icon: ListChecks },
-  { id: 'review', label: 'Review & Confirm', icon: ClipboardCheck },
+  { id: 'context', label: 'Project Context' },
+  { id: 'selection', label: 'Document Selection' },
+  { id: 'review', label: 'Review & Confirm' },
 ];
 
 export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
@@ -113,7 +113,7 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-[95vw] sm:max-w-[95vw] w-full h-[88vh] max-h-[850px] p-0 flex flex-col gap-0 z-[150] overflow-hidden"
+        className="max-w-[600px] sm:max-w-[600px] w-full h-auto max-h-[85vh] p-0 flex flex-col gap-0 z-[150] overflow-hidden"
         overlayClassName="z-[140]"
       >
         <VisuallyHidden>
@@ -124,42 +124,39 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
         </VisuallyHidden>
 
         {/* Modern Stepper Header */}
-        <div className="px-6 pt-5 pb-4 border-b bg-gradient-to-b from-muted/40 to-background">
-          <div className="flex items-center justify-center max-w-xl mx-auto">
+        <div className="px-6 pt-4 pb-3 border-b bg-muted/20">
+          <div className="flex items-center justify-center max-w-sm mx-auto">
             {STEPS.map((step, idx) => {
               const isActive = idx === currentStep;
               const isComplete = idx < currentStep;
-              const StepIcon = step.icon;
               return (
                 <React.Fragment key={step.id}>
                   <button
                     onClick={() => idx < currentStep && setCurrentStep(idx)}
                     disabled={idx > currentStep}
-                    className={cn(
-                      'flex items-center gap-2.5 px-4 py-2 rounded-lg transition-all text-sm group relative',
-                      isActive && 'bg-primary text-primary-foreground font-semibold shadow-md',
-                      isComplete && 'text-emerald-600 dark:text-emerald-400 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/30',
-                      !isActive && !isComplete && 'text-muted-foreground/50'
-                    )}
+                    className="flex flex-col items-center gap-1.5 group"
                   >
                     <span className={cn(
-                      'w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0',
-                      isActive && 'bg-primary-foreground/20',
-                      isComplete && 'bg-emerald-100 dark:bg-emerald-900/40',
-                      !isActive && !isComplete && 'bg-muted'
+                      'w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold border-2 transition-all shrink-0',
+                      isComplete && 'bg-primary border-primary text-primary-foreground',
+                      isActive && 'border-primary bg-background text-primary',
+                      !isActive && !isComplete && 'border-muted-foreground/30 bg-background text-muted-foreground/50'
                     )}>
                       {isComplete ? (
-                        <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <Check className="w-3 h-3" />
                       ) : (
-                        <StepIcon className={cn('w-4 h-4', isActive ? 'text-primary-foreground' : 'text-muted-foreground/50')} />
+                        idx + 1
                       )}
                     </span>
-                    <span className="hidden sm:inline whitespace-nowrap">{step.label}</span>
+                    <span className={cn(
+                      'text-[11px] whitespace-nowrap',
+                      isActive ? 'text-foreground font-medium' : 'text-muted-foreground'
+                    )}>{step.label}</span>
                   </button>
                   {idx < STEPS.length - 1 && (
                     <div className={cn(
-                      'w-8 sm:w-12 h-0.5 mx-1 rounded-full transition-colors shrink-0',
-                      idx < currentStep ? 'bg-emerald-400' : 'bg-border'
+                      'flex-1 h-px mx-3 mb-5 transition-colors shrink-0 min-w-[40px]',
+                      idx < currentStep ? 'bg-primary' : 'bg-border'
                     )} />
                   )}
                 </React.Fragment>
