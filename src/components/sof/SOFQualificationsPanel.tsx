@@ -139,7 +139,7 @@ const dp385Deviations: QualificationDetail[] = [
     description: 'Software backups and licence documentation for the CS6/7 control system are yet to be received from vendor.',
     severity: 'medium',
     status: 'approved',
-    approvedBy: 'Bart Den Hond',
+    approvedBy: 'PACO TA2 (Asset)',
     approverRole: 'PACO TA2 (Asset)',
     approvedAt: '2026-01-28',
     mitigationMeasures: 'Vendor support agreement in place for emergency recovery. Temporary licence issued pending formal transfer. Backup scheduled for completion by Feb 28th.',
