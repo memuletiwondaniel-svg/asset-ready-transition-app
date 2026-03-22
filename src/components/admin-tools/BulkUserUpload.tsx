@@ -96,102 +96,92 @@ export const BulkUserUpload: React.FC<BulkUserUploadProps> = ({ onBack }) => {
       // Second pass: parse with correct header row
       const { sheetNames, data: jsonData } = await readExcelFile<Record<string, any>>(buffer, { range: headerRowIndex });
         
-        console.log('Sheet names:', workbook.SheetNames);
-        console.log('Raw JSON data sample:', jsonData.slice(0, 3));
-        console.log('First row keys:', jsonData[0] ? Object.keys(jsonData[0]) : 'No data');
+      console.log('Sheet names:', sheetNames);
+      console.log('Raw JSON data sample:', jsonData.slice(0, 3));
+      console.log('First row keys:', jsonData[0] ? Object.keys(jsonData[0]) : 'No data');
 
-        // Helper function to get field value with flexible column name matching
-        const getField = (row: Record<string, any>, fieldName: string): any => {
-          // Normalize the target field name
-          const normalizedFieldName = fieldName.toLowerCase().replace(/[\s_-]/g, '');
+      // Helper function to get field value with flexible column name matching
+      const getField = (row: Record<string, any>, fieldName: string): any => {
+        const normalizedFieldName = fieldName.toLowerCase().replace(/[\s_-]/g, '');
+        const key = Object.keys(row).find(k => {
+          const normalizedKey = k.toLowerCase().trim().replace(/[\s_-]/g, '');
+          return normalizedKey === normalizedFieldName;
+        });
+        return key ? row[key] : undefined;
+      };
+
+      const foundColumns = jsonData[0] ? Object.keys(jsonData[0]) : [];
+      console.log('Found columns:', foundColumns);
+
+      const parsed: ParsedUser[] = jsonData
+        .filter(row => {
+          return Object.values(row).some(v => v !== null && v !== undefined && v.toString().trim() !== '');
+        })
+        .map(row => {
+          const validationErrors: string[] = [];
           
-          // Try to find a matching key
-          const key = Object.keys(row).find(k => {
-            const normalizedKey = k.toLowerCase().trim().replace(/[\s_-]/g, '');
-            return normalizedKey === normalizedFieldName;
-          });
-          
-          const value = key ? row[key] : undefined;
-          return value;
-        };
+          const firstName = getField(row, 'firstName');
+          const lastName = getField(row, 'lastName');
+          const email = getField(row, 'email');
+          const password = getField(row, 'password');
+          const company = getField(row, 'company');
+          const personalEmail = getField(row, 'personalEmail');
+          const isFunctionalEmailRaw = getField(row, 'isFunctionalEmail');
+          const role = getField(row, 'role');
+          const plant = getField(row, 'plant');
+          const commission = getField(row, 'commission');
+          const phone = getField(row, 'phone');
+          const systemRole = getField(row, 'systemRole');
+          const hub = getField(row, 'hub');
 
-        // Log all column names found for debugging
-        const foundColumns = jsonData[0] ? Object.keys(jsonData[0]) : [];
-        console.log('Found columns:', foundColumns);
-        console.log('Expected columns: firstName, lastName, email, password, company, personalEmail, isFunctionalEmail, role, plant, commission, phone, systemRole, hub');
+          if (!firstName) validationErrors.push('Missing first name');
+          if (!lastName) validationErrors.push('Missing last name');
+          if (!email) validationErrors.push('Missing email');
+          if (!password) validationErrors.push('Missing password');
+          if (!company) validationErrors.push('Missing company');
 
-        const parsed: ParsedUser[] = jsonData
-          .filter(row => {
-            // Skip completely empty rows - only check if ANY value exists
-            return Object.values(row).some(v => v !== null && v !== undefined && v.toString().trim() !== '');
-          })
-          .map(row => {
-            const validationErrors: string[] = [];
-            
-            const firstName = getField(row, 'firstName');
-            const lastName = getField(row, 'lastName');
-            const email = getField(row, 'email');
-            const password = getField(row, 'password');
-            const company = getField(row, 'company');
-            const personalEmail = getField(row, 'personalEmail');
-            const isFunctionalEmailRaw = getField(row, 'isFunctionalEmail');
-            const role = getField(row, 'role');
-            const plant = getField(row, 'plant');
-            const commission = getField(row, 'commission');
-            const phone = getField(row, 'phone');
-            const systemRole = getField(row, 'systemRole');
-            const hub = getField(row, 'hub');
+          const isFunctional = typeof isFunctionalEmailRaw === 'boolean' 
+            ? isFunctionalEmailRaw 
+            : isFunctionalEmailRaw?.toString().toUpperCase() === 'TRUE';
 
-            if (!firstName) validationErrors.push('Missing first name');
-            if (!lastName) validationErrors.push('Missing last name');
-            if (!email) validationErrors.push('Missing email');
-            if (!password) validationErrors.push('Missing password');
-            if (!company) validationErrors.push('Missing company');
+          if (isFunctional && !personalEmail) {
+            validationErrors.push('Functional email requires personal email');
+          }
 
-            const isFunctional = typeof isFunctionalEmailRaw === 'boolean' 
-              ? isFunctionalEmailRaw 
-              : isFunctionalEmailRaw?.toString().toUpperCase() === 'TRUE';
+          return {
+            firstName: firstName?.toString().trim() || '',
+            lastName: lastName?.toString().trim() || '',
+            password: password?.toString() || '',
+            personalEmail: personalEmail?.toString().replace(/<|>/g, '').trim() || '',
+            email: email?.toString().replace(/<|>/g, '').trim() || '',
+            isFunctionalEmail: isFunctional,
+            company: company?.toString().trim() || '',
+            role: role?.toString().trim() || '',
+            plant: plant?.toString().trim() || undefined,
+            commission: commission?.toString().trim() || undefined,
+            phone: phone?.toString().trim() || undefined,
+            systemRole: systemRole?.toString().trim() || 'user',
+            hub: hub?.toString().trim() || undefined,
+            isValid: validationErrors.length === 0,
+            validationErrors,
+          };
+        });
 
-            if (isFunctional && !personalEmail) {
-              validationErrors.push('Functional email requires personal email');
-            }
-
-            return {
-              firstName: firstName?.toString().trim() || '',
-              lastName: lastName?.toString().trim() || '',
-              password: password?.toString() || '',
-              personalEmail: personalEmail?.toString().replace(/<|>/g, '').trim() || '',
-              email: email?.toString().replace(/<|>/g, '').trim() || '',
-              isFunctionalEmail: isFunctional,
-              company: company?.toString().trim() || '',
-              role: role?.toString().trim() || '',
-              plant: plant?.toString().trim() || undefined,
-              commission: commission?.toString().trim() || undefined,
-              phone: phone?.toString().trim() || undefined,
-              systemRole: systemRole?.toString().trim() || 'user',
-              hub: hub?.toString().trim() || undefined,
-              isValid: validationErrors.length === 0,
-              validationErrors,
-            };
-          });
-
-        setParsedUsers(parsed);
-        setFileName(file.name);
-        setUploadResults(null);
-        setSummary(null);
-        
-        if (parsed.length === 0) {
-          console.error('No users parsed. Raw data sample:', jsonData.slice(0, 5));
-          toast.error('No valid users found. Check console for debugging info.');
-        } else {
-          toast.success(`Parsed ${parsed.length} users from ${file.name}`);
-        }
-      } catch (error) {
-        console.error('Error parsing Excel file:', error);
-        toast.error('Failed to parse Excel file');
+      setParsedUsers(parsed);
+      setFileName(file.name);
+      setUploadResults(null);
+      setSummary(null);
+      
+      if (parsed.length === 0) {
+        console.error('No users parsed. Raw data sample:', jsonData.slice(0, 5));
+        toast.error('No valid users found. Check console for debugging info.');
+      } else {
+        toast.success(`Parsed ${parsed.length} users from ${file.name}`);
       }
-    };
-    reader.readAsArrayBuffer(file);
+    } catch (error) {
+      console.error('Error parsing Excel file:', error);
+      toast.error('Failed to parse Excel file');
+    }
   }, []);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
