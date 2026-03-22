@@ -176,7 +176,7 @@ export const AddRegisterSheet: React.FC<AddRegisterSheetProps> = ({
               <Label htmlFor="registerOwner" className="text-sm font-medium">Owner / Responsible Person</Label>
               <Input
                 id="registerOwner"
-                placeholder="e.g., John Smith"
+                placeholder="e.g., Operations Engineer"
                 value={owner}
                 onChange={(e) => setOwner(e.target.value)}
               />

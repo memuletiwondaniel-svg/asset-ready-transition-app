@@ -187,7 +187,7 @@ const PSSRDashboard: React.FC<PSSRDashboardProps> = ({
     progress: 75,
     created: '2024-01-15',
     dueDate: '2024-02-15',
-    initiator: dbPssr?.pssr_lead?.full_name || 'Ahmed Al-Rashid',
+    initiator: dbPssr?.pssr_lead?.full_name || 'PSSR Lead',
     tier: 'Tier 1',
     scope: dbPssr?.scope || 'Pre-start-up safety review for the commissioning of new natural gas processing units including safety systems, process controls, and emergency shutdown procedures.',
     scopeImageUrl: dbPssr?.scope_image_url || null,

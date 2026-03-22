@@ -46,21 +46,21 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 const mockProcedures: Procedure[] = [
   // Initial Start-up Procedures
-  { id: '1', procedureNumber: 'ISU-001', title: 'Gas Turbine Initial Start-up Procedure', type: 'startup', status: 'approved', version: '2.1', owner: 'John Smith', lastUpdated: '2024-01-15' },
-  { id: '2', procedureNumber: 'ISU-002', title: 'Compressor Train Commissioning & Start-up', type: 'startup', status: 'final_review', version: '1.3', owner: 'Sarah Johnson', lastUpdated: '2024-01-10' },
-  { id: '3', procedureNumber: 'ISU-003', title: 'Heat Recovery Steam Generator (HRSG) Start-up', type: 'startup', status: 'site_validation', version: '1.0', owner: 'Mike Chen', lastUpdated: '2024-01-08' },
-  { id: '4', procedureNumber: 'ISU-004', title: 'Process Gas Heater Light-off Procedure', type: 'startup', status: 'approved', version: '3.0', owner: 'Emily Davis', lastUpdated: '2024-01-12' },
-  { id: '5', procedureNumber: 'ISU-005', title: 'Electrical Systems Energization Sequence', type: 'startup', status: 'translated', version: '2.5', owner: 'Robert Wilson', lastUpdated: '2024-01-05' },
-  { id: '6', procedureNumber: 'ISU-006', title: 'Instrument Air System Commissioning', type: 'startup', status: 'draft', version: '0.2', owner: 'Lisa Brown', lastUpdated: '2024-01-03' },
+  { id: '1', procedureNumber: 'ISU-001', title: 'Gas Turbine Initial Start-up Procedure', type: 'startup', status: 'approved', version: '2.1', owner: 'Operations Engineer 1', lastUpdated: '2024-01-15' },
+  { id: '2', procedureNumber: 'ISU-002', title: 'Compressor Train Commissioning & Start-up', type: 'startup', status: 'final_review', version: '1.3', owner: 'Process Engineer 1', lastUpdated: '2024-01-10' },
+  { id: '3', procedureNumber: 'ISU-003', title: 'Heat Recovery Steam Generator (HRSG) Start-up', type: 'startup', status: 'site_validation', version: '1.0', owner: 'Mechanical Engineer 1', lastUpdated: '2024-01-08' },
+  { id: '4', procedureNumber: 'ISU-004', title: 'Process Gas Heater Light-off Procedure', type: 'startup', status: 'approved', version: '3.0', owner: 'Process Engineer 2', lastUpdated: '2024-01-12' },
+  { id: '5', procedureNumber: 'ISU-005', title: 'Electrical Systems Energization Sequence', type: 'startup', status: 'translated', version: '2.5', owner: 'Electrical Engineer 1', lastUpdated: '2024-01-05' },
+  { id: '6', procedureNumber: 'ISU-006', title: 'Instrument Air System Commissioning', type: 'startup', status: 'draft', version: '0.2', owner: 'Instrument Engineer 1', lastUpdated: '2024-01-03' },
   { id: '7', procedureNumber: 'ISU-007', title: 'Cooling Water System Start-up', type: 'startup', status: 'not_started', version: '-', owner: 'TBD', lastUpdated: '-' },
   // Normal Operating Procedures
-  { id: '8', procedureNumber: 'NOP-001', title: 'Gas Turbine Normal Operating Procedure', type: 'normal', status: 'approved', version: '4.2', owner: 'John Smith', lastUpdated: '2024-01-14' },
-  { id: '9', procedureNumber: 'NOP-002', title: 'Compressor Surge Control & Monitoring', type: 'normal', status: 'approved', version: '2.0', owner: 'Sarah Johnson', lastUpdated: '2024-01-11' },
-  { id: '10', procedureNumber: 'NOP-003', title: 'Production Separator Operation', type: 'normal', status: 'translated', version: '1.5', owner: 'Lisa Brown', lastUpdated: '2024-01-09' },
-  { id: '11', procedureNumber: 'NOP-004', title: 'Flare System Operation & Monitoring', type: 'normal', status: 'final_review', version: '1.2', owner: 'David Lee', lastUpdated: '2024-01-07' },
-  { id: '12', procedureNumber: 'NOP-005', title: 'Chemical Injection System Operation', type: 'normal', status: 'site_validation', version: '2.0', owner: 'Amanda Taylor', lastUpdated: '2024-01-13' },
-  { id: '13', procedureNumber: 'NOP-006', title: 'Water Treatment Plant Operation', type: 'normal', status: 'approved', version: '3.1', owner: 'Chris Martin', lastUpdated: '2024-01-06' },
-  { id: '14', procedureNumber: 'NOP-007', title: 'Emergency Shutdown (ESD) System Testing', type: 'normal', status: 'draft', version: '0.5', owner: 'Jennifer White', lastUpdated: '2024-01-04' },
+  { id: '8', procedureNumber: 'NOP-001', title: 'Gas Turbine Normal Operating Procedure', type: 'normal', status: 'approved', version: '4.2', owner: 'Operations Engineer 1', lastUpdated: '2024-01-14' },
+  { id: '9', procedureNumber: 'NOP-002', title: 'Compressor Surge Control & Monitoring', type: 'normal', status: 'approved', version: '2.0', owner: 'Process Engineer 1', lastUpdated: '2024-01-11' },
+  { id: '10', procedureNumber: 'NOP-003', title: 'Production Separator Operation', type: 'normal', status: 'translated', version: '1.5', owner: 'Instrument Engineer 1', lastUpdated: '2024-01-09' },
+  { id: '11', procedureNumber: 'NOP-004', title: 'Flare System Operation & Monitoring', type: 'normal', status: 'final_review', version: '1.2', owner: 'Safety Engineer 1', lastUpdated: '2024-01-07' },
+  { id: '12', procedureNumber: 'NOP-005', title: 'Chemical Injection System Operation', type: 'normal', status: 'site_validation', version: '2.0', owner: 'Chemical Engineer 1', lastUpdated: '2024-01-13' },
+  { id: '13', procedureNumber: 'NOP-006', title: 'Water Treatment Plant Operation', type: 'normal', status: 'approved', version: '3.1', owner: 'Utilities Engineer 1', lastUpdated: '2024-01-06' },
+  { id: '14', procedureNumber: 'NOP-007', title: 'Emergency Shutdown (ESD) System Testing', type: 'normal', status: 'draft', version: '0.5', owner: 'Control Systems Engineer 1', lastUpdated: '2024-01-04' },
   { id: '15', procedureNumber: 'NOP-008', title: 'Fuel Gas System Operation', type: 'normal', status: 'not_started', version: '-', owner: 'TBD', lastUpdated: '-' },
 ];
 

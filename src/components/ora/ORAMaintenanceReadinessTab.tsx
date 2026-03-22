@@ -84,38 +84,38 @@ const MOCK_COMPONENT_NARRATIVES: Record<string, {
 }> = {
   ARB: {
     lastUpdated: '2024-01-08',
-    updatedBy: 'Ahmed Hassan (CMMS Lead)',
+    updatedBy: 'CMMS Lead',
     narrative: 'Asset Register Build is progressing well. Batch 1 (Critical Equipment) has been completed with all 847 assets validated. Batch 2 is currently in progress with 65% of rotating equipment entered. We are on track to complete ARB by end of Q1. Key risk: awaiting final P&ID revisions for static equipment classification.'
   },
   PMS: {
     lastUpdated: '2024-01-07',
-    updatedBy: 'Ahmed Hassan (CMMS Lead)',
+    updatedBy: 'CMMS Lead',
     narrative: 'Preventive Maintenance routines setup is underway. We have completed PM strategies for all critical rotating equipment. Currently working on developing task lists for electrical systems. Vendor maintenance manuals for new compressor packages have been received and are being reviewed.'
   },
   BOM: {
     lastUpdated: '2024-01-05',
-    updatedBy: 'Fatima Al-Rashid (Materials Lead)',
+    updatedBy: 'Materials Lead',
     narrative: 'Bill of Materials population is approximately 40% complete. Initial spare parts lists have been uploaded for major equipment. Currently coordinating with vendors to obtain recommended spare parts lists for specialized equipment. Long-lead items have been identified and procurement process initiated.'
   },
   IMS: {
     lastUpdated: '2024-01-06',
-    updatedBy: 'Ahmed Hassan (CMMS Lead)',
+    updatedBy: 'CMMS Lead',
     narrative: 'Integrity Management System setup has commenced. RBI study results are being integrated into CMMS. Inspection points for pressure vessels and piping have been defined. Awaiting final corrosion loop definitions from the Integrity team.'
   },
   '2Y_SPARES': {
     lastUpdated: '2024-01-04',
-    updatedBy: 'Fatima Al-Rashid (Materials Lead)',
+    updatedBy: 'Materials Lead',
     narrative: 'Two-year operating spares procurement is in planning phase. Initial spares list has been compiled based on equipment criticality analysis. Working with Operations to validate consumption estimates. Budget allocation confirmed for Phase 1 items.'
   }
 };
 
 // Mock responsible engineers by component
 const MOCK_RESPONSIBLE_ENGINEERS: Record<string, string[]> = {
-  ARB: ['Mushtaq Nawaz', 'Ben Chiong'],
-  PMS: ['Ben Chiong', 'Mushtaq Nawaz'],
-  IMS: ['Mushtaq Nawaz', 'Ben Chiong'],
-  BOM: ['Poojan Joshi', 'Maharsh Seth'],
-  '2Y_SPARES': ['Maharsh Seth', 'Poojan Joshi']
+  ARB: ['CMMS Engineer 1', 'CMMS Engineer 2'],
+  PMS: ['CMMS Engineer 2', 'CMMS Engineer 1'],
+  IMS: ['CMMS Engineer 1', 'CMMS Engineer 2'],
+  BOM: ['Materials Engineer 1', 'Materials Engineer 2'],
+  '2Y_SPARES': ['Materials Engineer 2', 'Materials Engineer 1']
 };
 
 // Helper to get responsible engineer for a batch

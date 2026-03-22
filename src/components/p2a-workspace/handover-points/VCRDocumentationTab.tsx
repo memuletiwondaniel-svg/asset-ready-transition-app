@@ -58,7 +58,7 @@ const mockDocuments: VCRDocument[] = [
     category: 'rlmu',
     status: 'published',
     version: '3.0',
-    owner: 'John Smith',
+    owner: 'Operations Engineer 1',
     lastUpdated: '2024-01-15',
     systems: ['GTG-001', 'CMP-001']
   },
@@ -72,7 +72,7 @@ const mockDocuments: VCRDocument[] = [
     category: 'afc',
     status: 'approved',
     version: '2.5',
-    owner: 'Sarah Johnson',
+    owner: 'Process Engineer',
     lastUpdated: '2024-01-12',
     systems: ['GTG-001']
   },
@@ -86,7 +86,7 @@ const mockDocuments: VCRDocument[] = [
     category: 'rlmu',
     status: 'in_review',
     version: '1.8',
-    owner: 'Mike Chen',
+    owner: 'Electrical Engineer 1',
     lastUpdated: '2024-01-10',
     systems: ['STG-001']
   },
@@ -100,7 +100,7 @@ const mockDocuments: VCRDocument[] = [
     category: 'asb',
     status: 'draft',
     version: '1.0',
-    owner: 'Lisa Wong',
+    owner: 'Maintenance Engineer 1',
     lastUpdated: '2024-01-08',
     systems: ['CMP-001']
   },

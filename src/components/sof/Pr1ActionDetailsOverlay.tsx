@@ -72,7 +72,7 @@ export const Pr1ActionDetailsOverlay: React.FC<Pr1ActionDetailsOverlayProps> = (
                 Assigned To
               </div>
               <p className="text-sm font-medium">
-                {assignedTo || 'PSSR Lead (John Smith)'}
+                {assignedTo || 'PSSR Lead'}
               </p>
             </div>
 

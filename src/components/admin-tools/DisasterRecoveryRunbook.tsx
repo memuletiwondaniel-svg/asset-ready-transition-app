@@ -140,15 +140,15 @@ const DisasterRecoveryRunbook: React.FC<DisasterRecoveryRunbookProps> = ({ onBac
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                <tr><td className="p-2">System Administrator</td><td className="p-2">First responder, initiates restore</td><td className="p-2">Daniel Memuletiwon — memuletiwondaniel@gmail.com / +1 (905) 242-9978</td></tr>
-                <tr><td className="p-2">Database Administrator</td><td className="p-2">Database restore, data verification</td><td className="p-2">Daniel Memuletiwon — memuletiwondaniel@gmail.com / +1 (905) 242-9978</td></tr>
+                <tr><td className="p-2">System Administrator</td><td className="p-2">First responder, initiates restore</td><td className="p-2">Configure in admin settings</td></tr>
+                <tr><td className="p-2">Database Administrator</td><td className="p-2">Database restore, data verification</td><td className="p-2">Configure in admin settings</td></tr>
                 <tr><td className="p-2">Supabase Support</td><td className="p-2">Infrastructure-level issues</td><td className="p-2">support@supabase.io</td></tr>
-                <tr><td className="p-2">IT Security Lead</td><td className="p-2">Security incident coordination</td><td className="p-2">Daniel Memuletiwon — memuletiwondaniel@gmail.com / +1 (905) 242-9978</td></tr>
-                <tr><td className="p-2">Business Owner</td><td className="p-2">Incident communication, RTO decisions</td><td className="p-2">Daniel Memuletiwon — memuletiwondaniel@gmail.com / +1 (905) 242-9978</td></tr>
+                <tr><td className="p-2">IT Security Lead</td><td className="p-2">Security incident coordination</td><td className="p-2">Configure in admin settings</td></tr>
+                <tr><td className="p-2">Business Owner</td><td className="p-2">Incident communication, RTO decisions</td><td className="p-2">Configure in admin settings</td></tr>
               </tbody>
             </table>
           </div>
-          <p className="text-[10px] text-muted-foreground">Primary contact: Daniel Memuletiwon. Update additional contacts as your team grows.</p>
+          <p className="text-[10px] text-muted-foreground">Configure emergency contacts in admin settings. Update additional contacts as your team grows.</p>
         </div>
       ),
     },

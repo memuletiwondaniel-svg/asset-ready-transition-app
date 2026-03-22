@@ -52,8 +52,8 @@ const PSSRActivityFeed: React.FC<PSSRActivityFeedProps> = ({
         pssrId: 'PSSR-DP300-001',
         projectName: 'HM Additional Compressors',
         user: {
-          name: 'Sarah Johnson',
-          avatar: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=150&h=150&fit=crop&crop=face'
+          name: 'Safety Lead',
+          avatar: ''
         },
         message: 'approved the safety checklist',
         timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
@@ -64,8 +64,8 @@ const PSSRActivityFeed: React.FC<PSSRActivityFeedProps> = ({
         pssrId: 'PSSR-2024-004',
         projectName: 'Majnoon New Gas Tie-in',
         user: {
-          name: 'Omar Al-Basri',
-          avatar: 'https://images.unsplash.com/photo-1501286353178-1ec881214838?w=150&h=150&fit=crop&crop=face'
+          name: 'PSSR Reviewer',
+          avatar: ''
         },
         message: 'added a comment: "Need to review pressure test results before approval"',
         timestamp: new Date(Date.now() - 1000 * 60 * 45), // 45 minutes ago
@@ -76,8 +76,8 @@ const PSSRActivityFeed: React.FC<PSSRActivityFeedProps> = ({
         pssrId: 'PSSR-2024-002',
         projectName: 'LPG Unit 12.1 Rehabilitation',
         user: {
-          name: 'Ahmed Al-Rashid',
-          avatar: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=150&h=150&fit=crop&crop=face'
+          name: 'Plant Director',
+          avatar: ''
         },
         message: 'changed status',
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
@@ -92,8 +92,8 @@ const PSSRActivityFeed: React.FC<PSSRActivityFeedProps> = ({
         pssrId: 'PSSR-DP300-001',
         projectName: 'HM Additional Compressors',
         user: {
-          name: 'Mohammed Hassan',
-          avatar: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face'
+          name: 'ORA Engineer',
+          avatar: ''
         },
         message: 'updated equipment inspection results',
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
@@ -104,8 +104,8 @@ const PSSRActivityFeed: React.FC<PSSRActivityFeedProps> = ({
         pssrId: 'PSSR-2024-003',
         projectName: 'UQ Jetty 2 Export Terminal',
         user: {
-          name: 'Admin User',
-          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+          name: 'System Administrator',
+          avatar: ''
         },
         message: 'assigned John Davis as reviewer',
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8), // 8 hours ago
@@ -116,8 +116,8 @@ const PSSRActivityFeed: React.FC<PSSRActivityFeedProps> = ({
         pssrId: 'PSSR-2024-005',
         projectName: 'New Pipeline Installation',
         user: {
-          name: 'Sarah Johnson',
-          avatar: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=150&h=150&fit=crop&crop=face'
+          name: 'Safety Lead',
+          avatar: ''
         },
         message: 'created a new PSSR',
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago

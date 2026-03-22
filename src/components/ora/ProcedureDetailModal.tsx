@@ -56,9 +56,9 @@ interface ProcedureDetailModalProps {
 
 
 const mockVersions = [
-  { version: '2.1', uploadedBy: 'John Smith', date: '2024-01-15', status: 'current' },
-  { version: '2.0', uploadedBy: 'John Smith', date: '2024-01-10', status: 'archived' },
-  { version: '1.0', uploadedBy: 'Sarah Johnson', date: '2023-12-01', status: 'archived' },
+  { version: '2.1', uploadedBy: 'Operations Engineer 1', date: '2024-01-15', status: 'current' },
+  { version: '2.0', uploadedBy: 'Operations Engineer 1', date: '2024-01-10', status: 'archived' },
+  { version: '1.0', uploadedBy: 'Process Engineer 1', date: '2023-12-01', status: 'archived' },
 ];
 
 export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({

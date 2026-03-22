@@ -28,18 +28,18 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
     progress: 75,
     created: '2024-01-15',
     dueDate: '2024-02-15',
-    initiator: 'Ahmed Al-Rashid',
+    initiator: 'Plant Director',
     scope: 'Pre-start-up safety review for the commissioning of new natural gas processing units including safety systems, process controls, and emergency shutdown procedures.',
     pendingApprovals: 3,
     teamMembers: {
       technicalAuthorities: [
-        { name: 'Dr. Sarah Wilson', role: 'Process Engineering TA', status: 'Approved' },
-        { name: 'John Smith', role: 'Technical Safety TA', status: 'Pending' },
-        { name: 'Maria Garcia', role: 'Mechanical Static TA', status: 'Under Review' }
+        { name: 'Process Engineering TA', role: 'Process Engineering TA', status: 'Approved' },
+        { name: 'Technical Safety TA', role: 'Technical Safety TA', status: 'Pending' },
+        { name: 'Mechanical Static TA', role: 'Mechanical Static TA', status: 'Under Review' }
       ],
       assetTeam: [
-        { name: 'Omar Hassan', role: 'Deputy Plant Director', status: 'Approved' },
-        { name: 'Lisa Chen', role: 'Site Engineer', status: 'Approved' }
+        { name: 'Deputy Plant Director', role: 'Deputy Plant Director', status: 'Approved' },
+        { name: 'Site Engineer', role: 'Site Engineer', status: 'Approved' }
       ],
       projectTeam: [
         { name: 'Michael Brown', role: 'Project Manager', status: 'Approved' },
@@ -392,7 +392,7 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
                     </div>
                     <div className="flex-1">
                       <p className="text-xs font-medium">Technical Authority approval received</p>
-                      <p className="text-xs text-gray-600">Dr. Sarah Wilson approved Process Engineering review</p>
+                      <p className="text-xs text-gray-600">Process Engineering TA approved review</p>
                       <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
                     </div>
                   </div>
@@ -414,7 +414,7 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
                     </div>
                     <div className="flex-1">
                       <p className="text-xs font-medium">Team member assigned</p>
-                      <p className="text-xs text-gray-600">John Smith assigned as Technical Safety TA</p>
+                      <p className="text-xs text-gray-600">Technical Safety TA assigned</p>
                       <p className="text-xs text-gray-500 mt-1">1 day ago</p>
                     </div>
                   </div>
