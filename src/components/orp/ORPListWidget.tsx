@@ -12,7 +12,7 @@ interface ORPListWidgetProps {
   onCreateNew?: () => void;
 }
 
-export const ORPListWidget: React.FC<ORPListWidgetProps> = ({ onSelectORP }) => {
+export const ORPListWidget: React.FC<ORPListWidgetProps> = ({ onSelectORP, onCreateNew }) => {
   const { plans, isLoading } = useORPPlans();
 
   const getStatusColor = (status: string) => {
