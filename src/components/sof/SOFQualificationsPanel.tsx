@@ -64,7 +64,7 @@ const mockDeviations: QualificationDetail[] = [
     description: 'As-built P&IDs not yet updated to reflect field changes. Marked-up copies available at control room.',
     severity: 'low',
     status: 'approved',
-    approvedBy: 'Ali Danbous',
+    approvedBy: 'Operations Manager',
     approverRole: 'Operations Manager',
     approvedAt: '2026-01-27',
     mitigationMeasures: 'Marked-up drawings available. Final P&IDs due within 30 days of startup.',
