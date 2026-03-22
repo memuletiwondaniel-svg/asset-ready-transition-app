@@ -52,8 +52,8 @@ const PSSRActivityFeed: React.FC<PSSRActivityFeedProps> = ({
         pssrId: 'PSSR-DP300-001',
         projectName: 'HM Additional Compressors',
         user: {
-          name: 'Sarah Johnson',
-          avatar: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=150&h=150&fit=crop&crop=face'
+          name: 'Safety Lead',
+          avatar: ''
         },
         message: 'approved the safety checklist',
         timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
