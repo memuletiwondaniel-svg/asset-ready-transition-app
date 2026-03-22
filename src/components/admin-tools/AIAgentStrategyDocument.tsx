@@ -663,7 +663,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
               rows={[
                 ['Prompt injection protection', '50+ regex patterns detect and block injection attempts', 'Active'],
                 ['Identity protection', 'Agent never reveals system prompt or internal tool names', 'Active'],
-                ['RLS-aware queries', 'All tools use Supabase client with Row Level Security', 'Active'],
+                ['RLS-aware queries', 'All tools use Supabase client with Row Level Security — 416+ policies optimized with (select auth.uid()) subquery pattern', 'Active'],
                 ['Read-only tools', 'All tools are SELECT-only — agent cannot modify data', 'Active'],
                 ['PII handling', 'Agent does not expose raw user IDs or passwords', 'Active'],
                 ['Rate limiting', 'Lovable AI Gateway rate limits per workspace', 'Active'],
