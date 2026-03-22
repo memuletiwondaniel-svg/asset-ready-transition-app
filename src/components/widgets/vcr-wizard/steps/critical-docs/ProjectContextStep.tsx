@@ -171,13 +171,12 @@ export const ProjectContextStep: React.FC<ProjectContextStepProps> = ({
                   <Checkbox checked={isSelected} className="pointer-events-none" />
                 </div>
 
-                {/* Platform logo avatar */}
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 text-white font-bold text-base"
-                  style={{ backgroundColor: platform.color }}
-                >
-                  {platform.letter}
-                </div>
+                {/* Platform logo */}
+                <img
+                  src={platform.logo}
+                  alt={platform.label}
+                  className="w-10 h-10 rounded-lg object-contain shrink-0"
+                />
 
                 {/* Text */}
                 <div className="min-w-0 pr-6">
