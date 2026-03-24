@@ -61,6 +61,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
     { id: 'acquisition-positioning', label: 'Acquisition-Positioning Narrative' },
     { id: 'technical-differentiation', label: 'Technical Differentiation' },
     { id: 'module-alignment', label: 'Current Module Alignment' },
+    { id: 'march-2026-milestones', label: 'March 2026 — Key Milestones' },
   ];
 
   return (
