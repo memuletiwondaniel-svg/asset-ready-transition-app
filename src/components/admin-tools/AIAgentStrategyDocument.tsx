@@ -230,7 +230,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['ai-chat Edge Function', 'Deno / Supabase Edge', 'Central orchestrator — routes to agents, calls LLM, logs feedback'],
                 ['Agent Router', 'TypeScript (detectAgentDomain)', 'Keyword-based intent detection for domain routing'],
                 ['A2A Protocol Bus', 'TypeScript (routeA2AMessage)', 'Inter-agent communication via structured JSON-RPC messages'],
-                ['Lovable AI Gateway', 'API Proxy', 'Unified access to OpenAI GPT-5 and Google Gemini models'],
+                ['Anthropic API', 'Direct API', 'Claude Sonnet 4.5 via https://api.anthropic.com/v1/messages'],
                 ['Supabase Client', 'PostgreSQL', 'Data source for all agent tools (RLS-aware queries)'],
                 ['Training Infrastructure', 'PostgreSQL tables', '5 tables: registry, feedback, training log, A2A comms, edge cases'],
               ]}
