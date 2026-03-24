@@ -415,13 +415,13 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             <InfoTable
               headers={['Message Type', 'Direction', 'Purpose', 'Example']}
               rows={[
-                ['data_request', 'Agent A -> Agent B', 'Request specific data via a tool', 'CoPilot asks Selma for readiness %'],
+                ['data_request', 'Agent A -> Agent B', 'Request specific data via a tool', 'Hannah asks Selma for document readiness per VCR'],
                 ['data_response', 'Agent B -> Agent A', 'Return requested data', 'Selma returns 25% readiness'],
                 ['insight_share', 'Any -> Any', 'Proactively share a finding', 'Selma alerts: "8 Process docs still in Draft"'],
                 ['escalation', 'Specialist -> CoPilot', 'Escalate complex query that needs multi-domain reasoning', 'Zain: "Need PSSR data to assess training gaps"'],
                 ['context_handoff', 'Agent A -> Agent B', 'Transfer conversation context for continuity', 'CoPilot hands off DMS context to Selma'],
-                ['cross_reference', 'CoPilot -> Multiple', 'Gather data from multiple agents simultaneously', 'CoPilot queries Selma + Fred for integrated view'],
-                ['alert', 'Any -> CoPilot', 'Critical finding that needs user attention', 'Alex: "5 critical equipment items without maintenance plans"'],
+                ['cross_reference', 'Hannah -> Multiple', 'Gather data from multiple agents simultaneously', 'Hannah queries Selma + Fred + Zain + Alex for handover verdict'],
+                ['alert', 'Any -> CoPilot', 'Critical finding that needs user attention', 'Hannah: "3 open Punch List A items blocking PAC issuance"'],
               ]}
             />
 
