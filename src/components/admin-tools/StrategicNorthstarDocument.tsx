@@ -372,7 +372,8 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
             <StatusTable rows={[
               { label: 'Bob CoPilot (Router)', value: 'Central AI agent running on Claude Sonnet 4.5 (Anthropic) with intent detection, user context learning, and specialist dispatch', status: 'active' },
               { label: 'Selma (Document Specialist)', value: '13-tool agent for DMS gap analysis, quality scoring, numbering config, and ORA linkage — confirmed live with excellent performance', status: 'active' },
-              { label: 'PSSR/ORA Agent', value: '14-tool specialist for safety review guidance, checklist intelligence, and ORA activity planning', status: 'active' },
+              { label: 'Fred (PSSR/ORA Agent)', value: '14-tool specialist for safety review guidance, checklist intelligence, and ORA activity planning', status: 'active' },
+              { label: 'Hannah (P2A Handover Intelligence)', value: '12-tool cross-agent readiness orchestrator — VCR lifecycle, punch list, ITR, PAC/FAC, GoCompletions sync, startup risk flagging. Aggregates from Selma, Fred, Zain, Alex.', status: 'active' },
               { label: 'Autonomous Training Loop', value: 'v5.0 — daily cron-driven feedback analysis, auto-apply prompt improvements, self-healing edge cases', status: 'active' },
               { label: 'User Context Persistence', value: 'Per-user preference learning stored in ai_user_context — personalizes responses over time', status: 'active' },
               { label: 'Zain — Training Intelligence (Phase 2)', value: 'Domain-specific agent for training plan intelligence — claude-haiku planned', status: 'planned' },
