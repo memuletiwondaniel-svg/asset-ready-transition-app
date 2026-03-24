@@ -318,9 +318,9 @@ hubs (Project Hubs)
 PSSR MODULE TABLES:
 
 pssrs (PSSR header records)
-- id, pssr_number (e.g., "PSSR-DP300-001")
+- id, pssr_id (e.g., "PSSR-NRNGL-001")
 - project_id reference
-- status: Draft | Active | Ready for Review | Pending Approval | Approved | Closed
+- status: Draft | PENDING_LEAD_REVIEW | UNDER_REVIEW | Pending Approval | Approved | Closed
 - equipment_tag, equipment_description
 - location, area, system
 - created_by, created_at
@@ -341,9 +341,9 @@ pssr_item_approvals (Approval status per item)
 pssr_priority_actions (Action items from PSSR)
 - id, pssr_id reference
 - priority: A | B
-- description, responsible_party
+- description, action_owner_name
 - status: open | closed
-- due_date, closed_date
+- target_date, closed_at
 
 pssr_final_approvers (Sign-off workflow)
 - id, pssr_id reference
@@ -1835,7 +1835,7 @@ WORKFLOW DETAILS:
 6. CLOSED: Startup completed, PSSR closed out
 
 KEY DATABASE TABLES:
-- pssrs: Header records (pssr_number, project_id, status, equipment details)
+- pssrs: Header records (pssr_id, project_id, status, equipment details)
 - pssr_checklist_items: Individual review items by discipline
 - pssr_item_approvals: Per-item approval status (PENDING/APPROVED/REJECTED)
 - pssr_priority_actions: A/B priority action items
@@ -3242,10 +3242,10 @@ async function getProactiveInsights(supabaseClient: any, scope: string, projectC
     if (scope === 'all' || scope === 'pssr') {
       const { data: overdueActions } = await supabaseClient
         .from('pssr_priority_actions')
-        .select('id, description, due_date, priority, status, pssr_id')
+        .select('id, description, target_date, priority, status, pssr_id')
         .eq('status', 'open')
         .eq('priority', 'A')
-        .lt('due_date', now.toISOString())
+        .lt('target_date', now.toISOString())
         .limit(10);
 
       if (overdueActions && overdueActions.length > 0) {
@@ -3257,7 +3257,7 @@ async function getProactiveInsights(supabaseClient: any, scope: string, projectC
           count: overdueActions.length,
           items: overdueActions.slice(0, 5).map((a: any) => ({
             description: a.description?.substring(0, 80),
-            due_date: a.due_date
+            target_date: a.target_date
           }))
         });
       }
@@ -3266,7 +3266,7 @@ async function getProactiveInsights(supabaseClient: any, scope: string, projectC
       const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
       const { data: stalePssrs } = await supabaseClient
         .from('pssrs')
-        .select('id, pssr_number, status, created_at')
+        .select('id, pssr_id, status, created_at')
         .eq('status', 'Draft')
         .lt('created_at', twoWeeksAgo.toISOString())
         .limit(10);
@@ -3278,7 +3278,7 @@ async function getProactiveInsights(supabaseClient: any, scope: string, projectC
           type: 'stale_draft_pssr',
           message: `🟡 ${stalePssrs.length} PSSRs stuck in Draft for >14 days`,
           count: stalePssrs.length,
-          items: stalePssrs.slice(0, 5).map((p: any) => ({ pssr_number: p.pssr_number, created_at: p.created_at }))
+          items: stalePssrs.slice(0, 5).map((p: any) => ({ pssr_id: p.pssr_id, created_at: p.created_at }))
         });
       }
     }
@@ -3369,30 +3369,17 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
   switch(toolName) {
     case "get_pssr_stats": {
       try {
-        let query = supabaseClient.from('pssrs').select('id, status, pssr_number, project_id');
+        let query = supabaseClient.from('pssrs').select('id, status, pssr_id, title, asset, project_name');
         
-        // Filter by project if specified
+        // Filter by project if specified — search pssr_id or project_name directly
         if (args.project_code) {
-          const { data: project } = await supabaseClient
-            .from('projects')
-            .select('id')
-            .ilike('project_code', `%${args.project_code}%`)
-            .maybeSingle();
-          
-          if (project) {
-            query = query.eq('project_id', project.id);
-          } else {
-            return { 
-              error: `Project "${args.project_code}" not found`,
-              total: 0,
-              breakdown: {}
-            };
-          }
+          const code = args.project_code.replace(/[-\s]/g, '');
+          query = query.or(`pssr_id.ilike.%${code}%,project_name.ilike.%${code}%,title.ilike.%${code}%,asset.ilike.%${code}%`);
         }
         
-        // Apply status filter
+        // Apply status filter (use actual DB status values)
         if (args.status_filter === 'pending') {
-          query = query.in('status', ['Draft', 'Active', 'Ready for Review', 'Pending Approval']);
+          query = query.in('status', ['Draft', 'PENDING_LEAD_REVIEW', 'UNDER_REVIEW', 'Pending Approval']);
         } else if (args.status_filter === 'approved') {
           query = query.in('status', ['Approved', 'Closed']);
         }
@@ -3413,7 +3400,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           total: data?.length || 0,
           breakdown,
           pssrs: data?.slice(0, 10).map((p: any) => ({ 
-            number: p.pssr_number, 
+            pssr_id: p.pssr_id, 
+            title: p.title,
             status: p.status 
           })) || []
         };
@@ -4338,15 +4326,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           approved_at: a.approved_at
         }));
         
-        // Get discipline reviewers from pssr_reviewers table
-        const { data: reviewers, error: reviewersError } = await supabaseClient
-          .from('pssr_reviewers')
-          .select('id, reviewer_name, reviewer_role, status, discipline')
-          .eq('pssr_id', pssrId);
-        
-        if (reviewersError) {
-          console.error('Reviewers error:', reviewersError);
-        }
+        // Note: pssr_reviewers table does not exist; use checklist responses for discipline review status
         
         // Count pending items per discipline from checklist responses
         const { data: pendingCounts } = await supabaseClient
@@ -4364,13 +4344,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           pendingByDiscipline[cat] = (pendingByDiscipline[cat] || 0) + 1;
         });
         
-        const itemReviewers = (reviewers || []).map((r: any) => ({
-          name: r.reviewer_name,
-          role: r.reviewer_role,
-          discipline: r.discipline,
-          status: r.status,
-          pending_items: pendingByDiscipline[r.discipline] || 0
-        }));
+        const itemReviewers: any[] = [];
         
         return {
           pssr_label: pssrLabel,
