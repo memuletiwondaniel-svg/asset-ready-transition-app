@@ -299,7 +299,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['copilot', 'Bob CoPilot', 'claude-sonnet-4-5', 'Active', '14', 'pssr, ora, orm, platform, navigation'],
                 ['document_agent', 'Selma', 'claude-sonnet-4-5', 'Active', '13', 'dms, document, readiness, quality, maturity, handover'],
                 ['pssr_ora_agent', 'Fred (PSSR & ORA)', 'claude-sonnet-4-5', 'Active', '14', 'pssr, safety, checklist, operational readiness'],
-                ['training_agent', 'Training AI Agent', 'claude-haiku', 'Planned', '0', 'training, competency, learning'],
+                ['training_agent', 'Zain (Training Intelligence)', 'claude-haiku', 'Planned', '0', 'training, competency, learning'],
                 ['cmms_agent', 'CMMS AI Agent', 'claude-haiku', 'Planned', '0', 'cmms, maintenance, equipment, spares'],
                 ['orm_agent', 'ORM AI Agent', 'claude-haiku', 'Planned', '0', 'orm, manpower, staffing, organization'],
               ]}
