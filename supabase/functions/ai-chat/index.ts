@@ -3191,29 +3191,69 @@ async function loadUserContext(supabaseClient: any, userId: string): Promise<str
       .select('context_key, context_value')
       .eq('user_id', userId);
 
-    if (!contextRows || contextRows.length === 0) return '';
-
     const { data: profile } = await supabaseClient
       .from('profiles')
       .select('full_name, position, department, company, region')
       .eq('user_id', userId)
       .maybeSingle();
 
-    const contextParts = ['=== USER CONTEXT (Personalization) ==='];
-    
+    const parts: string[] = ['\n\n=== USER MEMORY (Persistent Context) ==='];
+    parts.push('Use this memory to personalize responses. Reference prior work naturally without the user needing to repeat themselves.');
+
     if (profile) {
-      contextParts.push(`User: ${profile.full_name || 'Unknown'}`);
-      if (profile.position) contextParts.push(`Position: ${profile.position}`);
-      if (profile.department) contextParts.push(`Department: ${profile.department}`);
-      if (profile.company) contextParts.push(`Company: ${profile.company}`);
+      parts.push(`User: ${profile.full_name || 'Unknown'}`);
+      if (profile.position) parts.push(`Role: ${profile.position}`);
+      if (profile.department) parts.push(`Department: ${profile.department}`);
+      if (profile.company) parts.push(`Company: ${profile.company}`);
+      if (profile.region) parts.push(`Region: ${profile.region}`);
     }
 
+    if (!contextRows || contextRows.length === 0) {
+      parts.push('No prior session memory found — this may be a new user.');
+      return parts.join('\n');
+    }
+
+    const contextMap: Record<string, any> = {};
     for (const row of contextRows) {
-      contextParts.push(`${row.context_key}: ${JSON.stringify(row.context_value)}`);
+      contextMap[row.context_key] = row.context_value;
     }
 
-    contextParts.push('Use this context to personalize responses. Reference their projects and role naturally.');
-    return '\n\n' + contextParts.join('\n');
+    // Format memory as natural language
+    if (contextMap['last_active_pssr']) {
+      const v = typeof contextMap['last_active_pssr'] === 'object' ? contextMap['last_active_pssr'].value : contextMap['last_active_pssr'];
+      parts.push(`Last active PSSR: ${v} — if the user asks about "that PSSR" or "the checklist", they likely mean this one.`);
+    }
+    if (contextMap['last_active_project']) {
+      const v = typeof contextMap['last_active_project'] === 'object' ? contextMap['last_active_project'].value : contextMap['last_active_project'];
+      parts.push(`Last active project: ${v}`);
+    }
+    if (contextMap['user_plant_location']) {
+      const v = typeof contextMap['user_plant_location'] === 'object' ? contextMap['user_plant_location'].value : contextMap['user_plant_location'];
+      parts.push(`User's plant location: ${v}`);
+    }
+    if (contextMap['user_role']) {
+      const v = typeof contextMap['user_role'] === 'object' ? contextMap['user_role'].value : contextMap['user_role'];
+      parts.push(`User's operational role: ${v}`);
+    }
+    if (contextMap['recent_topics']) {
+      const topics = typeof contextMap['recent_topics'] === 'object' && Array.isArray(contextMap['recent_topics'].topics)
+        ? contextMap['recent_topics'].topics
+        : (Array.isArray(contextMap['recent_topics']) ? contextMap['recent_topics'] : []);
+      if (topics.length > 0) {
+        parts.push(`Recent conversation topics: ${topics.join(', ')}`);
+      }
+    }
+
+    // Include any other custom context keys
+    const knownKeys = ['last_active_pssr', 'last_active_project', 'user_plant_location', 'user_role', 'recent_topics', 'bob_welcome_sent'];
+    for (const [key, val] of Object.entries(contextMap)) {
+      if (!knownKeys.includes(key)) {
+        const v = typeof val === 'object' && val?.value ? val.value : JSON.stringify(val);
+        parts.push(`${key}: ${v}`);
+      }
+    }
+
+    return parts.join('\n');
   } catch (e) {
     console.error('Failed to load user context:', e);
     return '';
