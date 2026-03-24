@@ -1392,6 +1392,72 @@ export type Database = {
         }
         Relationships: []
       }
+      moc_register: {
+        Row: {
+          actions_complete: number | null
+          actions_total: number | null
+          change_type: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          ivan_closeout_assessment: string | null
+          moc_number: string | null
+          new_hazard_introduced: boolean | null
+          project_id: string | null
+          startup_risk_flag: boolean | null
+          status: string | null
+          tenant_id: string | null
+          title: string | null
+        }
+        Insert: {
+          actions_complete?: number | null
+          actions_total?: number | null
+          change_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          ivan_closeout_assessment?: string | null
+          moc_number?: string | null
+          new_hazard_introduced?: boolean | null
+          project_id?: string | null
+          startup_risk_flag?: boolean | null
+          status?: string | null
+          tenant_id?: string | null
+          title?: string | null
+        }
+        Update: {
+          actions_complete?: number | null
+          actions_total?: number | null
+          change_type?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          ivan_closeout_assessment?: string | null
+          moc_number?: string | null
+          new_hazard_introduced?: boolean | null
+          project_id?: string | null
+          startup_risk_flag?: boolean | null
+          status?: string | null
+          tenant_id?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moc_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "moc_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           checklist_items: boolean | null
@@ -4008,6 +4074,75 @@ export type Database = {
           },
           {
             foreignKeyName: "outstanding_work_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      override_register: {
+        Row: {
+          actual_removal_date: string | null
+          authorised_by: string | null
+          created_at: string | null
+          expected_removal_date: string | null
+          id: string
+          override_description: string | null
+          override_reason: string | null
+          project_id: string | null
+          raised_by: string | null
+          raised_date: string | null
+          risk_level: string | null
+          sif_tag: string | null
+          status: string | null
+          system_name: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          actual_removal_date?: string | null
+          authorised_by?: string | null
+          created_at?: string | null
+          expected_removal_date?: string | null
+          id?: string
+          override_description?: string | null
+          override_reason?: string | null
+          project_id?: string | null
+          raised_by?: string | null
+          raised_date?: string | null
+          risk_level?: string | null
+          sif_tag?: string | null
+          status?: string | null
+          system_name?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          actual_removal_date?: string | null
+          authorised_by?: string | null
+          created_at?: string | null
+          expected_removal_date?: string | null
+          id?: string
+          override_description?: string | null
+          override_reason?: string | null
+          project_id?: string | null
+          raised_by?: string | null
+          raised_date?: string | null
+          risk_level?: string | null
+          sif_tag?: string | null
+          status?: string | null
+          system_name?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "override_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "override_register_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects_enriched"
@@ -9100,6 +9235,75 @@ export type Database = {
             columns: ["field_id"]
             isOneToOne: false
             referencedRelation: "field"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stq_register: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          design_deviation_impact: string | null
+          discipline: string | null
+          id: string
+          ivan_adequacy_assessment: string | null
+          project_id: string | null
+          raised_by: string | null
+          raised_date: string | null
+          risk_score: number | null
+          status: string | null
+          stq_number: string | null
+          technical_response: string | null
+          tenant_id: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          design_deviation_impact?: string | null
+          discipline?: string | null
+          id?: string
+          ivan_adequacy_assessment?: string | null
+          project_id?: string | null
+          raised_by?: string | null
+          raised_date?: string | null
+          risk_score?: number | null
+          status?: string | null
+          stq_number?: string | null
+          technical_response?: string | null
+          tenant_id?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          design_deviation_impact?: string | null
+          discipline?: string | null
+          id?: string
+          ivan_adequacy_assessment?: string | null
+          project_id?: string | null
+          raised_by?: string | null
+          raised_date?: string | null
+          risk_score?: number | null
+          status?: string | null
+          stq_number?: string | null
+          technical_response?: string | null
+          tenant_id?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stq_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stq_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
             referencedColumns: ["id"]
           },
         ]
