@@ -78,6 +78,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
     { id: 'user-memory', label: 'Per-User Memory & Personalization' },
     { id: 'proactive-insights', label: 'Proactive Insights Engine' },
     { id: 'development-phases', label: 'Development Phases' },
+    { id: 'doc-intelligence', label: 'Document Intelligence Build Sequence' },
     { id: 'gaps', label: 'Gaps & Known Limitations' },
     { id: 'training-strategy', label: 'Continuous Training Strategy' },
     { id: 'training-methodology', label: 'Training Methodology' },
