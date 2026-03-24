@@ -5766,7 +5766,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // Create user_task
         const taskData: any = {
           title: `[DMS Gap] ${docName} (${docCode})`,
-          description: `Document Gap: ${gapDesc}\n\nDiscipline: ${discipline}\nDocument Code: ${docCode}\nDocument: ${docName}\n\nCreated automatically by Sally (Document Intelligence Assistant).`,
+          description: `Document Gap: ${gapDesc}\n\nDiscipline: ${discipline}\nDocument Code: ${docCode}\nDocument: ${docName}\n\nCreated automatically by Selma (Document Intelligence Assistant).`,
           priority: 'high',
           status: 'todo',
           source: 'ai_document_agent',
