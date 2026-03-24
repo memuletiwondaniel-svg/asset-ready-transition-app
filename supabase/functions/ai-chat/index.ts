@@ -3137,8 +3137,13 @@ async function routeA2AMessage(message: A2AMessage, supabaseClient: any): Promis
 function detectAgentDomain(message: string): string {
   const lower = message.toLowerCase();
   
+  // Hannah (P2A Handover Intelligence Agent) triggers — MUST come before document_agent to catch handover-specific queries
+  if (/\b(p2a|handover|vcr|itr\b|inspection test record|punch\s?list|punch list a|punch list b|itp\b|inspection test plan|pac\b|fac\b|provisional acceptance|final acceptance|system readiness|hardware readiness|commissioning|gocompletions|rfsu|rfo|handover readiness|owl\b|outstanding work|system completion|subsystem|two phase approval|deputy plant director handover|vcr sign off|vcr prerequisites|hand over|ready to hand over|handover verdict|startup risk|startup blocker)\b/i.test(lower)) {
+    return 'hannah';
+  }
+  
   // Selma (Document Intelligence Assistant) triggers
-  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|document.*handover|doc.*p2a)\b/i.test(lower)) {
+  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|doc.*p2a)\b/i.test(lower)) {
     return 'document_agent';
   }
   
