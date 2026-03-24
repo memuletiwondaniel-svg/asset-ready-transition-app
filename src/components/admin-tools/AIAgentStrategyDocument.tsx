@@ -189,7 +189,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
                       <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
-                        <p className="font-semibold text-foreground">Rex (PSSR & Operational Readiness)</p>
+                        <p className="font-semibold text-foreground">Fred (PSSR & Operational Readiness)</p>
                         <p className="text-muted-foreground">GPT-5-mini | 14 tools | Safety reviews</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
