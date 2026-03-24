@@ -271,6 +271,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['Selma (Document Intelligence)', 'claude-sonnet-4-5', 'Anthropic', 'Document intelligence specialist', 'Active'],
                 ['Fred (PSSR/ORA Agent)', 'claude-sonnet-4-5', 'Anthropic', 'Safety-critical domain', 'Active'],
                 ['Hannah (P2A Handover)', 'claude-sonnet-4-5', 'Anthropic', 'Handover readiness orchestration, cross-agent aggregation', 'Active'],
+                ['Ivan (Process TA)', 'claude-sonnet-4-5', 'Anthropic', 'HAZOP, STQ, MOC, cumulative risk, operational registers', 'Active'],
                 ['Zain — Training Intelligence (Phase 2)', 'claude-haiku', 'Anthropic', 'Training queries, competency gaps', 'Planned'],
                 ['Alex — CMMS & Maintenance (Phase 2)', 'claude-haiku', 'Anthropic', 'Maintenance, equipment, spares', 'Planned'],
                 ['ORM Agent (Phase 2)', 'claude-haiku', 'Anthropic', 'Manpower, staffing, organizational readiness', 'Planned'],
@@ -286,6 +287,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                   <li><strong className="text-foreground">Selma (Document Intelligence):</strong> Claude Sonnet 4.5 — accurate SQL-based analysis and status calculations</li>
                   <li><strong className="text-foreground">Fred (PSSR/ORA):</strong> Claude Sonnet 4.5 — safety-critical domain requiring high accuracy</li>
                   <li><strong className="text-foreground">Hannah (P2A Handover):</strong> Claude Sonnet 4.5 — cross-agent readiness orchestration requiring complex multi-source aggregation</li>
+                  <li><strong className="text-foreground">Ivan (Process TA):</strong> Claude Sonnet 4.5 — process safety domain requiring precision, cumulative risk assessment, and cross-agent aggregation</li>
                   <li><strong className="text-foreground">Zain — Training Intelligence (planned):</strong> Will use Claude Haiku — training queries are structured and domain-specific</li>
                   <li><strong className="text-foreground">Alex — CMMS & Maintenance (planned):</strong> Will use Claude Haiku — maintenance queries are lookup-heavy, speed matters</li>
                   <li><strong className="text-foreground">ORM Agent (planned):</strong> Will use Claude Haiku — manpower queries are data-centric</li>
@@ -310,6 +312,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['document_agent', 'Selma', 'claude-sonnet-4-5', 'Active', '13', 'dms, document, readiness, quality, maturity, handover'],
                 ['pssr_ora_agent', 'Fred (PSSR & ORA)', 'claude-sonnet-4-5', 'Active', '14', 'pssr, safety, checklist, operational readiness'],
                 ['hannah', 'Hannah (P2A Handover)', 'claude-sonnet-4-5', 'Active', '12', 'p2a, handover, vcr, itr, punchlist, pac, fac, commissioning, rfsu, rfo'],
+                ['ivan', 'Ivan (Process TA)', 'claude-sonnet-4-5', 'Active', '17', 'hazop, stq, moc, override, cumulative_risk, pid, safeguarding, omar, simops, flow_assurance'],
                 ['training_agent', 'Zain (Training Intelligence)', 'claude-haiku', 'Planned', '0', 'training, competency, learning'],
                 ['cmms_agent', 'Alex (CMMS & Maintenance)', 'claude-haiku', 'Planned', '0', 'cmms, maintenance, equipment, spares'],
                 ['orm_agent', 'ORM AI Agent', 'claude-haiku', 'Planned', '0', 'orm, manpower, staffing, organization'],
@@ -871,7 +874,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <br />
                 Continuously updated as new agents are built, tools added, and training strategy evolves.
                 <br />
-                Last updated: March 2026 — Hannah confirmed as P2A Handover Intelligence Agent (active, claude-sonnet-4-5, 12 tools, cross-agent readiness orchestrator). Alex as CMMS Agent. Zain as Training Agent. Fred as PSSR/ORA Agent. Selma as Document Agent.
+                Last updated: March 2026 — Ivan confirmed as Process Technical Authority Agent (active, claude-sonnet-4-5, 17 tools, cumulative risk assessment and cross-agent aggregation). Hannah as P2A Handover Agent. Alex as CMMS Agent. Zain as Training Agent. Fred as PSSR/ORA Agent. Selma as Document Agent.
               </p>
             </CardContent>
           </Card>

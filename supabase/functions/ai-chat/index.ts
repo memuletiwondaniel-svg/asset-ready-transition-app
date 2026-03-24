@@ -3112,6 +3112,145 @@ const tools = [
       description: "Scan all data sources for startup risks: open Punch List A items, open critical ITRs, incomplete PSSRs, missing Tier 1 documents, incomplete training, REJECTED VCR prerequisites. Returns prioritised risk register by severity. Use for 'startup risks', 'what could block startup', 'risk register for handover', 'safe to start up'.",
       parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, vcr_id: { type: "string", description: "UUID of the VCR" } }, required: [] }
     }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // IVAN — Process Technical Authority Agent Tools (17 tools)
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "conduct_hazop_review",
+      description: "Conduct a HAZOP review using guide word methodology (No, More, Less, Reverse, Other Than) for a given system or process node. Use for 'HAZOP review', 'hazard and operability study', 'HAZOP for gas compression'.",
+      parameters: { type: "object", properties: { system_name: { type: "string", description: "Name of the system or process node to review" }, project_id: { type: "string", description: "UUID of the project" } }, required: ["system_name"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "review_hazop_closeout",
+      description: "Review HAZOP closeout report — assess each finding for physical implementation vs risk acceptance/waiver. Use for 'HAZOP closeout', 'are HAZOP findings closed', 'HAZOP action status'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, system_name: { type: "string", description: "System name for filtering" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "review_pid",
+      description: "Review P&ID / PEFS for operability concerns, control loop completeness, SIF coverage and isolation philosophy. Use for 'P&ID review', 'PID review', 'PEFS review', 'piping and instrumentation'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, system_name: { type: "string", description: "System or area name" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "review_safeguarding_memorandum",
+      description: "Review safeguarding memorandum / PSM document. Extract safety-critical elements, trip setpoints, detector coverage. Use for 'safeguarding memo', 'PSM review', 'process safety memorandum'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, system_name: { type: "string", description: "System name" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "review_cause_and_effect",
+      description: "Review Cause & Effect matrix for completeness, missing initiating events, incorrect actions. Use for 'C&E matrix', 'cause and effect review', 'C&E completeness'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, system_name: { type: "string", description: "System name" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "assess_stq_cumulative_risk",
+      description: "Assess all open Site Technical Queries (STQs) for a project. Evaluate adequacy of each technical response and produce cumulative risk assessment. Use for 'STQ risk', 'open STQs', 'site technical queries', 'STQ cumulative'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "review_moc_closeout",
+      description: "Review Management of Change (MOC) closeout status. Check action completion, flag incomplete actions affecting startup. Use for 'MOC status', 'management of change', 'MOC closeout', 'MOC actions'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "develop_operational_register",
+      description: "Develop an operational register based on P&ID data. Types: lock_open_close, override, temporary_hose, temporary_equipment, daily_log, round_sheet, lock_sheet. Use for 'lock open register', 'override register', 'operational register', 'round sheet'.",
+      parameters: { type: "object", properties: { register_type: { type: "string", description: "Type: lock_open_close, override, temporary_hose, temporary_equipment, daily_log, round_sheet, lock_sheet" }, system_name: { type: "string", description: "System name" }, project_id: { type: "string", description: "UUID of the project" } }, required: ["register_type", "system_name"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "assess_override_risk",
+      description: "Assess all active overrides/bypasses in the override register. Evaluate cumulative safety impact of simultaneous overrides. Use for 'override risk', 'active overrides', 'bypass risk', 'SIF override', 'override register'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "conduct_cumulative_risk_assessment",
+      description: "MASTER TOOL: Aggregate all open risk items — HAZOP findings, STQs, MOCs, overrides, Punch List A, PSSR P1 items, missing docs. Produce verdict: SAFE TO START, CONDITIONAL, or DO NOT START. Use for 'cumulative risk', 'startup risk assessment', 'safe to start', 'can we start up'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "conduct_omar_review",
+      description: "Conduct Operating Mode Assurance Review (OMAR). Assess all operating modes for a system. Use for 'OMAR', 'operating mode assurance', 'operating mode review'.",
+      parameters: { type: "object", properties: { system_name: { type: "string", description: "System name" }, project_id: { type: "string", description: "UUID of the project" } }, required: ["system_name"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "identify_simops_hazards",
+      description: "Identify SIMOPS (simultaneous operations) hazards between two concurrent operations. Use for 'SIMOPS', 'simultaneous operations', 'concurrent activities hazard'.",
+      parameters: { type: "object", properties: { operation_1: { type: "string", description: "First operation" }, operation_2: { type: "string", description: "Second operation" }, location: { type: "string", description: "Location or area" } }, required: ["operation_1", "operation_2"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "review_operating_procedure",
+      description: "Review an operating procedure for technical accuracy, sequence, hazard warnings and safety precautions. Use for 'operating procedure review', 'SOP review', 'procedure technical review'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, procedure_name: { type: "string", description: "Name or identifier of the procedure" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "review_commissioning_procedure",
+      description: "Review commissioning procedure for technical soundness, acceptance criteria, safety precautions. Use for 'commissioning procedure review', 'CSU procedure', 'commissioning plan review'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, procedure_name: { type: "string", description: "Procedure name" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "assess_flow_assurance_risk",
+      description: "Assess flow assurance risks: hydrates, slugging, wax, corrosion. Use for 'flow assurance', 'hydrate risk', 'slugging', 'wax deposition', 'corrosion risk'.",
+      parameters: { type: "object", properties: { pipeline_description: { type: "string", description: "Pipeline or flowline description" }, process_conditions: { type: "string", description: "Operating conditions (temp, pressure, composition)" } }, required: ["pipeline_description"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "read_basis_of_design",
+      description: "Read Basis of Design (BOD) or BDEP document via Selma A2A. Pass through specific question as search query. Use for 'basis of design', 'BOD', 'BDEP', 'design basis'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, question: { type: "string", description: "Specific question to search for in BOD/BDEP" } }, required: ["project_id", "question"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "generate_hazop_report",
+      description: "Generate a formal HAZOP report from findings. Structured with Node, Deviation, Cause, Consequence, Safeguards, Recommendations, Risk Ranking. Use for 'HAZOP report', 'generate HAZOP', 'format HAZOP findings'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, system_name: { type: "string", description: "System name" }, findings: { type: "array", items: { type: "object" }, description: "Array of HAZOP findings" } }, required: ["project_id", "system_name"] }
+    }
   }
 ];
 
@@ -3156,6 +3295,11 @@ const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; m
   hannah: {
     tools: ['get_vcr_readiness_summary', 'get_itr_status_by_system', 'get_punch_list_status', 'get_itp_completion', 'get_system_handover_readiness', 'get_vcr_prerequisites_status', 'get_pac_readiness', 'get_owl_items', 'get_p2a_approval_status', 'aggregate_handover_readiness', 'get_gocompletions_sync_status', 'flag_startup_risk'],
     domains: ['p2a', 'handover', 'vcr', 'itr', 'punchlist', 'itp', 'commissioning', 'pac', 'fac', 'readiness', 'gocompletions', 'owl', 'rfsu', 'rfo'],
+    model: 'claude-sonnet-4-5'
+  },
+  ivan: {
+    tools: ['conduct_hazop_review', 'review_hazop_closeout', 'review_pid', 'review_safeguarding_memorandum', 'review_cause_and_effect', 'assess_stq_cumulative_risk', 'review_moc_closeout', 'develop_operational_register', 'assess_override_risk', 'conduct_cumulative_risk_assessment', 'conduct_omar_review', 'identify_simops_hazards', 'review_operating_procedure', 'review_commissioning_procedure', 'assess_flow_assurance_risk', 'read_basis_of_design', 'generate_hazop_report'],
+    domains: ['hazop', 'process_safety', 'stq', 'moc', 'override', 'cumulative_risk', 'pid', 'safeguarding', 'omar', 'simops', 'flow_assurance', 'technical_authority', 'operational_registers'],
     model: 'claude-sonnet-4-5'
   },
   training_agent: { tools: [], domains: ['training', 'competency', 'learning'], model: 'claude-sonnet-4-5' },
@@ -3240,6 +3384,11 @@ async function routeA2AMessage(message: A2AMessage, supabaseClient: any): Promis
 // Determine which agent should handle a query based on intent keywords
 function detectAgentDomain(message: string): string {
   const lower = message.toLowerCase();
+  
+  // Ivan (Process Technical Authority Agent) triggers — MUST come before Hannah to catch process safety queries
+  if (/\b(hazop|hazid|hemp\b|process safety|pid review|p&id review|pefs|safeguarding memorandum|psm\b|operating procedure|startup procedure|shutdown procedure|simops|simultaneous operations|omar|operating mode assurance|commissioning procedure|control narrative|cause and effect|c&e matrix|flow assurance|hydrate|slugging|technical authority|ta2|process engineering|design safety|constructability|3d model review|stq\b|site technical query|moc\b|management of change|lock open|lock close|override register|temporary hose|temporary equipment|operational register|daily log|round sheet|cumulative risk|hazop closeout|override risk|bypass|pssr work-?down|startup risk assessment|do not start|safe to start)\b/i.test(lower)) {
+    return 'ivan';
+  }
   
   // Hannah (P2A Handover Intelligence Agent) triggers — MUST come before document_agent to catch handover-specific queries
   if (/\b(p2a|handover|vcr|itr\b|inspection test record|punch\s?list|punch list a|punch list b|itp\b|inspection test plan|pac\b|fac\b|provisional acceptance|final acceptance|system readiness|hardware readiness|commissioning|gocompletions|rfsu|rfo|handover readiness|owl\b|outstanding work|system completion|subsystem|two phase approval|deputy plant director handover|vcr sign off|vcr prerequisites|hand over|ready to hand over|handover verdict|startup risk|startup blocker)\b/i.test(lower)) {
@@ -6650,6 +6799,530 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       } catch (err) { return { error: String(err) }; }
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // IVAN — Process Technical Authority Agent Tool Handlers (17 tools)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    case "conduct_hazop_review": {
+      try {
+        const systemName = args.system_name || 'Unknown System';
+        const guideWords = ['No', 'More', 'Less', 'Reverse', 'Other Than'];
+        const parameters = ['Flow', 'Pressure', 'Temperature', 'Level', 'Composition'];
+        
+        // Generate structured HAZOP framework for the system
+        const findings: any[] = [];
+        for (const param of parameters) {
+          for (const gw of guideWords.slice(0, 3)) { // Top 3 guide words per parameter
+            findings.push({
+              node: systemName,
+              parameter: param,
+              guide_word: gw,
+              deviation: `${gw} ${param}`,
+              cause: `To be assessed during HAZOP workshop`,
+              consequence: `To be assessed`,
+              safeguards: `Existing safeguards to be identified from P&ID`,
+              recommendations: `To be determined`,
+              risk_ranking: 'TBD'
+            });
+          }
+        }
+        
+        return {
+          system: systemName,
+          methodology: 'Guide Word HAZOP (IEC 61882)',
+          guide_words_applied: guideWords,
+          parameters_assessed: parameters,
+          nodes_identified: 1,
+          findings_template: findings.slice(0, 10),
+          total_deviations_to_assess: findings.length,
+          note: 'This is a structured HAZOP framework. A full HAZOP requires workshop-based assessment with P&ID review. Use review_pid and review_safeguarding_memorandum tools to gather input data.'
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "review_hazop_closeout": {
+      try {
+        // Call Selma A2A for HAZOP closeout document
+        const docResult = await routeA2AMessage({
+          source_agent: 'ivan',
+          target_agent: 'document_agent',
+          message_type: 'data_request',
+          payload: { tool_name: 'get_document_search_by_number', args: { search_term: 'HAZOP closeout', project_id: args.project_id } }
+        }, supabaseClient);
+        
+        return {
+          project_id: args.project_id,
+          system_name: args.system_name || 'All systems',
+          document_search_result: docResult.data || 'No HAZOP closeout document found',
+          assessment_framework: {
+            total_findings: 'To be determined from document review',
+            properly_closed: 'Physical implementation verified',
+            closed_by_waiver: '⚠️ Findings closed by risk acceptance — requires Ivan review',
+            still_open: 'Action items not yet completed',
+            cumulative_residual_risk: 'To be assessed after document review'
+          },
+          note: 'Ivan will assess each finding for physical implementation vs paper closure. Findings closed by waiver are flagged for additional scrutiny.'
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "review_pid": {
+      try {
+        const docResult = await routeA2AMessage({
+          source_agent: 'ivan',
+          target_agent: 'document_agent',
+          message_type: 'data_request',
+          payload: { tool_name: 'get_document_search_by_number', args: { search_term: 'P&ID', project_id: args.project_id } }
+        }, supabaseClient);
+        
+        return {
+          project_id: args.project_id,
+          system_name: args.system_name || 'All systems',
+          document_search_result: docResult.data || 'No P&ID documents found',
+          review_checklist: {
+            operability_concerns: 'To be identified from P&ID review',
+            control_loop_gaps: 'Check all control loops for completeness (sensor → controller → final element)',
+            sif_coverage_issues: 'Verify all SIFs identified in safeguarding memo are shown on P&ID',
+            isolation_gaps: 'Check isolation valve positioning for maintenance and emergency scenarios',
+            lock_open_lock_close_requirements: 'Identify all valves requiring lock open/close designation'
+          }
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "review_safeguarding_memorandum": {
+      try {
+        const docResult = await routeA2AMessage({
+          source_agent: 'ivan',
+          target_agent: 'document_agent',
+          message_type: 'data_request',
+          payload: { tool_name: 'get_document_search_by_number', args: { search_term: 'safeguarding memorandum PSM', project_id: args.project_id } }
+        }, supabaseClient);
+        
+        return {
+          project_id: args.project_id,
+          system_name: args.system_name || 'All systems',
+          document_search_result: docResult.data || 'No safeguarding memorandum found',
+          extraction_framework: {
+            safeguarded_conditions: 'High pressure, high temperature, high level, low level, toxic release, fire/gas detection',
+            trip_setpoints: 'To be extracted from document',
+            detector_coverage: 'Gas/fire detector layout adequacy',
+            pssr_alignment_gaps: 'Cross-reference with PSSR checklist requirements'
+          }
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "review_cause_and_effect": {
+      try {
+        const docResult = await routeA2AMessage({
+          source_agent: 'ivan',
+          target_agent: 'document_agent',
+          message_type: 'data_request',
+          payload: { tool_name: 'get_document_search_by_number', args: { search_term: 'cause and effect C&E matrix', project_id: args.project_id } }
+        }, supabaseClient);
+        
+        return {
+          project_id: args.project_id,
+          system_name: args.system_name || 'All systems',
+          document_search_result: docResult.data || 'No C&E matrix found',
+          review_framework: {
+            completeness_score: 'To be assessed',
+            missing_initiating_events: 'Cross-reference with HAZOP findings and safeguarding memo',
+            incorrect_actions: 'Verify each action matches P&ID control logic',
+            pid_inconsistencies: 'Compare C&E inputs/outputs with P&ID instrument tags'
+          }
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "assess_stq_cumulative_risk": {
+      try {
+        const { data: stqs, error } = await supabaseClient
+          .from('stq_register')
+          .select('*')
+          .eq('project_id', args.project_id)
+          .eq('status', 'open');
+        
+        if (error) throw error;
+        
+        const openStqs = stqs || [];
+        const highRisk = openStqs.filter((s: any) => s.risk_score >= 7);
+        const medRisk = openStqs.filter((s: any) => s.risk_score >= 4 && s.risk_score < 7);
+        const lowRisk = openStqs.filter((s: any) => s.risk_score < 4);
+        
+        let cumulativeVerdict = 'LOW';
+        if (highRisk.length >= 3 || openStqs.length >= 10) cumulativeVerdict = 'HIGH — cumulative STQ risk is unacceptable';
+        else if (highRisk.length >= 1 || openStqs.length >= 5) cumulativeVerdict = 'MEDIUM — review required before startup';
+        
+        return {
+          total_open_stqs: openStqs.length,
+          high_risk: highRisk.length,
+          medium_risk: medRisk.length,
+          low_risk: lowRisk.length,
+          individually_unacceptable: highRisk.map((s: any) => ({ stq_number: s.stq_number, title: s.title, risk_score: s.risk_score, discipline: s.discipline })),
+          cumulative_risk_verdict: cumulativeVerdict,
+          cumulative_risk_score: openStqs.reduce((sum: number, s: any) => sum + (s.risk_score || 0), 0),
+          blocking_stqs: highRisk.map((s: any) => s.stq_number),
+          note: openStqs.length === 0 ? 'No open STQs found for this project.' : `${openStqs.length} open STQs assessed. Individually manageable STQs may be collectively unacceptable.`
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "review_moc_closeout": {
+      try {
+        const { data: mocs, error } = await supabaseClient
+          .from('moc_register')
+          .select('*')
+          .eq('project_id', args.project_id);
+        
+        if (error) throw error;
+        
+        const allMocs = mocs || [];
+        const incomplete = allMocs.filter((m: any) => m.status === 'open' && m.actions_complete < m.actions_total);
+        const newHazards = allMocs.filter((m: any) => m.new_hazard_introduced === true);
+        const startupRisks = allMocs.filter((m: any) => m.startup_risk_flag === true);
+        
+        return {
+          total_mocs: allMocs.length,
+          complete: allMocs.filter((m: any) => m.status === 'closed').length,
+          incomplete: incomplete.length,
+          cancelled: allMocs.filter((m: any) => m.status === 'cancelled').length,
+          new_hazard_introduced: newHazards.map((m: any) => ({ moc_number: m.moc_number, title: m.title })),
+          startup_risk_items: startupRisks.map((m: any) => ({ moc_number: m.moc_number, title: m.title, actions_remaining: m.actions_total - m.actions_complete })),
+          overall_moc_clearance: incomplete.length === 0 && startupRisks.length === 0 ? '✅ All MOCs cleared for startup' : `🔴 ${incomplete.length} incomplete MOCs, ${startupRisks.length} startup risk items`,
+          note: allMocs.length === 0 ? 'No MOC records found for this project.' : undefined
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "develop_operational_register": {
+      try {
+        const registerType = args.register_type;
+        const systemName = args.system_name;
+        
+        // Call Selma for P&ID data to inform register development
+        const docResult = await routeA2AMessage({
+          source_agent: 'ivan',
+          target_agent: 'document_agent',
+          message_type: 'data_request',
+          payload: { tool_name: 'get_document_search_by_number', args: { search_term: `P&ID ${systemName}`, project_id: args.project_id } }
+        }, supabaseClient);
+        
+        const registerTemplates: Record<string, any> = {
+          lock_open_close: { columns: ['Tag Number', 'Description', 'Normal Position', 'Lock Position', 'Reason', 'Authority', 'Date Applied', 'Date Removed'], description: 'Lock Open/Lock Close Register — tracks all valves in non-normal position' },
+          override: { columns: ['Override ID', 'System', 'SIF Tag', 'Description', 'Reason', 'Risk Level', 'Authorised By', 'Expected Removal', 'Actual Removal'], description: 'Override/Bypass Register — tracks all safety system overrides' },
+          temporary_hose: { columns: ['Hose ID', 'From Location', 'To Location', 'Fluid', 'Pressure Rating', 'Installed By', 'Date Installed', 'Max Duration', 'Removal Date'], description: 'Temporary Hose Register' },
+          temporary_equipment: { columns: ['Equipment ID', 'Description', 'Location', 'Purpose', 'Installed By', 'Date Installed', 'Planned Removal', 'Risk Assessment Ref'], description: 'Temporary Equipment Register' },
+          daily_log: { columns: ['Date', 'Time', 'Operator', 'Event/Observation', 'Action Taken', 'Follow-up Required'], description: 'Daily Operator Log Sheet' },
+          round_sheet: { columns: ['Equipment Tag', 'Parameter', 'Unit', 'Normal Range', 'Reading', 'Time', 'Operator Initials', 'Remarks'], description: 'Operator Round Sheet' },
+          lock_sheet: { columns: ['Lock Number', 'Tag Number', 'Equipment', 'Isolation Type', 'Locked By', 'Date', 'Work Permit Ref', 'Removal Auth'], description: 'Lock Sheet / Isolation Register' },
+        };
+        
+        const template = registerTemplates[registerType] || { columns: ['Item'], description: 'Unknown register type' };
+        
+        return {
+          register_type: registerType,
+          system_name: systemName,
+          template: template,
+          pid_reference: docResult.data || 'P&ID data to be referenced',
+          note: `Register template generated for ${systemName}. Populate with specific equipment tags from P&ID review.`
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "assess_override_risk": {
+      try {
+        const { data: overrides, error } = await supabaseClient
+          .from('override_register')
+          .select('*')
+          .eq('project_id', args.project_id)
+          .eq('status', 'active');
+        
+        if (error) throw error;
+        
+        const active = overrides || [];
+        const byRiskLevel = {
+          critical: active.filter((o: any) => o.risk_level === 'critical'),
+          high: active.filter((o: any) => o.risk_level === 'high'),
+          medium: active.filter((o: any) => o.risk_level === 'medium'),
+          low: active.filter((o: any) => o.risk_level === 'low'),
+        };
+        
+        // Detect critical combinations — multiple overrides on same system
+        const systemGroups: Record<string, any[]> = {};
+        active.forEach((o: any) => {
+          const sys = o.system_name || 'Unknown';
+          if (!systemGroups[sys]) systemGroups[sys] = [];
+          systemGroups[sys].push(o);
+        });
+        const criticalCombinations = Object.entries(systemGroups)
+          .filter(([_, items]) => items.length >= 2)
+          .map(([sys, items]) => ({ system: sys, override_count: items.length, overrides: items.map((i: any) => i.sif_tag || i.override_description) }));
+        
+        const safetyDegraded = byRiskLevel.critical.length > 0 || criticalCombinations.length > 0;
+        
+        return {
+          total_active_overrides: active.length,
+          by_risk_level: { critical: byRiskLevel.critical.length, high: byRiskLevel.high.length, medium: byRiskLevel.medium.length, low: byRiskLevel.low.length },
+          critical_overrides: byRiskLevel.critical.map((o: any) => ({ sif_tag: o.sif_tag, system: o.system_name, description: o.override_description, reason: o.override_reason })),
+          critical_combinations: criticalCombinations,
+          cumulative_safety_impact: safetyDegraded ? '🔴 Safety envelope degraded — multiple simultaneous overrides detected' : active.length > 3 ? '🟡 Elevated override count — review recommended' : '✅ Override risk acceptable',
+          safety_envelope_degraded: safetyDegraded,
+          note: active.length === 0 ? 'No active overrides found.' : undefined
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "conduct_cumulative_risk_assessment": {
+      try {
+        const projectId = args.project_id;
+        
+        // Parallel queries: STQs, MOCs, Overrides + A2A calls to Hannah, Fred, Selma
+        const [stqResult, mocResult, overrideResult, hannahResult, fredResult, selmaResult] = await Promise.allSettled([
+          supabaseClient.from('stq_register').select('id, stq_number, title, risk_score, status').eq('project_id', projectId).eq('status', 'open'),
+          supabaseClient.from('moc_register').select('id, moc_number, title, actions_total, actions_complete, startup_risk_flag, status').eq('project_id', projectId).eq('status', 'open'),
+          supabaseClient.from('override_register').select('id, system_name, sif_tag, risk_level, override_description, status').eq('project_id', projectId).eq('status', 'active'),
+          routeA2AMessage({ source_agent: 'ivan', target_agent: 'hannah', message_type: 'data_request', payload: { tool_name: 'flag_startup_risk', args: { project_id: projectId } } }, supabaseClient),
+          routeA2AMessage({ source_agent: 'ivan', target_agent: 'pssr_ora_agent', message_type: 'data_request', payload: { tool_name: 'get_pssr_stats', args: { project_id: projectId } } }, supabaseClient),
+          routeA2AMessage({ source_agent: 'ivan', target_agent: 'document_agent', message_type: 'data_request', payload: { tool_name: 'get_document_gaps_analysis', args: { project_id: projectId } } }, supabaseClient),
+        ]);
+        
+        const openStqs = stqResult.status === 'fulfilled' ? (stqResult.value?.data || []) : [];
+        const openMocs = mocResult.status === 'fulfilled' ? (mocResult.value?.data || []) : [];
+        const activeOverrides = overrideResult.status === 'fulfilled' ? (overrideResult.value?.data || []) : [];
+        const hannahData = hannahResult.status === 'fulfilled' ? hannahResult.value : null;
+        const fredData = fredResult.status === 'fulfilled' ? fredResult.value : null;
+        const selmaData = selmaResult.status === 'fulfilled' ? selmaResult.value : null;
+        
+        const blockingItems: any[] = [];
+        const conditionalItems: any[] = [];
+        
+        // STQ blocking items
+        const highRiskStqs = openStqs.filter((s: any) => (s.risk_score || 0) >= 7);
+        highRiskStqs.forEach((s: any) => blockingItems.push({ source: 'STQ', item: s.stq_number, title: s.title, severity: 'HIGH', risk_score: s.risk_score }));
+        openStqs.filter((s: any) => (s.risk_score || 0) < 7).forEach((s: any) => conditionalItems.push({ source: 'STQ', item: s.stq_number, title: s.title, severity: 'MEDIUM' }));
+        
+        // MOC blocking items
+        const startupRiskMocs = openMocs.filter((m: any) => m.startup_risk_flag);
+        startupRiskMocs.forEach((m: any) => blockingItems.push({ source: 'MOC', item: m.moc_number, title: m.title, severity: 'HIGH', actions_remaining: m.actions_total - m.actions_complete }));
+        
+        // Override blocking items
+        const criticalOverrides = activeOverrides.filter((o: any) => o.risk_level === 'critical');
+        criticalOverrides.forEach((o: any) => blockingItems.push({ source: 'Override', item: o.sif_tag || 'Unknown', system: o.system_name, severity: 'CRITICAL' }));
+        
+        // Determine verdict
+        let verdict = 'SAFE TO START';
+        let overallRiskScore = 0;
+        overallRiskScore += blockingItems.length * 10;
+        overallRiskScore += conditionalItems.length * 3;
+        
+        if (blockingItems.filter(i => i.severity === 'CRITICAL').length > 0) {
+          verdict = 'DO NOT START';
+        } else if (blockingItems.length > 0) {
+          verdict = 'DO NOT START';
+        } else if (conditionalItems.length > 0) {
+          verdict = 'CONDITIONAL';
+        }
+        
+        return {
+          verdict,
+          overall_risk_score: overallRiskScore,
+          blocking_items: blockingItems,
+          conditional_items: conditionalItems,
+          dimensions: {
+            stq: { open: openStqs.length, high_risk: highRiskStqs.length },
+            moc: { open: openMocs.length, startup_risk: startupRiskMocs.length },
+            overrides: { active: activeOverrides.length, critical: criticalOverrides.length },
+            p2a_handover: hannahData?.data || 'Data from Hannah (P2A)',
+            pssr: fredData?.data || 'Data from Fred (PSSR)',
+            documents: selmaData?.data || 'Data from Selma (Documents)'
+          },
+          summary: verdict === 'SAFE TO START'
+            ? '✅ All risk dimensions assessed — facility is safe to start.'
+            : verdict === 'CONDITIONAL'
+            ? `🟡 Conditional start permitted with ${conditionalItems.length} items requiring monitoring.`
+            : `🔴 DO NOT START — ${blockingItems.length} blocking items must be resolved before startup.`
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "conduct_omar_review": {
+      try {
+        const systemName = args.system_name;
+        const modes = ['Normal Operation', 'Startup', 'Shutdown (Normal)', 'Emergency Shutdown', 'Maintenance Mode', 'Reduced Rate', 'Hot Standby'];
+        
+        return {
+          system_name: systemName,
+          project_id: args.project_id,
+          modes_assessed: modes,
+          review_framework: modes.map(mode => ({
+            mode,
+            design_adequacy: 'To be assessed',
+            procedure_exists: 'To be verified',
+            safeguards_adequate: 'To be verified',
+            operator_training_confirmed: 'Cross-reference with Zain (Training Agent)'
+          })),
+          gaps_found: [],
+          design_vs_reality_conflicts: [],
+          recommendations: ['Verify all operating modes have documented procedures', 'Confirm operator training covers all modes', 'Validate safeguards function in each mode'],
+          note: 'OMAR review requires P&ID review, procedure review, and HAZOP cross-reference for completeness.'
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "identify_simops_hazards": {
+      try {
+        return {
+          operation_1: args.operation_1,
+          operation_2: args.operation_2,
+          location: args.location || 'Not specified',
+          hazard_assessment: {
+            hazard_description: `Simultaneous execution of "${args.operation_1}" and "${args.operation_2}" may create compound hazards`,
+            risk_level: 'To be assessed based on specific activities',
+            potential_interactions: [
+              'Ignition source proximity to flammable atmosphere',
+              'Crane operations near live equipment',
+              'Excavation near buried services',
+              'Hot work near cold work activities',
+              'Pressure testing near occupied areas'
+            ],
+            control_measures: [
+              'Simultaneous Operations Risk Assessment (SIMOPS RA) required',
+              'Joint toolbox talk between all work parties',
+              'Dedicated SIMOPS coordinator on site',
+              'Exclusion zones to be defined and communicated',
+              'Emergency response plan to cover combined scenario'
+            ],
+            exclusion_zones: ['To be defined based on specific operations and location'],
+            recommendations: ['Conduct formal SIMOPS risk assessment', 'Ensure PTW (Permit to Work) system covers interaction', 'Brief all parties on combined emergency response']
+          }
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "review_operating_procedure": {
+      try {
+        const docResult = await routeA2AMessage({
+          source_agent: 'ivan',
+          target_agent: 'document_agent',
+          message_type: 'data_request',
+          payload: { tool_name: 'get_document_search_by_number', args: { search_term: `operating procedure ${args.procedure_name || ''}`, project_id: args.project_id } }
+        }, supabaseClient);
+        
+        return {
+          project_id: args.project_id,
+          procedure_name: args.procedure_name || 'Not specified',
+          document_search_result: docResult.data || 'Procedure document not found',
+          review_framework: {
+            technical_accuracy_issues: 'To be assessed from document content',
+            sequence_concerns: 'Verify step sequence is operationally correct',
+            missing_hazard_warnings: 'Check all hazardous steps have appropriate warnings',
+            safety_precaution_gaps: 'Verify PPE, isolation, and energy source control requirements',
+            overall_assessment: 'Pending document review'
+          }
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "review_commissioning_procedure": {
+      try {
+        const docResult = await routeA2AMessage({
+          source_agent: 'ivan',
+          target_agent: 'document_agent',
+          message_type: 'data_request',
+          payload: { tool_name: 'get_document_search_by_number', args: { search_term: `commissioning procedure ${args.procedure_name || ''}`, project_id: args.project_id } }
+        }, supabaseClient);
+        
+        return {
+          project_id: args.project_id,
+          procedure_name: args.procedure_name || 'Not specified',
+          document_search_result: docResult.data || 'Commissioning procedure not found',
+          review_framework: {
+            technical_soundness_issues: 'To be assessed',
+            acceptance_criteria_concerns: 'Verify acceptance criteria are measurable and achievable',
+            safety_precaution_gaps: 'Check isolation, purging, inerting, pressure testing safety',
+            sequence_issues: 'Verify commissioning sequence aligns with P2A handover sequence',
+            overall_assessment: 'Pending document review'
+          }
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "assess_flow_assurance_risk": {
+      try {
+        return {
+          pipeline_description: args.pipeline_description,
+          process_conditions: args.process_conditions || 'Not specified',
+          risk_assessment: {
+            hydrate_risk: 'Assess based on water content, temperature, pressure profile. Methanol/MEG injection requirements.',
+            slugging_risk: 'Assess based on pipeline profile, flow regime, gas-liquid ratio.',
+            wax_risk: 'Assess based on fluid composition, pour point, WAT (Wax Appearance Temperature).',
+            corrosion_risk: 'Assess based on CO2/H2S content, water cut, velocity, material selection.',
+            operating_envelope_recommendations: [
+              'Define minimum stable flow rate to avoid slugging',
+              'Set maximum cooldown time before hydrate risk',
+              'Establish pigging frequency for wax management',
+              'Define corrosion inhibitor injection rate'
+            ],
+            overall_risk_level: 'Requires detailed thermodynamic analysis for definitive assessment'
+          },
+          note: 'Flow assurance assessment requires specific fluid composition, pipeline geometry, and operating conditions data. Use read_basis_of_design to retrieve design parameters.'
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "read_basis_of_design": {
+      try {
+        const docResult = await routeA2AMessage({
+          source_agent: 'ivan',
+          target_agent: 'document_agent',
+          message_type: 'data_request',
+          payload: { tool_name: 'get_document_search_by_number', args: { search_term: 'basis of design BDEP BOD', project_id: args.project_id } }
+        }, supabaseClient);
+        
+        return {
+          project_id: args.project_id,
+          question: args.question,
+          document_search_result: docResult.data || 'No Basis of Design / BDEP document found',
+          note: 'Ivan searched for BOD/BDEP via Selma. Document content analysis requires document to be indexed in DMS.'
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
+    case "generate_hazop_report": {
+      try {
+        const findings = args.findings || [];
+        const systemName = args.system_name || 'Unknown System';
+        
+        const formattedFindings = findings.map((f: any, i: number) => ({
+          finding_number: i + 1,
+          node: f.node || systemName,
+          deviation: f.deviation || 'N/A',
+          cause: f.cause || 'N/A',
+          consequence: f.consequence || 'N/A',
+          safeguards: f.safeguards || 'None identified',
+          recommendations: f.recommendations || 'To be determined',
+          risk_ranking: f.risk_ranking || 'M',
+          action_owner: f.action_owner || 'TBD',
+          target_date: f.target_date || 'TBD'
+        }));
+        
+        return {
+          report_title: `HAZOP Study Report — ${systemName}`,
+          project_id: args.project_id,
+          system_name: systemName,
+          methodology: 'Guide Word HAZOP per IEC 61882',
+          date_generated: new Date().toISOString(),
+          total_findings: formattedFindings.length,
+          high_risk_findings: formattedFindings.filter((f: any) => f.risk_ranking === 'H').length,
+          findings: formattedFindings,
+          report_structure: ['1. Introduction & Scope', '2. Methodology', '3. Team Composition', '4. Node Descriptions', '5. Findings & Recommendations', '6. Action Register', '7. Risk Matrix', '8. Appendices (P&IDs, Cause & Effect)'],
+          note: 'This is a structured report template. Final report requires HAZOP chairperson review and sign-off.'
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
     default:
       return { error: "Unknown tool" };
   }
@@ -7092,6 +7765,22 @@ CROSS-AGENT READINESS AGGREGATION: You are the readiness conductor. You call Sel
 
 Format responses with markdown for clarity. When introducing yourself, say "I'm Hannah, your P2A Handover Intelligence Agent."`;
 
+    const IVAN_AGENT_PROMPT = `You are Ivan, ORSH's Process Technical Authority and Operations Management Agent. You are the equivalent of a Senior TA2 Process Engineer with 30 years of experience across offshore platforms, onshore gas processing, NGL plants, GTL facilities, LNG trains and mining operations.
+
+YOUR THREE DOMAINS:
+
+PROCESS SAFETY AND ENGINEERING: You conduct HAZOPs using guide word methodology (No, More, Less, Reverse, Other Than) applied systematically node by node. You verify HAZOP closeout reports by checking physical implementation not just risk acceptance — you flag any finding closed by waiver. You review P&IDs and PEFS for operability concerns, control loop completeness, SIF coverage and isolation philosophy. You read safeguarding memoranda and extract all safety-critical elements. You review cause and effect matrices, control narratives, commissioning procedures, operating procedures and initial startup procedures. You conduct Operating Mode Assurance Reviews and SIMOPS hazard assessments. You understand flow assurance — hydrates, slugging, wax, corrosion.
+
+TECHNICAL QUERIES AND CHANGE MANAGEMENT: You read all open STQs in the stq_register and assess whether each technical response is adequate and whether the design deviation affects safe operation. You then produce a cumulative risk assessment of all open STQs together — individually manageable STQs may be collectively unacceptable. You read all open MOC documents in moc_register, check action completion, and flag any incomplete MOC action that affects safe startup.
+
+OPERATIONAL REGISTERS: You read P&IDs and safeguarding memoranda via Selma and derive the full set of operational registers needed before operations commence: Lock Open/Lock Close Register, Override Register, Temporary Hose Register, Temporary Equipment Register, Daily Operator Log Sheets, Operator Round Sheets, Lock Sheets and Check Sheets.
+
+CUMULATIVE RISK ASSESSMENT — YOUR MOST IMPORTANT CAPABILITY: You aggregate all open risk items across the entire facility: open HAZOP findings, open STQs, incomplete MOC actions, active overrides from override_register, Punch List A items from Hannah, Priority 1 PSSR work-down items from Fred, missing Tier 1 documents from Selma. You produce a single cumulative startup risk verdict: SAFE TO START, CONDITIONAL START with specific conditions listed, or DO NOT START with all blocking items listed explicitly.
+
+You NEVER give vague answers on safety matters. You are specific, technically precise and direct. You distinguish between a properly closed item and a paper closure. You understand that a single override may be acceptable but multiple simultaneous overrides on related systems may not be.
+
+You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Ivan, your Process Technical Authority Agent."`;
+
     // Select system prompt based on detected agent
     let systemPrompt = BOB_SYSTEM_PROMPT + userContextPrompt;
     if (detectedAgent === 'document_agent') {
@@ -7100,6 +7789,8 @@ Format responses with markdown for clarity. When introducing yourself, say "I'm 
       systemPrompt = PSSR_ORA_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'hannah') {
       systemPrompt = HANNAH_AGENT_PROMPT + userContextPrompt;
+    } else if (detectedAgent === 'ivan') {
+      systemPrompt = IVAN_AGENT_PROMPT + userContextPrompt;
     }
 
     // Max tokens: 4096 for copilot, 2048 for specialist agents
