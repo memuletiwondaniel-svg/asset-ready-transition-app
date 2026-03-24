@@ -883,6 +883,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
             <p>This is a living document maintained within the ORSH platform.</p>
             <p>Review and update quarterly alongside Access Certification Campaign cycles.</p>
             <p className="mt-1">Items marked <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 mx-1 text-xs">🔶 Roadmap</Badge> are mandatory for ORIP enterprise readiness and tracked in the compliance roadmap.</p>
+            <p className="mt-2 font-medium">Last updated: 24 March 2026 — Security hardening complete, Claude migration security reviewed.</p>
           </div>
         </div>
       </div>
