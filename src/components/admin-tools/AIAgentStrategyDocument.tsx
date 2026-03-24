@@ -502,6 +502,64 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
 
           <Separator />
 
+          {/* Document Intelligence Build Sequence */}
+          <Section icon={<Layers className="h-5 w-5 text-blue-500" />} title="6b. Document Intelligence Build Sequence" id="doc-intelligence">
+            <p>
+              Sally is ORSH's specialist Document Intelligence Agent. She analyses document readiness, identifies gaps, scores quality, 
+              and links document status to ORA phase requirements. Sally runs on Claude Sonnet 4.5 via the Anthropic API. 
+              The following 9-phase build sequence is now in progress alongside Phase 2.
+            </p>
+            <div className="grid gap-3">
+              <Card className="border-amber-500/20 bg-amber-500/5">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">BUILD NOW</Badge>
+                    <h3 className="font-semibold text-foreground text-sm">Phase 1 — Document data model foundation</h3>
+                  </div>
+                  <p className="text-xs">Add package_tag, document_scope, PO number, is_mdr to schema</p>
+                </CardContent>
+              </Card>
+              <Card className="border-amber-500/20 bg-amber-500/5">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">NEXT</Badge>
+                    <h3 className="font-semibold text-foreground text-sm">Phase 2 — Document wizard Step 2 redesign</h3>
+                  </div>
+                  <p className="text-xs">Discipline and package tabs</p>
+                </CardContent>
+              </Card>
+              <Card className="border-amber-500/20 bg-amber-500/5">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">NEXT</Badge>
+                    <h3 className="font-semibold text-foreground text-sm">Phase 3 — Document wizard Step 3 redesign</h3>
+                  </div>
+                  <p className="text-xs">Review, confirm, save to vcr_document_requirements</p>
+                </CardContent>
+              </Card>
+              {[
+                { phase: 4, title: 'External DMS sync infrastructure', desc: 'Assai connection, Edge Function, Admin Tools screen' },
+                { phase: 5, title: 'Sally 8 new tools', desc: 'VCR requirements, readiness, packages, PO, MDR, gaps, DMS status, sync' },
+                { phase: 6, title: 'Operations document dossier', desc: 'Package view, Assai hyperlinks, MDR card' },
+                { phase: 7, title: 'Proactive document alerts and ORI integration', desc: '' },
+                { phase: 8, title: 'Autonomous MDR fetching and parsing', desc: '' },
+                { phase: 9, title: 'Project knowledge intelligence', desc: 'pgvector, document reading, BOD/BDEP' },
+              ].map(item => (
+                <Card key={item.phase} className="border-blue-500/20 bg-blue-500/5">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">PLANNED</Badge>
+                      <h3 className="font-semibold text-foreground text-sm">Phase {item.phase} — {item.title}</h3>
+                    </div>
+                    {item.desc && <p className="text-xs">{item.desc}</p>}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </Section>
+
+          <Separator />
+
           {/* 7. Gaps */}
           <Section icon={<AlertTriangle className="h-5 w-5 text-red-500" />} title="7. Gaps & Known Limitations" id="gaps">
             <InfoTable
