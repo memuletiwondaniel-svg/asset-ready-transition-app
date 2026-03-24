@@ -5050,7 +5050,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
     }
     
     // ═══════════════════════════════════════════════════════════════════════════
-    // SELMA (DOCUMENT INTELLIGENCE ASSISTANT) TOOL HANDLERS
+    // SALLY (DOCUMENT INTELLIGENCE ASSISTANT) TOOL HANDLERS
     // ═══════════════════════════════════════════════════════════════════════════
     
     case "get_document_readiness_summary": {
