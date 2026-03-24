@@ -513,8 +513,8 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               { label: 'Certificates', value: 'Statement of Fitness (SoF), PAC, FAC issuance → Formal readiness gate', status: 'active' },
               { label: 'Task Manager', value: 'Unified task inbox with auto-generated tasks from all modules → Action closeout velocity metric', status: 'active' },
               { label: 'Admin Tools', value: '28+ management tools (users, roles, security, audit, config) → Governance & compliance layer', status: 'active' },
-              { label: 'DMS', value: 'Document metadata config, numbering builder, gap analysis → Document readiness intelligence', status: 'active' },
-              { label: 'AI CoPilot (Bob)', value: 'Multi-agent AI with autonomous training, specialist routing, document intelligence → Embedded decision support', status: 'active' },
+              { label: 'DMS', value: 'Document Intelligence build sequence defined — 9 phases from data model through project knowledge reading. Phase 1 (data model) ready to execute. Sally (Document AI Agent) confirmed live with 13 tools and excellent performance on document readiness analysis.', status: 'active' },
+              { label: 'AI CoPilot (Bob)', value: 'Multi-agent AI running on Claude Sonnet 4.5 (Anthropic). Bob CoPilot, Sally (Document Agent) and PSSR/ORA Agent all live and confirmed working. Autonomous training loop v5.0 active. React-markdown rendering installed. Phase 2 agents (Training, CMMS, ORM) in build queue.', status: 'active' },
             ]} />
 
             <Card className="bg-amber-500/5 border-amber-500/20 mt-4">
