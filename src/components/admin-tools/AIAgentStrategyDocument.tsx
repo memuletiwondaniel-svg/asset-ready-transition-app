@@ -296,11 +296,12 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             <InfoTable
               headers={['Agent Code', 'Display Name', 'Model', 'Status', 'Tools', 'Domains']}
               rows={[
-                ['copilot', 'Bob CoPilot', 'openai/gpt-5-mini', 'Active', '14', 'pssr, ora, orm, platform, navigation'],
-                ['document_agent', 'Selma (Document Intelligence)', 'openai/gpt-5-mini', 'Active', '13', 'dms, document, readiness, quality, maturity, handover'],
-                ['training_agent', 'Training AI Agent', 'gemini-3-flash-preview', 'Planned', '0', 'training, competency, learning'],
-                ['cmms_agent', 'CMMS AI Agent', 'gemini-3-flash-preview', 'Planned', '0', 'cmms, maintenance, equipment, spares'],
-                ['orm_agent', 'ORM AI Agent', 'gemini-3-flash-preview', 'Planned', '0', 'orm, manpower, staffing, organization'],
+                ['copilot', 'Bob CoPilot', 'claude-sonnet-4-5', 'Active', '14', 'pssr, ora, orm, platform, navigation'],
+                ['document_agent', 'Sally', 'claude-sonnet-4-5', 'Active', '13', 'dms, document, readiness, quality, maturity, handover'],
+                ['pssr_ora_agent', 'Fred (PSSR & ORA)', 'claude-sonnet-4-5', 'Active', '14', 'pssr, safety, checklist, operational readiness'],
+                ['training_agent', 'Training AI Agent', 'claude-haiku', 'Planned', '0', 'training, competency, learning'],
+                ['cmms_agent', 'CMMS AI Agent', 'claude-haiku', 'Planned', '0', 'cmms, maintenance, equipment, spares'],
+                ['orm_agent', 'ORM AI Agent', 'claude-haiku', 'Planned', '0', 'orm, manpower, staffing, organization'],
               ]}
             />
 
