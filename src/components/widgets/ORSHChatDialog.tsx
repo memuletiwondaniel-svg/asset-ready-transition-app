@@ -601,33 +601,10 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     setEditingTitle(conv.title);
   };
 
-  const handleFeedback = async (messageIndex: number, rating: 'positive' | 'negative') => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const message = messages[messageIndex];
-      if (message.feedbackGiven === rating) return;
-
-      const { error } = await supabase
-        .from('ai_response_feedback')
-        .insert({
-          user_id: user.id,
-          conversation_id: currentConversationId,
-          rating,
-          agent_code: 'bob-copilot',
-        });
-
-      if (error) throw error;
-
-      setMessages(prev => prev.map((m, i) => 
-        i === messageIndex ? { ...m, feedbackGiven: rating } : m
-      ));
-
-      toast.success(rating === 'positive' ? 'Thanks for the feedback!' : 'Thanks, we\'ll improve!');
-    } catch (error) {
-      console.error('Error saving feedback:', error);
-    }
+  const handleFeedbackChange = (messageIndex: number, rating: 'positive' | 'negative') => {
+    setMessages(prev => prev.map((m, i) => 
+      i === messageIndex ? { ...m, feedbackGiven: rating } : m
+    ));
   };
 
   const filteredConversations = conversations.filter(conv => 
