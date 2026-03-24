@@ -613,7 +613,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
               <Card className="bg-muted/30 border-border">
                 <CardContent className="pt-4">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">3. PSSR/ORA Agent — Safety Review & Activity Planning Specialist</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">3. Fred (PSSR/ORA Agent) — Safety Review & Activity Planning Specialist</h3>
                   <p className="text-xs">
                     The PSSR/ORA Agent has <strong className="text-foreground">14 tools</strong> covering Pre-Startup Safety Review management, 
                     ORA activity planning, checklist intelligence and safety readiness assessment.
