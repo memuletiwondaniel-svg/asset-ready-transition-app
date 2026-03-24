@@ -99,7 +99,7 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
           <div className="flex items-center gap-2">
             <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-Enterprise-Security-Compliance" />
             <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-              v3.1 — March 2026
+              v4.0 — March 2026
             </Badge>
           </div>
         </div>
