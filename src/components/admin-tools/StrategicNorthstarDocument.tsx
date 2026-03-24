@@ -533,6 +533,25 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
             </Card>
           </Section>
 
+          <Separator />
+
+          {/* 10. March 2026 Milestones */}
+          <Section id="march-2026-milestones" icon={<Rocket className="h-5 w-5 text-amber-600" />} title="10. March 2026 — Key Milestones Achieved">
+            <Card className="border-emerald-500/20 bg-emerald-500/5">
+              <CardContent className="pt-4 text-sm">
+                <p className="font-bold text-foreground mb-3">CLAUDE MIGRATION COMPLETE</p>
+                <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
+                  <li>All active ORSH AI agents migrated from Lovable AI Gateway to <strong className="text-foreground">Anthropic API</strong></li>
+                  <li>Model: <strong className="text-foreground">claude-sonnet-4-5</strong> for Bob CoPilot, Sally and PSSR/ORA Agent</li>
+                  <li>The Lovable AI Gateway dependency eliminated — full Anthropic API control</li>
+                  <li><strong className="text-foreground">Sally (Document Agent) confirmed live:</strong> delivered document intelligence analysis showing 988 documents tracked, quality score 45/100, 3 prioritised action items, identified RLMU compliance gap blocking operational handover</li>
+                  <li><strong className="text-foreground">Security hardening:</strong> 6 critical issues resolved, enterprise-grade security posture confirmed</li>
+                  <li><strong className="text-foreground">Document Intelligence strategy formalised:</strong> 9-phase build sequence for Sally covering wizard redesign, Assai sync, autonomous MDR fetching, and project knowledge intelligence (BOD/BDEP reading via pgvector)</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </Section>
+
           {/* Footer */}
           <Card className="bg-muted/30 mt-6">
             <CardContent className="pt-6 text-center">
@@ -540,7 +559,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
                 <strong className="text-foreground">ORSH Strategic North Star</strong> — Living Document
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Last updated: March 2026 • Maintained by the ORSH Product & Strategy Team
+                Last updated: 24 March 2026 — Claude migration milestone, Sally agent live, Document Intelligence roadmap defined.
               </p>
             </CardContent>
           </Card>
