@@ -8,7 +8,7 @@ import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileTex
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { useTypingEffect } from '@/hooks/useTypingEffect';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
@@ -194,11 +194,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   // Context-aware greeting subtitle
   const [greetingSubtitle, setGreetingSubtitle] = useState<string>('');
 
-  // Context-aware placeholder questions
-  const [contextPlaceholders, setContextPlaceholders] = useState<string[]>([
-    "Ask Bob anything about ORSH...",
-  ]);
-
   useEffect(() => {
     const loadContext = async () => {
       try {
@@ -237,30 +232,12 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           subtitle = "What are we tackling today?";
         }
         setGreetingSubtitle(subtitle);
-
-        // Placeholder suggestions
-        const suggestions: string[] = [];
-        if (ctxMap.last_active_pssr?.value) {
-          suggestions.push(`Any updates on ${ctxMap.last_active_pssr.value} today?`);
-        }
-        if (ctxMap.last_active_project?.value) {
-          suggestions.push(`What's the status of ${ctxMap.last_active_project.value}?`);
-        }
-        suggestions.push("What are my priority tasks today?");
-        suggestions.push("What's the document readiness score today?");
-
-        if (suggestions.length > 0) setContextPlaceholders(suggestions);
       } catch {}
     };
     loadContext();
   }, []);
 
-  const { displayText: placeholderText, isTyping } = useTypingEffect({
-    texts: contextPlaceholders,
-    typingSpeed: 40,
-    pauseBeforeNext: 2500,
-    pauseBeforeType: 300,
-  });
+  const placeholderText = "Message Bob...";
 
   // Widget grid configuration
   const [widgets, setWidgets] = useState<WidgetConfig[]>(() => {
