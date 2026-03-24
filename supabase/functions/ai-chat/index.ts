@@ -6331,7 +6331,7 @@ serve(async (req) => {
     }
 
     // Max tokens: 4096 for copilot, 2048 for specialist agents
-    const maxTokens = detectedAgent === 'copilot' ? 4096 : 2048;
+    const maxTokens = detectedAgent === 'copilot' ? 4096 : 3072;
 
     // Convert OpenAI-style tools to Anthropic format
     const anthropicTools = tools.map((t: any) => ({
@@ -6472,6 +6472,7 @@ serve(async (req) => {
       }
 
       const finalResult = await finalResponse.json();
+      console.log("Final AI response stop_reason:", finalResult.stop_reason, "usage:", finalResult.usage);
       const finalBlocks = finalResult.content || [];
       let finalContent = finalBlocks.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
 
@@ -6504,8 +6505,61 @@ serve(async (req) => {
           const issueLines = issues.length ? `\n\n**Issues/Concerns:**\n${issues.map((i: any) => `• ${i.severity === 'critical' ? '🔴' : i.severity === 'warning' ? '🟡' : 'ℹ️'} ${i.message}`).join('\n')}` : '';
           const blockerLines = blockers.length ? `\n\n**Blockers:**\n${blockers.map((b: string) => `• ${b}`).join('\n')}` : '';
           finalContent = `**${label} - ${healthText}**\nOverall progress: ${lastToolResult.overall_progress ?? 0}%${issueLines}${blockerLines}`;
+        } else if (lastToolName === 'get_pssr_detailed_summary' && lastToolResult) {
+          const p = lastToolResult.pssr || {};
+          const prog = lastToolResult.progress || {};
+          const approverInfo = lastToolResult.approvers || {};
+          const actions = lastToolResult.priority_actions || {};
+          const blockers = lastToolResult.blocking_items || [];
+          
+          finalContent = `## ${p.pssr_id || 'PSSR'} — ${p.title || 'Untitled'}\n\n`;
+          finalContent += `| Field | Value |\n|---|---|\n`;
+          finalContent += `| **Status** | ${p.status || 'Unknown'} |\n`;
+          finalContent += `| **Asset** | ${p.asset || 'N/A'} |\n`;
+          finalContent += `| **Project** | ${p.project_name || 'N/A'} |\n`;
+          finalContent += `| **Overall Progress** | ${prog.overall ?? 0}% |\n`;
+          finalContent += `| **Total Items** | ${prog.total_items ?? 0} |\n`;
+          finalContent += `| **Complete** | ${prog.complete_items ?? 0} |\n`;
+          finalContent += `| **Pending** | ${prog.pending_items ?? 0} |\n`;
+          finalContent += `| **Approvers** | ${approverInfo.approved ?? 0}/${approverInfo.total ?? 0} approved |\n`;
+          finalContent += `| **Priority A Actions** | ${actions.a_open ?? 0} open / ${actions.a_total ?? 0} total |\n`;
+          finalContent += `| **Priority B Actions** | ${actions.b_open ?? 0} open / ${actions.b_total ?? 0} total |\n`;
+          
+          if (prog.by_category && Object.keys(prog.by_category).length > 0) {
+            finalContent += `\n### Progress by Category\n\n| Category | Complete | Pending | Total |\n|---|---|---|---|\n`;
+            for (const [cat, stats] of Object.entries(prog.by_category) as any) {
+              finalContent += `| ${cat} | ${stats.complete} | ${stats.pending} | ${stats.total} |\n`;
+            }
+          }
+          
+          if (blockers.length > 0) {
+            finalContent += `\n### Blockers\n${blockers.map((b: string) => `- ${b}`).join('\n')}`;
+          }
+          
+          finalContent += `\n\n${lastToolResult.can_close ? '✅ Ready to close' : '⚠️ Not ready to close — blockers remain'}`;
+        } else if (lastToolName === 'get_discipline_status' && lastToolResult) {
+          const label = lastToolResult.pssr_label || 'PSSR';
+          const byCat = lastToolResult.by_category || {};
+          finalContent = `## ${label} — Discipline Status\n\n| Discipline | Complete | Pending | Total | Progress |\n|---|---|---|---|---|\n`;
+          for (const [cat, stats] of Object.entries(byCat) as any) {
+            const pct = stats.total > 0 ? Math.round((stats.complete / stats.total) * 100) : 0;
+            finalContent += `| ${cat} | ${stats.complete} | ${stats.pending} | ${stats.total} | ${pct}% |\n`;
+          }
+        } else if (lastToolName === 'get_pssr_stats' && lastToolResult) {
+          const total = lastToolResult.total ?? 0;
+          const breakdown = lastToolResult.breakdown || {};
+          finalContent = `**PSSR Summary — ${total} total records**\n\n| Status | Count |\n|---|---|\n`;
+          for (const [status, count] of Object.entries(breakdown)) {
+            finalContent += `| ${status} | ${count} |\n`;
+          }
+          if (lastToolResult.pssrs?.length > 0) {
+            finalContent += `\n**Recent PSSRs:**\n`;
+            lastToolResult.pssrs.forEach((p: any) => {
+              finalContent += `- ${p.pssr_id}: ${p.title} (${p.status})\n`;
+            });
+          }
         } else {
-          finalContent = "I couldn't process that request.";
+          finalContent = "I retrieved the data but couldn't format it. Please try a more specific question.";
         }
       }
       
