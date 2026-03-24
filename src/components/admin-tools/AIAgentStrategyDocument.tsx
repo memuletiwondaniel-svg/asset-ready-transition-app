@@ -842,11 +842,11 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
           <Card className="bg-muted/30 border-border">
             <CardContent className="pt-4">
               <p className="text-xs text-muted-foreground text-center">
-                <strong className="text-foreground">AI Agent Strategy & Training — Living Document v5.0</strong>
+                <strong className="text-foreground">AI Agent Strategy & Training — Living Document v6.0</strong>
                 <br />
                 Continuously updated as new agents are built, tools added, and training strategy evolves.
                 <br />
-                Last updated: March 2026 · Maintained by the ORSH Platform Team
+                Last updated: 24 March 2026 — Reflects Claude migration, Sally naming, Document Intelligence build sequence.
               </p>
             </CardContent>
           </Card>
