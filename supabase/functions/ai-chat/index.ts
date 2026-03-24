@@ -5920,17 +5920,29 @@ interface NavigationIntent {
 function detectNavigationIntent(message: string): NavigationIntent {
   const lowerMessage = message.toLowerCase().trim();
   
+  // ═══ DATA QUERY EXCLUSION (must come FIRST) ═══
+  // If the message is asking for data/information, NEVER treat as navigation
+  const dataQueryPatterns = [
+    /\b(summary|status|statistics|stats|completion|progress|details|report|overview|breakdown|count|how many|list all|pending|approved|checklist)\b/i,
+    /\b(show me a |give me |what is |what are |tell me |get me |fetch |retrieve |query |analyze )/i,
+  ];
+  
+  const isDataQuery = dataQueryPatterns.some(pattern => pattern.test(lowerMessage));
+  if (isDataQuery) {
+    console.log("🧭 NAV_SKIPPED_DATA_QUERY: Message is a data query, skipping nav:", lowerMessage);
+    return { detected: false, module: null, entitySearch: null, isModuleOnly: false };
+  }
+  
   // Strip common prefixes that don't affect navigation intent
   const cleanedMessage = lowerMessage
     .replace(/^(ok(ay)?|please|sure|yes|can you|could you|would you|will you)\s*/i, '')
     .trim();
   
-  // Navigation trigger phrases - check both original and cleaned message
+  // Navigation trigger phrases - only explicit "go to" style requests
   const navTriggers = [
-    /\b(take me to|go to|open|navigate to|show me|bring me to|let'?s go to|i want to see|i need to see)\s+/i,
-    /^(pssr|ora|orm|p2a|project|task|home|dashboard)\b/i, // Direct module mention at start
-    /\bthe\s+(pssr|ora|orm|p2a|project|task|home|dashboard)\s+(page|dashboard|module)\b/i, // "the PSSR page"
-    /\bfor\s+\w+.*(pssr|ora|orm|p2a)/i, // "for DP300 PSSR"
+    /\b(take me to|go to|open|navigate to|bring me to|let'?s go to)\s+/i,
+    /\bi want to see the\s+(pssr|ora|orm|p2a|project|task|home|dashboard)\s+(page|dashboard|module)\b/i,
+    /^(pssr|ora|orm|p2a|project|task|home|dashboard)\s*(page|dashboard|module)\s*$/i, // Direct module page request
   ];
   
   const hasNavIntent = navTriggers.some(pattern => 
@@ -5938,18 +5950,20 @@ function detectNavigationIntent(message: string): NavigationIntent {
   );
   
   if (!hasNavIntent) {
-    // Log missed potential navigation for debugging
-    if (/pssr|ora|orm|p2a|project|task/i.test(lowerMessage)) {
-      console.log("🧭 NAV_INTENT_MISSED: Potential nav in message but no trigger match:", lowerMessage);
-    }
     return { detected: false, module: null, entitySearch: null, isModuleOnly: false };
   }
   
-  // FIXED: Extract entity code with flexible pattern to handle DP-217, DP217, DP 217 as equivalent
-  // Pattern matches: "DP300", "DP-300", "DP 300", "JV100", "JV-100", etc.
+  // Extract entity code — try full PSSR code first (PSSR-BNGL-001), then project codes (DP300)
+  const pssrCodeMatch = message.match(/\bPSSR[-\s]([A-Z]{2,6})[-\s](\d{2,4})\b/i);
   const codeMatch = message.match(/\b([A-Z]{1,4})[-\s]?(\d{2,4})\b/i);
-  // Normalize: remove hyphens/spaces to get consistent format (DP300)
-  const entitySearch = codeMatch ? (codeMatch[1] + codeMatch[2]).toUpperCase() : null;
+  
+  let entitySearch: string | null = null;
+  if (pssrCodeMatch) {
+    // Preserve full PSSR code format: PSSR-BNGL-001
+    entitySearch = `PSSR-${pssrCodeMatch[1].toUpperCase()}-${pssrCodeMatch[2]}`;
+  } else if (codeMatch) {
+    entitySearch = (codeMatch[1] + codeMatch[2]).toUpperCase();
+  }
   
   // Now normalize for module detection only (handles "DP300PSSR" -> "DP300 PSSR")
   const normalized = message.replace(/([a-zA-Z])(\d)/g, '$1 $2').replace(/(\d)([a-zA-Z])/g, '$1 $2');
