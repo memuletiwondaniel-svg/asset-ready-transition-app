@@ -85,7 +85,7 @@ const navigationItems: (NavigationItem & { requiresLeadership?: boolean })[] = [
   { labelKey: 'navMyBacklog', icon: ClipboardList, path: '/my-backlog', section: 'my-backlog' },
   { labelKey: 'navExecutiveDashboard', icon: Gauge, path: '/executive-dashboard', section: 'executive-dashboard', requiresLeadership: true },
   { labelKey: 'navORMaintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance', requiresLeadership: true },
-  { labelKey: 'navAskBob', icon: MessageSquare, path: '/ask-orsh', section: 'ask-orsh' },
+  
 ];
 
 export const SidebarContent = memo<SidebarContentProps>(({

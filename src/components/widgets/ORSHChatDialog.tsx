@@ -104,6 +104,24 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   const { isListening, startListening, stopListening, isSupported } = useVoiceInput();
   const { data: roleData } = useCurrentUserRole();
   const welcomeSentRef = useRef(false);
+  const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
+
+  // Fetch user profile for avatar
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (profile) setUserProfile(profile);
+      } catch {}
+    };
+    if (open) fetchProfile();
+  }, [open]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -831,8 +849,18 @@ agentName="bob"
                         </div>
                       )}
                       {message.role === 'user' && (
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                          <User className="h-4 w-4 text-muted-foreground" />
+                        <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {userProfile?.avatar_url ? (
+                            <img 
+                              src={userProfile.avatar_url.startsWith('http') ? userProfile.avatar_url : `https://kgnrjqjbonuvpxxfvfjq.supabase.co/storage/v1/object/public/user-avatars/${userProfile.avatar_url}`}
+                              alt="You"
+                              className="h-8 w-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-xs font-semibold text-primary-foreground">
+                              {userProfile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'}
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
