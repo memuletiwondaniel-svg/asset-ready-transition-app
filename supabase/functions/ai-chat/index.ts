@@ -320,7 +320,7 @@ PSSR MODULE TABLES:
 pssrs (PSSR header records)
 - id, pssr_id (e.g., "PSSR-NRNGL-001")
 - project_id reference
-- status: Draft | Active | Ready for Review | Pending Approval | Approved | Closed
+- status: Draft | PENDING_LEAD_REVIEW | UNDER_REVIEW | Pending Approval | Approved | Closed
 - equipment_tag, equipment_description
 - location, area, system
 - created_by, created_at
