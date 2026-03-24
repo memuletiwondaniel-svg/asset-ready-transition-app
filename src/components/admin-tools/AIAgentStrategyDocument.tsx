@@ -277,7 +277,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                   <li><strong className="text-foreground">Selma (Document Intelligence):</strong> Claude Sonnet 4.5 — accurate SQL-based analysis and status calculations</li>
                   <li><strong className="text-foreground">Fred (PSSR/ORA):</strong> Claude Sonnet 4.5 — safety-critical domain requiring high accuracy</li>
                   <li><strong className="text-foreground">Zain — Training Intelligence (planned):</strong> Will use Claude Haiku — training queries are structured and domain-specific</li>
-                  <li><strong className="text-foreground">CMMS Agent (planned):</strong> Will use Claude Haiku — maintenance queries are lookup-heavy, speed matters</li>
+                  <li><strong className="text-foreground">Alex — CMMS & Maintenance (planned):</strong> Will use Claude Haiku — maintenance queries are lookup-heavy, speed matters</li>
                   <li><strong className="text-foreground">ORM Agent (planned):</strong> Will use Claude Haiku — manpower queries are data-centric</li>
                 </ul>
               </CardContent>
