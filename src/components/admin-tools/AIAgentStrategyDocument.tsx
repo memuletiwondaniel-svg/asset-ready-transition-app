@@ -846,7 +846,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <br />
                 Continuously updated as new agents are built, tools added, and training strategy evolves.
                 <br />
-                Last updated: 24 March 2026 — Reflects Claude migration, Sally naming, Document Intelligence build sequence.
+                Last updated: 24 March 2026 — Reflects Claude migration, Sally naming, Fred (formerly Rex) confirmed as PSSR/ORA Agent name, Document Intelligence build sequence.
               </p>
             </CardContent>
           </Card>
