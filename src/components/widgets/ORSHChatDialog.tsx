@@ -131,9 +131,13 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     }
   }, [input]);
 
+  // Pre-seed the user message instantly so the modal never appears empty
   useEffect(() => {
     if (open && initialMessage) {
-      // Auto-send the initial message directly — no second click needed
+      const userMsg: Message = { role: 'user', content: initialMessage };
+      setMessages([userMsg]);
+      setIsLoading(true);
+      // Then trigger the actual send (which will append assistant response)
       handleSend(initialMessage);
     }
   }, [open, initialMessage]);
