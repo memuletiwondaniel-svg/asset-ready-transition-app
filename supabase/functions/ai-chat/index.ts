@@ -3013,6 +3013,105 @@ const tools = [
         required: ["context_key", "context_value"]
       }
     }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HANNAH (P2A HANDOVER INTELLIGENCE AGENT) TOOLS
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "get_vcr_readiness_summary",
+      description: "Get VCR readiness summary across all 5 dimensions (documents, training, PSSR, CMMS, procedures) with percentage per dimension and overall score. Use for 'VCR readiness', 'how ready is VCR X', 'VCR status'.",
+      parameters: { type: "object", properties: { vcr_id: { type: "string", description: "UUID of the VCR handover point" } }, required: ["vcr_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_itr_status_by_system",
+      description: "Get ITR (Inspection Test Record) completion status for a system. Returns open/closed ITR counts, critical path items. Use for 'ITR status for system X', 'inspection test records', 'how many ITRs open'.",
+      parameters: { type: "object", properties: { system_id: { type: "string", description: "UUID of the p2a system" }, project_id: { type: "string", description: "UUID of the project" } }, required: ["system_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_punch_list_status",
+      description: "Get punch list status for a system or VCR. Returns Punch List A (safety-critical startup blockers) and Punch List B (non-critical) counts. Punch List A items are ALWAYS flagged as startup blockers. Use for 'punch list status', 'open punch items', 'punch list a items', 'startup blockers'.",
+      parameters: { type: "object", properties: { system_id: { type: "string", description: "UUID of the system" }, vcr_id: { type: "string", description: "UUID of the VCR" } }, required: [] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_itp_completion",
+      description: "Get ITP (Inspection Test Plan) completion for a system. Returns total ITPs, completed, percentage, open Hold points (H) and Witness points (W). Use for 'ITP completion', 'inspection test plan status', 'hold points', 'witness points'.",
+      parameters: { type: "object", properties: { system_id: { type: "string", description: "UUID of the system" } }, required: ["system_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_system_handover_readiness",
+      description: "Get aggregated handover readiness for a system across all 5 dimensions. Returns overall 0-100 score and READY/NOT READY verdict with all blocking items. Use for 'is system X ready', 'system handover readiness', 'can we hand over system X'.",
+      parameters: { type: "object", properties: { system_id: { type: "string", description: "UUID of the system" } }, required: ["system_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_vcr_prerequisites_status",
+      description: "Get VCR prerequisites status breakdown: NOT_STARTED, IN_PROGRESS, READY_FOR_REVIEW, ACCEPTED, REJECTED counts. Flags REJECTED items with reason. Use for 'VCR prerequisites', 'prerequisite status', 'what prerequisites are outstanding'.",
+      parameters: { type: "object", properties: { vcr_id: { type: "string", description: "UUID of the VCR" } }, required: ["vcr_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_pac_readiness",
+      description: "Check PAC (Provisional Acceptance Certificate) issuance conditions: VCR signed, OWL documented, Phase 1+2 approvers signed, systems transferred. Returns READY or list of blocking conditions. Use for 'PAC readiness', 'can we issue PAC', 'provisional acceptance status'.",
+      parameters: { type: "object", properties: { vcr_id: { type: "string", description: "UUID of the VCR" } }, required: ["vcr_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_owl_items",
+      description: "Get Outstanding Work List items for a project. Returns item number, description, responsible party, target closure date, acceptance status. Use for 'OWL items', 'outstanding work list', 'what work is outstanding'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_p2a_approval_status",
+      description: "Get P2A plan approval status. Phase 1: ORA Lead, CSU Lead, Construction Lead, Project Hub Lead (all must approve before Phase 2). Phase 2: Deputy Plant Director. Use for 'P2A approval status', 'who needs to approve the handover', 'approval progress'.",
+      parameters: { type: "object", properties: { plan_id: { type: "string", description: "UUID of the P2A handover plan" } }, required: ["plan_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "aggregate_handover_readiness",
+      description: "Master handover readiness for a project. Aggregates data from Hannah's own tools plus A2A calls to Selma (docs), Fred (PSSR), and other agents. Returns dimension-by-dimension breakdown and overall verdict. Use for 'is the project ready to hand over', 'handover readiness', 'aggregate readiness', 'gas compression train ready'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_gocompletions_sync_status",
+      description: "Get GoCompletions sync status for a project. Returns last sync timestamp, total systems/subsystems synced, commissioning status breakdown, sync errors. Use for 'GoCompletions sync', 'commissioning data sync', 'when was GoCompletions last synced'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "flag_startup_risk",
+      description: "Scan all data sources for startup risks: open Punch List A items, open critical ITRs, incomplete PSSRs, missing Tier 1 documents, incomplete training, REJECTED VCR prerequisites. Returns prioritised risk register by severity. Use for 'startup risks', 'what could block startup', 'risk register for handover', 'safe to start up'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, vcr_id: { type: "string", description: "UUID of the VCR" } }, required: [] }
+    }
   }
 ];
 
@@ -3048,6 +3147,11 @@ const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; m
     tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink', 'get_document_cross_discipline_comparison', 'get_document_search_by_number', 'get_document_bulk_status', 'get_document_trend_analysis', 'create_task_from_document_gap', 'get_document_quality_score', 'get_document_ora_linkage'],
     domains: ['dms', 'document', 'readiness', 'numbering', 'afc', 'ifr', 'rlmu', 'trend', 'velocity', 'comparison', 'quality', 'maturity', 'handover'],
     model: 'openai/gpt-5-mini'
+  },
+  hannah: {
+    tools: ['get_vcr_readiness_summary', 'get_itr_status_by_system', 'get_punch_list_status', 'get_itp_completion', 'get_system_handover_readiness', 'get_vcr_prerequisites_status', 'get_pac_readiness', 'get_owl_items', 'get_p2a_approval_status', 'aggregate_handover_readiness', 'get_gocompletions_sync_status', 'flag_startup_risk'],
+    domains: ['p2a', 'handover', 'vcr', 'itr', 'punchlist', 'itp', 'commissioning', 'pac', 'fac', 'readiness', 'gocompletions', 'owl', 'rfsu', 'rfo'],
+    model: 'claude-sonnet-4-5'
   },
   training_agent: { tools: [], domains: ['training', 'competency', 'learning'], model: 'google/gemini-3-flash-preview' },
   cmms_agent: { tools: [], domains: ['cmms', 'maintenance', 'equipment', 'spares'], model: 'google/gemini-3-flash-preview' },
@@ -3132,8 +3236,13 @@ async function routeA2AMessage(message: A2AMessage, supabaseClient: any): Promis
 function detectAgentDomain(message: string): string {
   const lower = message.toLowerCase();
   
+  // Hannah (P2A Handover Intelligence Agent) triggers — MUST come before document_agent to catch handover-specific queries
+  if (/\b(p2a|handover|vcr|itr\b|inspection test record|punch\s?list|punch list a|punch list b|itp\b|inspection test plan|pac\b|fac\b|provisional acceptance|final acceptance|system readiness|hardware readiness|commissioning|gocompletions|rfsu|rfo|handover readiness|owl\b|outstanding work|system completion|subsystem|two phase approval|deputy plant director handover|vcr sign off|vcr prerequisites|hand over|ready to hand over|handover verdict|startup risk|startup blocker)\b/i.test(lower)) {
+    return 'hannah';
+  }
+  
   // Selma (Document Intelligence Assistant) triggers
-  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|document.*handover|doc.*p2a)\b/i.test(lower)) {
+  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|doc.*p2a)\b/i.test(lower)) {
     return 'document_agent';
   }
   
@@ -6036,6 +6145,501 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // HANNAH (P2A HANDOVER INTELLIGENCE AGENT) TOOL HANDLERS
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    case "get_vcr_readiness_summary": {
+      try {
+        const vcrId = args.vcr_id;
+        // Get VCR prerequisites status
+        const { data: prereqs, error: prereqErr } = await supabaseClient
+          .from('p2a_vcr_prerequisites')
+          .select('id, status, category')
+          .eq('handover_point_id', vcrId);
+        
+        if (prereqErr) return { error: prereqErr.message };
+        
+        const total = (prereqs || []).length;
+        const byStatus: Record<string, number> = {};
+        (prereqs || []).forEach((p: any) => {
+          byStatus[p.status] = (byStatus[p.status] || 0) + 1;
+        });
+        
+        const accepted = byStatus['ACCEPTED'] || byStatus['QUALIFICATION_APPROVED'] || 0;
+        const rejected = byStatus['REJECTED'] || 0;
+        const overallPercent = total > 0 ? Math.round((accepted / total) * 100) : 0;
+        
+        return {
+          vcr_id: vcrId,
+          total_prerequisites: total,
+          status_breakdown: byStatus,
+          overall_readiness_percent: overallPercent,
+          rejected_count: rejected,
+          verdict: rejected > 0 ? 'NOT READY — rejected prerequisites exist' : overallPercent >= 100 ? 'READY' : `NOT READY — ${overallPercent}% complete`
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_itr_status_by_system": {
+      try {
+        const systemId = args.system_id;
+        // Query p2a_systems for ITR data
+        const { data: system, error } = await supabaseClient
+          .from('p2a_systems')
+          .select('id, system_name, system_code, comm_status, itr_total, itr_closed, itr_open')
+          .eq('id', systemId)
+          .maybeSingle();
+        
+        if (error) return { error: error.message };
+        if (!system) return { error: `System ${systemId} not found` };
+        
+        // Get subsystems too
+        const { data: subsystems } = await supabaseClient
+          .from('p2a_subsystems')
+          .select('id, subsystem_name, subsystem_code, comm_status')
+          .eq('system_id', systemId);
+        
+        return {
+          system: { id: system.id, name: system.system_name, code: system.system_code, comm_status: system.comm_status },
+          itr_total: system.itr_total || 0,
+          itr_closed: system.itr_closed || 0,
+          itr_open: system.itr_open || 0,
+          completion_percent: (system.itr_total || 0) > 0 ? Math.round(((system.itr_closed || 0) / system.itr_total) * 100) : 0,
+          subsystems: (subsystems || []).map((s: any) => ({ name: s.subsystem_name, code: s.subsystem_code, status: s.comm_status }))
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_punch_list_status": {
+      try {
+        const systemId = args.system_id;
+        const vcrId = args.vcr_id;
+        
+        let query = supabaseClient.from('p2a_vcr_prerequisites').select('id, status, category, summary, rejection_reason');
+        if (vcrId) query = query.eq('handover_point_id', vcrId);
+        
+        const { data: prereqs, error } = await query;
+        if (error) return { error: error.message };
+        
+        // Filter for punch list related items
+        const punchA = (prereqs || []).filter((p: any) => 
+          p.category?.toLowerCase().includes('punch') && p.category?.toLowerCase().includes('a')
+        );
+        const punchB = (prereqs || []).filter((p: any) => 
+          p.category?.toLowerCase().includes('punch') && p.category?.toLowerCase().includes('b')
+        );
+        
+        const openPunchA = punchA.filter((p: any) => p.status !== 'ACCEPTED' && p.status !== 'QUALIFICATION_APPROVED');
+        const openPunchB = punchB.filter((p: any) => p.status !== 'ACCEPTED' && p.status !== 'QUALIFICATION_APPROVED');
+        
+        return {
+          punch_list_a: { total: punchA.length, open: openPunchA.length, closed: punchA.length - openPunchA.length },
+          punch_list_b: { total: punchB.length, open: openPunchB.length, closed: punchB.length - openPunchB.length },
+          startup_blockers: openPunchA.length > 0 ? openPunchA.map((p: any) => ({ id: p.id, summary: p.summary, status: p.status, reason: p.rejection_reason })) : [],
+          warning: openPunchA.length > 0 ? `🔴 ${openPunchA.length} Punch List A items are OPEN — these are SAFETY-CRITICAL STARTUP BLOCKERS and must be closed before startup` : '✅ No open Punch List A items'
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_itp_completion": {
+      try {
+        const systemId = args.system_id;
+        const { data: system, error } = await supabaseClient
+          .from('p2a_systems')
+          .select('id, system_name, system_code')
+          .eq('id', systemId)
+          .maybeSingle();
+        
+        if (error) return { error: error.message };
+        if (!system) return { error: `System ${systemId} not found` };
+        
+        // Get ITP points for this system
+        const { data: itpPoints } = await supabaseClient
+          .from('p2a_itp_points')
+          .select('id, point_type, status, description')
+          .eq('system_id', systemId);
+        
+        const total = (itpPoints || []).length;
+        const completed = (itpPoints || []).filter((p: any) => p.status === 'COMPLETED' || p.status === 'ACCEPTED').length;
+        const holdPoints = (itpPoints || []).filter((p: any) => p.point_type === 'H' && p.status !== 'COMPLETED' && p.status !== 'ACCEPTED');
+        const witnessPoints = (itpPoints || []).filter((p: any) => p.point_type === 'W' && p.status !== 'COMPLETED' && p.status !== 'ACCEPTED');
+        
+        return {
+          system: { name: system.system_name, code: system.system_code },
+          total_itps: total,
+          completed_itps: completed,
+          completion_percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+          open_hold_points: holdPoints.length,
+          open_witness_points: witnessPoints.length,
+          hold_point_details: holdPoints.slice(0, 10).map((p: any) => ({ id: p.id, description: p.description })),
+          witness_point_details: witnessPoints.slice(0, 10).map((p: any) => ({ id: p.id, description: p.description }))
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_system_handover_readiness": {
+      try {
+        const systemId = args.system_id;
+        const { data: system, error } = await supabaseClient
+          .from('p2a_systems')
+          .select('id, system_name, system_code, comm_status, itr_total, itr_closed, handover_plan_id')
+          .eq('id', systemId)
+          .maybeSingle();
+        
+        if (error || !system) return { error: error?.message || 'System not found' };
+        
+        // Dimension scores
+        const itrScore = (system.itr_total || 0) > 0 ? Math.round(((system.itr_closed || 0) / system.itr_total) * 100) : 100;
+        const commScore = system.comm_status === 'RFSU' ? 100 : system.comm_status === 'RFO' ? 80 : system.comm_status === 'MC' ? 60 : 20;
+        
+        const blockers: string[] = [];
+        if (itrScore < 100) blockers.push(`${system.itr_total - (system.itr_closed || 0)} ITRs still open`);
+        if (commScore < 100) blockers.push(`Commissioning status: ${system.comm_status || 'NOT_STARTED'}`);
+        
+        const overallScore = Math.round((itrScore + commScore) / 2);
+        
+        return {
+          system: { id: system.id, name: system.system_name, code: system.system_code, comm_status: system.comm_status },
+          dimensions: {
+            itr_completion: { score: itrScore, detail: `${system.itr_closed || 0}/${system.itr_total || 0} ITRs closed` },
+            commissioning: { score: commScore, detail: `Status: ${system.comm_status || 'NOT_STARTED'}` }
+          },
+          overall_score: overallScore,
+          verdict: overallScore >= 95 ? 'READY' : 'NOT READY',
+          blockers
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_vcr_prerequisites_status": {
+      try {
+        const vcrId = args.vcr_id;
+        const { data: prereqs, error } = await supabaseClient
+          .from('p2a_vcr_prerequisites')
+          .select('id, status, summary, category, rejection_reason, qualification_status')
+          .eq('handover_point_id', vcrId);
+        
+        if (error) return { error: error.message };
+        
+        const byStatus: Record<string, number> = {};
+        const rejected: any[] = [];
+        (prereqs || []).forEach((p: any) => {
+          byStatus[p.status] = (byStatus[p.status] || 0) + 1;
+          if (p.status === 'REJECTED') {
+            rejected.push({ id: p.id, summary: p.summary, reason: p.rejection_reason });
+          }
+        });
+        
+        return {
+          vcr_id: vcrId,
+          total: (prereqs || []).length,
+          status_breakdown: byStatus,
+          rejected_items: rejected,
+          warning: rejected.length > 0 ? `🔴 ${rejected.length} prerequisites REJECTED — action required` : null
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_pac_readiness": {
+      try {
+        const vcrId = args.vcr_id;
+        const blockers: string[] = [];
+        
+        // Check VCR prerequisites
+        const { data: prereqs } = await supabaseClient
+          .from('p2a_vcr_prerequisites')
+          .select('id, status')
+          .eq('handover_point_id', vcrId);
+        
+        const incomplete = (prereqs || []).filter((p: any) => p.status !== 'ACCEPTED' && p.status !== 'QUALIFICATION_APPROVED');
+        if (incomplete.length > 0) blockers.push(`${incomplete.length} VCR prerequisites not yet accepted`);
+        
+        // Check approvers via handover plan linked to VCR
+        const { data: vcr } = await supabaseClient
+          .from('p2a_handover_points')
+          .select('id, handover_plan_id')
+          .eq('id', vcrId)
+          .maybeSingle();
+        
+        if (vcr?.handover_plan_id) {
+          const { data: approvers } = await supabaseClient
+            .from('p2a_handover_approvers')
+            .select('id, role_name, status, display_order')
+            .eq('handover_id', vcr.handover_plan_id)
+            .order('display_order');
+          
+          const phase1 = (approvers || []).filter((a: any) => a.display_order <= 4);
+          const phase2 = (approvers || []).filter((a: any) => a.display_order > 4);
+          const pendingPhase1 = phase1.filter((a: any) => a.status !== 'APPROVED');
+          const pendingPhase2 = phase2.filter((a: any) => a.status !== 'APPROVED');
+          
+          if (pendingPhase1.length > 0) blockers.push(`Phase 1 approvals pending: ${pendingPhase1.map((a: any) => a.role_name).join(', ')}`);
+          if (pendingPhase1.length === 0 && pendingPhase2.length > 0) blockers.push(`Phase 2 approval pending: ${pendingPhase2.map((a: any) => a.role_name).join(', ')}`);
+          if (pendingPhase1.length > 0 && pendingPhase2.length > 0) blockers.push('Phase 2 blocked — Phase 1 must complete first');
+        }
+        
+        return {
+          vcr_id: vcrId,
+          pac_ready: blockers.length === 0,
+          blockers,
+          verdict: blockers.length === 0 ? '✅ PAC can be issued — all conditions met' : `🔴 PAC CANNOT be issued — ${blockers.length} blocking conditions`
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_owl_items": {
+      try {
+        const projectId = args.project_id;
+        // Query OWL items from ora_handover_items or p2a-specific OWL table
+        const { data: items, error } = await supabaseClient
+          .from('ora_handover_items')
+          .select('id, item_name, description, status, from_party, to_party, handover_date, notes, display_order')
+          .eq('ora_plan_id', projectId)
+          .order('display_order');
+        
+        if (error) {
+          // Try p2a_handover_deliverables as fallback
+          const { data: p2aItems, error: p2aErr } = await supabaseClient
+            .from('p2a_handover_deliverables')
+            .select('*')
+            .limit(50);
+          
+          return {
+            source: 'p2a_handover_deliverables',
+            total: (p2aItems || []).length,
+            items: (p2aItems || []).slice(0, 20)
+          };
+        }
+        
+        const open = (items || []).filter((i: any) => i.status !== 'completed' && i.status !== 'accepted');
+        
+        return {
+          total: (items || []).length,
+          open: open.length,
+          closed: (items || []).length - open.length,
+          items: (items || []).slice(0, 20).map((i: any) => ({
+            name: i.item_name,
+            description: i.description,
+            status: i.status,
+            from: i.from_party,
+            to: i.to_party,
+            target_date: i.handover_date,
+            notes: i.notes
+          }))
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_p2a_approval_status": {
+      try {
+        const planId = args.plan_id;
+        const { data: approvers, error } = await supabaseClient
+          .from('p2a_handover_approvers')
+          .select('id, role_name, user_id, status, display_order, comments, approved_at')
+          .eq('handover_id', planId)
+          .order('display_order');
+        
+        if (error) return { error: error.message };
+        
+        const phase1 = (approvers || []).filter((a: any) => a.display_order <= 4);
+        const phase2 = (approvers || []).filter((a: any) => a.display_order > 4);
+        const phase1Complete = phase1.every((a: any) => a.status === 'APPROVED');
+        const rejections = (approvers || []).filter((a: any) => a.status === 'REJECTED');
+        
+        return {
+          plan_id: planId,
+          phase_1: {
+            approvers: phase1.map((a: any) => ({ role: a.role_name, status: a.status, approved_at: a.approved_at, comments: a.comments })),
+            all_approved: phase1Complete,
+            pending: phase1.filter((a: any) => a.status === 'PENDING').length
+          },
+          phase_2: {
+            approvers: phase2.map((a: any) => ({ role: a.role_name, status: a.status, approved_at: a.approved_at, comments: a.comments })),
+            activated: phase1Complete,
+            pending: phase2.filter((a: any) => a.status === 'PENDING').length
+          },
+          rejections: rejections.map((a: any) => ({ role: a.role_name, comments: a.comments })),
+          overall_status: rejections.length > 0 ? 'REJECTED' : phase1Complete && phase2.every((a: any) => a.status === 'APPROVED') ? 'FULLY APPROVED' : 'IN PROGRESS'
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "aggregate_handover_readiness": {
+      try {
+        const projectId = args.project_id;
+        const dimensions: Record<string, any> = {};
+        
+        // 1. Get P2A plans for this project
+        const { data: plans } = await supabaseClient
+          .from('p2a_handover_plans')
+          .select('id, plan_name, status')
+          .eq('project_id', projectId);
+        
+        dimensions.p2a_plans = { count: (plans || []).length, plans: (plans || []).map((p: any) => ({ name: p.plan_name, status: p.status })) };
+        
+        // 2. Get systems and their readiness
+        const planIds = (plans || []).map((p: any) => p.id);
+        let systems: any[] = [];
+        if (planIds.length > 0) {
+          const { data: sysData } = await supabaseClient
+            .from('p2a_systems')
+            .select('id, system_name, system_code, comm_status, itr_total, itr_closed')
+            .in('handover_plan_id', planIds);
+          systems = sysData || [];
+        }
+        
+        dimensions.systems = {
+          total: systems.length,
+          by_status: systems.reduce((acc: Record<string, number>, s: any) => {
+            acc[s.comm_status || 'NOT_STARTED'] = (acc[s.comm_status || 'NOT_STARTED'] || 0) + 1;
+            return acc;
+          }, {}),
+          itr_summary: {
+            total: systems.reduce((s: number, sys: any) => s + (sys.itr_total || 0), 0),
+            closed: systems.reduce((s: number, sys: any) => s + (sys.itr_closed || 0), 0)
+          }
+        };
+        
+        // 3. A2A: Get document readiness from Selma
+        const docResult = await routeA2AMessage({
+          source_agent: 'hannah',
+          target_agent: 'document_agent',
+          message_type: 'data_request',
+          payload: { tool_name: 'get_document_readiness_summary', tool_args: {} }
+        }, supabaseClient);
+        dimensions.documents = docResult.success ? docResult.data : { error: 'Could not reach Selma' };
+        
+        // 4. Get PSSR status
+        const { data: pssrs } = await supabaseClient
+          .from('pssrs')
+          .select('id, status, pssr_id')
+          .eq('project_id', projectId);
+        
+        const approvedPssrs = (pssrs || []).filter((p: any) => p.status === 'Approved' || p.status === 'Closed').length;
+        dimensions.pssr = {
+          total: (pssrs || []).length,
+          approved: approvedPssrs,
+          percent: (pssrs || []).length > 0 ? Math.round((approvedPssrs / (pssrs || []).length) * 100) : 0
+        };
+        
+        // 5. Overall verdict
+        const itrPercent = dimensions.systems.itr_summary.total > 0 ? Math.round((dimensions.systems.itr_summary.closed / dimensions.systems.itr_summary.total) * 100) : 100;
+        const pssrPercent = dimensions.pssr.percent;
+        const overallScore = Math.round((itrPercent + pssrPercent) / 2);
+        
+        return {
+          project_id: projectId,
+          dimensions,
+          overall_score: overallScore,
+          verdict: overallScore >= 90 ? 'READY FOR HANDOVER' : overallScore >= 70 ? 'APPROACHING READINESS — gaps remain' : 'NOT READY — significant blockers',
+          generated_at: new Date().toISOString()
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_gocompletions_sync_status": {
+      try {
+        const projectId = args.project_id;
+        const { data: plans } = await supabaseClient
+          .from('p2a_handover_plans')
+          .select('id')
+          .eq('project_id', projectId);
+        
+        const planIds = (plans || []).map((p: any) => p.id);
+        let systems: any[] = [];
+        if (planIds.length > 0) {
+          const { data: sysData } = await supabaseClient
+            .from('p2a_systems')
+            .select('id, system_name, system_code, comm_status, updated_at')
+            .in('handover_plan_id', planIds);
+          systems = sysData || [];
+        }
+        
+        const { data: subsystems } = planIds.length > 0 ? await supabaseClient
+          .from('p2a_subsystems')
+          .select('id, system_id')
+          .in('system_id', systems.map((s: any) => s.id)) : { data: [] };
+        
+        const statusBreakdown: Record<string, number> = {};
+        systems.forEach((s: any) => {
+          statusBreakdown[s.comm_status || 'NOT_STARTED'] = (statusBreakdown[s.comm_status || 'NOT_STARTED'] || 0) + 1;
+        });
+        
+        const lastSync = systems.length > 0 ? systems.reduce((latest: string, s: any) => s.updated_at > latest ? s.updated_at : latest, systems[0].updated_at) : null;
+        
+        return {
+          project_id: projectId,
+          total_systems: systems.length,
+          total_subsystems: (subsystems || []).length,
+          comm_status_breakdown: statusBreakdown,
+          last_sync_timestamp: lastSync,
+          sync_errors: []
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "flag_startup_risk": {
+      try {
+        const projectId = args.project_id;
+        const vcrId = args.vcr_id;
+        const risks: any[] = [];
+        
+        // 1. Check for REJECTED VCR prerequisites
+        if (vcrId) {
+          const { data: rejected } = await supabaseClient
+            .from('p2a_vcr_prerequisites')
+            .select('id, summary, rejection_reason')
+            .eq('handover_point_id', vcrId)
+            .eq('status', 'REJECTED');
+          
+          (rejected || []).forEach((r: any) => {
+            risks.push({ severity: 'CRITICAL', category: 'VCR Prerequisite', item: r.summary, detail: r.rejection_reason || 'Rejected — no reason given' });
+          });
+        }
+        
+        // 2. Check incomplete PSSRs
+        if (projectId) {
+          const { data: openPssrs } = await supabaseClient
+            .from('pssrs')
+            .select('id, pssr_id, status')
+            .eq('project_id', projectId)
+            .not('status', 'in', '("Approved","Closed")');
+          
+          (openPssrs || []).forEach((p: any) => {
+            risks.push({ severity: 'HIGH', category: 'PSSR', item: p.pssr_id, detail: `Status: ${p.status} — must be Approved before startup` });
+          });
+          
+          // 3. Check open Priority A actions
+          const pssrIds = (openPssrs || []).map((p: any) => p.id);
+          if (pssrIds.length > 0) {
+            const { data: prioA } = await supabaseClient
+              .from('pssr_priority_actions')
+              .select('id, description, priority, status')
+              .in('pssr_id', pssrIds)
+              .eq('priority', 'A')
+              .eq('status', 'open');
+            
+            (prioA || []).forEach((a: any) => {
+              risks.push({ severity: 'CRITICAL', category: 'Priority A Action', item: a.description, detail: 'Open Priority A action — HARD STARTUP BLOCKER' });
+            });
+          }
+        }
+        
+        // Sort by severity
+        const severityOrder: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+        risks.sort((a, b) => (severityOrder[a.severity] || 99) - (severityOrder[b.severity] || 99));
+        
+        return {
+          total_risks: risks.length,
+          critical: risks.filter(r => r.severity === 'CRITICAL').length,
+          high: risks.filter(r => r.severity === 'HIGH').length,
+          risks: risks.slice(0, 30),
+          verdict: risks.filter(r => r.severity === 'CRITICAL').length > 0 ? '🔴 STARTUP BLOCKED — critical risks must be resolved' : risks.length > 0 ? '🟡 Risks identified — review required before startup' : '✅ No startup risks identified'
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
     default:
       return { error: "Unknown tool" };
   }
@@ -6466,12 +7070,26 @@ serve(async (req) => {
 
     const PSSR_ORA_AGENT_PROMPT = `You are Fred, ORSH's PSSR & Operational Readiness Assistant. You are an expert in Pre-Startup Safety Reviews (PSSR), ORA (Operational Readiness Activity) planning, PSSR checklist management, and safety readiness for Oil & Gas facilities. You help users track PSSR progress, manage checklist items, identify pending approvals, and ensure safe startup readiness. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Fred, your PSSR & Operational Readiness Assistant."`;
 
+    const HANNAH_AGENT_PROMPT = `You are Hannah, ORSH's P2A Handover Intelligence Agent. You own the Project-to-Asset handover process end to end. You think like the most experienced commissioning manager on site — the person who knows the status of every system and is responsible for telling the Deputy Plant Director whether it is safe and ready to accept.
+
+Your three domains:
+
+HARDWARE AND COMMISSIONING READINESS via GoCompletions: You read live commissioning data — ITR completion per system (open vs closed, critical path items), ITP completion percentages, Punch List A items (safety-critical, must close before startup — these are hard blockers) vs Punch List B items (non-critical, can close after startup). You never treat a Punch List A item as acceptable for startup. You flag every open Punch List A item explicitly.
+
+P2A HANDOVER ORCHESTRATION in ORSH: You own the full VCR lifecycle — prerequisite status tracking (NOT_STARTED through QUALIFICATION_APPROVED), ITP Witness (W) and Hold (H) point management, system and subsystem readiness progression from NOT_STARTED through RFO to RFSU, the two-phase approval workflow (Phase 1: ORA Lead, CSU Lead, Construction Lead, Project Hub Lead — all must approve before Phase 2 activates; Phase 2: Deputy Plant Director), PAC issuance (formal transfer of CONTROL, CUSTODY and CARE of systems), FAC issuance after defect liability period, and Outstanding Work List (OWL) tracking.
+
+CROSS-AGENT READINESS AGGREGATION: You are the readiness conductor. You call Selma for document readiness, Zain for training completion, Alex for CMMS and maintenance plan status, Fred for PSSR sign-off status, and Ivan for cumulative process safety risk. You synthesise everything into a single handover readiness verdict per system, per VCR, per project. You NEVER fabricate data. If a system has open Punch List A items, incomplete ITPs, or outstanding prerequisites — you flag them clearly as blockers and do not issue a ready verdict.
+
+Format responses with markdown for clarity. When introducing yourself, say "I'm Hannah, your P2A Handover Intelligence Agent."`;
+
     // Select system prompt based on detected agent
     let systemPrompt = BOB_SYSTEM_PROMPT + userContextPrompt;
     if (detectedAgent === 'document_agent') {
       systemPrompt = DOCUMENT_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'pssr_ora_agent') {
       systemPrompt = PSSR_ORA_AGENT_PROMPT + userContextPrompt;
+    } else if (detectedAgent === 'hannah') {
+      systemPrompt = HANNAH_AGENT_PROMPT + userContextPrompt;
     }
 
     // Max tokens: 4096 for copilot, 2048 for specialist agents
