@@ -2489,7 +2489,7 @@ const tools = [
     type: "function",
     function: {
       name: "navigate_to_page",
-      description: "Navigate user to a specific page or entity. Use for module landing pages OR specific entities like a PSSR, project, ORA plan. ONLY use when user EXPLICITLY asks to 'go to', 'take me to', 'show me', 'open', 'navigate to' a page or item. For specific entities, first use resolve_entity_for_navigation to get the entity_id.",
+      description: "Navigate user to a specific page in the ORSH UI. ONLY use when user EXPLICITLY asks to GO TO or OPEN a page using phrases like 'go to', 'take me to', 'open', 'navigate to'. NEVER use for data queries like 'show me a summary', 'what is the status', 'how many', 'list all', 'give me details'. For data questions, use the appropriate data query tools instead and show results in chat.",
       parameters: {
         type: "object",
         properties: {
