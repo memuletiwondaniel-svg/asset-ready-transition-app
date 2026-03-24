@@ -270,6 +270,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['Bob CoPilot', 'claude-sonnet-4-5', 'Anthropic', 'Complex routing, multi-domain reasoning', 'Active'],
                 ['Selma (Document Intelligence)', 'claude-sonnet-4-5', 'Anthropic', 'Document intelligence specialist', 'Active'],
                 ['Fred (PSSR/ORA Agent)', 'claude-sonnet-4-5', 'Anthropic', 'Safety-critical domain', 'Active'],
+                ['Hannah (P2A Handover)', 'claude-sonnet-4-5', 'Anthropic', 'Handover readiness orchestration, cross-agent aggregation', 'Active'],
                 ['Zain — Training Intelligence (Phase 2)', 'claude-haiku', 'Anthropic', 'Training queries, competency gaps', 'Planned'],
                 ['Alex — CMMS & Maintenance (Phase 2)', 'claude-haiku', 'Anthropic', 'Maintenance, equipment, spares', 'Planned'],
                 ['ORM Agent (Phase 2)', 'claude-haiku', 'Anthropic', 'Manpower, staffing, organizational readiness', 'Planned'],
