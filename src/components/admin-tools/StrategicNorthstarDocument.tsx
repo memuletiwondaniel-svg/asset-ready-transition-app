@@ -82,7 +82,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               <p className="text-sm text-muted-foreground">Living document — ORSH → ORIP evolution & strategic positioning</p>
               <div className="flex items-center gap-1.5 mt-1">
                 <Calendar className="h-3 w-3 text-muted-foreground/70" />
-                <span className="text-xs text-muted-foreground/70">Last updated: 24 March 2026 — Claude migration milestone, Selma agent live, Document Intelligence roadmap defined</span>
+                <span className="text-xs text-muted-foreground/70">Last updated: 24 March 2026 — ORM Agent removed. Agent family: Bob, Selma, Fred, Hannah, Ivan, Zain, Alex.</span>
               </div>
             </div>
           </div>
