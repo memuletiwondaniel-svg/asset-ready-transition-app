@@ -388,7 +388,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['data_response', 'Agent B -> Agent A', 'Return requested data', 'Selma returns 25% readiness'],
                 ['insight_share', 'Any -> Any', 'Proactively share a finding', 'Selma alerts: "8 Process docs still in Draft"'],
                 ['escalation', 'Specialist -> CoPilot', 'Escalate complex query that needs multi-domain reasoning', 'Training Agent: "Need PSSR data to assess training gaps"'],
-                ['context_handoff', 'Agent A -> Agent B', 'Transfer conversation context for continuity', 'CoPilot hands off DMS context to Document Agent'],
+                ['context_handoff', 'Agent A -> Agent B', 'Transfer conversation context for continuity', 'CoPilot hands off DMS context to Selma'],
                 ['cross_reference', 'CoPilot -> Multiple', 'Gather data from multiple agents simultaneously', 'CoPilot queries Doc + PSSR agents for integrated view'],
                 ['alert', 'Any -> CoPilot', 'Critical finding that needs user attention', 'CMMS Agent: "5 critical equipment items without maintenance plans"'],
               ]}
