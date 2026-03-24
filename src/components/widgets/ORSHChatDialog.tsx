@@ -822,7 +822,11 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                           : 'bg-muted rounded-bl-md'
                       )}>
                         {message.content && (
-                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                          <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border/50 [&_th]:px-3 [&_th]:py-1.5 [&_th]:bg-muted/50 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_td]:border [&_td]:border-border/50 [&_td]:px-3 [&_td]:py-1.5 [&_td]:text-xs [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_pre]:bg-background/50 [&_pre]:rounded-lg [&_code]:text-xs">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {message.content}
+                            </ReactMarkdown>
+                          </div>
                         )}
                         
                         {message.imageUrls && message.imageUrls.length > 0 && (
