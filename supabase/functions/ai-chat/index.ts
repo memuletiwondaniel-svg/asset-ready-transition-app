@@ -3369,30 +3369,17 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
   switch(toolName) {
     case "get_pssr_stats": {
       try {
-        let query = supabaseClient.from('pssrs').select('id, status, pssr_number, project_id');
+        let query = supabaseClient.from('pssrs').select('id, status, pssr_id, title, asset, project_name');
         
-        // Filter by project if specified
+        // Filter by project if specified — search pssr_id or project_name directly
         if (args.project_code) {
-          const { data: project } = await supabaseClient
-            .from('projects')
-            .select('id')
-            .ilike('project_code', `%${args.project_code}%`)
-            .maybeSingle();
-          
-          if (project) {
-            query = query.eq('project_id', project.id);
-          } else {
-            return { 
-              error: `Project "${args.project_code}" not found`,
-              total: 0,
-              breakdown: {}
-            };
-          }
+          const code = args.project_code.replace(/[-\s]/g, '');
+          query = query.or(`pssr_id.ilike.%${code}%,project_name.ilike.%${code}%,title.ilike.%${code}%,asset.ilike.%${code}%`);
         }
         
-        // Apply status filter
+        // Apply status filter (use actual DB status values)
         if (args.status_filter === 'pending') {
-          query = query.in('status', ['Draft', 'Active', 'Ready for Review', 'Pending Approval']);
+          query = query.in('status', ['Draft', 'PENDING_LEAD_REVIEW', 'UNDER_REVIEW', 'Pending Approval']);
         } else if (args.status_filter === 'approved') {
           query = query.in('status', ['Approved', 'Closed']);
         }
@@ -3413,7 +3400,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           total: data?.length || 0,
           breakdown,
           pssrs: data?.slice(0, 10).map((p: any) => ({ 
-            number: p.pssr_number, 
+            pssr_id: p.pssr_id, 
+            title: p.title,
             status: p.status 
           })) || []
         };
