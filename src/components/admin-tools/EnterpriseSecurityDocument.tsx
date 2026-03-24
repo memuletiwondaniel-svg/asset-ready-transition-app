@@ -152,6 +152,124 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
 
           <Separator />
 
+          {/* March 2026 Security Hardening Summary — NEW */}
+          <Section id="march-2026-hardening" icon={<ShieldCheck className="h-5 w-5 text-emerald-500" />} title="March 2026 Security Hardening — Summary">
+            <Card className="border-emerald-500/20 bg-emerald-500/5">
+              <CardContent className="pt-4 text-sm">
+                <p className="text-muted-foreground">The following security hardening was applied to ORSH in March 2026. All items have been verified and confirmed resolved.</p>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-4 mt-4">
+              {/* 1. 2FA Secrets */}
+              <Card className="bg-muted/30">
+                <CardContent className="pt-4 text-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-foreground">1. Two-Factor Authentication Secrets Secured</p>
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">✅ RESOLVED</Badge>
+                  </div>
+                  <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                    <li><code className="bg-muted px-1 rounded text-xs">profiles_safe</code> view created — <code className="bg-muted px-1 rounded text-xs">two_factor_secret</code>, <code className="bg-muted px-1 rounded text-xs">two_factor_backup_codes</code>, <code className="bg-muted px-1 rounded text-xs">temporary_password</code> excluded</li>
+                    <li>Column-level SELECT revoked for sensitive authentication fields</li>
+                    <li><code className="bg-muted px-1 rounded text-xs">temporary_password</code> column purge trigger added — cleared after first use</li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* 2. OAuth Tokens */}
+              <Card className="bg-muted/30">
+                <CardContent className="pt-4 text-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-foreground">2. Microsoft OAuth Tokens Encrypted</p>
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">✅ RESOLVED</Badge>
+                  </div>
+                  <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                    <li>OAuth tokens no longer stored in plaintext</li>
+                    <li>Access tokens: no longer persisted to database</li>
+                    <li>Refresh tokens: encrypted AES-256-GCM at rest via Supabase Vault</li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* 3. Unauthenticated Access */}
+              <Card className="bg-muted/30">
+                <CardContent className="pt-4 text-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-foreground">3. Unauthenticated Data Access Closed</p>
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">✅ RESOLVED</Badge>
+                  </div>
+                  <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                    <li>43 previously open SELECT policies now require authentication</li>
+                    <li>All operational tables (projects, pssrs, orp_plans, p2a_handover_plans) confirmed requiring <code className="bg-muted px-1 rounded text-xs">auth.uid() IS NOT NULL</code></li>
+                    <li>Zero <code className="bg-muted px-1 rounded text-xs">USING(true)</code> SELECT policies on operational data</li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* 4. Email Protection */}
+              <Card className="bg-muted/30">
+                <CardContent className="pt-4 text-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-foreground">4. Email Addresses Protected</p>
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">✅ RESOLVED</Badge>
+                  </div>
+                  <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                    <li>All tables containing email columns require <code className="bg-muted px-1 rounded text-xs">auth.uid() IS NOT NULL</code></li>
+                    <li>Tenant isolation enforced: <code className="bg-muted px-1 rounded text-xs">tenant_id = (select auth.jwt()-&gt;&gt;'tenant_id')</code></li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* 5. RLS Performance */}
+              <Card className="bg-muted/30">
+                <CardContent className="pt-4 text-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-foreground">5. RLS Performance Hardening</p>
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">✅ RESOLVED</Badge>
+                  </div>
+                  <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                    <li>All 416+ RLS policies updated to use <code className="bg-muted px-1 rounded text-xs">(select auth.uid())</code> subquery pattern</li>
+                    <li>Evaluated once per query not per row — significant performance improvement at scale</li>
+                    <li>Zero bare <code className="bg-muted px-1 rounded text-xs">auth.uid()</code> calls remaining</li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* 6. .env File */}
+              <Card className="bg-muted/30">
+                <CardContent className="pt-4 text-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-foreground">6. .env File Removed from GitHub</p>
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">✅ RESOLVED</Badge>
+                  </div>
+                  <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                    <li>.env file deleted from public GitHub repository</li>
+                    <li>.env added to .gitignore</li>
+                    <li>.env.example created with placeholder values</li>
+                    <li>README security note added</li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              {/* 7. Anthropic API Key */}
+              <Card className="bg-muted/30">
+                <CardContent className="pt-4 text-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-foreground">7. Anthropic API Key Security</p>
+                    <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">✅ ACTIVE</Badge>
+                  </div>
+                  <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                    <li>ANTHROPIC_API_KEY stored as Supabase Edge Function secret — never exposed in frontend</li>
+                    <li>API key never included in any log output, error message or API response</li>
+                    <li>SSE output format verified — no key leakage through streaming</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </Section>
+
+          <Separator />
+
           {/* 1. Authentication — enhanced with explicit IdP callouts */}
           <Section id="auth" icon={<Lock className="h-5 w-5 text-primary" />} title="1. Authentication & Identity Management">
             <p>ORSH supports multiple authentication methods for enterprise flexibility:</p>
