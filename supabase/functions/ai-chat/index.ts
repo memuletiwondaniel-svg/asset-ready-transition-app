@@ -3246,6 +3246,11 @@ function detectAgentDomain(message: string): string {
     return 'document_agent';
   }
   
+  // Fred (PSSR/ORA Safety Agent) triggers
+  if (/\b(pssr|pre-?startup safety|safety review|sof\b|statement of fitness|ora checklist|pssr checklist|pssr status|pssr completion|safety readiness|pssr items|pssr action|startup safety|pssr walkdown|safety inspection|pssr findings)\b/i.test(lower)) {
+    return 'pssr_ora_agent';
+  }
+  
   // Zain (Training Intelligence) triggers (planned)
   if (/\b(training|competency|competence|learning|course|certification|skill gap|training plan|training cost)\b/i.test(lower)) {
     return 'training_agent';
