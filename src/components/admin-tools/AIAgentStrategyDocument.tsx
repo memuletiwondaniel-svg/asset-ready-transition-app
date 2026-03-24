@@ -184,7 +184,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                     <p className="text-primary font-semibold mb-2">Bob CoPilot (Central Router — GPT-5-mini)</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
                       <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
-                        <p className="font-semibold text-foreground">Document Agent</p>
+                        <p className="font-semibold text-foreground">Selma (Document Intelligence)</p>
                         <p className="text-muted-foreground">GPT-5-mini | 13 tools | DMS readiness + quality + ORA linkage</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
