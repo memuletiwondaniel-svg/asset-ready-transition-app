@@ -241,40 +241,44 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
 
           {/* 2. Model Selection Strategy */}
           <Section icon={<Cpu className="h-5 w-5 text-violet-500" />} title="2. Model Selection Strategy" id="model-strategy">
-            <Card className="bg-amber-500/5 border-amber-500/20">
+            <Card className="bg-emerald-500/5 border-emerald-500/20">
               <CardContent className="pt-4">
                 <div className="flex items-start gap-2">
-                  <Lightbulb className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                  <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
                   <p className="text-xs">
-                    <strong className="text-foreground">Why not Claude?</strong> Claude (Anthropic) is not available via the Lovable AI Gateway. 
-                    The gateway supports OpenAI GPT-5 family and Google Gemini family only. We optimize by using the right model 
-                    for the right task — GPT-5-mini for complex reasoning/routing, Gemini 3 Flash for fast specialist queries.
+                    <strong className="text-foreground">CURRENT MODEL STRATEGY — Updated March 2026:</strong> All three active ORSH agents 
+                    have been migrated from the Lovable AI Gateway (OpenAI GPT-5-mini / Google Gemini) to the Anthropic API running on 
+                    Claude Sonnet 4.5 (claude-sonnet-4-5). The migration was completed successfully on 23 March 2026.
+                    The Lovable AI Gateway has been completely removed from the ai-chat Edge Function. All LLM calls now go directly 
+                    to https://api.anthropic.com/v1/messages using the ANTHROPIC_API_KEY stored as a Supabase Edge Function secret.
                   </p>
                 </div>
               </CardContent>
             </Card>
 
             <InfoTable
-              headers={['Model', 'Provider', 'Used For', 'Strengths', 'Cost/Speed']}
+              headers={['Agent', 'Model', 'Provider', 'Purpose', 'Status']}
               rows={[
-                ['openai/gpt-5-mini', 'OpenAI', 'Bob CoPilot + Selma (Document Intelligence)', 'Strong reasoning, excellent tool calling, multi-turn context', 'Medium cost, ~3s latency'],
-                ['google/gemini-3-flash-preview', 'Google', 'Future specialist agents (Training, CMMS, ORM)', 'Fast, cost-effective, good at structured queries', 'Low cost, ~1-2s latency'],
-                ['openai/gpt-5', 'OpenAI', 'Complex cross-agent reasoning (Phase 3)', 'Strongest reasoning, best for multi-step analysis', 'High cost, ~5s latency'],
-                ['google/gemini-2.5-flash', 'Google', 'High-volume simple queries, batch processing', 'Very fast, cheapest option, good for classification', 'Lowest cost, <1s'],
+                ['Bob CoPilot', 'claude-sonnet-4-5', 'Anthropic', 'Complex routing, multi-domain reasoning', 'Active'],
+                ['Sally (Document Intelligence)', 'claude-sonnet-4-5', 'Anthropic', 'Document intelligence specialist', 'Active'],
+                ['Fred (PSSR/ORA Agent)', 'claude-sonnet-4-5', 'Anthropic', 'Safety-critical domain', 'Active'],
+                ['Training Agent (Phase 2)', 'claude-haiku', 'Anthropic', 'Training queries, competency gaps', 'Planned'],
+                ['CMMS Agent (Phase 2)', 'claude-haiku', 'Anthropic', 'Maintenance, equipment, spares', 'Planned'],
+                ['ORM Agent (Phase 2)', 'claude-haiku', 'Anthropic', 'Manpower, staffing, organizational readiness', 'Planned'],
               ]}
             />
 
             <Card className="bg-muted/30 border-border">
               <CardContent className="pt-4">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Model Assignment Strategy</h3>
-                <FlowDiagram steps={['User Query', 'detectAgentDomain()', 'Route to Agent', 'Agent selects model from registry', 'Call Lovable AI Gateway', 'Return response']} />
+                <FlowDiagram steps={['User Query', 'detectAgentDomain()', 'Route to Agent', 'Agent selects model from registry', 'Call Anthropic API', 'Return response']} />
                 <ul className="list-disc list-inside space-y-1 text-xs mt-3">
-                  <li><strong className="text-foreground">CoPilot (Bob):</strong> Uses GPT-5-mini — needs strong reasoning for multi-domain routing, tool selection, and nuanced responses</li>
-                  <li><strong className="text-foreground">Selma (Document Intelligence):</strong> Uses GPT-5-mini — needs accurate SQL-based analysis and status calculations</li>
-                  <li><strong className="text-foreground">Training Agent (planned):</strong> Will use Gemini 3 Flash — training queries are structured and domain-specific</li>
-                  <li><strong className="text-foreground">CMMS Agent (planned):</strong> Will use Gemini 3 Flash — maintenance queries are lookup-heavy, speed matters</li>
-                  <li><strong className="text-foreground">ORM Agent (planned):</strong> Will use Gemini 3 Flash — manpower queries are data-centric</li>
-                  <li><strong className="text-foreground">Cross-Agent Reasoning (Phase 3):</strong> Will escalate to GPT-5 for complex multi-domain analysis</li>
+                  <li><strong className="text-foreground">CoPilot (Bob):</strong> Claude Sonnet 4.5 — strong reasoning for multi-domain routing, tool selection, and nuanced responses</li>
+                  <li><strong className="text-foreground">Sally (Document Intelligence):</strong> Claude Sonnet 4.5 — accurate SQL-based analysis and status calculations</li>
+                  <li><strong className="text-foreground">Fred (PSSR/ORA):</strong> Claude Sonnet 4.5 — safety-critical domain requiring high accuracy</li>
+                  <li><strong className="text-foreground">Training Agent (planned):</strong> Will use Claude Haiku — training queries are structured and domain-specific</li>
+                  <li><strong className="text-foreground">CMMS Agent (planned):</strong> Will use Claude Haiku — maintenance queries are lookup-heavy, speed matters</li>
+                  <li><strong className="text-foreground">ORM Agent (planned):</strong> Will use Claude Haiku — manpower queries are data-centric</li>
                 </ul>
               </CardContent>
             </Card>
