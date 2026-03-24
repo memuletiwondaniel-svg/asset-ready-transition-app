@@ -237,30 +237,12 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
           subtitle = "What are we tackling today?";
         }
         setGreetingSubtitle(subtitle);
-
-        // Placeholder suggestions
-        const suggestions: string[] = [];
-        if (ctxMap.last_active_pssr?.value) {
-          suggestions.push(`Any updates on ${ctxMap.last_active_pssr.value} today?`);
-        }
-        if (ctxMap.last_active_project?.value) {
-          suggestions.push(`What's the status of ${ctxMap.last_active_project.value}?`);
-        }
-        suggestions.push("What are my priority tasks today?");
-        suggestions.push("What's the document readiness score today?");
-
-        if (suggestions.length > 0) setContextPlaceholders(suggestions);
       } catch {}
     };
     loadContext();
   }, []);
 
-  const { displayText: placeholderText, isTyping } = useTypingEffect({
-    texts: contextPlaceholders,
-    typingSpeed: 40,
-    pauseBeforeNext: 2500,
-    pauseBeforeType: 300,
-  });
+  const placeholderText = "Message Bob...";
 
   // Widget grid configuration
   const [widgets, setWidgets] = useState<WidgetConfig[]>(() => {
