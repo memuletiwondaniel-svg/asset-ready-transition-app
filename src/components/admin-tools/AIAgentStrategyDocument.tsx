@@ -472,7 +472,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                   </div>
                   <ul className="list-disc list-inside space-y-1 text-xs">
                     <li>Cross-agent reasoning via A2A (Doc gaps impact on PSSR impact on ORA schedule)</li>
-                    <li>Escalation to GPT-5 for complex multi-domain synthesis</li>
+                    <li>Escalation to Claude for complex multi-domain synthesis</li>
                     <li>Predictive readiness forecasting (when will ORI reach 85%?)</li>
                     <li>RAG over uploaded project documents (vector search)</li>
                     <li>Confidence scoring on every response with source attribution</li>
