@@ -513,9 +513,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
             <Card className="bg-primary/5 border-primary/20 mt-4">
               <CardContent className="pt-4">
                 <p className="text-xs">
-                  <strong className="text-foreground">Sally — ORSH's Document Intelligence Agent</strong> — integrates directly with external DMS platforms 
-                  including Assai, Wrench, Documentum and SharePoint. Sally can check live document status, identify gaps, score quality and create tasks 
-                  from document issues. Future capability: Sally will autonomously fetch and read the Master Document Register directly from Assai 
+                  <strong className="text-foreground">Selma — ORSH's Document Intelligence Agent</strong> — integrates directly with external DMS platforms 
+                  including Assai, Wrench, Documentum and SharePoint. Selma can check live document status, identify gaps, score quality and create tasks 
+                  from document issues. Future capability: Selma will autonomously fetch and read the Master Document Register directly from Assai 
                   without any manual action required.
                 </p>
               </CardContent>
@@ -535,7 +535,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               <div className="pl-4">├── Intent Detection (domain classification)</div>
               <div className="pl-4">├── User Context Loading (ai_user_context)</div>
               <div className="pl-4">├── Specialist Agent Dispatch:</div>
-               <div className="pl-8">├── Sally — Document Intelligence (DMS domain — 13 tools)</div>
+               <div className="pl-8">├── Selma — Document Intelligence (DMS domain — 13 tools)</div>
                <div className="pl-8">├── PSSR/ORA Agent — Safety & Readiness (PSSR domain — 14 tools)</div>
                <div className="pl-8">├── PSSR/ORA Agent — ORA Planning (activity planning domain)</div>
               <div className="pl-8">└── General CoPilot (fallback)</div>
@@ -602,11 +602,11 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
               <Card className="bg-muted/30 border-border">
                 <CardContent className="pt-4">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">2. Sally — Document Intelligence Specialist</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">2. Selma — Document Intelligence Specialist</h3>
                   <p className="text-xs">
-                    Sally is ORSH's specialist for all document management intelligence. She has <strong className="text-foreground">13 active tools</strong> covering 
+                    Selma is ORSH's specialist for all document management intelligence. She has <strong className="text-foreground">13 active tools</strong> covering 
                     document readiness analysis, quality scoring, gap identification, numbering configuration, and ORA linkage. 
-                    Ask Sally anything about documents: status, gaps, quality scores, what's blocking handover, how documents link to ORA phases.
+                    Ask Selma anything about documents: status, gaps, quality scores, what's blocking handover, how documents link to ORA phases.
                   </p>
                 </CardContent>
               </Card>
@@ -628,8 +628,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
                 <ul className="list-disc pl-5 space-y-1 text-xs">
                   <li>All agents are accessed through the <strong className="text-foreground">Bob CoPilot chat interface</strong> (Ask Bob in the navigation)</li>
                   <li>Bob automatically routes your question to the right specialist</li>
-                  <li>You do not need to address Sally or the PSSR/ORA Agent directly — Bob handles routing</li>
-                  <li>Example: asking <em>"What is the document quality score for project DP-368?"</em> will automatically route to Sally</li>
+                  <li>You do not need to address Selma or the PSSR/ORA Agent directly — Bob handles routing</li>
+                  <li>Example: asking <em>"What is the document quality score for project DP-368?"</em> will automatically route to Selma</li>
                 </ul>
               </CardContent>
             </Card>
@@ -1118,7 +1118,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
           <div className="text-center text-xs text-muted-foreground py-6 border-t border-border">
             <p><strong className="text-foreground">ORSH Platform Guide — Living Document</strong></p>
             <p>Updated continuously as new features, workflows, and tables are added.</p>
-            <p>Last updated: 24 March 2026 — Sally agent introduced, Claude migration complete.</p>
+            <p>Last updated: 24 March 2026 — Selma agent introduced, Claude migration complete.</p>
           </div>
         </div>
       </div>

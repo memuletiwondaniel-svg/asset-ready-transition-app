@@ -2239,7 +2239,7 @@ Bob: "P2A (Project to Asset) handover uses a multi-stage approval workflow:
 
 Each approval stage is tracked in p2a_approval_workflow. Approvers see pending items on their dashboard."
 
-=== SALLY - DOCUMENT INTELLIGENCE ASSISTANT - DMS SPECIALIST KNOWLEDGE ===
+=== SELMA - DOCUMENT INTELLIGENCE ASSISTANT - DMS SPECIALIST KNOWLEDGE ===
 
 You are also a Document Management System (DMS) expert. You understand document numbering conventions, status lifecycles, readiness assessment, and can interface with external DMS platforms.
 
@@ -2634,7 +2634,7 @@ const tools = [
     }
   },
   // ═══════════════════════════════════════════════════════════════════════════
-  // SALLY (DOCUMENT INTELLIGENCE ASSISTANT) TOOLS - For DMS queries and document readiness
+  // SELMA (DOCUMENT INTELLIGENCE ASSISTANT) TOOLS - For DMS queries and document readiness
   // ═══════════════════════════════════════════════════════════════════════════
   {
     type: "function",
@@ -3132,7 +3132,7 @@ async function routeA2AMessage(message: A2AMessage, supabaseClient: any): Promis
 function detectAgentDomain(message: string): string {
   const lower = message.toLowerCase();
   
-  // Sally (Document Intelligence Assistant) triggers
+  // Selma (Document Intelligence Assistant) triggers
   if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|document.*handover|doc.*p2a)\b/i.test(lower)) {
     return 'document_agent';
   }
@@ -5050,7 +5050,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
     }
     
     // ═══════════════════════════════════════════════════════════════════════════
-    // SALLY (DOCUMENT INTELLIGENCE ASSISTANT) TOOL HANDLERS
+    // SELMA (DOCUMENT INTELLIGENCE ASSISTANT) TOOL HANDLERS
     // ═══════════════════════════════════════════════════════════════════════════
     
     case "get_document_readiness_summary": {
@@ -5475,7 +5475,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
     }
     
     // ═══════════════════════════════════════════════════════════════════════════
-    // ENHANCED SALLY TOOLS - Cross-discipline, search, bulk, trends, tasks
+    // ENHANCED SELMA TOOLS - Cross-discipline, search, bulk, trends, tasks
     // ═══════════════════════════════════════════════════════════════════════════
     
     case "get_document_cross_discipline_comparison": {
@@ -5766,7 +5766,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // Create user_task
         const taskData: any = {
           title: `[DMS Gap] ${docName} (${docCode})`,
-          description: `Document Gap: ${gapDesc}\n\nDiscipline: ${discipline}\nDocument Code: ${docCode}\nDocument: ${docName}\n\nCreated automatically by Sally (Document Intelligence Assistant).`,
+          description: `Document Gap: ${gapDesc}\n\nDiscipline: ${discipline}\nDocument Code: ${docCode}\nDocument: ${docName}\n\nCreated automatically by Selma (Document Intelligence Assistant).`,
           priority: 'high',
           status: 'todo',
           source: 'ai_document_agent',
@@ -6462,7 +6462,7 @@ serve(async (req) => {
     console.log(`Bob processing request with ${transformedMessages.length} messages (detected agent: ${detectedAgent})`);
 
     // Agent-specific system prompts
-    const DOCUMENT_AGENT_PROMPT = `You are Sally, ORSH's Document Intelligence Assistant. You are an expert in DMS (Document Management System) document readiness, gap analysis, quality scoring, document numbering configuration, and ORA phase linkage for Oil & Gas capital projects. You help users understand document status, identify gaps, analyze trends, and ensure documentation readiness for operational handover. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Sally, your Document Intelligence Assistant."`;
+    const DOCUMENT_AGENT_PROMPT = `You are Selma, ORSH's Document Intelligence Assistant. You are an expert in DMS (Document Management System) document readiness, gap analysis, quality scoring, document numbering configuration, and ORA phase linkage for Oil & Gas capital projects. You help users understand document status, identify gaps, analyze trends, and ensure documentation readiness for operational handover. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Selma, your Document Intelligence Assistant."`;
 
     const PSSR_ORA_AGENT_PROMPT = `You are Fred, ORSH's PSSR & Operational Readiness Assistant. You are an expert in Pre-Startup Safety Reviews (PSSR), ORA (Operational Readiness Activity) planning, PSSR checklist management, and safety readiness for Oil & Gas facilities. You help users track PSSR progress, manage checklist items, identify pending approvals, and ensure safe startup readiness. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Fred, your PSSR & Operational Readiness Assistant."`;
 

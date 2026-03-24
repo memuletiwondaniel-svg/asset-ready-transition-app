@@ -82,7 +82,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               <p className="text-sm text-muted-foreground">Living document — ORSH → ORIP evolution & strategic positioning</p>
               <div className="flex items-center gap-1.5 mt-1">
                 <Calendar className="h-3 w-3 text-muted-foreground/70" />
-                <span className="text-xs text-muted-foreground/70">Last updated: 24 March 2026 — Claude migration milestone, Sally agent live, Document Intelligence roadmap defined</span>
+                <span className="text-xs text-muted-foreground/70">Last updated: 24 March 2026 — Claude migration milestone, Selma agent live, Document Intelligence roadmap defined</span>
               </div>
             </div>
           </div>
@@ -319,7 +319,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
                   </div>
                   <Card className="bg-amber-500/5 border-amber-500/20 mt-3">
                     <CardContent className="pt-3 pb-3 text-xs text-muted-foreground">
-                      <strong className="text-foreground">Note:</strong> Document Intelligence build sequence (Phases 1-9) running in parallel with ORIP scoring engine development. Sally's document readiness data will feed directly into the Design Integrity (DI2) dimension of the ORI score.
+                      <strong className="text-foreground">Note:</strong> Document Intelligence build sequence (Phases 1-9) running in parallel with ORIP scoring engine development. Selma's document readiness data will feed directly into the Design Integrity (DI2) dimension of the ORI score.
                     </CardContent>
                   </Card>
                 </CardContent>
@@ -371,7 +371,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
             
             <StatusTable rows={[
               { label: 'Bob CoPilot (Router)', value: 'Central AI agent running on Claude Sonnet 4.5 (Anthropic) with intent detection, user context learning, and specialist dispatch', status: 'active' },
-              { label: 'Sally (Document Specialist)', value: '13-tool agent for DMS gap analysis, quality scoring, numbering config, and ORA linkage — confirmed live with excellent performance', status: 'active' },
+              { label: 'Selma (Document Specialist)', value: '13-tool agent for DMS gap analysis, quality scoring, numbering config, and ORA linkage — confirmed live with excellent performance', status: 'active' },
               { label: 'PSSR/ORA Agent', value: '14-tool specialist for safety review guidance, checklist intelligence, and ORA activity planning', status: 'active' },
               { label: 'Autonomous Training Loop', value: 'v5.0 — daily cron-driven feedback analysis, auto-apply prompt improvements, self-healing edge cases', status: 'active' },
               { label: 'User Context Persistence', value: 'Per-user preference learning stored in ai_user_context — personalizes responses over time', status: 'active' },
@@ -513,8 +513,8 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               { label: 'Certificates', value: 'Statement of Fitness (SoF), PAC, FAC issuance → Formal readiness gate', status: 'active' },
               { label: 'Task Manager', value: 'Unified task inbox with auto-generated tasks from all modules → Action closeout velocity metric', status: 'active' },
               { label: 'Admin Tools', value: '28+ management tools (users, roles, security, audit, config) → Governance & compliance layer', status: 'active' },
-              { label: 'DMS', value: 'Document Intelligence build sequence defined — 9 phases from data model through project knowledge reading. Phase 1 (data model) ready to execute. Sally (Document AI Agent) confirmed live with 13 tools and excellent performance on document readiness analysis.', status: 'active' },
-              { label: 'AI CoPilot (Bob)', value: 'Multi-agent AI running on Claude Sonnet 4.5 (Anthropic). Bob CoPilot, Sally (Document Agent) and PSSR/ORA Agent all live and confirmed working. Autonomous training loop v5.0 active. React-markdown rendering installed. Phase 2 agents (Training, CMMS, ORM) in build queue.', status: 'active' },
+              { label: 'DMS', value: 'Document Intelligence build sequence defined — 9 phases from data model through project knowledge reading. Phase 1 (data model) ready to execute. Selma (Document AI Agent) confirmed live with 13 tools and excellent performance on document readiness analysis.', status: 'active' },
+              { label: 'AI CoPilot (Bob)', value: 'Multi-agent AI running on Claude Sonnet 4.5 (Anthropic). Bob CoPilot, Selma (Document Agent) and PSSR/ORA Agent all live and confirmed working. Autonomous training loop v5.0 active. React-markdown rendering installed. Phase 2 agents (Training, CMMS, ORM) in build queue.', status: 'active' },
             ]} />
 
             <Card className="bg-amber-500/5 border-amber-500/20 mt-4">
@@ -542,11 +542,11 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
                 <p className="font-bold text-foreground mb-3">CLAUDE MIGRATION COMPLETE</p>
                 <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
                   <li>All active ORSH AI agents migrated from Lovable AI Gateway to <strong className="text-foreground">Anthropic API</strong></li>
-                  <li>Model: <strong className="text-foreground">claude-sonnet-4-5</strong> for Bob CoPilot, Sally and PSSR/ORA Agent</li>
+                  <li>Model: <strong className="text-foreground">claude-sonnet-4-5</strong> for Bob CoPilot, Selma and PSSR/ORA Agent</li>
                   <li>The Lovable AI Gateway dependency eliminated — full Anthropic API control</li>
-                  <li><strong className="text-foreground">Sally (Document Agent) confirmed live:</strong> delivered document intelligence analysis showing 988 documents tracked, quality score 45/100, 3 prioritised action items, identified RLMU compliance gap blocking operational handover</li>
+                  <li><strong className="text-foreground">Selma (Document Agent) confirmed live:</strong> delivered document intelligence analysis showing 988 documents tracked, quality score 45/100, 3 prioritised action items, identified RLMU compliance gap blocking operational handover</li>
                   <li><strong className="text-foreground">Security hardening:</strong> 6 critical issues resolved, enterprise-grade security posture confirmed</li>
-                  <li><strong className="text-foreground">Document Intelligence strategy formalised:</strong> 9-phase build sequence for Sally covering wizard redesign, Assai sync, autonomous MDR fetching, and project knowledge intelligence (BOD/BDEP reading via pgvector)</li>
+                  <li><strong className="text-foreground">Document Intelligence strategy formalised:</strong> 9-phase build sequence for Selma covering wizard redesign, Assai sync, autonomous MDR fetching, and project knowledge intelligence (BOD/BDEP reading via pgvector)</li>
                 </ul>
               </CardContent>
             </Card>
@@ -559,7 +559,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
                 <strong className="text-foreground">ORSH Strategic North Star</strong> — Living Document
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Last updated: 24 March 2026 — Claude migration milestone, Sally agent live, Document Intelligence roadmap defined.
+                Last updated: 24 March 2026 — Claude migration milestone, Selma agent live, Document Intelligence roadmap defined.
               </p>
             </CardContent>
           </Card>
