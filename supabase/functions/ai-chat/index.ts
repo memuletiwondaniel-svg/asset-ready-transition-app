@@ -3278,8 +3278,88 @@ async function saveUserContextTool(supabaseClient: any, userId: string, key: str
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PROACTIVE INSIGHTS ENGINE - Detect overdue/stalled items
+// POST-CONVERSATION CONTEXT EXTRACTION — Automatically persist memory
 // ═══════════════════════════════════════════════════════════════════════════
+
+async function extractAndPersistContext(supabaseClient: any, userId: string, messages: any[]): Promise<void> {
+  try {
+    const userMessages = messages.filter((m: any) => m.role === 'user').map((m: any) => 
+      typeof m.content === 'string' ? m.content : ''
+    );
+    if (userMessages.length === 0) return;
+
+    const allUserText = userMessages.join(' ');
+
+    // Extract PSSR references (e.g. PSSR-BNGL-001)
+    const pssrMatch = allUserText.match(/PSSR-[A-Z]+-\d{3}/gi);
+    if (pssrMatch) {
+      const lastPssr = pssrMatch[pssrMatch.length - 1].toUpperCase();
+      await supabaseClient.from('ai_user_context').upsert({
+        user_id: userId,
+        context_key: 'last_active_pssr',
+        context_value: { value: lastPssr, updated: new Date().toISOString() }
+      }, { onConflict: 'user_id,context_key' });
+
+      // Also try to extract plant from PSSR code
+      const plantMatch = lastPssr.match(/PSSR-([A-Z]+)-/);
+      if (plantMatch) {
+        await supabaseClient.from('ai_user_context').upsert({
+          user_id: userId,
+          context_key: 'user_plant_location',
+          context_value: { value: plantMatch[1], updated: new Date().toISOString() }
+        }, { onConflict: 'user_id,context_key' });
+      }
+    }
+
+    // Extract project references
+    const projectPatterns = [
+      /project\s+([A-Z][A-Z0-9-]+)/gi,
+      /for\s+([A-Z]{2,}[\s-]?\d*)\s+(project|plan)/gi,
+    ];
+    for (const pattern of projectPatterns) {
+      const match = pattern.exec(allUserText);
+      if (match) {
+        await supabaseClient.from('ai_user_context').upsert({
+          user_id: userId,
+          context_key: 'last_active_project',
+          context_value: { value: match[1].trim(), updated: new Date().toISOString() }
+        }, { onConflict: 'user_id,context_key' });
+        break;
+      }
+    }
+
+    // Update recent_topics — keep last 5 topic summaries
+    const latestQuery = userMessages[userMessages.length - 1];
+    const topicSummary = latestQuery.substring(0, 80).replace(/\n/g, ' ').trim();
+    if (topicSummary) {
+      const { data: existing } = await supabaseClient
+        .from('ai_user_context')
+        .select('context_value')
+        .eq('user_id', userId)
+        .eq('context_key', 'recent_topics')
+        .maybeSingle();
+
+      let topics: string[] = [];
+      if (existing?.context_value?.topics && Array.isArray(existing.context_value.topics)) {
+        topics = existing.context_value.topics;
+      }
+      topics.push(topicSummary);
+      if (topics.length > 5) topics = topics.slice(-5);
+
+      await supabaseClient.from('ai_user_context').upsert({
+        user_id: userId,
+        context_key: 'recent_topics',
+        context_value: { topics, updated: new Date().toISOString() }
+      }, { onConflict: 'user_id,context_key' });
+    }
+
+    console.log('📝 MEMORY: Context persisted for user', userId);
+  } catch (e) {
+    console.error('Failed to extract/persist context:', e);
+  }
+}
+
+
 
 async function getProactiveInsights(supabaseClient: any, scope: string, projectCode?: string): Promise<any> {
   const insights: any[] = [];
