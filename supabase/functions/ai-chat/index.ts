@@ -3013,6 +3013,105 @@ const tools = [
         required: ["context_key", "context_value"]
       }
     }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HANNAH (P2A HANDOVER INTELLIGENCE AGENT) TOOLS
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "get_vcr_readiness_summary",
+      description: "Get VCR readiness summary across all 5 dimensions (documents, training, PSSR, CMMS, procedures) with percentage per dimension and overall score. Use for 'VCR readiness', 'how ready is VCR X', 'VCR status'.",
+      parameters: { type: "object", properties: { vcr_id: { type: "string", description: "UUID of the VCR handover point" } }, required: ["vcr_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_itr_status_by_system",
+      description: "Get ITR (Inspection Test Record) completion status for a system. Returns open/closed ITR counts, critical path items. Use for 'ITR status for system X', 'inspection test records', 'how many ITRs open'.",
+      parameters: { type: "object", properties: { system_id: { type: "string", description: "UUID of the p2a system" }, project_id: { type: "string", description: "UUID of the project" } }, required: ["system_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_punch_list_status",
+      description: "Get punch list status for a system or VCR. Returns Punch List A (safety-critical startup blockers) and Punch List B (non-critical) counts. Punch List A items are ALWAYS flagged as startup blockers. Use for 'punch list status', 'open punch items', 'punch list a items', 'startup blockers'.",
+      parameters: { type: "object", properties: { system_id: { type: "string", description: "UUID of the system" }, vcr_id: { type: "string", description: "UUID of the VCR" } }, required: [] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_itp_completion",
+      description: "Get ITP (Inspection Test Plan) completion for a system. Returns total ITPs, completed, percentage, open Hold points (H) and Witness points (W). Use for 'ITP completion', 'inspection test plan status', 'hold points', 'witness points'.",
+      parameters: { type: "object", properties: { system_id: { type: "string", description: "UUID of the system" } }, required: ["system_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_system_handover_readiness",
+      description: "Get aggregated handover readiness for a system across all 5 dimensions. Returns overall 0-100 score and READY/NOT READY verdict with all blocking items. Use for 'is system X ready', 'system handover readiness', 'can we hand over system X'.",
+      parameters: { type: "object", properties: { system_id: { type: "string", description: "UUID of the system" } }, required: ["system_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_vcr_prerequisites_status",
+      description: "Get VCR prerequisites status breakdown: NOT_STARTED, IN_PROGRESS, READY_FOR_REVIEW, ACCEPTED, REJECTED counts. Flags REJECTED items with reason. Use for 'VCR prerequisites', 'prerequisite status', 'what prerequisites are outstanding'.",
+      parameters: { type: "object", properties: { vcr_id: { type: "string", description: "UUID of the VCR" } }, required: ["vcr_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_pac_readiness",
+      description: "Check PAC (Provisional Acceptance Certificate) issuance conditions: VCR signed, OWL documented, Phase 1+2 approvers signed, systems transferred. Returns READY or list of blocking conditions. Use for 'PAC readiness', 'can we issue PAC', 'provisional acceptance status'.",
+      parameters: { type: "object", properties: { vcr_id: { type: "string", description: "UUID of the VCR" } }, required: ["vcr_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_owl_items",
+      description: "Get Outstanding Work List items for a project. Returns item number, description, responsible party, target closure date, acceptance status. Use for 'OWL items', 'outstanding work list', 'what work is outstanding'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_p2a_approval_status",
+      description: "Get P2A plan approval status. Phase 1: ORA Lead, CSU Lead, Construction Lead, Project Hub Lead (all must approve before Phase 2). Phase 2: Deputy Plant Director. Use for 'P2A approval status', 'who needs to approve the handover', 'approval progress'.",
+      parameters: { type: "object", properties: { plan_id: { type: "string", description: "UUID of the P2A handover plan" } }, required: ["plan_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "aggregate_handover_readiness",
+      description: "Master handover readiness for a project. Aggregates data from Hannah's own tools plus A2A calls to Selma (docs), Fred (PSSR), and other agents. Returns dimension-by-dimension breakdown and overall verdict. Use for 'is the project ready to hand over', 'handover readiness', 'aggregate readiness', 'gas compression train ready'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_gocompletions_sync_status",
+      description: "Get GoCompletions sync status for a project. Returns last sync timestamp, total systems/subsystems synced, commissioning status breakdown, sync errors. Use for 'GoCompletions sync', 'commissioning data sync', 'when was GoCompletions last synced'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "flag_startup_risk",
+      description: "Scan all data sources for startup risks: open Punch List A items, open critical ITRs, incomplete PSSRs, missing Tier 1 documents, incomplete training, REJECTED VCR prerequisites. Returns prioritised risk register by severity. Use for 'startup risks', 'what could block startup', 'risk register for handover', 'safe to start up'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, vcr_id: { type: "string", description: "UUID of the VCR" } }, required: [] }
+    }
   }
 ];
 
