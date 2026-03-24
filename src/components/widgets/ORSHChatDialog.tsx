@@ -758,7 +758,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
               </Button>
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                  <Bot className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">B</span>
                 </div>
                 <div>
                   <h2 className="font-semibold text-sm">Bob</h2>
@@ -779,7 +779,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                 /* Welcome Screen */
                 <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
                   <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-6 shadow-lg">
-                    <Sparkles className="h-8 w-8 text-white" />
+                    <span className="text-3xl font-bold text-white">B</span>
                   </div>
                   <h1 className="text-2xl font-bold mb-2">Hi, I'm Bob</h1>
                   <p className="text-muted-foreground mb-8 max-w-md">
@@ -794,14 +794,14 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                     <div key={index} className={cn("flex gap-4", message.role === 'user' ? 'justify-end' : 'justify-start')}>
                       {message.role === 'assistant' && (
                         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
-                          <Bot className="h-4 w-4 text-white" />
+                          <span className="text-sm font-bold text-white">B</span>
                         </div>
                       )}
                       <div className={cn(
                         "max-w-[80%] rounded-2xl px-4 py-3",
                         message.role === 'user' 
-                          ? 'bg-primary text-primary-foreground rounded-br-md' 
-                          : 'bg-muted rounded-bl-md'
+                          ? 'bg-muted text-foreground rounded-br-md' 
+                          : 'bg-transparent rounded-bl-md'
                       )}>
                         {message.content && (
                           <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border/50 [&_th]:px-3 [&_th]:py-1.5 [&_th]:bg-muted/50 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_td]:border [&_td]:border-border/50 [&_td]:px-3 [&_td]:py-1.5 [&_td]:text-xs [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_pre]:bg-background/50 [&_pre]:rounded-lg [&_code]:text-xs">
