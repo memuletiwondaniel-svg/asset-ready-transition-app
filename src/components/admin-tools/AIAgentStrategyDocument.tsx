@@ -135,10 +135,11 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 optimized LLM model, tool registry, and domain knowledge — enabling independent scaling, training, and improvement.
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                <strong className="text-foreground">Key Decision — Model Strategy:</strong> Claude is not available via the Lovable AI Gateway. 
-                We use <strong className="text-foreground">OpenAI GPT-5-mini</strong> for the CoPilot (strong reasoning + tool calling) and 
-                <strong className="text-foreground"> Google Gemini 3 Flash Preview</strong> for specialist agents (fast, cost-effective for focused domain queries). 
-                This dual-model approach optimizes for both reasoning depth and response speed.
+                <strong className="text-foreground">Key Decision — Model Strategy (Updated March 2026):</strong> All three active ORSH agents 
+                have been migrated from the Lovable AI Gateway (OpenAI GPT-5-mini / Google Gemini) to the 
+                <strong className="text-foreground"> Anthropic API</strong> running on <strong className="text-foreground">Claude Sonnet 4.5</strong> (claude-sonnet-4-5). 
+                The migration was completed successfully on 23 March 2026. The Lovable AI Gateway has been completely removed from the ai-chat Edge Function. 
+                All LLM calls now go directly to https://api.anthropic.com/v1/messages using the ANTHROPIC_API_KEY stored as a Supabase Edge Function secret.
               </p>
             </CardContent>
           </Card>
