@@ -40,6 +40,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { cn } from '@/lib/utils';
 import { processUserInput, getBlockedResponse } from '@/lib/security';
+import { ChatMessageFeedback } from '@/components/widgets/ChatMessageFeedback';
 import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import {
   Tooltip,
