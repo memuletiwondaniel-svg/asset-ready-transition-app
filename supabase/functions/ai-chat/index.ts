@@ -4326,15 +4326,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           approved_at: a.approved_at
         }));
         
-        // Get discipline reviewers from pssr_reviewers table
-        const { data: reviewers, error: reviewersError } = await supabaseClient
-          .from('pssr_reviewers')
-          .select('id, reviewer_name, reviewer_role, status, discipline')
-          .eq('pssr_id', pssrId);
-        
-        if (reviewersError) {
-          console.error('Reviewers error:', reviewersError);
-        }
+        // Note: pssr_reviewers table does not exist; use checklist responses for discipline review status
         
         // Count pending items per discipline from checklist responses
         const { data: pendingCounts } = await supabaseClient
@@ -4352,13 +4344,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           pendingByDiscipline[cat] = (pendingByDiscipline[cat] || 0) + 1;
         });
         
-        const itemReviewers = (reviewers || []).map((r: any) => ({
-          name: r.reviewer_name,
-          role: r.reviewer_role,
-          discipline: r.discipline,
-          status: r.status,
-          pending_items: pendingByDiscipline[r.discipline] || 0
-        }));
+        const itemReviewers: any[] = [];
         
         return {
           pssr_label: pssrLabel,
