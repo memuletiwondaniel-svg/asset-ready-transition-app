@@ -3191,29 +3191,69 @@ async function loadUserContext(supabaseClient: any, userId: string): Promise<str
       .select('context_key, context_value')
       .eq('user_id', userId);
 
-    if (!contextRows || contextRows.length === 0) return '';
-
     const { data: profile } = await supabaseClient
       .from('profiles')
       .select('full_name, position, department, company, region')
       .eq('user_id', userId)
       .maybeSingle();
 
-    const contextParts = ['=== USER CONTEXT (Personalization) ==='];
-    
+    const parts: string[] = ['\n\n=== USER MEMORY (Persistent Context) ==='];
+    parts.push('Use this memory to personalize responses. Reference prior work naturally without the user needing to repeat themselves.');
+
     if (profile) {
-      contextParts.push(`User: ${profile.full_name || 'Unknown'}`);
-      if (profile.position) contextParts.push(`Position: ${profile.position}`);
-      if (profile.department) contextParts.push(`Department: ${profile.department}`);
-      if (profile.company) contextParts.push(`Company: ${profile.company}`);
+      parts.push(`User: ${profile.full_name || 'Unknown'}`);
+      if (profile.position) parts.push(`Role: ${profile.position}`);
+      if (profile.department) parts.push(`Department: ${profile.department}`);
+      if (profile.company) parts.push(`Company: ${profile.company}`);
+      if (profile.region) parts.push(`Region: ${profile.region}`);
     }
 
+    if (!contextRows || contextRows.length === 0) {
+      parts.push('No prior session memory found — this may be a new user.');
+      return parts.join('\n');
+    }
+
+    const contextMap: Record<string, any> = {};
     for (const row of contextRows) {
-      contextParts.push(`${row.context_key}: ${JSON.stringify(row.context_value)}`);
+      contextMap[row.context_key] = row.context_value;
     }
 
-    contextParts.push('Use this context to personalize responses. Reference their projects and role naturally.');
-    return '\n\n' + contextParts.join('\n');
+    // Format memory as natural language
+    if (contextMap['last_active_pssr']) {
+      const v = typeof contextMap['last_active_pssr'] === 'object' ? contextMap['last_active_pssr'].value : contextMap['last_active_pssr'];
+      parts.push(`Last active PSSR: ${v} — if the user asks about "that PSSR" or "the checklist", they likely mean this one.`);
+    }
+    if (contextMap['last_active_project']) {
+      const v = typeof contextMap['last_active_project'] === 'object' ? contextMap['last_active_project'].value : contextMap['last_active_project'];
+      parts.push(`Last active project: ${v}`);
+    }
+    if (contextMap['user_plant_location']) {
+      const v = typeof contextMap['user_plant_location'] === 'object' ? contextMap['user_plant_location'].value : contextMap['user_plant_location'];
+      parts.push(`User's plant location: ${v}`);
+    }
+    if (contextMap['user_role']) {
+      const v = typeof contextMap['user_role'] === 'object' ? contextMap['user_role'].value : contextMap['user_role'];
+      parts.push(`User's operational role: ${v}`);
+    }
+    if (contextMap['recent_topics']) {
+      const topics = typeof contextMap['recent_topics'] === 'object' && Array.isArray(contextMap['recent_topics'].topics)
+        ? contextMap['recent_topics'].topics
+        : (Array.isArray(contextMap['recent_topics']) ? contextMap['recent_topics'] : []);
+      if (topics.length > 0) {
+        parts.push(`Recent conversation topics: ${topics.join(', ')}`);
+      }
+    }
+
+    // Include any other custom context keys
+    const knownKeys = ['last_active_pssr', 'last_active_project', 'user_plant_location', 'user_role', 'recent_topics', 'bob_welcome_sent'];
+    for (const [key, val] of Object.entries(contextMap)) {
+      if (!knownKeys.includes(key)) {
+        const v = typeof val === 'object' && val?.value ? val.value : JSON.stringify(val);
+        parts.push(`${key}: ${v}`);
+      }
+    }
+
+    return parts.join('\n');
   } catch (e) {
     console.error('Failed to load user context:', e);
     return '';
@@ -3238,8 +3278,88 @@ async function saveUserContextTool(supabaseClient: any, userId: string, key: str
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PROACTIVE INSIGHTS ENGINE - Detect overdue/stalled items
+// POST-CONVERSATION CONTEXT EXTRACTION — Automatically persist memory
 // ═══════════════════════════════════════════════════════════════════════════
+
+async function extractAndPersistContext(supabaseClient: any, userId: string, messages: any[]): Promise<void> {
+  try {
+    const userMessages = messages.filter((m: any) => m.role === 'user').map((m: any) => 
+      typeof m.content === 'string' ? m.content : ''
+    );
+    if (userMessages.length === 0) return;
+
+    const allUserText = userMessages.join(' ');
+
+    // Extract PSSR references (e.g. PSSR-BNGL-001)
+    const pssrMatch = allUserText.match(/PSSR-[A-Z]+-\d{3}/gi);
+    if (pssrMatch) {
+      const lastPssr = pssrMatch[pssrMatch.length - 1].toUpperCase();
+      await supabaseClient.from('ai_user_context').upsert({
+        user_id: userId,
+        context_key: 'last_active_pssr',
+        context_value: { value: lastPssr, updated: new Date().toISOString() }
+      }, { onConflict: 'user_id,context_key' });
+
+      // Also try to extract plant from PSSR code
+      const plantMatch = lastPssr.match(/PSSR-([A-Z]+)-/);
+      if (plantMatch) {
+        await supabaseClient.from('ai_user_context').upsert({
+          user_id: userId,
+          context_key: 'user_plant_location',
+          context_value: { value: plantMatch[1], updated: new Date().toISOString() }
+        }, { onConflict: 'user_id,context_key' });
+      }
+    }
+
+    // Extract project references
+    const projectPatterns = [
+      /project\s+([A-Z][A-Z0-9-]+)/gi,
+      /for\s+([A-Z]{2,}[\s-]?\d*)\s+(project|plan)/gi,
+    ];
+    for (const pattern of projectPatterns) {
+      const match = pattern.exec(allUserText);
+      if (match) {
+        await supabaseClient.from('ai_user_context').upsert({
+          user_id: userId,
+          context_key: 'last_active_project',
+          context_value: { value: match[1].trim(), updated: new Date().toISOString() }
+        }, { onConflict: 'user_id,context_key' });
+        break;
+      }
+    }
+
+    // Update recent_topics — keep last 5 topic summaries
+    const latestQuery = userMessages[userMessages.length - 1];
+    const topicSummary = latestQuery.substring(0, 80).replace(/\n/g, ' ').trim();
+    if (topicSummary) {
+      const { data: existing } = await supabaseClient
+        .from('ai_user_context')
+        .select('context_value')
+        .eq('user_id', userId)
+        .eq('context_key', 'recent_topics')
+        .maybeSingle();
+
+      let topics: string[] = [];
+      if (existing?.context_value?.topics && Array.isArray(existing.context_value.topics)) {
+        topics = existing.context_value.topics;
+      }
+      topics.push(topicSummary);
+      if (topics.length > 5) topics = topics.slice(-5);
+
+      await supabaseClient.from('ai_user_context').upsert({
+        user_id: userId,
+        context_key: 'recent_topics',
+        context_value: { topics, updated: new Date().toISOString() }
+      }, { onConflict: 'user_id,context_key' });
+    }
+
+    console.log('📝 MEMORY: Context persisted for user', userId);
+  } catch (e) {
+    console.error('Failed to extract/persist context:', e);
+  }
+}
+
+
 
 async function getProactiveInsights(supabaseClient: any, scope: string, projectCode?: string): Promise<any> {
   const insights: any[] = [];
@@ -6568,9 +6688,13 @@ serve(async (req) => {
         finalContent += ` ${JSON.stringify(navigationAction)}`;
       }
       
-      // Log response for continuous training pipeline
+      // Log response and persist memory
       logResponseFeedback(supabase, null, detectedAgent, toolCallNames, Date.now() - requestStartTime)
         .catch(e => console.error('Feedback log error:', e));
+      if (currentUserId) {
+        extractAndPersistContext(supabase, currentUserId, messages)
+          .catch(e => console.error('Context persist error:', e));
+      }
       
       // Return as SSE format for compatibility with frontend
       const sseData = `data: ${JSON.stringify({
@@ -6585,9 +6709,13 @@ serve(async (req) => {
     // No tool calls - return direct response as SSE
     const directContent = textContent || "I'm here to help. What would you like to know?";
     
-    // Log response for continuous training pipeline
+    // Log response and persist memory
     logResponseFeedback(supabase, null, detectedAgent, [], Date.now() - requestStartTime)
       .catch(e => console.error('Feedback log error:', e));
+    if (currentUserId) {
+      extractAndPersistContext(supabase, currentUserId, messages)
+        .catch(e => console.error('Context persist error:', e));
+    }
     
     const sseData = `data: ${JSON.stringify({
       choices: [{ delta: { content: directContent } }]
