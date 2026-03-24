@@ -183,33 +183,33 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <p className="text-xs font-semibold text-foreground mb-3">Multi-Agent Topology</p>
                 <div className="space-y-2 text-xs font-mono">
                   <div className="bg-background rounded p-3 border border-border">
-                    <p className="text-primary font-semibold mb-2">Bob CoPilot (Central Router — GPT-5-mini)</p>
+                    <p className="text-primary font-semibold mb-2">Bob CoPilot (Central Router — Claude Sonnet 4.5)</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
                       <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
-                        <p className="font-semibold text-foreground">Selma (Document Intelligence)</p>
-                        <p className="text-muted-foreground">GPT-5-mini | 13 tools | DMS readiness + quality + ORA linkage</p>
+                        <p className="font-semibold text-foreground">Sally (Document Intelligence)</p>
+                        <p className="text-muted-foreground">Claude Sonnet 4.5 | 13 tools | DMS readiness + quality + ORA linkage</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
                       <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
                         <p className="font-semibold text-foreground">Fred (PSSR & Operational Readiness)</p>
-                        <p className="text-muted-foreground">GPT-5-mini | 14 tools | Safety reviews</p>
+                        <p className="text-muted-foreground">Claude Sonnet 4.5 | 14 tools | Safety reviews</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
                       <div className="bg-blue-500/5 rounded p-2 border border-blue-500/20">
                         <p className="font-semibold text-foreground">Training Agent</p>
-                        <p className="text-muted-foreground">Gemini 3 Flash | 0 tools | Planned</p>
+                        <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">PLANNED</Badge>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="bg-blue-500/5 rounded p-2 border border-blue-500/20">
                         <p className="font-semibold text-foreground">CMMS Agent</p>
-                        <p className="text-muted-foreground">Gemini 3 Flash | 0 tools | Planned</p>
+                        <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">PLANNED</Badge>
                       </div>
                       <div className="bg-blue-500/5 rounded p-2 border border-blue-500/20">
                         <p className="font-semibold text-foreground">ORM Agent</p>
-                        <p className="text-muted-foreground">Gemini 3 Flash | 0 tools | Planned</p>
+                        <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">PLANNED</Badge>
                       </div>
                       <div className="bg-muted/50 rounded p-2 border border-border">
