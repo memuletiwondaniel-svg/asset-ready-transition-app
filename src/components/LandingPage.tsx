@@ -191,53 +191,112 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     if (needsSetup && !setupDismissed) setTenantSetupOpen(true);
   }, [needsSetup, setupDismissed]);
 
-  // Context-aware greeting subtitle
+  // Context-aware greeting subtitle + complementary placeholder
   const [greetingSubtitle, setGreetingSubtitle] = useState<string>('');
+  const [placeholderText, setPlaceholderText] = useState<string>('Message Bob...');
 
   useEffect(() => {
     const loadContext = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data: ctx } = await (supabase.from('ai_user_context' as any)
-          .select('context_key, context_value')
-          .eq('user_id', user.id) as any);
+      const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000));
+      const fetcher = (async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return null;
 
-        const ctxMap: Record<string, any> = {};
-        if (ctx && ctx.length > 0) {
-          (ctx as any[]).forEach((c: any) => { ctxMap[c.context_key] = c.context_value; });
-        }
+          // Parallel fetch: user_context + tasks + pssrs
+          const [ctxResult, tasksResult] = await Promise.all([
+            (supabase.from('ai_user_context' as any)
+              .select('context_key, context_value')
+              .eq('user_id', user.id) as any),
+            supabase.from('user_tasks' as any)
+              .select('id, due_date, status, title')
+              .eq('assigned_to', user.id)
+              .in('status', ['not_started', 'in_progress'])
+              .limit(50) as any,
+          ]);
 
-        // Build context-aware greeting subtitle
-        const hour = new Date().getHours();
-        const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
-        let subtitle = '';
-        if (ctxMap.last_active_pssr?.value) {
-          const pssr = String(ctxMap.last_active_pssr.value).slice(0, 80);
-          if (timeOfDay === 'morning') {
+          const ctxMap: Record<string, any> = {};
+          if (ctxResult.data) {
+            (ctxResult.data as any[]).forEach((c: any) => { ctxMap[c.context_key] = c.context_value; });
+          }
+
+          // Count overdue tasks
+          const today = new Date().toISOString().split('T')[0];
+          const overdueTasks = (tasksResult.data || []).filter((t: any) => t.due_date && t.due_date < today);
+          const dueTodayTasks = (tasksResult.data || []).filter((t: any) => t.due_date === today);
+          const openTaskCount = (tasksResult.data || []).length;
+
+          // Determine topic for subtitle (priority: overdue > due today > PSSR > docs > generic)
+          type Topic = 'overdue' | 'due_today' | 'pssr' | 'documents' | 'caught_up' | 'generic';
+          let topic: Topic = 'generic';
+          let subtitle = '';
+
+          if (overdueTasks.length > 0) {
+            topic = 'overdue';
+            subtitle = `You have ${overdueTasks.length} overdue task${overdueTasks.length > 1 ? 's' : ''} — want to tackle ${overdueTasks.length === 1 ? 'it' : 'them'}?`;
+          } else if (dueTodayTasks.length > 0) {
+            topic = 'due_today';
+            subtitle = `${dueTodayTasks.length} task${dueTodayTasks.length > 1 ? 's' : ''} due today — let's make progress.`;
+          } else if (ctxMap.last_active_pssr?.value) {
+            topic = 'pssr';
+            const pssr = String(ctxMap.last_active_pssr.value).slice(0, 80);
             subtitle = `${pssr} is waiting for you — shall we pick it up?`;
-          } else {
-            subtitle = `You were last working on ${pssr} — want to continue?`;
+          } else if (ctxMap.pending_document_count?.value) {
+            const docCount = parseInt(String(ctxMap.pending_document_count.value), 10);
+            if (docCount > 0) {
+              topic = 'documents';
+              subtitle = `${docCount} document${docCount > 1 ? 's are' : ' is'} waiting for your review`;
+            }
+          } else if (openTaskCount === 0 && ctxMap.last_active_pssr?.value) {
+            topic = 'caught_up';
+            subtitle = "You're all caught up — nice work! 🎉";
           }
-        } else if (ctxMap.last_active_project?.value) {
-          const proj = String(ctxMap.last_active_project.value).slice(0, 80);
-          subtitle = `${proj} has activity — want to check in?`;
-        } else if (ctxMap.open_task_count?.value) {
-          const count = parseInt(String(ctxMap.open_task_count.value), 10);
-          if (count > 0) {
-            subtitle = `You have ${count} task${count > 1 ? 's' : ''} waiting — let's make progress.`;
+
+          if (!subtitle) {
+            topic = 'generic';
+            subtitle = "What are we tackling today?";
           }
+
+          // Complementary placeholder (always different topic from subtitle)
+          let placeholder = 'Message Bob...';
+          switch (topic) {
+            case 'overdue':
+            case 'due_today':
+              placeholder = 'Show me my PSSR status...';
+              break;
+            case 'pssr':
+              placeholder = 'What tasks are due this week?';
+              break;
+            case 'documents':
+              placeholder = 'Ask me anything about ORSH...';
+              break;
+            case 'caught_up':
+              placeholder = 'What should I focus on next?';
+              break;
+            case 'generic':
+              placeholder = ctxMap.last_active_project?.value
+                ? `Try asking: what is the status of ${String(ctxMap.last_active_project.value).slice(0, 30)}?`
+                : 'Try asking: what is a PSSR?';
+              break;
+          }
+
+          return { subtitle, placeholder };
+        } catch {
+          return null;
         }
-        if (!subtitle) {
-          subtitle = "What are we tackling today?";
-        }
-        setGreetingSubtitle(subtitle);
-      } catch {}
+      })();
+
+      const result = await Promise.race([fetcher, timeout]);
+      if (result) {
+        setGreetingSubtitle(result.subtitle);
+        setPlaceholderText(result.placeholder);
+      } else {
+        setGreetingSubtitle("What are we tackling today?");
+        setPlaceholderText("Message Bob...");
+      }
     };
     loadContext();
   }, []);
-
-  const placeholderText = "Message Bob...";
 
   // Widget grid configuration
   const [widgets, setWidgets] = useState<WidgetConfig[]>(() => {
