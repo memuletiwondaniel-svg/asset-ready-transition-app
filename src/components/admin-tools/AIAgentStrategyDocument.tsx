@@ -324,7 +324,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                     ['hannah', 'p2a, handover, vcr, itr, punch list, punchlist, itp, pac, fac, commissioning, gocompletions, rfsu, rfo, system readiness, owl'],
                     ['training_agent', 'training, competency, competence, learning, course, certification, skill gap'],
                     ['cmms_agent', 'cmms, maintenance, equipment care, spare parts, reliability, preventive maintenance'],
-                    ['orm_agent', 'manpower, staffing, headcount, organizational readiness, manning, recruitment'],
+                    
                     ['copilot (default)', 'Everything else — PSSR, ORA, projects, navigation, general platform help'],
                   ]}
                 />
