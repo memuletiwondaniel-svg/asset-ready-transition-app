@@ -196,13 +196,18 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                         <p className="text-muted-foreground">Claude Sonnet 4.5 | 14 tools | Safety reviews</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
+                      <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
+                        <p className="font-semibold text-foreground">Hannah (P2A Handover Intelligence)</p>
+                        <p className="text-muted-foreground">Claude Sonnet 4.5 | 12 tools | Handover readiness orchestrator</p>
+                        <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="bg-blue-500/5 rounded p-2 border border-blue-500/20">
                         <p className="font-semibold text-foreground">Zain (Training Intelligence)</p>
                         <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">PLANNED</Badge>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="bg-blue-500/5 rounded p-2 border border-blue-500/20">
                         <p className="font-semibold text-foreground">Alex (CMMS & Maintenance)</p>
                         <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
@@ -213,6 +218,8 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                         <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">PLANNED</Badge>
                       </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="bg-muted/50 rounded p-2 border border-border">
                         <p className="font-semibold text-foreground">A2A Protocol Bus</p>
                         <p className="text-muted-foreground">JSON-RPC envelope | Logged to DB</p>
