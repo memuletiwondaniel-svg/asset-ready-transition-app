@@ -3186,22 +3186,27 @@ async function logResponseFeedback(
 
 async function loadUserContext(supabaseClient: any, userId: string): Promise<string> {
   try {
-    const { data: contextRows } = await supabaseClient
-      .from('ai_user_context')
-      .select('context_key, context_value')
-      .eq('user_id', userId);
+    // Parallel fetch with individual error handling
+    const [contextResult, profileResult] = await Promise.allSettled([
+      supabaseClient
+        .from('ai_user_context')
+        .select('context_key, context_value')
+        .eq('user_id', userId),
+      supabaseClient
+        .from('profiles')
+        .select('full_name, position, department, company, region')
+        .eq('user_id', userId)
+        .maybeSingle()
+    ]);
 
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('full_name, position, department, company, region')
-      .eq('user_id', userId)
-      .maybeSingle();
+    const contextRows = contextResult.status === 'fulfilled' ? contextResult.value?.data : null;
+    const profile = profileResult.status === 'fulfilled' ? profileResult.value?.data : null;
 
     const parts: string[] = ['\n\n=== USER MEMORY (Persistent Context) ==='];
     parts.push('Use this memory to personalize responses. Reference prior work naturally without the user needing to repeat themselves.');
 
     if (profile) {
-      parts.push(`User: ${profile.full_name || 'Unknown'}`);
+      if (profile.full_name) parts.push(`User: ${profile.full_name}`);
       if (profile.position) parts.push(`Role: ${profile.position}`);
       if (profile.department) parts.push(`Department: ${profile.department}`);
       if (profile.company) parts.push(`Company: ${profile.company}`);
@@ -3210,7 +3215,7 @@ async function loadUserContext(supabaseClient: any, userId: string): Promise<str
 
     if (!contextRows || contextRows.length === 0) {
       parts.push('No prior session memory found — this may be a new user.');
-      return parts.join('\n');
+      return sanitizeContextOutput(parts.join('\n'));
     }
 
     const contextMap: Record<string, any> = {};
@@ -3219,45 +3224,56 @@ async function loadUserContext(supabaseClient: any, userId: string): Promise<str
     }
 
     // Format memory as natural language
+    const safeVal = (v: any): string => {
+      if (v == null) return '';
+      if (typeof v === 'string') return v.substring(0, 200);
+      if (typeof v === 'object' && v.value) return String(v.value).substring(0, 200);
+      return String(v).substring(0, 200);
+    };
+
     if (contextMap['last_active_pssr']) {
-      const v = typeof contextMap['last_active_pssr'] === 'object' ? contextMap['last_active_pssr'].value : contextMap['last_active_pssr'];
-      parts.push(`Last active PSSR: ${v} — if the user asks about "that PSSR" or "the checklist", they likely mean this one.`);
+      parts.push(`Last active PSSR: ${safeVal(contextMap['last_active_pssr'])} — if the user asks about "that PSSR" or "the checklist", they likely mean this one.`);
     }
     if (contextMap['last_active_project']) {
-      const v = typeof contextMap['last_active_project'] === 'object' ? contextMap['last_active_project'].value : contextMap['last_active_project'];
-      parts.push(`Last active project: ${v}`);
+      parts.push(`Last active project: ${safeVal(contextMap['last_active_project'])}`);
     }
     if (contextMap['user_plant_location']) {
-      const v = typeof contextMap['user_plant_location'] === 'object' ? contextMap['user_plant_location'].value : contextMap['user_plant_location'];
-      parts.push(`User's plant location: ${v}`);
+      parts.push(`User's plant location: ${safeVal(contextMap['user_plant_location'])}`);
     }
     if (contextMap['user_role']) {
-      const v = typeof contextMap['user_role'] === 'object' ? contextMap['user_role'].value : contextMap['user_role'];
-      parts.push(`User's operational role: ${v}`);
+      parts.push(`User's operational role: ${safeVal(contextMap['user_role'])}`);
     }
     if (contextMap['recent_topics']) {
-      const topics = typeof contextMap['recent_topics'] === 'object' && Array.isArray(contextMap['recent_topics'].topics)
-        ? contextMap['recent_topics'].topics
-        : (Array.isArray(contextMap['recent_topics']) ? contextMap['recent_topics'] : []);
-      if (topics.length > 0) {
-        parts.push(`Recent conversation topics: ${topics.join(', ')}`);
-      }
+      try {
+        const raw = contextMap['recent_topics'];
+        const topics = (typeof raw === 'object' && Array.isArray(raw?.topics)) ? raw.topics
+          : (Array.isArray(raw) ? raw : []);
+        if (topics.length > 0) {
+          parts.push(`Recent conversation topics: ${topics.map((t: any) => String(t).substring(0, 80)).join(', ')}`);
+        }
+      } catch { /* skip malformed topics */ }
     }
 
-    // Include any other custom context keys
+    // Include any other custom context keys (skip internal ones)
     const knownKeys = ['last_active_pssr', 'last_active_project', 'user_plant_location', 'user_role', 'recent_topics', 'bob_welcome_sent'];
     for (const [key, val] of Object.entries(contextMap)) {
       if (!knownKeys.includes(key)) {
-        const v = typeof val === 'object' && val?.value ? val.value : JSON.stringify(val);
-        parts.push(`${key}: ${v}`);
+        parts.push(`${key}: ${safeVal(val)}`);
       }
     }
 
-    return parts.join('\n');
+    return sanitizeContextOutput(parts.join('\n'));
   } catch (e) {
-    console.error('Failed to load user context:', e);
+    console.error('Failed to load user context (non-fatal):', e);
     return '';
   }
+}
+
+// Ensure injected context is a clean string under 500 chars
+function sanitizeContextOutput(text: string): string {
+  if (!text || typeof text !== 'string') return '';
+  // Truncate to 500 chars to avoid bloating the system prompt
+  return text.substring(0, 500);
 }
 
 async function saveUserContextTool(supabaseClient: any, userId: string, key: string, value: string): Promise<any> {
