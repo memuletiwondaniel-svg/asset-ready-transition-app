@@ -3454,9 +3454,10 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       try {
         let query = supabaseClient.from('pssrs').select('id, status, pssr_id, title, asset, project_name');
         
-        // Filter by project if specified — search pssr_id or project_name directly
+        // Filter by project if specified — use flexible lookup preserving dashes
         if (args.project_code) {
-          const code = args.project_code.replace(/[-\s]/g, '');
+          const code = String(args.project_code);
+          // First try exact pssr_id match, then flexible
           query = query.or(`pssr_id.ilike.%${code}%,project_name.ilike.%${code}%,title.ilike.%${code}%,asset.ilike.%${code}%`);
         }
         
