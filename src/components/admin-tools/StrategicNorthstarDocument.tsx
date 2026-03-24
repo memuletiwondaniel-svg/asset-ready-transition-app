@@ -368,8 +368,8 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               { label: 'Document Specialist', value: '13-tool agent for DMS gap analysis, quality scoring, numbering config, and ORA linkage', status: 'active' },
               { label: 'Autonomous Training Loop', value: 'Daily cron-driven feedback analysis, auto-apply prompt improvements, self-healing edge cases', status: 'active' },
               { label: 'User Context Persistence', value: 'Per-user preference learning stored in ai_user_context — personalizes responses over time', status: 'active' },
-              { label: 'Rex — PSSR Specialist', value: 'Domain-specific agent for safety review guidance and checklist intelligence', status: 'planned' },
-              { label: 'Rex — ORA Specialist', value: 'Activity planning optimization and schedule intelligence', status: 'planned' },
+              { label: 'Fred — PSSR Specialist', value: 'Domain-specific agent for safety review guidance and checklist intelligence', status: 'planned' },
+              { label: 'Fred — ORA Specialist', value: 'Activity planning optimization and schedule intelligence', status: 'planned' },
               { label: 'Predictive ORI Agent', value: 'ML-driven readiness trajectory forecasting and risk anomaly detection', status: 'roadmap' },
             ]} />
 

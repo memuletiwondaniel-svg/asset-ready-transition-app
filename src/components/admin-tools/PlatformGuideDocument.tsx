@@ -524,8 +524,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               <div className="pl-4">├── User Context Loading (ai_user_context)</div>
               <div className="pl-4">├── Specialist Agent Dispatch:</div>
                <div className="pl-8">├── Selma — Document Intelligence (DMS domain — 13 tools)</div>
-               <div className="pl-8">├── Rex — PSSR & Operational Readiness (safety review domain)</div>
-               <div className="pl-8">├── Rex — ORA Planning (activity planning domain)</div>
+               <div className="pl-8">├── Fred — PSSR & Operational Readiness (safety review domain)</div>
+               <div className="pl-8">├── Fred — ORA Planning (activity planning domain)</div>
               <div className="pl-8">└── General CoPilot (fallback)</div>
               <div className="pl-4">└── Response Synthesis + Context Persistence</div>
             </div>

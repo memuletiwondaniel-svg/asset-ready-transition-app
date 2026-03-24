@@ -189,7 +189,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
                       <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
-                        <p className="font-semibold text-foreground">Rex (PSSR & Operational Readiness)</p>
+                        <p className="font-semibold text-foreground">Fred (PSSR & Operational Readiness)</p>
                         <p className="text-muted-foreground">GPT-5-mini | 14 tools | Safety reviews</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
@@ -389,7 +389,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['insight_share', 'Any -> Any', 'Proactively share a finding', 'Selma alerts: "8 Process docs still in Draft"'],
                 ['escalation', 'Specialist -> CoPilot', 'Escalate complex query that needs multi-domain reasoning', 'Training Agent: "Need PSSR data to assess training gaps"'],
                 ['context_handoff', 'Agent A -> Agent B', 'Transfer conversation context for continuity', 'CoPilot hands off DMS context to Selma'],
-                ['cross_reference', 'CoPilot -> Multiple', 'Gather data from multiple agents simultaneously', 'CoPilot queries Selma + Rex for integrated view'],
+                ['cross_reference', 'CoPilot -> Multiple', 'Gather data from multiple agents simultaneously', 'CoPilot queries Selma + Fred for integrated view'],
                 ['alert', 'Any -> CoPilot', 'Critical finding that needs user attention', 'CMMS Agent: "5 critical equipment items without maintenance plans"'],
               ]}
             />
@@ -397,7 +397,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             <Card className="bg-muted/30 border-border">
               <CardContent className="pt-4">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Cross-Domain Query Flow (Phase 3)</h3>
-                <FlowDiagram steps={['User: "How do doc gaps affect PSSR?"', 'CoPilot detects cross-domain', 'A2A: Selma -> readiness gaps', 'A2A: Rex -> PSSR blockers', 'GPT-5 synthesizes both datasets', 'User gets integrated answer']} />
+                <FlowDiagram steps={['User: "How do doc gaps affect PSSR?"', 'CoPilot detects cross-domain', 'A2A: Selma -> readiness gaps', 'A2A: Fred -> PSSR blockers', 'GPT-5 synthesizes both datasets', 'User gets integrated answer']} />
               </CardContent>
             </Card>
 
