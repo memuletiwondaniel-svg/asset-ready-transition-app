@@ -764,19 +764,6 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                     Your ORSH assistant. Ask me anything or let me navigate you around.
                   </p>
                   
-                  {/* Simple prompt suggestions */}
-                  <div className="flex flex-wrap justify-center gap-2 w-full max-w-lg">
-                    {SUGGESTED_PROMPTS.map((prompt, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleSend(prompt)}
-                        disabled={isLoading}
-                        className="px-4 py-2 text-sm rounded-full border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-border transition-all text-muted-foreground hover:text-foreground"
-                      >
-                        {prompt}
-                      </button>
-                    ))}
-                  </div>
                 </div>
               ) : (
                 /* Messages */
