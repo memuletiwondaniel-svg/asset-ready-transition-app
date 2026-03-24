@@ -472,7 +472,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-2 mb-2">
                     <StatusBadge status="in-progress" />
-                    <h3 className="font-semibold text-foreground text-sm">Phase 2 — Feedback Loops + Training/CMMS/ORM Agents</h3>
+                    <h3 className="font-semibold text-foreground text-sm">Phase 2 — Feedback Loops + Training/CMMS Agents</h3>
                   </div>
                   <ul className="list-disc list-inside space-y-1 text-xs">
                     <li>Thumbs up/down UI in chat — stores to <code className="bg-muted px-1 rounded">ai_response_feedback</code></li>
