@@ -307,7 +307,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               <Card className="border-emerald-500/20">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3 mb-2">
-                    <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Phase 1 — Active</Badge>
+                    <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Phase 1 — Active — Advanced</Badge>
                     <p className="font-bold text-foreground">Readiness Scoring Engine (ORIP Core)</p>
                   </div>
                   <p className="text-sm text-muted-foreground">Dimension-based Operational Readiness Index (ORI) using VCR Item Categories as configurable readiness dimensions (Design Integrity, Technical Integrity, Operating Integrity, Management Systems, Health & Safety). Full ORIP formula with confidence factors (0.7–1.0), risk penalty engine (capped at 15%), and Startup Confidence Score (SCS = ORI × Schedule Adherence × Critical Path Stability).</p>
@@ -317,6 +317,11 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
                     <div className="bg-emerald-500/5 rounded p-2"><strong className="text-foreground">Confidence:</strong> Verified=1.0, Self-reported=0.8, Forecasted=0.7</div>
                     <div className="bg-emerald-500/5 rounded p-2"><strong className="text-foreground">Risk Severity:</strong> Minor(0.5), Moderate(1.0), Major(2.0), Startup-blocking(3.0)</div>
                   </div>
+                  <Card className="bg-amber-500/5 border-amber-500/20 mt-3">
+                    <CardContent className="pt-3 pb-3 text-xs text-muted-foreground">
+                      <strong className="text-foreground">Note:</strong> Document Intelligence build sequence (Phases 1-9) running in parallel with ORIP scoring engine development. Sally's document readiness data will feed directly into the Design Integrity (DI2) dimension of the ORI score.
+                    </CardContent>
+                  </Card>
                 </CardContent>
               </Card>
 
