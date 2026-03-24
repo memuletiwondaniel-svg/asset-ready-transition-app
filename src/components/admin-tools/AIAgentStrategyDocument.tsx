@@ -404,7 +404,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             <Card className="bg-muted/30 border-border">
               <CardContent className="pt-4">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Cross-Domain Query Flow (Phase 3)</h3>
-                <FlowDiagram steps={['User: "How do doc gaps affect PSSR?"', 'CoPilot detects cross-domain', 'A2A: Selma -> readiness gaps', 'A2A: Fred -> PSSR blockers', 'GPT-5 synthesizes both datasets', 'User gets integrated answer']} />
+                <FlowDiagram steps={['User: "How do doc gaps affect PSSR?"', 'CoPilot detects cross-domain', 'A2A: Sally -> readiness gaps', 'A2A: Fred -> PSSR blockers', 'Claude synthesizes both datasets', 'User gets integrated answer']} />
               </CardContent>
             </Card>
 
