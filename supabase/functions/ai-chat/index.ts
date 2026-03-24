@@ -2349,13 +2349,13 @@ const tools = [
     type: "function",
     function: {
       name: "get_pssr_stats",
-      description: "Get PSSR statistics including counts by status. Use this when users ask about PSSR counts, pending items, or status breakdowns.",
+      description: "Get PSSR statistics including counts by status. Use this when users ask about PSSR counts, pending items, status breakdowns, or list PSSRs. Also use when a user mentions a plant code like 'BNGL', 'DP300', 'JV100' — pass it as project_code to find all PSSRs for that plant/project.",
       parameters: {
         type: "object",
         properties: {
           project_code: { 
             type: "string", 
-            description: "Optional project code filter like DP300, JV100. Leave empty for all projects." 
+            description: "Optional plant or project code filter like BNGL, DP300, JV100. Also matches partial PSSR IDs like PSSR-BNGL. Leave empty for all projects." 
           },
           status_filter: { 
             type: "string", 
