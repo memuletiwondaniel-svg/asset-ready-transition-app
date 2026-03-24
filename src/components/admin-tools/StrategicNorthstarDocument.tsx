@@ -89,7 +89,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
           <div className="flex items-center gap-2">
             <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-Strategic-North-Star" />
             <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-              v2.0 — March 2026
+              v3.0 — March 2026
             </Badge>
           </div>
         </div>
