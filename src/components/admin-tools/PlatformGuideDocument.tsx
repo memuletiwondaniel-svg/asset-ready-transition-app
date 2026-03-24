@@ -584,7 +584,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               <CardContent className="pt-4">
                 <p className="text-xs font-semibold text-foreground mb-2">ORSH AI Agents — March 2026 Update</p>
                 <p className="text-xs">
-                  ORSH now runs three active AI agents, all powered by <strong className="text-foreground">Claude Sonnet 4.5 (Anthropic)</strong>.
+                  ORSH runs <strong className="text-foreground">five active AI agents</strong> and two planned agents, all powered by <strong className="text-foreground">Anthropic Claude</strong>.
                 </p>
               </CardContent>
             </Card>
@@ -606,19 +606,52 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
                   <h3 className="text-sm font-semibold text-foreground mb-2">2. Selma — Document Intelligence Specialist</h3>
                   <p className="text-xs">
                     Selma is ORSH's specialist for all document management intelligence. She has <strong className="text-foreground">13 active tools</strong> covering 
-                    document readiness analysis, quality scoring, gap identification, numbering configuration, and ORA linkage. 
-                    Ask Selma anything about documents: status, gaps, quality scores, what's blocking handover, how documents link to ORA phases.
+                    document readiness analysis, quality scoring, gap identification, numbering configuration, and ORA linkage.
                   </p>
                 </CardContent>
               </Card>
 
               <Card className="bg-muted/30 border-border">
                 <CardContent className="pt-4">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">3. Fred (PSSR/ORA Agent) — Safety Review & Activity Planning Specialist</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">3. Fred — PSSR/ORA Safety & Readiness Specialist</h3>
                   <p className="text-xs">
-                    The PSSR/ORA Agent has <strong className="text-foreground">14 tools</strong> covering Pre-Startup Safety Review management, 
+                    Fred has <strong className="text-foreground">14 tools</strong> covering Pre-Startup Safety Review management, 
                     ORA activity planning, checklist intelligence and safety readiness assessment.
                   </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-muted/30 border-border">
+                <CardContent className="pt-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">4. Hannah — P2A Handover Intelligence</h3>
+                  <p className="text-xs">
+                    Hannah owns the Project-to-Asset handover process. She has <strong className="text-foreground">12 tools</strong> covering 
+                    VCR readiness, ITR status, punch list tracking, PAC/FAC readiness, and cross-agent handover aggregation.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-muted/30 border-border">
+                <CardContent className="pt-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">5. Ivan — Process Technical Authority</h3>
+                  <p className="text-xs">
+                    Ivan has <strong className="text-foreground">17 tools</strong> covering HAZOP reviews, STQ/MOC assessment, 
+                    operational register development, override risk analysis, and cumulative startup risk assessment.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-muted/30 border-border border-dashed">
+                <CardContent className="pt-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">6. Zain — Training Intelligence (Planned)</h3>
+                  <p className="text-xs text-muted-foreground">Claude Haiku — training plan analysis, competency gaps, cost tracking.</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-muted/30 border-border border-dashed">
+                <CardContent className="pt-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">7. Alex — CMMS & Maintenance Intelligence (Planned)</h3>
+                  <p className="text-xs text-muted-foreground">Claude Haiku — equipment care, spare parts, maintenance readiness.</p>
                 </CardContent>
               </Card>
             </div>
@@ -629,8 +662,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
                 <ul className="list-disc pl-5 space-y-1 text-xs">
                   <li>All agents are accessed through the <strong className="text-foreground">Bob CoPilot chat interface</strong> (Ask Bob in the navigation)</li>
                   <li>Bob automatically routes your question to the right specialist</li>
-                  <li>You do not need to address Selma or Fred (PSSR/ORA Agent) directly — Bob handles routing</li>
-                  <li>Example: asking <em>"What is the document quality score for project DP-368?"</em> will automatically route to Selma</li>
+                  <li>You do not need to address agents directly — Bob handles routing</li>
+                  <li>Example: asking <em>"What is the cumulative startup risk?"</em> will automatically route to Ivan</li>
                 </ul>
               </CardContent>
             </Card>
