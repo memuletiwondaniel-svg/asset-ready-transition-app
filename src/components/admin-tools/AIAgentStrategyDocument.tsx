@@ -829,7 +829,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['Q2 2026', 'Training Agent', 'Training plan tools, competency gap analysis (Gemini 3 Flash)', 'Planned'],
                 ['Q2 2026', 'CMMS Agent', 'Equipment care tools, maintenance readiness (Gemini 3 Flash)', 'Planned'],
                 ['Q2 2026', 'ORM Agent', 'Manpower readiness tools, staffing gaps (Gemini 3 Flash)', 'Planned'],
-                ['Q3 2026', 'Cross-Agent Reasoning', 'A2A cross_reference messages, GPT-5 synthesis', 'Planned'],
+                ['Q3 2026', 'Cross-Agent Reasoning', 'A2A cross_reference messages, Claude synthesis', 'Planned'],
                 ['Q3 2026', 'Predictive Analytics', 'Trend forecasting, schedule risk alerts', 'Planned'],
                 ['Q4 2026', 'RAG + Performance Dashboard', 'Vector search over docs, agent metrics UI', 'Planned'],
                 ['2027', 'Autonomous Agents', 'Self-improving prompts, proactive alerts, dynamic tools', 'Vision'],
