@@ -79,12 +79,6 @@ interface ORSHChatDialogProps {
   initialMessage?: string;
 }
 
-const SUGGESTED_PROMPTS = [
-  "Show me my tasks",
-  "What are the 6 phases of ORA?",
-  "What is a Priority A action?",
-  "Take me to PSSR module",
-];
 
 export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ 
   open, 
@@ -121,7 +115,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
 
   useEffect(() => {
     if (open && initialMessage) {
-      setInput(initialMessage);
+      // Auto-send the initial message directly — no second click needed
+      handleSend(initialMessage);
     }
   }, [open, initialMessage]);
 
@@ -615,7 +610,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[85vh] flex p-0 gap-0 bg-background border-border/50 shadow-2xl overflow-hidden">
+      <DialogContent className="max-w-[90vw] w-[900px] h-[85vh] flex p-0 gap-0 bg-background border-border/50 shadow-2xl overflow-hidden">
         {/* Sidebar */}
         <div className={cn(
           "flex flex-col border-r border-border/50 bg-muted/30 transition-all duration-300",
@@ -769,19 +764,6 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                     Your ORSH assistant. Ask me anything or let me navigate you around.
                   </p>
                   
-                  {/* Simple prompt suggestions */}
-                  <div className="flex flex-wrap justify-center gap-2 w-full max-w-lg">
-                    {SUGGESTED_PROMPTS.map((prompt, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleSend(prompt)}
-                        disabled={isLoading}
-                        className="px-4 py-2 text-sm rounded-full border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-border transition-all text-muted-foreground hover:text-foreground"
-                      >
-                        {prompt}
-                      </button>
-                    ))}
-                  </div>
                 </div>
               ) : (
                 /* Messages */
