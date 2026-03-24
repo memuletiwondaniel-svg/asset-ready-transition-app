@@ -3112,6 +3112,145 @@ const tools = [
       description: "Scan all data sources for startup risks: open Punch List A items, open critical ITRs, incomplete PSSRs, missing Tier 1 documents, incomplete training, REJECTED VCR prerequisites. Returns prioritised risk register by severity. Use for 'startup risks', 'what could block startup', 'risk register for handover', 'safe to start up'.",
       parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, vcr_id: { type: "string", description: "UUID of the VCR" } }, required: [] }
     }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // IVAN — Process Technical Authority Agent Tools (17 tools)
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "conduct_hazop_review",
+      description: "Conduct a HAZOP review using guide word methodology (No, More, Less, Reverse, Other Than) for a given system or process node. Use for 'HAZOP review', 'hazard and operability study', 'HAZOP for gas compression'.",
+      parameters: { type: "object", properties: { system_name: { type: "string", description: "Name of the system or process node to review" }, project_id: { type: "string", description: "UUID of the project" } }, required: ["system_name"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "review_hazop_closeout",
+      description: "Review HAZOP closeout report — assess each finding for physical implementation vs risk acceptance/waiver. Use for 'HAZOP closeout', 'are HAZOP findings closed', 'HAZOP action status'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, system_name: { type: "string", description: "System name for filtering" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "review_pid",
+      description: "Review P&ID / PEFS for operability concerns, control loop completeness, SIF coverage and isolation philosophy. Use for 'P&ID review', 'PID review', 'PEFS review', 'piping and instrumentation'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, system_name: { type: "string", description: "System or area name" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "review_safeguarding_memorandum",
+      description: "Review safeguarding memorandum / PSM document. Extract safety-critical elements, trip setpoints, detector coverage. Use for 'safeguarding memo', 'PSM review', 'process safety memorandum'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, system_name: { type: "string", description: "System name" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "review_cause_and_effect",
+      description: "Review Cause & Effect matrix for completeness, missing initiating events, incorrect actions. Use for 'C&E matrix', 'cause and effect review', 'C&E completeness'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, system_name: { type: "string", description: "System name" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "assess_stq_cumulative_risk",
+      description: "Assess all open Site Technical Queries (STQs) for a project. Evaluate adequacy of each technical response and produce cumulative risk assessment. Use for 'STQ risk', 'open STQs', 'site technical queries', 'STQ cumulative'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "review_moc_closeout",
+      description: "Review Management of Change (MOC) closeout status. Check action completion, flag incomplete actions affecting startup. Use for 'MOC status', 'management of change', 'MOC closeout', 'MOC actions'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "develop_operational_register",
+      description: "Develop an operational register based on P&ID data. Types: lock_open_close, override, temporary_hose, temporary_equipment, daily_log, round_sheet, lock_sheet. Use for 'lock open register', 'override register', 'operational register', 'round sheet'.",
+      parameters: { type: "object", properties: { register_type: { type: "string", description: "Type: lock_open_close, override, temporary_hose, temporary_equipment, daily_log, round_sheet, lock_sheet" }, system_name: { type: "string", description: "System name" }, project_id: { type: "string", description: "UUID of the project" } }, required: ["register_type", "system_name"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "assess_override_risk",
+      description: "Assess all active overrides/bypasses in the override register. Evaluate cumulative safety impact of simultaneous overrides. Use for 'override risk', 'active overrides', 'bypass risk', 'SIF override', 'override register'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "conduct_cumulative_risk_assessment",
+      description: "MASTER TOOL: Aggregate all open risk items — HAZOP findings, STQs, MOCs, overrides, Punch List A, PSSR P1 items, missing docs. Produce verdict: SAFE TO START, CONDITIONAL, or DO NOT START. Use for 'cumulative risk', 'startup risk assessment', 'safe to start', 'can we start up'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "conduct_omar_review",
+      description: "Conduct Operating Mode Assurance Review (OMAR). Assess all operating modes for a system. Use for 'OMAR', 'operating mode assurance', 'operating mode review'.",
+      parameters: { type: "object", properties: { system_name: { type: "string", description: "System name" }, project_id: { type: "string", description: "UUID of the project" } }, required: ["system_name"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "identify_simops_hazards",
+      description: "Identify SIMOPS (simultaneous operations) hazards between two concurrent operations. Use for 'SIMOPS', 'simultaneous operations', 'concurrent activities hazard'.",
+      parameters: { type: "object", properties: { operation_1: { type: "string", description: "First operation" }, operation_2: { type: "string", description: "Second operation" }, location: { type: "string", description: "Location or area" } }, required: ["operation_1", "operation_2"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "review_operating_procedure",
+      description: "Review an operating procedure for technical accuracy, sequence, hazard warnings and safety precautions. Use for 'operating procedure review', 'SOP review', 'procedure technical review'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, procedure_name: { type: "string", description: "Name or identifier of the procedure" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "review_commissioning_procedure",
+      description: "Review commissioning procedure for technical soundness, acceptance criteria, safety precautions. Use for 'commissioning procedure review', 'CSU procedure', 'commissioning plan review'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, procedure_name: { type: "string", description: "Procedure name" } }, required: ["project_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "assess_flow_assurance_risk",
+      description: "Assess flow assurance risks: hydrates, slugging, wax, corrosion. Use for 'flow assurance', 'hydrate risk', 'slugging', 'wax deposition', 'corrosion risk'.",
+      parameters: { type: "object", properties: { pipeline_description: { type: "string", description: "Pipeline or flowline description" }, process_conditions: { type: "string", description: "Operating conditions (temp, pressure, composition)" } }, required: ["pipeline_description"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "read_basis_of_design",
+      description: "Read Basis of Design (BOD) or BDEP document via Selma A2A. Pass through specific question as search query. Use for 'basis of design', 'BOD', 'BDEP', 'design basis'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, question: { type: "string", description: "Specific question to search for in BOD/BDEP" } }, required: ["project_id", "question"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "generate_hazop_report",
+      description: "Generate a formal HAZOP report from findings. Structured with Node, Deviation, Cause, Consequence, Safeguards, Recommendations, Risk Ranking. Use for 'HAZOP report', 'generate HAZOP', 'format HAZOP findings'.",
+      parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, system_name: { type: "string", description: "System name" }, findings: { type: "array", items: { type: "object" }, description: "Array of HAZOP findings" } }, required: ["project_id", "system_name"] }
+    }
   }
 ];
 
