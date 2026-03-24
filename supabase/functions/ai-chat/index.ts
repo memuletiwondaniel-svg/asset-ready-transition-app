@@ -341,9 +341,9 @@ pssr_item_approvals (Approval status per item)
 pssr_priority_actions (Action items from PSSR)
 - id, pssr_id reference
 - priority: A | B
-- description, responsible_party
+- description, action_owner_name
 - status: open | closed
-- due_date, closed_date
+- target_date, closed_at
 
 pssr_final_approvers (Sign-off workflow)
 - id, pssr_id reference
