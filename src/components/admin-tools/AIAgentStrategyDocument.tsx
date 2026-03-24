@@ -871,7 +871,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <br />
                 Continuously updated as new agents are built, tools added, and training strategy evolves.
                 <br />
-                Last updated: March 2026 — Alex confirmed as CMMS Agent name. Zain confirmed as Training Agent. Fred (formerly Rex) as PSSR/ORA Agent. Selma as Document Agent.
+                Last updated: March 2026 — Hannah confirmed as P2A Handover Intelligence Agent (active, claude-sonnet-4-5, 12 tools, cross-agent readiness orchestrator). Alex as CMMS Agent. Zain as Training Agent. Fred as PSSR/ORA Agent. Selma as Document Agent.
               </p>
             </CardContent>
           </Card>
