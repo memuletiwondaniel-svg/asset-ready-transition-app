@@ -79,12 +79,6 @@ interface ORSHChatDialogProps {
   initialMessage?: string;
 }
 
-const SUGGESTED_PROMPTS = [
-  "Show me my tasks",
-  "What are the 6 phases of ORA?",
-  "What is a Priority A action?",
-  "Take me to PSSR module",
-];
 
 export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({ 
   open, 
