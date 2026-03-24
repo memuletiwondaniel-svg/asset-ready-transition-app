@@ -682,7 +682,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                     ['Negative instructions', 'Hallucinations', '"Never fabricate numbers — if data missing, say so"'],
                     ['Tool description tuning', 'LLM picks wrong tool', 'Make descriptions more specific about when to use'],
                     ['Temperature adjustment', 'Too creative / too rigid', 'Lower for factual (0.3), higher for brainstorming (0.8)'],
-                    ['Model upgrade', 'Complex queries fail', 'Escalate from gpt-5-mini to gpt-5 for hard queries'],
+                    ['Model upgrade', 'Complex queries fail', 'Escalate from Claude Haiku to Claude Sonnet for hard queries'],
                     ['A2A cross-reference', 'Missing cross-domain context', 'Route to multiple agents, synthesize results'],
                   ]}
                 />
