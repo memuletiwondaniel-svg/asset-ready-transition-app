@@ -3588,12 +3588,12 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
   switch(toolName) {
     case "get_pssr_stats": {
       try {
-        let query = supabaseClient.from('pssrs').select('id, status, pssr_id, title, asset, project_name');
+        let query = supabaseClient.from('pssrs').select('id, status, pssr_id, title, asset, project_name, progress_percentage');
         
-        // Filter by project if specified — use flexible lookup preserving dashes
+        // Filter by project/plant code if specified — use flexible lookup preserving dashes
         if (args.project_code) {
           const code = String(args.project_code);
-          // First try exact pssr_id match, then flexible
+          // Match against pssr_id, project_name, title, and asset for plant/project codes
           query = query.or(`pssr_id.ilike.%${code}%,project_name.ilike.%${code}%,title.ilike.%${code}%,asset.ilike.%${code}%`);
         }
         
@@ -3619,10 +3619,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         return {
           total: data?.length || 0,
           breakdown,
-          pssrs: data?.slice(0, 10).map((p: any) => ({ 
+          pssrs: data?.slice(0, 15).map((p: any) => ({ 
             pssr_id: p.pssr_id, 
             title: p.title,
-            status: p.status 
+            status: p.status,
+            progress: p.progress_percentage ?? 0
           })) || []
         };
       } catch (err) {
