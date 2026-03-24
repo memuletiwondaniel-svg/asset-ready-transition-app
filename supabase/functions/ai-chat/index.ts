@@ -6331,7 +6331,7 @@ serve(async (req) => {
     }
 
     // Max tokens: 4096 for copilot, 2048 for specialist agents
-    const maxTokens = detectedAgent === 'copilot' ? 4096 : 2048;
+    const maxTokens = detectedAgent === 'copilot' ? 4096 : 3072;
 
     // Convert OpenAI-style tools to Anthropic format
     const anthropicTools = tools.map((t: any) => ({
