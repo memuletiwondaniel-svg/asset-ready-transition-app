@@ -1,0 +1,4 @@
+-- FIX 1: Update domain_tags and tools_count for Bob, Selma and Fred
+UPDATE ai_agent_registry SET domain_tags = ARRAY['routing','copilot','multi-domain','pssr','document','p2a','training','cmms','orm','certificates','ora','handover'], tools_count = 14 WHERE agent_code = 'copilot';
+UPDATE ai_agent_registry SET domain_tags = ARRAY['document','dms','readiness','quality','gap_analysis','ora_linkage','numbering','hyperlink'], tools_count = 13 WHERE agent_code = 'document_agent';
+UPDATE ai_agent_registry SET domain_tags = ARRAY['pssr','ora','safety','checklist','sof','startup_safety','pssr_review'], tools_count = 14 WHERE agent_code = 'pssr_ora_agent';
