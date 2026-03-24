@@ -384,9 +384,9 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             <InfoTable
               headers={['Message Type', 'Direction', 'Purpose', 'Example']}
               rows={[
-                ['data_request', 'Agent A -> Agent B', 'Request specific data via a tool', 'CoPilot asks Document Agent for readiness %'],
-                ['data_response', 'Agent B -> Agent A', 'Return requested data', 'Document Agent returns 25% readiness'],
-                ['insight_share', 'Any -> Any', 'Proactively share a finding', 'Document Agent alerts: "8 Process docs still in Draft"'],
+                ['data_request', 'Agent A -> Agent B', 'Request specific data via a tool', 'CoPilot asks Selma for readiness %'],
+                ['data_response', 'Agent B -> Agent A', 'Return requested data', 'Selma returns 25% readiness'],
+                ['insight_share', 'Any -> Any', 'Proactively share a finding', 'Selma alerts: "8 Process docs still in Draft"'],
                 ['escalation', 'Specialist -> CoPilot', 'Escalate complex query that needs multi-domain reasoning', 'Training Agent: "Need PSSR data to assess training gaps"'],
                 ['context_handoff', 'Agent A -> Agent B', 'Transfer conversation context for continuity', 'CoPilot hands off DMS context to Document Agent'],
                 ['cross_reference', 'CoPilot -> Multiple', 'Gather data from multiple agents simultaneously', 'CoPilot queries Doc + PSSR agents for integrated view'],
