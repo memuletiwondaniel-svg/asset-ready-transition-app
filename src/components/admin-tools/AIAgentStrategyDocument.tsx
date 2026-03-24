@@ -459,6 +459,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                     <li>ORM Agent tools (manpower readiness, staffing gaps, organizational capability)</li>
                     <li>Persistent conversation memory — cross-conversation context</li>
                     <li>Dynamic few-shot examples injected from approved response patterns</li>
+                    <li>Document Intelligence build sequence (Phases 1-9) now in progress alongside Phase 2</li>
                   </ul>
                 </CardContent>
               </Card>
