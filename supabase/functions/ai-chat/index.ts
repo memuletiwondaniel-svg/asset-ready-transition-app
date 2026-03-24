@@ -3242,10 +3242,10 @@ async function getProactiveInsights(supabaseClient: any, scope: string, projectC
     if (scope === 'all' || scope === 'pssr') {
       const { data: overdueActions } = await supabaseClient
         .from('pssr_priority_actions')
-        .select('id, description, due_date, priority, status, pssr_id')
+        .select('id, description, target_date, priority, status, pssr_id')
         .eq('status', 'open')
         .eq('priority', 'A')
-        .lt('due_date', now.toISOString())
+        .lt('target_date', now.toISOString())
         .limit(10);
 
       if (overdueActions && overdueActions.length > 0) {
