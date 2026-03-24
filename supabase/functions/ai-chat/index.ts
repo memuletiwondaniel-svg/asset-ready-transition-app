@@ -6346,25 +6346,29 @@ serve(async (req) => {
     }
 
     const initialResult = await initialResponse.json();
-    console.log("Initial AI response:", JSON.stringify(initialResult, null, 2));
+    console.log("Initial AI response stop_reason:", initialResult.stop_reason);
 
-    const assistantMessage = initialResult.choices?.[0]?.message;
+    // Anthropic response: extract text content and tool_use blocks
+    const contentBlocks = initialResult.content || [];
+    const toolUseBlocks = contentBlocks.filter((b: any) => b.type === 'tool_use');
+    const textBlocks = contentBlocks.filter((b: any) => b.type === 'text');
+    const textContent = textBlocks.map((b: any) => b.text).join('');
     
     // Check if AI wants to call tools
-    if (assistantMessage?.tool_calls && assistantMessage.tool_calls.length > 0) {
-      console.log("AI requested tool calls:", assistantMessage.tool_calls.length);
+    if (toolUseBlocks.length > 0) {
+      console.log("AI requested tool calls:", toolUseBlocks.length);
       
       // Execute all tool calls and track navigation actions
-      const toolResults = [];
+      const toolResultContents: any[] = [];
       const toolCallNames: string[] = [];
       let navigationAction: { action: string; path: string } | null = null;
       let lastToolName: string | null = null;
       let lastToolResult: any = null;
       
-      for (const toolCall of assistantMessage.tool_calls) {
-        const toolName = toolCall.function.name;
+      for (const toolBlock of toolUseBlocks) {
+        const toolName = toolBlock.name;
         toolCallNames.push(toolName);
-        const toolArgs = JSON.parse(toolCall.function.arguments || '{}');
+        const toolArgs = toolBlock.input || {};
         // Inject user_id for user context tools
         if (['get_user_context', 'save_user_context'].includes(toolName) && currentUserId) {
           toolArgs._user_id = currentUserId;
@@ -6382,29 +6386,32 @@ serve(async (req) => {
           navigationAction = { action: "navigate", path: result.path };
         }
         
-        toolResults.push({
-          role: "tool",
-          tool_call_id: toolCall.id,
+        // Anthropic tool_result format
+        toolResultContents.push({
+          type: "tool_result",
+          tool_use_id: toolBlock.id,
           content: JSON.stringify(result)
         });
       }
       
       // Second API call - send tool results back to AI for final response
-      const finalResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      // Build messages: original conversation + assistant message with tool_use + user message with tool_results
+      const finalResponse = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
         },
         body: JSON.stringify({
-          model: "openai/gpt-5-mini",
+          model: "claude-sonnet-4-5-20250514",
+          system: systemPrompt,
           messages: [
-            { role: "system", content: BOB_SYSTEM_PROMPT + userContextPrompt },
             ...transformedMessages,
-            assistantMessage,
-          ...toolResults,
+            { role: "assistant", content: contentBlocks },
+            { role: "user", content: toolResultContents },
           ],
-          stream: false,
+          max_tokens: maxTokens,
         }),
       });
 
@@ -6412,13 +6419,14 @@ serve(async (req) => {
         const errorText = await finalResponse.text();
         console.error("Final AI response error:", finalResponse.status, errorText);
         return new Response(
-          JSON.stringify({ error: "AI gateway error on final response" }), 
+          JSON.stringify({ error: "AI error on final response" }), 
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       const finalResult = await finalResponse.json();
-      let finalContent = finalResult.choices?.[0]?.message?.content;
+      const finalBlocks = finalResult.content || [];
+      let finalContent = finalBlocks.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
 
       // Fallback: if model returns no content after tools, deterministically format the last tool result
       if (!finalContent || !finalContent.trim()) {
@@ -6474,7 +6482,7 @@ serve(async (req) => {
     }
     
     // No tool calls - return direct response as SSE
-    const directContent = assistantMessage?.content || "I'm here to help. What would you like to know?";
+    const directContent = textContent || "I'm here to help. What would you like to know?";
     
     // Log response for continuous training pipeline
     logResponseFeedback(supabase, null, detectedAgent, [], Date.now() - requestStartTime)
