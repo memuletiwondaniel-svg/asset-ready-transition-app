@@ -42,9 +42,11 @@ const DialogContent = React.forwardRef<
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         // Mobile: full screen
         "inset-0 max-h-full rounded-none p-4",
-        // Desktop: centered modal
-        "sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-w-lg sm:max-h-[85vh] sm:rounded-lg sm:p-6",
+        // Desktop: centered modal — max-w deliberately omitted so callers can override
+        "sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-h-[85vh] sm:rounded-lg sm:p-6",
         "sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95 sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%] sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%]",
+        // Default max-width for dialogs that don't specify their own
+        !className?.includes('w-[') && !className?.includes('max-w-') ? 'sm:max-w-lg' : '',
         className
       )}
       {...props}

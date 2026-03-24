@@ -6697,9 +6697,9 @@ serve(async (req) => {
             finalContent += `| ${status} | ${count} |\n`;
           }
           if (lastToolResult.pssrs?.length > 0) {
-            finalContent += `\n**Recent PSSRs:**\n`;
+            finalContent += `\n**PSSRs Found:**\n\n| PSSR ID | Title | Status | Progress |\n|---|---|---|---|\n`;
             lastToolResult.pssrs.forEach((p: any) => {
-              finalContent += `- ${p.pssr_id}: ${p.title} (${p.status})\n`;
+              finalContent += `| ${p.pssr_id} | ${p.title} | ${p.status} | ${p.progress ?? 0}% |\n`;
             });
           }
         } else {
