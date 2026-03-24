@@ -397,7 +397,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['escalation', 'Specialist -> CoPilot', 'Escalate complex query that needs multi-domain reasoning', 'Zain: "Need PSSR data to assess training gaps"'],
                 ['context_handoff', 'Agent A -> Agent B', 'Transfer conversation context for continuity', 'CoPilot hands off DMS context to Selma'],
                 ['cross_reference', 'CoPilot -> Multiple', 'Gather data from multiple agents simultaneously', 'CoPilot queries Selma + Fred for integrated view'],
-                ['alert', 'Any -> CoPilot', 'Critical finding that needs user attention', 'CMMS Agent: "5 critical equipment items without maintenance plans"'],
+                ['alert', 'Any -> CoPilot', 'Critical finding that needs user attention', 'Alex: "5 critical equipment items without maintenance plans"'],
               ]}
             />
 
