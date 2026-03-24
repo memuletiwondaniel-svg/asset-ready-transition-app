@@ -1,0 +1,1 @@
+UPDATE ai_agent_registry SET domain_tags = ARRAY['routing','copilot','multi-domain','pssr','document','p2a','training','cmms','certificates','ora','handover'] WHERE agent_code = 'copilot';
