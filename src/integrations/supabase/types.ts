@@ -1198,6 +1198,57 @@ export type Database = {
         }
         Relationships: []
       }
+      document_packages: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          package_name: string
+          package_tag: string
+          po_number: string | null
+          project_id: string | null
+          tenant_id: string | null
+          vendor_name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          package_name: string
+          package_tag: string
+          po_number?: string | null
+          project_id?: string | null
+          tenant_id?: string | null
+          vendor_name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          package_name?: string
+          package_tag?: string
+          po_number?: string | null
+          project_id?: string | null
+          tenant_id?: string | null
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_packages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_packages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fac_prerequisites: {
         Row: {
           created_at: string | null
@@ -10270,6 +10321,72 @@ export type Database = {
           {
             foreignKeyName: "vcr_discipline_assurance_handover_point_id_fkey"
             columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vcr_document_requirements: {
+        Row: {
+          created_at: string | null
+          discipline_code: string | null
+          document_scope: string | null
+          document_type_id: string | null
+          id: string
+          identified_at: string | null
+          identified_by: string | null
+          is_mdr: boolean | null
+          package_tag: string | null
+          po_number: string | null
+          status: string | null
+          tenant_id: string | null
+          vcr_id: string | null
+          vendor_po_sequence: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          discipline_code?: string | null
+          document_scope?: string | null
+          document_type_id?: string | null
+          id?: string
+          identified_at?: string | null
+          identified_by?: string | null
+          is_mdr?: boolean | null
+          package_tag?: string | null
+          po_number?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          vcr_id?: string | null
+          vendor_po_sequence?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          discipline_code?: string | null
+          document_scope?: string | null
+          document_type_id?: string | null
+          id?: string
+          identified_at?: string | null
+          identified_by?: string | null
+          is_mdr?: boolean | null
+          package_tag?: string | null
+          po_number?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          vcr_id?: string | null
+          vendor_po_sequence?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_document_requirements_document_type_id_fkey"
+            columns: ["document_type_id"]
+            isOneToOne: false
+            referencedRelation: "dms_document_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vcr_document_requirements_vcr_id_fkey"
+            columns: ["vcr_id"]
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
