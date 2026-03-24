@@ -70,6 +70,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
     { id: 'training', label: 'Training Management' },
     { id: 'dms', label: 'Document Management System (DMS)' },
     { id: 'ai-agent', label: 'AI Agent Architecture (Bob CoPilot)' },
+    { id: 'ai-agents', label: 'Meet the ORSH AI Agents' },
     { id: 'coding-conventions', label: 'Coding Conventions & ID Formats' },
     { id: 'roles', label: 'Roles & Permissions Configuration' },
     { id: 'database-schema', label: 'Database Schema & Tables' },
@@ -101,7 +102,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               <p className="text-sm text-muted-foreground">Living document — covers all workflows, codes, tables, roles, and automations</p>
               <div className="flex items-center gap-1.5 mt-1">
                 <Calendar className="h-3 w-3 text-muted-foreground/70" />
-                <span className="text-xs text-muted-foreground/70">Last updated: 22 March 2026</span>
+                <span className="text-xs text-muted-foreground/70">Last updated: 24 March 2026</span>
               </div>
             </div>
           </div>
@@ -508,6 +509,17 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               <li><strong className="text-foreground">Gap Analysis:</strong> AI agent compares current statuses against acceptable_status rules</li>
               <li><strong className="text-foreground">Quality Scoring:</strong> 0–100 composite score (completeness 30%, maturity 30%, RLMU compliance 25%, consistency 15%)</li>
             </ul>
+
+            <Card className="bg-primary/5 border-primary/20 mt-4">
+              <CardContent className="pt-4">
+                <p className="text-xs">
+                  <strong className="text-foreground">Sally — ORSH's Document Intelligence Agent</strong> — integrates directly with external DMS platforms 
+                  including Assai, Wrench, Documentum and SharePoint. Sally can check live document status, identify gaps, score quality and create tasks 
+                  from document issues. Future capability: Sally will autonomously fetch and read the Master Document Register directly from Assai 
+                  without any manual action required.
+                </p>
+              </CardContent>
+            </Card>
           </Section>
 
           <Separator />
@@ -523,9 +535,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               <div className="pl-4">├── Intent Detection (domain classification)</div>
               <div className="pl-4">├── User Context Loading (ai_user_context)</div>
               <div className="pl-4">├── Specialist Agent Dispatch:</div>
-               <div className="pl-8">├── Selma — Document Intelligence (DMS domain — 13 tools)</div>
-               <div className="pl-8">├── Fred — PSSR & Operational Readiness (safety review domain)</div>
-               <div className="pl-8">├── Fred — ORA Planning (activity planning domain)</div>
+               <div className="pl-8">├── Sally — Document Intelligence (DMS domain — 13 tools)</div>
+               <div className="pl-8">├── PSSR/ORA Agent — Safety & Readiness (PSSR domain — 14 tools)</div>
+               <div className="pl-8">├── PSSR/ORA Agent — ORA Planning (activity planning domain)</div>
               <div className="pl-8">└── General CoPilot (fallback)</div>
               <div className="pl-4">└── Response Synthesis + Context Persistence</div>
             </div>
@@ -561,6 +573,66 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               ['ai_user_context', 'Per-user preference persistence (key-value JSON)'],
               ['ai_prompt_improvements', 'Suggested and auto-applied prompt changes'],
             ]} />
+          </Section>
+
+          <Separator />
+
+          {/* 10b. Meet the ORSH AI Agents */}
+          <Section id="ai-agents" icon={<Users className="h-5 w-5 text-primary" />} title="10b. Meet the ORSH AI Agents">
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="pt-4">
+                <p className="text-xs font-semibold text-foreground mb-2">ORSH AI Agents — March 2026 Update</p>
+                <p className="text-xs">
+                  ORSH now runs three active AI agents, all powered by <strong className="text-foreground">Claude Sonnet 4.5 (Anthropic)</strong>.
+                </p>
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-3 mt-3">
+              <Card className="bg-muted/30 border-border">
+                <CardContent className="pt-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">1. Bob CoPilot — Central Router & Conversational AI</h3>
+                  <p className="text-xs">
+                    Bob receives all user messages, detects intent, routes to the correct specialist agent, and synthesises responses. 
+                    Bob has <strong className="text-foreground">14 tools</strong> covering PSSR status, project information, team queries, navigation and general platform help. 
+                    Bob is always the first point of contact — users talk to Bob, Bob decides who answers.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-muted/30 border-border">
+                <CardContent className="pt-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">2. Sally — Document Intelligence Specialist</h3>
+                  <p className="text-xs">
+                    Sally is ORSH's specialist for all document management intelligence. She has <strong className="text-foreground">13 active tools</strong> covering 
+                    document readiness analysis, quality scoring, gap identification, numbering configuration, and ORA linkage. 
+                    Ask Sally anything about documents: status, gaps, quality scores, what's blocking handover, how documents link to ORA phases.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-muted/30 border-border">
+                <CardContent className="pt-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">3. PSSR/ORA Agent — Safety Review & Activity Planning Specialist</h3>
+                  <p className="text-xs">
+                    The PSSR/ORA Agent has <strong className="text-foreground">14 tools</strong> covering Pre-Startup Safety Review management, 
+                    ORA activity planning, checklist intelligence and safety readiness assessment.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="bg-amber-500/5 border-amber-500/20 mt-3">
+              <CardContent className="pt-4">
+                <p className="text-xs font-semibold text-foreground mb-2">How to use the agents</p>
+                <ul className="list-disc pl-5 space-y-1 text-xs">
+                  <li>All agents are accessed through the <strong className="text-foreground">Bob CoPilot chat interface</strong> (Ask Bob in the navigation)</li>
+                  <li>Bob automatically routes your question to the right specialist</li>
+                  <li>You do not need to address Sally or the PSSR/ORA Agent directly — Bob handles routing</li>
+                  <li>Example: asking <em>"What is the document quality score for project DP-368?"</em> will automatically route to Sally</li>
+                </ul>
+              </CardContent>
+            </Card>
           </Section>
 
           <Separator />
@@ -1044,8 +1116,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           {/* Footer */}
           <div className="text-center text-xs text-muted-foreground py-6 border-t border-border">
-            <p>This is a living document maintained within the ORSH platform.</p>
+            <p><strong className="text-foreground">ORSH Platform Guide — Living Document</strong></p>
             <p>Updated continuously as new features, workflows, and tables are added.</p>
+            <p>Last updated: 24 March 2026 — Sally agent introduced, Claude migration complete.</p>
           </div>
         </div>
       </div>
