@@ -5475,7 +5475,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
     }
     
     // ═══════════════════════════════════════════════════════════════════════════
-    // ENHANCED SELMA TOOLS - Cross-discipline, search, bulk, trends, tasks
+    // ENHANCED SALLY TOOLS - Cross-discipline, search, bulk, trends, tasks
     // ═══════════════════════════════════════════════════════════════════════════
     
     case "get_document_cross_discipline_comparison": {
