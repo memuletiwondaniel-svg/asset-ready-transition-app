@@ -3370,18 +3370,94 @@ async function getProactiveInsights(supabaseClient: any, scope: string, projectC
   }
 }
 
+// Helper: flexible PSSR lookup by code/project
+// Tries exact pssr_id match first, then flexible ilike search
+async function findPssrByCode(supabaseClient: any, code: string): Promise<{ id: string; pssr_id: string; title: string; asset?: string; project_name?: string } | null> {
+  // 1. Try exact match on pssr_id first (e.g., "PSSR-BNGL-001")
+  const { data: exact } = await supabaseClient
+    .from('pssrs')
+    .select('id, pssr_id, title, asset, project_name')
+    .eq('pssr_id', code)
+    .maybeSingle();
+  if (exact) return exact;
+
+  // 2. Try case-insensitive exact match
+  const { data: iexact } = await supabaseClient
+    .from('pssrs')
+    .select('id, pssr_id, title, asset, project_name')
+    .ilike('pssr_id', code)
+    .maybeSingle();
+  if (iexact) return iexact;
+
+  // 3. Try flexible ilike search across multiple fields (original value WITH dashes)
+  const { data: flexible } = await supabaseClient
+    .from('pssrs')
+    .select('id, pssr_id, title, asset, project_name')
+    .or(`pssr_id.ilike.%${code}%,title.ilike.%${code}%,asset.ilike.%${code}%,project_name.ilike.%${code}%`)
+    .limit(1)
+    .maybeSingle();
+  if (flexible) return flexible;
+
+  // 4. Last resort: strip non-alphanumeric and search (handles "PSSR-BNGL-001" -> "PSSRBNGL001" matching)
+  const stripped = code.replace(/[^a-z0-9]/gi, '');
+  if (stripped !== code) {
+    const { data: strippedMatch } = await supabaseClient
+      .from('pssrs')
+      .select('id, pssr_id, title, asset, project_name')
+      .or(`pssr_id.ilike.%${stripped}%,title.ilike.%${stripped}%,asset.ilike.%${stripped}%,project_name.ilike.%${stripped}%`)
+      .limit(1)
+      .maybeSingle();
+    if (strippedMatch) return strippedMatch;
+  }
+
+  return null;
+}
+
+// Helper: find multiple PSSRs by code/project
+async function findPssrsByCode(supabaseClient: any, code: string, limit = 10): Promise<any[]> {
+  // Try exact match first
+  const { data: exact } = await supabaseClient
+    .from('pssrs')
+    .select('id, pssr_id, title, asset, project_name')
+    .eq('pssr_id', code)
+    .limit(limit);
+  if (exact && exact.length > 0) return exact;
+
+  // Flexible search with original value
+  const { data: flexible } = await supabaseClient
+    .from('pssrs')
+    .select('id, pssr_id, title, asset, project_name')
+    .or(`pssr_id.ilike.%${code}%,title.ilike.%${code}%,asset.ilike.%${code}%,project_name.ilike.%${code}%`)
+    .limit(limit);
+  if (flexible && flexible.length > 0) return flexible;
+
+  // Stripped fallback
+  const stripped = code.replace(/[^a-z0-9]/gi, '');
+  if (stripped !== code) {
+    const { data: strippedMatch } = await supabaseClient
+      .from('pssrs')
+      .select('id, pssr_id, title, asset, project_name')
+      .or(`pssr_id.ilike.%${stripped}%,title.ilike.%${stripped}%,asset.ilike.%${stripped}%,project_name.ilike.%${stripped}%`)
+      .limit(limit);
+    return strippedMatch || [];
+  }
+
+  return [];
+}
+
 // Execute tool calls
 async function executeTool(toolName: string, args: any, supabaseClient: any): Promise<any> {
   console.log(`Executing tool: ${toolName} with args:`, args);
-  
+
   switch(toolName) {
     case "get_pssr_stats": {
       try {
         let query = supabaseClient.from('pssrs').select('id, status, pssr_id, title, asset, project_name');
         
-        // Filter by project if specified — search pssr_id or project_name directly
+        // Filter by project if specified — use flexible lookup preserving dashes
         if (args.project_code) {
-          const code = args.project_code.replace(/[-\s]/g, '');
+          const code = String(args.project_code);
+          // First try exact pssr_id match, then flexible
           query = query.or(`pssr_id.ilike.%${code}%,project_name.ilike.%${code}%,title.ilike.%${code}%,asset.ilike.%${code}%`);
         }
         
@@ -4167,12 +4243,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             .maybeSingle();
           pssrLabel = pssr?.pssr_id || pssr?.title || args.pssr_id;
         } else if (args.project_code) {
-          const projectCode = String(args.project_code).replace(/[^a-z0-9]/gi, '');
-          const { data: pssrs } = await supabaseClient
-            .from('pssrs')
-            .select('id, pssr_id, title, asset, project_name')
-            .or(`pssr_id.ilike.%${projectCode}%,title.ilike.%${projectCode}%,asset.ilike.%${projectCode}%,project_name.ilike.%${projectCode}%`)
-            .limit(10);
+          const pssrs = await findPssrsByCode(supabaseClient, String(args.project_code), 10);
           
           if (!pssrs || pssrs.length === 0) {
             return { 
@@ -4295,12 +4366,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             .maybeSingle();
           pssrLabel = pssr?.pssr_id || pssr?.title || args.pssr_id;
         } else if (args.project_code) {
-          const { data: pssrs } = await supabaseClient
-            .from('pssrs')
-            .select('id, pssr_id, title, asset')
-            .or(`pssr_id.ilike.%${args.project_code}%,title.ilike.%${args.project_code}%,asset.ilike.%${args.project_code}%,project_name.ilike.%${args.project_code}%`)
-            .limit(1)
-            .maybeSingle();
+          const pssrs = await findPssrByCode(supabaseClient, String(args.project_code));
           
           if (!pssrs) {
             return { 
@@ -4379,12 +4445,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         if (args.pssr_id) {
           pssrId = args.pssr_id;
         } else if (args.project_code) {
-          const { data: pssrs } = await supabaseClient
-            .from('pssrs')
-            .select('id')
-            .or(`pssr_id.ilike.%${args.project_code}%,title.ilike.%${args.project_code}%,asset.ilike.%${args.project_code}%,project_name.ilike.%${args.project_code}%`)
-            .limit(1)
-            .maybeSingle();
+          const pssrs = await findPssrByCode(supabaseClient, String(args.project_code));
           
           if (!pssrs) {
             return { error: `No PSSR found for project "${args.project_code}"` };
@@ -4534,12 +4595,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             .maybeSingle();
           pssrLabel = pssr?.pssr_id || pssr?.title || args.pssr_id;
         } else if (args.project_code) {
-          const { data: pssrs } = await supabaseClient
-            .from('pssrs')
-            .select('id, pssr_id, title, asset')
-            .or(`pssr_id.ilike.%${args.project_code}%,title.ilike.%${args.project_code}%,asset.ilike.%${args.project_code}%,project_name.ilike.%${args.project_code}%`)
-            .limit(1)
-            .maybeSingle();
+          const pssrs = await findPssrByCode(supabaseClient, String(args.project_code));
           
           if (!pssrs) {
             return { error: `No PSSR found for project "${args.project_code}"` };
@@ -4669,12 +4725,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             .maybeSingle();
           pssrLabel = pssr?.pssr_id || pssr?.title || args.pssr_id;
         } else if (args.project_code) {
-          const { data: pssrs } = await supabaseClient
-            .from('pssrs')
-            .select('id, pssr_id, title, asset')
-            .or(`pssr_id.ilike.%${args.project_code}%,title.ilike.%${args.project_code}%,asset.ilike.%${args.project_code}%,project_name.ilike.%${args.project_code}%`)
-            .limit(1)
-            .maybeSingle();
+          const pssrs = await findPssrByCode(supabaseClient, String(args.project_code));
           
           if (!pssrs) {
             return { error: `No PSSR found for "${args.project_code}"` };
