@@ -6472,6 +6472,7 @@ serve(async (req) => {
       }
 
       const finalResult = await finalResponse.json();
+      console.log("Final AI response stop_reason:", finalResult.stop_reason, "usage:", finalResult.usage);
       const finalBlocks = finalResult.content || [];
       let finalContent = finalBlocks.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
 
