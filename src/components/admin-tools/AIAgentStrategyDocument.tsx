@@ -478,7 +478,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                     <li>Thumbs up/down UI in chat — stores to <code className="bg-muted px-1 rounded">ai_response_feedback</code></li>
                     <li>Zain (Training Agent) tools (training plan analysis, competency gaps, cost tracking)</li>
                     <li>Alex (CMMS Agent) tools (equipment care, spare parts, maintenance readiness)</li>
-                    <li>ORM Agent tools (manpower readiness, staffing gaps, organizational capability)</li>
+                    
                     <li>Persistent conversation memory — cross-conversation context</li>
                     <li>Dynamic few-shot examples injected from approved response patterns</li>
                     <li>Document Intelligence build sequence (Phases 1-9) now in progress alongside Phase 2</li>
