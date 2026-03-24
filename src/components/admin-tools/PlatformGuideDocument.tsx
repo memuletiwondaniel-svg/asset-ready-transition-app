@@ -509,6 +509,17 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               <li><strong className="text-foreground">Gap Analysis:</strong> AI agent compares current statuses against acceptable_status rules</li>
               <li><strong className="text-foreground">Quality Scoring:</strong> 0–100 composite score (completeness 30%, maturity 30%, RLMU compliance 25%, consistency 15%)</li>
             </ul>
+
+            <Card className="bg-primary/5 border-primary/20 mt-4">
+              <CardContent className="pt-4">
+                <p className="text-xs">
+                  <strong className="text-foreground">Sally — ORSH's Document Intelligence Agent</strong> — integrates directly with external DMS platforms 
+                  including Assai, Wrench, Documentum and SharePoint. Sally can check live document status, identify gaps, score quality and create tasks 
+                  from document issues. Future capability: Sally will autonomously fetch and read the Master Document Register directly from Assai 
+                  without any manual action required.
+                </p>
+              </CardContent>
+            </Card>
           </Section>
 
           <Separator />
