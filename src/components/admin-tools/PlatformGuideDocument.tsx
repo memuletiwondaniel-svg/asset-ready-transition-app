@@ -102,7 +102,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               <p className="text-sm text-muted-foreground">Living document — covers all workflows, codes, tables, roles, and automations</p>
               <div className="flex items-center gap-1.5 mt-1">
                 <Calendar className="h-3 w-3 text-muted-foreground/70" />
-                <span className="text-xs text-muted-foreground/70">Last updated: 22 March 2026</span>
+                <span className="text-xs text-muted-foreground/70">Last updated: 24 March 2026</span>
               </div>
             </div>
           </div>
