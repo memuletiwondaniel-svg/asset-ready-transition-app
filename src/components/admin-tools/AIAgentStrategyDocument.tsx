@@ -254,9 +254,9 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <div className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
                   <p className="text-xs">
-                    <strong className="text-foreground">CURRENT MODEL STRATEGY — Updated March 2026:</strong> All three active ORSH agents 
-                    have been migrated from the Lovable AI Gateway (OpenAI GPT-5-mini / Google Gemini) to the Anthropic API running on 
-                    Claude Sonnet 4.5 (claude-sonnet-4-5). The migration was completed successfully on 23 March 2026.
+                    <strong className="text-foreground">CURRENT MODEL STRATEGY — Updated March 2026:</strong> All four active ORSH agents (Bob, Selma, Fred, Hannah) 
+                    run on the Anthropic API with Claude Sonnet 4.5 (claude-sonnet-4-5). The migration from the Lovable AI Gateway was completed on 23 March 2026. 
+                    Hannah (P2A Handover Intelligence) was added 24 March 2026 as the cross-agent readiness orchestrator.
                     The Lovable AI Gateway has been completely removed from the ai-chat Edge Function. All LLM calls now go directly 
                     to https://api.anthropic.com/v1/messages using the ANTHROPIC_API_KEY stored as a Supabase Edge Function secret.
                   </p>
