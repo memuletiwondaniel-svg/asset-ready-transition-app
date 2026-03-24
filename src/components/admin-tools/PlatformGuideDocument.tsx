@@ -577,6 +577,66 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           <Separator />
 
+          {/* 10b. Meet the ORSH AI Agents */}
+          <Section id="ai-agents" icon={<Users className="h-5 w-5 text-primary" />} title="10b. Meet the ORSH AI Agents">
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="pt-4">
+                <p className="text-xs font-semibold text-foreground mb-2">ORSH AI Agents — March 2026 Update</p>
+                <p className="text-xs">
+                  ORSH now runs three active AI agents, all powered by <strong className="text-foreground">Claude Sonnet 4.5 (Anthropic)</strong>.
+                </p>
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-3 mt-3">
+              <Card className="bg-muted/30 border-border">
+                <CardContent className="pt-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">1. Bob CoPilot — Central Router & Conversational AI</h3>
+                  <p className="text-xs">
+                    Bob receives all user messages, detects intent, routes to the correct specialist agent, and synthesises responses. 
+                    Bob has <strong className="text-foreground">14 tools</strong> covering PSSR status, project information, team queries, navigation and general platform help. 
+                    Bob is always the first point of contact — users talk to Bob, Bob decides who answers.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-muted/30 border-border">
+                <CardContent className="pt-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">2. Sally — Document Intelligence Specialist</h3>
+                  <p className="text-xs">
+                    Sally is ORSH's specialist for all document management intelligence. She has <strong className="text-foreground">13 active tools</strong> covering 
+                    document readiness analysis, quality scoring, gap identification, numbering configuration, and ORA linkage. 
+                    Ask Sally anything about documents: status, gaps, quality scores, what's blocking handover, how documents link to ORA phases.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-muted/30 border-border">
+                <CardContent className="pt-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">3. PSSR/ORA Agent — Safety Review & Activity Planning Specialist</h3>
+                  <p className="text-xs">
+                    The PSSR/ORA Agent has <strong className="text-foreground">14 tools</strong> covering Pre-Startup Safety Review management, 
+                    ORA activity planning, checklist intelligence and safety readiness assessment.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="bg-amber-500/5 border-amber-500/20 mt-3">
+              <CardContent className="pt-4">
+                <p className="text-xs font-semibold text-foreground mb-2">How to use the agents</p>
+                <ul className="list-disc pl-5 space-y-1 text-xs">
+                  <li>All agents are accessed through the <strong className="text-foreground">Bob CoPilot chat interface</strong> (Ask Bob in the navigation)</li>
+                  <li>Bob automatically routes your question to the right specialist</li>
+                  <li>You do not need to address Sally or the PSSR/ORA Agent directly — Bob handles routing</li>
+                  <li>Example: asking <em>"What is the document quality score for project DP-368?"</em> will automatically route to Sally</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </Section>
+
+          <Separator />
+
           {/* 11. Coding Conventions */}
           <Section id="coding-conventions" icon={<Code className="h-5 w-5 text-primary" />} title="11. Coding Conventions & ID Formats">
             <InfoTable headers={['Entity', 'Format', 'Example', 'Generator Function']} rows={[
