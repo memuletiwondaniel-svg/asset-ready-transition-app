@@ -4595,12 +4595,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             .maybeSingle();
           pssrLabel = pssr?.pssr_id || pssr?.title || args.pssr_id;
         } else if (args.project_code) {
-          const { data: pssrs } = await supabaseClient
-            .from('pssrs')
-            .select('id, pssr_id, title, asset')
-            .or(`pssr_id.ilike.%${args.project_code}%,title.ilike.%${args.project_code}%,asset.ilike.%${args.project_code}%,project_name.ilike.%${args.project_code}%`)
-            .limit(1)
-            .maybeSingle();
+          const pssrs = await findPssrByCode(supabaseClient, String(args.project_code));
           
           if (!pssrs) {
             return { error: `No PSSR found for project "${args.project_code}"` };
