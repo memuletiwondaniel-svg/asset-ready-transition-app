@@ -70,6 +70,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
     { id: 'training', label: 'Training Management' },
     { id: 'dms', label: 'Document Management System (DMS)' },
     { id: 'ai-agent', label: 'AI Agent Architecture (Bob CoPilot)' },
+    { id: 'ai-agents', label: 'Meet the ORSH AI Agents' },
     { id: 'coding-conventions', label: 'Coding Conventions & ID Formats' },
     { id: 'roles', label: 'Roles & Permissions Configuration' },
     { id: 'database-schema', label: 'Database Schema & Tables' },
