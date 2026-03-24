@@ -1116,8 +1116,9 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
           {/* Footer */}
           <div className="text-center text-xs text-muted-foreground py-6 border-t border-border">
-            <p>This is a living document maintained within the ORSH platform.</p>
+            <p><strong className="text-foreground">ORSH Platform Guide — Living Document</strong></p>
             <p>Updated continuously as new features, workflows, and tables are added.</p>
+            <p>Last updated: 24 March 2026 — Sally agent introduced, Claude migration complete.</p>
           </div>
         </div>
       </div>
