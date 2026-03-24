@@ -3414,10 +3414,6 @@ function detectAgentDomain(message: string): string {
     return 'cmms_agent';
   }
   
-  // ORM agent triggers (planned)
-  if (/\b(manpower|staffing|headcount|organizational readiness|manning|recruitment|organizational capability)\b/i.test(lower)) {
-    return 'orm_agent';
-  }
   
   return 'copilot';
 }

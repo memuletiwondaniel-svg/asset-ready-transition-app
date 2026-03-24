@@ -852,7 +852,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['Q1 2026', 'Hannah (P2A Handover)', '12 tools — VCR readiness, punch list, ITR, PAC/FAC, cross-agent aggregation', 'Active'],
                 ['Q2 2026', 'Zain (Training Agent)', 'Training plan tools, competency gap analysis (Claude Haiku)', 'Planned'],
                 ['Q2 2026', 'Alex (CMMS Agent)', 'Equipment care tools, maintenance readiness (Claude Haiku)', 'Planned'],
-                ['Q2 2026', 'ORM Agent', 'Manpower readiness tools, staffing gaps (Claude Haiku)', 'Planned'],
+                
                 ['Q3 2026', 'Cross-Agent Reasoning', 'A2A cross_reference messages, Claude synthesis', 'Planned'],
                 ['Q3 2026', 'Predictive Analytics', 'Trend forecasting, schedule risk alerts', 'Planned'],
                 ['Q4 2026', 'RAG + Performance Dashboard', 'Vector search over docs, agent metrics UI', 'Planned'],
