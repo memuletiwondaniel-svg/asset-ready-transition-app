@@ -1,0 +1,1 @@
+UPDATE ai_agent_registry SET model_id = 'claude-sonnet-4-5', updated_at = now() WHERE agent_code IN ('copilot', 'document_agent', 'pssr_ora_agent');
