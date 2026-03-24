@@ -6709,9 +6709,13 @@ serve(async (req) => {
     // No tool calls - return direct response as SSE
     const directContent = textContent || "I'm here to help. What would you like to know?";
     
-    // Log response for continuous training pipeline
+    // Log response and persist memory
     logResponseFeedback(supabase, null, detectedAgent, [], Date.now() - requestStartTime)
       .catch(e => console.error('Feedback log error:', e));
+    if (currentUserId) {
+      extractAndPersistContext(supabase, currentUserId, messages)
+        .catch(e => console.error('Context persist error:', e));
+    }
     
     const sseData = `data: ${JSON.stringify({
       choices: [{ delta: { content: directContent } }]
