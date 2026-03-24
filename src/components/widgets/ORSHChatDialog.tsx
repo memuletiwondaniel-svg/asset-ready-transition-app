@@ -779,7 +779,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                 /* Welcome Screen */
                 <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
                   <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-6 shadow-lg">
-                    <Sparkles className="h-8 w-8 text-white" />
+                    <span className="text-3xl font-bold text-white">B</span>
                   </div>
                   <h1 className="text-2xl font-bold mb-2">Hi, I'm Bob</h1>
                   <p className="text-muted-foreground mb-8 max-w-md">
