@@ -734,11 +734,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     {isProfileLoading ? (
                       <span className="inline-block animate-pulse bg-muted rounded h-8 w-48" />
                     ) : (
-                      <>{getGreeting()}, {userProfile?.full_name?.split(' ')[0] || 'User'}!</>
+                      <>{getGreeting()}, {userProfile?.full_name?.split(' ')[0] || 'User'}</>
                     )}
                   </h1>
-                  <p className="text-sm text-muted-foreground mb-4 sm:mb-6">
-                    {t.askBobAnything || 'Ask Bob anything about ORSH'}
+                  <p className="text-sm text-muted-foreground mb-4 sm:mb-6 max-w-md">
+                    {greetingSubtitle || (t.askBobAnything || 'What are we tackling today?')}
                   </p>
                   
                   {/* Bob Input Field */}
