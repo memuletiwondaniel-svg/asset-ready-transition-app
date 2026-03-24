@@ -6688,9 +6688,13 @@ serve(async (req) => {
         finalContent += ` ${JSON.stringify(navigationAction)}`;
       }
       
-      // Log response for continuous training pipeline
+      // Log response and persist memory
       logResponseFeedback(supabase, null, detectedAgent, toolCallNames, Date.now() - requestStartTime)
         .catch(e => console.error('Feedback log error:', e));
+      if (currentUserId) {
+        extractAndPersistContext(supabase, currentUserId, messages)
+          .catch(e => console.error('Context persist error:', e));
+      }
       
       // Return as SSE format for compatibility with frontend
       const sseData = `data: ${JSON.stringify({
