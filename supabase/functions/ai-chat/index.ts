@@ -3304,7 +3304,6 @@ const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; m
   },
   training_agent: { tools: [], domains: ['training', 'competency', 'learning'], model: 'claude-sonnet-4-5' },
   cmms_agent: { tools: [], domains: ['cmms', 'maintenance', 'equipment', 'spares'], model: 'claude-sonnet-4-5' },
-  orm_agent: { tools: [], domains: ['orm', 'manpower', 'staffing', 'organization'], model: 'claude-sonnet-4-5' },
 };
 
 // Route an A2A message to the target agent's tools
@@ -3415,10 +3414,6 @@ function detectAgentDomain(message: string): string {
     return 'cmms_agent';
   }
   
-  // ORM agent triggers (planned)
-  if (/\b(manpower|staffing|headcount|organizational readiness|manning|recruitment|organizational capability)\b/i.test(lower)) {
-    return 'orm_agent';
-  }
   
   return 'copilot';
 }

@@ -213,11 +213,6 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                         <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">PLANNED</Badge>
                       </div>
-                      <div className="bg-blue-500/5 rounded p-2 border border-blue-500/20">
-                        <p className="font-semibold text-foreground">ORM Agent</p>
-                        <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
-                        <Badge variant="outline" className="mt-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">PLANNED</Badge>
-                      </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="bg-muted/50 rounded p-2 border border-border">
@@ -274,7 +269,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['Ivan (Process TA)', 'claude-sonnet-4-5', 'Anthropic', 'HAZOP, STQ, MOC, cumulative risk, operational registers', 'Active'],
                 ['Zain — Training Intelligence (Phase 2)', 'claude-haiku', 'Anthropic', 'Training queries, competency gaps', 'Planned'],
                 ['Alex — CMMS & Maintenance (Phase 2)', 'claude-haiku', 'Anthropic', 'Maintenance, equipment, spares', 'Planned'],
-                ['ORM Agent (Phase 2)', 'claude-haiku', 'Anthropic', 'Manpower, staffing, organizational readiness', 'Planned'],
+                
               ]}
             />
 
@@ -290,7 +285,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                   <li><strong className="text-foreground">Ivan (Process TA):</strong> Claude Sonnet 4.5 — process safety domain requiring precision, cumulative risk assessment, and cross-agent aggregation</li>
                   <li><strong className="text-foreground">Zain — Training Intelligence (planned):</strong> Will use Claude Haiku — training queries are structured and domain-specific</li>
                   <li><strong className="text-foreground">Alex — CMMS & Maintenance (planned):</strong> Will use Claude Haiku — maintenance queries are lookup-heavy, speed matters</li>
-                  <li><strong className="text-foreground">ORM Agent (planned):</strong> Will use Claude Haiku — manpower queries are data-centric</li>
+                  
                 </ul>
               </CardContent>
             </Card>
@@ -315,7 +310,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['ivan', 'Ivan (Process TA)', 'claude-sonnet-4-5', 'Active', '17', 'hazop, stq, moc, override, cumulative_risk, pid, safeguarding, omar, simops, flow_assurance'],
                 ['training_agent', 'Zain (Training Intelligence)', 'claude-haiku', 'Planned', '0', 'training, competency, learning'],
                 ['cmms_agent', 'Alex (CMMS & Maintenance)', 'claude-haiku', 'Planned', '0', 'cmms, maintenance, equipment, spares'],
-                ['orm_agent', 'ORM AI Agent', 'claude-haiku', 'Planned', '0', 'orm, manpower, staffing, organization'],
+                
               ]}
             />
 
@@ -329,7 +324,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                     ['hannah', 'p2a, handover, vcr, itr, punch list, punchlist, itp, pac, fac, commissioning, gocompletions, rfsu, rfo, system readiness, owl'],
                     ['training_agent', 'training, competency, competence, learning, course, certification, skill gap'],
                     ['cmms_agent', 'cmms, maintenance, equipment care, spare parts, reliability, preventive maintenance'],
-                    ['orm_agent', 'manpower, staffing, headcount, organizational readiness, manning, recruitment'],
+                    
                     ['copilot (default)', 'Everything else — PSSR, ORA, projects, navigation, general platform help'],
                   ]}
                 />
@@ -477,13 +472,13 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-2 mb-2">
                     <StatusBadge status="in-progress" />
-                    <h3 className="font-semibold text-foreground text-sm">Phase 2 — Feedback Loops + Training/CMMS/ORM Agents</h3>
+                    <h3 className="font-semibold text-foreground text-sm">Phase 2 — Feedback Loops + Training/CMMS Agents</h3>
                   </div>
                   <ul className="list-disc list-inside space-y-1 text-xs">
                     <li>Thumbs up/down UI in chat — stores to <code className="bg-muted px-1 rounded">ai_response_feedback</code></li>
                     <li>Zain (Training Agent) tools (training plan analysis, competency gaps, cost tracking)</li>
                     <li>Alex (CMMS Agent) tools (equipment care, spare parts, maintenance readiness)</li>
-                    <li>ORM Agent tools (manpower readiness, staffing gaps, organizational capability)</li>
+                    
                     <li>Persistent conversation memory — cross-conversation context</li>
                     <li>Dynamic few-shot examples injected from approved response patterns</li>
                     <li>Document Intelligence build sequence (Phases 1-9) now in progress alongside Phase 2</li>
@@ -857,7 +852,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['Q1 2026', 'Hannah (P2A Handover)', '12 tools — VCR readiness, punch list, ITR, PAC/FAC, cross-agent aggregation', 'Active'],
                 ['Q2 2026', 'Zain (Training Agent)', 'Training plan tools, competency gap analysis (Claude Haiku)', 'Planned'],
                 ['Q2 2026', 'Alex (CMMS Agent)', 'Equipment care tools, maintenance readiness (Claude Haiku)', 'Planned'],
-                ['Q2 2026', 'ORM Agent', 'Manpower readiness tools, staffing gaps (Claude Haiku)', 'Planned'],
+                
                 ['Q3 2026', 'Cross-Agent Reasoning', 'A2A cross_reference messages, Claude synthesis', 'Planned'],
                 ['Q3 2026', 'Predictive Analytics', 'Trend forecasting, schedule risk alerts', 'Planned'],
                 ['Q4 2026', 'RAG + Performance Dashboard', 'Vector search over docs, agent metrics UI', 'Planned'],
