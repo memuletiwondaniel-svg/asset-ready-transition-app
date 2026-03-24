@@ -131,7 +131,8 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">
                 ORSH employs a <strong className="text-foreground">Google A2A-inspired multi-agent architecture</strong> where 
                 <strong className="text-foreground"> Bob</strong> (the CoPilot) serves as the central orchestrator, routing queries to 
-                specialist domain agents via a structured Agent-to-Agent (A2A) communication protocol. Each agent has its own 
+                specialist domain agents via a structured Agent-to-Agent (A2A) communication protocol. <strong className="text-foreground">Hannah</strong> (P2A Handover Intelligence) 
+                serves as the cross-agent readiness conductor, aggregating data from Selma, Fred, Zain, and Alex into handover verdicts. Each agent has its own 
                 optimized LLM model, tool registry, and domain knowledge — enabling independent scaling, training, and improvement.
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed">
@@ -195,13 +196,18 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                         <p className="text-muted-foreground">Claude Sonnet 4.5 | 14 tools | Safety reviews</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
+                      <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
+                        <p className="font-semibold text-foreground">Hannah (P2A Handover Intelligence)</p>
+                        <p className="text-muted-foreground">Claude Sonnet 4.5 | 12 tools | Handover readiness orchestrator</p>
+                        <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="bg-blue-500/5 rounded p-2 border border-blue-500/20">
                         <p className="font-semibold text-foreground">Zain (Training Intelligence)</p>
                         <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">PLANNED</Badge>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="bg-blue-500/5 rounded p-2 border border-blue-500/20">
                         <p className="font-semibold text-foreground">Alex (CMMS & Maintenance)</p>
                         <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
@@ -212,6 +218,8 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                         <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">PLANNED</Badge>
                       </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="bg-muted/50 rounded p-2 border border-border">
                         <p className="font-semibold text-foreground">A2A Protocol Bus</p>
                         <p className="text-muted-foreground">JSON-RPC envelope | Logged to DB</p>
@@ -246,9 +254,9 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <div className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
                   <p className="text-xs">
-                    <strong className="text-foreground">CURRENT MODEL STRATEGY — Updated March 2026:</strong> All three active ORSH agents 
-                    have been migrated from the Lovable AI Gateway (OpenAI GPT-5-mini / Google Gemini) to the Anthropic API running on 
-                    Claude Sonnet 4.5 (claude-sonnet-4-5). The migration was completed successfully on 23 March 2026.
+                    <strong className="text-foreground">CURRENT MODEL STRATEGY — Updated March 2026:</strong> All four active ORSH agents (Bob, Selma, Fred, Hannah) 
+                    run on the Anthropic API with Claude Sonnet 4.5 (claude-sonnet-4-5). The migration from the Lovable AI Gateway was completed on 23 March 2026. 
+                    Hannah (P2A Handover Intelligence) was added 24 March 2026 as the cross-agent readiness orchestrator.
                     The Lovable AI Gateway has been completely removed from the ai-chat Edge Function. All LLM calls now go directly 
                     to https://api.anthropic.com/v1/messages using the ANTHROPIC_API_KEY stored as a Supabase Edge Function secret.
                   </p>
@@ -262,6 +270,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['Bob CoPilot', 'claude-sonnet-4-5', 'Anthropic', 'Complex routing, multi-domain reasoning', 'Active'],
                 ['Selma (Document Intelligence)', 'claude-sonnet-4-5', 'Anthropic', 'Document intelligence specialist', 'Active'],
                 ['Fred (PSSR/ORA Agent)', 'claude-sonnet-4-5', 'Anthropic', 'Safety-critical domain', 'Active'],
+                ['Hannah (P2A Handover)', 'claude-sonnet-4-5', 'Anthropic', 'Handover readiness orchestration, cross-agent aggregation', 'Active'],
                 ['Zain — Training Intelligence (Phase 2)', 'claude-haiku', 'Anthropic', 'Training queries, competency gaps', 'Planned'],
                 ['Alex — CMMS & Maintenance (Phase 2)', 'claude-haiku', 'Anthropic', 'Maintenance, equipment, spares', 'Planned'],
                 ['ORM Agent (Phase 2)', 'claude-haiku', 'Anthropic', 'Manpower, staffing, organizational readiness', 'Planned'],
@@ -276,6 +285,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                   <li><strong className="text-foreground">CoPilot (Bob):</strong> Claude Sonnet 4.5 — strong reasoning for multi-domain routing, tool selection, and nuanced responses</li>
                   <li><strong className="text-foreground">Selma (Document Intelligence):</strong> Claude Sonnet 4.5 — accurate SQL-based analysis and status calculations</li>
                   <li><strong className="text-foreground">Fred (PSSR/ORA):</strong> Claude Sonnet 4.5 — safety-critical domain requiring high accuracy</li>
+                  <li><strong className="text-foreground">Hannah (P2A Handover):</strong> Claude Sonnet 4.5 — cross-agent readiness orchestration requiring complex multi-source aggregation</li>
                   <li><strong className="text-foreground">Zain — Training Intelligence (planned):</strong> Will use Claude Haiku — training queries are structured and domain-specific</li>
                   <li><strong className="text-foreground">Alex — CMMS & Maintenance (planned):</strong> Will use Claude Haiku — maintenance queries are lookup-heavy, speed matters</li>
                   <li><strong className="text-foreground">ORM Agent (planned):</strong> Will use Claude Haiku — manpower queries are data-centric</li>
@@ -299,6 +309,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['copilot', 'Bob CoPilot', 'claude-sonnet-4-5', 'Active', '14', 'pssr, ora, orm, platform, navigation'],
                 ['document_agent', 'Selma', 'claude-sonnet-4-5', 'Active', '13', 'dms, document, readiness, quality, maturity, handover'],
                 ['pssr_ora_agent', 'Fred (PSSR & ORA)', 'claude-sonnet-4-5', 'Active', '14', 'pssr, safety, checklist, operational readiness'],
+                ['hannah', 'Hannah (P2A Handover)', 'claude-sonnet-4-5', 'Active', '12', 'p2a, handover, vcr, itr, punchlist, pac, fac, commissioning, rfsu, rfo'],
                 ['training_agent', 'Zain (Training Intelligence)', 'claude-haiku', 'Planned', '0', 'training, competency, learning'],
                 ['cmms_agent', 'Alex (CMMS & Maintenance)', 'claude-haiku', 'Planned', '0', 'cmms, maintenance, equipment, spares'],
                 ['orm_agent', 'ORM AI Agent', 'claude-haiku', 'Planned', '0', 'orm, manpower, staffing, organization'],
@@ -312,6 +323,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                   headers={['Agent', 'Trigger Keywords']}
                   rows={[
                     ['document_agent', 'document, dms, readiness, numbering, afc, ifr, ifc, rlmu, assai, documentum, wrench'],
+                    ['hannah', 'p2a, handover, vcr, itr, punch list, punchlist, itp, pac, fac, commissioning, gocompletions, rfsu, rfo, system readiness, owl'],
                     ['training_agent', 'training, competency, competence, learning, course, certification, skill gap'],
                     ['cmms_agent', 'cmms, maintenance, equipment care, spare parts, reliability, preventive maintenance'],
                     ['orm_agent', 'manpower, staffing, headcount, organizational readiness, manning, recruitment'],
@@ -354,6 +366,18 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['create_task_from_document_gap', 'Document', 'dms_document_types, user_tasks', 'Active — v4.0'],
                 ['get_document_quality_score', 'Document', 'dms_document_types, dms_status_codes', 'Active — v5.0'],
                 ['get_document_ora_linkage', 'Document', 'dms_document_types, orp_plans, p2a_handover_plans', 'Active — v5.0'],
+                ['get_vcr_readiness_summary', 'Hannah', 'p2a_handover_points, p2a_vcr_prerequisites, vcr_document_requirements', 'Active'],
+                ['get_itr_status_by_system', 'Hannah', 'p2a_systems, p2a_subsystems', 'Active'],
+                ['get_punch_list_status', 'Hannah', 'p2a_vcr_prerequisites', 'Active'],
+                ['get_itp_completion', 'Hannah', 'p2a_systems', 'Active'],
+                ['get_system_handover_readiness', 'Hannah', 'Multi-table aggregation', 'Active'],
+                ['get_vcr_prerequisites_status', 'Hannah', 'p2a_vcr_prerequisites', 'Active'],
+                ['get_pac_readiness', 'Hannah', 'p2a_handover_approvers, p2a_vcr_prerequisites', 'Active'],
+                ['get_owl_items', 'Hannah', 'outstanding_work_items', 'Active'],
+                ['get_p2a_approval_status', 'Hannah', 'p2a_handover_approvers', 'Active'],
+                ['aggregate_handover_readiness', 'Hannah', 'Cross-agent A2A aggregation', 'Active'],
+                ['get_gocompletions_sync_status', 'Hannah', 'p2a_systems', 'Active'],
+                ['flag_startup_risk', 'Hannah', 'Multi-source risk scan', 'Active'],
                 ['navigate_to_page', 'CoPilot', 'N/A (frontend action)', 'Active'],
                 ['resolve_entity_for_navigation', 'CoPilot', 'pssrs, projects, orp_plans', 'Active'],
               ]}
@@ -391,13 +415,13 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             <InfoTable
               headers={['Message Type', 'Direction', 'Purpose', 'Example']}
               rows={[
-                ['data_request', 'Agent A -> Agent B', 'Request specific data via a tool', 'CoPilot asks Selma for readiness %'],
+                ['data_request', 'Agent A -> Agent B', 'Request specific data via a tool', 'Hannah asks Selma for document readiness per VCR'],
                 ['data_response', 'Agent B -> Agent A', 'Return requested data', 'Selma returns 25% readiness'],
                 ['insight_share', 'Any -> Any', 'Proactively share a finding', 'Selma alerts: "8 Process docs still in Draft"'],
                 ['escalation', 'Specialist -> CoPilot', 'Escalate complex query that needs multi-domain reasoning', 'Zain: "Need PSSR data to assess training gaps"'],
                 ['context_handoff', 'Agent A -> Agent B', 'Transfer conversation context for continuity', 'CoPilot hands off DMS context to Selma'],
-                ['cross_reference', 'CoPilot -> Multiple', 'Gather data from multiple agents simultaneously', 'CoPilot queries Selma + Fred for integrated view'],
-                ['alert', 'Any -> CoPilot', 'Critical finding that needs user attention', 'Alex: "5 critical equipment items without maintenance plans"'],
+                ['cross_reference', 'Hannah -> Multiple', 'Gather data from multiple agents simultaneously', 'Hannah queries Selma + Fred + Zain + Alex for handover verdict'],
+                ['alert', 'Any -> CoPilot', 'Critical finding that needs user attention', 'Hannah: "3 open Punch List A items blocking PAC issuance"'],
               ]}
             />
 
@@ -435,7 +459,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                   </div>
                   <ul className="list-disc list-inside space-y-1 text-xs">
                     <li>Static system prompt with comprehensive domain knowledge</li>
-                    <li>20 SQL-backed tool functions across 3 active agents</li>
+                    <li>53 SQL-backed tool functions across 4 active agents (Bob, Selma, Fred, Hannah)</li>
                     <li>A2A communication protocol implemented and logging to database</li>
                     <li>Agent registry in PostgreSQL with model assignments</li>
                     <li>Response feedback logging (latency, tools used, agent detected)</li>
@@ -827,8 +851,9 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['Q1 2026', 'Advanced Document Tools (v4)', 'Cross-discipline, bulk status, trend analysis, task creation (11 tools)', 'Complete'],
                 ['Q1 2026', 'Autonomous Training + Quality Score (v5)', 'Auto-apply improvements, self-healing edge cases, quality scoring, ORA linkage (13 tools)', 'Complete'],
                 ['Q1 2026', 'Anthropic Migration (v6)', 'Claude Sonnet 4.5 migration, Selma naming, Document Intelligence build sequence', 'Complete'],
-                ['Q2 2026', 'Training Agent', 'Training plan tools, competency gap analysis (Claude Haiku)', 'Planned'],
-                ['Q2 2026', 'CMMS Agent', 'Equipment care tools, maintenance readiness (Claude Haiku)', 'Planned'],
+                ['Q1 2026', 'Hannah (P2A Handover)', '12 tools — VCR readiness, punch list, ITR, PAC/FAC, cross-agent aggregation', 'Active'],
+                ['Q2 2026', 'Zain (Training Agent)', 'Training plan tools, competency gap analysis (Claude Haiku)', 'Planned'],
+                ['Q2 2026', 'Alex (CMMS Agent)', 'Equipment care tools, maintenance readiness (Claude Haiku)', 'Planned'],
                 ['Q2 2026', 'ORM Agent', 'Manpower readiness tools, staffing gaps (Claude Haiku)', 'Planned'],
                 ['Q3 2026', 'Cross-Agent Reasoning', 'A2A cross_reference messages, Claude synthesis', 'Planned'],
                 ['Q3 2026', 'Predictive Analytics', 'Trend forecasting, schedule risk alerts', 'Planned'],
@@ -846,7 +871,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <br />
                 Continuously updated as new agents are built, tools added, and training strategy evolves.
                 <br />
-                Last updated: March 2026 — Alex confirmed as CMMS Agent name. Zain confirmed as Training Agent. Fred (formerly Rex) as PSSR/ORA Agent. Selma as Document Agent.
+                Last updated: March 2026 — Hannah confirmed as P2A Handover Intelligence Agent (active, claude-sonnet-4-5, 12 tools, cross-agent readiness orchestrator). Alex as CMMS Agent. Zain as Training Agent. Fred as PSSR/ORA Agent. Selma as Document Agent.
               </p>
             </CardContent>
           </Card>
