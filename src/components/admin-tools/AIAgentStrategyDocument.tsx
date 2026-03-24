@@ -310,7 +310,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['ivan', 'Ivan (Process TA)', 'claude-sonnet-4-5', 'Active', '17', 'hazop, stq, moc, override, cumulative_risk, pid, safeguarding, omar, simops, flow_assurance'],
                 ['training_agent', 'Zain (Training Intelligence)', 'claude-haiku', 'Planned', '0', 'training, competency, learning'],
                 ['cmms_agent', 'Alex (CMMS & Maintenance)', 'claude-haiku', 'Planned', '0', 'cmms, maintenance, equipment, spares'],
-                ['orm_agent', 'ORM AI Agent', 'claude-haiku', 'Planned', '0', 'orm, manpower, staffing, organization'],
+                
               ]}
             />
 
