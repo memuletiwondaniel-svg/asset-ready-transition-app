@@ -6383,10 +6383,17 @@ serve(async (req) => {
     // User ID from verified JWT
     const currentUserId: string | null = (_claimsData.claims.sub as string) || null;
 
-    // Load personalization context
+    // Load personalization context (non-blocking, 2s timeout, never fails the request)
     let userContextPrompt = '';
     if (currentUserId) {
-      userContextPrompt = await loadUserContext(supabase, currentUserId);
+      try {
+        const contextPromise = loadUserContext(supabase, currentUserId);
+        const timeoutPromise = new Promise<string>((resolve) => setTimeout(() => resolve(''), 2000));
+        userContextPrompt = await Promise.race([contextPromise, timeoutPromise]);
+      } catch {
+        userContextPrompt = '';
+        console.log('⚠️ MEMORY: Context load failed silently, proceeding without memory');
+      }
     }
 
     // Check last user message for injection attempts - BLOCK if detected
