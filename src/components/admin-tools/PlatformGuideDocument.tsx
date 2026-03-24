@@ -628,7 +628,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
                 <ul className="list-disc pl-5 space-y-1 text-xs">
                   <li>All agents are accessed through the <strong className="text-foreground">Bob CoPilot chat interface</strong> (Ask Bob in the navigation)</li>
                   <li>Bob automatically routes your question to the right specialist</li>
-                  <li>You do not need to address Selma or the PSSR/ORA Agent directly — Bob handles routing</li>
+                  <li>You do not need to address Selma or Fred (PSSR/ORA Agent) directly — Bob handles routing</li>
                   <li>Example: asking <em>"What is the document quality score for project DP-368?"</em> will automatically route to Selma</li>
                 </ul>
               </CardContent>

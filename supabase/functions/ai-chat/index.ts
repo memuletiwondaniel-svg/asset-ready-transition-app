@@ -3141,21 +3141,26 @@ const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; m
   copilot: { 
     tools: ['get_pssr_stats', 'get_checklist_item_stats', 'get_priority_action_stats', 'get_team_member_info', 'get_region_info', 'get_project_info', 'get_hub_info', 'navigate_to_page', 'resolve_entity_for_navigation', 'get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_pssr_detailed_summary', 'get_discipline_status', 'get_executive_summary'],
     domains: ['pssr', 'ora', 'orm', 'platform', 'navigation'],
-    model: 'openai/gpt-5-mini'
+    model: 'claude-sonnet-4-5'
   },
   document_agent: {
     tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink', 'get_document_cross_discipline_comparison', 'get_document_search_by_number', 'get_document_bulk_status', 'get_document_trend_analysis', 'create_task_from_document_gap', 'get_document_quality_score', 'get_document_ora_linkage'],
     domains: ['dms', 'document', 'readiness', 'numbering', 'afc', 'ifr', 'rlmu', 'trend', 'velocity', 'comparison', 'quality', 'maturity', 'handover'],
-    model: 'openai/gpt-5-mini'
+    model: 'claude-sonnet-4-5'
+  },
+  pssr_ora_agent: {
+    tools: ['get_pssr_stats', 'get_checklist_item_stats', 'get_priority_action_stats', 'get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_pssr_detailed_summary', 'get_discipline_status', 'get_executive_summary', 'get_pssr_checklist_details', 'get_ora_activity_status', 'get_ora_plan_summary', 'get_safety_readiness_score', 'get_sof_status', 'get_pssr_walkdown_items'],
+    domains: ['pssr', 'ora', 'safety', 'checklist', 'sof', 'startup_safety'],
+    model: 'claude-sonnet-4-5'
   },
   hannah: {
     tools: ['get_vcr_readiness_summary', 'get_itr_status_by_system', 'get_punch_list_status', 'get_itp_completion', 'get_system_handover_readiness', 'get_vcr_prerequisites_status', 'get_pac_readiness', 'get_owl_items', 'get_p2a_approval_status', 'aggregate_handover_readiness', 'get_gocompletions_sync_status', 'flag_startup_risk'],
     domains: ['p2a', 'handover', 'vcr', 'itr', 'punchlist', 'itp', 'commissioning', 'pac', 'fac', 'readiness', 'gocompletions', 'owl', 'rfsu', 'rfo'],
     model: 'claude-sonnet-4-5'
   },
-  training_agent: { tools: [], domains: ['training', 'competency', 'learning'], model: 'google/gemini-3-flash-preview' },
-  cmms_agent: { tools: [], domains: ['cmms', 'maintenance', 'equipment', 'spares'], model: 'google/gemini-3-flash-preview' },
-  orm_agent: { tools: [], domains: ['orm', 'manpower', 'staffing', 'organization'], model: 'google/gemini-3-flash-preview' },
+  training_agent: { tools: [], domains: ['training', 'competency', 'learning'], model: 'claude-sonnet-4-5' },
+  cmms_agent: { tools: [], domains: ['cmms', 'maintenance', 'equipment', 'spares'], model: 'claude-sonnet-4-5' },
+  orm_agent: { tools: [], domains: ['orm', 'manpower', 'staffing', 'organization'], model: 'claude-sonnet-4-5' },
 };
 
 // Route an A2A message to the target agent's tools

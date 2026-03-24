@@ -543,7 +543,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
                 <p className="font-bold text-foreground mb-3">CLAUDE MIGRATION COMPLETE</p>
                 <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
                   <li>All active ORSH AI agents migrated from Lovable AI Gateway to <strong className="text-foreground">Anthropic API</strong></li>
-                  <li>Model: <strong className="text-foreground">claude-sonnet-4-5</strong> for Bob CoPilot, Selma and PSSR/ORA Agent</li>
+                  <li>Model: <strong className="text-foreground">claude-sonnet-4-5</strong> for Bob CoPilot, Selma (Document Intelligence), Fred (PSSR/ORA) and Hannah (P2A Handover)</li>
                   <li>The Lovable AI Gateway dependency eliminated — full Anthropic API control</li>
                   <li><strong className="text-foreground">Selma (Document Agent) confirmed live:</strong> delivered document intelligence analysis showing 988 documents tracked, quality score 45/100, 3 prioritised action items, identified RLMU compliance gap blocking operational handover</li>
                   <li><strong className="text-foreground">Security hardening:</strong> 6 critical issues resolved, enterprise-grade security posture confirmed</li>
