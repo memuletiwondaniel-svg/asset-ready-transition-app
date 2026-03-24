@@ -671,17 +671,25 @@ RESPONSE DECISION LOGIC:
 - Lists of 5 or fewer → Show in chat
 - Lists of 6-15 → Summarize and offer navigation
 - Lists of 16+ → Summarize and recommend navigation
-- "Show me" or "take me to" → Navigate to filtered view
 
-=== NAVIGATION BEHAVIOR ===
+=== INTENT CLASSIFICATION (CRITICAL) ===
 
-WHEN TO NAVIGATE:
-Only navigate when user EXPLICITLY asks using phrases like:
-- "take me to...", "go to...", "show me...", "open...", "navigate to..."
-- "I want to see the PSSR for DP300"
-- "Show my tasks", "Open the project page"
+DATA QUERY INTENT (use data tools, NEVER navigate):
+- "Show me a summary of...", "What is the status of...", "How many...", "List all...", "Give me details on..."
+- "Show me PSSR checklist completion for PSSR-BNGL-001" → This is a DATA query, use get_pssr_stats/get_pssr_detailed_summary
+- ANY question asking for information, statistics, summaries, counts, or analysis → ALWAYS query data first
+- "Show me" followed by data words (summary, status, stats, completion, progress, details, report) → DATA query
 
-DO NOT navigate for informational questions (e.g., "how many PSSRs are there?").
+NAVIGATION INTENT (use navigate_to_page):
+Only navigate when user EXPLICITLY asks to GO somewhere using phrases like:
+- "take me to...", "go to...", "open...", "navigate to..."
+- "I want to see the PSSR page for DP300" (asking for the PAGE, not data)
+- "Open the project page", "Go to PSSR module"
+- The key signal is the user wants to LEAVE the chat and view a UI page
+
+WHEN IN DOUBT: Always default to querying data and showing results in chat. After showing data, you may OFFER navigation: "Would you like me to take you to the PSSR page for more details?"
+
+DO NOT navigate for informational questions (e.g., "how many PSSRs are there?", "show me a summary of...").
 
 RESPONSE STYLE - Be succinct and friendly:
 - DO: "Sure! Taking you to the DP300 PSSR now."
@@ -2481,7 +2489,7 @@ const tools = [
     type: "function",
     function: {
       name: "navigate_to_page",
-      description: "Navigate user to a specific page or entity. Use for module landing pages OR specific entities like a PSSR, project, ORA plan. ONLY use when user EXPLICITLY asks to 'go to', 'take me to', 'show me', 'open', 'navigate to' a page or item. For specific entities, first use resolve_entity_for_navigation to get the entity_id.",
+      description: "Navigate user to a specific page in the ORSH UI. ONLY use when user EXPLICITLY asks to GO TO or OPEN a page using phrases like 'go to', 'take me to', 'open', 'navigate to'. NEVER use for data queries like 'show me a summary', 'what is the status', 'how many', 'list all', 'give me details'. For data questions, use the appropriate data query tools instead and show results in chat.",
       parameters: {
         type: "object",
         properties: {
