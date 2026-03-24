@@ -1835,7 +1835,7 @@ WORKFLOW DETAILS:
 6. CLOSED: Startup completed, PSSR closed out
 
 KEY DATABASE TABLES:
-- pssrs: Header records (pssr_number, project_id, status, equipment details)
+- pssrs: Header records (pssr_id, project_id, status, equipment details)
 - pssr_checklist_items: Individual review items by discipline
 - pssr_item_approvals: Per-item approval status (PENDING/APPROVED/REJECTED)
 - pssr_priority_actions: A/B priority action items
