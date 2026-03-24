@@ -3385,6 +3385,11 @@ async function routeA2AMessage(message: A2AMessage, supabaseClient: any): Promis
 function detectAgentDomain(message: string): string {
   const lower = message.toLowerCase();
   
+  // Ivan (Process Technical Authority Agent) triggers — MUST come before Hannah to catch process safety queries
+  if (/\b(hazop|hazid|hemp\b|process safety|pid review|p&id review|pefs|safeguarding memorandum|psm\b|operating procedure|startup procedure|shutdown procedure|simops|simultaneous operations|omar|operating mode assurance|commissioning procedure|control narrative|cause and effect|c&e matrix|flow assurance|hydrate|slugging|technical authority|ta2|process engineering|design safety|constructability|3d model review|stq\b|site technical query|moc\b|management of change|lock open|lock close|override register|temporary hose|temporary equipment|operational register|daily log|round sheet|cumulative risk|hazop closeout|override risk|bypass|pssr work-?down|startup risk assessment|do not start|safe to start)\b/i.test(lower)) {
+    return 'ivan';
+  }
+  
   // Hannah (P2A Handover Intelligence Agent) triggers — MUST come before document_agent to catch handover-specific queries
   if (/\b(p2a|handover|vcr|itr\b|inspection test record|punch\s?list|punch list a|punch list b|itp\b|inspection test plan|pac\b|fac\b|provisional acceptance|final acceptance|system readiness|hardware readiness|commissioning|gocompletions|rfsu|rfo|handover readiness|owl\b|outstanding work|system completion|subsystem|two phase approval|deputy plant director handover|vcr sign off|vcr prerequisites|hand over|ready to hand over|handover verdict|startup risk|startup blocker)\b/i.test(lower)) {
     return 'hannah';
