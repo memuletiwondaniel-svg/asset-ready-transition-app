@@ -259,7 +259,7 @@ TECHNOLOGY STACK:
 - State Management: React Query (TanStack Query) for server state
 - Routing: React Router v6
 - Backend: Supabase (PostgreSQL + Edge Functions + Auth + Storage)
-- AI: Lovable AI Gateway (Google Gemini models)
+- AI: Anthropic Claude (claude-sonnet-4-5)
 
 APPLICATION STRUCTURE:
 \`\`\`
