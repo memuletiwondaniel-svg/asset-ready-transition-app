@@ -1,62 +1,70 @@
 
-## Step 2 Fix Plan (all requested issues)
 
-### Findings from current code
-- `DocumentSelectionStep.tsx` still uses `rounded-full` for filter chips, which is why Tier/Discipline filters look circular.
-- Filter groups are rendered in one horizontal row (`flex items-center gap-4`) with no wrap strategy, causing right-side cutoff/cramping.
-- Tier row badges are not fixed-size pills yet (currently auto-size with padding), so they can still appear rounded.
-- Systems sidebar data is mapped directly from `p2a_handover_point_systems` join rows without dedupe, so duplicate join rows create duplicate system entries.
-- Header currently shows `Disc.`; we need a cleaner non-cutoff label (`DISC`).
+## Migrate AI Chat from Lovable Gateway to Anthropic API
 
-## Implementation scope
-Single file update: `src/components/widgets/vcr-wizard/steps/critical-docs/DocumentSelectionStep.tsx`  
-(No behavior changes to search, row height, checkbox behavior, navigation, or footer buttons.)
+### Blocker: Missing ANTHROPIC_API_KEY
 
-## Changes to implement
+The `ANTHROPIC_API_KEY` is **not currently stored** in Supabase Edge Function secrets. The 11 existing secrets do not include it. Before implementation can proceed, you need to add this secret.
 
-1. **Tier filter pills (compact rectangular)**
-   - Replace current chip button class with fixed compact pill sizing:
-     - `h-6` (24px), `text-[11px]`, `font-medium`, `px-2.5` (10px), `rounded-[12px]`, `border`.
-   - Remove circular visuals entirely (`rounded-full` removed).
-   - Tier color states:
-     - Tier 1 inactive: light orange border/text; active: filled light orange.
-     - Tier 2 inactive: light blue border/text; active: filled light blue.
-     - RLMU inactive: light gray border/text; active: filled gray.
+---
 
-2. **Discipline filter pills (same compact treatment)**
-   - Apply the same 24px/11px/10px/12px pill geometry to Process, Elect, Inst, Static, Rotating.
-   - Keep each discipline’s existing color identity via active/inactive class pairs.
-   - Remove any leftover circular/dot visual references from chip rendering.
+### Changes Overview
 
-3. **Filter row layout + overflow fix**
-   - Rework filter area into clean grouped rows with explicit order:
-     - Row 1: `TIER` label + tier pills.
-     - Row 2: `DISCIPLINE` label + discipline pills.
-   - Use compact spacing (`gap-2`, i.e. 8px between groups/chips).
-   - Add a thin divider line under filter rows before table header (`border-t`/`h-px bg-border` equivalent).
-   - Keep search bar unchanged above filters.
+**File: `supabase/functions/ai-chat/index.ts`**
 
-4. **Tier badge pills in table rows**
-   - Replace current tier badge style with fixed rectangular chips:
-     - `w-[28px] h-[18px] rounded-[4px] text-[11px] font-medium inline-flex items-center justify-center`.
-   - Color mapping:
-     - T1: light orange fill + orange text.
-     - T2: light blue fill + blue text.
-   - No circular shape classes.
+1. **Replace API key retrieval**
+   - Change `Deno.env.get("LOVABLE_API_KEY")` → `Deno.env.get("ANTHROPIC_API_KEY")`
+   - Update the error message accordingly
 
-5. **Systems sidebar deduplication**
-   - In systems query transform, dedupe returned systems before building `systemTabs`.
-   - Primary dedupe key: system ID (`id`, fallback `system_id`) to eliminate duplicate join rows.
-   - Secondary guard: normalized name dedupe to prevent duplicate labels from data anomalies.
-   - Result: only unique system names shown in sidebar (fixes duplicate “Gas Compressors”).
+2. **Replace both fetch calls** (lines ~6274 and ~6357) from Lovable Gateway to Anthropic Messages API
+   - URL: `https://api.anthropic.com/v1/messages`
+   - Headers: `x-api-key`, `anthropic-version: 2023-06-01`, `content-type: application/json`
+   - Model: `claude-sonnet-4-5`
+   - Max tokens: 4096 for copilot, 2048 for specialist agents (based on `detectedAgent`)
 
-6. **DISC header cleanup**
-   - Change last column header text to `DISC` (11px uppercase muted style retained) so it renders cleanly in the 80px column without awkward truncation.
+3. **Adapt request body format** (OpenAI → Anthropic)
+   - Move system prompt from `messages` array to top-level `system` parameter
+   - Anthropic messages format: `[{role, content}]` without system message in array
+   - Tool definitions: Anthropic uses `input_schema` instead of `parameters`, and wraps differently
+   - Tool results: Anthropic uses `tool_result` content blocks instead of `role: "tool"` messages
 
-## Verification checklist after implementation
-- Tier filters are compact 24px pills, not circles.
-- Discipline filters are compact, color-coded, and no right-side cutoff.
-- Filter section is clean (2-row grouped layout) with divider before table.
-- Row tier badges are small rectangular pills (28x18), not circular.
-- Sidebar shows unique systems only (single “Gas Compressors” entry).
-- Table row height remains exactly 40px; search, checkbox behavior, navigation, and footer CTAs unchanged.
+4. **Agent-specific system prompts**
+   - `detectedAgent === 'copilot'`: Current `BOB_SYSTEM_PROMPT + userContextPrompt` (unchanged content)
+   - `detectedAgent === 'document_agent'`: New dedicated prompt for DMS document readiness, gap analysis, quality scoring, numbering config, ORA phase linkage
+   - `detectedAgent === 'pssr_ora_agent'` (covers PSSR/ORA triggers): New dedicated prompt for PSSR reviews, ORA planning, checklist management, safety readiness
+
+5. **Adapt response parsing** (Anthropic format)
+   - Response: `response.content[0].text` instead of `choices[0].message.content`
+   - Tool calls: `response.content.filter(b => b.type === 'tool_use')` instead of `choices[0].message.tool_calls`
+   - Tool call ID: `block.id`, function name: `block.name`, args: `block.input`
+
+6. **Error handling**
+   - On Anthropic API error: log to `ai_edge_cases` table with `category: 'api_error'`
+   - Return graceful fallback message
+   - Never log API key value
+
+7. **Image support adaptation**
+   - Anthropic uses `{type: "image", source: {type: "url", url}}` instead of `{type: "image_url", image_url: {url}}`
+
+8. **SSE output format stays the same** — still wrap final content in `data: {"choices":[{"delta":{"content":"..."}}]}\n\ndata: [DONE]\n\n` for frontend compatibility
+
+### Data Update (via insert tool)
+
+Update `ai_agent_registry` table:
+```sql
+UPDATE ai_agent_registry SET model_id = 'claude-sonnet-4-5' WHERE agent_code IN ('copilot', 'document_agent', 'pssr_ora_agent');
+```
+
+### What stays untouched
+- All tool definitions and `executeTool()` switch
+- `detectAgentDomain()` routing logic
+- A2A protocol and `routeA2AMessage()`
+- Injection detection and protective responses
+- Deterministic navigation handler
+- Audit logging and feedback collection
+- JWT auth guard and tenant isolation
+- SSE response format to frontend
+
+### Pre-requisite
+I will need to add the `ANTHROPIC_API_KEY` secret before deploying. Please have your Anthropic API key ready.
+
