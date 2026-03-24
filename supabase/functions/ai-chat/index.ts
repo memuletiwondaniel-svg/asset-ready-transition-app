@@ -3049,6 +3049,11 @@ const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; m
     domains: ['dms', 'document', 'readiness', 'numbering', 'afc', 'ifr', 'rlmu', 'trend', 'velocity', 'comparison', 'quality', 'maturity', 'handover'],
     model: 'openai/gpt-5-mini'
   },
+  hannah: {
+    tools: ['get_vcr_readiness_summary', 'get_itr_status_by_system', 'get_punch_list_status', 'get_itp_completion', 'get_system_handover_readiness', 'get_vcr_prerequisites_status', 'get_pac_readiness', 'get_owl_items', 'get_p2a_approval_status', 'aggregate_handover_readiness', 'get_gocompletions_sync_status', 'flag_startup_risk'],
+    domains: ['p2a', 'handover', 'vcr', 'itr', 'punchlist', 'itp', 'commissioning', 'pac', 'fac', 'readiness', 'gocompletions', 'owl', 'rfsu', 'rfo'],
+    model: 'claude-sonnet-4-5'
+  },
   training_agent: { tools: [], domains: ['training', 'competency', 'learning'], model: 'google/gemini-3-flash-preview' },
   cmms_agent: { tools: [], domains: ['cmms', 'maintenance', 'equipment', 'spares'], model: 'google/gemini-3-flash-preview' },
   orm_agent: { tools: [], domains: ['orm', 'manpower', 'staffing', 'organization'], model: 'google/gemini-3-flash-preview' },
