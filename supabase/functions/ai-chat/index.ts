@@ -3266,7 +3266,7 @@ async function getProactiveInsights(supabaseClient: any, scope: string, projectC
       const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
       const { data: stalePssrs } = await supabaseClient
         .from('pssrs')
-        .select('id, pssr_number, status, created_at')
+        .select('id, pssr_id, status, created_at')
         .eq('status', 'Draft')
         .lt('created_at', twoWeeksAgo.toISOString())
         .limit(10);
