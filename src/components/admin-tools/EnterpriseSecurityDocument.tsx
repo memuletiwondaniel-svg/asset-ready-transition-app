@@ -474,6 +474,12 @@ const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({
               { label: 'Edge Case Catalog', value: 'Hallucinations and tool failures cataloged in ai_edge_cases with severity classification and regression testing', status: 'active' },
               { label: 'Context Persistence', value: 'User preferences stored in ai_user_context — scoped to individual user_id, never shared cross-user', status: 'active' },
             ]} />
+            <Card className="bg-emerald-500/5 border-emerald-500/20 mt-4">
+              <CardContent className="pt-4 text-sm space-y-2">
+                <p className="font-medium text-foreground">Claude Migration — March 2026</p>
+                <p className="text-muted-foreground">All AI agents now call Anthropic API directly from Supabase Edge Functions using server-side secrets. The Lovable AI Gateway has been removed. Model API keys are stored as Edge Function secrets and are never accessible from client-side code. Prompt injection protection, RLS-aware queries, tenant isolation and read-only tool access all remain active.</p>
+              </CardContent>
+            </Card>
             <p className="font-medium text-foreground mt-4">Autonomous Training Security</p>
             <ul className="list-disc pl-5 space-y-1">
               <li><strong className="text-foreground">Version Control:</strong> All prompt changes tracked with before/after state in ai_training_log</li>
