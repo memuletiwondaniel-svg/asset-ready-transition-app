@@ -3142,7 +3142,7 @@ function detectAgentDomain(message: string): string {
     return 'training_agent';
   }
   
-  // CMMS agent triggers (planned)
+  // Alex (CMMS & Maintenance Intelligence) triggers (planned)
   if (/\b(cmms|maintenance|equipment care|spare parts|reliability|asset care|preventive maintenance|work order)\b/i.test(lower)) {
     return 'cmms_agent';
   }

@@ -203,7 +203,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="bg-blue-500/5 rounded p-2 border border-blue-500/20">
-                        <p className="font-semibold text-foreground">CMMS Agent</p>
+                        <p className="font-semibold text-foreground">Alex (CMMS & Maintenance)</p>
                         <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">PLANNED</Badge>
                       </div>
@@ -263,7 +263,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['Selma (Document Intelligence)', 'claude-sonnet-4-5', 'Anthropic', 'Document intelligence specialist', 'Active'],
                 ['Fred (PSSR/ORA Agent)', 'claude-sonnet-4-5', 'Anthropic', 'Safety-critical domain', 'Active'],
                 ['Zain — Training Intelligence (Phase 2)', 'claude-haiku', 'Anthropic', 'Training queries, competency gaps', 'Planned'],
-                ['CMMS Agent (Phase 2)', 'claude-haiku', 'Anthropic', 'Maintenance, equipment, spares', 'Planned'],
+                ['Alex — CMMS & Maintenance (Phase 2)', 'claude-haiku', 'Anthropic', 'Maintenance, equipment, spares', 'Planned'],
                 ['ORM Agent (Phase 2)', 'claude-haiku', 'Anthropic', 'Manpower, staffing, organizational readiness', 'Planned'],
               ]}
             />
@@ -277,7 +277,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                   <li><strong className="text-foreground">Selma (Document Intelligence):</strong> Claude Sonnet 4.5 — accurate SQL-based analysis and status calculations</li>
                   <li><strong className="text-foreground">Fred (PSSR/ORA):</strong> Claude Sonnet 4.5 — safety-critical domain requiring high accuracy</li>
                   <li><strong className="text-foreground">Zain — Training Intelligence (planned):</strong> Will use Claude Haiku — training queries are structured and domain-specific</li>
-                  <li><strong className="text-foreground">CMMS Agent (planned):</strong> Will use Claude Haiku — maintenance queries are lookup-heavy, speed matters</li>
+                  <li><strong className="text-foreground">Alex — CMMS & Maintenance (planned):</strong> Will use Claude Haiku — maintenance queries are lookup-heavy, speed matters</li>
                   <li><strong className="text-foreground">ORM Agent (planned):</strong> Will use Claude Haiku — manpower queries are data-centric</li>
                 </ul>
               </CardContent>
@@ -300,7 +300,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['document_agent', 'Selma', 'claude-sonnet-4-5', 'Active', '13', 'dms, document, readiness, quality, maturity, handover'],
                 ['pssr_ora_agent', 'Fred (PSSR & ORA)', 'claude-sonnet-4-5', 'Active', '14', 'pssr, safety, checklist, operational readiness'],
                 ['training_agent', 'Zain (Training Intelligence)', 'claude-haiku', 'Planned', '0', 'training, competency, learning'],
-                ['cmms_agent', 'CMMS AI Agent', 'claude-haiku', 'Planned', '0', 'cmms, maintenance, equipment, spares'],
+                ['cmms_agent', 'Alex (CMMS & Maintenance)', 'claude-haiku', 'Planned', '0', 'cmms, maintenance, equipment, spares'],
                 ['orm_agent', 'ORM AI Agent', 'claude-haiku', 'Planned', '0', 'orm, manpower, staffing, organization'],
               ]}
             />
@@ -397,7 +397,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['escalation', 'Specialist -> CoPilot', 'Escalate complex query that needs multi-domain reasoning', 'Zain: "Need PSSR data to assess training gaps"'],
                 ['context_handoff', 'Agent A -> Agent B', 'Transfer conversation context for continuity', 'CoPilot hands off DMS context to Selma'],
                 ['cross_reference', 'CoPilot -> Multiple', 'Gather data from multiple agents simultaneously', 'CoPilot queries Selma + Fred for integrated view'],
-                ['alert', 'Any -> CoPilot', 'Critical finding that needs user attention', 'CMMS Agent: "5 critical equipment items without maintenance plans"'],
+                ['alert', 'Any -> CoPilot', 'Critical finding that needs user attention', 'Alex: "5 critical equipment items without maintenance plans"'],
               ]}
             />
 
@@ -455,7 +455,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                   <ul className="list-disc list-inside space-y-1 text-xs">
                     <li>Thumbs up/down UI in chat — stores to <code className="bg-muted px-1 rounded">ai_response_feedback</code></li>
                     <li>Zain (Training Agent) tools (training plan analysis, competency gaps, cost tracking)</li>
-                    <li>CMMS Agent tools (equipment care, spare parts, maintenance readiness)</li>
+                    <li>Alex (CMMS Agent) tools (equipment care, spare parts, maintenance readiness)</li>
                     <li>ORM Agent tools (manpower readiness, staffing gaps, organizational capability)</li>
                     <li>Persistent conversation memory — cross-conversation context</li>
                     <li>Dynamic few-shot examples injected from approved response patterns</li>
@@ -846,7 +846,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <br />
                 Continuously updated as new agents are built, tools added, and training strategy evolves.
                 <br />
-                Last updated: March 2026 — Zain confirmed as Training Agent name. Fred (formerly Rex) confirmed as PSSR/ORA Agent. Selma confirmed as Document Agent.
+                Last updated: March 2026 — Alex confirmed as CMMS Agent name. Zain confirmed as Training Agent. Fred (formerly Rex) as PSSR/ORA Agent. Selma as Document Agent.
               </p>
             </CardContent>
           </Card>
