@@ -735,7 +735,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             </Card>
             <Card className="bg-muted/30 border-border">
               <CardContent className="pt-4">
-                <h3 className="text-sm font-semibold text-foreground mb-3">New Document Agent Tools (v5.0)</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-3">New Selma (Document Intelligence) Tools (v5.0)</h3>
                 <InfoTable
                   headers={['Tool', 'Purpose', 'Cross-Domain']}
                   rows={[
