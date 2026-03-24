@@ -2634,7 +2634,7 @@ const tools = [
     }
   },
   // ═══════════════════════════════════════════════════════════════════════════
-  // SELMA (DOCUMENT INTELLIGENCE ASSISTANT) TOOLS - For DMS queries and document readiness
+  // SALLY (DOCUMENT INTELLIGENCE ASSISTANT) TOOLS - For DMS queries and document readiness
   // ═══════════════════════════════════════════════════════════════════════════
   {
     type: "function",
