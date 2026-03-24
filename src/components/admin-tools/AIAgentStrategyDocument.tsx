@@ -184,7 +184,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                     <p className="text-primary font-semibold mb-2">Bob CoPilot (Central Router — GPT-5-mini)</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
                       <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
-                        <p className="font-semibold text-foreground">Document Agent</p>
+                        <p className="font-semibold text-foreground">Selma (Document Intelligence)</p>
                         <p className="text-muted-foreground">GPT-5-mini | 13 tools | DMS readiness + quality + ORA linkage</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
@@ -255,7 +255,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             <InfoTable
               headers={['Model', 'Provider', 'Used For', 'Strengths', 'Cost/Speed']}
               rows={[
-                ['openai/gpt-5-mini', 'OpenAI', 'Bob CoPilot + Document Agent', 'Strong reasoning, excellent tool calling, multi-turn context', 'Medium cost, ~3s latency'],
+                ['openai/gpt-5-mini', 'OpenAI', 'Bob CoPilot + Selma (Document Intelligence)', 'Strong reasoning, excellent tool calling, multi-turn context', 'Medium cost, ~3s latency'],
                 ['google/gemini-3-flash-preview', 'Google', 'Future specialist agents (Training, CMMS, ORM)', 'Fast, cost-effective, good at structured queries', 'Low cost, ~1-2s latency'],
                 ['openai/gpt-5', 'OpenAI', 'Complex cross-agent reasoning (Phase 3)', 'Strongest reasoning, best for multi-step analysis', 'High cost, ~5s latency'],
                 ['google/gemini-2.5-flash', 'Google', 'High-volume simple queries, batch processing', 'Very fast, cheapest option, good for classification', 'Lowest cost, <1s'],
@@ -268,7 +268,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <FlowDiagram steps={['User Query', 'detectAgentDomain()', 'Route to Agent', 'Agent selects model from registry', 'Call Lovable AI Gateway', 'Return response']} />
                 <ul className="list-disc list-inside space-y-1 text-xs mt-3">
                   <li><strong className="text-foreground">CoPilot (Bob):</strong> Uses GPT-5-mini — needs strong reasoning for multi-domain routing, tool selection, and nuanced responses</li>
-                  <li><strong className="text-foreground">Document Agent:</strong> Uses GPT-5-mini — needs accurate SQL-based analysis and status calculations</li>
+                  <li><strong className="text-foreground">Selma (Document Intelligence):</strong> Uses GPT-5-mini — needs accurate SQL-based analysis and status calculations</li>
                   <li><strong className="text-foreground">Training Agent (planned):</strong> Will use Gemini 3 Flash — training queries are structured and domain-specific</li>
                   <li><strong className="text-foreground">CMMS Agent (planned):</strong> Will use Gemini 3 Flash — maintenance queries are lookup-heavy, speed matters</li>
                   <li><strong className="text-foreground">ORM Agent (planned):</strong> Will use Gemini 3 Flash — manpower queries are data-centric</li>
@@ -291,7 +291,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
               headers={['Agent Code', 'Display Name', 'Model', 'Status', 'Tools', 'Domains']}
               rows={[
                 ['copilot', 'Bob CoPilot', 'openai/gpt-5-mini', 'Active', '14', 'pssr, ora, orm, platform, navigation'],
-                ['document_agent', 'Document AI Agent', 'openai/gpt-5-mini', 'Active', '13', 'dms, document, readiness, quality, maturity, handover'],
+                ['document_agent', 'Selma (Document Intelligence)', 'openai/gpt-5-mini', 'Active', '13', 'dms, document, readiness, quality, maturity, handover'],
                 ['training_agent', 'Training AI Agent', 'gemini-3-flash-preview', 'Planned', '0', 'training, competency, learning'],
                 ['cmms_agent', 'CMMS AI Agent', 'gemini-3-flash-preview', 'Planned', '0', 'cmms, maintenance, equipment, spares'],
                 ['orm_agent', 'ORM AI Agent', 'gemini-3-flash-preview', 'Planned', '0', 'orm, manpower, staffing, organization'],
@@ -384,11 +384,11 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             <InfoTable
               headers={['Message Type', 'Direction', 'Purpose', 'Example']}
               rows={[
-                ['data_request', 'Agent A -> Agent B', 'Request specific data via a tool', 'CoPilot asks Document Agent for readiness %'],
-                ['data_response', 'Agent B -> Agent A', 'Return requested data', 'Document Agent returns 25% readiness'],
-                ['insight_share', 'Any -> Any', 'Proactively share a finding', 'Document Agent alerts: "8 Process docs still in Draft"'],
+                ['data_request', 'Agent A -> Agent B', 'Request specific data via a tool', 'CoPilot asks Selma for readiness %'],
+                ['data_response', 'Agent B -> Agent A', 'Return requested data', 'Selma returns 25% readiness'],
+                ['insight_share', 'Any -> Any', 'Proactively share a finding', 'Selma alerts: "8 Process docs still in Draft"'],
                 ['escalation', 'Specialist -> CoPilot', 'Escalate complex query that needs multi-domain reasoning', 'Training Agent: "Need PSSR data to assess training gaps"'],
-                ['context_handoff', 'Agent A -> Agent B', 'Transfer conversation context for continuity', 'CoPilot hands off DMS context to Document Agent'],
+                ['context_handoff', 'Agent A -> Agent B', 'Transfer conversation context for continuity', 'CoPilot hands off DMS context to Selma'],
                 ['cross_reference', 'CoPilot -> Multiple', 'Gather data from multiple agents simultaneously', 'CoPilot queries Doc + PSSR agents for integrated view'],
                 ['alert', 'Any -> CoPilot', 'Critical finding that needs user attention', 'CMMS Agent: "5 critical equipment items without maintenance plans"'],
               ]}
@@ -735,7 +735,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             </Card>
             <Card className="bg-muted/30 border-border">
               <CardContent className="pt-4">
-                <h3 className="text-sm font-semibold text-foreground mb-3">New Document Agent Tools (v5.0)</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-3">New Selma (Document Intelligence) Tools (v5.0)</h3>
                 <InfoTable
                   headers={['Tool', 'Purpose', 'Cross-Domain']}
                   rows={[
