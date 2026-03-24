@@ -318,7 +318,7 @@ hubs (Project Hubs)
 PSSR MODULE TABLES:
 
 pssrs (PSSR header records)
-- id, pssr_number (e.g., "PSSR-DP300-001")
+- id, pssr_id (e.g., "PSSR-NRNGL-001")
 - project_id reference
 - status: Draft | Active | Ready for Review | Pending Approval | Approved | Closed
 - equipment_tag, equipment_description
