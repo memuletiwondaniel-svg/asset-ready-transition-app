@@ -194,11 +194,6 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   // Context-aware greeting subtitle
   const [greetingSubtitle, setGreetingSubtitle] = useState<string>('');
 
-  // Context-aware placeholder questions
-  const [contextPlaceholders, setContextPlaceholders] = useState<string[]>([
-    "Ask Bob anything about ORSH...",
-  ]);
-
   useEffect(() => {
     const loadContext = async () => {
       try {
