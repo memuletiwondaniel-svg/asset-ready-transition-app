@@ -561,7 +561,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
                 <strong className="text-foreground">ORSH Strategic North Star</strong> — Living Document
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Last updated: 24 March 2026 — Claude migration milestone, Selma agent live, Document Intelligence roadmap defined.
+                Last updated: 24 March 2026 — ORM Agent removed. Agent family confirmed: Bob, Selma, Fred, Hannah, Ivan, Zain, Alex.
               </p>
             </CardContent>
           </Card>

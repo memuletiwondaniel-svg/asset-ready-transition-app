@@ -869,7 +869,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <br />
                 Continuously updated as new agents are built, tools added, and training strategy evolves.
                 <br />
-                Last updated: March 2026 — Ivan confirmed as Process Technical Authority Agent (active, claude-sonnet-4-5, 17 tools, cumulative risk assessment and cross-agent aggregation). Hannah as P2A Handover Agent. Alex as CMMS Agent. Zain as Training Agent. Fred as PSSR/ORA Agent. Selma as Document Agent.
+                Last updated: March 2026 — ORM Agent removed. Confirmed agent family (7): Bob (CoPilot), Selma (Document Intelligence), Fred (PSSR/ORA), Hannah (P2A Handover), Ivan (Process Technical Authority), Zain (Training), Alex (CMMS).
               </p>
             </CardContent>
           </Card>

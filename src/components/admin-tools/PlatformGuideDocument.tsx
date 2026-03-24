@@ -1152,7 +1152,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
           <div className="text-center text-xs text-muted-foreground py-6 border-t border-border">
             <p><strong className="text-foreground">ORSH Platform Guide — Living Document</strong></p>
             <p>Updated continuously as new features, workflows, and tables are added.</p>
-            <p>Last updated: 24 March 2026 — Selma agent introduced, Claude migration complete.</p>
+            <p>Last updated: 24 March 2026 — ORM Agent removed. Agent family: Bob, Selma, Fred, Hannah, Ivan, Zain, Alex.</p>
           </div>
         </div>
       </div>
