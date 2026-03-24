@@ -191,6 +191,9 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     if (needsSetup && !setupDismissed) setTenantSetupOpen(true);
   }, [needsSetup, setupDismissed]);
 
+  // Context-aware greeting subtitle
+  const [greetingSubtitle, setGreetingSubtitle] = useState<string>('');
+
   // Context-aware placeholder questions
   const [contextPlaceholders, setContextPlaceholders] = useState<string[]>([
     "Ask Bob anything about ORSH...",
@@ -204,12 +207,39 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
         const { data: ctx } = await (supabase.from('ai_user_context' as any)
           .select('context_key, context_value')
           .eq('user_id', user.id) as any);
-        if (!ctx || ctx.length === 0) return;
 
-        const suggestions: string[] = [];
         const ctxMap: Record<string, any> = {};
-        (ctx as any[]).forEach((c: any) => { ctxMap[c.context_key] = c.context_value; });
+        if (ctx && ctx.length > 0) {
+          (ctx as any[]).forEach((c: any) => { ctxMap[c.context_key] = c.context_value; });
+        }
 
+        // Build context-aware greeting subtitle
+        const hour = new Date().getHours();
+        const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+        let subtitle = '';
+        if (ctxMap.last_active_pssr?.value) {
+          const pssr = String(ctxMap.last_active_pssr.value).slice(0, 80);
+          if (timeOfDay === 'morning') {
+            subtitle = `${pssr} is waiting for you — shall we pick it up?`;
+          } else {
+            subtitle = `You were last working on ${pssr} — want to continue?`;
+          }
+        } else if (ctxMap.last_active_project?.value) {
+          const proj = String(ctxMap.last_active_project.value).slice(0, 80);
+          subtitle = `${proj} has activity — want to check in?`;
+        } else if (ctxMap.open_task_count?.value) {
+          const count = parseInt(String(ctxMap.open_task_count.value), 10);
+          if (count > 0) {
+            subtitle = `You have ${count} task${count > 1 ? 's' : ''} waiting — let's make progress.`;
+          }
+        }
+        if (!subtitle) {
+          subtitle = "What are we tackling today?";
+        }
+        setGreetingSubtitle(subtitle);
+
+        // Placeholder suggestions
+        const suggestions: string[] = [];
         if (ctxMap.last_active_pssr?.value) {
           suggestions.push(`Any updates on ${ctxMap.last_active_pssr.value} today?`);
         }
@@ -704,11 +734,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     {isProfileLoading ? (
                       <span className="inline-block animate-pulse bg-muted rounded h-8 w-48" />
                     ) : (
-                      <>{getGreeting()}, {userProfile?.full_name?.split(' ')[0] || 'User'}!</>
+                      <>{getGreeting()}, {userProfile?.full_name?.split(' ')[0] || 'User'}</>
                     )}
                   </h1>
-                  <p className="text-sm text-muted-foreground mb-4 sm:mb-6">
-                    {t.askBobAnything || 'Ask Bob anything about ORSH'}
+                  <p className="text-sm text-muted-foreground mb-4 sm:mb-6 max-w-md">
+                    {greetingSubtitle || (t.askBobAnything || 'What are we tackling today?')}
                   </p>
                   
                   {/* Bob Input Field */}
