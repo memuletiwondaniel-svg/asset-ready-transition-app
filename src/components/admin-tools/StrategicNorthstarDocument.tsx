@@ -370,12 +370,14 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
             </p>
             
             <StatusTable rows={[
-              { label: 'Bob CoPilot (Router)', value: 'Central AI agent with intent detection, user context learning, and specialist dispatch', status: 'active' },
-              { label: 'Document Specialist', value: '13-tool agent for DMS gap analysis, quality scoring, numbering config, and ORA linkage', status: 'active' },
-              { label: 'Autonomous Training Loop', value: 'Daily cron-driven feedback analysis, auto-apply prompt improvements, self-healing edge cases', status: 'active' },
+              { label: 'Bob CoPilot (Router)', value: 'Central AI agent running on Claude Sonnet 4.5 (Anthropic) with intent detection, user context learning, and specialist dispatch', status: 'active' },
+              { label: 'Sally (Document Specialist)', value: '13-tool agent for DMS gap analysis, quality scoring, numbering config, and ORA linkage — confirmed live with excellent performance', status: 'active' },
+              { label: 'PSSR/ORA Agent', value: '14-tool specialist for safety review guidance, checklist intelligence, and ORA activity planning', status: 'active' },
+              { label: 'Autonomous Training Loop', value: 'v5.0 — daily cron-driven feedback analysis, auto-apply prompt improvements, self-healing edge cases', status: 'active' },
               { label: 'User Context Persistence', value: 'Per-user preference learning stored in ai_user_context — personalizes responses over time', status: 'active' },
-              { label: 'Fred — PSSR Specialist', value: 'Domain-specific agent for safety review guidance and checklist intelligence', status: 'planned' },
-              { label: 'Fred — ORA Specialist', value: 'Activity planning optimization and schedule intelligence', status: 'planned' },
+              { label: 'Training Agent (Phase 2)', value: 'Domain-specific agent for training plan intelligence — claude-haiku planned', status: 'planned' },
+              { label: 'CMMS Agent (Phase 2)', value: 'Maintenance management intelligence — claude-haiku planned', status: 'planned' },
+              { label: 'ORM Agent (Phase 2)', value: 'Operations Readiness Manpower intelligence — claude-haiku planned', status: 'planned' },
               { label: 'Predictive ORI Agent', value: 'ML-driven readiness trajectory forecasting and risk anomaly detection', status: 'roadmap' },
             ]} />
 
