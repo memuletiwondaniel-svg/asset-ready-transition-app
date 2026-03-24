@@ -6145,6 +6145,501 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // HANNAH (P2A HANDOVER INTELLIGENCE AGENT) TOOL HANDLERS
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    case "get_vcr_readiness_summary": {
+      try {
+        const vcrId = args.vcr_id;
+        // Get VCR prerequisites status
+        const { data: prereqs, error: prereqErr } = await supabaseClient
+          .from('p2a_vcr_prerequisites')
+          .select('id, status, category')
+          .eq('handover_point_id', vcrId);
+        
+        if (prereqErr) return { error: prereqErr.message };
+        
+        const total = (prereqs || []).length;
+        const byStatus: Record<string, number> = {};
+        (prereqs || []).forEach((p: any) => {
+          byStatus[p.status] = (byStatus[p.status] || 0) + 1;
+        });
+        
+        const accepted = byStatus['ACCEPTED'] || byStatus['QUALIFICATION_APPROVED'] || 0;
+        const rejected = byStatus['REJECTED'] || 0;
+        const overallPercent = total > 0 ? Math.round((accepted / total) * 100) : 0;
+        
+        return {
+          vcr_id: vcrId,
+          total_prerequisites: total,
+          status_breakdown: byStatus,
+          overall_readiness_percent: overallPercent,
+          rejected_count: rejected,
+          verdict: rejected > 0 ? 'NOT READY — rejected prerequisites exist' : overallPercent >= 100 ? 'READY' : `NOT READY — ${overallPercent}% complete`
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_itr_status_by_system": {
+      try {
+        const systemId = args.system_id;
+        // Query p2a_systems for ITR data
+        const { data: system, error } = await supabaseClient
+          .from('p2a_systems')
+          .select('id, system_name, system_code, comm_status, itr_total, itr_closed, itr_open')
+          .eq('id', systemId)
+          .maybeSingle();
+        
+        if (error) return { error: error.message };
+        if (!system) return { error: `System ${systemId} not found` };
+        
+        // Get subsystems too
+        const { data: subsystems } = await supabaseClient
+          .from('p2a_subsystems')
+          .select('id, subsystem_name, subsystem_code, comm_status')
+          .eq('system_id', systemId);
+        
+        return {
+          system: { id: system.id, name: system.system_name, code: system.system_code, comm_status: system.comm_status },
+          itr_total: system.itr_total || 0,
+          itr_closed: system.itr_closed || 0,
+          itr_open: system.itr_open || 0,
+          completion_percent: (system.itr_total || 0) > 0 ? Math.round(((system.itr_closed || 0) / system.itr_total) * 100) : 0,
+          subsystems: (subsystems || []).map((s: any) => ({ name: s.subsystem_name, code: s.subsystem_code, status: s.comm_status }))
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_punch_list_status": {
+      try {
+        const systemId = args.system_id;
+        const vcrId = args.vcr_id;
+        
+        let query = supabaseClient.from('p2a_vcr_prerequisites').select('id, status, category, summary, rejection_reason');
+        if (vcrId) query = query.eq('handover_point_id', vcrId);
+        
+        const { data: prereqs, error } = await query;
+        if (error) return { error: error.message };
+        
+        // Filter for punch list related items
+        const punchA = (prereqs || []).filter((p: any) => 
+          p.category?.toLowerCase().includes('punch') && p.category?.toLowerCase().includes('a')
+        );
+        const punchB = (prereqs || []).filter((p: any) => 
+          p.category?.toLowerCase().includes('punch') && p.category?.toLowerCase().includes('b')
+        );
+        
+        const openPunchA = punchA.filter((p: any) => p.status !== 'ACCEPTED' && p.status !== 'QUALIFICATION_APPROVED');
+        const openPunchB = punchB.filter((p: any) => p.status !== 'ACCEPTED' && p.status !== 'QUALIFICATION_APPROVED');
+        
+        return {
+          punch_list_a: { total: punchA.length, open: openPunchA.length, closed: punchA.length - openPunchA.length },
+          punch_list_b: { total: punchB.length, open: openPunchB.length, closed: punchB.length - openPunchB.length },
+          startup_blockers: openPunchA.length > 0 ? openPunchA.map((p: any) => ({ id: p.id, summary: p.summary, status: p.status, reason: p.rejection_reason })) : [],
+          warning: openPunchA.length > 0 ? `🔴 ${openPunchA.length} Punch List A items are OPEN — these are SAFETY-CRITICAL STARTUP BLOCKERS and must be closed before startup` : '✅ No open Punch List A items'
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_itp_completion": {
+      try {
+        const systemId = args.system_id;
+        const { data: system, error } = await supabaseClient
+          .from('p2a_systems')
+          .select('id, system_name, system_code')
+          .eq('id', systemId)
+          .maybeSingle();
+        
+        if (error) return { error: error.message };
+        if (!system) return { error: `System ${systemId} not found` };
+        
+        // Get ITP points for this system
+        const { data: itpPoints } = await supabaseClient
+          .from('p2a_itp_points')
+          .select('id, point_type, status, description')
+          .eq('system_id', systemId);
+        
+        const total = (itpPoints || []).length;
+        const completed = (itpPoints || []).filter((p: any) => p.status === 'COMPLETED' || p.status === 'ACCEPTED').length;
+        const holdPoints = (itpPoints || []).filter((p: any) => p.point_type === 'H' && p.status !== 'COMPLETED' && p.status !== 'ACCEPTED');
+        const witnessPoints = (itpPoints || []).filter((p: any) => p.point_type === 'W' && p.status !== 'COMPLETED' && p.status !== 'ACCEPTED');
+        
+        return {
+          system: { name: system.system_name, code: system.system_code },
+          total_itps: total,
+          completed_itps: completed,
+          completion_percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+          open_hold_points: holdPoints.length,
+          open_witness_points: witnessPoints.length,
+          hold_point_details: holdPoints.slice(0, 10).map((p: any) => ({ id: p.id, description: p.description })),
+          witness_point_details: witnessPoints.slice(0, 10).map((p: any) => ({ id: p.id, description: p.description }))
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_system_handover_readiness": {
+      try {
+        const systemId = args.system_id;
+        const { data: system, error } = await supabaseClient
+          .from('p2a_systems')
+          .select('id, system_name, system_code, comm_status, itr_total, itr_closed, handover_plan_id')
+          .eq('id', systemId)
+          .maybeSingle();
+        
+        if (error || !system) return { error: error?.message || 'System not found' };
+        
+        // Dimension scores
+        const itrScore = (system.itr_total || 0) > 0 ? Math.round(((system.itr_closed || 0) / system.itr_total) * 100) : 100;
+        const commScore = system.comm_status === 'RFSU' ? 100 : system.comm_status === 'RFO' ? 80 : system.comm_status === 'MC' ? 60 : 20;
+        
+        const blockers: string[] = [];
+        if (itrScore < 100) blockers.push(`${system.itr_total - (system.itr_closed || 0)} ITRs still open`);
+        if (commScore < 100) blockers.push(`Commissioning status: ${system.comm_status || 'NOT_STARTED'}`);
+        
+        const overallScore = Math.round((itrScore + commScore) / 2);
+        
+        return {
+          system: { id: system.id, name: system.system_name, code: system.system_code, comm_status: system.comm_status },
+          dimensions: {
+            itr_completion: { score: itrScore, detail: `${system.itr_closed || 0}/${system.itr_total || 0} ITRs closed` },
+            commissioning: { score: commScore, detail: `Status: ${system.comm_status || 'NOT_STARTED'}` }
+          },
+          overall_score: overallScore,
+          verdict: overallScore >= 95 ? 'READY' : 'NOT READY',
+          blockers
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_vcr_prerequisites_status": {
+      try {
+        const vcrId = args.vcr_id;
+        const { data: prereqs, error } = await supabaseClient
+          .from('p2a_vcr_prerequisites')
+          .select('id, status, summary, category, rejection_reason, qualification_status')
+          .eq('handover_point_id', vcrId);
+        
+        if (error) return { error: error.message };
+        
+        const byStatus: Record<string, number> = {};
+        const rejected: any[] = [];
+        (prereqs || []).forEach((p: any) => {
+          byStatus[p.status] = (byStatus[p.status] || 0) + 1;
+          if (p.status === 'REJECTED') {
+            rejected.push({ id: p.id, summary: p.summary, reason: p.rejection_reason });
+          }
+        });
+        
+        return {
+          vcr_id: vcrId,
+          total: (prereqs || []).length,
+          status_breakdown: byStatus,
+          rejected_items: rejected,
+          warning: rejected.length > 0 ? `🔴 ${rejected.length} prerequisites REJECTED — action required` : null
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_pac_readiness": {
+      try {
+        const vcrId = args.vcr_id;
+        const blockers: string[] = [];
+        
+        // Check VCR prerequisites
+        const { data: prereqs } = await supabaseClient
+          .from('p2a_vcr_prerequisites')
+          .select('id, status')
+          .eq('handover_point_id', vcrId);
+        
+        const incomplete = (prereqs || []).filter((p: any) => p.status !== 'ACCEPTED' && p.status !== 'QUALIFICATION_APPROVED');
+        if (incomplete.length > 0) blockers.push(`${incomplete.length} VCR prerequisites not yet accepted`);
+        
+        // Check approvers via handover plan linked to VCR
+        const { data: vcr } = await supabaseClient
+          .from('p2a_handover_points')
+          .select('id, handover_plan_id')
+          .eq('id', vcrId)
+          .maybeSingle();
+        
+        if (vcr?.handover_plan_id) {
+          const { data: approvers } = await supabaseClient
+            .from('p2a_handover_approvers')
+            .select('id, role_name, status, display_order')
+            .eq('handover_id', vcr.handover_plan_id)
+            .order('display_order');
+          
+          const phase1 = (approvers || []).filter((a: any) => a.display_order <= 4);
+          const phase2 = (approvers || []).filter((a: any) => a.display_order > 4);
+          const pendingPhase1 = phase1.filter((a: any) => a.status !== 'APPROVED');
+          const pendingPhase2 = phase2.filter((a: any) => a.status !== 'APPROVED');
+          
+          if (pendingPhase1.length > 0) blockers.push(`Phase 1 approvals pending: ${pendingPhase1.map((a: any) => a.role_name).join(', ')}`);
+          if (pendingPhase1.length === 0 && pendingPhase2.length > 0) blockers.push(`Phase 2 approval pending: ${pendingPhase2.map((a: any) => a.role_name).join(', ')}`);
+          if (pendingPhase1.length > 0 && pendingPhase2.length > 0) blockers.push('Phase 2 blocked — Phase 1 must complete first');
+        }
+        
+        return {
+          vcr_id: vcrId,
+          pac_ready: blockers.length === 0,
+          blockers,
+          verdict: blockers.length === 0 ? '✅ PAC can be issued — all conditions met' : `🔴 PAC CANNOT be issued — ${blockers.length} blocking conditions`
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_owl_items": {
+      try {
+        const projectId = args.project_id;
+        // Query OWL items from ora_handover_items or p2a-specific OWL table
+        const { data: items, error } = await supabaseClient
+          .from('ora_handover_items')
+          .select('id, item_name, description, status, from_party, to_party, handover_date, notes, display_order')
+          .eq('ora_plan_id', projectId)
+          .order('display_order');
+        
+        if (error) {
+          // Try p2a_handover_deliverables as fallback
+          const { data: p2aItems, error: p2aErr } = await supabaseClient
+            .from('p2a_handover_deliverables')
+            .select('*')
+            .limit(50);
+          
+          return {
+            source: 'p2a_handover_deliverables',
+            total: (p2aItems || []).length,
+            items: (p2aItems || []).slice(0, 20)
+          };
+        }
+        
+        const open = (items || []).filter((i: any) => i.status !== 'completed' && i.status !== 'accepted');
+        
+        return {
+          total: (items || []).length,
+          open: open.length,
+          closed: (items || []).length - open.length,
+          items: (items || []).slice(0, 20).map((i: any) => ({
+            name: i.item_name,
+            description: i.description,
+            status: i.status,
+            from: i.from_party,
+            to: i.to_party,
+            target_date: i.handover_date,
+            notes: i.notes
+          }))
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_p2a_approval_status": {
+      try {
+        const planId = args.plan_id;
+        const { data: approvers, error } = await supabaseClient
+          .from('p2a_handover_approvers')
+          .select('id, role_name, user_id, status, display_order, comments, approved_at')
+          .eq('handover_id', planId)
+          .order('display_order');
+        
+        if (error) return { error: error.message };
+        
+        const phase1 = (approvers || []).filter((a: any) => a.display_order <= 4);
+        const phase2 = (approvers || []).filter((a: any) => a.display_order > 4);
+        const phase1Complete = phase1.every((a: any) => a.status === 'APPROVED');
+        const rejections = (approvers || []).filter((a: any) => a.status === 'REJECTED');
+        
+        return {
+          plan_id: planId,
+          phase_1: {
+            approvers: phase1.map((a: any) => ({ role: a.role_name, status: a.status, approved_at: a.approved_at, comments: a.comments })),
+            all_approved: phase1Complete,
+            pending: phase1.filter((a: any) => a.status === 'PENDING').length
+          },
+          phase_2: {
+            approvers: phase2.map((a: any) => ({ role: a.role_name, status: a.status, approved_at: a.approved_at, comments: a.comments })),
+            activated: phase1Complete,
+            pending: phase2.filter((a: any) => a.status === 'PENDING').length
+          },
+          rejections: rejections.map((a: any) => ({ role: a.role_name, comments: a.comments })),
+          overall_status: rejections.length > 0 ? 'REJECTED' : phase1Complete && phase2.every((a: any) => a.status === 'APPROVED') ? 'FULLY APPROVED' : 'IN PROGRESS'
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "aggregate_handover_readiness": {
+      try {
+        const projectId = args.project_id;
+        const dimensions: Record<string, any> = {};
+        
+        // 1. Get P2A plans for this project
+        const { data: plans } = await supabaseClient
+          .from('p2a_handover_plans')
+          .select('id, plan_name, status')
+          .eq('project_id', projectId);
+        
+        dimensions.p2a_plans = { count: (plans || []).length, plans: (plans || []).map((p: any) => ({ name: p.plan_name, status: p.status })) };
+        
+        // 2. Get systems and their readiness
+        const planIds = (plans || []).map((p: any) => p.id);
+        let systems: any[] = [];
+        if (planIds.length > 0) {
+          const { data: sysData } = await supabaseClient
+            .from('p2a_systems')
+            .select('id, system_name, system_code, comm_status, itr_total, itr_closed')
+            .in('handover_plan_id', planIds);
+          systems = sysData || [];
+        }
+        
+        dimensions.systems = {
+          total: systems.length,
+          by_status: systems.reduce((acc: Record<string, number>, s: any) => {
+            acc[s.comm_status || 'NOT_STARTED'] = (acc[s.comm_status || 'NOT_STARTED'] || 0) + 1;
+            return acc;
+          }, {}),
+          itr_summary: {
+            total: systems.reduce((s: number, sys: any) => s + (sys.itr_total || 0), 0),
+            closed: systems.reduce((s: number, sys: any) => s + (sys.itr_closed || 0), 0)
+          }
+        };
+        
+        // 3. A2A: Get document readiness from Selma
+        const docResult = await routeA2AMessage({
+          source_agent: 'hannah',
+          target_agent: 'document_agent',
+          message_type: 'data_request',
+          payload: { tool_name: 'get_document_readiness_summary', tool_args: {} }
+        }, supabaseClient);
+        dimensions.documents = docResult.success ? docResult.data : { error: 'Could not reach Selma' };
+        
+        // 4. Get PSSR status
+        const { data: pssrs } = await supabaseClient
+          .from('pssrs')
+          .select('id, status, pssr_id')
+          .eq('project_id', projectId);
+        
+        const approvedPssrs = (pssrs || []).filter((p: any) => p.status === 'Approved' || p.status === 'Closed').length;
+        dimensions.pssr = {
+          total: (pssrs || []).length,
+          approved: approvedPssrs,
+          percent: (pssrs || []).length > 0 ? Math.round((approvedPssrs / (pssrs || []).length) * 100) : 0
+        };
+        
+        // 5. Overall verdict
+        const itrPercent = dimensions.systems.itr_summary.total > 0 ? Math.round((dimensions.systems.itr_summary.closed / dimensions.systems.itr_summary.total) * 100) : 100;
+        const pssrPercent = dimensions.pssr.percent;
+        const overallScore = Math.round((itrPercent + pssrPercent) / 2);
+        
+        return {
+          project_id: projectId,
+          dimensions,
+          overall_score: overallScore,
+          verdict: overallScore >= 90 ? 'READY FOR HANDOVER' : overallScore >= 70 ? 'APPROACHING READINESS — gaps remain' : 'NOT READY — significant blockers',
+          generated_at: new Date().toISOString()
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "get_gocompletions_sync_status": {
+      try {
+        const projectId = args.project_id;
+        const { data: plans } = await supabaseClient
+          .from('p2a_handover_plans')
+          .select('id')
+          .eq('project_id', projectId);
+        
+        const planIds = (plans || []).map((p: any) => p.id);
+        let systems: any[] = [];
+        if (planIds.length > 0) {
+          const { data: sysData } = await supabaseClient
+            .from('p2a_systems')
+            .select('id, system_name, system_code, comm_status, updated_at')
+            .in('handover_plan_id', planIds);
+          systems = sysData || [];
+        }
+        
+        const { data: subsystems } = planIds.length > 0 ? await supabaseClient
+          .from('p2a_subsystems')
+          .select('id, system_id')
+          .in('system_id', systems.map((s: any) => s.id)) : { data: [] };
+        
+        const statusBreakdown: Record<string, number> = {};
+        systems.forEach((s: any) => {
+          statusBreakdown[s.comm_status || 'NOT_STARTED'] = (statusBreakdown[s.comm_status || 'NOT_STARTED'] || 0) + 1;
+        });
+        
+        const lastSync = systems.length > 0 ? systems.reduce((latest: string, s: any) => s.updated_at > latest ? s.updated_at : latest, systems[0].updated_at) : null;
+        
+        return {
+          project_id: projectId,
+          total_systems: systems.length,
+          total_subsystems: (subsystems || []).length,
+          comm_status_breakdown: statusBreakdown,
+          last_sync_timestamp: lastSync,
+          sync_errors: []
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+    
+    case "flag_startup_risk": {
+      try {
+        const projectId = args.project_id;
+        const vcrId = args.vcr_id;
+        const risks: any[] = [];
+        
+        // 1. Check for REJECTED VCR prerequisites
+        if (vcrId) {
+          const { data: rejected } = await supabaseClient
+            .from('p2a_vcr_prerequisites')
+            .select('id, summary, rejection_reason')
+            .eq('handover_point_id', vcrId)
+            .eq('status', 'REJECTED');
+          
+          (rejected || []).forEach((r: any) => {
+            risks.push({ severity: 'CRITICAL', category: 'VCR Prerequisite', item: r.summary, detail: r.rejection_reason || 'Rejected — no reason given' });
+          });
+        }
+        
+        // 2. Check incomplete PSSRs
+        if (projectId) {
+          const { data: openPssrs } = await supabaseClient
+            .from('pssrs')
+            .select('id, pssr_id, status')
+            .eq('project_id', projectId)
+            .not('status', 'in', '("Approved","Closed")');
+          
+          (openPssrs || []).forEach((p: any) => {
+            risks.push({ severity: 'HIGH', category: 'PSSR', item: p.pssr_id, detail: `Status: ${p.status} — must be Approved before startup` });
+          });
+          
+          // 3. Check open Priority A actions
+          const pssrIds = (openPssrs || []).map((p: any) => p.id);
+          if (pssrIds.length > 0) {
+            const { data: prioA } = await supabaseClient
+              .from('pssr_priority_actions')
+              .select('id, description, priority, status')
+              .in('pssr_id', pssrIds)
+              .eq('priority', 'A')
+              .eq('status', 'open');
+            
+            (prioA || []).forEach((a: any) => {
+              risks.push({ severity: 'CRITICAL', category: 'Priority A Action', item: a.description, detail: 'Open Priority A action — HARD STARTUP BLOCKER' });
+            });
+          }
+        }
+        
+        // Sort by severity
+        const severityOrder: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+        risks.sort((a, b) => (severityOrder[a.severity] || 99) - (severityOrder[b.severity] || 99));
+        
+        return {
+          total_risks: risks.length,
+          critical: risks.filter(r => r.severity === 'CRITICAL').length,
+          high: risks.filter(r => r.severity === 'HIGH').length,
+          risks: risks.slice(0, 30),
+          verdict: risks.filter(r => r.severity === 'CRITICAL').length > 0 ? '🔴 STARTUP BLOCKED — critical risks must be resolved' : risks.length > 0 ? '🟡 Risks identified — review required before startup' : '✅ No startup risks identified'
+        };
+      } catch (err) { return { error: String(err) }; }
+    }
+
     default:
       return { error: "Unknown tool" };
   }
