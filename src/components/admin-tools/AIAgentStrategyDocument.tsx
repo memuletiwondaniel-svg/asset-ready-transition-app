@@ -822,10 +822,11 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             <InfoTable
               headers={['Quarter', 'Milestone', 'Deliverables', 'Status']}
               rows={[
-                ['Q1 2026', 'Document Agent + A2A Protocol', '6 DMS tools, A2A protocol, training infrastructure (5 tables), agent registry', 'Complete'],
+                ['Q1 2026', 'Sally (Document Agent) + A2A Protocol', '6 DMS tools, A2A protocol, training infrastructure (5 tables), agent registry', 'Complete'],
                 ['Q1 2026', 'Living Strategy Document v2', 'Model strategy, A2A protocol, training infrastructure documentation', 'Complete'],
                 ['Q1 2026', 'Advanced Document Tools (v4)', 'Cross-discipline, bulk status, trend analysis, task creation (11 tools)', 'Complete'],
                 ['Q1 2026', 'Autonomous Training + Quality Score (v5)', 'Auto-apply improvements, self-healing edge cases, quality scoring, ORA linkage (13 tools)', 'Complete'],
+                ['Q1 2026', 'Anthropic Migration (v6)', 'Claude Sonnet 4.5 migration, Sally naming, Document Intelligence build sequence', 'Complete'],
                 ['Q2 2026', 'Training Agent', 'Training plan tools, competency gap analysis (Gemini 3 Flash)', 'Planned'],
                 ['Q2 2026', 'CMMS Agent', 'Equipment care tools, maintenance readiness (Gemini 3 Flash)', 'Planned'],
                 ['Q2 2026', 'ORM Agent', 'Manpower readiness tools, staffing gaps (Gemini 3 Flash)', 'Planned'],
