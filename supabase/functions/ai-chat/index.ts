@@ -6404,7 +6404,7 @@ serve(async (req) => {
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-5-20250514",
+          model: "claude-sonnet-4-5-20250929",
           system: systemPrompt,
           messages: [
             ...transformedMessages,
