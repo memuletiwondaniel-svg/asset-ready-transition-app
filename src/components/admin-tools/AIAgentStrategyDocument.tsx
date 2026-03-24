@@ -213,11 +213,6 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                         <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">PLANNED</Badge>
                       </div>
-                      <div className="bg-blue-500/5 rounded p-2 border border-blue-500/20">
-                        <p className="font-semibold text-foreground">ORM Agent</p>
-                        <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
-                        <Badge variant="outline" className="mt-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">PLANNED</Badge>
-                      </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="bg-muted/50 rounded p-2 border border-border">
