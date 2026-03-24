@@ -3279,7 +3279,7 @@ interface A2AResponse {
 const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; model: string }> = {
   copilot: { 
     tools: ['get_pssr_stats', 'get_checklist_item_stats', 'get_priority_action_stats', 'get_team_member_info', 'get_region_info', 'get_project_info', 'get_hub_info', 'navigate_to_page', 'resolve_entity_for_navigation', 'get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_pssr_detailed_summary', 'get_discipline_status', 'get_executive_summary'],
-    domains: ['pssr', 'ora', 'orm', 'platform', 'navigation'],
+    domains: ['pssr', 'ora', 'platform', 'navigation'],
     model: 'claude-sonnet-4-5'
   },
   document_agent: {
