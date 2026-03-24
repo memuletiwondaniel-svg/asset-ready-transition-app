@@ -52,6 +52,7 @@ const StatusTable: React.FC<{ rows: { label: string; value: string; status: 'act
 const EnterpriseSecurityDocument: React.FC<EnterpriseSecurityDocumentProps> = ({ onBack }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const tocItems = [
+    { id: 'march-2026-hardening', label: 'March 2026 Security Hardening' },
     { id: 'auth', label: 'Authentication & Identity' },
     { id: 'rbac', label: 'Role-Based Access Control' },
     { id: 'multitenancy', label: 'Multi-Tenancy & Isolation' },
