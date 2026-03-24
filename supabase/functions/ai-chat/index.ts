@@ -3297,6 +3297,11 @@ const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; m
     domains: ['p2a', 'handover', 'vcr', 'itr', 'punchlist', 'itp', 'commissioning', 'pac', 'fac', 'readiness', 'gocompletions', 'owl', 'rfsu', 'rfo'],
     model: 'claude-sonnet-4-5'
   },
+  ivan: {
+    tools: ['conduct_hazop_review', 'review_hazop_closeout', 'review_pid', 'review_safeguarding_memorandum', 'review_cause_and_effect', 'assess_stq_cumulative_risk', 'review_moc_closeout', 'develop_operational_register', 'assess_override_risk', 'conduct_cumulative_risk_assessment', 'conduct_omar_review', 'identify_simops_hazards', 'review_operating_procedure', 'review_commissioning_procedure', 'assess_flow_assurance_risk', 'read_basis_of_design', 'generate_hazop_report'],
+    domains: ['hazop', 'process_safety', 'stq', 'moc', 'override', 'cumulative_risk', 'pid', 'safeguarding', 'omar', 'simops', 'flow_assurance', 'technical_authority', 'operational_registers'],
+    model: 'claude-sonnet-4-5'
+  },
   training_agent: { tools: [], domains: ['training', 'competency', 'learning'], model: 'claude-sonnet-4-5' },
   cmms_agent: { tools: [], domains: ['cmms', 'maintenance', 'equipment', 'spares'], model: 'claude-sonnet-4-5' },
   orm_agent: { tools: [], domains: ['orm', 'manpower', 'staffing', 'organization'], model: 'claude-sonnet-4-5' },
