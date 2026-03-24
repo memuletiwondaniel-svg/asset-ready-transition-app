@@ -255,7 +255,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             <InfoTable
               headers={['Model', 'Provider', 'Used For', 'Strengths', 'Cost/Speed']}
               rows={[
-                ['openai/gpt-5-mini', 'OpenAI', 'Bob CoPilot + Document Agent', 'Strong reasoning, excellent tool calling, multi-turn context', 'Medium cost, ~3s latency'],
+                ['openai/gpt-5-mini', 'OpenAI', 'Bob CoPilot + Selma (Document Intelligence)', 'Strong reasoning, excellent tool calling, multi-turn context', 'Medium cost, ~3s latency'],
                 ['google/gemini-3-flash-preview', 'Google', 'Future specialist agents (Training, CMMS, ORM)', 'Fast, cost-effective, good at structured queries', 'Low cost, ~1-2s latency'],
                 ['openai/gpt-5', 'OpenAI', 'Complex cross-agent reasoning (Phase 3)', 'Strongest reasoning, best for multi-step analysis', 'High cost, ~5s latency'],
                 ['google/gemini-2.5-flash', 'Google', 'High-volume simple queries, batch processing', 'Very fast, cheapest option, good for classification', 'Lowest cost, <1s'],
