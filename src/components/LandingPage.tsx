@@ -191,18 +191,42 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
     if (needsSetup && !setupDismissed) setTenantSetupOpen(true);
   }, [needsSetup, setupDismissed]);
 
-  // Sample questions for rotating placeholder
-  const sampleQuestions = [
-    "What is the status of my PSSR checklist?",
-    "Show me all pending punch list items...",
-    "How do I approve a safety review?",
-    "Generate an ORM maintenance report...",
-    "What are the P2A handover requirements?",
-    "List all projects awaiting commissioning...",
-  ];
+  // Context-aware placeholder questions
+  const [contextPlaceholders, setContextPlaceholders] = useState<string[]>([
+    "Ask Bob anything about ORSH...",
+  ]);
+
+  useEffect(() => {
+    const loadContext = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data: ctx } = await (supabase.from('ai_user_context' as any)
+          .select('context_key, context_value')
+          .eq('user_id', user.id) as any);
+        if (!ctx || ctx.length === 0) return;
+
+        const suggestions: string[] = [];
+        const ctxMap: Record<string, any> = {};
+        (ctx as any[]).forEach((c: any) => { ctxMap[c.context_key] = c.context_value; });
+
+        if (ctxMap.last_active_pssr?.value) {
+          suggestions.push(`Any updates on ${ctxMap.last_active_pssr.value} today?`);
+        }
+        if (ctxMap.last_active_project?.value) {
+          suggestions.push(`What's the status of ${ctxMap.last_active_project.value}?`);
+        }
+        suggestions.push("What are my priority tasks today?");
+        suggestions.push("What's the document readiness score today?");
+
+        if (suggestions.length > 0) setContextPlaceholders(suggestions);
+      } catch {}
+    };
+    loadContext();
+  }, []);
 
   const { displayText: placeholderText, isTyping } = useTypingEffect({
-    texts: sampleQuestions,
+    texts: contextPlaceholders,
     typingSpeed: 40,
     pauseBeforeNext: 2500,
     pauseBeforeType: 300,
