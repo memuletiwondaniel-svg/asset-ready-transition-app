@@ -3257,7 +3257,7 @@ async function getProactiveInsights(supabaseClient: any, scope: string, projectC
           count: overdueActions.length,
           items: overdueActions.slice(0, 5).map((a: any) => ({
             description: a.description?.substring(0, 80),
-            due_date: a.due_date
+            target_date: a.target_date
           }))
         });
       }
