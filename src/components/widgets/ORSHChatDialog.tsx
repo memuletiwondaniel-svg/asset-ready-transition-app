@@ -104,6 +104,24 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   const { isListening, startListening, stopListening, isSupported } = useVoiceInput();
   const { data: roleData } = useCurrentUserRole();
   const welcomeSentRef = useRef(false);
+  const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
+
+  // Fetch user profile for avatar
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (profile) setUserProfile(profile);
+      } catch {}
+    };
+    if (open) fetchProfile();
+  }, [open]);
 
   // Auto-resize textarea
   useEffect(() => {
