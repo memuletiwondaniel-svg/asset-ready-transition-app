@@ -392,7 +392,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
               headers={['Message Type', 'Direction', 'Purpose', 'Example']}
               rows={[
                 ['data_request', 'Agent A -> Agent B', 'Request specific data via a tool', 'CoPilot asks Sally for readiness %'],
-                ['data_response', 'Agent B -> Agent A', 'Return requested data', 'Selma returns 25% readiness'],
+                ['data_response', 'Agent B -> Agent A', 'Return requested data', 'Sally returns 25% readiness'],
                 ['insight_share', 'Any -> Any', 'Proactively share a finding', 'Sally alerts: "8 Process docs still in Draft"'],
                 ['escalation', 'Specialist -> CoPilot', 'Escalate complex query that needs multi-domain reasoning', 'Training Agent: "Need PSSR data to assess training gaps"'],
                 ['context_handoff', 'Agent A -> Agent B', 'Transfer conversation context for continuity', 'CoPilot hands off DMS context to Sally'],
