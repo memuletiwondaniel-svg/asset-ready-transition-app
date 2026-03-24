@@ -8,7 +8,7 @@ import { Settings, ClipboardList, KeyRound, Send, Mic, ImagePlus, Clock, FileTex
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { useTypingEffect } from '@/hooks/useTypingEffect';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { DashboardWidgets } from '@/components/widgets/DashboardWidgets';
