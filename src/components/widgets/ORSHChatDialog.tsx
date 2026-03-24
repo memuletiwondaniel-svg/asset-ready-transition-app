@@ -115,7 +115,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
 
   useEffect(() => {
     if (open && initialMessage) {
-      setInput(initialMessage);
+      // Auto-send the initial message directly — no second click needed
+      handleSend(initialMessage);
     }
   }, [open, initialMessage]);
 
