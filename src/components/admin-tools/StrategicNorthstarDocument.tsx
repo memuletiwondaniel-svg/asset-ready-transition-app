@@ -375,7 +375,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               { label: 'PSSR/ORA Agent', value: '14-tool specialist for safety review guidance, checklist intelligence, and ORA activity planning', status: 'active' },
               { label: 'Autonomous Training Loop', value: 'v5.0 — daily cron-driven feedback analysis, auto-apply prompt improvements, self-healing edge cases', status: 'active' },
               { label: 'User Context Persistence', value: 'Per-user preference learning stored in ai_user_context — personalizes responses over time', status: 'active' },
-              { label: 'Training Agent (Phase 2)', value: 'Domain-specific agent for training plan intelligence — claude-haiku planned', status: 'planned' },
+              { label: 'Zain — Training Intelligence (Phase 2)', value: 'Domain-specific agent for training plan intelligence — claude-haiku planned', status: 'planned' },
               { label: 'CMMS Agent (Phase 2)', value: 'Maintenance management intelligence — claude-haiku planned', status: 'planned' },
               { label: 'ORM Agent (Phase 2)', value: 'Operations Readiness Manpower intelligence — claude-haiku planned', status: 'planned' },
               { label: 'Predictive ORI Agent', value: 'ML-driven readiness trajectory forecasting and risk anomaly detection', status: 'roadmap' },

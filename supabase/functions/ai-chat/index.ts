@@ -3137,7 +3137,7 @@ function detectAgentDomain(message: string): string {
     return 'document_agent';
   }
   
-  // Training agent triggers (planned)
+  // Zain (Training Intelligence) triggers (planned)
   if (/\b(training|competency|competence|learning|course|certification|skill gap|training plan|training cost)\b/i.test(lower)) {
     return 'training_agent';
   }
