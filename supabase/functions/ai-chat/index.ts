@@ -3278,7 +3278,7 @@ async function getProactiveInsights(supabaseClient: any, scope: string, projectC
           type: 'stale_draft_pssr',
           message: `🟡 ${stalePssrs.length} PSSRs stuck in Draft for >14 days`,
           count: stalePssrs.length,
-          items: stalePssrs.slice(0, 5).map((p: any) => ({ pssr_number: p.pssr_number, created_at: p.created_at }))
+          items: stalePssrs.slice(0, 5).map((p: any) => ({ pssr_id: p.pssr_id, created_at: p.created_at }))
         });
       }
     }
