@@ -738,11 +738,12 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['RLS-aware queries', 'All tools use Supabase client with Row Level Security — 416+ policies optimized with (select auth.uid()) subquery pattern', 'Active'],
                 ['Read-only tools', 'All tools are SELECT-only — agent cannot modify data', 'Active'],
                 ['PII handling', 'Agent does not expose raw user IDs or passwords', 'Active'],
-                ['Rate limiting', 'Lovable AI Gateway rate limits per workspace', 'Active'],
+                ['Rate limiting', 'Anthropic API rate limits per key', 'Active'],
                 ['Hallucination guardrails', 'Prompt: "If data unavailable, say so. Never fabricate."', 'Active'],
                 ['Audit logging', 'All conversations stored in chat_messages with user_id', 'Active'],
                 ['A2A isolation', 'Inter-agent messages use service role, not user tokens', 'Active'],
-                ['Model key security', 'LOVABLE_API_KEY as Edge Function secret, never exposed', 'Active'],
+                ['Model key security', 'ANTHROPIC_API_KEY as Edge Function secret, never exposed', 'Active'],
+                ['Markdown rendering', 'React-markdown with remark-gfm installed March 2026 — tables, bold, headers, lists render properly in ORSHChatDialog UI', 'Active'],
               ]}
             />
           </Section>
