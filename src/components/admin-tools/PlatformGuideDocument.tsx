@@ -536,8 +536,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               <div className="pl-4">├── User Context Loading (ai_user_context)</div>
               <div className="pl-4">├── Specialist Agent Dispatch:</div>
                <div className="pl-8">├── Selma — Document Intelligence (DMS domain — 13 tools)</div>
-               <div className="pl-8">├── PSSR/ORA Agent — Safety & Readiness (PSSR domain — 14 tools)</div>
-               <div className="pl-8">├── PSSR/ORA Agent — ORA Planning (activity planning domain)</div>
+               <div className="pl-8">├── Fred (PSSR/ORA Agent) — Safety & Readiness (PSSR domain — 14 tools)</div>
+               <div className="pl-8">├── Fred (PSSR/ORA Agent) — ORA Planning (activity planning domain)</div>
               <div className="pl-8">└── General CoPilot (fallback)</div>
               <div className="pl-4">└── Response Synthesis + Context Persistence</div>
             </div>
@@ -613,7 +613,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
               <Card className="bg-muted/30 border-border">
                 <CardContent className="pt-4">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">3. PSSR/ORA Agent — Safety Review & Activity Planning Specialist</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">3. Fred (PSSR/ORA Agent) — Safety Review & Activity Planning Specialist</h3>
                   <p className="text-xs">
                     The PSSR/ORA Agent has <strong className="text-foreground">14 tools</strong> covering Pre-Startup Safety Review management, 
                     ORA activity planning, checklist intelligence and safety readiness assessment.
@@ -628,7 +628,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
                 <ul className="list-disc pl-5 space-y-1 text-xs">
                   <li>All agents are accessed through the <strong className="text-foreground">Bob CoPilot chat interface</strong> (Ask Bob in the navigation)</li>
                   <li>Bob automatically routes your question to the right specialist</li>
-                  <li>You do not need to address Selma or the PSSR/ORA Agent directly — Bob handles routing</li>
+                  <li>You do not need to address Selma or Fred (PSSR/ORA Agent) directly — Bob handles routing</li>
                   <li>Example: asking <em>"What is the document quality score for project DP-368?"</em> will automatically route to Selma</li>
                 </ul>
               </CardContent>
