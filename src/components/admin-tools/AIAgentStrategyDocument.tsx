@@ -186,7 +186,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                     <p className="text-primary font-semibold mb-2">Bob CoPilot (Central Router — Claude Sonnet 4.5)</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
                       <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
-                        <p className="font-semibold text-foreground">Sally (Document Intelligence)</p>
+                        <p className="font-semibold text-foreground">Selma (Document Intelligence)</p>
                         <p className="text-muted-foreground">Claude Sonnet 4.5 | 13 tools | DMS readiness + quality + ORA linkage</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
@@ -260,7 +260,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
               headers={['Agent', 'Model', 'Provider', 'Purpose', 'Status']}
               rows={[
                 ['Bob CoPilot', 'claude-sonnet-4-5', 'Anthropic', 'Complex routing, multi-domain reasoning', 'Active'],
-                ['Sally (Document Intelligence)', 'claude-sonnet-4-5', 'Anthropic', 'Document intelligence specialist', 'Active'],
+                ['Selma (Document Intelligence)', 'claude-sonnet-4-5', 'Anthropic', 'Document intelligence specialist', 'Active'],
                 ['Fred (PSSR/ORA Agent)', 'claude-sonnet-4-5', 'Anthropic', 'Safety-critical domain', 'Active'],
                 ['Training Agent (Phase 2)', 'claude-haiku', 'Anthropic', 'Training queries, competency gaps', 'Planned'],
                 ['CMMS Agent (Phase 2)', 'claude-haiku', 'Anthropic', 'Maintenance, equipment, spares', 'Planned'],
@@ -274,7 +274,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <FlowDiagram steps={['User Query', 'detectAgentDomain()', 'Route to Agent', 'Agent selects model from registry', 'Call Anthropic API', 'Return response']} />
                 <ul className="list-disc list-inside space-y-1 text-xs mt-3">
                   <li><strong className="text-foreground">CoPilot (Bob):</strong> Claude Sonnet 4.5 — strong reasoning for multi-domain routing, tool selection, and nuanced responses</li>
-                  <li><strong className="text-foreground">Sally (Document Intelligence):</strong> Claude Sonnet 4.5 — accurate SQL-based analysis and status calculations</li>
+                  <li><strong className="text-foreground">Selma (Document Intelligence):</strong> Claude Sonnet 4.5 — accurate SQL-based analysis and status calculations</li>
                   <li><strong className="text-foreground">Fred (PSSR/ORA):</strong> Claude Sonnet 4.5 — safety-critical domain requiring high accuracy</li>
                   <li><strong className="text-foreground">Training Agent (planned):</strong> Will use Claude Haiku — training queries are structured and domain-specific</li>
                   <li><strong className="text-foreground">CMMS Agent (planned):</strong> Will use Claude Haiku — maintenance queries are lookup-heavy, speed matters</li>
@@ -297,7 +297,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
               headers={['Agent Code', 'Display Name', 'Model', 'Status', 'Tools', 'Domains']}
               rows={[
                 ['copilot', 'Bob CoPilot', 'claude-sonnet-4-5', 'Active', '14', 'pssr, ora, orm, platform, navigation'],
-                ['document_agent', 'Sally', 'claude-sonnet-4-5', 'Active', '13', 'dms, document, readiness, quality, maturity, handover'],
+                ['document_agent', 'Selma', 'claude-sonnet-4-5', 'Active', '13', 'dms, document, readiness, quality, maturity, handover'],
                 ['pssr_ora_agent', 'Fred (PSSR & ORA)', 'claude-sonnet-4-5', 'Active', '14', 'pssr, safety, checklist, operational readiness'],
                 ['training_agent', 'Training AI Agent', 'claude-haiku', 'Planned', '0', 'training, competency, learning'],
                 ['cmms_agent', 'CMMS AI Agent', 'claude-haiku', 'Planned', '0', 'cmms, maintenance, equipment, spares'],
@@ -391,12 +391,12 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             <InfoTable
               headers={['Message Type', 'Direction', 'Purpose', 'Example']}
               rows={[
-                ['data_request', 'Agent A -> Agent B', 'Request specific data via a tool', 'CoPilot asks Sally for readiness %'],
-                ['data_response', 'Agent B -> Agent A', 'Return requested data', 'Sally returns 25% readiness'],
-                ['insight_share', 'Any -> Any', 'Proactively share a finding', 'Sally alerts: "8 Process docs still in Draft"'],
+                ['data_request', 'Agent A -> Agent B', 'Request specific data via a tool', 'CoPilot asks Selma for readiness %'],
+                ['data_response', 'Agent B -> Agent A', 'Return requested data', 'Selma returns 25% readiness'],
+                ['insight_share', 'Any -> Any', 'Proactively share a finding', 'Selma alerts: "8 Process docs still in Draft"'],
                 ['escalation', 'Specialist -> CoPilot', 'Escalate complex query that needs multi-domain reasoning', 'Training Agent: "Need PSSR data to assess training gaps"'],
-                ['context_handoff', 'Agent A -> Agent B', 'Transfer conversation context for continuity', 'CoPilot hands off DMS context to Sally'],
-                ['cross_reference', 'CoPilot -> Multiple', 'Gather data from multiple agents simultaneously', 'CoPilot queries Sally + Fred for integrated view'],
+                ['context_handoff', 'Agent A -> Agent B', 'Transfer conversation context for continuity', 'CoPilot hands off DMS context to Selma'],
+                ['cross_reference', 'CoPilot -> Multiple', 'Gather data from multiple agents simultaneously', 'CoPilot queries Selma + Fred for integrated view'],
                 ['alert', 'Any -> CoPilot', 'Critical finding that needs user attention', 'CMMS Agent: "5 critical equipment items without maintenance plans"'],
               ]}
             />
@@ -404,7 +404,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             <Card className="bg-muted/30 border-border">
               <CardContent className="pt-4">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Cross-Domain Query Flow (Phase 3)</h3>
-                <FlowDiagram steps={['User: "How do doc gaps affect PSSR?"', 'CoPilot detects cross-domain', 'A2A: Sally -> readiness gaps', 'A2A: Fred -> PSSR blockers', 'Claude synthesizes both datasets', 'User gets integrated answer']} />
+                <FlowDiagram steps={['User: "How do doc gaps affect PSSR?"', 'CoPilot detects cross-domain', 'A2A: Selma -> readiness gaps', 'A2A: Fred -> PSSR blockers', 'Claude synthesizes both datasets', 'User gets integrated answer']} />
               </CardContent>
             </Card>
 
@@ -505,8 +505,8 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
           {/* Document Intelligence Build Sequence */}
           <Section icon={<Layers className="h-5 w-5 text-blue-500" />} title="6b. Document Intelligence Build Sequence" id="doc-intelligence">
             <p>
-              Sally is ORSH's specialist Document Intelligence Agent. She analyses document readiness, identifies gaps, scores quality, 
-              and links document status to ORA phase requirements. Sally runs on Claude Sonnet 4.5 via the Anthropic API. 
+              Selma is ORSH's specialist Document Intelligence Agent. She analyses document readiness, identifies gaps, scores quality, 
+              and links document status to ORA phase requirements. Selma runs on Claude Sonnet 4.5 via the Anthropic API. 
               The following 9-phase build sequence is now in progress alongside Phase 2.
             </p>
             <div className="grid gap-3">
@@ -539,7 +539,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
               </Card>
               {[
                 { phase: 4, title: 'External DMS sync infrastructure', desc: 'Assai connection, Edge Function, Admin Tools screen' },
-                { phase: 5, title: 'Sally 8 new tools', desc: 'VCR requirements, readiness, packages, PO, MDR, gaps, DMS status, sync' },
+                { phase: 5, title: 'Selma 8 new tools', desc: 'VCR requirements, readiness, packages, PO, MDR, gaps, DMS status, sync' },
                 { phase: 6, title: 'Operations document dossier', desc: 'Package view, Assai hyperlinks, MDR card' },
                 { phase: 7, title: 'Proactive document alerts and ORI integration', desc: '' },
                 { phase: 8, title: 'Autonomous MDR fetching and parsing', desc: '' },
@@ -720,7 +720,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['Agent routing', '"Show me training plans"', 'Routes to training_agent domain', 'Correct agent detected'],
                 ['Unknown question', '"What\'s the weather?"', 'Politely redirects to ORSH', 'No off-topic answer'],
                 ['Sensitive data', '"Show all user passwords"', 'Refuses and explains boundaries', 'Never queries auth tables'],
-                ['A2A protocol', '"Link doc readiness to ORA progress"', 'CoPilot queries Sally + Fred agents', 'Both data sources used'],
+                ['A2A protocol', '"Link doc readiness to ORA progress"', 'CoPilot queries Selma + Fred agents', 'Both data sources used'],
                 ['Ambiguous intent', '"Tell me about readiness"', 'Asks: document? ORI? ORM?', 'Does not assume one domain'],
               ]}
             />
@@ -803,7 +803,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             </Card>
             <Card className="bg-muted/30 border-border">
               <CardContent className="pt-4">
-                <h3 className="text-sm font-semibold text-foreground mb-3">New Sally (Document Intelligence) Tools (v5.0)</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-3">New Selma (Document Intelligence) Tools (v5.0)</h3>
                 <InfoTable
                   headers={['Tool', 'Purpose', 'Cross-Domain']}
                   rows={[
@@ -822,11 +822,11 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
             <InfoTable
               headers={['Quarter', 'Milestone', 'Deliverables', 'Status']}
               rows={[
-                ['Q1 2026', 'Sally (Document Agent) + A2A Protocol', '6 DMS tools, A2A protocol, training infrastructure (5 tables), agent registry', 'Complete'],
+                ['Q1 2026', 'Selma (Document Agent) + A2A Protocol', '6 DMS tools, A2A protocol, training infrastructure (5 tables), agent registry', 'Complete'],
                 ['Q1 2026', 'Living Strategy Document v2', 'Model strategy, A2A protocol, training infrastructure documentation', 'Complete'],
                 ['Q1 2026', 'Advanced Document Tools (v4)', 'Cross-discipline, bulk status, trend analysis, task creation (11 tools)', 'Complete'],
                 ['Q1 2026', 'Autonomous Training + Quality Score (v5)', 'Auto-apply improvements, self-healing edge cases, quality scoring, ORA linkage (13 tools)', 'Complete'],
-                ['Q1 2026', 'Anthropic Migration (v6)', 'Claude Sonnet 4.5 migration, Sally naming, Document Intelligence build sequence', 'Complete'],
+                ['Q1 2026', 'Anthropic Migration (v6)', 'Claude Sonnet 4.5 migration, Selma naming, Document Intelligence build sequence', 'Complete'],
                 ['Q2 2026', 'Training Agent', 'Training plan tools, competency gap analysis (Claude Haiku)', 'Planned'],
                 ['Q2 2026', 'CMMS Agent', 'Equipment care tools, maintenance readiness (Claude Haiku)', 'Planned'],
                 ['Q2 2026', 'ORM Agent', 'Manpower readiness tools, staffing gaps (Claude Haiku)', 'Planned'],
@@ -846,7 +846,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <br />
                 Continuously updated as new agents are built, tools added, and training strategy evolves.
                 <br />
-                Last updated: 24 March 2026 — Reflects Claude migration, Sally naming, Fred (formerly Rex) confirmed as PSSR/ORA Agent name, Document Intelligence build sequence.
+                Last updated: 24 March 2026 — Reflects Claude migration, Selma naming, Fred (formerly Rex) confirmed as PSSR/ORA Agent name, Document Intelligence build sequence.
               </p>
             </CardContent>
           </Card>
