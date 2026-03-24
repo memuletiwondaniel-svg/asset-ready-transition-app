@@ -794,7 +794,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                     <div key={index} className={cn("flex gap-4", message.role === 'user' ? 'justify-end' : 'justify-start')}>
                       {message.role === 'assistant' && (
                         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
-                          <Bot className="h-4 w-4 text-white" />
+                          <span className="text-sm font-bold text-white">B</span>
                         </div>
                       )}
                       <div className={cn(
