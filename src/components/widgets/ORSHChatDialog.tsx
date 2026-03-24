@@ -40,6 +40,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { cn } from '@/lib/utils';
 import { processUserInput, getBlockedResponse } from '@/lib/security';
+import { ChatMessageFeedback } from '@/components/widgets/ChatMessageFeedback';
 import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import {
   Tooltip,
@@ -600,33 +601,10 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     setEditingTitle(conv.title);
   };
 
-  const handleFeedback = async (messageIndex: number, rating: 'positive' | 'negative') => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const message = messages[messageIndex];
-      if (message.feedbackGiven === rating) return;
-
-      const { error } = await supabase
-        .from('ai_response_feedback')
-        .insert({
-          user_id: user.id,
-          conversation_id: currentConversationId,
-          rating,
-          agent_code: 'bob-copilot',
-        });
-
-      if (error) throw error;
-
-      setMessages(prev => prev.map((m, i) => 
-        i === messageIndex ? { ...m, feedbackGiven: rating } : m
-      ));
-
-      toast.success(rating === 'positive' ? 'Thanks for the feedback!' : 'Thanks, we\'ll improve!');
-    } catch (error) {
-      console.error('Error saving feedback:', error);
-    }
+  const handleFeedbackChange = (messageIndex: number, rating: 'positive' | 'negative') => {
+    setMessages(prev => prev.map((m, i) => 
+      i === messageIndex ? { ...m, feedbackGiven: rating } : m
+    ));
   };
 
   const filteredConversations = conversations.filter(conv => 
@@ -860,29 +838,14 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                         )}
                       </div>
                       {message.role === 'assistant' && !isLoading && (
-                        <div className="flex items-center gap-1 mt-1 ml-12">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                              "h-7 w-7 rounded-full",
-                              message.feedbackGiven === 'positive' && "bg-green-500/10 text-green-600"
-                            )}
-                            onClick={() => handleFeedback(index, 'positive')}
-                          >
-                            <ThumbsUp className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                              "h-7 w-7 rounded-full",
-                              message.feedbackGiven === 'negative' && "bg-destructive/10 text-destructive"
-                            )}
-                            onClick={() => handleFeedback(index, 'negative')}
-                          >
-                            <ThumbsDown className="h-3.5 w-3.5" />
-                          </Button>
+                        <div className="ml-12">
+                          <ChatMessageFeedback
+                            messageIndex={index}
+                            conversationId={currentConversationId}
+                            agentName="bob"
+                            feedbackGiven={message.feedbackGiven}
+                            onFeedbackChange={handleFeedbackChange}
+                          />
                         </div>
                       )}
                       {message.role === 'user' && (

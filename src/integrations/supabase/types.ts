@@ -149,6 +149,47 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_feedback: {
+        Row: {
+          agent_name: string
+          created_at: string
+          feedback_text: string | null
+          id: string
+          message_id: string | null
+          rating: string
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_name?: string
+          created_at?: string
+          feedback_text?: string | null
+          id?: string
+          message_id?: string | null
+          rating: string
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_name?: string
+          created_at?: string
+          feedback_text?: string | null
+          id?: string
+          message_id?: string | null
+          rating?: string
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_feedback_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_prompt_improvements: {
         Row: {
           agent_code: string
