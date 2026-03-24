@@ -115,7 +115,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
           <div className="flex items-center gap-2">
             <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-AI-Agent-Strategy" />
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-              v5.0 — March 2026
+              v6.0 — March 2026
             </Badge>
           </div>
         </div>
