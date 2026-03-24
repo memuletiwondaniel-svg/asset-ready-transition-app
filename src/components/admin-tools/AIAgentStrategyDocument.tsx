@@ -430,17 +430,18 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
               <Card className="border-emerald-500/20 bg-emerald-500/5">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <StatusBadge status="active" />
-                    <h3 className="font-semibold text-foreground text-sm">Phase 1 — Rule-Based Tool Agents + A2A Protocol (Current)</h3>
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">COMPLETE</Badge>
+                    <h3 className="font-semibold text-foreground text-sm">Phase 1 — Rule-Based Tool Agents + A2A Protocol</h3>
                   </div>
                   <ul className="list-disc list-inside space-y-1 text-xs">
                     <li>Static system prompt with comprehensive domain knowledge</li>
-                    <li>20 SQL-backed tool functions across 2 active agents</li>
+                    <li>20 SQL-backed tool functions across 3 active agents</li>
                     <li>A2A communication protocol implemented and logging to database</li>
                     <li>Agent registry in PostgreSQL with model assignments</li>
                     <li>Response feedback logging (latency, tools used, agent detected)</li>
                     <li>Edge case catalog table for tracking failures</li>
                     <li>Intent detection via keyword matching for agent routing</li>
+                    <li>Migration to Anthropic API (Claude Sonnet 4.5) completed 23 March 2026</li>
                   </ul>
                 </CardContent>
               </Card>
