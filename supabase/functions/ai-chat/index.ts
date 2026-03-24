@@ -4243,12 +4243,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             .maybeSingle();
           pssrLabel = pssr?.pssr_id || pssr?.title || args.pssr_id;
         } else if (args.project_code) {
-          const projectCode = String(args.project_code).replace(/[^a-z0-9]/gi, '');
-          const { data: pssrs } = await supabaseClient
-            .from('pssrs')
-            .select('id, pssr_id, title, asset, project_name')
-            .or(`pssr_id.ilike.%${projectCode}%,title.ilike.%${projectCode}%,asset.ilike.%${projectCode}%,project_name.ilike.%${projectCode}%`)
-            .limit(10);
+          const pssrs = await findPssrsByCode(supabaseClient, String(args.project_code), 10);
           
           if (!pssrs || pssrs.length === 0) {
             return { 
