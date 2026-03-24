@@ -3132,7 +3132,7 @@ async function routeA2AMessage(message: A2AMessage, supabaseClient: any): Promis
 function detectAgentDomain(message: string): string {
   const lower = message.toLowerCase();
   
-  // Sally (Document Intelligence Assistant) triggers
+  // Selma (Document Intelligence Assistant) triggers
   if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|document.*handover|doc.*p2a)\b/i.test(lower)) {
     return 'document_agent';
   }
