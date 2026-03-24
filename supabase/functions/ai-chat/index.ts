@@ -259,7 +259,7 @@ TECHNOLOGY STACK:
 - State Management: React Query (TanStack Query) for server state
 - Routing: React Router v6
 - Backend: Supabase (PostgreSQL + Edge Functions + Auth + Storage)
-- AI: Lovable AI Gateway (Google Gemini models)
+- AI: Anthropic Claude (claude-sonnet-4-5)
 
 APPLICATION STRUCTURE:
 \`\`\`
@@ -6182,12 +6182,12 @@ serve(async (req) => {
 
   try {
     const { messages } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error("ANTHROPIC_API_KEY is not configured");
     }
     
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -6248,7 +6248,7 @@ serve(async (req) => {
       }
     }
 
-    // Transform messages to support vision with multiple images
+    // Transform messages for Anthropic format (vision support)
     const transformedMessages = messages.map((msg: any) => {
       if (msg.imageUrls && msg.imageUrls.length > 0) {
         const content: any[] = [
@@ -6256,8 +6256,8 @@ serve(async (req) => {
         ];
         msg.imageUrls.forEach((url: string) => {
           content.push({
-            type: "image_url",
-            image_url: { url }
+            type: "image",
+            source: { type: "url", url }
           });
         });
         return { role: msg.role, content };
@@ -6270,65 +6270,105 @@ serve(async (req) => {
     const requestStartTime = Date.now();
     console.log(`Bob processing request with ${transformedMessages.length} messages (detected agent: ${detectedAgent})`);
 
+    // Agent-specific system prompts
+    const DOCUMENT_AGENT_PROMPT = `You are the Document Specialist Agent for the ORSH platform. You are an expert in DMS (Document Management System) document readiness, gap analysis, quality scoring, document numbering configuration, and ORA phase linkage for Oil & Gas capital projects. You help users understand document status, identify gaps, analyze trends, and ensure documentation readiness for operational handover. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity.`;
+
+    const PSSR_ORA_AGENT_PROMPT = `You are the PSSR & ORA Specialist Agent for the ORSH platform. You are an expert in Pre-Startup Safety Reviews (PSSR), ORA (Operational Readiness Activity) planning, PSSR checklist management, and safety readiness for Oil & Gas facilities. You help users track PSSR progress, manage checklist items, identify pending approvals, and ensure safe startup readiness. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity.`;
+
+    // Select system prompt based on detected agent
+    let systemPrompt = BOB_SYSTEM_PROMPT + userContextPrompt;
+    if (detectedAgent === 'document_agent') {
+      systemPrompt = DOCUMENT_AGENT_PROMPT + userContextPrompt;
+    } else if (detectedAgent === 'pssr_ora_agent') {
+      systemPrompt = PSSR_ORA_AGENT_PROMPT + userContextPrompt;
+    }
+
+    // Max tokens: 4096 for copilot, 2048 for specialist agents
+    const maxTokens = detectedAgent === 'copilot' ? 4096 : 2048;
+
+    // Convert OpenAI-style tools to Anthropic format
+    const anthropicTools = tools.map((t: any) => ({
+      name: t.function.name,
+      description: t.function.description,
+      input_schema: t.function.parameters
+    }));
+
     // First API call - with tools enabled (non-streaming for tool handling)
-    const initialResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const initialResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai/gpt-5-mini",
-        messages: [
-          { role: "system", content: BOB_SYSTEM_PROMPT + userContextPrompt },
-          ...transformedMessages,
-        ],
-        tools: tools,
-        stream: false, // Non-streaming for tool calling
+        model: "claude-sonnet-4-5-20250514",
+        system: systemPrompt,
+        messages: transformedMessages,
+        tools: anthropicTools,
+        max_tokens: maxTokens,
       }),
     });
 
     if (!initialResponse.ok) {
+      const errorText = await initialResponse.text();
+      console.error("Anthropic API error:", initialResponse.status, errorText);
+      
+      // Log API error to ai_edge_cases
+      try {
+        await supabase.from('ai_edge_cases').insert({
+          trigger_message: lastUserMessage?.content?.substring(0, 500) || 'unknown',
+          category: 'api_error',
+          severity: initialResponse.status === 429 ? 'medium' : 'high',
+          actual_behavior: `Anthropic API returned ${initialResponse.status}: ${errorText.substring(0, 500)}`,
+          expected_behavior: 'Successful API response',
+          agent_code: detectedAgent
+        });
+      } catch (logErr) {
+        console.error('Failed to log API error:', logErr);
+      }
+
       if (initialResponse.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limits exceeded, please try again later." }), 
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (initialResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Payment required, please add funds to your Lovable AI workspace." }), 
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const errorText = await initialResponse.text();
-      console.error("AI gateway error:", initialResponse.status, errorText);
-      return new Response(
-        JSON.stringify({ error: "AI gateway error" }), 
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      
+      // Graceful fallback
+      const fallbackContent = "I'm experiencing a temporary issue connecting to my AI backend. Please try again in a moment. If this persists, contact your ORSH administrator.";
+      const sseData = `data: ${JSON.stringify({
+        choices: [{ delta: { content: fallbackContent } }]
+      })}\n\ndata: [DONE]\n\n`;
+      return new Response(sseData, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      });
     }
 
     const initialResult = await initialResponse.json();
-    console.log("Initial AI response:", JSON.stringify(initialResult, null, 2));
+    console.log("Initial AI response stop_reason:", initialResult.stop_reason);
 
-    const assistantMessage = initialResult.choices?.[0]?.message;
+    // Anthropic response: extract text content and tool_use blocks
+    const contentBlocks = initialResult.content || [];
+    const toolUseBlocks = contentBlocks.filter((b: any) => b.type === 'tool_use');
+    const textBlocks = contentBlocks.filter((b: any) => b.type === 'text');
+    const textContent = textBlocks.map((b: any) => b.text).join('');
     
     // Check if AI wants to call tools
-    if (assistantMessage?.tool_calls && assistantMessage.tool_calls.length > 0) {
-      console.log("AI requested tool calls:", assistantMessage.tool_calls.length);
+    if (toolUseBlocks.length > 0) {
+      console.log("AI requested tool calls:", toolUseBlocks.length);
       
       // Execute all tool calls and track navigation actions
-      const toolResults = [];
+      const toolResultContents: any[] = [];
       const toolCallNames: string[] = [];
       let navigationAction: { action: string; path: string } | null = null;
       let lastToolName: string | null = null;
       let lastToolResult: any = null;
       
-      for (const toolCall of assistantMessage.tool_calls) {
-        const toolName = toolCall.function.name;
+      for (const toolBlock of toolUseBlocks) {
+        const toolName = toolBlock.name;
         toolCallNames.push(toolName);
-        const toolArgs = JSON.parse(toolCall.function.arguments || '{}');
+        const toolArgs = toolBlock.input || {};
         // Inject user_id for user context tools
         if (['get_user_context', 'save_user_context'].includes(toolName) && currentUserId) {
           toolArgs._user_id = currentUserId;
@@ -6346,29 +6386,32 @@ serve(async (req) => {
           navigationAction = { action: "navigate", path: result.path };
         }
         
-        toolResults.push({
-          role: "tool",
-          tool_call_id: toolCall.id,
+        // Anthropic tool_result format
+        toolResultContents.push({
+          type: "tool_result",
+          tool_use_id: toolBlock.id,
           content: JSON.stringify(result)
         });
       }
       
       // Second API call - send tool results back to AI for final response
-      const finalResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      // Build messages: original conversation + assistant message with tool_use + user message with tool_results
+      const finalResponse = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
         },
         body: JSON.stringify({
-          model: "openai/gpt-5-mini",
+          model: "claude-sonnet-4-5-20250514",
+          system: systemPrompt,
           messages: [
-            { role: "system", content: BOB_SYSTEM_PROMPT + userContextPrompt },
             ...transformedMessages,
-            assistantMessage,
-          ...toolResults,
+            { role: "assistant", content: contentBlocks },
+            { role: "user", content: toolResultContents },
           ],
-          stream: false,
+          max_tokens: maxTokens,
         }),
       });
 
@@ -6376,13 +6419,14 @@ serve(async (req) => {
         const errorText = await finalResponse.text();
         console.error("Final AI response error:", finalResponse.status, errorText);
         return new Response(
-          JSON.stringify({ error: "AI gateway error on final response" }), 
+          JSON.stringify({ error: "AI error on final response" }), 
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       const finalResult = await finalResponse.json();
-      let finalContent = finalResult.choices?.[0]?.message?.content;
+      const finalBlocks = finalResult.content || [];
+      let finalContent = finalBlocks.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
 
       // Fallback: if model returns no content after tools, deterministically format the last tool result
       if (!finalContent || !finalContent.trim()) {
@@ -6438,7 +6482,7 @@ serve(async (req) => {
     }
     
     // No tool calls - return direct response as SSE
-    const directContent = assistantMessage?.content || "I'm here to help. What would you like to know?";
+    const directContent = textContent || "I'm here to help. What would you like to know?";
     
     // Log response for continuous training pipeline
     logResponseFeedback(supabase, null, detectedAgent, [], Date.now() - requestStartTime)
