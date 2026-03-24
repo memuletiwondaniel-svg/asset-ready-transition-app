@@ -758,7 +758,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
               </Button>
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                  <Bot className="h-4 w-4 text-white" />
+                  <span className="text-sm font-bold text-white">B</span>
                 </div>
                 <div>
                   <h2 className="font-semibold text-sm">Bob</h2>
