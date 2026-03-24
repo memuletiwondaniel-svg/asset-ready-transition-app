@@ -897,11 +897,17 @@ export type Database = {
           display_order: number
           document_description: string | null
           document_name: string
+          document_scope: string | null
           id: string
           is_active: boolean
+          is_mdr: boolean | null
+          is_vendor_document: boolean | null
+          package_tag: string | null
+          po_number: string | null
           rlmu: string | null
           tier: string | null
           updated_at: string
+          vendor_po_sequence: string | null
         }
         Insert: {
           acceptable_status?: string | null
@@ -912,11 +918,17 @@ export type Database = {
           display_order?: number
           document_description?: string | null
           document_name: string
+          document_scope?: string | null
           id?: string
           is_active?: boolean
+          is_mdr?: boolean | null
+          is_vendor_document?: boolean | null
+          package_tag?: string | null
+          po_number?: string | null
           rlmu?: string | null
           tier?: string | null
           updated_at?: string
+          vendor_po_sequence?: string | null
         }
         Update: {
           acceptable_status?: string | null
@@ -927,11 +939,17 @@ export type Database = {
           display_order?: number
           document_description?: string | null
           document_name?: string
+          document_scope?: string | null
           id?: string
           is_active?: boolean
+          is_mdr?: boolean | null
+          is_vendor_document?: boolean | null
+          package_tag?: string | null
+          po_number?: string | null
           rlmu?: string | null
           tier?: string | null
           updated_at?: string
+          vendor_po_sequence?: string | null
         }
         Relationships: []
       }
@@ -1242,6 +1260,54 @@ export type Database = {
           },
           {
             foreignKeyName: "document_packages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_po_structure: {
+        Row: {
+          created_at: string | null
+          id: string
+          package_tag: string | null
+          po_description: string | null
+          po_number: string | null
+          project_id: string | null
+          tenant_id: string | null
+          vendor_po_sequence: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          package_tag?: string | null
+          po_description?: string | null
+          po_number?: string | null
+          project_id?: string | null
+          tenant_id?: string | null
+          vendor_po_sequence?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          package_tag?: string | null
+          po_description?: string | null
+          po_number?: string | null
+          project_id?: string | null
+          tenant_id?: string | null
+          vendor_po_sequence?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_po_structure_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_po_structure_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects_enriched"
