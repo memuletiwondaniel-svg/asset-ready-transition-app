@@ -103,11 +103,13 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     client_id: '', client_secret: '', token_url: '', scope: '',
     project_code_field: '', sync_enabled: false,
     platform_url: '', auth_token: '', automation_enabled: false,
+    db_name: '',
   });
   const [urlError, setUrlError] = useState('');
   const [triedSave, setTriedSave] = useState(false);
   const [credentialsSaved, setCredentialsSaved] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [dbNameAutoDetected, setDbNameAutoDetected] = useState(false);
   const [saving, setSaving] = useState(false);
   const [hasStoredCredentials, setHasStoredCredentials] = useState(false);
 
@@ -231,6 +233,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
             platform_url: existing.base_url || '',
             auth_token: '',
             automation_enabled: existing.sync_enabled || false,
+            db_name: existing.db_name || '',
           });
         } else {
           setConnectionMethod('api');
@@ -266,7 +269,9 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       client_id: '', client_secret: '', token_url: '', scope: '',
       project_code_field: '', sync_enabled: false,
       platform_url: '', auth_token: '', automation_enabled: false,
+      db_name: '',
     });
+    setDbNameAutoDetected(false);
   };
 
   const saveConfig = async () => {
@@ -306,6 +311,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       } else {
         if (formData.username) record.username_encrypted = formData.username;
         if (formData.password) record.password_encrypted = formData.password;
+        if (formData.db_name) record.db_name = formData.db_name;
       }
 
       console.log('[IntegrationHub] Saving credentials for', panelPlatform.id, 'method:', connectionMethod);
@@ -420,7 +426,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const enterprisePlatforms = filteredPlatforms.filter(p => p.section === 'enterprise');
   const commsPlatforms = filteredPlatforms.filter(p => p.section === 'comms');
 
-  const isFormValid = connectionMethod === 'api' ? !!formData.base_url.trim() : !!formData.platform_url.trim();
+  const isFormValid = connectionMethod === 'api' ? !!formData.base_url.trim() : (!!formData.platform_url.trim() && !!formData.db_name.trim());
 
   const validateUrl = (url: string) => {
     if (url && !url.startsWith('https://')) {
@@ -776,7 +782,24 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                           placeholder="https://client.assaisoftware.com"
                           value={formData.platform_url}
                           onChange={e => { setFormData(f => ({ ...f, platform_url: e.target.value })); setUrlError(''); }}
-                          onBlur={() => setUrlError(validateUrl(formData.platform_url))}
+                          onBlur={() => {
+                            setUrlError(validateUrl(formData.platform_url));
+                            // Auto-suggest db_name from URL
+                            if (formData.platform_url && !formData.db_name) {
+                              try {
+                                const urlObj = new URL(formData.platform_url.trim());
+                                const pathParts = urlObj.pathname.split('/').filter(Boolean);
+                                const tenantCode = pathParts[0] || '';
+                                if (tenantCode) {
+                                  const suggested = tenantCode.replace(/^AW/i, '').toLowerCase();
+                                  if (suggested) {
+                                    setFormData(f => ({ ...f, db_name: suggested }));
+                                    setDbNameAutoDetected(true);
+                                  }
+                                }
+                              } catch { /* invalid URL, skip */ }
+                            }
+                          }}
                           className={cn('h-10 text-sm rounded-lg', (urlError || (triedSave && !formData.platform_url.trim())) && 'border-destructive')}
                         />
                         {urlError ? (
@@ -785,6 +808,21 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                           <p className="text-xs text-muted-foreground mt-1">The login URL of the platform e.g. https://client.assaisoftware.com</p>
                         )}
                         {triedSave && !formData.platform_url.trim() && <p className="text-xs text-destructive mt-1">Platform URL is required</p>}
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[13px] font-medium text-foreground/80">Database Name</Label>
+                        <Input
+                          placeholder="e.g. eu578"
+                          value={formData.db_name}
+                          onChange={e => { setFormData(f => ({ ...f, db_name: e.target.value })); setDbNameAutoDetected(false); }}
+                          className={cn('h-10 text-sm rounded-lg', triedSave && !formData.db_name.trim() && 'border-destructive')}
+                        />
+                        {dbNameAutoDetected ? (
+                          <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Auto-detected from URL — verify before saving</p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground mt-1">The database identifier for your Assai instance. For Assai Cloud, this is typically your tenant code in lowercase without the 'AW' prefix e.g. AWeu578 → eu578</p>
+                        )}
+                        {triedSave && !formData.db_name.trim() && <p className="text-xs text-destructive mt-1">Database Name is required</p>}
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[13px] font-medium text-foreground/80">Username</Label>
