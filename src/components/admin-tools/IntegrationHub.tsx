@@ -69,7 +69,7 @@ interface Platform {
 }
 
 type ConnectionMethod = 'api' | 'automation';
-type AuthType = 'basic' | 'api_key' | 'oauth';
+type AuthType = 'api_key' | 'oauth' | 'bearer';
 
 const ALL_PLATFORMS: Platform[] = [
   { id: 'assai', name: 'Assai', description: 'Enterprise document management for O&G', section: 'dms', logo: assaiLogo, logoScale: 1.15, hasEdgeFunction: true, accent: '#F97316', badgeLabel: 'assai' },
