@@ -346,7 +346,25 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   };
 
   const testConnection = async () => {
-    toast.info(`Test function not yet available for ${panelPlatform?.name}`);
+    if (!panelPlatform) return;
+    if (panelPlatform.id === 'assai') {
+      setTestingInPanel(true);
+      setTestResultInPanel(null);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const { data, error } = await supabase.functions.invoke('test-assai-connection', {
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        });
+        if (error) throw error;
+        setTestResultInPanel(data);
+      } catch (err: any) {
+        setTestResultInPanel({ success: false, message: err.message || 'Test failed' });
+      } finally {
+        setTestingInPanel(false);
+      }
+    } else {
+      toast.info(`Test function not yet available for ${panelPlatform?.name}`);
+    }
   };
 
   const triggerSync = async () => {
