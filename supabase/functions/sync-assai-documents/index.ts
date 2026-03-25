@@ -531,14 +531,14 @@ Deno.serve(async (req) => {
 
       for (const doc of documents) {
         try {
-          const docNumber = doc.document_number || doc.documentNumber || doc.number || doc.doc_no || "";
+          const docNumber = doc.document_number || "";
           if (!docNumber) continue;
 
-          const docTitle = doc.title || doc.document_title || doc.documentTitle || doc.description || "";
-          const revision = doc.revision || doc.rev || doc.current_revision || "";
-          const statusCode = doc.status || doc.status_code || doc.documentStatus || "";
-          const disciplineCode = doc.discipline || doc.discipline_code || doc.disciplineCode || "";
-          const packageCode = doc.work_package || doc.workPackage || doc.package_code || "";
+          const docTitle = doc.document_title || "";
+          const revision = doc.revision || "";
+          const statusCode = doc.status_code || "";
+          const disciplineCode = doc.discipline_code || "";
+          const packageCode = doc.work_package_code || "";
 
           const { data: existing } = await supabase
             .from("dms_external_sync")
@@ -558,7 +558,7 @@ Deno.serve(async (req) => {
               package_tag: packageCode,
               last_synced_at: new Date().toISOString(),
               sync_status: "synced",
-              metadata: { raw: doc, last_sync_source: "rest_api" },
+              metadata: { raw: doc, last_sync_source: syncRoute },
             }).eq("id", existing.id);
           } else {
             await supabase.from("dms_external_sync").insert({
@@ -572,7 +572,7 @@ Deno.serve(async (req) => {
               last_synced_at: new Date().toISOString(),
               sync_status: "synced",
               tenant_id: creds.tenant_id,
-              metadata: { raw: doc, last_sync_source: "rest_api" },
+              metadata: { raw: doc, last_sync_source: syncRoute },
             });
             newCount++;
           }
