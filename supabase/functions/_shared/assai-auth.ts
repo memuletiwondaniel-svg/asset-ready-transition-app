@@ -13,6 +13,7 @@ export interface AssaiAuthDebugStep {
   final_url?: string;
   cookies?: string;
   base_url?: string;
+  dbname_used?: string;
   hidden_fields_found?: string[];
   form_body_preview?: string;
   form_body_masked?: string;
@@ -202,9 +203,23 @@ export async function loginAssai(
     // Extract hidden fields dynamically (includes CSRF-like fields)
     const hiddenFields = extractHiddenFields(bodyB);
 
+    const loginFields = Object.fromEntries(
+      Object.entries(hiddenFields).filter(([key]) => {
+        const lowered = key.toLowerCase();
+        return !lowered.startsWith("reset_") && !lowered.startsWith("forgetpwd_");
+      })
+    );
+
+    const tenantCode = baseUrl.split("/").filter(Boolean).pop() || "";
+    const derivedDbName = tenantCode.replace(/^AW/i, "").toLowerCase();
+    const dbname = (hiddenFields["reset_dbname"] || derivedDbName || "").trim();
+
     const formParams = new URLSearchParams();
-    for (const [k, v] of Object.entries(hiddenFields)) {
+    for (const [k, v] of Object.entries(loginFields)) {
       formParams.set(k, v);
+    }
+    if (dbname) {
+      formParams.set("dbname", dbname);
     }
     formParams.set("userid", username);
     formParams.set("password", password);
@@ -220,6 +235,7 @@ export async function loginAssai(
       url: resB.url,
       cookies,
       hidden_fields_found: Object.keys(hiddenFields),
+      dbname_used: dbname,
       form_body_preview: maskedFormBody.substring(0, 200),
       form_body_masked: maskedFormBody,
     });
