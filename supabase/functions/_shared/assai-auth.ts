@@ -193,10 +193,10 @@ export async function loginAssai(
   };
 
   try {
-    console.log('[assai-auth] loginAssai called with:', {
+    console.log('[assai-login] Starting login:', {
       base_url: baseUrl,
-      username_length: (username || '').length,
-      password_length: (password || '').length,
+      username_length: username.length,
+      password_length: password.length,
       db_name: dbname,
     });
 
@@ -287,9 +287,16 @@ export async function loginAssai(
     });
 
     cookies = mergeCookies(cookies, getSetCookies(r3));
-    const responseBody = await r3.text();
+    const responseText = await r3.text();
     const finalUrl = r3.url || "";
     const success = !finalUrl.toLowerCase().includes("login.aweb");
+
+    // Direct console logs for edge function log visibility
+    console.log('[assai-login] POST status:', r3.status);
+    console.log('[assai-login] POST final URL:', finalUrl);
+    console.log('[assai-login] Response body:', responseText.substring(0, 500));
+    console.log('[assai-login] Contains login form:', responseText.includes('id="form"'));
+    console.log('[assai-login] Contains forward:', responseText.includes('forward.aweb'));
 
     debugSteps.push({
       step: "login_post",
@@ -301,22 +308,20 @@ export async function loginAssai(
       form_body_masked: maskedBody.toString(),
     });
 
-    // Always log full response body details as a separate debug step
     debugSteps.push({
       step: "login_post_body",
       status: r3.status,
       final_url: finalUrl,
-      response_body_preview: responseBody.substring(0, 1000),
+      response_body_preview: responseText.substring(0, 1000),
       is_cloudflare_block:
-        responseBody.includes("cf-challenge") ||
-        responseBody.includes("Ray ID") ||
-        responseBody.includes("checking your browser") ||
-        responseBody.includes("Just a moment"),
+        responseText.includes("cf-challenge") ||
+        responseText.includes("Ray ID") ||
+        responseText.includes("checking your browser") ||
+        responseText.includes("Just a moment"),
     });
 
     if (!success) {
       console.log(`[assai-auth] Step 3 FAILED: status=${r3.status}, finalUrl=${finalUrl}`);
-      console.log(`[assai-auth] Response body (first 1500): ${responseBody.substring(0, 1500)}`);
     } else {
       console.log(`[assai-auth] Step 3 SUCCESS: finalUrl=${finalUrl}`);
     }
