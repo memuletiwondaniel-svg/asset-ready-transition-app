@@ -218,6 +218,7 @@ export async function loginAssai(
     const derivedDbName = tenantCode.replace(/^AW/i, "").toLowerCase();
     const resolvedDbName = (dbname || hiddenFields["reset_dbname"] || derivedDbName || "").trim();
 
+    const methodSelectStepIndex = debugSteps.length;
     debugSteps.push({
       step: "method_select",
       status: resB.status,
@@ -305,8 +306,8 @@ export async function loginAssai(
     maskedParams.set("password", "[REDACTED]");
     const maskedFormBody = maskedParams.toString();
 
-    debugSteps[debugSteps.length - 3] = {
-      ...debugSteps[debugSteps.length - 3],
+    debugSteps[methodSelectStepIndex] = {
+      ...debugSteps[methodSelectStepIndex],
       form_body_preview: maskedFormBody.substring(0, 200),
       form_body_masked: maskedFormBody,
     };
