@@ -116,7 +116,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
   // Action states
   const [testingInPanel, setTestingInPanel] = useState(false);
-  const [testResultInPanel, setTestResultInPanel] = useState<{ success: boolean; message: string; response_time_ms: number } | null>(null);
+  const [testResultInPanel, setTestResultInPanel] = useState<{ success: boolean; message?: string; response_time_ms?: number } | null>(null);
   const [syncingInPanel, setSyncingInPanel] = useState(false);
   const [syncResultInPanel, setSyncResultInPanel] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -346,7 +346,25 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   };
 
   const testConnection = async () => {
-    toast.info(`Test function not yet available for ${panelPlatform?.name}`);
+    if (!panelPlatform) return;
+    if (panelPlatform.id === 'assai') {
+      setTestingInPanel(true);
+      setTestResultInPanel(null);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const { data, error } = await supabase.functions.invoke('test-assai-connection', {
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        });
+        if (error) throw error;
+        setTestResultInPanel(data);
+      } catch (err: any) {
+        setTestResultInPanel({ success: false, message: err.message || 'Test failed' });
+      } finally {
+        setTestingInPanel(false);
+      }
+    } else {
+      toast.info(`Test function not yet available for ${panelPlatform?.name}`);
+    }
   };
 
   const triggerSync = async () => {
@@ -813,48 +831,37 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                 {/* SYNC SECTION */}
                 <div className="space-y-3">
                   <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Sync</span>
-                  {panelPlatform.id === 'assai' ? (
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-muted border border-border/50">
-                      <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Automated sync coming soon. Configure credentials now to be ready when sync is enabled.
-                      </p>
+                  {(() => {
+                    const cred = getCredential(panelPlatform.id);
+                    const lastSync = cred?.last_sync_at;
+                    return (
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          {lastSync ? `Last synced: ${formatDistanceToNow(new Date(lastSync), { addSuffix: true })}` : 'Never synced'}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs"
+                          disabled={!credentialsSaved || syncingInPanel}
+                          onClick={triggerSync}
+                        >
+                          {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                          Sync Now
+                        </Button>
+                      </div>
+                    );
+                  })()}
+                  {syncResultInPanel && (
+                    <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-muted">
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      {syncResultInPanel}
                     </div>
-                  ) : (
-                    <>
-                      {(() => {
-                        const cred = getCredential(panelPlatform.id);
-                        const lastSync = cred?.last_sync_at;
-                        return (
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs text-muted-foreground">
-                              {lastSync ? `Last synced: ${formatDistanceToNow(new Date(lastSync), { addSuffix: true })}` : 'Never synced'}
-                            </p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-xs"
-                              disabled={!credentialsSaved || syncingInPanel}
-                              onClick={triggerSync}
-                            >
-                              {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
-                              Sync Now
-                            </Button>
-                          </div>
-                        );
-                      })()}
-                      {syncResultInPanel && (
-                        <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-muted">
-                          <RefreshCw className="h-3.5 w-3.5" />
-                          {syncResultInPanel}
-                        </div>
-                      )}
-                    </>
                   )}
                 </div>
 
-                {/* SYNC HISTORY — hidden for Assai */}
-                {panelPlatform.id !== 'assai' && (
+                {/* SYNC HISTORY */}
+                {(
                   <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
                     <CollapsibleTrigger className="flex items-center gap-2 w-full text-left">
                       <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', historyOpen ? '' : '-rotate-90')} />
@@ -911,7 +918,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {panelPlatform.id !== 'assai' && (
+                    {(
                       <Button
                         variant="outline"
                         size="sm"
