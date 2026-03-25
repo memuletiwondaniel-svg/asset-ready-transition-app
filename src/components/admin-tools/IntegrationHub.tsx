@@ -345,13 +345,18 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     setTestingInPanel(true);
     setTestResultInPanel(null);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const tenantId = user?.user_metadata?.tenant_id;
-      const { data, error } = await supabase.functions.invoke('test-assai-connection', { body: { tenant_id: tenantId } });
-      if (error) throw error;
-      setTestResultInPanel(data);
+      const resolvedTenant = tenantId;
+      if (!resolvedTenant) throw new Error('No tenant associated with your account');
+      const { data, error } = await supabase.functions.invoke('test-assai-connection', { body: { tenant_id: resolvedTenant } });
+      if (error) {
+        // supabase.functions.invoke throws on non-2xx — extract the message
+        const msg = typeof error === 'object' && error.message ? error.message : String(error);
+        setTestResultInPanel({ success: false, message: msg, response_time_ms: 0 });
+      } else {
+        setTestResultInPanel(data);
+      }
     } catch (err: any) {
-      setTestResultInPanel({ success: false, message: err.message, response_time_ms: 0 });
+      setTestResultInPanel({ success: false, message: err.message || 'Connection test failed', response_time_ms: 0 });
     } finally {
       setTestingInPanel(false);
     }
@@ -365,20 +370,24 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     setSyncingInPanel(true);
     setSyncResultInPanel(null);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const tenantId = user?.user_metadata?.tenant_id;
+      const resolvedTenant = tenantId;
+      if (!resolvedTenant) throw new Error('No tenant associated with your account');
       const { data, error } = await supabase.functions.invoke('sync-assai-documents', {
-        body: { tenant_id: tenantId, manual_trigger: true },
+        body: { tenant_id: resolvedTenant, manual_trigger: true },
       });
-      if (error) throw error;
-      if (data?.success) {
+      if (error) {
+        const msg = typeof error === 'object' && error.message ? error.message : String(error);
+        setSyncResultInPanel(`Sync failed: ${msg}`);
+      } else if (data?.success) {
         setSyncResultInPanel(`${data.synced_count} records synced, ${data.new_documents} new`);
       } else {
-        setSyncResultInPanel(data?.error || 'Sync failed');
+        // Show specific error from the function
+        const errorMsg = data?.error || 'Sync failed';
+        setSyncResultInPanel(`Sync failed: ${errorMsg}`);
       }
       fetchData();
     } catch (err: any) {
-      setSyncResultInPanel(err.message || 'Sync failed');
+      setSyncResultInPanel(`Sync failed: ${err.message || 'Unknown error'}`);
     } finally {
       setSyncingInPanel(false);
     }
