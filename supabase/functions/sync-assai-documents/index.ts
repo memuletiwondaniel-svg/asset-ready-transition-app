@@ -115,8 +115,7 @@ Deno.serve(async (req) => {
     const baseUrl = deriveBaseUrl(creds.base_url);
     console.log(`[sync-assai] Base URL: ${baseUrl}`);
 
-    const loginResult = await loginAssai(baseUrl, username, password);
-    // Note: db_name from creds is passed through if available
+    const loginResult = await loginAssai(baseUrl, username, password, creds.db_name || undefined);
     console.log(`[sync-assai] Login: success=${loginResult.success}, msg=${loginResult.message}`);
 
     if (!loginResult.success) {
