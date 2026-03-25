@@ -770,12 +770,12 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[13px] font-medium text-foreground/80">Username</Label>
-                        <Input value={formData.username} onChange={e => setFormData(f => ({ ...f, username: e.target.value }))} className="h-10 text-sm rounded-lg" />
+                        <Input placeholder={hasStoredCredentials ? '••••••••' : ''} value={formData.username} onChange={e => setFormData(f => ({ ...f, username: e.target.value }))} className="h-10 text-sm rounded-lg" />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[13px] font-medium text-foreground/80">Password</Label>
                         <div className="relative">
-                          <Input type={showPassword ? 'text' : 'password'} value={formData.password} onChange={e => setFormData(f => ({ ...f, password: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
+                          <Input type={showPassword ? 'text' : 'password'} placeholder={hasStoredCredentials ? '••••••••' : ''} value={formData.password} onChange={e => setFormData(f => ({ ...f, password: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
                           {formData.password && (
                             <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
                               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -783,21 +783,16 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                           )}
                         </div>
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-[13px] font-medium text-foreground/80">Workflow Trigger URL</Label>
-                        <Input value={formData.workflow_url} onChange={e => setFormData(f => ({ ...f, workflow_url: e.target.value }))} className="h-10 text-sm rounded-lg" placeholder="https://prod-00.westus.logic.azure.com/..." />
-                        <p className="text-xs text-muted-foreground mt-1">URL of your Power Automate or UiPath workflow trigger endpoint</p>
-                      </div>
                       <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50">
                         <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                         <p className="text-[11px] text-blue-700 dark:text-blue-400 leading-relaxed">
-                          Automation mode logs into the platform interface directly. Ensure your IT team has set up the automation workflow before enabling.
+                          Automation mode stores your login credentials so ORSH can access this platform directly. Your credentials are encrypted and stored securely.
                         </p>
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <Label className="text-[13px] font-medium text-foreground/80">Enable Automation</Label>
-                          <p className="text-xs text-muted-foreground">Allow automated workflows for this platform</p>
+                          <Label className="text-[13px] font-medium text-foreground/80">Enable sync</Label>
+                          <p className="text-xs text-muted-foreground">Allow ORSH to access this platform using stored credentials</p>
                         </div>
                         <Switch checked={formData.automation_enabled} onCheckedChange={v => setFormData(f => ({ ...f, automation_enabled: v }))} />
                       </div>
