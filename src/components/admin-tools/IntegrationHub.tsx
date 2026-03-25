@@ -198,8 +198,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           client_id: config.apiCredentials!.clientId || '',
           client_secret: config.apiCredentials!.clientSecret || '',
           token_url: config.apiCredentials!.tokenUrl || '',
-          project_code_field: '', sync_enabled: false,
-          workflow_url: '', auth_token: '', automation_enabled: false, header_name: 'X-API-Key',
+          scope: '', project_code_field: '', sync_enabled: false,
+          platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false, header_name: 'X-API-Key',
         }));
       } else {
         setConnectionMethod('api');
