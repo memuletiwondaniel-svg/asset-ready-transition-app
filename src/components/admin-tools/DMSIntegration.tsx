@@ -216,7 +216,35 @@ const DMSIntegration: React.FC<DMSIntegrationProps> = ({ onBack }) => {
     }
   };
 
-  const getCredential = (platformId: string) =>
+  const testConnection = async (platformId: string) => {
+    setTesting(platformId);
+    setTestResult(prev => ({ ...prev, [platformId]: null }));
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const tenantId = user?.user_metadata?.tenant_id;
+
+      const { data, error } = await supabase.functions.invoke('test-assai-connection', {
+        body: { tenant_id: tenantId },
+      });
+
+      if (error) throw error;
+
+      setTestResult(prev => ({ ...prev, [platformId]: data }));
+      if (data?.success) {
+        toast.success(`Connection successful (${data.response_time_ms}ms)`);
+      } else {
+        toast.error(data?.message || 'Connection failed');
+      }
+    } catch (err: any) {
+      const result = { success: false, message: err.message || 'Test failed', response_time_ms: 0 };
+      setTestResult(prev => ({ ...prev, [platformId]: result }));
+      toast.error(err.message || 'Connection test failed');
+    } finally {
+      setTesting(null);
+    }
+  };
+
+
     credentials.find(c => c.dms_platform === platformId);
 
   const getStatus = (platformId: string) => {
