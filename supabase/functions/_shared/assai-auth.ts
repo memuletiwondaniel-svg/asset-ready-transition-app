@@ -7,6 +7,21 @@ export interface AssaiLoginResult {
   response_time_ms?: number;
 }
 
+const normalizeAssaiBaseUrl = (rawBaseUrl: string): string => {
+  const trimmed = rawBaseUrl.trim();
+
+  try {
+    const url = new URL(trimmed);
+    const hasAssaiLoginPath = /\/AW[^/]+\/login\.aweb$/i.test(url.pathname);
+    const safePath = hasAssaiLoginPath ? "" : url.pathname.replace(/\/+$/, "");
+    return `${url.origin}${safePath}`;
+  } catch {
+    return trimmed
+      .replace(/\/AW[^/]+\/login\.aweb.*$/i, "")
+      .replace(/\/+$/, "");
+  }
+};
+
 const extractInputValue = (html: string, fieldName: string, fallback = ""): string => {
   const regex = new RegExp(`(?:id|name)="${fieldName}"[^>]*value="([^"]*)"`, "i");
   return regex.exec(html)?.[1] ?? fallback;
@@ -104,10 +119,12 @@ export async function loginAssai(
   password: string,
   dbName: string,
 ): Promise<AssaiLoginResult> {
+  const normalizedBaseUrl = normalizeAssaiBaseUrl(baseUrl);
   const loginPath = `/AW${dbName}/login.aweb`;
-  const loginPageUrl = `${baseUrl}${loginPath}?loginMethod=unpw`;
-  const loginPostUrl = `${baseUrl}${loginPath}`;
+  const loginPageUrl = `${normalizedBaseUrl}${loginPath}?loginMethod=unpw`;
+  const loginPostUrl = `${normalizedBaseUrl}${loginPath}`;
   console.log(`[assai-auth] Attempting login to ${loginPostUrl} as ${username}`);
+  console.log(`[assai-auth] normalized_base_url=${normalizedBaseUrl}`);
   console.log(`[assai-auth] password_length=${password.length}`);
 
   const start = Date.now();
@@ -125,7 +142,7 @@ export async function loginAssai(
     const loginMethod = extractInputValue(loginPageBody, "loginMethod", "unpw");
 
     // 2) Request passphrase via DWR, same as submitSecureLogon() in Assai login.js
-    const dwrUrl = `${baseUrl}/AW${dbName}/dwr/call/plaincall/DWRBean.getSessionID.dwr`;
+    const dwrUrl = `${normalizedBaseUrl}/AW${dbName}/dwr/call/plaincall/DWRBean.getSessionID.dwr`;
     const cookieHeader = uniqueCookiePairs(cookies).join("; ");
     const dwrBody = [
       "callCount=1",
