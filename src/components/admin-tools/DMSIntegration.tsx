@@ -244,7 +244,7 @@ const DMSIntegration: React.FC<DMSIntegrationProps> = ({ onBack }) => {
     }
   };
 
-
+  const getCredential = (platformId: string) =>
     credentials.find(c => c.dms_platform === platformId);
 
   const getStatus = (platformId: string) => {
