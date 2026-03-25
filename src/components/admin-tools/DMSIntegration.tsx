@@ -69,6 +69,8 @@ const DMSIntegration: React.FC<DMSIntegrationProps> = ({ onBack }) => {
   });
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState<string | null>(null);
+  const [testing, setTesting] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<Record<string, { success: boolean; message: string; response_time_ms: number } | null>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [projects, setProjects] = useState<{ id: string; project_title: string; project_id_prefix: string }[]>([]);
