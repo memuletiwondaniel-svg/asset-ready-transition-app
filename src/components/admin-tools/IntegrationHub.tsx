@@ -252,11 +252,10 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         updated_at: new Date().toISOString(),
       };
       if (connectionMethod === 'api') {
-        if (authType === 'basic') {
-          if (formData.username) record.username_encrypted = formData.username;
-          if (formData.password) record.password_encrypted = formData.password;
-        } else if (authType === 'api_key') {
+        if (authType === 'api_key') {
           if (formData.api_key) record.password_encrypted = formData.api_key;
+        } else if (authType === 'bearer') {
+          if (formData.auth_token) record.password_encrypted = formData.auth_token;
         } else if (authType === 'oauth') {
           if (formData.client_id) record.username_encrypted = formData.client_id;
           if (formData.client_secret) record.password_encrypted = formData.client_secret;
