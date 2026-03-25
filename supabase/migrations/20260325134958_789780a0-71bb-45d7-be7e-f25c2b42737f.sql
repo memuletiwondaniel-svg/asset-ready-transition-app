@@ -1,0 +1,1 @@
+UPDATE dms_sync_credentials SET base_url = 'https://eu.assaicloud.com' WHERE id = '84bea01c-0bee-4a79-a3bb-f3949587d7e4' AND dms_platform = 'assai';
