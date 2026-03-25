@@ -69,11 +69,11 @@ const ALL_PLATFORMS: Platform[] = [
   { id: 'assai', name: 'Assai', description: 'Enterprise document management for O&G', section: 'dms', logo: assaiLogo, logoScale: 1.15, hasEdgeFunction: true, accent: '#F97316', badgeLabel: 'assai' },
   { id: 'wrench', name: 'Wrench', description: 'Project document control and management', section: 'dms', logo: wrenchLogo, accent: '#2563EB', badgeLabel: 'wrench' },
   { id: 'documentum', name: 'Documentum', description: 'Enterprise content management platform', section: 'dms', logo: documentumLogo, logoScale: 1.35, accent: '#6D28D9', badgeLabel: 'Documentum' },
-  { id: 'gocompletions', name: 'GoCompletions', description: 'Completions and commissioning management', section: 'enterprise', logo: gocompletionsLogo, accent: '#0EA5E9', badgeLabel: 'GoCompletions' },
-  { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and financials', section: 'enterprise', logo: sapLogo, accent: '#0070F2', badgeLabel: 'SAP' },
-  { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', section: 'enterprise', logo: primaveraLogo, logoScale: 1.3, accent: '#C74634', badgeLabel: 'Oracle' },
-  { id: 'sharepoint', name: 'SharePoint', description: 'Collaboration and document storage', section: 'enterprise', logo: sharepointLogo, logoScale: 1.6, accent: '#038387', badgeLabel: 'SharePoint' },
-  { id: 'teams', name: 'Microsoft Teams', description: 'Team communication and collaboration', section: 'enterprise', logo: teamsLogo, accent: '#6264A7', badgeLabel: 'Teams' },
+  { id: 'gocompletions', name: 'GoCompletions', description: 'Completions and commissioning management', section: 'enterprise', logo: gocompletionsLogo, logoScale: 1.6, accent: '#0EA5E9', badgeLabel: 'GoCompletions' },
+  { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and financials', section: 'enterprise', logo: sapLogo, logoScale: 1.4, accent: '#0070F2', badgeLabel: 'SAP' },
+  { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', section: 'enterprise', logo: primaveraLogo, logoScale: 1.5, accent: '#C74634', badgeLabel: 'Oracle' },
+  { id: 'sharepoint', name: 'SharePoint', description: 'Collaboration and document storage', section: 'enterprise', logo: sharepointLogo, logoScale: 1.8, accent: '#038387', badgeLabel: 'SharePoint' },
+  { id: 'teams', name: 'Microsoft Teams', description: 'Team communication and collaboration', section: 'enterprise', logo: teamsLogo, logoScale: 1.5, accent: '#6264A7', badgeLabel: 'Teams' },
 ];
 
 const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
@@ -451,7 +451,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           <h2 className="text-base font-semibold text-foreground">{title}</h2>
           <Badge variant="outline" className="text-xs">{platforms.length}</Badge>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl">
           {platforms.map(renderPlatformCard)}
         </div>
       </div>
