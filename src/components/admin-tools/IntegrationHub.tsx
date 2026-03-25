@@ -418,11 +418,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     );
   };
 
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    dms: true,
-    enterprise: false,
-    comms: false,
-  });
 
   const toggleSection = (key: string) => {
     setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
