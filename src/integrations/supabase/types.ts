@@ -1216,6 +1216,64 @@ export type Database = {
         }
         Relationships: []
       }
+      document_ingest_queue: {
+        Row: {
+          created_at: string | null
+          document_type_id: string | null
+          id: string
+          priority: number | null
+          processed_at: string | null
+          project_id: string | null
+          status: string | null
+          tenant_id: string | null
+          vcr_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_type_id?: string | null
+          id?: string
+          priority?: number | null
+          processed_at?: string | null
+          project_id?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          vcr_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_type_id?: string | null
+          id?: string
+          priority?: number | null
+          processed_at?: string | null
+          project_id?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          vcr_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_ingest_queue_document_type_id_fkey"
+            columns: ["document_type_id"]
+            isOneToOne: false
+            referencedRelation: "dms_document_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_ingest_queue_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_ingest_queue_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_packages: {
         Row: {
           created_at: string | null
