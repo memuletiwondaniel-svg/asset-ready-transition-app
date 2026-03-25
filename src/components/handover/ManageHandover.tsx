@@ -74,11 +74,11 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
             <TabsTrigger 
               value="vcr" 
               className={cn(
-                "flex items-center gap-2 px-4 transition-colors duration-200",
+                "flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 text-xs md:text-sm transition-colors duration-200",
                 activeTab !== 'vcr' && "text-muted-foreground/60"
               )}
             >
-              <CheckCircle className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('vcr', activeTab === 'vcr'))} />
+              <CheckCircle className={cn("h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('vcr', activeTab === 'vcr'))} />
               <span>VCR</span>
             </TabsTrigger>
             <TabsTrigger 
