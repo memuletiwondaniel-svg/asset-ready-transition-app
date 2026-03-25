@@ -368,7 +368,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     return (
       <Card
         key={platform.id}
-        className="group border-border/40 bg-card hover:border-border transition-colors duration-200 cursor-pointer overflow-hidden"
+        className="group border-border/40 bg-card hover:border-border transition-colors duration-200 cursor-pointer overflow-hidden min-h-[180px] flex flex-col"
         onClick={() => openPanel(platform)}
       >
         {/* Status badge */}
