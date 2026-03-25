@@ -963,6 +963,7 @@ export type Database = {
           external_url: string | null
           id: string
           last_synced_at: string | null
+          metadata: Json | null
           package_tag: string | null
           project_id: string | null
           revision: string | null
@@ -981,6 +982,7 @@ export type Database = {
           external_url?: string | null
           id?: string
           last_synced_at?: string | null
+          metadata?: Json | null
           package_tag?: string | null
           project_id?: string | null
           revision?: string | null
@@ -999,6 +1001,7 @@ export type Database = {
           external_url?: string | null
           id?: string
           last_synced_at?: string | null
+          metadata?: Json | null
           package_tag?: string | null
           project_id?: string | null
           revision?: string | null
@@ -1021,6 +1024,44 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dms_field_mappings: {
+        Row: {
+          assai_field: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          orsh_field: string
+          platform: string
+          tenant_id: string | null
+        }
+        Insert: {
+          assai_field?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          orsh_field: string
+          platform: string
+          tenant_id?: string | null
+        }
+        Update: {
+          assai_field?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          orsh_field?: string
+          platform?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dms_field_mappings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
