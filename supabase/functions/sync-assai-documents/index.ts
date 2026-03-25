@@ -24,6 +24,9 @@ interface DwrBeanMethod {
 const MUTATING_METHOD_PATTERN =
   /^(add|delete|update|save|copy|process|register|validate|check|ocr|import|export|upload|download|remove|set)/i;
 
+const stripHtml = (value: string): string =>
+  value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/\s+/g, " ").trim();
+
 /**
  * Normalize Assai work package code (e.g. "ST/DP189") to ORSH format ("DP-189").
  * Preserves original in metadata.
@@ -107,6 +110,144 @@ async function fetchDocumentsViaWeb(
 }
 
 /**
+ * Parse Assai result.aweb page and extract document rows from the grid payload.
+ */
+function parseAssaiResultPageDocuments(resultHtml: string): AssaiDocument[] {
+  const docs: AssaiDocument[] = [];
+  const seen = new Set<string>();
+
+  const headersMatch = resultHtml.match(/\/\*\s*\[([\s\S]*?)\]\s*\*\//);
+  const headers = headersMatch?.[1]
+    ?.split(",")
+    .map((h) => h.trim().toUpperCase())
+    .filter(Boolean) ?? [];
+
+  const cellsMatch = resultHtml.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);/);
+  if (!cellsMatch) return docs;
+
+  let rows: unknown;
+  try {
+    rows = JSON.parse(cellsMatch[1]);
+  } catch {
+    return docs;
+  }
+
+  if (!Array.isArray(rows) || rows.length === 0) return docs;
+
+  const firstRow = rows.find((row) => Array.isArray(row)) as string[] | undefined;
+  if (!firstRow) return docs;
+
+  const offset = headers.length > 0 ? Math.max(0, firstRow.length - headers.length) : 3;
+
+  const headerIndex = (name: string): number => headers.indexOf(name.toUpperCase());
+
+  const readByHeader = (row: string[], headerName: string, fallbackIndex: number): string => {
+    const idx = headerIndex(headerName);
+    if (idx >= 0) {
+      return stripHtml(String(row[offset + idx] ?? ""));
+    }
+    return stripHtml(String(row[fallbackIndex] ?? ""));
+  };
+
+  for (const row of rows) {
+    if (!Array.isArray(row)) continue;
+    const values = row.map((v) => String(v ?? ""));
+
+    const documentNumber = readByHeader(values, "DOCUMENT_NR", 3);
+    if (!documentNumber || seen.has(documentNumber)) continue;
+
+    seen.add(documentNumber);
+    docs.push({
+      document_number: documentNumber,
+      document_title: readByHeader(values, "DESCRIPTION", 8),
+      revision: readByHeader(values, "LATEST_REV", 4),
+      status_code: readByHeader(values, "STATUS", 6),
+      discipline_code: readByHeader(values, "DISCIPLINE_CODE", 10),
+      work_package_code: readByHeader(values, "WORK_PACKAGE_CODE", 12),
+    });
+  }
+
+  return docs;
+}
+
+/**
+ * Use the same Search Documents flow as the browser:
+ * load search.aweb, submit full_nr form to result.aweb, parse grid rows.
+ */
+async function fetchDocumentsViaSearchForm(
+  baseUrl: string,
+  dbName: string,
+  cookies: string[],
+): Promise<AssaiDocument[]> {
+  const searchUrl = `${baseUrl}/AW${dbName}/search.aweb?subclass_type=DES_DOC&search_type=default&window=search`;
+  console.log(`[sync-assai] Loading Assai search form: ${searchUrl}`);
+
+  const searchResp = await fetch(searchUrl, {
+    method: "GET",
+    headers: {
+      Cookie: cookies.join("; "),
+      Accept: "text/html",
+    },
+    redirect: "manual",
+  });
+
+  const searchHtml = await searchResp.text();
+  console.log(`[sync-assai] Search page status=${searchResp.status}, length=${searchHtml.length}`);
+
+  if (searchHtml.includes('action="login.aweb"')) {
+    throw new Error("Session expired - redirected to login page");
+  }
+
+  const fullNrFormMatch = searchHtml.match(/<form[^>]+name=["']full_nr["'][\s\S]*?<\/form>/i);
+  if (!fullNrFormMatch) {
+    throw new Error("Could not find Assai document search form (full_nr)");
+  }
+
+  const fullNrForm = fullNrFormMatch[0];
+  const action = fullNrForm.match(/action=["']([^"']+)["']/i)?.[1] ?? "result.aweb";
+  const formBody = new URLSearchParams();
+
+  for (const match of fullNrForm.matchAll(/<input[^>]*name=["']([^"']+)["'][^>]*>/gi)) {
+    const inputTag = match[0];
+    const name = match[1];
+    const type = inputTag.match(/type=["']([^"']+)["']/i)?.[1]?.toLowerCase() ?? "text";
+
+    if (["button", "submit", "reset", "image", "file"].includes(type)) continue;
+    if (formBody.has(name)) continue;
+
+    const value = inputTag.match(/value=["']([^"']*)["']/i)?.[1] ?? "";
+    formBody.set(name, value);
+  }
+
+  // Mirror browser submit intent.
+  if (!formBody.has("search")) {
+    formBody.set("search", "Search");
+  }
+
+  const resultUrl = new URL(action, `${baseUrl}/AW${dbName}/`).toString();
+  const resultResp = await fetch(resultUrl, {
+    method: "POST",
+    headers: {
+      Cookie: cookies.join("; "),
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: formBody.toString(),
+    redirect: "manual",
+  });
+
+  const resultHtml = await resultResp.text();
+  console.log(`[sync-assai] Result page status=${resultResp.status}, length=${resultHtml.length}`);
+
+  if (resultHtml.includes("error.aweb?message=showErrorInfo")) {
+    throw new Error("Assai returned applet error page for result view");
+  }
+
+  const docs = parseAssaiResultPageDocuments(resultHtml);
+  console.log(`[sync-assai] Parsed ${docs.length} documents from Assai search results`);
+  return docs;
+}
+
+/**
  * Try to fetch documents via DWR DocumentBean methods.
  * Assai typically exposes search/list via DWR beans.
  */
@@ -127,7 +268,9 @@ async function fetchDocumentsViaDwr(
     console.log(`[sync-assai] DWRBean methods discovered: ${methods.length}`);
 
     const docLikeMethods = methods
-      .filter((m) => /doc|register|search|mdr|transmittal|package|revision|status|list|grid|result|quick/i.test(m.name))
+      .filter((m) => /^(get|find|list|load|search|query)/i.test(m.name))
+      .filter((m) => /doc|register|search|package|revision|status|list|grid|result|quick|monitor/i.test(m.name))
+      .filter((m) => !/transmittal|workflow|docusign|ocr|upload|download|mail|uniqueness|default/i.test(m.name))
       .filter((m) => !MUTATING_METHOD_PATTERN.test(m.name))
       .filter((m) => m.arity <= 2)
       .sort((a, b) => {
@@ -135,7 +278,7 @@ async function fetchDocumentsViaDwr(
         const bScore = /search|result|list|grid|quick/i.test(b.name) ? 0 : 1;
         return aScore - bScore;
       })
-      .slice(0, 30);
+      .slice(0, 12);
     console.log(
       `[sync-assai] DWRBean doc-like methods: ${docLikeMethods
         .slice(0, 40)
@@ -150,12 +293,9 @@ async function fetchDocumentsViaDwr(
       if (method.arity === 0) {
         invocationPatterns.push([]);
       } else if (method.arity === 1) {
-        invocationPatterns.push(["string:%"]);
-        invocationPatterns.push(["string:*"]);
         invocationPatterns.push(["string:"]);
         invocationPatterns.push(["null:null"]);
       } else if (method.arity === 2) {
-        invocationPatterns.push(["string:%", "number:0"]);
         invocationPatterns.push(["string:", "number:0"]);
         invocationPatterns.push(["string:", "string:"]);
         invocationPatterns.push(["null:null", "null:null"]);
@@ -385,42 +525,25 @@ Deno.serve(async (req) => {
       const resolvedDb = loginResult.dbName!;
       const sessionCookies = loginResult.cookies!;
 
-      // Step 1.5: Discover the Assai interface by fetching the home/forward page
-      const forwardUrl = `${resolvedBase}/AW${resolvedDb}/forward.aweb?page=root/body`;
-      console.log(`[sync-assai] Fetching forward page: ${forwardUrl}`);
-      const forwardResp = await fetch(forwardUrl, {
-        headers: { Cookie: sessionCookies.join("; "), Accept: "text/html" },
-        redirect: "manual",
-      });
-      const forwardHtml = await forwardResp.text();
-      console.log(`[sync-assai] Forward page status=${forwardResp.status}, length=${forwardHtml.length}`);
-      
-      // Extract all .aweb links and JS references to discover navigation
-      const awebLinks = [...forwardHtml.matchAll(/href=["']([^"']*\.aweb[^"']*)["']/gi)].map(m => m[1]);
-      const pageRefs = [...forwardHtml.matchAll(/page=([a-zA-Z0-9/._-]+)/gi)].map(m => m[1]);
-      console.log(`[sync-assai] Found .aweb links: ${awebLinks.slice(0, 20).join(", ")}`);
-      console.log(`[sync-assai] Found page refs: ${pageRefs.slice(0, 20).join(", ")}`);
-      
-      // Extract DWR script references
-      const dwrScripts = [...forwardHtml.matchAll(/\/dwr\/interface\/(\w+)\.js/gi)].map(m => m[1]);
-      console.log(`[sync-assai] DWR scripts in forward page: ${dwrScripts.join(", ")}`);
-      
-      // Log a snippet of the page for analysis
-      console.log(`[sync-assai] Forward page snippet: ${forwardHtml.substring(0, 2000)}`);
+      // Step 2: Fetch documents via the same search/result flow used by browser UI
+      console.log("[sync-assai] Attempting to fetch documents via Assai search form...");
+      let documents = await fetchDocumentsViaSearchForm(resolvedBase, resolvedDb, sessionCookies);
 
-      // Step 2: Fetch documents via DWR discovery
-      console.log("[sync-assai] Attempting to fetch documents via DWR...");
-      let documents = await fetchDocumentsViaDwr(resolvedBase, resolvedDb, sessionCookies);
-
-      // Step 3: Fallback to web scraping if DWR didn't work
+      // Step 3: Fallback to DWR discovery if search flow did not return rows
       if (documents.length === 0) {
-        console.log("[sync-assai] DWR returned no documents, trying web page...");
+        console.log("[sync-assai] Search flow returned no docs, trying conservative DWR discovery...");
+        documents = await fetchDocumentsViaDwr(resolvedBase, resolvedDb, sessionCookies);
+      }
+
+      // Step 4: Last fallback to web scraping endpoint
+      if (documents.length === 0) {
+        console.log("[sync-assai] DWR returned no docs, trying web page fallback...");
         documents = await fetchDocumentsViaWeb(resolvedBase, resolvedDb, sessionCookies);
       }
 
       console.log(`[sync-assai] Total documents fetched: ${documents.length}`);
 
-      // Step 4: Upsert to dms_external_sync
+      // Step 5: Upsert to dms_external_sync
       let syncedCount = 0;
       let failedCount = 0;
       let newCount = 0;
@@ -482,7 +605,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Step 5: Update sync log
+      // Step 6: Update sync log
       if (syncLogId) {
         await supabase.from("dms_sync_logs").update({
           sync_status: "completed",
