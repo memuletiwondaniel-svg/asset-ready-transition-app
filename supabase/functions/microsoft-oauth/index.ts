@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.52.0";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 import { encrypt, decrypt, isEncrypted } from "../_shared/crypto.ts";
 
 const corsHeaders = {
