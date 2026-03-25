@@ -71,7 +71,7 @@ const DMSIntegration: React.FC<DMSIntegrationProps> = ({ onBack }) => {
   const [syncing, setSyncing] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string>('');
-  const [projects, setProjects] = useState<{ id: string; name: string; project_code: string }[]>([]);
+  const [projects, setProjects] = useState<{ id: string; project_title: string; project_id_prefix: string }[]>([]);
 
   useEffect(() => {
     fetchData();
