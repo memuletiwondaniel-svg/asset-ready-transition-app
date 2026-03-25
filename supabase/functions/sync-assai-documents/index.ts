@@ -3,7 +3,6 @@ import {
   deriveBaseUrl,
   loginAssai,
   fetchAndParseDocuments,
-  normaliseProjectCode,
 } from "../_shared/assai-auth.ts";
 
 const corsHeaders = {
@@ -103,6 +102,7 @@ Deno.serve(async (req) => {
         sync_status: "failed",
         error_message: "Username or password not configured",
         triggered_by: user.id, project_id,
+        error_details: { step: "precheck", reason: "missing_credentials" },
       });
       return json({
         success: false,
@@ -124,6 +124,11 @@ Deno.serve(async (req) => {
         sync_status: "failed",
         error_message: loginResult.message,
         triggered_by: user.id, project_id,
+        error_details: {
+          base_url: baseUrl,
+          auth_steps: loginResult.debugSteps,
+          response_time_ms: loginResult.responseTimeMs,
+        },
       });
       return json({
         success: false,
@@ -141,6 +146,11 @@ Deno.serve(async (req) => {
         sync_status: "failed",
         error_message: parseResult.error,
         triggered_by: user.id, project_id,
+        error_details: {
+          base_url: baseUrl,
+          auth_steps: loginResult.debugSteps,
+          parse_error: parseResult.error,
+        },
       });
       return json({
         success: false,
@@ -156,6 +166,11 @@ Deno.serve(async (req) => {
         synced_count: 0,
         error_message: "No documents found — check search filters in Assai",
         triggered_by: user.id, project_id,
+        error_details: {
+          base_url: baseUrl,
+          auth_steps: loginResult.debugSteps,
+          note: "No documents parsed",
+        },
       });
       return json({
         success: true,
@@ -242,6 +257,11 @@ Deno.serve(async (req) => {
       error_message: failedCount > 0 ? `${failedCount} records failed to upsert` : null,
       triggered_by: user.id,
       project_id,
+      error_details: {
+        base_url: baseUrl,
+        auth_steps: loginResult.debugSteps,
+        parsed_rows: parseResult.documents.length,
+      },
     });
 
     const message = `Synced ${syncedCount} documents from Assai (${newCount} new, ${changedCount} updated)`;
@@ -284,6 +304,7 @@ async function logSync(supabase: any, data: Record<string, unknown>) {
       error_message: data.error_message || null,
       triggered_by: data.triggered_by,
       tenant_id: data.tenant_id,
+      error_details: data.error_details || null,
     });
   } catch (logErr) {
     console.error("[sync-assai] Failed to write sync log:", logErr);

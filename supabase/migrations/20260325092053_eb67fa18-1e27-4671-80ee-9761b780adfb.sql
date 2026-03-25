@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Service role can manage field mappings" ON public.dms_field_mappings;

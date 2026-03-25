@@ -1355,6 +1355,7 @@ export type Database = {
           created_at: string | null
           credential_id: string | null
           dms_platform: string
+          error_details: Json | null
           error_message: string | null
           failed_count: number | null
           id: string
@@ -1370,6 +1371,7 @@ export type Database = {
           created_at?: string | null
           credential_id?: string | null
           dms_platform: string
+          error_details?: Json | null
           error_message?: string | null
           failed_count?: number | null
           id?: string
@@ -1385,6 +1387,7 @@ export type Database = {
           created_at?: string | null
           credential_id?: string | null
           dms_platform?: string
+          error_details?: Json | null
           error_message?: string | null
           failed_count?: number | null
           id?: string
