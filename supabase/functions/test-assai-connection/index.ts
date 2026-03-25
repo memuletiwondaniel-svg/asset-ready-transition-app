@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { deriveBaseUrl, authenticateAssai } from "../_shared/assai-auth.ts";
+import { deriveBaseUrl, loginAssai, getDocumentCount } from "../_shared/assai-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,42 +12,38 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const json = (body: Record<string, unknown>, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Missing authorization" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Missing authorization" }, 401);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify user JWT
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: { user }, error: authError } = await userClient.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Unauthorized" }, 401);
     }
 
     const { tenant_id } = await req.json();
     if (!tenant_id) {
-      return new Response(
-        JSON.stringify({ success: false, message: "tenant_id is required", response_time_ms: 0 }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json({ success: false, message: "tenant_id is required", response_time_ms: 0 });
     }
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Fetch Assai credentials
+    // Fetch credentials
     const { data: creds, error: credError } = await supabase
       .from("dms_sync_credentials")
       .select("*")
@@ -56,20 +52,14 @@ Deno.serve(async (req) => {
       .single();
 
     if (credError || !creds) {
-      return new Response(
-        JSON.stringify({ success: false, message: "No Assai credentials configured for this tenant", response_time_ms: 0 }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json({ success: false, message: "No Assai credentials configured for this tenant", response_time_ms: 0 });
     }
 
     if (!creds.base_url) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Platform URL is not configured", response_time_ms: 0 }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json({ success: false, message: "Platform URL is not configured", response_time_ms: 0 });
     }
 
-    // Decrypt credentials
+    // Decrypt
     let username = creds.username_encrypted;
     let password = creds.password_encrypted;
 
@@ -78,63 +68,44 @@ Deno.serve(async (req) => {
       if (username && isEncrypted(username)) username = await decrypt(username);
       if (password && isEncrypted(password)) password = await decrypt(password);
     } catch (decryptErr) {
-      console.error("Decryption warning:", decryptErr);
+      console.error("[test-assai] Decryption warning:", decryptErr);
     }
 
     if (!username || !password) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Username or password not configured", response_time_ms: 0 }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json({ success: false, message: "Username or password not configured", response_time_ms: 0 });
     }
 
-    // Derive API base URL and attempt authentication
+    // Login
     const baseUrl = deriveBaseUrl(creds.base_url);
-    console.log(`[test-assai] Derived base URL: ${baseUrl} from stored: ${creds.base_url}`);
+    console.log(`[test-assai] Base URL: ${baseUrl}`);
 
-    const authResult = await authenticateAssai(baseUrl, username, password);
+    const loginResult = await loginAssai(baseUrl, username, password);
+    console.log(`[test-assai] Login: success=${loginResult.success}`);
 
-    console.log(`[test-assai] Auth result: success=${authResult.success}, attempts=${authResult.attempts.length}`);
-    for (const a of authResult.attempts) {
-      console.log(`[test-assai]   ${a.endpoint} → ${a.status}: ${a.body.substring(0, 200)}`);
-    }
-
-    if (authResult.success) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: `Authentication successful via ${authResult.endpointUsed}`,
-          response_time_ms: authResult.responseTimeMs,
-          endpoint_used: authResult.endpointUsed,
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Build descriptive failure message
-    const lastAttempt = authResult.attempts[authResult.attempts.length - 1];
-    const statusHint = lastAttempt?.status
-      ? `returned HTTP ${lastAttempt.status}`
-      : "connection failed";
-
-    return new Response(
-      JSON.stringify({
+    if (!loginResult.success) {
+      return json({
         success: false,
-        message: `Authentication failed — ${statusHint}. Tried ${authResult.attempts.length} endpoint(s). Check credentials and Platform URL.`,
-        response_time_ms: authResult.responseTimeMs,
-        attempts: authResult.attempts.map(a => ({ endpoint: a.endpoint, status: a.status })),
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+        message: loginResult.message,
+        response_time_ms: loginResult.responseTimeMs,
+      });
+    }
+
+    // Get document count
+    const countResult = await getDocumentCount(baseUrl, loginResult.cookies);
+    console.log(`[test-assai] Count: ${countResult.count}`);
+
+    return json({
+      success: true,
+      message: countResult.message,
+      response_time_ms: loginResult.responseTimeMs,
+      document_count: countResult.count,
+    });
   } catch (err) {
-    console.error("Unhandled error:", err);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: err instanceof Error ? err.message : "Internal server error",
-        response_time_ms: 0,
-      }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.error("[test-assai] Unhandled error:", err);
+    return json({
+      success: false,
+      message: err instanceof Error ? err.message : "Internal server error",
+      response_time_ms: 0,
+    });
   }
 });

@@ -1,5 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { deriveBaseUrl, authenticateAssai } from "../_shared/assai-auth.ts";
+import {
+  deriveBaseUrl,
+  loginAssai,
+  fetchAndParseDocuments,
+  normaliseProjectCode,
+} from "../_shared/assai-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,14 +17,17 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const json = (body: Record<string, unknown>, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   try {
-    // Validate JWT
+    // ── Auth ──
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Missing authorization" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Missing authorization" }, 401);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -29,27 +37,23 @@ Deno.serve(async (req) => {
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await userClient.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Unauthorized" }, 401);
     }
 
-    // Parse request — project_id is optional for manual sync
     const body = await req.json();
     const { tenant_id, project_id, manual_trigger } = body;
     if (!tenant_id) {
-      return new Response(
-        JSON.stringify({ success: false, error: "tenant_id is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json({ success: false, error: "tenant_id is required" }, 400);
     }
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // 1. Fetch credentials
+    // ── 1. Fetch credentials ──
     const { data: creds, error: credError } = await supabase
       .from("dms_sync_credentials")
       .select("*")
@@ -58,27 +62,30 @@ Deno.serve(async (req) => {
       .single();
 
     if (credError || !creds) {
-      return new Response(
-        JSON.stringify({ success: false, error: "No Assai credentials configured for this tenant" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json({
+        success: false,
+        error: "No Assai credentials configured for this tenant",
+        synced: 0, new: 0, changed: 0, failed: 0,
+      });
     }
 
     if (!creds.sync_enabled) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Assai sync is disabled for this tenant" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json({
+        success: false,
+        error: "Assai sync is disabled for this tenant",
+        synced: 0, new: 0, changed: 0, failed: 0,
+      });
     }
 
     if (!creds.base_url) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Platform URL is not configured" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json({
+        success: false,
+        error: "Platform URL is not configured",
+        synced: 0, new: 0, changed: 0, failed: 0,
+      });
     }
 
-    // 2. Decrypt credentials
+    // ── 2. Decrypt credentials ──
     let username = creds.username_encrypted;
     let password = creds.password_encrypted;
 
@@ -87,197 +94,181 @@ Deno.serve(async (req) => {
       if (username && isEncrypted(username)) username = await decrypt(username);
       if (password && isEncrypted(password)) password = await decrypt(password);
     } catch (decryptErr) {
-      console.error("Decryption warning:", decryptErr);
+      console.error("[sync-assai] Decryption warning:", decryptErr);
     }
 
     if (!username || !password) {
       await logSync(supabase, {
         credential_id: creds.id, tenant_id, dms_platform: "assai",
-        sync_status: "failed", error_message: "Username or password not configured",
+        sync_status: "failed",
+        error_message: "Username or password not configured",
         triggered_by: user.id, project_id,
       });
-      return new Response(
-        JSON.stringify({ success: false, error: "Username or password not configured" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json({
+        success: false,
+        error: "Username or password not configured",
+        synced: 0, new: 0, changed: 0, failed: 0,
+      });
     }
 
-    // 3. Derive base URL and authenticate
+    // ── 3. Login to Assai Cloud ──
     const baseUrl = deriveBaseUrl(creds.base_url);
-    console.log(`[sync-assai] Derived base URL: ${baseUrl} from stored: ${creds.base_url}`);
+    console.log(`[sync-assai] Base URL: ${baseUrl}`);
 
-    const authResult = await authenticateAssai(baseUrl, username, password);
+    const loginResult = await loginAssai(baseUrl, username, password);
+    console.log(`[sync-assai] Login: success=${loginResult.success}, msg=${loginResult.message}`);
 
-    console.log(`[sync-assai] Auth result: success=${authResult.success}, attempts=${authResult.attempts.length}`);
-    for (const a of authResult.attempts) {
-      console.log(`[sync-assai]   ${a.endpoint} → ${a.status}: ${a.body.substring(0, 200)}`);
-    }
-
-    if (!authResult.success) {
-      const errorDetail = {
-        error: "Authentication failed",
-        attempts: authResult.attempts.map(a => ({
-          endpoint: a.endpoint,
-          status: a.status,
-          body: a.body.substring(0, 300),
-        })),
-      };
-
+    if (!loginResult.success) {
       await logSync(supabase, {
         credential_id: creds.id, tenant_id, dms_platform: "assai",
         sync_status: "failed",
-        error_message: `Authentication failed after ${authResult.attempts.length} attempts. ` +
-          authResult.attempts.map(a => `${a.endpoint} → ${a.status}`).join("; "),
+        error_message: loginResult.message,
         triggered_by: user.id, project_id,
       });
-
-      // Build user-friendly message
-      const lastAttempt = authResult.attempts[authResult.attempts.length - 1];
-      const hint = lastAttempt?.status
-        ? `Authentication returned ${lastAttempt.status} — check your credentials`
-        : "Could not reach the Assai server — check your Platform URL";
-
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: hint,
-          synced_count: 0, failed_count: 0, new_documents: 0, status_changes: 0,
-          auth_attempts: errorDetail.attempts,
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 4. Fetch documents
-    const token = authResult.token!;
-    let syncResult = { synced_count: 0, failed_count: 0, new_documents: 0, status_changes: 0 };
-    let syncError: string | null = null;
-
-    try {
-      // Try /api/documents first, then /api/documentregister
-      let docsResponse = await fetch(`${baseUrl}/api/documents`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      return json({
+        success: false,
+        error: loginResult.message,
+        synced: 0, new: 0, changed: 0, failed: 0,
       });
-
-      if (!docsResponse.ok) {
-        const firstBody = await docsResponse.text();
-        console.log(`[sync-assai] /api/documents returned ${docsResponse.status}: ${firstBody.substring(0, 200)}`);
-
-        docsResponse = await fetch(`${baseUrl}/api/documentregister`, {
-          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-        });
-      }
-
-      if (!docsResponse.ok) {
-        const errText = await docsResponse.text();
-        console.log(`[sync-assai] Document fetch failed: ${docsResponse.status}: ${errText.substring(0, 500)}`);
-        throw new Error(`Document fetch failed (${docsResponse.status}): ${errText.substring(0, 200)}`);
-      }
-
-      const docsBody = await docsResponse.text();
-      console.log(`[sync-assai] Document response (first 500 chars): ${docsBody.substring(0, 500)}`);
-
-      const documents = JSON.parse(docsBody);
-      const docList = Array.isArray(documents)
-        ? documents
-        : documents.data || documents.documents || documents.Items || [];
-
-      // If we have a project_id, scope the upsert
-      if (project_id && docList.length > 0) {
-        const { data: existingDocs } = await supabase
-          .from("dms_external_sync")
-          .select("document_number, status_code")
-          .eq("project_id", project_id)
-          .eq("dms_platform", "assai");
-
-        const existingMap = new Map(
-          (existingDocs || []).map((d: any) => [d.document_number, d.status_code])
-        );
-
-        const upsertRecords = docList.map((doc: any) => ({
-          project_id,
-          document_number: doc.documentNumber || doc.document_number || doc.DocumentNumber || "",
-          document_title: doc.title || doc.documentTitle || doc.DocumentTitle || "",
-          revision: doc.revision || doc.Revision || null,
-          status_code: doc.statusCode || doc.status || doc.StatusCode || null,
-          discipline_code: doc.discipline || doc.disciplineCode || doc.DisciplineCode || null,
-          package_tag: doc.packageTag || doc.package_tag || doc.PackageTag || null,
-          vendor_po_sequence: doc.vendorPoSequence || doc.vendor_po_sequence || doc.VendorPOSequence || null,
-          dms_platform: "assai",
-          external_url: doc.url || doc.externalUrl || doc.link || null,
-          last_synced_at: new Date().toISOString(),
-          sync_status: "success",
-          tenant_id,
-        }));
-
-        for (const rec of upsertRecords) {
-          const existing = existingMap.get(rec.document_number);
-          if (!existing) syncResult.new_documents++;
-          else if (existing !== rec.status_code) syncResult.status_changes++;
-        }
-
-        const chunkSize = 500;
-        for (let i = 0; i < upsertRecords.length; i += chunkSize) {
-          const chunk = upsertRecords.slice(i, i + chunkSize);
-          const { error: upsertError } = await supabase
-            .from("dms_external_sync")
-            .upsert(chunk, { onConflict: "project_id,document_number,dms_platform" });
-          if (upsertError) {
-            console.error("[sync-assai] Upsert error:", upsertError);
-            syncResult.failed_count += chunk.length;
-          } else {
-            syncResult.synced_count += chunk.length;
-          }
-        }
-      } else {
-        // No project_id — just report what we found
-        syncResult.synced_count = docList.length;
-      }
-    } catch (apiError) {
-      console.error("[sync-assai] Sync error:", apiError);
-      syncError = apiError instanceof Error ? apiError.message : "Unknown sync error";
-      syncResult.failed_count++;
     }
 
-    // 5. Update last_sync_at
-    await supabase
-      .from("dms_sync_credentials")
-      .update({ last_sync_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-      .eq("id", creds.id);
+    // ── 4. Fetch and parse documents ──
+    const parseResult = await fetchAndParseDocuments(baseUrl, loginResult.cookies);
 
-    // 6. Log to dms_sync_logs
-    await logSync(supabase, {
-      credential_id: creds.id, tenant_id, dms_platform: "assai",
-      synced_count: syncResult.synced_count,
-      failed_count: syncResult.failed_count,
-      new_documents: syncResult.new_documents,
-      status_changes: syncResult.status_changes,
-      sync_status: syncError ? "failed" : "success",
-      error_message: syncError,
-      triggered_by: user.id, project_id,
+    if (parseResult.error && parseResult.documents.length === 0) {
+      await logSync(supabase, {
+        credential_id: creds.id, tenant_id, dms_platform: "assai",
+        sync_status: "failed",
+        error_message: parseResult.error,
+        triggered_by: user.id, project_id,
+      });
+      return json({
+        success: false,
+        error: parseResult.error,
+        synced: 0, new: 0, changed: 0, failed: 0,
+      });
+    }
+
+    if (parseResult.documents.length === 0) {
+      await logSync(supabase, {
+        credential_id: creds.id, tenant_id, dms_platform: "assai",
+        sync_status: "success",
+        synced_count: 0,
+        error_message: "No documents found — check search filters in Assai",
+        triggered_by: user.id, project_id,
+      });
+      return json({
+        success: true,
+        message: "No documents found — check search filters in Assai",
+        synced: 0, new: 0, changed: 0, failed: 0,
+      });
+    }
+
+    // ── 5. Upsert into dms_external_sync ──
+    let newCount = 0;
+    let changedCount = 0;
+    let failedCount = 0;
+    let syncedCount = 0;
+
+    // Fetch existing records for diff tracking
+    const { data: existingDocs } = await supabase
+      .from("dms_external_sync")
+      .select("document_number, status_code")
+      .eq("tenant_id", tenant_id)
+      .eq("dms_platform", "assai");
+
+    const existingMap = new Map(
+      (existingDocs || []).map((d: any) => [d.document_number, d.status_code])
+    );
+
+    const upsertRecords = parseResult.documents.map((doc) => {
+      const existing = existingMap.get(doc.document_number);
+      if (!existing) newCount++;
+      else if (existing !== doc.status_code) changedCount++;
+
+      return {
+        document_number: doc.document_number,
+        document_title: doc.document_title,
+        revision: doc.revision,
+        status_code: doc.status_code,
+        discipline_code: doc.discipline_code,
+        package_tag: doc.package_tag,
+        vendor_po_sequence: doc.vendor_po_sequence,
+        dms_platform: "assai",
+        last_synced_at: new Date().toISOString(),
+        sync_status: "success",
+        tenant_id,
+        metadata: doc.metadata,
+        ...(project_id ? { project_id } : {}),
+      };
     });
 
-    return new Response(
-      JSON.stringify({
-        success: !syncError,
-        ...syncResult,
-        error: syncError,
-        manual_trigger: manual_trigger || false,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    // Upsert in chunks
+    const chunkSize = 500;
+    for (let i = 0; i < upsertRecords.length; i += chunkSize) {
+      const chunk = upsertRecords.slice(i, i + chunkSize);
+      const { error: upsertError } = await supabase
+        .from("dms_external_sync")
+        .upsert(chunk, {
+          onConflict: "project_id,document_number,dms_platform",
+        });
+      if (upsertError) {
+        console.error("[sync-assai] Upsert error:", upsertError);
+        failedCount += chunk.length;
+      } else {
+        syncedCount += chunk.length;
+      }
+    }
+
+    // ── 6. Seed field mappings ──
+    await seedFieldMappings(supabase, tenant_id);
+
+    // ── 7. Update credentials and log ──
+    await supabase
+      .from("dms_sync_credentials")
+      .update({
+        last_sync_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", creds.id);
+
+    await logSync(supabase, {
+      credential_id: creds.id, tenant_id, dms_platform: "assai",
+      synced_count: syncedCount,
+      failed_count: failedCount,
+      new_documents: newCount,
+      status_changes: changedCount,
+      sync_status: failedCount > 0 && syncedCount === 0 ? "failed" : "success",
+      error_message: failedCount > 0 ? `${failedCount} records failed to upsert` : null,
+      triggered_by: user.id,
+      project_id,
+    });
+
+    const message = `Synced ${syncedCount} documents from Assai (${newCount} new, ${changedCount} updated)`;
+    console.log(`[sync-assai] ${message}`);
+
+    return json({
+      success: true,
+      synced: syncedCount,
+      new: newCount,
+      changed: changedCount,
+      failed: failedCount,
+      message,
+      manual_trigger: manual_trigger || false,
+    });
   } catch (err) {
-    console.error("Unhandled error:", err);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: err instanceof Error ? err.message : "Internal server error",
-        synced_count: 0, failed_count: 0, new_documents: 0, status_changes: 0,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.error("[sync-assai] Unhandled error:", err);
+    return json({
+      success: false,
+      error: err instanceof Error ? err.message : "Internal server error",
+      synced: 0, new: 0, changed: 0, failed: 0,
+    });
   }
 });
+
+// ──────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────
 
 async function logSync(supabase: any, data: Record<string, unknown>) {
   try {
@@ -296,5 +287,26 @@ async function logSync(supabase: any, data: Record<string, unknown>) {
     });
   } catch (logErr) {
     console.error("[sync-assai] Failed to write sync log:", logErr);
+  }
+}
+
+async function seedFieldMappings(supabase: any, tenantId: string) {
+  const mappings = [
+    { platform: "assai", orsh_field: "document_number", assai_field: "Document nr.", notes: "Full ORSH-format doc number e.g. 9500-WGEL-N003-ISGP-U60000-PX-2310-09601" },
+    { platform: "assai", orsh_field: "revision", assai_field: "Rev.", notes: "Current revision e.g. 02A" },
+    { platform: "assai", orsh_field: "status_code", assai_field: "Status", notes: "AFU=Approved for Use, IFR=Issued for Review, AFC=Approved for Construction, IFC=Issued for Construction" },
+    { platform: "assai", orsh_field: "document_title", assai_field: "Title", notes: "Full document title" },
+    { platform: "assai", orsh_field: "discipline_code", assai_field: "Discipline code", notes: "e.g. PX, CG, CI — matches ORSH discipline codes" },
+    { platform: "assai", orsh_field: "package_tag", assai_field: "Work package code", notes: "Assai format: ST/DP189. ORSH format: DP-189. Normalised on sync by stripping prefix before slash and inserting hyphen between letters and digits. Raw Assai value preserved in metadata.assai_work_package_code." },
+    { platform: "assai", orsh_field: "vendor_po_sequence", assai_field: "Purchase order", notes: "PO number for vendor documents" },
+  ];
+
+  try {
+    await supabase.from("dms_field_mappings").upsert(
+      mappings.map((m) => ({ ...m, tenant_id: tenantId })),
+      { onConflict: "platform,orsh_field" }
+    );
+  } catch (err) {
+    console.error("[sync-assai] Failed to seed field mappings:", err);
   }
 }
