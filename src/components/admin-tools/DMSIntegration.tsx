@@ -353,19 +353,53 @@ const DMSIntegration: React.FC<DMSIntegrationProps> = ({ onBack }) => {
                           </span>
                         </div>
                       )}
-                      <div className="flex gap-2 pt-1">
+                      {/* Test Connection Result */}
+                      {testResult[platform.id] && (
+                        <div className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md ${
+                          testResult[platform.id]!.success
+                            ? 'bg-emerald-500/10 text-emerald-600'
+                            : 'bg-destructive/10 text-destructive'
+                        }`}>
+                          {testResult[platform.id]!.success ? (
+                            <CheckCircle2 className="h-3 w-3 shrink-0" />
+                          ) : (
+                            <XCircle className="h-3 w-3 shrink-0" />
+                          )}
+                          <span className="truncate">{testResult[platform.id]!.message}</span>
+                          {testResult[platform.id]!.response_time_ms > 0 && (
+                            <span className="text-[10px] ml-auto shrink-0">
+                              {testResult[platform.id]!.response_time_ms}ms
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <div className="grid grid-cols-3 gap-1.5 pt-1">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 text-xs h-8"
+                          className="text-xs h-8"
                           onClick={() => openConfig(platform.id)}
                         >
                           <Settings className="h-3 w-3 mr-1" />
-                          Configure
+                          Config
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-8"
+                          disabled={status === 'not_configured' || testing === platform.id}
+                          onClick={() => testConnection(platform.id)}
+                        >
+                          {testing === platform.id ? (
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          ) : (
+                            <Wifi className="h-3 w-3 mr-1" />
+                          )}
+                          Test
                         </Button>
                         <Button
                           size="sm"
-                          className="flex-1 text-xs h-8"
+                          className="text-xs h-8"
                           disabled={status === 'not_configured' || status === 'disabled' || syncing === platform.id}
                           onClick={() => triggerSync(platform.id)}
                         >
@@ -374,7 +408,7 @@ const DMSIntegration: React.FC<DMSIntegrationProps> = ({ onBack }) => {
                           ) : (
                             <RefreshCw className="h-3 w-3 mr-1" />
                           )}
-                          Sync Now
+                          Sync
                         </Button>
                       </div>
                     </CardContent>
