@@ -26,9 +26,10 @@ export async function loginAssai(
   try {
     const formBody = new URLSearchParams({
       loginMethod: 'unpw',
-      isSecure: 'true',
-      username,
+      isSecure: 'false',
+      userid: username,
       password,
+      dbname: dbName,
     });
 
     const resp = await fetch(loginUrl, {
