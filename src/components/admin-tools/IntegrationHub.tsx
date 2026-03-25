@@ -398,7 +398,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         </div>
 
         <CardContent className="pt-0 pb-4 text-center space-y-2">
-          <h3 className="font-semibold text-sm text-foreground">{platform.name}</h3>
+          
           <p className="text-xs text-muted-foreground leading-relaxed">{platform.description}</p>
           {methodLabel && (
             <Badge variant="outline" className="text-[10px] text-muted-foreground font-normal">
