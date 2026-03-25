@@ -28,7 +28,7 @@ const ManageHandover = lazy(() => import("./handover/ManageHandover").then(m => 
 const AdminHeader = lazy(() => import("./admin/AdminHeader"));
 const AdminActivityLog = lazy(() => import("./AdminActivityLog"));
 const BulkUserUpload = lazy(() => import("./admin-tools/BulkUserUpload").then(m => ({ default: m.BulkUserUpload })));
-const APIManagement = lazy(() => import("./admin-tools/APIManagement"));
+const IntegrationHub = lazy(() => import("./admin-tools/IntegrationHub"));
 const SSOConfiguration = lazy(() => import("./admin-tools/SSOConfiguration").then(m => ({ default: m.SSOConfiguration })));
 const RolePermissionsManager = lazy(() => import("./admin-tools/RolePermissionsManager"));
 const AuditLogViewer = lazy(() => import("./admin-tools/AuditLogViewer"));
