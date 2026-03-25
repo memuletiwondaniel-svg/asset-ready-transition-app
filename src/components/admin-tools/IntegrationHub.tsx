@@ -464,6 +464,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           <>
             {renderSection('Document Management Systems', dmsPlatforms)}
             {renderSection('Project & Enterprise Systems', enterprisePlatforms)}
+            {renderSection('Communication & Collaboration', commsPlatforms)}
             {filteredPlatforms.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <Plug className="h-12 w-12 mx-auto mb-3 opacity-40" />
