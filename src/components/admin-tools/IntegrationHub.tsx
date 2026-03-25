@@ -69,7 +69,7 @@ interface Platform {
 }
 
 type ConnectionMethod = 'api' | 'automation';
-type AuthType = 'basic' | 'api_key' | 'oauth';
+type AuthType = 'api_key' | 'oauth' | 'bearer';
 
 const ALL_PLATFORMS: Platform[] = [
   { id: 'assai', name: 'Assai', description: 'Enterprise document management for O&G', section: 'dms', logo: assaiLogo, logoScale: 1.15, hasEdgeFunction: true, accent: '#F97316', badgeLabel: 'assai' },
@@ -95,13 +95,16 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
   // Panel form state
   const [connectionMethod, setConnectionMethod] = useState<ConnectionMethod>('api');
-  const [authType, setAuthType] = useState<AuthType>('basic');
+  const [authType, setAuthType] = useState<AuthType>('api_key');
   const [formData, setFormData] = useState({
     base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
-    client_id: '', client_secret: '', token_url: '',
+    client_id: '', client_secret: '', token_url: '', scope: '',
     project_code_field: '', sync_enabled: false,
-    workflow_url: '', auth_token: '', automation_enabled: false,
+    platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false,
   });
+  const [urlError, setUrlError] = useState('');
+  const [triedSave, setTriedSave] = useState(false);
+  const [credentialsSaved, setCredentialsSaved] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -195,8 +198,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           client_id: config.apiCredentials!.clientId || '',
           client_secret: config.apiCredentials!.clientSecret || '',
           token_url: config.apiCredentials!.tokenUrl || '',
-          project_code_field: '', sync_enabled: false,
-          workflow_url: '', auth_token: '', automation_enabled: false, header_name: 'X-API-Key',
+          scope: '', project_code_field: '', sync_enabled: false,
+          platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false, header_name: 'X-API-Key',
         }));
       } else {
         setConnectionMethod('api');
@@ -208,13 +211,16 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       setFormData({
         base_url: existing?.base_url || '',
         username: '', password: '', api_key: '', header_name: 'X-API-Key',
-        client_id: '', client_secret: '', token_url: '',
+        client_id: '', client_secret: '', token_url: '', scope: '',
         project_code_field: existing?.project_code_field || '',
         sync_enabled: existing?.sync_enabled || false,
-        workflow_url: '', auth_token: '', automation_enabled: false,
+        platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false,
       });
     }
-    setAuthType('basic');
+    setAuthType('api_key');
+    setTriedSave(false);
+    setUrlError('');
+    setCredentialsSaved(!!getCredential(platform.id) || (platform.id === 'gocompletions' && gocConfigured));
     setShowPassword(false);
     setPanelOpen(true);
   };
@@ -222,9 +228,9 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const resetFormData = () => {
     setFormData({
       base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
-      client_id: '', client_secret: '', token_url: '',
+      client_id: '', client_secret: '', token_url: '', scope: '',
       project_code_field: '', sync_enabled: false,
-      workflow_url: '', auth_token: '', automation_enabled: false,
+      platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false,
     });
   };
 
@@ -240,23 +246,23 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       const record: Record<string, unknown> = {
         tenant_id: tenantId,
         dms_platform: panelPlatform.id,
-        base_url: connectionMethod === 'api' ? formData.base_url : formData.workflow_url,
+        base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
         project_code_field: formData.project_code_field,
         sync_enabled: connectionMethod === 'api' ? formData.sync_enabled : formData.automation_enabled,
         updated_at: new Date().toISOString(),
       };
       if (connectionMethod === 'api') {
-        if (authType === 'basic') {
-          if (formData.username) record.username_encrypted = formData.username;
-          if (formData.password) record.password_encrypted = formData.password;
-        } else if (authType === 'api_key') {
+        if (authType === 'api_key') {
           if (formData.api_key) record.password_encrypted = formData.api_key;
+        } else if (authType === 'bearer') {
+          if (formData.auth_token) record.password_encrypted = formData.auth_token;
         } else if (authType === 'oauth') {
           if (formData.client_id) record.username_encrypted = formData.client_id;
           if (formData.client_secret) record.password_encrypted = formData.client_secret;
         }
       } else {
-        if (formData.auth_token) record.password_encrypted = formData.auth_token;
+        if (formData.username) record.username_encrypted = formData.username;
+        if (formData.password) record.password_encrypted = formData.password;
       }
 
       if (existing) {
@@ -268,7 +274,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         if (error) throw error;
       }
 
-      toast.success(`${panelPlatform.name} configuration saved`);
+      toast.success('Credentials saved');
+      setCredentialsSaved(true);
       fetchData();
     } catch (err: any) {
       toast.error(err.message || 'Failed to save');
@@ -351,7 +358,14 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const enterprisePlatforms = filteredPlatforms.filter(p => p.section === 'enterprise');
   const commsPlatforms = filteredPlatforms.filter(p => p.section === 'comms');
 
-  const isFormValid = connectionMethod === 'api' ? !!formData.base_url.trim() : !!formData.workflow_url.trim();
+  const isFormValid = connectionMethod === 'api' ? !!formData.base_url.trim() : !!formData.platform_url.trim();
+
+  const validateUrl = (url: string) => {
+    if (url && !url.startsWith('https://')) {
+      return 'URL must start with https://';
+    }
+    return '';
+  };
 
   const StatusBadge = ({ platformId }: { platformId: string }) => {
     const status = getStatusInfo(platformId);
@@ -491,15 +505,15 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
       {/* Detail Panel */}
       <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
-        <SheetContent className="w-full sm:max-w-[480px] overflow-y-auto p-0">
+        <SheetContent className="w-full sm:max-w-[480px] p-0 flex flex-col" overlayClassName="">
           {panelPlatform && (
             <>
               {/* Panel Header */}
-              <div className="sticky top-0 z-10 bg-background border-b border-border px-6 py-4">
+              <div className="border-b border-border px-6 py-4 shrink-0">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center">
                     {panelPlatform.logo && (
-                      <div className="h-9 w-16 flex items-center justify-center bg-white rounded-lg border border-border/30 p-1">
+                      <div className="h-9 w-20 flex items-center justify-center bg-white rounded-lg border border-border/30 p-1">
                         <img
                           src={panelPlatform.logo}
                           alt={panelPlatform.name}
@@ -508,7 +522,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         />
                       </div>
                     )}
-                    <h2 className="text-lg font-semibold text-foreground">{panelPlatform.name}</h2>
                   </div>
                   <div className="flex items-center gap-2">
                     <StatusBadge platformId={panelPlatform.id} />
@@ -517,77 +530,72 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     </Button>
                   </div>
                 </div>
+                <p className="text-[13px] text-muted-foreground mt-2">{panelPlatform.description}</p>
               </div>
 
-              <div className="px-6 py-6 space-y-6">
-                {/* SECTION A: Connection Method */}
+              {/* Panel Body — scrollable */}
+              <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+                {/* CONNECTION METHOD */}
                 <div className="space-y-3">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                    Connection Method
-                  </span>
-                  <p className="text-xs text-muted-foreground">How would you like to connect?</p>
+                  <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Connection Method</span>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       onClick={() => setConnectionMethod('api')}
                       className={cn(
-                        'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-center',
+                        'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-center min-h-[110px] justify-center',
                         connectionMethod === 'api'
-                          ? 'border-2 border-primary bg-background'
-                          : 'border-border hover:border-border/80 bg-background'
+                          ? 'border-2 border-blue-600 bg-blue-50 dark:bg-blue-950/30'
+                          : 'border border-border bg-background hover:border-border/80'
                       )}
                     >
-                      <div className="flex items-center gap-2">
-                        <div className={cn('w-3 h-3 rounded-full border-2', connectionMethod === 'api' ? 'border-primary bg-primary' : 'border-muted-foreground/40')} />
-                        <Zap className="h-4 w-4 text-blue-600" />
-                        <span className="font-semibold text-sm">API</span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground leading-relaxed">Direct connection via REST API</p>
-                      <p className="text-[10px] text-muted-foreground/70">Best for: real-time sync, large volumes</p>
+                      <Zap className={cn('h-5 w-5', connectionMethod === 'api' ? 'text-blue-600' : 'text-muted-foreground')} />
+                      <span className={cn('font-medium text-sm', connectionMethod === 'api' ? 'text-blue-700 dark:text-blue-400' : 'text-foreground')}>API</span>
+                      <p className="text-xs text-muted-foreground">Real-time sync via REST API</p>
                     </button>
                     <button
                       onClick={() => setConnectionMethod('automation')}
                       className={cn(
-                        'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-center',
+                        'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-center min-h-[110px] justify-center',
                         connectionMethod === 'automation'
-                          ? 'border-2 border-primary bg-background'
-                          : 'border-border hover:border-border/80 bg-background'
+                          ? 'border-2 border-violet-600 bg-violet-50 dark:bg-violet-950/30'
+                          : 'border border-border bg-background hover:border-border/80'
                       )}
                     >
-                      <div className="flex items-center gap-2">
-                        <div className={cn('w-3 h-3 rounded-full border-2', connectionMethod === 'automation' ? 'border-primary bg-primary' : 'border-muted-foreground/40')} />
-                        <Bot className="h-4 w-4 text-amber-600" />
-                        <span className="font-semibold text-sm">Automation</span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground leading-relaxed">Browser-based workflow (RPA)</p>
-                      <p className="text-[10px] text-muted-foreground/70">Best for: systems without API access</p>
+                      <Bot className={cn('h-5 w-5', connectionMethod === 'automation' ? 'text-violet-600' : 'text-muted-foreground')} />
+                      <span className={cn('font-medium text-sm', connectionMethod === 'automation' ? 'text-violet-700 dark:text-violet-400' : 'text-foreground')}>Automation</span>
+                      <p className="text-xs text-muted-foreground">Browser-based workflow automation</p>
                     </button>
                   </div>
                 </div>
 
-                {/* SECTION B: Configuration Form */}
+                {/* CONFIGURATION */}
                 <div className="space-y-4">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                    Configuration
-                  </span>
+                  <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Configuration</span>
 
                   {connectionMethod === 'api' ? (
                     <div className="space-y-4">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Base URL</Label>
+                      <div className="space-y-1">
+                        <Label className="text-[13px] font-medium text-foreground/80">Base URL</Label>
                         <Input
-                          placeholder="https://client.assaisoftware.com"
+                          placeholder="https://client.assaisoftware.com/api"
                           value={formData.base_url}
-                          onChange={e => setFormData(f => ({ ...f, base_url: e.target.value }))}
-                          className="h-10 text-sm rounded-lg"
+                          onChange={e => { setFormData(f => ({ ...f, base_url: e.target.value })); setUrlError(''); }}
+                          onBlur={() => setUrlError(validateUrl(formData.base_url))}
+                          className={cn('h-10 text-sm rounded-lg', (urlError || (triedSave && !formData.base_url.trim())) && 'border-destructive')}
                         />
-                        <p className="text-[10px] text-muted-foreground">e.g. https://client.assaisoftware.com</p>
+                        {urlError ? (
+                          <p className="text-xs text-destructive mt-1">{urlError}</p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground mt-1">e.g. https://client.assaisoftware.com/api</p>
+                        )}
+                        {triedSave && !formData.base_url.trim() && <p className="text-xs text-destructive mt-1">Base URL is required</p>}
                       </div>
 
                       {/* Auth type selector */}
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Authentication Type</Label>
+                      <div className="space-y-1">
+                        <Label className="text-[13px] font-medium text-foreground/80">Authentication Type</Label>
                         <div className="flex rounded-lg border border-border overflow-hidden">
-                          {([['basic', 'Username / Password'], ['api_key', 'API Key'], ['oauth', 'OAuth 2.0']] as const).map(([key, label]) => (
+                          {([['api_key', 'API Key'], ['oauth', 'OAuth 2.0'], ['bearer', 'Bearer Token']] as const).map(([key, label]) => (
                             <button
                               key={key}
                               onClick={() => setAuthType(key)}
@@ -604,28 +612,10 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         </div>
                       </div>
 
-                      {authType === 'basic' && (
-                        <>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Username</Label>
-                            <Input value={formData.username} onChange={e => setFormData(f => ({ ...f, username: e.target.value }))} className="h-10 text-sm rounded-lg" />
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Password</Label>
-                            <div className="relative">
-                              <Input type={showPassword ? 'text' : 'password'} value={formData.password} onChange={e => setFormData(f => ({ ...f, password: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
-                              <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10" onClick={() => setShowPassword(!showPassword)}>
-                                {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                              </Button>
-                            </div>
-                          </div>
-                        </>
-                      )}
-
                       {authType === 'api_key' && (
                         <>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">API Key</Label>
+                          <div className="space-y-1">
+                            <Label className="text-[13px] font-medium text-foreground/80">API Key</Label>
                             <div className="relative">
                               <Input type={showPassword ? 'text' : 'password'} value={formData.api_key} onChange={e => setFormData(f => ({ ...f, api_key: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
                               <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10" onClick={() => setShowPassword(!showPassword)}>
@@ -633,21 +623,22 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                               </Button>
                             </div>
                           </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Header Name</Label>
+                          <div className="space-y-1">
+                            <Label className="text-[13px] font-medium text-foreground/80">Header Name</Label>
                             <Input value={formData.header_name} onChange={e => setFormData(f => ({ ...f, header_name: e.target.value }))} className="h-10 text-sm rounded-lg" placeholder="X-API-Key" />
+                            <p className="text-xs text-muted-foreground mt-1">HTTP header used to pass the API key</p>
                           </div>
                         </>
                       )}
 
                       {authType === 'oauth' && (
                         <>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Client ID</Label>
+                          <div className="space-y-1">
+                            <Label className="text-[13px] font-medium text-foreground/80">Client ID</Label>
                             <Input value={formData.client_id} onChange={e => setFormData(f => ({ ...f, client_id: e.target.value }))} className="h-10 text-sm rounded-lg" />
                           </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Client Secret</Label>
+                          <div className="space-y-1">
+                            <Label className="text-[13px] font-medium text-foreground/80">Client Secret</Label>
                             <div className="relative">
                               <Input type={showPassword ? 'text' : 'password'} value={formData.client_secret} onChange={e => setFormData(f => ({ ...f, client_secret: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
                               <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10" onClick={() => setShowPassword(!showPassword)}>
@@ -655,83 +646,124 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                               </Button>
                             </div>
                           </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Token URL</Label>
-                            <Input value={formData.token_url} onChange={e => setFormData(f => ({ ...f, token_url: e.target.value }))} className="h-10 text-sm rounded-lg" placeholder="https://auth.example.com/oauth/token" />
+                          <div className="space-y-1">
+                            <Label className="text-[13px] font-medium text-foreground/80">Token URL</Label>
+                            <Input value={formData.token_url} onChange={e => setFormData(f => ({ ...f, token_url: e.target.value }))} className="h-10 text-sm rounded-lg" placeholder="https://platform.com/oauth/token" />
+                            <p className="text-xs text-muted-foreground mt-1">e.g. https://platform.com/oauth/token</p>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[13px] font-medium text-foreground/80">Scope</Label>
+                            <Input value={formData.scope} onChange={e => setFormData(f => ({ ...f, scope: e.target.value }))} className="h-10 text-sm rounded-lg" placeholder="read write" />
+                            <p className="text-xs text-muted-foreground mt-1">Space-separated OAuth scopes if required</p>
                           </div>
                         </>
                       )}
 
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Project Code Field</Label>
+                      {authType === 'bearer' && (
+                        <div className="space-y-1">
+                          <Label className="text-[13px] font-medium text-foreground/80">Token</Label>
+                          <div className="relative">
+                            <Input type={showPassword ? 'text' : 'password'} value={formData.auth_token} onChange={e => setFormData(f => ({ ...f, auth_token: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
+                            <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10" onClick={() => setShowPassword(!showPassword)}>
+                              {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">Paste your bearer/access token here</p>
+                        </div>
+                      )}
+
+                      <div className="space-y-1">
+                        <Label className="text-[13px] font-medium text-foreground/80">Project Code Field</Label>
                         <Input value={formData.project_code_field} onChange={e => setFormData(f => ({ ...f, project_code_field: e.target.value }))} className="h-10 text-sm rounded-lg" placeholder="ProjectCode" />
-                        <p className="text-[10px] text-muted-foreground">Field used to filter documents by project</p>
+                        <p className="text-xs text-muted-foreground mt-1">Field name used to filter documents by project</p>
                       </div>
 
                       <div className="flex items-center justify-between">
                         <div>
-                          <Label className="text-xs">Enable Sync</Label>
-                          <p className="text-[10px] text-muted-foreground">Allow ORSH to pull data from this platform</p>
+                          <Label className="text-[13px] font-medium text-foreground/80">Enable Sync</Label>
+                          <p className="text-xs text-muted-foreground">Allow ORSH to pull data from this platform</p>
                         </div>
                         <Switch checked={formData.sync_enabled} onCheckedChange={v => setFormData(f => ({ ...f, sync_enabled: v }))} />
                       </div>
                     </div>
                   ) : (
+                    /* AUTOMATION MODE */
                     <div className="space-y-4">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Workflow Endpoint URL</Label>
-                        <Input value={formData.workflow_url} onChange={e => setFormData(f => ({ ...f, workflow_url: e.target.value }))} className="h-10 text-sm rounded-lg" placeholder="https://prod-00.westus.logic.azure.com/..." />
-                        <p className="text-[10px] text-muted-foreground">URL of your automation workflow trigger</p>
+                      <div className="space-y-1">
+                        <Label className="text-[13px] font-medium text-foreground/80">Platform URL</Label>
+                        <Input
+                          placeholder="https://client.assaisoftware.com"
+                          value={formData.platform_url}
+                          onChange={e => { setFormData(f => ({ ...f, platform_url: e.target.value })); setUrlError(''); }}
+                          onBlur={() => setUrlError(validateUrl(formData.platform_url))}
+                          className={cn('h-10 text-sm rounded-lg', (urlError || (triedSave && !formData.platform_url.trim())) && 'border-destructive')}
+                        />
+                        {urlError ? (
+                          <p className="text-xs text-destructive mt-1">{urlError}</p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground mt-1">The login URL of the platform e.g. https://client.assaisoftware.com</p>
+                        )}
+                        {triedSave && !formData.platform_url.trim() && <p className="text-xs text-destructive mt-1">Platform URL is required</p>}
                       </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Authentication Token</Label>
+                      <div className="space-y-1">
+                        <Label className="text-[13px] font-medium text-foreground/80">Username</Label>
+                        <Input value={formData.username} onChange={e => setFormData(f => ({ ...f, username: e.target.value }))} className="h-10 text-sm rounded-lg" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[13px] font-medium text-foreground/80">Password</Label>
                         <div className="relative">
-                          <Input type={showPassword ? 'text' : 'password'} value={formData.auth_token} onChange={e => setFormData(f => ({ ...f, auth_token: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
+                          <Input type={showPassword ? 'text' : 'password'} value={formData.password} onChange={e => setFormData(f => ({ ...f, password: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
                           <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10" onClick={() => setShowPassword(!showPassword)}>
                             {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                           </Button>
                         </div>
-                        <p className="text-[10px] text-muted-foreground">Bearer token to authenticate the trigger</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[13px] font-medium text-foreground/80">Workflow Trigger URL</Label>
+                        <Input value={formData.workflow_url} onChange={e => setFormData(f => ({ ...f, workflow_url: e.target.value }))} className="h-10 text-sm rounded-lg" placeholder="https://prod-00.westus.logic.azure.com/..." />
+                        <p className="text-xs text-muted-foreground mt-1">URL of your Power Automate or UiPath workflow trigger endpoint</p>
+                      </div>
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50">
+                        <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-blue-700 dark:text-blue-400 leading-relaxed">
+                          Automation mode logs into the platform interface directly. Ensure your IT team has set up the automation workflow before enabling.
+                        </p>
                       </div>
                       <div className="flex items-center justify-between">
-                        <Label className="text-xs">Enable Automation</Label>
+                        <div>
+                          <Label className="text-[13px] font-medium text-foreground/80">Enable Automation</Label>
+                          <p className="text-xs text-muted-foreground">Allow automated workflows for this platform</p>
+                        </div>
                         <Switch checked={formData.automation_enabled} onCheckedChange={v => setFormData(f => ({ ...f, automation_enabled: v }))} />
-                      </div>
-                      <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/5 border border-blue-200/50">
-                        <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
-                        <p className="text-[11px] text-blue-700 leading-relaxed">
-                          Automation workflows require a configured RPA tool such as Power Automate or UiPath. Contact your IT team to set up the workflow before enabling.
-                        </p>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* SECTION C: Action Buttons */}
+                {/* SYNC SECTION */}
                 <div className="space-y-3">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                    Actions
-                  </span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button variant="outline" size="sm" className="text-xs" disabled={!isFormValid || testingInPanel} onClick={testConnection}>
-                      {testingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wifi className="h-3 w-3 mr-1" />}
-                      Test
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-xs" disabled={!isFormValid || syncingInPanel} onClick={triggerSync}>
-                      {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
-                      Sync Now
-                    </Button>
-                    <Button size="sm" className="text-xs" disabled={!isFormValid || saving} onClick={saveConfig}>
-                      {saving && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
-                      Save
-                    </Button>
-                  </div>
-                  {testResultInPanel && (
-                    <div className={cn('flex items-center gap-2 text-xs px-3 py-2 rounded-lg', testResultInPanel.success ? 'bg-emerald-500/10 text-emerald-600' : 'bg-destructive/10 text-destructive')}>
-                      {testResultInPanel.success ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-                      {testResultInPanel.success ? `Connected · ${testResultInPanel.response_time_ms}ms` : testResultInPanel.message}
-                    </div>
-                  )}
+                  <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Sync</span>
+                  {(() => {
+                    const cred = getCredential(panelPlatform.id);
+                    const lastSync = cred?.last_sync_at;
+                    return (
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          {lastSync ? `Last synced: ${formatDistanceToNow(new Date(lastSync), { addSuffix: true })}` : 'Never synced'}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs"
+                          disabled={!credentialsSaved || syncingInPanel}
+                          onClick={triggerSync}
+                        >
+                          {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                          Sync Now
+                        </Button>
+                      </div>
+                    );
+                  })()}
                   {syncResultInPanel && (
                     <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-muted">
                       <RefreshCw className="h-3.5 w-3.5" />
@@ -740,13 +772,11 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                   )}
                 </div>
 
-                {/* SECTION D: Sync History */}
+                {/* SYNC HISTORY */}
                 <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
                   <CollapsibleTrigger className="flex items-center gap-2 w-full text-left">
                     <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', historyOpen ? '' : '-rotate-90')} />
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                      Sync History (last 30 days)
-                    </span>
+                    <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Sync History</span>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pt-3">
                     {panelLogs.length === 0 ? (
@@ -769,28 +799,55 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     )}
                   </CollapsibleContent>
                 </Collapsible>
+              </div>
 
-                {/* SECTION E: Danger Zone */}
-                <div className="border-t border-border pt-4">
-                  {!showRemoveConfirm ? (
-                    <button
-                      onClick={() => setShowRemoveConfirm(true)}
-                      className="text-xs text-destructive hover:text-destructive/80 transition-colors flex items-center gap-1"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                      Remove credentials
-                    </button>
-                  ) : (
-                    <div className="space-y-2 p-3 rounded-lg border border-destructive/20 bg-destructive/5">
-                      <p className="text-xs text-foreground">
-                        This will delete all saved credentials for <strong>{panelPlatform.name}</strong>. Are you sure?
-                      </p>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setShowRemoveConfirm(false)}>Cancel</Button>
+              {/* Sticky Footer */}
+              <div className="shrink-0 border-t border-border bg-background px-6 py-4">
+                {/* Test result inline */}
+                {testResultInPanel && (
+                  <div className={cn('flex items-center gap-2 text-xs px-3 py-2 rounded-lg mb-3', testResultInPanel.success ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20' : 'bg-destructive/10 text-destructive')}>
+                    {testResultInPanel.success ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                    {testResultInPanel.success ? `Connected · ${testResultInPanel.response_time_ms}ms` : testResultInPanel.message}
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <div>
+                    {!showRemoveConfirm ? (
+                      <button
+                        onClick={() => setShowRemoveConfirm(true)}
+                        className="text-xs text-destructive hover:text-destructive/80 transition-colors flex items-center gap-1"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Remove credentials
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2">
                         <Button variant="destructive" size="sm" className="text-xs h-7" onClick={removeCredentials}>Remove</Button>
+                        <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setShowRemoveConfirm(false)}>Cancel</Button>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      disabled={!credentialsSaved || testingInPanel}
+                      onClick={testConnection}
+                    >
+                      {testingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wifi className="h-3 w-3 mr-1" />}
+                      Test
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="text-xs"
+                      disabled={!isFormValid || saving}
+                      onClick={() => { setTriedSave(true); if (isFormValid) saveConfig(); }}
+                    >
+                      {saving && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+                      Save
+                    </Button>
+                  </div>
                 </div>
               </div>
             </>
