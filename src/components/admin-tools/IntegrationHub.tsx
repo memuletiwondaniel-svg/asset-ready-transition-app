@@ -80,7 +80,7 @@ const ALL_PLATFORMS: Platform[] = [
   { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and financials', section: 'enterprise', logo: sapLogo, logoScale: 1.4, accent: '#0070F2', badgeLabel: 'SAP' },
   { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', section: 'enterprise', logo: primaveraLogo, logoScale: 1.5, accent: '#C74634', badgeLabel: 'Oracle' },
   { id: 'teams', name: 'Microsoft Teams', description: 'Team communication and collaboration', section: 'comms', logo: teamsLogo, logoScale: 1.5, accent: '#6264A7', badgeLabel: 'Teams' },
-  { id: 'outlook', name: 'Microsoft Outlook', description: 'Email and calendar integration for invitations', section: 'comms', logo: outlookLogo, logoScale: 1.4, accent: '#0078D4', badgeLabel: 'Outlook' },
+  { id: 'outlook', name: 'Microsoft Outlook', description: 'Email and calendar integration for invitations', section: 'comms', logo: outlookLogo, logoScale: 1.0, accent: '#0078D4', badgeLabel: 'Outlook' },
 ];
 
 const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
@@ -112,6 +112,11 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const [syncResultInPanel, setSyncResultInPanel] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    dms: true,
+    enterprise: false,
+    comms: false,
+  });
 
   // GoCompletions localStorage status
   const [gocConfigured, setGocConfigured] = useState(false);
@@ -413,18 +418,27 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     );
   };
 
-  const renderSection = (title: string, platforms: Platform[]) => {
+
+  const toggleSection = (key: string) => {
+    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const renderSection = (key: string, title: string, platforms: Platform[]) => {
     if (platforms.length === 0) return null;
+    const isOpen = openSections[key] ?? false;
     return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
+      <Collapsible open={isOpen} onOpenChange={() => toggleSection(key)}>
+        <CollapsibleTrigger className="flex items-center gap-2 w-full group/section">
+          <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200", isOpen && "rotate-0", !isOpen && "-rotate-90")} />
           <h2 className="text-base font-semibold text-foreground">{title}</h2>
           <Badge variant="outline" className="text-xs">{platforms.length}</Badge>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl">
-          {platforms.map(renderPlatformCard)}
-        </div>
-      </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl">
+            {platforms.map(renderPlatformCard)}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     );
   };
 
@@ -462,9 +476,9 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           </div>
         ) : (
           <>
-            {renderSection('Document Management Systems', dmsPlatforms)}
-            {renderSection('Project & Enterprise Systems', enterprisePlatforms)}
-            {renderSection('Communication & Collaboration', commsPlatforms)}
+            {renderSection('dms', 'Document Management', dmsPlatforms)}
+            {renderSection('enterprise', 'Project & Enterprise Systems', enterprisePlatforms)}
+            {renderSection('comms', 'Communication & Collaboration', commsPlatforms)}
             {filteredPlatforms.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <Plug className="h-12 w-12 mx-auto mb-3 opacity-40" />
