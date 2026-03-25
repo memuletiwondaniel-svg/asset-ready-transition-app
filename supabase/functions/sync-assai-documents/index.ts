@@ -47,14 +47,7 @@ Deno.serve(async (req) => {
     const username = creds.username_encrypted || "";
     const password = String(creds.password_encrypted ?? "");
 
-    // Extract the API base - convert AWeu578 login URL to AAeu578 API base
-    const apiBase = baseUrl
-      .replace(/\/AW([^/]+)\/.*$/, "/AA$1")
-      .replace(/\/AW([^/]+)$/, "/AA$1");
-
-    const clientId = apiBase.match(/\/AA([^/]+)/)?.[1] || "eu578";
-
-    console.log(`[sync-assai] API base: ${apiBase}, clientId: ${clientId}`);
+    const dbName = creds.db_name || "";
 
     // Create sync log
     const { data: syncLog } = await supabase
