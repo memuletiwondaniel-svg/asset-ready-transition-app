@@ -109,30 +109,70 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Step 2: Fetch documents from REST API using session cookies
+      // Step 2: Use AW session cookies to get a Bearer token from access_token.jsp
+      const tokenPageUrl = `${resolvedBase}/AA${resolvedDb}/access_token.jsp?client_id=${resolvedDb}`;
+      console.log(`[sync-assai] Getting Bearer token from: ${tokenPageUrl}`);
+
+      const tokenPageResp = await fetch(tokenPageUrl, {
+        method: "GET",
+        headers: {
+          "Cookie": sessionCookies.join("; "),
+          "Accept": "text/html,application/json",
+        },
+        redirect: "follow",
+      });
+
+      const tokenPageText = await tokenPageResp.text();
+      const tokenPageUrl2 = tokenPageResp.url;
+      console.log(`[sync-assai] Token page status=${tokenPageResp.status}, final_url=${tokenPageUrl2}`);
+      console.log(`[sync-assai] Token page body preview=${tokenPageText.substring(0, 500)}`);
+
+      // Try extracting token from final URL fragment or page body
+      let bearerToken: string | null = null;
+
+      // From URL fragment (implicit flow)
+      const fragmentMatch = tokenPageUrl2.match(/[#&]access_token=([^&\s]+)/);
+      if (fragmentMatch) bearerToken = fragmentMatch[1];
+
+      // From page body if rendered as JSON or HTML with token value
+      if (!bearerToken) {
+        const bodyMatch = tokenPageText.match(/access_token[=:]["'\s]*([A-Za-z0-9\-._~+/]+=*)/);
+        if (bodyMatch) bearerToken = bodyMatch[1];
+      }
+
+      // From input field value in HTML
+      if (!bearerToken) {
+        const inputMatch = tokenPageText.match(/value=["']([A-Za-z0-9\-._~+/]{20,})['"]/);
+        if (inputMatch) bearerToken = inputMatch[1];
+      }
+
+      console.log(`[sync-assai] Bearer token found: ${bearerToken ? "YES (length=" + bearerToken.length + ")" : "NO"}`);
+
+      if (!bearerToken) {
+        throw new Error(`Could not extract Bearer token. Page body: ${tokenPageText.substring(0, 300)}`);
+      }
+
+      // Step 3: Call the documents API with the Bearer token
       const docsUrl = `${resolvedBase}/AA${resolvedDb}/api/v1/documents`;
-      console.log(`[sync-assai] Correct docs URL: ${docsUrl}`);
+      console.log(`[sync-assai] Fetching documents: ${docsUrl}`);
 
       const docsResp = await fetch(docsUrl, {
         method: "GET",
         headers: {
-          "Cookie": sessionCookies.join("; "),
+          "Authorization": `Bearer ${bearerToken}`,
           "Accept": "application/json",
         },
       });
 
-      console.log(`[sync-assai] Documents response status=${docsResp.status}`);
-
       const respText = await docsResp.text();
-      console.log(`[sync-assai] Response preview: ${respText.substring(0, 500)}`);
+      console.log(`[sync-assai] Docs status=${docsResp.status}, preview=${respText.substring(0, 500)}`);
 
       if (!docsResp.ok) {
-        throw new Error(`Documents API returned ${docsResp.status}: ${respText.substring(0, 300)}`);
+        throw new Error(`Documents API ${docsResp.status}: ${respText.substring(0, 300)}`);
       }
 
       const docsJson = JSON.parse(respText);
 
-      // Handle both array and paginated response formats
       const documents: any[] = Array.isArray(docsJson)
         ? docsJson
         : docsJson.data || docsJson.documents || docsJson.results || docsJson.items || [];
