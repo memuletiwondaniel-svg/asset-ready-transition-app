@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { loginAssai } from "../_shared/assai-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
