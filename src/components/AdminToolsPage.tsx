@@ -269,15 +269,15 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     height: 'md:row-span-2',
     onClick: () => setActiveView('ora-configuration')
   }, {
-    id: 'apis',
-    title: 'APIs',
-    description: 'Configure interfaces between ORSH and external applications such as SAP4HANA, Primavera P6, GoCompletions, Assai, SharePoint',
+    id: 'integration-hub',
+    title: 'Integration Hub',
+    description: 'Manage all external platform connections and sync — Assai, SAP, Primavera, GoCompletions, SharePoint, Teams',
     icon: Plug,
     gradient: 'from-emerald-500 to-teal-600',
-    tooltip: 'Manage Application Programming Interfaces (APIs) for integrating ORSH with external systems',
+    tooltip: 'Manage all external platform connections and sync',
     stats: {},
     height: 'md:row-span-2',
-    onClick: () => setActiveView('apis')
+    onClick: () => setActiveView('integration-hub')
   }, {
     id: 'sso',
     title: 'Single Sign-On',
