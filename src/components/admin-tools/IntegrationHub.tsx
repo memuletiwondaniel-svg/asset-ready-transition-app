@@ -56,20 +56,22 @@ interface Platform {
   name: string;
   description: string;
   section: 'dms' | 'enterprise';
-  logo: string;
+  logo: string | null;
   logoScale?: number;
   hasEdgeFunction?: boolean;
+  accent: string;
+  badgeLabel: string;
 }
 
 const ALL_PLATFORMS: Platform[] = [
-  { id: 'assai', name: 'Assai', description: 'Enterprise document management for O&G', section: 'dms', logo: assaiLogo, logoScale: 0.79, hasEdgeFunction: true },
-  { id: 'wrench', name: 'Wrench', description: 'Engineering document control', section: 'dms', logo: assaiLogo, logoScale: 0.79 },
-  { id: 'documentum', name: 'Documentum', description: 'OpenText Documentum ECM', section: 'dms', logo: assaiLogo, logoScale: 0.79 },
-  { id: 'gocompletions', name: 'GoCompletions', description: 'Completions and commissioning management', section: 'enterprise', logo: gocompletionsLogo },
-  { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and business operations', section: 'enterprise', logo: sapLogo },
-  { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', section: 'enterprise', logo: primaveraLogo, logoScale: 1.3 },
-  { id: 'sharepoint', name: 'SharePoint', description: 'Collaboration and document storage platform', section: 'enterprise', logo: sharepointLogo, logoScale: 1.6 },
-  { id: 'teams', name: 'Microsoft Teams', description: 'Team communication and collaboration platform', section: 'enterprise', logo: teamsLogo },
+  { id: 'assai', name: 'Assai', description: 'Enterprise document management for O&G', section: 'dms', logo: assaiLogo, logoScale: 0.79, hasEdgeFunction: true, accent: '#F97316', badgeLabel: 'assai' },
+  { id: 'wrench', name: 'Wrench', description: 'Project document control and management', section: 'dms', logo: null, accent: '#2563EB', badgeLabel: 'wrench' },
+  { id: 'documentum', name: 'Documentum', description: 'Enterprise content management platform', section: 'dms', logo: null, accent: '#6D28D9', badgeLabel: 'Documentum' },
+  { id: 'gocompletions', name: 'GoCompletions', description: 'Completions and commissioning management', section: 'enterprise', logo: gocompletionsLogo, accent: '#0EA5E9', badgeLabel: 'GoCompletions' },
+  { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and financials', section: 'enterprise', logo: sapLogo, accent: '#0070F2', badgeLabel: 'SAP' },
+  { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', section: 'enterprise', logo: primaveraLogo, logoScale: 1.3, accent: '#C74634', badgeLabel: 'Oracle' },
+  { id: 'sharepoint', name: 'SharePoint', description: 'Collaboration and document storage', section: 'enterprise', logo: sharepointLogo, logoScale: 1.6, accent: '#038387', badgeLabel: 'SharePoint' },
+  { id: 'teams', name: 'Microsoft Teams', description: 'Team communication and collaboration', section: 'enterprise', logo: teamsLogo, accent: '#6264A7', badgeLabel: 'Teams' },
 ];
 
 const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
@@ -311,7 +313,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     const isExpanded = expandedLogs[platform.id] || false;
 
     return (
-      <Card key={platform.id} className="border-border/40 transition-all duration-200">
+      <Card key={platform.id} className="border-border/40 transition-all duration-200 overflow-hidden" style={{ borderTop: `3px solid ${platform.accent}` }}>
         {/* Status badge */}
         <div className="flex justify-end p-3 pb-0">
           <StatusBadgeComponent platformId={platform.id} />
@@ -319,13 +321,22 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
         {/* Logo */}
         <div className="flex justify-center px-4 py-3">
-          <div className="h-12 w-full max-w-[160px] flex items-center justify-center bg-white rounded-lg border border-border/30 p-2">
-            <img
-              src={platform.logo}
-              alt={`${platform.name} logo`}
-              className="h-full max-w-full object-contain"
-              style={platform.logoScale ? { transform: `scale(${platform.logoScale})` } : undefined}
-            />
+          <div className="h-12 w-full max-w-[160px] flex items-center justify-center bg-white dark:bg-white/95 rounded-lg border border-border/30 p-2">
+            {platform.logo ? (
+              <img
+                src={platform.logo}
+                alt={`${platform.name} logo`}
+                className="h-full max-w-full object-contain"
+                style={platform.logoScale ? { transform: `scale(${platform.logoScale})` } : undefined}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
+              />
+            ) : null}
+            <span
+              className={`text-sm font-bold text-white px-3 py-1 rounded ${platform.logo ? 'hidden' : ''}`}
+              style={{ backgroundColor: platform.accent }}
+            >
+              {platform.badgeLabel}
+            </span>
           </div>
         </div>
 
