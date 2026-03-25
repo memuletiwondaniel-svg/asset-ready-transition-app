@@ -812,8 +812,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       </div>;
   }
   
-  }
-  
   // Show skeleton while initial data is loading
   if (isInitialLoading) {
     return <div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
