@@ -188,7 +188,6 @@ const DMSIntegration: React.FC<DMSIntegrationProps> = ({ onBack }) => {
   const testConnection = async (platformId: string) => {
     toast.info('Test function not yet available');
   };
-  };
 
   const getCredential = (platformId: string) =>
     credentials.find(c => c.dms_platform === platformId);
