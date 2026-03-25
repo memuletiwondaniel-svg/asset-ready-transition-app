@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 import { deriveBaseUrl, loginAssai, getDocumentCount } from "../_shared/assai-auth.ts";
 
 const corsHeaders = {
@@ -58,6 +58,15 @@ Deno.serve(async (req) => {
     if (!creds.base_url) {
       return json({ success: false, message: "Platform URL is not configured", response_time_ms: 0 });
     }
+
+    // Debug: log credential column check
+    console.log('[test-assai] Credentials check:', {
+      has_base_url: !!creds.base_url,
+      has_username: !!creds.username_encrypted,
+      has_password: !!creds.password_encrypted,
+      has_db_name: !!creds.db_name,
+      all_keys: Object.keys(creds),
+    });
 
     // Decrypt
     let username = creds.username_encrypted;
