@@ -21,6 +21,9 @@ interface DwrBeanMethod {
   arity: number;
 }
 
+const MUTATING_METHOD_PATTERN =
+  /^(add|delete|update|save|copy|process|register|validate|check|ocr|import|export|upload|download|remove|set)/i;
+
 /**
  * Normalize Assai work package code (e.g. "ST/DP189") to ORSH format ("DP-189").
  * Preserves original in metadata.
@@ -123,9 +126,16 @@ async function fetchDocumentsViaDwr(
     const methods = parseDwrBeanMethods(interfaceJs);
     console.log(`[sync-assai] DWRBean methods discovered: ${methods.length}`);
 
-    const docLikeMethods = methods.filter((m) =>
-      /doc|register|search|mdr|transmittal|package|revision|status|list|grid/i.test(m.name),
-    );
+    const docLikeMethods = methods
+      .filter((m) => /doc|register|search|mdr|transmittal|package|revision|status|list|grid|result|quick/i.test(m.name))
+      .filter((m) => !MUTATING_METHOD_PATTERN.test(m.name))
+      .filter((m) => m.arity <= 2)
+      .sort((a, b) => {
+        const aScore = /search|result|list|grid|quick/i.test(a.name) ? 0 : 1;
+        const bScore = /search|result|list|grid|quick/i.test(b.name) ? 0 : 1;
+        return aScore - bScore;
+      })
+      .slice(0, 30);
     console.log(
       `[sync-assai] DWRBean doc-like methods: ${docLikeMethods
         .slice(0, 40)
@@ -139,9 +149,18 @@ async function fetchDocumentsViaDwr(
 
       if (method.arity === 0) {
         invocationPatterns.push([]);
+      } else if (method.arity === 1) {
+        invocationPatterns.push(["string:%"]);
+        invocationPatterns.push(["string:*"]);
+        invocationPatterns.push(["string:"]);
+        invocationPatterns.push(["null:null"]);
+      } else if (method.arity === 2) {
+        invocationPatterns.push(["string:%", "number:0"]);
+        invocationPatterns.push(["string:", "number:0"]);
+        invocationPatterns.push(["string:", "string:"]);
+        invocationPatterns.push(["null:null", "null:null"]);
       } else {
-        invocationPatterns.push(Array.from({ length: method.arity }, () => "null:null"));
-        invocationPatterns.push(Array.from({ length: method.arity }, () => "string:"));
+        continue;
       }
 
       for (const params of invocationPatterns) {
@@ -177,6 +196,11 @@ async function fetchDocumentsViaDwr(
               console.log(`[sync-assai] Parsed ${docs.length} docs from DWRBean.${method.name}`);
               return docs;
             }
+            console.log(
+              `[sync-assai] DWRBean.${method.name} callback without parsable docs: ${result
+                .replace(/\s+/g, " ")
+                .substring(0, 450)}`,
+            );
           }
         } catch (e) {
           console.log(`[sync-assai] DWRBean.${method.name} failed: ${e}`);
