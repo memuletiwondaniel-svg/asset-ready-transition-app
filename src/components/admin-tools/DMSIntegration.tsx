@@ -182,66 +182,12 @@ const DMSIntegration: React.FC<DMSIntegrationProps> = ({ onBack }) => {
   };
 
   const triggerSync = async (platformId: string) => {
-    if (!selectedProject) {
-      toast.error('Please select a project first');
-      return;
-    }
-    setSyncing(platformId);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const tenantId = user?.user_metadata?.tenant_id;
-
-      const { data, error } = await supabase.functions.invoke('sync-assai-documents', {
-        body: {
-          project_id: selectedProject,
-          tenant_id: tenantId,
-          manual_trigger: true,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.success) {
-        toast.success(
-          `Sync complete: ${data.synced_count} synced, ${data.new_documents} new, ${data.status_changes} status changes`
-        );
-      } else {
-        toast.error(data?.error || 'Sync failed');
-      }
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || 'Sync failed');
-    } finally {
-      setSyncing(null);
-    }
+    toast.info('Sync function not yet available');
   };
 
   const testConnection = async (platformId: string) => {
-    setTesting(platformId);
-    setTestResult(prev => ({ ...prev, [platformId]: null }));
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const tenantId = user?.user_metadata?.tenant_id;
-
-      const { data, error } = await supabase.functions.invoke('test-assai-connection', {
-        body: { tenant_id: tenantId },
-      });
-
-      if (error) throw error;
-
-      setTestResult(prev => ({ ...prev, [platformId]: data }));
-      if (data?.success) {
-        toast.success(`Connection successful (${data.response_time_ms}ms)`);
-      } else {
-        toast.error(data?.message || 'Connection failed');
-      }
-    } catch (err: any) {
-      const result = { success: false, message: err.message || 'Test failed', response_time_ms: 0 };
-      setTestResult(prev => ({ ...prev, [platformId]: result }));
-      toast.error(err.message || 'Connection test failed');
-    } finally {
-      setTesting(null);
-    }
+    toast.info('Test function not yet available');
+  };
   };
 
   const getCredential = (platformId: string) =>
