@@ -74,7 +74,7 @@ type ConnectionMethod = 'api' | 'automation';
 type AuthType = 'api_key' | 'oauth' | 'bearer';
 
 const ALL_PLATFORMS: Platform[] = [
-  { id: 'assai', name: 'Assai', description: 'Enterprise document management for O&G', section: 'dms', logo: assaiLogo, logoScale: 1.15, hasEdgeFunction: true, accent: '#F97316', badgeLabel: 'assai' },
+  { id: 'assai', name: 'Assai', description: 'Enterprise document management for O&G', section: 'dms', logo: assaiLogo, logoScale: 1.15, accent: '#F97316', badgeLabel: 'assai' },
   { id: 'wrench', name: 'Wrench', description: 'Project document control and management', section: 'dms', logo: wrenchLogo, accent: '#2563EB', badgeLabel: 'wrench' },
   { id: 'documentum', name: 'Documentum', description: 'Enterprise content management platform', section: 'dms', logo: documentumLogo, logoScale: 1.35, accent: '#6D28D9', badgeLabel: 'Documentum' },
   { id: 'sharepoint', name: 'SharePoint', description: 'Collaboration and document storage', section: 'dms', logo: sharepointLogo, logoScale: 2.2, accent: '#038387', badgeLabel: 'SharePoint' },
