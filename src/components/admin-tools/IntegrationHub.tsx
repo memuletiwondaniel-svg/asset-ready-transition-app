@@ -261,7 +261,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           if (formData.client_secret) record.password_encrypted = formData.client_secret;
         }
       } else {
-        if (formData.auth_token) record.password_encrypted = formData.auth_token;
+        if (formData.username) record.username_encrypted = formData.username;
+        if (formData.password) record.password_encrypted = formData.password;
       }
 
       if (existing) {
