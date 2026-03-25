@@ -191,358 +191,100 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     };
   }, []);
 
-  // Load favorites from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem('orsh-favorite-admin-tools');
-    if (stored) {
-      try {
-        setFavoriteTools(JSON.parse(stored));
-      } catch (e) {
-        console.error('Error parsing favorite tools:', e);
-      }
-    }
-  }, []);
-
-  // Toggle favorite status
-  const toggleFavorite = (toolId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
-    setFavoriteTools(prev => {
-      const updated = prev.includes(toolId) ? prev.filter(id => id !== toolId) : [...prev, toolId];
-      localStorage.setItem('orsh-favorite-admin-tools', JSON.stringify(updated));
-      return updated;
-    });
-  };
-  const adminTools = [{
-    id: 'users',
-    title: t.manageUser,
-    description: t.manageUserDesc,
-    icon: Users,
-    gradient: 'from-blue-500 to-blue-600',
-    tooltip: t.manageUserDesc,
-    stats: {
-      total: userStats.total,
-      label: t.users
+  // Section definitions for the sectioned layout
+  const sections = useMemo(() => [
+    {
+      label: 'USER MANAGEMENT',
+      columns: 2 as const,
+      items: [
+        { id: 'users', title: 'Users', description: 'Manage user accounts, invite team members', icon: Users, gradient: 'from-blue-500 to-blue-600', onClick: () => setActiveView('users') },
+        { id: 'roles-permissions', title: 'Roles & Permissions', description: 'Access control, permission groups', icon: Shield, gradient: 'from-rose-500 to-pink-600', onClick: () => setActiveView('roles-permissions') },
+        { id: 'user-offboarding', title: 'User Offboarding', description: 'Deactivate users, revoke access', icon: UserMinus, gradient: 'from-red-500 to-rose-600', onClick: () => setActiveView('user-offboarding') },
+        { id: 'permission-review', title: 'Permission Reviews', description: 'Periodic access certification', icon: ClipboardCheck, gradient: 'from-indigo-500 to-violet-600', onClick: () => setActiveView('permission-review') },
+        { id: 'bulk-upload', title: 'Bulk User Upload', description: 'Import users via CSV', icon: Upload, gradient: 'from-teal-500 to-emerald-600', onClick: () => setActiveView('bulk-upload') },
+        { id: 'sso', title: 'Single Sign-On', description: 'SAML 2.0, Azure AD, Okta', icon: Shield, gradient: 'from-indigo-500 to-purple-600', onClick: () => setActiveView('sso') },
+      ],
     },
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('users')
-  }, {
-    id: 'projects',
-    title: t.manageProjects,
-    description: t.manageProjectsDesc,
-    icon: Building2,
-    gradient: 'from-purple-500 to-purple-600',
-    tooltip: t.manageProjectsDesc,
-    stats: {
-      total: projectStats.total,
-      label: t.projects
+    {
+      label: 'LIVING DOCUMENTATION',
+      columns: 3 as const,
+      items: [
+        { id: 'northstar-document', title: 'Strategic North Star', description: 'Vision, mission, product strategy', icon: Compass, gradient: 'from-amber-600 to-orange-700', badge: 'auto-update' as const, onClick: () => setActiveView('northstar-document') },
+        { id: 'platform-guide', title: 'Platform Guide', description: 'How to use ORSH, agent intros', icon: BookOpen, gradient: 'from-blue-600 to-indigo-700', badge: 'auto-update' as const, onClick: () => setActiveView('platform-guide') },
+        { id: 'ai-agent-strategy', title: 'AI Agent Strategy', description: 'Agent roadmap, tool registry', icon: Brain, gradient: 'from-violet-600 to-purple-700', badge: 'auto-update' as const, onClick: () => setActiveView('ai-agent-strategy') },
+        { id: 'security-document', title: 'Security & Compliance', description: 'Security posture, SOC 2 progress', icon: FileText, gradient: 'from-slate-600 to-zinc-700', badge: 'auto-update' as const, onClick: () => setActiveView('security-document') },
+        { id: 'journey-maps', title: 'Customer Journey Maps', description: 'Persona journeys, onboarding flows', icon: MapPin, gradient: 'from-pink-600 to-rose-700', onClick: () => setActiveView('journey-maps') },
+        { id: 'deployment-log', title: 'Deployment Log', description: 'Version history, release notes', icon: Rocket, gradient: 'from-emerald-500 to-teal-600', badge: 'auto-update' as const, onClick: () => setActiveView('deployment-log') },
+        { id: 'process-flows', title: 'Process Flow Maps', description: 'Workflows, approval chains', icon: GitBranch, gradient: 'from-emerald-600 to-teal-700', onClick: () => setActiveView('process-flows') },
+      ],
     },
-    height: 'md:row-span-2',
-    onClick: () => navigate('/project-management')
-  }, {
-    id: 'handover-management',
-    title: 'VCRs and PSSRs',
-    description: 'Configure Verification Certificate of Readiness, Pre-Startup Safety Reviews, and Certificates (SoF, PACs and FACs)',
-    icon: Key,
-    gradient: 'from-blue-500 to-cyan-500',
-    tooltip: t.manageHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('handover-management')
-  }, {
-    id: 'activity-log',
-    title: t.activityLogTitle,
-    description: t.activityLogDesc,
-    icon: Activity,
-    gradient: 'from-cyan-500 to-cyan-600',
-    tooltip: t.activityLogDesc,
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('activity-log')
-  }, {
-    id: 'ora-configuration',
-    title: t.oraPlans || 'ORA Plan',
-    description: t.manageORAPlansDesc,
-    icon: LayoutTemplate,
-    gradient: 'from-amber-500 to-amber-600',
-    tooltip: t.manageORAPlansDesc,
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('ora-configuration')
-  }, {
-    id: 'integration-hub',
-    title: 'Integration Hub',
-    description: 'Manage all external platform connections and sync — Assai, SAP, Primavera, GoCompletions, SharePoint, Teams',
-    icon: Plug,
-    gradient: 'from-emerald-500 to-teal-600',
-    tooltip: 'Manage all external platform connections and sync',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('integration-hub')
-  }, {
-    id: 'sso',
-    title: 'Single Sign-On',
-    description: 'Configure SAML 2.0 SSO with your Identity Provider (Azure AD, Okta, OneLogin) for enterprise authentication',
-    icon: Shield,
-    gradient: 'from-indigo-500 to-purple-600',
-    tooltip: 'Configure enterprise SSO authentication per tenant',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('sso')
-  }, {
-    id: 'roles-permissions',
-    title: 'Roles & Permissions',
-    description: 'Configure what each role can do — create projects, VCRs, PSSRs, approve documents, and more',
-    icon: Shield,
-    gradient: 'from-rose-500 to-pink-600',
-    tooltip: 'Manage role-based access control (RBAC) across the platform',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('roles-permissions')
-  }, {
-    id: 'audit-logs',
-    title: 'Security Audit Logs',
-    description: 'Track all authentication events, admin actions, PSSR/SoF approvals, and permission changes',
-    icon: FileSearch,
-    gradient: 'from-slate-600 to-zinc-700',
-    tooltip: 'View detailed audit trail for security and compliance',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('audit-logs')
-  }, {
-    id: 'session-timeout',
-    title: 'Session Timeout',
-    description: 'Configure auto-logout duration, warning timer, and inactivity timeout for all users',
-    icon: Timer,
-    gradient: 'from-indigo-500 to-violet-600',
-    tooltip: 'Set session timeout and idle lock policies',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('session-timeout')
-  }, {
-    id: 'brute-force',
-    title: 'Brute-Force Protection',
-    description: 'Configure account lockout thresholds, lockout duration, and progressive lockout policies',
-    icon: ShieldAlert,
-    gradient: 'from-red-500 to-rose-600',
-    tooltip: 'Protect accounts from brute-force login attacks',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('brute-force')
-  }, {
-    id: 'data-export',
-    title: 'Data Export',
-    description: 'Export critical tables (projects, users, audit logs) in CSV or JSON for backup and compliance',
-    icon: Database,
-    gradient: 'from-teal-500 to-emerald-600',
-    tooltip: 'Download application data for offline backup',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('data-export')
-  }, {
-    id: 'audit-retention',
-    title: 'Audit Log Retention',
-    description: 'Configure retention period and purge old audit log entries automatically',
-    icon: Archive,
-    gradient: 'from-orange-500 to-amber-600',
-    tooltip: 'Manage audit log lifecycle and storage',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('audit-retention')
-  }, {
-    id: 'disaster-recovery',
-    title: 'Disaster Recovery Runbook',
-    description: 'Step-by-step procedures for backup verification, database restore, and incident recovery',
-    icon: BookOpen,
-    gradient: 'from-cyan-600 to-blue-700',
-    tooltip: 'View disaster recovery procedures and checklists',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('disaster-recovery')
-  }, {
-    id: 'api-keys',
-    title: 'API Key Management',
-    description: 'Generate, scope, rotate, and revoke API keys for external integrations with rate limiting and IP restrictions',
-    icon: KeyRound,
-    gradient: 'from-violet-500 to-purple-600',
-    tooltip: 'Manage scoped API keys for SAP, Primavera, GoCompletions, and RPA bots',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('api-keys')
-  }, {
-    id: 'webhook-security',
-    title: 'Webhook Security',
-    description: 'Configure HMAC signature verification for incoming webhook payloads from external systems',
-    icon: Webhook,
-    gradient: 'from-sky-500 to-blue-600',
-    tooltip: 'Verify webhook authenticity with HMAC signatures',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('webhook-security')
-  }, {
-    id: 'integration-health',
-    title: 'Integration Health',
-    description: 'Monitor API call success rates, response times, error rates, and usage patterns per integration',
-    icon: HeartPulse,
-    gradient: 'from-green-500 to-emerald-600',
-    tooltip: 'Real-time health dashboard for all external API integrations',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('integration-health')
-  }, {
-    id: 'user-offboarding',
-    title: 'User Offboarding',
-    description: 'Securely deactivate departing users — cancel tasks, revoke API keys, remove roles, and flag stale accounts',
-    icon: UserMinus,
-    gradient: 'from-red-500 to-rose-600',
-    tooltip: 'Manage user departure and stale account detection',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('user-offboarding')
-  }, {
-    id: 'permission-review',
-    title: 'Permission Reviews',
-    description: 'Schedule periodic access certification campaigns, review user permissions, and track high-privilege grants',
-    icon: ClipboardCheck,
-    gradient: 'from-indigo-500 to-violet-600',
-    tooltip: 'Quarterly permission review campaigns and access certification',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('permission-review')
-  }, {
-    id: 'deployment-log',
-    title: 'Deployment Log',
-    description: 'Track releases with version labels, release notes, and a pre-publish verification checklist',
-    icon: Rocket,
-    gradient: 'from-emerald-500 to-teal-600',
-    tooltip: 'Log deployments and verify changes before publishing to production',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('deployment-log')
-  }, {
-    id: 'feature-flags',
-    title: 'Tenant Feature Flags',
-    description: 'Enable or disable modules per company — ship features to one tenant first, then roll out to all',
-    icon: Flag,
-    gradient: 'from-amber-500 to-orange-600',
-    tooltip: 'Per-tenant feature toggles for controlled rollouts',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('feature-flags')
-  }, {
-    id: 'security-document',
-    title: 'Security & Compliance Doc',
-    description: 'Live enterprise security document covering authentication, RBAC, multi-tenancy, audit, DR, and compliance posture',
-    icon: FileText,
-    gradient: 'from-slate-600 to-zinc-700',
-    tooltip: 'View the living ORSH enterprise security and compliance document',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('security-document')
-  }, {
-    id: 'platform-guide',
-    title: 'Platform Guide',
-    description: 'Comprehensive guide explaining all ORSH workflows, codes, tables, roles, automations, and integrations',
-    icon: BookOpen,
-    gradient: 'from-blue-600 to-indigo-700',
-    tooltip: 'View the living ORSH platform guide — how everything works',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('platform-guide')
-  }, {
-    id: 'northstar-document',
-    title: 'Strategic North Star',
-    description: 'ORSH → ORIP evolution roadmap, investor pitch, board-level strategic brief, and acquisition-positioning narrative',
-    icon: Compass,
-    gradient: 'from-amber-600 to-orange-700',
-    tooltip: 'View the living ORSH Strategic North Star — vision, positioning, and ORIP roadmap',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('northstar-document')
-  }, {
-    id: 'incident-response',
-    title: 'Incident Response Runbook',
-    description: 'Interactive severity classification, escalation paths, response SLAs, and containment procedures',
-    icon: AlertTriangle,
-    gradient: 'from-red-600 to-rose-700',
-    tooltip: 'Structured incident response with P1-P4 severity levels and built-in containment capabilities',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('incident-response')
-  }, {
-    id: 'deployment-configs',
-    title: 'Deployment Configs',
-    description: 'Docker Compose for single-tenant/air-gapped, GitHub Actions CI/CD pipeline, and environment templates',
-    icon: Container,
-    gradient: 'from-cyan-600 to-blue-700',
-    tooltip: 'Download ready-to-use deployment configurations for self-hosted and CI/CD environments',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('deployment-configs')
-  }, {
-    id: 'journey-maps',
-    title: 'Customer Journey Maps',
-    description: 'Role-based journey maps with real user personas, goals, pain points, and platform interaction flows',
-    icon: MapPin,
-    gradient: 'from-pink-600 to-rose-700',
-    tooltip: 'View enhanced customer journey maps for all configured roles with real profiles',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('journey-maps')
-  }, {
-    id: 'process-flows',
-    title: 'Process Flow Maps',
-    description: 'Complete process documentation covering all ORSH workflows, approval chains, and automation triggers',
-    icon: GitBranch,
-    gradient: 'from-emerald-600 to-teal-700',
-    tooltip: 'View detailed process flow maps explaining every ORSH process',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('process-flows')
-  }, {
-    id: 'document-management',
-    title: 'Document Management',
-    description: 'Configure document types, categories, lifecycle phases, and the Project Lifecycle Information Plan',
-    icon: Files,
-    gradient: 'from-sky-500 to-blue-600',
-    tooltip: 'Set up the Document Management System and Project Lifecycle Information Plan',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('document-management')
-  }, {
-    id: 'ai-agent-strategy',
-    title: 'AI Agent Strategy & Training',
-    description: 'Living document covering AI agent architecture, development phases, training strategy, gaps, and continuous improvement',
-    icon: Brain,
-    gradient: 'from-violet-600 to-purple-700',
-    tooltip: 'View the AI agent strategy, training methodology, and continuous improvement framework',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('ai-agent-strategy')
-  }, {
-    id: 'tenant-setup',
-    title: 'Tenant Setup Wizard',
-    description: 'Guided 7-step wizard to configure plants, fields, hubs, commissions, roles, and invite users for a new organisation',
-    icon: Compass,
-    gradient: 'from-teal-500 to-cyan-600',
-    tooltip: 'Launch the guided tenant setup wizard to configure your organisation',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setTenantSetupOpen(true)
-  }];
+    {
+      label: 'AI AGENTS',
+      columns: 3 as const,
+      items: [
+        { id: 'ai-agent-registry', title: 'Agent Registry', description: 'Bob, Selma, Fred, Hannah & more', icon: Brain, gradient: 'from-violet-500 to-purple-600', badge: '3 live' as const, onClick: () => toast.info('Agent Registry coming soon') },
+        { id: 'auto-update-controls', title: 'Auto-Update Controls', description: 'Living doc triggers, update queue', icon: Settings, gradient: 'from-sky-500 to-blue-600', onClick: () => toast.info('Auto-Update Controls coming soon') },
+        { id: 'training-feedback', title: 'Training & Feedback', description: 'Agent feedback loop, ratings', icon: HeartPulse, gradient: 'from-pink-500 to-rose-600', onClick: () => toast.info('Training & Feedback coming soon') },
+      ],
+    },
+    {
+      label: 'INTEGRATIONS',
+      columns: 2 as const,
+      items: [
+        { id: 'integration-hub', title: 'DMS Integration', description: 'Assai, Wrench, Documentum sync', icon: Plug, gradient: 'from-emerald-500 to-teal-600', badge: 'configured' as const, onClick: () => setActiveView('integration-hub') },
+        { id: 'gocompletions', title: 'GoCompletions', description: 'ITR & ITP completion sync', icon: CheckCircle, gradient: 'from-green-500 to-emerald-600', onClick: () => setActiveView('integration-hub') },
+        { id: 'api-keys', title: 'API Key Management', description: 'Generate, scope, rotate API keys', icon: KeyRound, gradient: 'from-violet-500 to-purple-600', onClick: () => setActiveView('api-keys') },
+        { id: 'webhook-security', title: 'Webhook Security', description: 'HMAC signature verification', icon: Webhook, gradient: 'from-sky-500 to-blue-600', onClick: () => setActiveView('webhook-security') },
+        { id: 'integration-health', title: 'Integration Health', description: 'API success rates, latency monitoring', icon: HeartPulse, gradient: 'from-green-500 to-emerald-600', onClick: () => setActiveView('integration-health') },
+      ],
+    },
+    {
+      label: 'SYSTEM',
+      columns: 3 as const,
+      items: [
+        { id: 'audit-logs', title: 'Audit Log', description: 'Security events, user actions', icon: FileSearch, gradient: 'from-slate-600 to-zinc-700', onClick: () => setActiveView('audit-logs') },
+        { id: 'activity-log', title: 'Activity Log', description: 'Recent system activity', icon: Activity, gradient: 'from-cyan-500 to-cyan-600', onClick: () => setActiveView('activity-log') },
+        { id: 'session-timeout', title: 'Session Timeout', description: 'Auto-logout, idle lock policies', icon: Timer, gradient: 'from-indigo-500 to-violet-600', onClick: () => setActiveView('session-timeout') },
+        { id: 'brute-force', title: 'Brute-Force Protection', description: 'Account lockout thresholds', icon: ShieldAlert, gradient: 'from-red-500 to-rose-600', onClick: () => setActiveView('brute-force') },
+        { id: 'data-export', title: 'Data Export', description: 'CSV/JSON backup downloads', icon: Database, gradient: 'from-teal-500 to-emerald-600', onClick: () => setActiveView('data-export') },
+        { id: 'audit-retention', title: 'Audit Log Retention', description: 'Retention period, purge config', icon: Archive, gradient: 'from-orange-500 to-amber-600', onClick: () => setActiveView('audit-retention') },
+        { id: 'disaster-recovery', title: 'Disaster Recovery', description: 'Backup, restore procedures', icon: BookOpen, gradient: 'from-cyan-600 to-blue-700', onClick: () => setActiveView('disaster-recovery') },
+        { id: 'incident-response', title: 'Incident Response', description: 'Severity classification, SLAs', icon: AlertTriangle, gradient: 'from-red-600 to-rose-700', onClick: () => setActiveView('incident-response') },
+        { id: 'feature-flags', title: 'Feature Flags', description: 'Per-tenant module toggles', icon: Flag, gradient: 'from-amber-500 to-orange-600', onClick: () => setActiveView('feature-flags') },
+        { id: 'deployment-configs', title: 'Deployment Configs', description: 'Docker, CI/CD pipelines', icon: Container, gradient: 'from-cyan-600 to-blue-700', onClick: () => setActiveView('deployment-configs') },
+      ],
+    },
+    {
+      label: 'OPERATIONS & CONFIGURATION',
+      columns: 3 as const,
+      items: [
+        { id: 'projects', title: 'Projects', description: 'Manage projects, phases, teams', icon: Building2, gradient: 'from-purple-500 to-purple-600', onClick: () => navigate('/project-management') },
+        { id: 'handover-management', title: 'VCRs & PSSRs', description: 'Certificates, safety reviews', icon: Key, gradient: 'from-blue-500 to-cyan-500', onClick: () => setActiveView('handover-management') },
+        { id: 'ora-configuration', title: 'ORA Plan', description: 'Operational readiness activities', icon: LayoutTemplate, gradient: 'from-amber-500 to-amber-600', onClick: () => setActiveView('ora-configuration') },
+        { id: 'document-management', title: 'Document Management', description: 'Types, categories, lifecycle', icon: Files, gradient: 'from-sky-500 to-blue-600', onClick: () => setActiveView('document-management') },
+        { id: 'tenant-setup', title: 'Tenant Setup Wizard', description: 'Configure new organisation', icon: Compass, gradient: 'from-teal-500 to-cyan-600', onClick: () => setTenantSetupOpen(true) },
+      ],
+    },
+  ], [navigate, t]);
 
-  // Filter admin tools based on search query
-  const filteredAdminTools = useMemo(() => {
-    if (!searchQuery.trim()) return adminTools;
+  // Filter sections based on search
+  const filteredSections = useMemo(() => {
+    if (!searchQuery.trim()) return sections;
     const query = searchQuery.toLowerCase().trim();
-    return adminTools.filter(tool => tool.title.toLowerCase().includes(query) || tool.description.toLowerCase().includes(query) || tool.tooltip.toLowerCase().includes(query));
-  }, [searchQuery, userStats.total, projectStats.total, t]);
+    return sections
+      .map(section => ({
+        ...section,
+        items: section.items.filter(item =>
+          item.title.toLowerCase().includes(query) ||
+          item.description.toLowerCase().includes(query)
+        ),
+      }))
+      .filter(section => section.items.length > 0);
+  }, [searchQuery, sections]);
 
-  // Get favorite and non-favorite tools
-  const favoriteToolsList = useMemo(() => {
-    return filteredAdminTools.filter(tool => favoriteTools.includes(tool.id));
-  }, [filteredAdminTools, favoriteTools]);
-  const nonFavoriteToolsList = useMemo(() => {
-    return filteredAdminTools.filter(tool => !favoriteTools.includes(tool.id));
+  const totalFilteredItems = useMemo(() => 
+    filteredSections.reduce((sum, s) => sum + s.items.length, 0),
+  [filteredSections]);
   }, [filteredAdminTools, favoriteTools]);
 
   // Generate breadcrumbs based on current view
