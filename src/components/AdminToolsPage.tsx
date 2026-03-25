@@ -600,18 +600,18 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
 
   return <><div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
         {/* Header */}
-        <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
+        <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-3 md:py-4 sticky top-0 z-10">
           <BreadcrumbNavigation currentPageLabel="Administration" favoritePath="/admin-tools" />
-          <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-600 to-gray-700 flex items-center justify-center shadow-lg">
-                <Sliders className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between mt-2 md:mt-3">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-slate-600 to-gray-700 flex items-center justify-center shadow-lg shrink-0">
+                <Sliders className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground tracking-tight">
+              <div className="min-w-0">
+                <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight truncate">
                   {t.administration}
                 </h1>
-                <p className="text-sm text-muted-foreground mt-0.5">
+                <p className="text-xs md:text-sm text-muted-foreground mt-0.5 line-clamp-1">
                   {t.adminToolsSubtitle}
                 </p>
               </div>
