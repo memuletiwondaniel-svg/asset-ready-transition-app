@@ -116,7 +116,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
   // Action states
   const [testingInPanel, setTestingInPanel] = useState(false);
-  const [testResultInPanel, setTestResultInPanel] = useState<{ success: boolean; message: string; response_time_ms: number } | null>(null);
+  const [testResultInPanel, setTestResultInPanel] = useState<{ success: boolean; message?: string; response_time_ms?: number } | null>(null);
   const [syncingInPanel, setSyncingInPanel] = useState(false);
   const [syncResultInPanel, setSyncResultInPanel] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
