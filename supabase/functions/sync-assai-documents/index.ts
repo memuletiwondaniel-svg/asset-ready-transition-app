@@ -8,88 +8,216 @@ const corsHeaders = {
 };
 
 /**
+ * Extract Set-Cookie pairs from a response.
+ */
+function extractCookies(resp: Response): string[] {
+  const headersAny = resp.headers as unknown as { getSetCookie?: () => string[] };
+  const setCookies = headersAny.getSetCookie?.() ?? [];
+  if (setCookies.length > 0) {
+    return setCookies.map((c) => c.split(";")[0].trim()).filter(Boolean);
+  }
+  const raw = resp.headers.get("set-cookie");
+  if (!raw) return [];
+  return raw.split(/,(?=[^;]+=[^;]+)/g).map((c) => c.split(";")[0].trim()).filter(Boolean);
+}
+
+/**
+ * Merge cookies, keeping latest value per name.
+ */
+function mergeCookies(existing: string[], newOnes: string[]): string[] {
+  const map = new Map<string, string>();
+  for (const c of [...existing, ...newOnes]) {
+    const [name, ...rest] = c.split("=");
+    if (name && rest.length > 0) map.set(name.trim(), c);
+  }
+  return Array.from(map.values());
+}
+
+/**
  * Obtain a Bearer token via the Assai OAuth implicit-grant flow.
- * The flow is:
- *   GET /AAeu578/oauth/authorize?client_id=eu578&redirect_uri=...&response_type=token
- *   → 307 → 302 (Location header contains #access_token=...)
- * We must follow manually because URL fragments are dropped by fetch().
+ *
+ * The flow (as observed in the browser):
+ *   1. GET /AAeu578/oauth/authorize?client_id=eu578&redirect_uri=...&response_type=token
+ *   2. → 302 to /AAeu578/login.jsp?loginMethod=unpw&orig_request=...
+ *   3. POST credentials to login.jsp
+ *   4. → 302 back to /oauth/authorize → 302 to redirect_uri#access_token=...
  */
 async function getAssaiBearerToken(
   baseUrl: string,
   dbName: string,
-  sessionCookies: string[],
-): Promise<string | null> {
-  const cookieHeader = sessionCookies.join("; ");
+  username: string,
+  password: string,
+): Promise<{ token: string | null; error?: string }> {
   const redirectUri = `${baseUrl}/AAeu578/access_token.jsp?client_id=${dbName}`;
   const authorizeUrl = `${baseUrl}/AAeu578/oauth/authorize?client_id=${dbName}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token`;
 
-  console.log(`[sync-assai] Starting OAuth authorize flow: ${authorizeUrl}`);
+  console.log(`[sync-assai] OAuth Step 1: ${authorizeUrl}`);
 
-  // Follow redirects manually to capture the fragment in Location headers
-  let currentUrl = authorizeUrl;
-  let cookies = [...sessionCookies];
+  let cookies: string[] = [];
+
+  // Step 1: Hit authorize — expect redirect to login.jsp
+  const authResp = await fetch(authorizeUrl, {
+    method: "GET",
+    headers: { "Accept": "text/html" },
+    redirect: "manual",
+  });
+  cookies = mergeCookies(cookies, extractCookies(authResp));
+  await authResp.text();
+
+  let location = authResp.headers.get("location");
+  console.log(`[sync-assai] OAuth authorize status=${authResp.status}, location=${location?.substring(0, 250)}`);
+
+  if (!location) {
+    return { token: null, error: "OAuth authorize did not redirect" };
+  }
+
+  // Resolve relative/http URLs
+  let loginUrl = location.startsWith("http") ? location : new URL(location, authorizeUrl).toString();
+
+  // Follow any intermediate redirects (e.g., http→https 301)
+  for (let i = 0; i < 5; i++) {
+    // Check if this is already a login page URL
+    if (loginUrl.includes("login.jsp") || loginUrl.includes("login.aweb")) break;
+
+    const intermediateResp = await fetch(loginUrl, {
+      method: "GET",
+      headers: { "Cookie": cookies.join("; "), "Accept": "text/html" },
+      redirect: "manual",
+    });
+    cookies = mergeCookies(cookies, extractCookies(intermediateResp));
+    await intermediateResp.text();
+
+    const nextLoc = intermediateResp.headers.get("location");
+    if (!nextLoc || intermediateResp.status < 300 || intermediateResp.status >= 400) break;
+    loginUrl = nextLoc.startsWith("http") ? nextLoc : new URL(nextLoc, loginUrl).toString();
+  }
+
+  console.log(`[sync-assai] OAuth Step 2: Login page URL = ${loginUrl.substring(0, 250)}`);
+
+  // Step 2: GET the login page to capture any hidden fields and cookies
+  const loginPageResp = await fetch(loginUrl, {
+    method: "GET",
+    headers: { "Cookie": cookies.join("; "), "Accept": "text/html" },
+    redirect: "manual",
+  });
+  cookies = mergeCookies(cookies, extractCookies(loginPageResp));
+  const loginPageBody = await loginPageResp.text();
+
+  // If it redirected again (already authenticated), follow
+  if (loginPageResp.status >= 300 && loginPageResp.status < 400) {
+    const loc = loginPageResp.headers.get("location") || "";
+    console.log(`[sync-assai] Login page redirected (already auth?): ${loc.substring(0, 200)}`);
+    // Check for token in the redirect
+    const tokenMatch = loc.match(/[#&]access_token=([^&\s]+)/);
+    if (tokenMatch) return { token: tokenMatch[1] };
+  }
+
+  console.log(`[sync-assai] Login page status=${loginPageResp.status}, body_length=${loginPageBody.length}`);
+
+  // Extract any hidden fields from the login form
+  const extractHidden = (name: string): string => {
+    const match = loginPageBody.match(new RegExp(`name=["']${name}["'][^>]*value=["']([^"']*)["']`, "i"));
+    if (match) return match[1];
+    const match2 = loginPageBody.match(new RegExp(`value=["']([^"']*)["'][^>]*name=["']${name}["']`, "i"));
+    return match2?.[1] ?? "";
+  };
+
+  const crValue = extractHidden("cr");
+  const origRequest = extractHidden("orig_request");
+
+  // Step 3: POST credentials to login.jsp
+  const loginPostUrl = loginUrl.split("?")[0]; // Base login URL without query params
+  const formData = new URLSearchParams({
+    userid: username,
+    password: password,
+    ...(crValue ? { cr: crValue } : {}),
+    ...(origRequest ? { orig_request: origRequest } : {}),
+  });
+
+  console.log(`[sync-assai] OAuth Step 3: POSTing credentials to ${loginPostUrl}`);
+
+  const loginResp = await fetch(loginPostUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Cookie": cookies.join("; "),
+      "Accept": "text/html",
+    },
+    body: formData.toString(),
+    redirect: "manual",
+  });
+  cookies = mergeCookies(cookies, extractCookies(loginResp));
+  await loginResp.text();
+
+  let postLocation = loginResp.headers.get("location");
+  console.log(`[sync-assai] Login POST status=${loginResp.status}, location=${postLocation?.substring(0, 250)}`);
+
+  if (!postLocation && loginResp.status === 200) {
+    return { token: null, error: "Login POST returned 200 — credentials may be wrong or form structure changed" };
+  }
+
+  // Step 4: Follow the redirect chain after login to capture the token
+  let currentUrl = postLocation!;
+  if (!currentUrl.startsWith("http")) {
+    currentUrl = new URL(currentUrl, loginPostUrl).toString();
+  }
 
   for (let hop = 0; hop < 10; hop++) {
+    // Check current URL for token fragment
+    const tokenInUrl = currentUrl.match(/[#&]access_token=([^&\s]+)/);
+    if (tokenInUrl) {
+      console.log(`[sync-assai] Token found in URL at hop ${hop}`);
+      return { token: tokenInUrl[1] };
+    }
+
     const resp = await fetch(currentUrl, {
       method: "GET",
       headers: {
         "Cookie": cookies.join("; "),
-        "Accept": "text/html,application/json",
+        "Accept": "text/html",
       },
       redirect: "manual",
     });
+    cookies = mergeCookies(cookies, extractCookies(resp));
 
-    // Collect any new cookies
-    const headersAny = resp.headers as unknown as { getSetCookie?: () => string[] };
-    const newCookies = headersAny.getSetCookie?.() ?? [];
-    for (const c of newCookies) {
-      const pair = c.split(";")[0].trim();
-      if (pair) cookies.push(pair);
-    }
+    const loc = resp.headers.get("location");
+    console.log(`[sync-assai] Redirect hop ${hop}: status=${resp.status}, location=${loc?.substring(0, 250) ?? "none"}`);
 
-    const location = resp.headers.get("location");
-    const status = resp.status;
-    console.log(`[sync-assai] OAuth hop ${hop}: status=${status}, location=${location?.substring(0, 200) ?? "none"}`);
-
-    // Check if the Location header contains the access_token fragment
-    if (location) {
-      const tokenMatch = location.match(/[#&]access_token=([^&\s]+)/);
+    // Check Location header for token
+    if (loc) {
+      const tokenMatch = loc.match(/[#&]access_token=([^&\s]+)/);
       if (tokenMatch) {
-        console.log(`[sync-assai] Found token in redirect Location (hop ${hop})`);
-        return tokenMatch[1];
+        await resp.text();
+        console.log(`[sync-assai] Token found in Location header at hop ${hop}`);
+        return { token: tokenMatch[1] };
       }
     }
 
-    if (status >= 300 && status < 400 && location) {
-      // Resolve relative URLs
-      currentUrl = location.startsWith("http") ? location : new URL(location, currentUrl).toString();
-      // Consume the body to avoid resource leaks
+    if (resp.status >= 300 && resp.status < 400 && loc) {
       await resp.text();
+      currentUrl = loc.startsWith("http") ? loc : new URL(loc, currentUrl).toString();
       continue;
     }
 
-    // If we landed on a 200 page, check the body and final URL for the token
+    // Landed on a final page — check body
     const body = await resp.text();
-    const finalUrl = resp.url || currentUrl;
-    console.log(`[sync-assai] OAuth landed: final_url=${finalUrl.substring(0, 200)}`);
-    console.log(`[sync-assai] OAuth body preview=${body.substring(0, 500)}`);
+    console.log(`[sync-assai] Final page: ${currentUrl.substring(0, 200)}`);
+    console.log(`[sync-assai] Final body preview: ${body.substring(0, 300)}`);
 
-    // Check final URL for fragment (unlikely with fetch, but try)
-    const fragMatch = finalUrl.match(/[#&]access_token=([^&\s]+)/);
-    if (fragMatch) return fragMatch[1];
-
-    // Check body for token patterns
+    // Look for token in body
     const bodyMatch = body.match(/access_token[=:]["'\s]*([A-Za-z0-9\-._~+/]+=*)/);
-    if (bodyMatch) return bodyMatch[1];
+    if (bodyMatch) return { token: bodyMatch[1] };
 
-    // Check for input field with token value
-    const inputMatch = body.match(/value=["']([A-Za-z0-9\-._~+/]{20,})['"]/);
-    if (inputMatch) return inputMatch[1];
+    const inputMatch = body.match(/value=["'](Bearer [^"']+|[A-Za-z0-9\-._~+/]{20,})['"]/);
+    if (inputMatch) {
+      const val = inputMatch[1].replace(/^Bearer\s+/, "");
+      return { token: val };
+    }
 
     break;
   }
 
-  return null;
+  return { token: null, error: "Could not extract token after following all redirects" };
 }
 
 Deno.serve(async (req) => {
@@ -113,13 +241,12 @@ Deno.serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     const { data: { user } } = await supabase.auth.getUser(token);
 
-    // Read Assai credentials
     const { data: creds, error: credsError } = await supabase
       .from("dms_sync_credentials")
       .select("*")
       .eq("dms_platform", "assai")
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (credsError || !creds) {
       return new Response(
@@ -132,6 +259,20 @@ Deno.serve(async (req) => {
     const username = creds.username_encrypted || "";
     const password = String(creds.password_encrypted ?? "");
     const dbName = creds.db_name || "";
+
+    // Normalize base URL (strip AW path if present)
+    const normalizedBase = baseUrl.replace(/\/AW[^/]+\/login\.aweb.*$/i, "").replace(/\/+$/, "");
+    let resolvedBase: string;
+    try {
+      const u = new URL(normalizedBase);
+      resolvedBase = `${u.origin}`;
+    } catch {
+      resolvedBase = normalizedBase;
+    }
+    const resolvedDb = dbName || (() => {
+      const m = baseUrl.match(/\/AW([^/]+?)(?:\/|$)/i);
+      return m?.[1]?.toLowerCase() ?? "";
+    })();
 
     // Create sync log
     const { data: syncLog } = await supabase
@@ -148,91 +289,31 @@ Deno.serve(async (req) => {
     const syncLogId = syncLog?.id;
 
     try {
-      // Step 1: Login to Assai using session cookies
-      console.log("[sync-assai] Logging in to Assai...");
-      const loginResult = await loginAssai(baseUrl, username, password, dbName);
+      // Step 1: Get Bearer token via OAuth flow (logs into AA login.jsp internally)
+      console.log(`[sync-assai] Starting OAuth token acquisition. base=${resolvedBase}, db=${resolvedDb}`);
+      const tokenResult = await getAssaiBearerToken(resolvedBase, resolvedDb, username, password);
 
-      if (!loginResult.success || !loginResult.cookies) {
-        throw new Error(loginResult.error || "Login failed");
+      if (!tokenResult.token) {
+        throw new Error(`Failed to acquire Bearer token: ${tokenResult.error}`);
       }
 
-      const sessionCookies = loginResult.cookies;
-      const resolvedBase = loginResult.baseUrl!;
-      const resolvedDb = loginResult.dbName!;
+      const bearerToken = tokenResult.token;
+      console.log(`[sync-assai] Bearer token acquired: length=${bearerToken.length}`);
 
-      // Step 2: Get Bearer token via OAuth implicit grant flow
-      console.log("[sync-assai] Attempting OAuth authorize flow for Bearer token...");
-      let bearerToken = await getAssaiBearerToken(resolvedBase, resolvedDb, sessionCookies);
-
-      // Fallback: try access_token.jsp directly (in case authorize flow didn't yield a token)
-      if (!bearerToken) {
-        console.log("[sync-assai] OAuth flow didn't yield token, trying access_token.jsp directly...");
-        const tokenPageUrl = `${resolvedBase}/AA${resolvedDb}/access_token.jsp?client_id=${resolvedDb}`;
-        const tokenPageResp = await fetch(tokenPageUrl, {
-          method: "GET",
-          headers: {
-            "Cookie": sessionCookies.join("; "),
-            "Accept": "text/html,application/json",
-          },
-          redirect: "follow",
-        });
-        const tokenPageText = await tokenPageResp.text();
-        console.log(`[sync-assai] access_token.jsp status=${tokenPageResp.status}, body_preview=${tokenPageText.substring(0, 300)}`);
-
-        const bodyMatch = tokenPageText.match(/access_token[=:]["'\s]*([A-Za-z0-9\-._~+/]+=*)/);
-        if (bodyMatch) bearerToken = bodyMatch[1];
-
-        const inputMatch = tokenPageText.match(/value=["']([A-Za-z0-9\-._~+/]{20,})['"]/);
-        if (!bearerToken && inputMatch) bearerToken = inputMatch[1];
-      }
-
-      console.log(`[sync-assai] Bearer token acquired: ${bearerToken ? "YES (length=" + bearerToken.length + ")" : "NO"}`);
-
-      // Step 3: Fetch documents — try Bearer token first, then session cookies as fallback
+      // Step 2: Fetch documents with Bearer token
       const docsUrl = `${resolvedBase}/AA${resolvedDb}/api/v1/documents`;
-      console.log(`[sync-assai] Fetching documents from: ${docsUrl}`);
+      console.log(`[sync-assai] Fetching documents: ${docsUrl}`);
 
-      let docsResp: Response;
-      let respText: string;
+      const docsResp = await fetch(docsUrl, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${bearerToken}`,
+          "Accept": "application/json",
+        },
+      });
 
-      if (bearerToken) {
-        // Try with Bearer token
-        docsResp = await fetch(docsUrl, {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${bearerToken}`,
-            "Accept": "application/json",
-          },
-        });
-        respText = await docsResp.text();
-        console.log(`[sync-assai] Docs (Bearer) status=${docsResp.status}, preview=${respText.substring(0, 300)}`);
-
-        // If Bearer failed, fall back to session cookies
-        if (!docsResp.ok) {
-          console.log("[sync-assai] Bearer token rejected, falling back to session cookies...");
-          docsResp = await fetch(docsUrl, {
-            method: "GET",
-            headers: {
-              "Cookie": sessionCookies.join("; "),
-              "Accept": "application/json",
-            },
-          });
-          respText = await docsResp.text();
-          console.log(`[sync-assai] Docs (cookies) status=${docsResp.status}, preview=${respText.substring(0, 300)}`);
-        }
-      } else {
-        // No Bearer token — try session cookies directly
-        console.log("[sync-assai] No Bearer token, using session cookies for API call...");
-        docsResp = await fetch(docsUrl, {
-          method: "GET",
-          headers: {
-            "Cookie": sessionCookies.join("; "),
-            "Accept": "application/json",
-          },
-        });
-        respText = await docsResp.text();
-        console.log(`[sync-assai] Docs (cookies) status=${docsResp.status}, preview=${respText.substring(0, 300)}`);
-      }
+      const respText = await docsResp.text();
+      console.log(`[sync-assai] Docs status=${docsResp.status}, preview=${respText.substring(0, 500)}`);
 
       if (!docsResp.ok) {
         throw new Error(`Documents API ${docsResp.status}: ${respText.substring(0, 300)}`);
@@ -245,7 +326,7 @@ Deno.serve(async (req) => {
 
       console.log(`[sync-assai] Total documents fetched: ${documents.length}`);
 
-      // Step 4: Upsert to dms_external_sync
+      // Step 3: Upsert to dms_external_sync
       let syncedCount = 0, failedCount = 0, newCount = 0, statusChanges = 0;
 
       for (const doc of documents) {
@@ -265,7 +346,7 @@ Deno.serve(async (req) => {
             .eq("dms_platform", "assai")
             .eq("document_number", docNumber)
             .limit(1)
-            .single();
+            .maybeSingle();
 
           if (existing) {
             if (existing.status_code !== statusCode) statusChanges++;
