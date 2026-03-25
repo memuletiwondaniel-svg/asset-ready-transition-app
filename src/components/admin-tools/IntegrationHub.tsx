@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenant } from '@/hooks/useTenant';
 import { toast } from 'sonner';
 import { format, formatDistanceToNow } from 'date-fns';
 import { isAPIConfigured, getAPIConfig } from '@/lib/api-config-storage';
@@ -84,6 +85,7 @@ const ALL_PLATFORMS: Platform[] = [
 ];
 
 const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
+  const { tenantId } = useTenant();
   const [searchQuery, setSearchQuery] = useState('');
   const [credentials, setCredentials] = useState<SyncCredential[]>([]);
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
@@ -100,13 +102,14 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
     client_id: '', client_secret: '', token_url: '', scope: '',
     project_code_field: '', sync_enabled: false,
-    platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false,
+    platform_url: '', auth_token: '', automation_enabled: false,
   });
   const [urlError, setUrlError] = useState('');
   const [triedSave, setTriedSave] = useState(false);
   const [credentialsSaved, setCredentialsSaved] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [hasStoredCredentials, setHasStoredCredentials] = useState(false);
 
   // Action states
   const [testingInPanel, setTestingInPanel] = useState(false);
@@ -185,7 +188,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         setFormData(prev => ({
           ...prev, base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
           client_id: '', client_secret: '', token_url: '', project_code_field: '', sync_enabled: false,
-          workflow_url: config.rpaCredentials!.portalUrl || '', auth_token: '', automation_enabled: true,
+          platform_url: config.rpaCredentials!.portalUrl || '', auth_token: '', automation_enabled: true,
         }));
       } else if (config?.apiCredentials) {
         setConnectionMethod('api');
@@ -199,7 +202,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           client_secret: config.apiCredentials!.clientSecret || '',
           token_url: config.apiCredentials!.tokenUrl || '',
           scope: '', project_code_field: '', sync_enabled: false,
-          platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false, header_name: 'X-API-Key',
+          platform_url: '', auth_token: '', automation_enabled: false, header_name: 'X-API-Key',
         }));
       } else {
         setConnectionMethod('api');
@@ -207,15 +210,38 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       }
     } else {
       const existing = getCredential(platform.id);
-      setConnectionMethod('api');
-      setFormData({
-        base_url: existing?.base_url || '',
-        username: '', password: '', api_key: '', header_name: 'X-API-Key',
-        client_id: '', client_secret: '', token_url: '', scope: '',
-        project_code_field: existing?.project_code_field || '',
-        sync_enabled: existing?.sync_enabled || false,
-        platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false,
-      });
+      if (existing) {
+        // Detect if it was saved as automation (has username_encrypted + password_encrypted but base_url looks like a portal URL)
+        // We store a "connection_method" hint via project_code_field prefix or simply check username_encrypted presence
+        const hasUserCreds = !!existing.username_encrypted && !!existing.password_encrypted;
+        const isAutomation = hasUserCreds && existing.project_code_field === '__automation__';
+        
+        if (isAutomation) {
+          setConnectionMethod('automation');
+          setFormData({
+            base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
+            client_id: '', client_secret: '', token_url: '', scope: '',
+            project_code_field: '', sync_enabled: false,
+            platform_url: existing.base_url || '', auth_token: '', automation_enabled: existing.sync_enabled || false,
+          });
+        } else {
+          setConnectionMethod('api');
+          setFormData({
+            base_url: existing.base_url || '',
+            username: '', password: '', api_key: '', header_name: 'X-API-Key',
+            client_id: '', client_secret: '', token_url: '', scope: '',
+            project_code_field: existing.project_code_field || '',
+            sync_enabled: existing.sync_enabled || false,
+            platform_url: '', auth_token: '', automation_enabled: false,
+          });
+        }
+        // Set placeholder state - credentials exist but we don't show decrypted values
+        setHasStoredCredentials(true);
+      } else {
+        setConnectionMethod('api');
+        resetFormData();
+        setHasStoredCredentials(false);
+      }
     }
     setAuthType('api_key');
     setTriedSave(false);
@@ -230,7 +256,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
       client_id: '', client_secret: '', token_url: '', scope: '',
       project_code_field: '', sync_enabled: false,
-      platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false,
+      platform_url: '', auth_token: '', automation_enabled: false,
     });
   };
 
@@ -240,17 +266,25 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-      const tenantId = user.user_metadata?.tenant_id;
+
+      // Use tenant from hook, fall back to user metadata
+      const resolvedTenantId = tenantId || user.user_metadata?.tenant_id;
+      if (!resolvedTenantId) {
+        console.error('No tenant_id found for user', user.id);
+        throw new Error('No tenant associated with your account');
+      }
+
       const existing = getCredential(panelPlatform.id);
 
       const record: Record<string, unknown> = {
-        tenant_id: tenantId,
+        tenant_id: resolvedTenantId,
         dms_platform: panelPlatform.id,
         base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
-        project_code_field: formData.project_code_field,
+        project_code_field: connectionMethod === 'automation' ? '__automation__' : formData.project_code_field,
         sync_enabled: connectionMethod === 'api' ? formData.sync_enabled : formData.automation_enabled,
         updated_at: new Date().toISOString(),
       };
+
       if (connectionMethod === 'api') {
         if (authType === 'api_key') {
           if (formData.api_key) record.password_encrypted = formData.api_key;
@@ -265,20 +299,30 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         if (formData.password) record.password_encrypted = formData.password;
       }
 
+      console.log('[IntegrationHub] Saving credentials for', panelPlatform.id, 'method:', connectionMethod);
+
       if (existing) {
         const { error } = await supabase.from('dms_sync_credentials').update(record).eq('id', existing.id);
-        if (error) throw error;
+        if (error) {
+          console.error('[IntegrationHub] Update error:', error);
+          throw error;
+        }
       } else {
         record.created_at = new Date().toISOString();
         const { error } = await supabase.from('dms_sync_credentials').insert(record as any);
-        if (error) throw error;
+        if (error) {
+          console.error('[IntegrationHub] Insert error:', error);
+          throw error;
+        }
       }
 
       toast.success('Credentials saved');
       setCredentialsSaved(true);
+      setHasStoredCredentials(true);
       fetchData();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to save');
+      console.error('[IntegrationHub] Save failed:', err);
+      toast.error(err.message || 'Failed to save credentials — check console for details');
     } finally {
       setSaving(false);
     }
@@ -594,6 +638,16 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         {triedSave && !formData.base_url.trim() && <p className="text-xs text-destructive mt-1">Base URL is required</p>}
                       </div>
 
+                      {/* Assai-specific helper banner */}
+                      {panelPlatform.id === 'assai' && (
+                        <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50">
+                          <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                          <p className="text-[11px] text-blue-700 dark:text-blue-400 leading-relaxed">
+                            Assai API — enter your Assai instance URL and use API Key or Bearer Token authentication. Contact your Assai administrator for API credentials.
+                          </p>
+                        </div>
+                      )}
+
                       {/* Auth type selector */}
                       <div className="space-y-1">
                         <Label className="text-[13px] font-medium text-foreground/80">Authentication Type</Label>
@@ -620,7 +674,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                           <div className="space-y-1">
                             <Label className="text-[13px] font-medium text-foreground/80">API Key</Label>
                             <div className="relative">
-                              <Input type={showPassword ? 'text' : 'password'} value={formData.api_key} onChange={e => setFormData(f => ({ ...f, api_key: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
+                              <Input type={showPassword ? 'text' : 'password'} placeholder={hasStoredCredentials ? '••••••••' : ''} value={formData.api_key} onChange={e => setFormData(f => ({ ...f, api_key: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
                               {formData.api_key && (
                                 <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
                                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -645,7 +699,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                           <div className="space-y-1">
                             <Label className="text-[13px] font-medium text-foreground/80">Client Secret</Label>
                             <div className="relative">
-                              <Input type={showPassword ? 'text' : 'password'} value={formData.client_secret} onChange={e => setFormData(f => ({ ...f, client_secret: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
+                              <Input type={showPassword ? 'text' : 'password'} placeholder={hasStoredCredentials ? '••••••••' : ''} value={formData.client_secret} onChange={e => setFormData(f => ({ ...f, client_secret: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
                               {formData.client_secret && (
                                 <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
                                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -670,7 +724,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         <div className="space-y-1">
                           <Label className="text-[13px] font-medium text-foreground/80">Token</Label>
                           <div className="relative">
-                            <Input type={showPassword ? 'text' : 'password'} value={formData.auth_token} onChange={e => setFormData(f => ({ ...f, auth_token: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
+                            <Input type={showPassword ? 'text' : 'password'} placeholder={hasStoredCredentials ? '••••••••' : ''} value={formData.auth_token} onChange={e => setFormData(f => ({ ...f, auth_token: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
                             {formData.auth_token && (
                               <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
                                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -689,8 +743,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
                       <div className="flex items-center justify-between">
                         <div>
-                          <Label className="text-[13px] font-medium text-foreground/80">Enable Sync</Label>
-                          <p className="text-xs text-muted-foreground">Allow ORSH to pull data from this platform</p>
+                          <Label className="text-[13px] font-medium text-foreground/80">Enable sync</Label>
+                          <p className="text-xs text-muted-foreground">Allow ORSH to sync data from this platform</p>
                         </div>
                         <Switch checked={formData.sync_enabled} onCheckedChange={v => setFormData(f => ({ ...f, sync_enabled: v }))} />
                       </div>
@@ -716,12 +770,12 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[13px] font-medium text-foreground/80">Username</Label>
-                        <Input value={formData.username} onChange={e => setFormData(f => ({ ...f, username: e.target.value }))} className="h-10 text-sm rounded-lg" />
+                        <Input placeholder={hasStoredCredentials ? '••••••••' : ''} value={formData.username} onChange={e => setFormData(f => ({ ...f, username: e.target.value }))} className="h-10 text-sm rounded-lg" />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[13px] font-medium text-foreground/80">Password</Label>
                         <div className="relative">
-                          <Input type={showPassword ? 'text' : 'password'} value={formData.password} onChange={e => setFormData(f => ({ ...f, password: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
+                          <Input type={showPassword ? 'text' : 'password'} placeholder={hasStoredCredentials ? '••••••••' : ''} value={formData.password} onChange={e => setFormData(f => ({ ...f, password: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
                           {formData.password && (
                             <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
                               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -729,21 +783,16 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                           )}
                         </div>
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-[13px] font-medium text-foreground/80">Workflow Trigger URL</Label>
-                        <Input value={formData.workflow_url} onChange={e => setFormData(f => ({ ...f, workflow_url: e.target.value }))} className="h-10 text-sm rounded-lg" placeholder="https://prod-00.westus.logic.azure.com/..." />
-                        <p className="text-xs text-muted-foreground mt-1">URL of your Power Automate or UiPath workflow trigger endpoint</p>
-                      </div>
                       <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50">
                         <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                         <p className="text-[11px] text-blue-700 dark:text-blue-400 leading-relaxed">
-                          Automation mode logs into the platform interface directly. Ensure your IT team has set up the automation workflow before enabling.
+                          Automation mode stores your login credentials so ORSH can access this platform directly. Your credentials are encrypted and stored securely.
                         </p>
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <Label className="text-[13px] font-medium text-foreground/80">Enable Automation</Label>
-                          <p className="text-xs text-muted-foreground">Allow automated workflows for this platform</p>
+                          <Label className="text-[13px] font-medium text-foreground/80">Enable sync</Label>
+                          <p className="text-xs text-muted-foreground">Allow ORSH to access this platform using stored credentials</p>
                         </div>
                         <Switch checked={formData.automation_enabled} onCheckedChange={v => setFormData(f => ({ ...f, automation_enabled: v }))} />
                       </div>
