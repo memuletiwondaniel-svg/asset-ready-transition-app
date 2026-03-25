@@ -442,10 +442,12 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     const isOpen = openSections[key] ?? false;
     return (
       <Collapsible open={isOpen} onOpenChange={() => toggleSection(key)}>
-        <CollapsibleTrigger className="flex items-center gap-2 w-full group/section">
-          <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200", isOpen && "rotate-0", !isOpen && "-rotate-90")} />
-          <h2 className="text-base font-semibold text-foreground">{title}</h2>
-          <Badge variant="outline" className="text-xs">{platforms.length}</Badge>
+        <CollapsibleTrigger className="flex items-center gap-3 w-full group/section cursor-pointer mb-3">
+          <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200", isOpen ? "" : "-rotate-90")} />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60 whitespace-nowrap select-none group-hover/section:text-muted-foreground transition-colors">
+            {title}
+          </span>
+          <Badge variant="outline" className="text-xs text-muted-foreground/60">{platforms.length}</Badge>
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl">
