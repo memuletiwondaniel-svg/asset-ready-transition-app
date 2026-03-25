@@ -60,7 +60,7 @@ interface Platform {
   id: string;
   name: string;
   description: string;
-  section: 'dms' | 'enterprise';
+  section: 'dms' | 'enterprise' | 'comms';
   logo: string | null;
   logoScale?: number;
   hasEdgeFunction?: boolean;
