@@ -555,23 +555,23 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   if (isInitialLoading) {
     return <div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
         {/* Header Skeleton */}
-        <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
+        <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-3 md:py-4 sticky top-0 z-10">
           <div className="h-4 w-48 bg-muted animate-pulse rounded mb-3" />
-          <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-muted animate-pulse" />
+          <div className="flex items-center justify-between mt-2 md:mt-3">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-muted animate-pulse shrink-0" />
               <div className="space-y-2">
-                <div className="h-6 w-40 bg-muted animate-pulse rounded" />
-                <div className="h-4 w-56 bg-muted animate-pulse rounded" />
+                <div className="h-5 md:h-6 w-32 md:w-40 bg-muted animate-pulse rounded" />
+                <div className="h-3 md:h-4 w-44 md:w-56 bg-muted animate-pulse rounded" />
               </div>
             </div>
           </div>
         </div>
         {/* Content Skeleton */}
         <div className="flex-1 overflow-auto">
-          <div className="container pt-8 pb-8 max-w-7xl mx-auto">
-            <div className="flex items-center justify-end mb-10">
-              <div className="w-96 h-10 bg-muted animate-pulse rounded-lg" />
+          <div className="container pt-6 md:pt-8 pb-20 md:pb-8 max-w-7xl mx-auto px-4 md:px-6">
+            <div className="flex items-center justify-end mb-6 md:mb-10">
+              <div className="w-full sm:w-80 h-10 bg-muted animate-pulse rounded-lg" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -600,18 +600,18 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
 
   return <><div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
         {/* Header */}
-        <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
+        <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-3 md:py-4 sticky top-0 z-10">
           <BreadcrumbNavigation currentPageLabel="Administration" favoritePath="/admin-tools" />
-          <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-600 to-gray-700 flex items-center justify-center shadow-lg">
-                <Sliders className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between mt-2 md:mt-3">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-slate-600 to-gray-700 flex items-center justify-center shadow-lg shrink-0">
+                <Sliders className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground tracking-tight">
+              <div className="min-w-0">
+                <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight truncate">
                   {t.administration}
                 </h1>
-                <p className="text-sm text-muted-foreground mt-0.5">
+                <p className="text-xs md:text-sm text-muted-foreground mt-0.5 line-clamp-1">
                   {t.adminToolsSubtitle}
                 </p>
               </div>
@@ -621,10 +621,10 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
-          <div className="container pt-6 pb-8 max-w-6xl mx-auto px-6">
+          <div className="container pt-4 md:pt-6 pb-20 md:pb-8 max-w-6xl mx-auto px-4 md:px-6">
             {/* Search Bar */}
-            <div className="flex items-center justify-end mb-8">
-              <div className="relative w-80">
+            <div className="flex items-center justify-end mb-6 md:mb-8">
+              <div className="relative w-full sm:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input type="text" placeholder={t.searchAdminTools} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 pr-10 h-9 text-sm bg-card border-border/50 rounded-lg" />
                 {searchQuery && <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setSearchQuery('')}>
