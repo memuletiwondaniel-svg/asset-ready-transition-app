@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
-import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, FolderOpen, Folder, Settings, ArrowLeft, ClipboardList, CheckCircle, Home, Search, X, Star, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container, MapPin, GitBranch, Files, Brain } from 'lucide-react';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { Users, Settings, CheckCircle, Home, Search, X, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container, MapPin, GitBranch, Files, Brain } from 'lucide-react';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { supabase } from '@/integrations/supabase/client';
@@ -100,7 +96,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   }, [(location.state as any)?.navKey]);
   const [searchQuery, setSearchQuery] = useState('');
   const [tenantSetupOpen, setTenantSetupOpen] = useState(false);
-  const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
+  
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<{
     full_name: string;
@@ -191,359 +187,101 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     };
   }, []);
 
-  // Load favorites from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem('orsh-favorite-admin-tools');
-    if (stored) {
-      try {
-        setFavoriteTools(JSON.parse(stored));
-      } catch (e) {
-        console.error('Error parsing favorite tools:', e);
-      }
-    }
-  }, []);
-
-  // Toggle favorite status
-  const toggleFavorite = (toolId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
-    setFavoriteTools(prev => {
-      const updated = prev.includes(toolId) ? prev.filter(id => id !== toolId) : [...prev, toolId];
-      localStorage.setItem('orsh-favorite-admin-tools', JSON.stringify(updated));
-      return updated;
-    });
-  };
-  const adminTools = [{
-    id: 'users',
-    title: t.manageUser,
-    description: t.manageUserDesc,
-    icon: Users,
-    gradient: 'from-blue-500 to-blue-600',
-    tooltip: t.manageUserDesc,
-    stats: {
-      total: userStats.total,
-      label: t.users
+  // Section definitions for the sectioned layout
+  const sections = useMemo(() => [
+    {
+      label: 'USER MANAGEMENT',
+      columns: 2 as const,
+      items: [
+        { id: 'users', title: 'Users', description: 'Manage user accounts, invite team members', icon: Users, gradient: 'from-blue-500 to-blue-600', onClick: () => setActiveView('users') },
+        { id: 'roles-permissions', title: 'Roles & Permissions', description: 'Access control, permission groups', icon: Shield, gradient: 'from-rose-500 to-pink-600', onClick: () => setActiveView('roles-permissions') },
+        { id: 'user-offboarding', title: 'User Offboarding', description: 'Deactivate users, revoke access', icon: UserMinus, gradient: 'from-red-500 to-rose-600', onClick: () => setActiveView('user-offboarding') },
+        { id: 'permission-review', title: 'Permission Reviews', description: 'Periodic access certification', icon: ClipboardCheck, gradient: 'from-indigo-500 to-violet-600', onClick: () => setActiveView('permission-review') },
+        { id: 'bulk-upload', title: 'Bulk User Upload', description: 'Import users via CSV', icon: Upload, gradient: 'from-teal-500 to-emerald-600', onClick: () => setActiveView('bulk-upload') },
+        { id: 'sso', title: 'Single Sign-On', description: 'SAML 2.0, Azure AD, Okta', icon: Shield, gradient: 'from-indigo-500 to-purple-600', onClick: () => setActiveView('sso') },
+      ],
     },
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('users')
-  }, {
-    id: 'projects',
-    title: t.manageProjects,
-    description: t.manageProjectsDesc,
-    icon: Building2,
-    gradient: 'from-purple-500 to-purple-600',
-    tooltip: t.manageProjectsDesc,
-    stats: {
-      total: projectStats.total,
-      label: t.projects
+    {
+      label: 'LIVING DOCUMENTATION',
+      columns: 3 as const,
+      items: [
+        { id: 'northstar-document', title: 'Strategic North Star', description: 'Vision, mission, product strategy', icon: Compass, gradient: 'from-amber-600 to-orange-700', badge: 'auto-update' as const, onClick: () => setActiveView('northstar-document') },
+        { id: 'platform-guide', title: 'Platform Guide', description: 'How to use ORSH, agent intros', icon: BookOpen, gradient: 'from-blue-600 to-indigo-700', badge: 'auto-update' as const, onClick: () => setActiveView('platform-guide') },
+        { id: 'ai-agent-strategy', title: 'AI Agent Strategy', description: 'Agent roadmap, tool registry', icon: Brain, gradient: 'from-violet-600 to-purple-700', badge: 'auto-update' as const, onClick: () => setActiveView('ai-agent-strategy') },
+        { id: 'security-document', title: 'Security & Compliance', description: 'Security posture, SOC 2 progress', icon: FileText, gradient: 'from-slate-600 to-zinc-700', badge: 'auto-update' as const, onClick: () => setActiveView('security-document') },
+        { id: 'journey-maps', title: 'Customer Journey Maps', description: 'Persona journeys, onboarding flows', icon: MapPin, gradient: 'from-pink-600 to-rose-700', onClick: () => setActiveView('journey-maps') },
+        { id: 'deployment-log', title: 'Deployment Log', description: 'Version history, release notes', icon: Rocket, gradient: 'from-emerald-500 to-teal-600', badge: 'auto-update' as const, onClick: () => setActiveView('deployment-log') },
+        { id: 'process-flows', title: 'Process Flow Maps', description: 'Workflows, approval chains', icon: GitBranch, gradient: 'from-emerald-600 to-teal-700', onClick: () => setActiveView('process-flows') },
+      ],
     },
-    height: 'md:row-span-2',
-    onClick: () => navigate('/project-management')
-  }, {
-    id: 'handover-management',
-    title: 'VCRs and PSSRs',
-    description: 'Configure Verification Certificate of Readiness, Pre-Startup Safety Reviews, and Certificates (SoF, PACs and FACs)',
-    icon: Key,
-    gradient: 'from-blue-500 to-cyan-500',
-    tooltip: t.manageHandoverDesc || 'Configure PAC, FAC, SoF certificates and OWL tracking',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('handover-management')
-  }, {
-    id: 'activity-log',
-    title: t.activityLogTitle,
-    description: t.activityLogDesc,
-    icon: Activity,
-    gradient: 'from-cyan-500 to-cyan-600',
-    tooltip: t.activityLogDesc,
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('activity-log')
-  }, {
-    id: 'ora-configuration',
-    title: t.oraPlans || 'ORA Plan',
-    description: t.manageORAPlansDesc,
-    icon: LayoutTemplate,
-    gradient: 'from-amber-500 to-amber-600',
-    tooltip: t.manageORAPlansDesc,
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('ora-configuration')
-  }, {
-    id: 'integration-hub',
-    title: 'Integration Hub',
-    description: 'Manage all external platform connections and sync — Assai, SAP, Primavera, GoCompletions, SharePoint, Teams',
-    icon: Plug,
-    gradient: 'from-emerald-500 to-teal-600',
-    tooltip: 'Manage all external platform connections and sync',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('integration-hub')
-  }, {
-    id: 'sso',
-    title: 'Single Sign-On',
-    description: 'Configure SAML 2.0 SSO with your Identity Provider (Azure AD, Okta, OneLogin) for enterprise authentication',
-    icon: Shield,
-    gradient: 'from-indigo-500 to-purple-600',
-    tooltip: 'Configure enterprise SSO authentication per tenant',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('sso')
-  }, {
-    id: 'roles-permissions',
-    title: 'Roles & Permissions',
-    description: 'Configure what each role can do — create projects, VCRs, PSSRs, approve documents, and more',
-    icon: Shield,
-    gradient: 'from-rose-500 to-pink-600',
-    tooltip: 'Manage role-based access control (RBAC) across the platform',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('roles-permissions')
-  }, {
-    id: 'audit-logs',
-    title: 'Security Audit Logs',
-    description: 'Track all authentication events, admin actions, PSSR/SoF approvals, and permission changes',
-    icon: FileSearch,
-    gradient: 'from-slate-600 to-zinc-700',
-    tooltip: 'View detailed audit trail for security and compliance',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('audit-logs')
-  }, {
-    id: 'session-timeout',
-    title: 'Session Timeout',
-    description: 'Configure auto-logout duration, warning timer, and inactivity timeout for all users',
-    icon: Timer,
-    gradient: 'from-indigo-500 to-violet-600',
-    tooltip: 'Set session timeout and idle lock policies',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('session-timeout')
-  }, {
-    id: 'brute-force',
-    title: 'Brute-Force Protection',
-    description: 'Configure account lockout thresholds, lockout duration, and progressive lockout policies',
-    icon: ShieldAlert,
-    gradient: 'from-red-500 to-rose-600',
-    tooltip: 'Protect accounts from brute-force login attacks',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('brute-force')
-  }, {
-    id: 'data-export',
-    title: 'Data Export',
-    description: 'Export critical tables (projects, users, audit logs) in CSV or JSON for backup and compliance',
-    icon: Database,
-    gradient: 'from-teal-500 to-emerald-600',
-    tooltip: 'Download application data for offline backup',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('data-export')
-  }, {
-    id: 'audit-retention',
-    title: 'Audit Log Retention',
-    description: 'Configure retention period and purge old audit log entries automatically',
-    icon: Archive,
-    gradient: 'from-orange-500 to-amber-600',
-    tooltip: 'Manage audit log lifecycle and storage',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('audit-retention')
-  }, {
-    id: 'disaster-recovery',
-    title: 'Disaster Recovery Runbook',
-    description: 'Step-by-step procedures for backup verification, database restore, and incident recovery',
-    icon: BookOpen,
-    gradient: 'from-cyan-600 to-blue-700',
-    tooltip: 'View disaster recovery procedures and checklists',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('disaster-recovery')
-  }, {
-    id: 'api-keys',
-    title: 'API Key Management',
-    description: 'Generate, scope, rotate, and revoke API keys for external integrations with rate limiting and IP restrictions',
-    icon: KeyRound,
-    gradient: 'from-violet-500 to-purple-600',
-    tooltip: 'Manage scoped API keys for SAP, Primavera, GoCompletions, and RPA bots',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('api-keys')
-  }, {
-    id: 'webhook-security',
-    title: 'Webhook Security',
-    description: 'Configure HMAC signature verification for incoming webhook payloads from external systems',
-    icon: Webhook,
-    gradient: 'from-sky-500 to-blue-600',
-    tooltip: 'Verify webhook authenticity with HMAC signatures',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('webhook-security')
-  }, {
-    id: 'integration-health',
-    title: 'Integration Health',
-    description: 'Monitor API call success rates, response times, error rates, and usage patterns per integration',
-    icon: HeartPulse,
-    gradient: 'from-green-500 to-emerald-600',
-    tooltip: 'Real-time health dashboard for all external API integrations',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('integration-health')
-  }, {
-    id: 'user-offboarding',
-    title: 'User Offboarding',
-    description: 'Securely deactivate departing users — cancel tasks, revoke API keys, remove roles, and flag stale accounts',
-    icon: UserMinus,
-    gradient: 'from-red-500 to-rose-600',
-    tooltip: 'Manage user departure and stale account detection',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('user-offboarding')
-  }, {
-    id: 'permission-review',
-    title: 'Permission Reviews',
-    description: 'Schedule periodic access certification campaigns, review user permissions, and track high-privilege grants',
-    icon: ClipboardCheck,
-    gradient: 'from-indigo-500 to-violet-600',
-    tooltip: 'Quarterly permission review campaigns and access certification',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('permission-review')
-  }, {
-    id: 'deployment-log',
-    title: 'Deployment Log',
-    description: 'Track releases with version labels, release notes, and a pre-publish verification checklist',
-    icon: Rocket,
-    gradient: 'from-emerald-500 to-teal-600',
-    tooltip: 'Log deployments and verify changes before publishing to production',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('deployment-log')
-  }, {
-    id: 'feature-flags',
-    title: 'Tenant Feature Flags',
-    description: 'Enable or disable modules per company — ship features to one tenant first, then roll out to all',
-    icon: Flag,
-    gradient: 'from-amber-500 to-orange-600',
-    tooltip: 'Per-tenant feature toggles for controlled rollouts',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('feature-flags')
-  }, {
-    id: 'security-document',
-    title: 'Security & Compliance Doc',
-    description: 'Live enterprise security document covering authentication, RBAC, multi-tenancy, audit, DR, and compliance posture',
-    icon: FileText,
-    gradient: 'from-slate-600 to-zinc-700',
-    tooltip: 'View the living ORSH enterprise security and compliance document',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('security-document')
-  }, {
-    id: 'platform-guide',
-    title: 'Platform Guide',
-    description: 'Comprehensive guide explaining all ORSH workflows, codes, tables, roles, automations, and integrations',
-    icon: BookOpen,
-    gradient: 'from-blue-600 to-indigo-700',
-    tooltip: 'View the living ORSH platform guide — how everything works',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('platform-guide')
-  }, {
-    id: 'northstar-document',
-    title: 'Strategic North Star',
-    description: 'ORSH → ORIP evolution roadmap, investor pitch, board-level strategic brief, and acquisition-positioning narrative',
-    icon: Compass,
-    gradient: 'from-amber-600 to-orange-700',
-    tooltip: 'View the living ORSH Strategic North Star — vision, positioning, and ORIP roadmap',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('northstar-document')
-  }, {
-    id: 'incident-response',
-    title: 'Incident Response Runbook',
-    description: 'Interactive severity classification, escalation paths, response SLAs, and containment procedures',
-    icon: AlertTriangle,
-    gradient: 'from-red-600 to-rose-700',
-    tooltip: 'Structured incident response with P1-P4 severity levels and built-in containment capabilities',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('incident-response')
-  }, {
-    id: 'deployment-configs',
-    title: 'Deployment Configs',
-    description: 'Docker Compose for single-tenant/air-gapped, GitHub Actions CI/CD pipeline, and environment templates',
-    icon: Container,
-    gradient: 'from-cyan-600 to-blue-700',
-    tooltip: 'Download ready-to-use deployment configurations for self-hosted and CI/CD environments',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('deployment-configs')
-  }, {
-    id: 'journey-maps',
-    title: 'Customer Journey Maps',
-    description: 'Role-based journey maps with real user personas, goals, pain points, and platform interaction flows',
-    icon: MapPin,
-    gradient: 'from-pink-600 to-rose-700',
-    tooltip: 'View enhanced customer journey maps for all configured roles with real profiles',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('journey-maps')
-  }, {
-    id: 'process-flows',
-    title: 'Process Flow Maps',
-    description: 'Complete process documentation covering all ORSH workflows, approval chains, and automation triggers',
-    icon: GitBranch,
-    gradient: 'from-emerald-600 to-teal-700',
-    tooltip: 'View detailed process flow maps explaining every ORSH process',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('process-flows')
-  }, {
-    id: 'document-management',
-    title: 'Document Management',
-    description: 'Configure document types, categories, lifecycle phases, and the Project Lifecycle Information Plan',
-    icon: Files,
-    gradient: 'from-sky-500 to-blue-600',
-    tooltip: 'Set up the Document Management System and Project Lifecycle Information Plan',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('document-management')
-  }, {
-    id: 'ai-agent-strategy',
-    title: 'AI Agent Strategy & Training',
-    description: 'Living document covering AI agent architecture, development phases, training strategy, gaps, and continuous improvement',
-    icon: Brain,
-    gradient: 'from-violet-600 to-purple-700',
-    tooltip: 'View the AI agent strategy, training methodology, and continuous improvement framework',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setActiveView('ai-agent-strategy')
-  }, {
-    id: 'tenant-setup',
-    title: 'Tenant Setup Wizard',
-    description: 'Guided 7-step wizard to configure plants, fields, hubs, commissions, roles, and invite users for a new organisation',
-    icon: Compass,
-    gradient: 'from-teal-500 to-cyan-600',
-    tooltip: 'Launch the guided tenant setup wizard to configure your organisation',
-    stats: {},
-    height: 'md:row-span-2',
-    onClick: () => setTenantSetupOpen(true)
-  }];
+    {
+      label: 'AI AGENTS',
+      columns: 3 as const,
+      items: [
+        { id: 'ai-agent-registry', title: 'Agent Registry', description: 'Bob, Selma, Fred, Hannah & more', icon: Brain, gradient: 'from-violet-500 to-purple-600', badge: '3 live' as const, onClick: () => toast.info('Agent Registry coming soon') },
+        { id: 'auto-update-controls', title: 'Auto-Update Controls', description: 'Living doc triggers, update queue', icon: Settings, gradient: 'from-sky-500 to-blue-600', onClick: () => toast.info('Auto-Update Controls coming soon') },
+        { id: 'training-feedback', title: 'Training & Feedback', description: 'Agent feedback loop, ratings', icon: HeartPulse, gradient: 'from-pink-500 to-rose-600', onClick: () => toast.info('Training & Feedback coming soon') },
+      ],
+    },
+    {
+      label: 'INTEGRATIONS',
+      columns: 2 as const,
+      items: [
+        { id: 'integration-hub', title: 'DMS Integration', description: 'Assai, Wrench, Documentum sync', icon: Plug, gradient: 'from-emerald-500 to-teal-600', badge: 'configured' as const, onClick: () => setActiveView('integration-hub') },
+        { id: 'gocompletions', title: 'GoCompletions', description: 'ITR & ITP completion sync', icon: CheckCircle, gradient: 'from-green-500 to-emerald-600', onClick: () => setActiveView('integration-hub') },
+        { id: 'api-keys', title: 'API Key Management', description: 'Generate, scope, rotate API keys', icon: KeyRound, gradient: 'from-violet-500 to-purple-600', onClick: () => setActiveView('api-keys') },
+        { id: 'webhook-security', title: 'Webhook Security', description: 'HMAC signature verification', icon: Webhook, gradient: 'from-sky-500 to-blue-600', onClick: () => setActiveView('webhook-security') },
+        { id: 'integration-health', title: 'Integration Health', description: 'API success rates, latency monitoring', icon: HeartPulse, gradient: 'from-green-500 to-emerald-600', onClick: () => setActiveView('integration-health') },
+      ],
+    },
+    {
+      label: 'SYSTEM',
+      columns: 3 as const,
+      items: [
+        { id: 'audit-logs', title: 'Audit Log', description: 'Security events, user actions', icon: FileSearch, gradient: 'from-slate-600 to-zinc-700', onClick: () => setActiveView('audit-logs') },
+        { id: 'activity-log', title: 'Activity Log', description: 'Recent system activity', icon: Activity, gradient: 'from-cyan-500 to-cyan-600', onClick: () => setActiveView('activity-log') },
+        { id: 'session-timeout', title: 'Session Timeout', description: 'Auto-logout, idle lock policies', icon: Timer, gradient: 'from-indigo-500 to-violet-600', onClick: () => setActiveView('session-timeout') },
+        { id: 'brute-force', title: 'Brute-Force Protection', description: 'Account lockout thresholds', icon: ShieldAlert, gradient: 'from-red-500 to-rose-600', onClick: () => setActiveView('brute-force') },
+        { id: 'data-export', title: 'Data Export', description: 'CSV/JSON backup downloads', icon: Database, gradient: 'from-teal-500 to-emerald-600', onClick: () => setActiveView('data-export') },
+        { id: 'audit-retention', title: 'Audit Log Retention', description: 'Retention period, purge config', icon: Archive, gradient: 'from-orange-500 to-amber-600', onClick: () => setActiveView('audit-retention') },
+        { id: 'disaster-recovery', title: 'Disaster Recovery', description: 'Backup, restore procedures', icon: BookOpen, gradient: 'from-cyan-600 to-blue-700', onClick: () => setActiveView('disaster-recovery') },
+        { id: 'incident-response', title: 'Incident Response', description: 'Severity classification, SLAs', icon: AlertTriangle, gradient: 'from-red-600 to-rose-700', onClick: () => setActiveView('incident-response') },
+        { id: 'feature-flags', title: 'Feature Flags', description: 'Per-tenant module toggles', icon: Flag, gradient: 'from-amber-500 to-orange-600', onClick: () => setActiveView('feature-flags') },
+        { id: 'deployment-configs', title: 'Deployment Configs', description: 'Docker, CI/CD pipelines', icon: Container, gradient: 'from-cyan-600 to-blue-700', onClick: () => setActiveView('deployment-configs') },
+      ],
+    },
+    {
+      label: 'OPERATIONS & CONFIGURATION',
+      columns: 3 as const,
+      items: [
+        { id: 'projects', title: 'Projects', description: 'Manage projects, phases, teams', icon: Building2, gradient: 'from-purple-500 to-purple-600', onClick: () => navigate('/project-management') },
+        { id: 'handover-management', title: 'VCRs & PSSRs', description: 'Certificates, safety reviews', icon: Key, gradient: 'from-blue-500 to-cyan-500', onClick: () => setActiveView('handover-management') },
+        { id: 'ora-configuration', title: 'ORA Plan', description: 'Operational readiness activities', icon: LayoutTemplate, gradient: 'from-amber-500 to-amber-600', onClick: () => setActiveView('ora-configuration') },
+        { id: 'document-management', title: 'Document Management', description: 'Types, categories, lifecycle', icon: Files, gradient: 'from-sky-500 to-blue-600', onClick: () => setActiveView('document-management') },
+        { id: 'tenant-setup', title: 'Tenant Setup Wizard', description: 'Configure new organisation', icon: Compass, gradient: 'from-teal-500 to-cyan-600', onClick: () => setTenantSetupOpen(true) },
+      ],
+    },
+  ], [navigate, t]);
 
-  // Filter admin tools based on search query
-  const filteredAdminTools = useMemo(() => {
-    if (!searchQuery.trim()) return adminTools;
+  // Filter sections based on search
+  const filteredSections = useMemo(() => {
+    if (!searchQuery.trim()) return sections;
     const query = searchQuery.toLowerCase().trim();
-    return adminTools.filter(tool => tool.title.toLowerCase().includes(query) || tool.description.toLowerCase().includes(query) || tool.tooltip.toLowerCase().includes(query));
-  }, [searchQuery, userStats.total, projectStats.total, t]);
+    return sections
+      .map(section => ({
+        ...section,
+        items: section.items.filter(item =>
+          item.title.toLowerCase().includes(query) ||
+          item.description.toLowerCase().includes(query)
+        ),
+      }))
+      .filter(section => section.items.length > 0);
+  }, [searchQuery, sections]);
 
-  // Get favorite and non-favorite tools
-  const favoriteToolsList = useMemo(() => {
-    return filteredAdminTools.filter(tool => favoriteTools.includes(tool.id));
-  }, [filteredAdminTools, favoriteTools]);
-  const nonFavoriteToolsList = useMemo(() => {
-    return filteredAdminTools.filter(tool => !favoriteTools.includes(tool.id));
-  }, [filteredAdminTools, favoriteTools]);
+  const totalFilteredItems = useMemo(() => 
+    filteredSections.reduce((sum, s) => sum + s.items.length, 0),
+  [filteredSections]);
+  
 
   // Generate breadcrumbs based on current view
   const getBreadcrumbs = () => {
@@ -857,7 +595,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         </div>
     </div>;
   }
-  
+
+
   return <><div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
         {/* Header */}
         <div className="border-b border-border bg-card/80 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
@@ -876,174 +615,125 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                 </p>
               </div>
             </div>
-            
           </div>
         </div>
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
-          <div className="container pt-8 pb-8 max-w-7xl mx-auto">
-            {/* Search Bar Section */}
-            <div className="flex items-center justify-end mb-10">
-            {/* Search Bar - Compact Design */}
-            <div className="relative w-96">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg blur-xl" />
-              <div className="relative bg-background border-2 border-border/50 rounded-lg shadow-sm hover:border-primary/30 transition-colors">
+          <div className="container pt-6 pb-8 max-w-6xl mx-auto px-6">
+            {/* Summary Metric Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+              <div className="bg-card border border-border/50 rounded-xl p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{userStats.total}</p>
+                  <p className="text-xs text-muted-foreground">Users</p>
+                </div>
+              </div>
+              <div className="bg-card border border-border/50 rounded-xl p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center">
+                  <Shield className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{userStats.active}</p>
+                  <p className="text-xs text-muted-foreground">Active Users</p>
+                </div>
+              </div>
+              <div className="bg-card border border-border/50 rounded-xl p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                  <Rocket className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">v2.4</p>
+                  <p className="text-xs text-muted-foreground">Current Version</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="flex items-center justify-end mb-8">
+              <div className="relative w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input type="text" placeholder={t.searchAdminTools} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 pr-10 h-10 text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0" />
-                {searchQuery && <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-muted" onClick={() => setSearchQuery('')}>
+                <Input type="text" placeholder={t.searchAdminTools} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 pr-10 h-9 text-sm bg-card border-border/50 rounded-lg" />
+                {searchQuery && <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setSearchQuery('')}>
                     <X className="h-3 w-3" />
                   </Button>}
               </div>
             </div>
-          </div>
-          
-          {searchQuery && <p className="text-sm text-muted-foreground mb-6">
-              {t.foundResults} {filteredAdminTools.length} {filteredAdminTools.length === 1 ? t.result : t.results}
+
+            {searchQuery && <p className="text-xs text-muted-foreground mb-4">
+              Found {totalFilteredItems} {totalFilteredItems === 1 ? 'result' : 'results'}
             </p>}
 
-          {/* Favorites Section */}
-        <TooltipProvider>
-          {favoriteToolsList.length > 0 && <div className="mb-12">
-              <h2 className="text-sm font-medium text-foreground/70 mb-5 flex items-center gap-2">
-                <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                {t.favoriteTools}
-              </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {favoriteToolsList.map((tool) => {
-                  const IconComponent = tool.icon;
-                  const isFavorite = favoriteTools.includes(tool.id);
-                  return <Card key={tool.id} interactive className="group relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-2 border-yellow-500/20 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden" onClick={tool.onClick}>
-                      {/* Gradient Background Effect */}
-                      <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
-                      
-                    <CardHeader className="relative space-y-4 p-6">
-                      {/* Icon and Stats Row */}
-                      <div className="flex items-start justify-between">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg cursor-help`}>
-                              <IconComponent className="h-6 w-6 text-white" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="max-w-xs">
-                            <p>{tool.tooltip}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      
-                        <div className="flex items-center gap-2">
-                          {/* Stats Badge */}
-                          {tool.stats.total !== undefined && <div className="flex flex-col items-end">
-                              <span className="text-2xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent transition-all duration-300">
-                                {tool.stats.total}
-                              </span>
-                              <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                                {tool.stats.label || 'Total'}
-                              </span>
-                            </div>}
-                          
-                          {/* Favorite Star Button */}
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background/80" onClick={e => toggleFavorite(tool.id, e)}>
-                            <Star className={`h-4 w-4 transition-colors ${isFavorite ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`} />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      {/* Title & Description */}
-                      <div className="space-y-1.5">
-                        <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors">
-                          {tool.title}
-                        </CardTitle>
-                        <CardDescription className="text-sm leading-relaxed">
-                          {tool.description}
-                        </CardDescription>
-                      </div>
-                    </CardHeader>
-                  </Card>;
-                })}
-            </div>
-          </div>}
+            {/* Sections */}
+            <div className="space-y-10">
+              {filteredSections.map((section) => (
+                <div key={section.label}>
+                  {/* Section Header */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60 whitespace-nowrap select-none">
+                      {section.label}
+                    </span>
+                    <div className="flex-1 h-px bg-border/40" />
+                  </div>
 
-        {/* All Tools Section */}
-        {nonFavoriteToolsList.length > 0 && <>
-            {favoriteToolsList.length > 0 && <h2 className="text-sm font-medium text-foreground/70 mb-5">
-                {t.allTools}
-              </h2>}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {nonFavoriteToolsList.map((tool) => {
-                  const IconComponent = tool.icon;
-                  const isFavorite = favoriteTools.includes(tool.id);
-                  return <Card key={tool.id} interactive className="group relative transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-card/50 backdrop-blur overflow-hidden" onClick={tool.onClick}>
-                    {/* Gradient Background Effect */}
-                    <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
-                    
-                    <CardHeader className="relative space-y-4 p-6">
-                      {/* Icon and Stats Row */}
-                      <div className="flex items-start justify-between">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg cursor-help`}>
-                              <IconComponent className="h-6 w-6 text-white" />
+                  {/* Card Grid */}
+                  <div className={`grid gap-3 ${
+                    section.columns === 2
+                      ? 'grid-cols-1 sm:grid-cols-2'
+                      : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                  }`}>
+                    {section.items.map((item) => {
+                      const IconComponent = item.icon;
+                      return (
+                        <div
+                          key={item.id}
+                          className="group bg-card border border-border/40 rounded-xl p-4 cursor-pointer hover:shadow-md hover:shadow-primary/5 hover:-translate-y-0.5 hover:border-border/80 transition-all duration-200"
+                          onClick={item.onClick}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200`}>
+                              <IconComponent className="h-4 w-4 text-white" />
                             </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="max-w-xs">
-                            <p>{tool.tooltip}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      
-                        <div className="flex items-center gap-2">
-                          {/* Stats Badge */}
-                          {tool.stats.total !== undefined && <div className="flex flex-col items-end">
-                              <span className="text-2xl font-bold bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent transition-all duration-300">
-                                {tool.stats.total}
-                              </span>
-                              <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                                {tool.stats.label || t.total}
-                              </span>
-                            </div>}
-                          
-                          {/* Favorite Star Button */}
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background/80" onClick={e => toggleFavorite(tool.id, e)}>
-                            <Star className={`h-4 w-4 transition-colors ${isFavorite ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground hover:text-yellow-500'}`} />
-                          </Button>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
+                                  {item.title}
+                                </h3>
+                                {'badge' in item && item.badge && (
+                                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+                                    item.badge === 'auto-update'
+                                      ? 'bg-blue-500/10 text-blue-600 border border-blue-200/50'
+                                      : 'bg-emerald-500/10 text-emerald-600 border border-emerald-200/50'
+                                  }`}>
+                                    {item.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                                {item.description}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    
-                    {/* Title & Description */}
-                    <div className="space-y-1.5">
-                      <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors">
-                        {tool.title}
-                      </CardTitle>
-                      <CardDescription className="text-sm leading-relaxed">
-                        {tool.description}
-                      </CardDescription>
-                    </div>
-                    
-                    {/* Hover Indicator */}
-                    <div className="flex items-center text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-2">
-                      <span>{t.manage}</span>
-                      <ArrowLeft className="h-4 w-4 ml-2 rotate-180" />
-                    </div>
-                  </CardHeader>
-                </Card>;
-                })}
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
-          </>}
 
-        {/* No Results */}
-        {filteredAdminTools.length === 0 && <div className="text-center py-12">
-            <Search className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">{t.noResultsFound}</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t.tryAdjustingSearch}
-            </p>
-            <Button variant="outline" onClick={() => setSearchQuery('')}>
-              {t.clearSearch}
-            </Button>
-            </div>}
-        </TooltipProvider>
+            {/* No Results */}
+            {totalFilteredItems === 0 && <div className="text-center py-12">
+                <Search className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">{t.noResultsFound}</h3>
+                <p className="text-sm text-muted-foreground mb-4">{t.tryAdjustingSearch}</p>
+                <Button variant="outline" onClick={() => setSearchQuery('')}>{t.clearSearch}</Button>
+              </div>}
+          </div>
         </div>
-      </div>
     </div>
     <Suspense fallback={null}>
       {tenantSetupOpen && <TenantSetupWizardLazy open={tenantSetupOpen} onOpenChange={setTenantSetupOpen} />}
