@@ -604,9 +604,10 @@ Deno.serve(async (req) => {
           new_documents: newCount,
           status_changes: statusChanges,
           failed_count: failedCount,
+          sync_route: syncRoute,
           message: documents.length === 0
-            ? "Authenticated successfully but no documents returned. Check API permissions."
-            : `Synced ${syncedCount} documents (${newCount} new, ${statusChanges} status changes)`,
+            ? "Authenticated successfully but no documents returned via either route."
+            : `Synced ${syncedCount} documents (${newCount} new, ${statusChanges} status changes) via ${syncRoute}`,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
