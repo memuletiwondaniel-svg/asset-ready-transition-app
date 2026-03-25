@@ -313,7 +313,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     const isExpanded = expandedLogs[platform.id] || false;
 
     return (
-      <Card key={platform.id} className="border-border/40 transition-all duration-200">
+      <Card key={platform.id} className="border-border/40 transition-all duration-200 overflow-hidden" style={{ borderTop: `3px solid ${platform.accent}` }}>
         {/* Status badge */}
         <div className="flex justify-end p-3 pb-0">
           <StatusBadgeComponent platformId={platform.id} />
@@ -321,13 +321,22 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
         {/* Logo */}
         <div className="flex justify-center px-4 py-3">
-          <div className="h-12 w-full max-w-[160px] flex items-center justify-center bg-white rounded-lg border border-border/30 p-2">
-            <img
-              src={platform.logo}
-              alt={`${platform.name} logo`}
-              className="h-full max-w-full object-contain"
-              style={platform.logoScale ? { transform: `scale(${platform.logoScale})` } : undefined}
-            />
+          <div className="h-12 w-full max-w-[160px] flex items-center justify-center bg-white dark:bg-white/95 rounded-lg border border-border/30 p-2">
+            {platform.logo ? (
+              <img
+                src={platform.logo}
+                alt={`${platform.name} logo`}
+                className="h-full max-w-full object-contain"
+                style={platform.logoScale ? { transform: `scale(${platform.logoScale})` } : undefined}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
+              />
+            ) : null}
+            <span
+              className={`text-sm font-bold text-white px-3 py-1 rounded ${platform.logo ? 'hidden' : ''}`}
+              style={{ backgroundColor: platform.accent }}
+            >
+              {platform.badgeLabel}
+            </span>
           </div>
         </div>
 
