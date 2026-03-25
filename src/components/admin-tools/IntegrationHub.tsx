@@ -672,9 +672,9 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                           <div className="relative">
                             <Input type={showPassword ? 'text' : 'password'} value={formData.auth_token} onChange={e => setFormData(f => ({ ...f, auth_token: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
                             {formData.auth_token && (
-                              <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10" onClick={() => setShowPassword(!showPassword)}>
-                                {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                              </Button>
+                              <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
+                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">Paste your bearer/access token here</p>
