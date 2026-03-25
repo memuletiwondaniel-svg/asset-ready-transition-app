@@ -160,26 +160,7 @@ export function normaliseProjectCode(raw: string): string {
 }
 
 // ──────────────────────────────────────────────
-// Hidden field extraction
-// ──────────────────────────────────────────────
-
-function extractHiddenFields(html: string): Record<string, string> {
-  const hiddenFields: Record<string, string> = {};
-  const hiddenInputs = html.match(/<input[^>]+type=["']hidden["'][^>]*>/gi) || [];
-
-  for (const input of hiddenInputs) {
-    const nameMatch = input.match(/name=["']([^"']+)["']/i);
-    const valueMatch = input.match(/value=["']([^"']*?)["']/i);
-    const fieldName = nameMatch?.[1]?.trim();
-    if (!fieldName) continue;
-    hiddenFields[fieldName] = valueMatch?.[1] ?? "";
-  }
-
-  return hiddenFields;
-}
-
-// ──────────────────────────────────────────────
-// Three-step browser-like login
+// Minimal clean login — 3 steps only
 // ──────────────────────────────────────────────
 
 export async function loginAssai(
@@ -192,188 +173,116 @@ export async function loginAssai(
   let cookies = "";
   const debugSteps: AssaiAuthDebugStep[] = [];
 
+  const headers: Record<string, string> = {
+    "User-Agent": USER_AGENT,
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+  };
+
   try {
-    // Request A — Initial page load
-    console.log("[assai-auth] Step A: Loading login page");
-    const resA = await fetch(`${baseUrl}/login.aweb`, {
-      headers: { "User-Agent": USER_AGENT },
+    // Step 1: Get initial session cookie
+    console.log("[assai-auth] Step 1: Get initial session cookie");
+    const r1 = await fetch(`${baseUrl}/login.aweb`, {
+      method: "GET",
+      headers,
       redirect: "follow",
     });
-    const bodyA = await resA.text();
-    cookies = mergeCookies(cookies, getSetCookies(resA));
+    cookies = mergeCookies(cookies, getSetCookies(r1));
+    await r1.text();
 
     debugSteps.push({
       step: "initial_load",
-      status: resA.status,
+      status: r1.status,
+      url: r1.url,
       cookies,
-      url: resA.url,
       base_url: baseUrl,
     });
+    console.log(`[assai-auth] Step 1: ${r1.status}, url=${r1.url}`);
 
-    console.log(`[assai-auth] Step A: ${resA.status}, url=${resA.url}`);
-    console.log(`[assai-auth] Step A body (first 200): ${bodyA.substring(0, 200)}`);
-
-    // Request B — Select password method
-    console.log("[assai-auth] Step B: Selecting login method");
-    const resB = await fetch(`${baseUrl}/login.aweb?loginMethod=unpw&isSecure=true`, {
-      headers: {
-        "User-Agent": USER_AGENT,
-        Cookie: cookies,
-      },
+    // Step 2: Load the username/password form
+    console.log("[assai-auth] Step 2: Load login form");
+    const r2 = await fetch(`${baseUrl}/login.aweb?loginMethod=unpw&isSecure=true`, {
+      method: "GET",
+      headers: { ...headers, Cookie: cookies },
       redirect: "follow",
     });
-    const bodyB = await resB.text();
-    cookies = mergeCookies(cookies, getSetCookies(resB));
+    const html = await r2.text();
+    cookies = mergeCookies(cookies, getSetCookies(r2));
 
-    // Extract hidden fields dynamically (includes CSRF-like fields)
-    const hiddenFields = extractHiddenFields(bodyB);
-
-    const loginFields = Object.fromEntries(
-      Object.entries(hiddenFields).filter(([key]) => {
-        const lowered = key.toLowerCase();
-        return !lowered.startsWith("reset_") && !lowered.startsWith("forgetpwd_");
-      })
-    );
+    // Extract ONLY login form hidden fields (exclude reset_* and forgetpwd_*)
+    const formFields = extractLoginFormFields(html);
 
     const tenantCode = baseUrl.split("/").filter(Boolean).pop() || "";
     const derivedDbName = tenantCode.replace(/^AW/i, "").toLowerCase();
-    const resolvedDbName = (dbname || hiddenFields["reset_dbname"] || derivedDbName || "").trim();
+    const resolvedDbName = (dbname || derivedDbName || "").trim();
 
-    const methodSelectStepIndex = debugSteps.length;
     debugSteps.push({
       step: "method_select",
-      status: resB.status,
-      url: resB.url,
+      status: r2.status,
+      url: r2.url,
       cookies,
-      hidden_fields_found: Object.keys(hiddenFields),
+      hidden_fields_found: Object.keys(formFields),
       dbname_used: resolvedDbName,
     });
+    console.log(`[assai-auth] Step 2: ${r2.status}, hidden fields=${Object.keys(formFields).join(",")}`);
 
-    console.log(`[assai-auth] Step B: ${resB.status}, hidden fields=${Object.keys(hiddenFields).join(",")}`);
+    // Step 3: Submit login — NO scriptSessionId, NO DWR
+    console.log("[assai-auth] Step 3: Submit login POST");
+    const body = new URLSearchParams({
+      ...formFields,
+      dbname: resolvedDbName,
+      userid: username,
+      password: password,
+    });
 
-    // Request B2 — Establish DWR session ID required by login flow
-    console.log("[assai-auth] Step B2: Establishing DWR session");
-    const tenantPath = new URL(baseUrl).pathname.replace(/\/+$/, "") || `/${tenantCode}`;
-    const generatedScriptSessionId = generateScriptSessionId();
-    const dwrSessionBody = [
-      "callCount=1",
-      `page=${tenantPath}/login.aweb`,
-      "httpSessionId=",
-      `scriptSessionId=${generatedScriptSessionId}`,
-      "c0-scriptName=DWRBean",
-      "c0-methodName=getSessionID",
-      "c0-id=0",
-      "batchId=0",
-    ].join("\n");
+    const maskedBody = new URLSearchParams({
+      ...formFields,
+      dbname: resolvedDbName,
+      userid: username,
+      password: "[REDACTED]",
+    });
 
-    const dwrSessionUrl = `${baseUrl}/dwr/call/plaincall/DWRBean.getSessionID.dwr`;
-    const resB2 = await fetch(dwrSessionUrl, {
+    const origin = new URL(baseUrl).origin;
+    const r3 = await fetch(`${baseUrl}/login.aweb`, {
       method: "POST",
       headers: {
-        "User-Agent": USER_AGENT,
-        "Content-Type": "text/plain",
+        ...headers,
         Cookie: cookies,
-        Referer: `${baseUrl}/login.aweb?loginMethod=unpw&isSecure=true`,
-      },
-      body: dwrSessionBody,
-      redirect: "follow",
-    });
-    const bodyB2 = await resB2.text();
-    cookies = mergeCookies(cookies, getSetCookies(resB2));
-
-    const realSessionIdMatch = bodyB2.match(/_remoteHandleCallback\([^)]*,\s*"([^"]+)"\s*\)/);
-    const realScriptSessionId = realSessionIdMatch?.[1] || generatedScriptSessionId;
-
-    debugSteps.push({
-      step: "dwr_session",
-      status: resB2.status,
-      url: dwrSessionUrl,
-      script_session_id: realScriptSessionId,
-      cookies,
-    });
-
-    const formParams = new URLSearchParams();
-    for (const [k, v] of Object.entries(loginFields)) {
-      formParams.set(k, v);
-    }
-
-    const requiredDefaults: Record<string, string> = {
-      isSecure: "false",
-      contentUrl: "./forward.aweb?page=root/body",
-      followUp: "null",
-      ssodata: "null",
-      loginMethod: "unpw",
-      uniqueName: "",
-      siteLanguage: "",
-      loggedOff: "true",
-      isFromLanguageForm: "true",
-    };
-
-    for (const [key, value] of Object.entries(requiredDefaults)) {
-      if (!formParams.has(key)) {
-        formParams.set(key, value);
-      }
-    }
-
-    if (resolvedDbName) {
-      formParams.set("dbname", resolvedDbName);
-    }
-    formParams.set("scriptSessionId", realScriptSessionId);
-    formParams.set("userid", username);
-    formParams.set("password", password);
-
-    const formBody = formParams.toString();
-    const maskedParams = new URLSearchParams(formParams);
-    maskedParams.set("password", "[REDACTED]");
-    const maskedFormBody = maskedParams.toString();
-
-    debugSteps[methodSelectStepIndex] = {
-      ...debugSteps[methodSelectStepIndex],
-      form_body_preview: maskedFormBody.substring(0, 200),
-      form_body_masked: maskedFormBody,
-    };
-
-    // Request C — Submit credentials
-    console.log("[assai-auth] Step C: Submitting credentials");
-    const loginPostUrl = `${baseUrl}/login.aweb`;
-    const resC = await fetch(loginPostUrl, {
-      method: "POST",
-      headers: {
-        "User-Agent": USER_AGENT,
         "Content-Type": "application/x-www-form-urlencoded",
-        Cookie: cookies,
-        Referer: `${baseUrl}/login.aweb?loginMethod=unpw&isSecure=true`,
+        "Referer": `${baseUrl}/login.aweb?loginMethod=unpw&isSecure=true`,
+        "Origin": origin,
       },
-      body: formBody,
+      body: body.toString(),
       redirect: "follow",
     });
 
-    cookies = mergeCookies(cookies, getSetCookies(resC));
-    const bodyC = await resC.text();
-    const finalUrl = resC.url || "";
-
-    const loginSuccess =
-      resC.status >= 200 &&
-      resC.status < 400 &&
-      !finalUrl.toLowerCase().includes("login.aweb");
+    cookies = mergeCookies(cookies, getSetCookies(r3));
+    const responseBody = await r3.text();
+    const finalUrl = r3.url || "";
+    const success = !finalUrl.toLowerCase().includes("login.aweb");
 
     debugSteps.push({
       step: "login_post",
-      status: resC.status,
-      post_url: loginPostUrl,
+      status: r3.status,
+      post_url: `${baseUrl}/login.aweb`,
       final_url: finalUrl,
-      success: loginSuccess,
-      script_session_id_used: realScriptSessionId,
+      success,
       cookies,
+      form_body_masked: maskedBody.toString(),
     });
 
-    console.log(`[assai-auth] Step C: ${resC.status}, finalUrl=${finalUrl}`);
-    console.log(`[assai-auth] Step C success=${loginSuccess}, body (first 300): ${bodyC.substring(0, 300)}`);
+    // Log response body on failure for debugging
+    if (!success) {
+      console.log(`[assai-auth] Step 3 FAILED: status=${r3.status}, finalUrl=${finalUrl}`);
+      console.log(`[assai-auth] Response body (first 500): ${responseBody.substring(0, 500)}`);
+    } else {
+      console.log(`[assai-auth] Step 3 SUCCESS: finalUrl=${finalUrl}`);
+    }
 
     return {
-      success: loginSuccess,
+      success,
       cookies,
-      message: loginSuccess
+      message: success
         ? "Authentication successful"
         : "Authentication failed — check username and password",
       responseTimeMs: Date.now() - startTime,
