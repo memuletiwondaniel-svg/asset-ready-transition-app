@@ -120,9 +120,7 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
   // Step 2 state
   const [selections, setSelections] = useState<SystemDocSelections>({});
 
-  const totalSelected = Object.values(selections).reduce(
-    (sum, docIds) => sum + docIds.length, 0
-  );
+  const totalSelected = (selections['__all__'] || []).length;
 
   const canProceed = () => {
     if (currentStep === 0) return !!selectedProjectCode && !!selectedPlantCode && dmsPlatforms.length > 0;
@@ -143,13 +141,6 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
     resolveProjectPlant(code);
   }, []);
 
-  /**
-   * Plant resolution strategy:
-   * 1) Exact code match
-   * 2) Keyword matching with generic terms removed
-   * 3) Tie-break toward plant-level names (fewer unmatched words)
-   * 4) Return null when confidence is too low
-   */
   const resolveDmsPlant = async (plantName: string, dmsProjectName: string): Promise<{ code: string; plant_name: string } | null> => {
     const { data: dmsPlants } = await (supabase as any)
       .from('dms_plants')
@@ -203,11 +194,9 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
     const minimumScore = Math.min(2, contextWords.length);
 
     if (bestCandidate && bestScore >= minimumScore) {
-      console.log(`[CriticalDocsWizard] Resolved plant: "${dmsProjectName}" + "${plantName}" → ${bestCandidate.code} (${bestCandidate.plant_name}) [score=${bestScore}, unmatched=${bestUnmatchedWords}]`);
       return bestCandidate;
     }
 
-    console.warn(`[CriticalDocsWizard] No reliable DMS plant match for plant="${plantName}", project="${dmsProjectName}"`);
     return null;
   };
 
@@ -256,6 +245,23 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
   const handleConfirm = useCallback(async () => {
     setIsSaving(true);
     try {
+      const selectedDocIds = selections['__all__'] || [];
+      if (selectedDocIds.length === 0) return;
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      const tenantId = user?.user_metadata?.tenant_id || null;
+
+      // Fetch full doc type info for selected docs
+      const { data: selectedDocTypes } = await supabase
+        .from('dms_document_types')
+        .select('id, code, document_name, tier, discipline_code, document_scope, is_mdr, is_vendor_document, package_tag, po_number, vendor_po_sequence')
+        .in('id', selectedDocIds);
+
+      if (!selectedDocTypes || selectedDocTypes.length === 0) throw new Error('Could not load document type data');
+
+      // Update DMS platforms on handover plan
       if (handoverPlanId) {
         await (supabase as any)
           .from('p2a_handover_plans')
@@ -263,36 +269,183 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
           .eq('id', handoverPlanId);
       }
 
-      const inserts: any[] = [];
-      for (const [systemId, docTypeIds] of Object.entries(selections)) {
-        for (const docTypeId of docTypeIds) {
-          inserts.push({
-            handover_point_id: vcrId,
-            system_id: systemId === '__all__' ? null : systemId,
-            dms_document_type_id: docTypeId,
-            status: 'not_started',
-            rlmu_status: 'not_required',
-          });
+      // 1. Save to vcr_document_requirements
+      const vcrDocInserts = selectedDocTypes.map((doc: any) => ({
+        vcr_id: vcrId,
+        document_type_id: doc.id,
+        document_scope: doc.document_scope || 'discipline',
+        package_tag: doc.package_tag || null,
+        discipline_code: doc.discipline_code || null,
+        is_mdr: doc.is_mdr || false,
+        po_number: doc.po_number || null,
+        vendor_po_sequence: doc.vendor_po_sequence || null,
+        status: 'required',
+        identified_by: userId || null,
+        tenant_id: tenantId,
+      }));
+
+      const { error: vcrDocError } = await (supabase as any)
+        .from('vcr_document_requirements')
+        .insert(vcrDocInserts);
+      if (vcrDocError) throw vcrDocError;
+
+      // 2. Also insert into p2a_vcr_critical_docs for backward compat
+      const critDocInserts = selectedDocIds.map(docTypeId => ({
+        handover_point_id: vcrId,
+        system_id: null,
+        dms_document_type_id: docTypeId,
+        status: 'not_started',
+        rlmu_status: 'not_required',
+      }));
+
+      if (critDocInserts.length > 0) {
+        const { error: critError } = await (supabase as any)
+          .from('p2a_vcr_critical_docs')
+          .insert(critDocInserts);
+        if (critError) console.warn('p2a_vcr_critical_docs insert warning:', critError.message);
+      }
+
+      // 3. Queue BOD/BDEP docs for Phase 9 ingestion
+      const isScopeDocFn = (doc: any): boolean => {
+        const name = (doc.document_name || '').toLowerCase();
+        return name.includes('basis of design') || name.includes('bdep') || name.includes('feed') || (doc.code || '').toUpperCase().includes('BOD');
+      };
+
+      const scopeDocs = selectedDocTypes.filter((doc: any) => isScopeDocFn(doc));
+      if (scopeDocs.length > 0) {
+        // Resolve project_id from project code
+        let resolvedProjectId: string | null = null;
+        if (selectedProjectCode) {
+          const { data: dmsProj } = await (supabase as any)
+            .from('dms_projects')
+            .select('project_id')
+            .eq('code', selectedProjectCode)
+            .maybeSingle();
+
+          if (dmsProj?.project_id) {
+            const projMatch = dmsProj.project_id.match(/^([A-Z]+)-(.+)$/i);
+            if (projMatch) {
+              const { data: proj } = await supabase
+                .from('projects')
+                .select('id')
+                .eq('project_id_prefix', projMatch[1])
+                .eq('project_id_number', projMatch[2])
+                .maybeSingle();
+              resolvedProjectId = proj?.id || null;
+            }
+          }
+        }
+
+        const ingestInserts = scopeDocs.map((doc: any) => {
+          const name = (doc.document_name || '').toLowerCase();
+          const isBod = name.includes('basis of design') || (doc.code || '').toUpperCase().includes('BOD');
+          return {
+            document_type_id: doc.id,
+            project_id: resolvedProjectId,
+            vcr_id: vcrId,
+            priority: isBod ? 1 : 2,
+            status: 'pending',
+            tenant_id: tenantId,
+          };
+        });
+
+        const { error: ingestError } = await (supabase as any)
+          .from('document_ingest_queue')
+          .insert(ingestInserts);
+        if (ingestError) console.warn('document_ingest_queue insert warning:', ingestError.message);
+      }
+
+      // 4. Create task for Senior ORA Engineer
+      const disciplineCount = new Set(selectedDocTypes.map((d: any) => d.discipline_code).filter(Boolean)).size;
+      const packageCount = new Set(selectedDocTypes.map((d: any) => d.package_tag).filter(Boolean)).size;
+
+      // Resolve project and find Sr. ORA Engineer
+      let resolvedProjectIdForTask: string | null = null;
+      if (selectedProjectCode) {
+        const { data: dmsProj } = await (supabase as any)
+          .from('dms_projects')
+          .select('project_id')
+          .eq('code', selectedProjectCode)
+          .maybeSingle();
+
+        if (dmsProj?.project_id) {
+          const projMatch = dmsProj.project_id.match(/^([A-Z]+)-(.+)$/i);
+          if (projMatch) {
+            const { data: proj } = await supabase
+              .from('projects')
+              .select('id')
+              .eq('project_id_prefix', projMatch[1])
+              .eq('project_id_number', projMatch[2])
+              .maybeSingle();
+            resolvedProjectIdForTask = proj?.id || null;
+          }
         }
       }
 
-      if (inserts.length > 0) {
-        const { error } = await (supabase as any)
-          .from('p2a_vcr_critical_docs')
-          .insert(inserts);
-        if (error) throw error;
+      if (resolvedProjectIdForTask) {
+        const { data: projectTeam } = await supabase
+          .from('project_team_members')
+          .select('user_id, role')
+          .eq('project_id', resolvedProjectIdForTask);
+
+        const srOraEngr = (projectTeam || []).find((m: any) => {
+          const role = (m.role || '').toLowerCase();
+          return role.includes('snr ora') || role.includes('senior ora') || role.includes('sr. ora') || role.includes('sr ora');
+        });
+
+        if (srOraEngr?.user_id) {
+          const vcrCode = (await (supabase as any)
+            .from('p2a_handover_points')
+            .select('code')
+            .eq('id', vcrId)
+            .maybeSingle()).data?.code || 'VCR';
+
+          try {
+            await supabase.rpc('create_user_task', {
+              p_user_id: srOraEngr.user_id,
+              p_title: `Document register confirmed for ${vcrCode} — ${selectedDocIds.length} documents identified across ${disciplineCount} disciplines and ${packageCount} packages. Next: verify document status in DMS.`,
+              p_description: `${selectedDocIds.length} documents identified: ${selectedDocTypes.filter((d: any) => d.tier === 'Tier 1').length} Tier 1, ${selectedDocTypes.filter((d: any) => d.tier === 'Tier 2').length} Tier 2. ${scopeDocs.length} scope documents queued for knowledge ingestion.`,
+              p_type: 'vcr_delivery_plan',
+              p_priority: 'Medium',
+              p_metadata: { vcr_id: vcrId, document_count: selectedDocIds.length } as any,
+            });
+          } catch (taskErr) {
+            console.warn('[CriticalDocsWizard] Task creation warning:', taskErr);
+          }
+        }
       }
 
+      // 5. Log activity
+      try {
+        await (supabase as any)
+          .from('orp_activity_log')
+          .insert({
+            action: 'document_register_confirmed',
+            description: `Document register confirmed for VCR ${vcrId}: ${selectedDocIds.length} documents identified`,
+            entity_type: 'vcr_document_requirements',
+            entity_id: vcrId,
+            performed_by: userId,
+            tenant_id: tenantId,
+          });
+      } catch (logErr) {
+        console.warn('[CriticalDocsWizard] Activity log warning:', logErr);
+      }
+
+      // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['vcr-critical-docs', vcrId] });
       queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcrId] });
-      toast.success(`${inserts.length} documents added successfully`);
+      queryClient.invalidateQueries({ queryKey: ['vcr-document-requirements', vcrId] });
+
+      toast.success(
+        `${selectedDocIds.length} documents confirmed — ${selectedDocTypes.filter((d: any) => d.tier === 'Tier 1').length} Tier 1, ${selectedDocTypes.filter((d: any) => d.tier === 'Tier 2').length} Tier 2${scopeDocs.length > 0 ? `, ${scopeDocs.length} queued for knowledge ingestion` : ''}`
+      );
       onOpenChange(false);
     } catch (e: any) {
       toast.error(e.message || 'Failed to save documents');
     } finally {
       setIsSaving(false);
     }
-  }, [selections, vcrId, handoverPlanId, dmsPlatforms, queryClient, onOpenChange]);
+  }, [selections, vcrId, handoverPlanId, dmsPlatforms, queryClient, onOpenChange, selectedProjectCode]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -307,7 +460,7 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
           </DialogHeader>
         </VisuallyHidden>
 
-        {/* Modern Stepper Header */}
+        {/* Stepper Header */}
         <div className="px-6 pt-3 pb-2 border-b bg-muted/20">
           <div className="flex items-center justify-center max-w-sm mx-auto">
             {STEPS.map((step, idx) => {
@@ -326,11 +479,7 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
                       isActive && 'border-primary bg-background text-primary',
                       !isActive && !isComplete && 'border-muted-foreground/30 bg-background text-muted-foreground/50'
                     )}>
-                      {isComplete ? (
-                        <Check className="w-3 h-3" />
-                      ) : (
-                        idx + 1
-                      )}
+                      {isComplete ? <Check className="w-3 h-3" /> : idx + 1}
                     </span>
                     <span className={cn(
                       'text-[11px] whitespace-nowrap',
@@ -350,7 +499,7 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
         </div>
 
         {/* Step Content */}
-        <div className="overflow-y-auto min-h-0 flex-shrink-1">
+        <div className="overflow-y-auto min-h-0 flex-1">
           {currentStep === 0 && (
             <ProjectContextStep
               projectCode={selectedProjectCode}
@@ -373,6 +522,9 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
               selections={selections}
               onSelectionsChange={setSelections}
               vcrId={vcrId}
+              projectCode={selectedProjectCode}
+              plantCode={selectedPlantCode}
+              dmsPlatforms={dmsPlatforms}
             />
           )}
         </div>
