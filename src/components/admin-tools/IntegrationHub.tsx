@@ -383,7 +383,26 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   };
 
   const triggerSync = async () => {
-    toast.info(`Sync function not yet available for ${panelPlatform?.name}`);
+    if (!panelPlatform) return;
+    if (panelPlatform.id === 'assai') {
+      toast.info('Starting Assai document sync...');
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const { data, error } = await supabase.functions.invoke('sync-assai-documents', {
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        });
+        if (error) throw error;
+        if (data?.success) {
+          toast.success(data.message || `Sync complete: ${data.synced_count} documents`);
+        } else {
+          toast.error(data?.error || 'Sync failed');
+        }
+      } catch (err: any) {
+        toast.error(err.message || 'Sync failed');
+      }
+    } else {
+      toast.info(`Sync function not yet available for ${panelPlatform?.name}`);
+    }
   };
 
   const removeCredentials = async () => {

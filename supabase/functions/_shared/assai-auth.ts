@@ -3,6 +3,9 @@
 export interface AssaiLoginResult {
   success: boolean;
   sessionId?: string;
+  cookies?: string[];
+  baseUrl?: string;
+  dbName?: string;
   error?: string;
   response_time_ms?: number;
 }
@@ -244,6 +247,9 @@ export async function loginAssai(
       return {
         success: true,
         sessionId,
+        cookies: allCookies,
+        baseUrl: normalizedBaseUrl,
+        dbName: resolvedDbName,
         response_time_ms: elapsed,
       };
     }
