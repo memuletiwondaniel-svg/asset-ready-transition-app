@@ -918,7 +918,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {panelPlatform.id !== 'assai' && (
+                    {(
                       <Button
                         variant="outline"
                         size="sm"
