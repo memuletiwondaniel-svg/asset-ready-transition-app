@@ -72,6 +72,19 @@ Deno.serve(async (req) => {
     }
 
     if (!username || !password) {
+      await logSync(supabase, {
+        credential_id: creds.id,
+        tenant_id,
+        dms_platform: "assai",
+        sync_status: "failed",
+        error_message: "Username or password not configured",
+        synced_count: 0,
+        failed_count: 1,
+        new_documents: 0,
+        status_changes: 0,
+        triggered_by: user.id,
+        error_details: { step: "precheck", reason: "missing_credentials" },
+      });
       return json({ success: false, message: "Username or password not configured", response_time_ms: 0 });
     }
 
@@ -83,6 +96,24 @@ Deno.serve(async (req) => {
     console.log(`[test-assai] Login: success=${loginResult.success}`);
 
     if (!loginResult.success) {
+      await logSync(supabase, {
+        credential_id: creds.id,
+        tenant_id,
+        dms_platform: "assai",
+        sync_status: "failed",
+        error_message: loginResult.message,
+        synced_count: 0,
+        failed_count: 1,
+        new_documents: 0,
+        status_changes: 0,
+        triggered_by: user.id,
+        error_details: {
+          base_url: baseUrl,
+          auth_steps: loginResult.debugSteps,
+          response_time_ms: loginResult.responseTimeMs,
+        },
+      });
+
       return json({
         success: false,
         message: loginResult.message,
@@ -93,6 +124,49 @@ Deno.serve(async (req) => {
     // Get document count
     const countResult = await getDocumentCount(baseUrl, loginResult.cookies);
     console.log(`[test-assai] Count: ${countResult.count}`);
+
+    if (!countResult.success) {
+      await logSync(supabase, {
+        credential_id: creds.id,
+        tenant_id,
+        dms_platform: "assai",
+        sync_status: "failed",
+        error_message: countResult.message,
+        synced_count: 0,
+        failed_count: 1,
+        new_documents: 0,
+        status_changes: 0,
+        triggered_by: user.id,
+        error_details: {
+          base_url: baseUrl,
+          auth_steps: loginResult.debugSteps,
+          dwr_error: countResult.message,
+        },
+      });
+
+      return json({
+        success: false,
+        message: countResult.message,
+        response_time_ms: loginResult.responseTimeMs,
+      });
+    }
+
+    await logSync(supabase, {
+      credential_id: creds.id,
+      tenant_id,
+      dms_platform: "assai",
+      sync_status: "success",
+      synced_count: countResult.count,
+      failed_count: 0,
+      new_documents: 0,
+      status_changes: 0,
+      triggered_by: user.id,
+      error_details: {
+        base_url: baseUrl,
+        auth_steps: loginResult.debugSteps,
+        document_count: countResult.count,
+      },
+    });
 
     return json({
       success: true,
@@ -109,3 +183,24 @@ Deno.serve(async (req) => {
     });
   }
 });
+
+async function logSync(supabase: any, data: Record<string, unknown>) {
+  try {
+    await supabase.from("dms_sync_logs").insert({
+      credential_id: data.credential_id,
+      project_id: data.project_id || null,
+      dms_platform: data.dms_platform,
+      synced_count: data.synced_count || 0,
+      failed_count: data.failed_count || 0,
+      new_documents: data.new_documents || 0,
+      status_changes: data.status_changes || 0,
+      sync_status: data.sync_status,
+      error_message: data.error_message || null,
+      triggered_by: data.triggered_by,
+      tenant_id: data.tenant_id,
+      error_details: data.error_details || null,
+    });
+  } catch (logErr) {
+    console.error("[test-assai] Failed to write sync log:", logErr);
+  }
+}

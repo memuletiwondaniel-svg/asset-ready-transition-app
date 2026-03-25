@@ -6,11 +6,26 @@
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
+export interface AssaiAuthDebugStep {
+  step: string;
+  status?: number;
+  url?: string;
+  final_url?: string;
+  cookies?: string;
+  base_url?: string;
+  hidden_fields_found?: string[];
+  form_body_preview?: string;
+  form_body_masked?: string;
+  success?: boolean;
+  error?: string;
+}
+
 export interface AssaiLoginResult {
   success: boolean;
   cookies: string;
   message: string;
   responseTimeMs: number;
+  debugSteps: AssaiAuthDebugStep[];
 }
 
 export interface AssaiDocCountResult {
@@ -39,15 +54,25 @@ export interface ParsedDocument {
  * e.g. https://eu.assaicloud.com/AWeu578/login.aweb → https://eu.assaicloud.com/AWeu578
  */
 export function deriveBaseUrl(rawUrl: string): string {
-  let url = rawUrl.trim().replace(/\/$/, "");
-  const suffixes = ["/login.aweb", "/login", "/index.html", "/home", "/forward.aweb"];
-  for (const suffix of suffixes) {
-    if (url.toLowerCase().endsWith(suffix)) {
-      url = url.slice(0, -suffix.length);
-      break;
+  try {
+    const url = new URL(rawUrl.trim());
+    const pathParts = url.pathname.split("/").filter(Boolean);
+    const tenantCode = pathParts[0] || "";
+    if (tenantCode) {
+      return `${url.origin}/${tenantCode}`;
     }
+    return url.origin;
+  } catch {
+    let fallback = rawUrl.trim().replace(/\/$/, "");
+    const suffixes = ["/login.aweb", "/login", "/index.html", "/home", "/forward.aweb"];
+    for (const suffix of suffixes) {
+      if (fallback.toLowerCase().endsWith(suffix)) {
+        fallback = fallback.slice(0, -suffix.length);
+        break;
+      }
+    }
+    return fallback.replace(/\/$/, "");
   }
-  return url.replace(/\/$/, "");
 }
 
 // ──────────────────────────────────────────────
@@ -102,13 +127,30 @@ export function generateScriptSessionId(): string {
 export function normaliseProjectCode(raw: string): string {
   if (!raw) return "";
   let code = raw.trim().toUpperCase();
-  // Strip known prefixes before slash (e.g. "ST/DP189" → "DP189")
   if (code.includes("/")) {
     code = code.split("/").pop() || code;
   }
-  // Insert hyphen between letters and numbers (e.g. "DP189" → "DP-189")
   code = code.replace(/^([A-Z]+)(\d+)$/, "$1-$2");
   return code;
+}
+
+// ──────────────────────────────────────────────
+// Hidden field extraction
+// ──────────────────────────────────────────────
+
+function extractHiddenFields(html: string): Record<string, string> {
+  const hiddenFields: Record<string, string> = {};
+  const hiddenInputs = html.match(/<input[^>]+type=["']hidden["'][^>]*>/gi) || [];
+
+  for (const input of hiddenInputs) {
+    const nameMatch = input.match(/name=["']([^"']+)["']/i);
+    const valueMatch = input.match(/value=["']([^"']*?)["']/i);
+    const fieldName = nameMatch?.[1]?.trim();
+    if (!fieldName) continue;
+    hiddenFields[fieldName] = valueMatch?.[1] ?? "";
+  }
+
+  return hiddenFields;
 }
 
 // ──────────────────────────────────────────────
@@ -122,6 +164,7 @@ export async function loginAssai(
 ): Promise<AssaiLoginResult> {
   const startTime = Date.now();
   let cookies = "";
+  const debugSteps: AssaiAuthDebugStep[] = [];
 
   try {
     // Request A — Initial page load
@@ -130,9 +173,19 @@ export async function loginAssai(
       headers: { "User-Agent": USER_AGENT },
       redirect: "follow",
     });
+    const bodyA = await resA.text();
     cookies = mergeCookies(cookies, getSetCookies(resA));
-    await resA.text(); // drain body
-    console.log(`[assai-auth] Step A: ${resA.status}, cookies: ${cookies.substring(0, 100)}`);
+
+    debugSteps.push({
+      step: "initial_load",
+      status: resA.status,
+      cookies,
+      url: resA.url,
+      base_url: baseUrl,
+    });
+
+    console.log(`[assai-auth] Step A: ${resA.status}, url=${resA.url}`);
+    console.log(`[assai-auth] Step A body (first 200): ${bodyA.substring(0, 200)}`);
 
     // Request B — Select password method
     console.log("[assai-auth] Step B: Selecting login method");
@@ -143,23 +196,38 @@ export async function loginAssai(
       },
       redirect: "follow",
     });
+    const bodyB = await resB.text();
     cookies = mergeCookies(cookies, getSetCookies(resB));
-    await resB.text(); // drain body
-    console.log(`[assai-auth] Step B: ${resB.status}`);
+
+    // Extract hidden fields dynamically (includes CSRF-like fields)
+    const hiddenFields = extractHiddenFields(bodyB);
+
+    const formParams = new URLSearchParams();
+    for (const [k, v] of Object.entries(hiddenFields)) {
+      formParams.set(k, v);
+    }
+    formParams.set("userid", username);
+    formParams.set("password", password);
+
+    const formBody = formParams.toString();
+    const maskedParams = new URLSearchParams(formParams);
+    maskedParams.set("password", "[REDACTED]");
+    const maskedFormBody = maskedParams.toString();
+
+    debugSteps.push({
+      step: "method_select",
+      status: resB.status,
+      url: resB.url,
+      cookies,
+      hidden_fields_found: Object.keys(hiddenFields),
+      form_body_preview: maskedFormBody.substring(0, 200),
+      form_body_masked: maskedFormBody,
+    });
+
+    console.log(`[assai-auth] Step B: ${resB.status}, hidden fields=${Object.keys(hiddenFields).join(",")}`);
 
     // Request C — Submit credentials
     console.log("[assai-auth] Step C: Submitting credentials");
-    const formBody = new URLSearchParams({
-      userid: username,
-      password: password,
-      loginMethod: "unpw",
-      isSecure: "false",
-      contentUrl: "./forward.aweb?page=root/body",
-      followUp: "null",
-      ssodata: "null",
-      uniqueName: "",
-    }).toString();
-
     const resC = await fetch(`${baseUrl}/login.aweb`, {
       method: "POST",
       headers: {
@@ -171,26 +239,26 @@ export async function loginAssai(
       body: formBody,
       redirect: "follow",
     });
+
     cookies = mergeCookies(cookies, getSetCookies(resC));
     const bodyC = await resC.text();
     const finalUrl = resC.url || "";
 
-    console.log(`[assai-auth] Step C: ${resC.status}, finalUrl: ${finalUrl.substring(0, 120)}`);
-    console.log(`[assai-auth] Step C body (first 300): ${bodyC.substring(0, 300)}`);
-
-    // Check success: final URL should NOT contain login.aweb
-    const isSuccess =
-      (finalUrl.includes("forward.aweb") ||
-        finalUrl.includes("navbar.aweb") ||
-        finalUrl.includes("index.aweb") ||
-        !finalUrl.includes("login.aweb")) &&
+    const loginSuccess =
       resC.status >= 200 &&
-      resC.status < 400;
+      resC.status < 400 &&
+      !finalUrl.toLowerCase().includes("login.aweb");
 
-    // Also check body — if it still shows login form, it failed
-    const bodyIndicatesLogin =
-      bodyC.includes('name="userid"') || bodyC.includes("loginMethod=unpw");
-    const loginSuccess = isSuccess && !bodyIndicatesLogin;
+    debugSteps.push({
+      step: "login_post",
+      status: resC.status,
+      final_url: finalUrl,
+      success: loginSuccess,
+      cookies,
+    });
+
+    console.log(`[assai-auth] Step C: ${resC.status}, finalUrl=${finalUrl}`);
+    console.log(`[assai-auth] Step C success=${loginSuccess}, body (first 300): ${bodyC.substring(0, 300)}`);
 
     return {
       success: loginSuccess,
@@ -199,14 +267,19 @@ export async function loginAssai(
         ? "Authentication successful"
         : "Authentication failed — check username and password",
       responseTimeMs: Date.now() - startTime,
+      debugSteps,
     };
   } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Login network error";
+    debugSteps.push({ step: "login_exception", error: errorMessage });
     console.error("[assai-auth] Login error:", err);
+
     return {
       success: false,
       cookies: "",
-      message: err instanceof Error ? err.message : "Login network error",
+      message: errorMessage,
       responseTimeMs: Date.now() - startTime,
+      debugSteps,
     };
   }
 }
