@@ -621,9 +621,11 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                             <Label className="text-[13px] font-medium text-foreground/80">API Key</Label>
                             <div className="relative">
                               <Input type={showPassword ? 'text' : 'password'} value={formData.api_key} onChange={e => setFormData(f => ({ ...f, api_key: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
-                              <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10" onClick={() => setShowPassword(!showPassword)}>
-                                {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                              </Button>
+                              {formData.api_key && (
+                                <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10" onClick={() => setShowPassword(!showPassword)}>
+                                  {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                                </Button>
+                              )}
                             </div>
                           </div>
                           <div className="space-y-1">
