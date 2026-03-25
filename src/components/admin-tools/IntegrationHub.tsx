@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenant } from '@/hooks/useTenant';
 import { toast } from 'sonner';
 import { format, formatDistanceToNow } from 'date-fns';
 import { isAPIConfigured, getAPIConfig } from '@/lib/api-config-storage';
