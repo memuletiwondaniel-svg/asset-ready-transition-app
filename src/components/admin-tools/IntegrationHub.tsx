@@ -315,7 +315,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     const isExpanded = expandedLogs[platform.id] || false;
 
     return (
-      <Card key={platform.id} className="border-border/40 transition-all duration-200 overflow-hidden" style={{ borderTop: `3px solid ${platform.accent}` }}>
+      <Card key={platform.id} className="border-border/40 transition-all duration-200 overflow-hidden">
         {/* Status badge */}
         <div className="flex justify-end p-3 pb-0">
           <StatusBadgeComponent platformId={platform.id} />
