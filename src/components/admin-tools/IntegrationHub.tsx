@@ -85,6 +85,7 @@ const ALL_PLATFORMS: Platform[] = [
 ];
 
 const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
+  const { tenantId } = useTenant();
   const [searchQuery, setSearchQuery] = useState('');
   const [credentials, setCredentials] = useState<SyncCredential[]>([]);
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
