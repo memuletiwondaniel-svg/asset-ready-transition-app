@@ -343,12 +343,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         </div>
 
         <CardContent className="space-y-3 pt-0">
-          {/* Name & description */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">{platform.name}</h3>
-            <p className="text-xs text-muted-foreground line-clamp-1">{platform.description}</p>
-          </div>
-
           {/* Stats row - only if connected */}
           {hasCredentials && (
             <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -381,7 +375,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           {/* Button row */}
           <div className="grid grid-cols-3 gap-1.5">
             <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => openConfig(platform)}>
-              <Settings className="h-3 w-3 mr-1" />
               Configure
             </Button>
             <TooltipProvider>
@@ -395,8 +388,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       disabled={!hasCredentials || testing === platform.id}
                       onClick={() => testConnection(platform)}
                     >
-                      {testing === platform.id ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Wifi className="h-3 w-3 mr-1" />}
-                      Test
+                      {testing === platform.id ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Test'}
                     </Button>
                   </span>
                 </TooltipTrigger>
@@ -404,13 +396,13 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
               </Tooltip>
             </TooltipProvider>
             <Button
+              variant="outline"
               size="sm"
               className="text-xs h-8"
               disabled={!hasCredentials || syncing === platform.id}
               onClick={() => triggerSync(platform)}
             >
-              {syncing === platform.id ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-1" />}
-              Sync Now
+              {syncing === platform.id ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Sync Now'}
             </Button>
           </div>
 
