@@ -64,65 +64,44 @@ Deno.serve(async (req) => {
     const syncLogId = syncLog?.id;
 
     try {
-      // Step 1: Get Bearer token via OAuth password grant
-      console.log("[sync-assai] Requesting Bearer token...");
-      const tokenUrl = `${apiBase}/access_token.jsp`;
-      const tokenBody = new URLSearchParams({
-        grant_type: "password",
-        client_id: clientId,
-        username,
-        password,
-      });
+      // Step 1: Login to Assai using session cookies
+      console.log("[sync-assai] Logging in to Assai...");
+      const loginResult = await loginAssai(baseUrl, username, password, dbName);
 
-      const tokenResp = await fetch(tokenUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: tokenBody.toString(),
-      });
-
-      const tokenText = await tokenResp.text();
-      console.log(`[sync-assai] Token response status=${tokenResp.status}, body=${tokenText.substring(0, 300)}`);
-
-      let accessToken: string | null = null;
-
-      // Try JSON parse first
-      try {
-        const tokenJson = JSON.parse(tokenText);
-        accessToken = tokenJson.access_token || null;
-      } catch {
-        // Try extracting from URL fragment format: access_token=xxx&token_type=Bearer
-        const match = tokenText.match(/access_token=([^&\s]+)/);
-        if (match) accessToken = match[1];
+      if (!loginResult.success || !loginResult.cookies) {
+        throw new Error(loginResult.error || "Login failed");
       }
 
-      if (!accessToken) {
-        throw new Error(`Failed to obtain Bearer token. Response: ${tokenText.substring(0, 200)}`);
-      }
+      const sessionCookies = loginResult.cookies;
+      const resolvedBase = loginResult.baseUrl!;
+      const resolvedDb = loginResult.dbName!;
 
-      console.log("[sync-assai] Bearer token obtained successfully");
+      // Derive the AA-prefix API base from the resolved base
+      const apiBase = resolvedBase.replace(/\/AW([^/]+)/, "/AA$1");
+      console.log(`[sync-assai] Using API base: ${apiBase}`);
 
-      // Step 2: Fetch documents from REST API
-      console.log("[sync-assai] Fetching documents from REST API...");
+      // Step 2: Fetch documents from REST API using session cookies
       const docsUrl = `${apiBase}/api/v1/documents`;
+      console.log(`[sync-assai] Fetching: ${docsUrl}`);
 
       const docsResp = await fetch(docsUrl, {
         method: "GET",
         headers: {
-          "Authorization": `Bearer ${accessToken}`,
+          "Cookie": sessionCookies.join("; "),
           "Accept": "application/json",
-          "Content-Type": "application/json",
         },
       });
 
       console.log(`[sync-assai] Documents response status=${docsResp.status}`);
 
+      const respText = await docsResp.text();
+      console.log(`[sync-assai] Response preview: ${respText.substring(0, 500)}`);
+
       if (!docsResp.ok) {
-        const errText = await docsResp.text();
-        throw new Error(`Documents API returned ${docsResp.status}: ${errText.substring(0, 300)}`);
+        throw new Error(`Documents API returned ${docsResp.status}: ${respText.substring(0, 300)}`);
       }
 
-      const docsJson = await docsResp.json();
-      console.log(`[sync-assai] Documents response structure: ${JSON.stringify(docsJson).substring(0, 500)}`);
+      const docsJson = JSON.parse(respText);
 
       // Handle both array and paginated response formats
       const documents: any[] = Array.isArray(docsJson)
