@@ -344,6 +344,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
   const dmsPlatforms = filteredPlatforms.filter(p => p.section === 'dms');
   const enterprisePlatforms = filteredPlatforms.filter(p => p.section === 'enterprise');
+  const commsPlatforms = filteredPlatforms.filter(p => p.section === 'comms');
 
   const isFormValid = connectionMethod === 'api' ? !!formData.base_url.trim() : !!formData.workflow_url.trim();
 
