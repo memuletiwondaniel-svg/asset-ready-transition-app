@@ -84,41 +84,41 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
             <TabsTrigger 
               value="pssr" 
               className={cn(
-                "flex items-center gap-2 px-4 transition-colors duration-200",
+                "flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 text-xs md:text-sm transition-colors duration-200",
                 activeTab !== 'pssr' && "text-muted-foreground/60"
               )}
             >
-              <ClipboardCheck className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('pssr', activeTab === 'pssr'))} />
+              <ClipboardCheck className={cn("h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('pssr', activeTab === 'pssr'))} />
               <span>PSSR</span>
             </TabsTrigger>
             <TabsTrigger 
               value="sof" 
               className={cn(
-                "flex items-center gap-2 px-4 transition-colors duration-200",
+                "flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 text-xs md:text-sm transition-colors duration-200",
                 activeTab !== 'sof' && "text-muted-foreground/60"
               )}
             >
-              <FileCheck2 className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('sof', activeTab === 'sof'))} />
+              <FileCheck2 className={cn("h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('sof', activeTab === 'sof'))} />
               <span>SoF</span>
             </TabsTrigger>
             <TabsTrigger 
               value="pac" 
               className={cn(
-                "flex items-center gap-2 px-4 transition-colors duration-200",
+                "flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 text-xs md:text-sm transition-colors duration-200",
                 activeTab !== 'pac' && "text-muted-foreground/60"
               )}
             >
-              <ClipboardList className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('pac', activeTab === 'pac'))} />
+              <ClipboardList className={cn("h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('pac', activeTab === 'pac'))} />
               <span>PAC</span>
             </TabsTrigger>
             <TabsTrigger 
               value="fac" 
               className={cn(
-                "flex items-center gap-2 px-4 transition-colors duration-200",
+                "flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 text-xs md:text-sm transition-colors duration-200",
                 activeTab !== 'fac' && "text-muted-foreground/60"
               )}
             >
-              <Award className={cn("h-4 w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('fac', activeTab === 'fac'))} />
+              <Award className={cn("h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 transition-colors duration-200", getParentTabIconColor('fac', activeTab === 'fac'))} />
               <span>FAC</span>
             </TabsTrigger>
           </TabsList>
