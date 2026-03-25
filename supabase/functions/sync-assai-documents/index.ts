@@ -16,6 +16,11 @@ interface AssaiDocument {
   work_package_code: string;
 }
 
+interface DwrBeanMethod {
+  name: string;
+  arity: number;
+}
+
 /**
  * Normalize Assai work package code (e.g. "ST/DP189") to ORSH format ("DP-189").
  * Preserves original in metadata.
@@ -107,88 +112,100 @@ async function fetchDocumentsViaDwr(
   dbName: string,
   cookies: string[],
 ): Promise<AssaiDocument[]> {
-  const documents: AssaiDocument[] = [];
+  try {
+    const interfaceUrl = `${baseUrl}/AW${dbName}/dwr/interface/DWRBean.js`;
+    const interfaceResp = await fetch(interfaceUrl, {
+      headers: { Cookie: cookies.join("; ") },
+    });
+    const interfaceJs = await interfaceResp.text();
+    console.log(`[sync-assai] DWRBean.js status=${interfaceResp.status}, length=${interfaceJs.length}`);
 
-  // Strategy 1: Try SearchBean.executeSearch or similar
-  const searchBeans = [
-    { script: "SearchBean", method: "executeSearch" },
-    { script: "SearchBean", method: "getSearchResults" },
-    { script: "DocumentBean", method: "getDocuments" },
-    { script: "DocumentBean", method: "getDocumentList" },
-    { script: "DocumentRegisterBean", method: "getDocuments" },
-    { script: "RegisterBean", method: "getDocuments" },
-  ];
+    const methods = parseDwrBeanMethods(interfaceJs);
+    console.log(`[sync-assai] DWRBean methods discovered: ${methods.length}`);
 
-  for (const { script, method } of searchBeans) {
-    try {
-      console.log(`[sync-assai] Trying DWR: ${script}.${method}`);
-      const result = await callDwr(baseUrl, dbName, cookies, script, method);
+    const docLikeMethods = methods.filter((m) =>
+      /doc|register|search|mdr|transmittal|package|revision|status|list|grid/i.test(m.name),
+    );
+    console.log(
+      `[sync-assai] DWRBean doc-like methods: ${docLikeMethods
+        .slice(0, 40)
+        .map((m) => `${m.name}(${m.arity})`)
+        .join(", ")}`,
+    );
 
-      // Check if we got a valid callback response (not an error)
-      if (result.includes("_remoteHandleCallback") && !result.includes("_remoteHandleException")) {
-        console.log(`[sync-assai] DWR ${script}.${method} returned data, length=${result.length}`);
+    let batch = 1;
+    for (const method of docLikeMethods) {
+      const invocationPatterns: string[][] = [];
 
-        // Parse DWR response - look for document data patterns
-        const docMatches = parseDwrDocumentResponse(result);
-        if (docMatches.length > 0) {
-          console.log(`[sync-assai] Parsed ${docMatches.length} documents from ${script}.${method}`);
-          documents.push(...docMatches);
-          break;
-        }
+      if (method.arity === 0) {
+        invocationPatterns.push([]);
+      } else {
+        invocationPatterns.push(Array.from({ length: method.arity }, () => "null:null"));
+        invocationPatterns.push(Array.from({ length: method.arity }, () => "string:"));
       }
-    } catch (e) {
-      console.log(`[sync-assai] DWR ${script}.${method} failed: ${e}`);
-    }
-  }
 
-  // Strategy 2: Try to discover available DWR interfaces
-  if (documents.length === 0) {
-    try {
-      const engineUrl = `${baseUrl}/AW${dbName}/dwr/engine.js`;
-      const engineResp = await fetch(engineUrl, {
-        headers: { Cookie: cookies.join("; ") },
-      });
-      const engineText = await engineResp.text();
-      console.log(`[sync-assai] DWR engine.js length=${engineText.length}`);
+      for (const params of invocationPatterns) {
+        try {
+          console.log(
+            `[sync-assai] Trying DWRBean.${method.name} with ${params.length} params (${params
+              .map((p) => p.split(":")[0])
+              .join(",")})`,
+          );
+          const result = await callDwr(
+            baseUrl,
+            dbName,
+            cookies,
+            "DWRBean",
+            method.name,
+            params,
+            batch++,
+          );
 
-      // Try to get interface listing
-      const interfaceUrl = `${baseUrl}/AW${dbName}/dwr/index.html`;
-      const interfaceResp = await fetch(interfaceUrl, {
-        headers: { Cookie: cookies.join("; ") },
-      });
-      const interfaceHtml = await interfaceResp.text();
-      console.log(`[sync-assai] DWR index.html length=${interfaceHtml.length}`);
-
-      // Extract available bean names
-      const beanMatches = interfaceHtml.matchAll(/href=["']interface\/(\w+)\.js["']/gi);
-      const beans = [...beanMatches].map(m => m[1]);
-      console.log(`[sync-assai] Discovered DWR beans: ${beans.join(", ")}`);
-
-      // For each document-related bean, try to get its interface
-      for (const bean of beans) {
-        if (/document|register|search|report/i.test(bean)) {
-          try {
-            const ifUrl = `${baseUrl}/AW${dbName}/dwr/interface/${bean}.js`;
-            const ifResp = await fetch(ifUrl, {
-              headers: { Cookie: cookies.join("; ") },
-            });
-            const ifText = await ifResp.text();
-            console.log(`[sync-assai] DWR interface ${bean}: ${ifText.substring(0, 500)}`);
-
-            // Extract method names
-            const methods = [...ifText.matchAll(/(\w+)\.(\w+)\s*=\s*function/g)].map(m => m[2]);
-            console.log(`[sync-assai] ${bean} methods: ${methods.join(", ")}`);
-          } catch (e) {
-            console.log(`[sync-assai] Failed to read interface ${bean}: ${e}`);
+          if (result.includes("_remoteHandleException")) {
+            const exceptionLine = result
+              .split("\n")
+              .find((line) => line.includes("_remoteHandleException"));
+            console.log(
+              `[sync-assai] DWRBean.${method.name} returned exception: ${exceptionLine?.substring(0, 220)}`,
+            );
+            continue;
           }
+
+          if (result.includes("_remoteHandleCallback")) {
+            const docs = parseDwrDocumentResponse(result);
+            if (docs.length > 0) {
+              console.log(`[sync-assai] Parsed ${docs.length} docs from DWRBean.${method.name}`);
+              return docs;
+            }
+          }
+        } catch (e) {
+          console.log(`[sync-assai] DWRBean.${method.name} failed: ${e}`);
         }
       }
-    } catch (e) {
-      console.log(`[sync-assai] DWR discovery failed: ${e}`);
     }
+  } catch (e) {
+    console.log(`[sync-assai] DWRBean discovery failed: ${e}`);
   }
 
-  return documents;
+  return [];
+}
+
+function parseDwrBeanMethods(interfaceJs: string): DwrBeanMethod[] {
+  const results = new Map<string, DwrBeanMethod>();
+  const regex = /DWRBean\.(\w+)\s*=\s*function\(([^)]*)\)/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(interfaceJs)) !== null) {
+    const name = match[1];
+    const args = match[2]
+      .split(",")
+      .map((a) => a.trim())
+      .filter(Boolean);
+    const arity = args.filter((a) => a !== "callback").length;
+    results.set(name, { name, arity });
+  }
+
+  return Array.from(results.values());
 }
 
 /**
@@ -197,27 +214,59 @@ async function fetchDocumentsViaDwr(
  */
 function parseDwrDocumentResponse(dwrText: string): AssaiDocument[] {
   const docs: AssaiDocument[] = [];
+  const seen = new Set<string>();
+
+  const readField = (objText: string, keys: string[]): string => {
+    for (const key of keys) {
+      const rx = new RegExp(
+        `(?:['\"]?${key}['\"]?\\s*:\\s*)(?:\"([^\"]*)\"|'([^']*)'|([^,}]+))`,
+        "i",
+      );
+      const m = objText.match(rx);
+      const value = (m?.[1] ?? m?.[2] ?? m?.[3] ?? "").trim();
+      if (value && value !== "null" && value !== "undefined") return value;
+    }
+    return "";
+  };
+
+  const pushDocIfAny = (objText: string) => {
+    const docNum = readField(objText, [
+      "documentNumber",
+      "docNumber",
+      "number",
+      "document_no",
+      "doc_no",
+      "documentnumber",
+    ]);
+
+    if (!docNum || seen.has(docNum)) return;
+    seen.add(docNum);
+
+    docs.push({
+      document_number: docNum,
+      document_title: readField(objText, ["title", "documentTitle", "description", "document_title"]),
+      revision: readField(objText, ["revision", "rev", "revisionCode", "currentRevision"]),
+      status_code: readField(objText, ["status", "statusCode", "documentStatus", "currentStatus"]),
+      discipline_code: readField(objText, ["discipline", "disciplineCode", "discipline_code"]),
+      work_package_code: readField(objText, ["workPackage", "workPackageCode", "packageCode", "work_package"]),
+    });
+  };
 
   // DWR array response pattern: var s0={...}; var s1={...};
   const objectMatches = dwrText.matchAll(/var\s+s\d+=\{([^}]+)\}/g);
 
   for (const match of objectMatches) {
     const objText = match[1];
-    const getString = (key: string): string => {
-      const m = objText.match(new RegExp(`${key}:"([^"]*)"`, "i"));
-      return m?.[1] ?? "";
-    };
+    pushDocIfAny(objText);
+  }
 
-    const docNum = getString("documentNumber") || getString("docNumber") || getString("number");
-    if (docNum) {
-      docs.push({
-        document_number: docNum,
-        document_title: getString("title") || getString("documentTitle") || getString("description"),
-        revision: getString("revision") || getString("rev") || getString("revisionCode"),
-        status_code: getString("status") || getString("statusCode") || getString("documentStatus"),
-        discipline_code: getString("discipline") || getString("disciplineCode"),
-        work_package_code: getString("workPackage") || getString("workPackageCode") || getString("packageCode"),
-      });
+  // DWR callback payload pattern
+  const callbackPayloadMatch = dwrText.match(/_remoteHandleCallback\('0','0',([\s\S]*?)\);?\s*$/m);
+  const callbackPayload = callbackPayloadMatch?.[1] ?? "";
+  if (callbackPayload) {
+    const payloadObjects = callbackPayload.matchAll(/\{([^{}]+)\}/g);
+    for (const m of payloadObjects) {
+      pushDocIfAny(m[1]);
     }
   }
 
