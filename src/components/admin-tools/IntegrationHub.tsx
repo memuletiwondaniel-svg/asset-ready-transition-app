@@ -211,18 +211,26 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     } else {
       const existing = getCredential(platform.id);
       if (existing) {
-        // Detect if it was saved as automation (has username_encrypted + password_encrypted but base_url looks like a portal URL)
-        // We store a "connection_method" hint via project_code_field prefix or simply check username_encrypted presence
-        const hasUserCreds = !!existing.username_encrypted && !!existing.password_encrypted;
-        const isAutomation = hasUserCreds && existing.project_code_field === '__automation__';
-        
+        // Detect automation credentials via marker
+        const isAutomation = existing.project_code_field === '__automation__';
+
         if (isAutomation) {
           setConnectionMethod('automation');
           setFormData({
-            base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
-            client_id: '', client_secret: '', token_url: '', scope: '',
-            project_code_field: '', sync_enabled: false,
-            platform_url: existing.base_url || '', auth_token: '', automation_enabled: existing.sync_enabled || false,
+            base_url: '',
+            username: existing.username_encrypted || '',
+            password: '',
+            api_key: '',
+            header_name: 'X-API-Key',
+            client_id: '',
+            client_secret: '',
+            token_url: '',
+            scope: '',
+            project_code_field: '',
+            sync_enabled: false,
+            platform_url: existing.base_url || '',
+            auth_token: '',
+            automation_enabled: existing.sync_enabled || false,
           });
         } else {
           setConnectionMethod('api');
@@ -235,8 +243,9 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
             platform_url: '', auth_token: '', automation_enabled: false,
           });
         }
-        // Set placeholder state - credentials exist but we don't show decrypted values
-        setHasStoredCredentials(true);
+
+        // Show dots only when a secret already exists
+        setHasStoredCredentials(!!existing.password_encrypted);
       } else {
         setConnectionMethod('api');
         resetFormData();
