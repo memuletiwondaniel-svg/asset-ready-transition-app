@@ -811,12 +811,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         </Suspense>
       </div>;
   }
-  if (activeView === 'dms-integration') {
-    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
-        <Suspense fallback={<ViewLoadingFallback />}>
-          <DMSIntegration onBack={() => setActiveView('dashboard')} />
-        </Suspense>
-      </div>;
+  
   }
   
   // Show skeleton while initial data is loading
