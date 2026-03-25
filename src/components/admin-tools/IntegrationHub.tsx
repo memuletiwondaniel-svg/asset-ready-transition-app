@@ -80,7 +80,7 @@ const ALL_PLATFORMS: Platform[] = [
   { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and financials', section: 'enterprise', logo: sapLogo, logoScale: 1.4, accent: '#0070F2', badgeLabel: 'SAP' },
   { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', section: 'enterprise', logo: primaveraLogo, logoScale: 1.5, accent: '#C74634', badgeLabel: 'Oracle' },
   { id: 'teams', name: 'Microsoft Teams', description: 'Team communication and collaboration', section: 'comms', logo: teamsLogo, logoScale: 1.5, accent: '#6264A7', badgeLabel: 'Teams' },
-  { id: 'outlook', name: 'Microsoft Outlook', description: 'Email and calendar integration for invitations', section: 'comms', logo: outlookLogo, logoScale: 1.4, accent: '#0078D4', badgeLabel: 'Outlook' },
+  { id: 'outlook', name: 'Microsoft Outlook', description: 'Email and calendar integration for invitations', section: 'comms', logo: outlookLogo, logoScale: 1.0, accent: '#0078D4', badgeLabel: 'Outlook' },
 ];
 
 const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
