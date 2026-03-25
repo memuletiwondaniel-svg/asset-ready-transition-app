@@ -125,6 +125,27 @@ export function generateScriptSessionId(): string {
 }
 
 // ──────────────────────────────────────────────
+// Login form field extraction
+// ──────────────────────────────────────────────
+
+function extractLoginFormFields(html: string): Record<string, string> {
+  const fields: Record<string, string> = {};
+  const matches = html.matchAll(/<input[^>]+type=["']hidden["'][^>]*>/gi);
+  for (const match of matches) {
+    const nameMatch = match[0].match(/name=["']([^"']+)["']/i);
+    const valueMatch = match[0].match(/value=["']([^"']*?)["']/i);
+    if (nameMatch) {
+      const name = nameMatch[1];
+      // Only include main login form fields
+      if (!name.startsWith('reset_') && !name.startsWith('forgetpwd_')) {
+        fields[name] = valueMatch ? valueMatch[1] : '';
+      }
+    }
+  }
+  return fields;
+}
+
+// ──────────────────────────────────────────────
 // Project code normalisation
 // ──────────────────────────────────────────────
 
