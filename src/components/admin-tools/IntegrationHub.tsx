@@ -67,8 +67,8 @@ interface Platform {
 
 const ALL_PLATFORMS: Platform[] = [
   { id: 'assai', name: 'Assai', description: 'Enterprise document management for O&G', section: 'dms', logo: assaiLogo, logoScale: 0.79, hasEdgeFunction: true, accent: '#F97316', badgeLabel: 'assai' },
-  { id: 'wrench', name: 'Wrench', description: 'Project document control and management', section: 'dms', logo: null, accent: '#2563EB', badgeLabel: 'wrench' },
-  { id: 'documentum', name: 'Documentum', description: 'Enterprise content management platform', section: 'dms', logo: null, accent: '#6D28D9', badgeLabel: 'Documentum' },
+  { id: 'wrench', name: 'Wrench', description: 'Project document control and management', section: 'dms', logo: wrenchLogo, accent: '#2563EB', badgeLabel: 'wrench' },
+  { id: 'documentum', name: 'Documentum', description: 'Enterprise content management platform', section: 'dms', logo: documentumLogo, accent: '#6D28D9', badgeLabel: 'Documentum' },
   { id: 'gocompletions', name: 'GoCompletions', description: 'Completions and commissioning management', section: 'enterprise', logo: gocompletionsLogo, accent: '#0EA5E9', badgeLabel: 'GoCompletions' },
   { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and financials', section: 'enterprise', logo: sapLogo, accent: '#0070F2', badgeLabel: 'SAP' },
   { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', section: 'enterprise', logo: primaveraLogo, logoScale: 1.3, accent: '#C74634', badgeLabel: 'Oracle' },
