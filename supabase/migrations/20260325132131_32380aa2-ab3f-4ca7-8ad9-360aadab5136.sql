@@ -1,0 +1,1 @@
+DELETE FROM dms_sync_logs WHERE dms_platform = 'assai';
