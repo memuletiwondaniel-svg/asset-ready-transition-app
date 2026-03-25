@@ -813,62 +813,75 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                 {/* SYNC SECTION */}
                 <div className="space-y-3">
                   <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Sync</span>
-                  {(() => {
-                    const cred = getCredential(panelPlatform.id);
-                    const lastSync = cred?.last_sync_at;
-                    return (
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground">
-                          {lastSync ? `Last synced: ${formatDistanceToNow(new Date(lastSync), { addSuffix: true })}` : 'Never synced'}
-                        </p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs"
-                          disabled={!credentialsSaved || syncingInPanel}
-                          onClick={triggerSync}
-                        >
-                          {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
-                          Sync Now
-                        </Button>
-                      </div>
-                    );
-                  })()}
-                  {syncResultInPanel && (
-                    <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-muted">
-                      <RefreshCw className="h-3.5 w-3.5" />
-                      {syncResultInPanel}
+                  {panelPlatform.id === 'assai' ? (
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-muted border border-border/50">
+                      <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Automated sync coming soon. Configure credentials now to be ready when sync is enabled.
+                      </p>
                     </div>
+                  ) : (
+                    <>
+                      {(() => {
+                        const cred = getCredential(panelPlatform.id);
+                        const lastSync = cred?.last_sync_at;
+                        return (
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-muted-foreground">
+                              {lastSync ? `Last synced: ${formatDistanceToNow(new Date(lastSync), { addSuffix: true })}` : 'Never synced'}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs"
+                              disabled={!credentialsSaved || syncingInPanel}
+                              onClick={triggerSync}
+                            >
+                              {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                              Sync Now
+                            </Button>
+                          </div>
+                        );
+                      })()}
+                      {syncResultInPanel && (
+                        <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-muted">
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          {syncResultInPanel}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
-                {/* SYNC HISTORY */}
-                <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
-                  <CollapsibleTrigger className="flex items-center gap-2 w-full text-left">
-                    <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', historyOpen ? '' : '-rotate-90')} />
-                    <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Sync History</span>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-3">
-                    {panelLogs.length === 0 ? (
-                      <p className="text-xs text-muted-foreground italic text-center py-4">No sync history yet</p>
-                    ) : (
-                      <div className="border rounded-lg overflow-hidden text-[11px]">
-                        <div className="grid grid-cols-5 gap-1 px-3 py-2 bg-muted/50 font-medium text-muted-foreground">
-                          <span>Date</span><span className="text-right">Synced</span><span className="text-right">New</span><span className="text-right">Changed</span><span className="text-right">Failed</span>
-                        </div>
-                        {panelLogs.map(log => (
-                          <div key={log.id} className="grid grid-cols-5 gap-1 px-3 py-2 border-t border-border/50">
-                            <span>{format(new Date(log.created_at), 'dd MMM HH:mm')}</span>
-                            <span className="text-right font-medium">{log.synced_count}</span>
-                            <span className="text-right text-emerald-600">{log.new_documents}</span>
-                            <span className="text-right text-amber-600">{log.status_changes}</span>
-                            <span className="text-right text-destructive">{log.failed_count}</span>
+                {/* SYNC HISTORY — hidden for Assai */}
+                {panelPlatform.id !== 'assai' && (
+                  <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
+                    <CollapsibleTrigger className="flex items-center gap-2 w-full text-left">
+                      <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', historyOpen ? '' : '-rotate-90')} />
+                      <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Sync History</span>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-3">
+                      {panelLogs.length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic text-center py-4">No sync history yet</p>
+                      ) : (
+                        <div className="border rounded-lg overflow-hidden text-[11px]">
+                          <div className="grid grid-cols-5 gap-1 px-3 py-2 bg-muted/50 font-medium text-muted-foreground">
+                            <span>Date</span><span className="text-right">Synced</span><span className="text-right">New</span><span className="text-right">Changed</span><span className="text-right">Failed</span>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </CollapsibleContent>
-                </Collapsible>
+                          {panelLogs.map(log => (
+                            <div key={log.id} className="grid grid-cols-5 gap-1 px-3 py-2 border-t border-border/50">
+                              <span>{format(new Date(log.created_at), 'dd MMM HH:mm')}</span>
+                              <span className="text-right font-medium">{log.synced_count}</span>
+                              <span className="text-right text-emerald-600">{log.new_documents}</span>
+                              <span className="text-right text-amber-600">{log.status_changes}</span>
+                              <span className="text-right text-destructive">{log.failed_count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
               </div>
 
               {/* Sticky Footer */}
