@@ -831,43 +831,32 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                 {/* SYNC SECTION */}
                 <div className="space-y-3">
                   <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Sync</span>
-                  {panelPlatform.id === 'assai' ? (
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-muted border border-border/50">
-                      <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Automated sync coming soon. Configure credentials now to be ready when sync is enabled.
-                      </p>
+                  {(() => {
+                    const cred = getCredential(panelPlatform.id);
+                    const lastSync = cred?.last_sync_at;
+                    return (
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          {lastSync ? `Last synced: ${formatDistanceToNow(new Date(lastSync), { addSuffix: true })}` : 'Never synced'}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs"
+                          disabled={!credentialsSaved || syncingInPanel}
+                          onClick={triggerSync}
+                        >
+                          {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                          Sync Now
+                        </Button>
+                      </div>
+                    );
+                  })()}
+                  {syncResultInPanel && (
+                    <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-muted">
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      {syncResultInPanel}
                     </div>
-                  ) : (
-                    <>
-                      {(() => {
-                        const cred = getCredential(panelPlatform.id);
-                        const lastSync = cred?.last_sync_at;
-                        return (
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs text-muted-foreground">
-                              {lastSync ? `Last synced: ${formatDistanceToNow(new Date(lastSync), { addSuffix: true })}` : 'Never synced'}
-                            </p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-xs"
-                              disabled={!credentialsSaved || syncingInPanel}
-                              onClick={triggerSync}
-                            >
-                              {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
-                              Sync Now
-                            </Button>
-                          </div>
-                        );
-                      })()}
-                      {syncResultInPanel && (
-                        <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-muted">
-                          <RefreshCw className="h-3.5 w-3.5" />
-                          {syncResultInPanel}
-                        </div>
-                      )}
-                    </>
                   )}
                 </div>
 
