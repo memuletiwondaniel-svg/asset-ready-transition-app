@@ -377,7 +377,7 @@ Deno.serve(async (req) => {
     try {
       // Step 1: Login via shared loginAssai to get session cookies
       console.log(`[sync-assai] Logging in via loginAssai. base=${resolvedBase}, db=${resolvedDb}`);
-      const loginResult = await loginAssai(resolvedBase, resolvedDb, username, password);
+      const loginResult = await loginAssai(resolvedBase, username, password, resolvedDb);
 
       if (!loginResult.success || !loginResult.cookies?.length) {
         throw new Error(`Login failed: ${loginResult.error || "No session cookies"}`);
