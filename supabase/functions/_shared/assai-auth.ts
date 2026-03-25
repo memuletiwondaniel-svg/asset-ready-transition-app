@@ -10,10 +10,13 @@ export interface AssaiAuthDebugStep {
   step: string;
   status?: number;
   url?: string;
+  post_url?: string;
   final_url?: string;
   cookies?: string;
   base_url?: string;
   dbname_used?: string;
+  script_session_id?: string;
+  script_session_id_used?: string;
   hidden_fields_found?: string[];
   form_body_preview?: string;
   form_body_masked?: string;
@@ -215,13 +218,86 @@ export async function loginAssai(
     const derivedDbName = tenantCode.replace(/^AW/i, "").toLowerCase();
     const resolvedDbName = (dbname || hiddenFields["reset_dbname"] || derivedDbName || "").trim();
 
+    const methodSelectStepIndex = debugSteps.length;
+    debugSteps.push({
+      step: "method_select",
+      status: resB.status,
+      url: resB.url,
+      cookies,
+      hidden_fields_found: Object.keys(hiddenFields),
+      dbname_used: resolvedDbName,
+    });
+
+    console.log(`[assai-auth] Step B: ${resB.status}, hidden fields=${Object.keys(hiddenFields).join(",")}`);
+
+    // Request B2 — Establish DWR session ID required by login flow
+    console.log("[assai-auth] Step B2: Establishing DWR session");
+    const tenantPath = new URL(baseUrl).pathname.replace(/\/+$/, "") || `/${tenantCode}`;
+    const generatedScriptSessionId = generateScriptSessionId();
+    const dwrSessionBody = [
+      "callCount=1",
+      `page=${tenantPath}/login.aweb`,
+      "httpSessionId=",
+      `scriptSessionId=${generatedScriptSessionId}`,
+      "c0-scriptName=DWRBean",
+      "c0-methodName=getSessionID",
+      "c0-id=0",
+      "batchId=0",
+    ].join("\n");
+
+    const dwrSessionUrl = `${baseUrl}/dwr/call/plaincall/DWRBean.getSessionID.dwr`;
+    const resB2 = await fetch(dwrSessionUrl, {
+      method: "POST",
+      headers: {
+        "User-Agent": USER_AGENT,
+        "Content-Type": "text/plain",
+        Cookie: cookies,
+        Referer: `${baseUrl}/login.aweb?loginMethod=unpw&isSecure=true`,
+      },
+      body: dwrSessionBody,
+      redirect: "follow",
+    });
+    const bodyB2 = await resB2.text();
+    cookies = mergeCookies(cookies, getSetCookies(resB2));
+
+    const realSessionIdMatch = bodyB2.match(/_remoteHandleCallback\([^)]*,\s*"([^"]+)"\s*\)/);
+    const realScriptSessionId = realSessionIdMatch?.[1] || generatedScriptSessionId;
+
+    debugSteps.push({
+      step: "dwr_session",
+      status: resB2.status,
+      url: dwrSessionUrl,
+      script_session_id: realScriptSessionId,
+      cookies,
+    });
+
     const formParams = new URLSearchParams();
     for (const [k, v] of Object.entries(loginFields)) {
       formParams.set(k, v);
     }
+
+    const requiredDefaults: Record<string, string> = {
+      isSecure: "false",
+      contentUrl: "./forward.aweb?page=root/body",
+      followUp: "null",
+      ssodata: "null",
+      loginMethod: "unpw",
+      uniqueName: "",
+      siteLanguage: "",
+      loggedOff: "true",
+      isFromLanguageForm: "true",
+    };
+
+    for (const [key, value] of Object.entries(requiredDefaults)) {
+      if (!formParams.has(key)) {
+        formParams.set(key, value);
+      }
+    }
+
     if (resolvedDbName) {
       formParams.set("dbname", resolvedDbName);
     }
+    formParams.set("scriptSessionId", realScriptSessionId);
     formParams.set("userid", username);
     formParams.set("password", password);
 
@@ -230,22 +306,16 @@ export async function loginAssai(
     maskedParams.set("password", "[REDACTED]");
     const maskedFormBody = maskedParams.toString();
 
-    debugSteps.push({
-      step: "method_select",
-      status: resB.status,
-      url: resB.url,
-      cookies,
-      hidden_fields_found: Object.keys(hiddenFields),
-      dbname_used: resolvedDbName,
+    debugSteps[methodSelectStepIndex] = {
+      ...debugSteps[methodSelectStepIndex],
       form_body_preview: maskedFormBody.substring(0, 200),
       form_body_masked: maskedFormBody,
-    });
-
-    console.log(`[assai-auth] Step B: ${resB.status}, hidden fields=${Object.keys(hiddenFields).join(",")}`);
+    };
 
     // Request C — Submit credentials
     console.log("[assai-auth] Step C: Submitting credentials");
-    const resC = await fetch(`${baseUrl}/login.aweb`, {
+    const loginPostUrl = `${baseUrl}/login.aweb?loginMethod=unpw&isSecure=true`;
+    const resC = await fetch(loginPostUrl, {
       method: "POST",
       headers: {
         "User-Agent": USER_AGENT,
@@ -269,8 +339,10 @@ export async function loginAssai(
     debugSteps.push({
       step: "login_post",
       status: resC.status,
+      post_url: loginPostUrl,
       final_url: finalUrl,
       success: loginSuccess,
+      script_session_id_used: realScriptSessionId,
       cookies,
     });
 
