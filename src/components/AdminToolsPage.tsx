@@ -97,7 +97,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   }, [(location.state as any)?.navKey]);
   const [searchQuery, setSearchQuery] = useState('');
   const [tenantSetupOpen, setTenantSetupOpen] = useState(false);
-  
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<{
     full_name: string;
