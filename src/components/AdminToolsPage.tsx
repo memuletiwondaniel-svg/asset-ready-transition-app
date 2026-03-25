@@ -205,6 +205,17 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       ],
     },
     {
+      label: 'OPERATIONS & CONFIGURATION',
+      columns: 3 as const,
+      items: [
+        { id: 'projects', title: 'Projects', description: 'Manage projects, phases, teams', icon: Building2, gradient: 'from-purple-500 to-purple-600', onClick: () => navigate('/project-management') },
+        { id: 'handover-management', title: 'VCRs & PSSRs', description: 'Certificates, safety reviews', icon: Key, gradient: 'from-blue-500 to-cyan-500', onClick: () => setActiveView('handover-management') },
+        { id: 'ora-configuration', title: 'ORA Plan', description: 'Operational readiness activities', icon: LayoutTemplate, gradient: 'from-amber-500 to-amber-600', onClick: () => setActiveView('ora-configuration') },
+        { id: 'document-management', title: 'Document Management', description: 'Types, categories, lifecycle', icon: Files, gradient: 'from-sky-500 to-blue-600', onClick: () => setActiveView('document-management') },
+        { id: 'tenant-setup', title: 'Tenant Setup Wizard', description: 'Configure new organisation', icon: Compass, gradient: 'from-teal-500 to-cyan-600', onClick: () => setTenantSetupOpen(true) },
+      ],
+    },
+    {
       label: 'LIVING DOCUMENTATION',
       columns: 3 as const,
       items: [
@@ -251,17 +262,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         { id: 'incident-response', title: 'Incident Response', description: 'Severity classification, SLAs', icon: AlertTriangle, gradient: 'from-red-600 to-rose-700', onClick: () => setActiveView('incident-response') },
         { id: 'feature-flags', title: 'Feature Flags', description: 'Per-tenant module toggles', icon: Flag, gradient: 'from-amber-500 to-orange-600', onClick: () => setActiveView('feature-flags') },
         { id: 'deployment-configs', title: 'Deployment Configs', description: 'Docker, CI/CD pipelines', icon: Container, gradient: 'from-cyan-600 to-blue-700', onClick: () => setActiveView('deployment-configs') },
-      ],
-    },
-    {
-      label: 'OPERATIONS & CONFIGURATION',
-      columns: 3 as const,
-      items: [
-        { id: 'projects', title: 'Projects', description: 'Manage projects, phases, teams', icon: Building2, gradient: 'from-purple-500 to-purple-600', onClick: () => navigate('/project-management') },
-        { id: 'handover-management', title: 'VCRs & PSSRs', description: 'Certificates, safety reviews', icon: Key, gradient: 'from-blue-500 to-cyan-500', onClick: () => setActiveView('handover-management') },
-        { id: 'ora-configuration', title: 'ORA Plan', description: 'Operational readiness activities', icon: LayoutTemplate, gradient: 'from-amber-500 to-amber-600', onClick: () => setActiveView('ora-configuration') },
-        { id: 'document-management', title: 'Document Management', description: 'Types, categories, lifecycle', icon: Files, gradient: 'from-sky-500 to-blue-600', onClick: () => setActiveView('document-management') },
-        { id: 'tenant-setup', title: 'Tenant Setup Wizard', description: 'Configure new organisation', icon: Compass, gradient: 'from-teal-500 to-cyan-600', onClick: () => setTenantSetupOpen(true) },
       ],
     },
   ], [navigate, t]);
