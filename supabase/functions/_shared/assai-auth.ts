@@ -314,7 +314,7 @@ export async function loginAssai(
 
     // Request C — Submit credentials
     console.log("[assai-auth] Step C: Submitting credentials");
-    const loginPostUrl = `${baseUrl}/login.aweb?loginMethod=unpw&isSecure=true`;
+    const loginPostUrl = `${baseUrl}/login.aweb`;
     const resC = await fetch(loginPostUrl, {
       method: "POST",
       headers: {
