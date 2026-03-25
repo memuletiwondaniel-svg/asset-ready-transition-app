@@ -211,10 +211,10 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       setFormData({
         base_url: existing?.base_url || '',
         username: '', password: '', api_key: '', header_name: 'X-API-Key',
-        client_id: '', client_secret: '', token_url: '',
+        client_id: '', client_secret: '', token_url: '', scope: '',
         project_code_field: existing?.project_code_field || '',
         sync_enabled: existing?.sync_enabled || false,
-        workflow_url: '', auth_token: '', automation_enabled: false,
+        platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false,
       });
     }
     setAuthType('basic');
