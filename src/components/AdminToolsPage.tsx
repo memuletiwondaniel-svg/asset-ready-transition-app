@@ -662,11 +662,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
 
                     <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
                       {/* Card Grid */}
-                      <div className={`grid gap-3 ${
-                        section.columns === 2
-                          ? 'grid-cols-1 sm:grid-cols-2'
-                          : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-                      }`}>
+                      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                         {section.items.map((item) => {
                           const IconComponent = item.icon;
                           return (
