@@ -266,7 +266,7 @@ const DMSIntegration: React.FC<DMSIntegrationProps> = ({ onBack }) => {
               <SelectContent>
                 {projects.map(p => (
                   <SelectItem key={p.id} value={p.id} className="text-xs">
-                    {p.project_code || p.name}
+                    {p.project_id_prefix || p.project_title}
                   </SelectItem>
                 ))}
               </SelectContent>
