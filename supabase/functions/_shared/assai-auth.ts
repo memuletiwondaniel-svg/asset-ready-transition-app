@@ -44,19 +44,22 @@ export async function loginAssai(
 
     console.log(`[assai-auth] Response status=${resp.status}, body_length=${body.length}, elapsed=${elapsed}ms`);
 
-    // Check for explicit credential error indicators only
     const lowerBody = body.toLowerCase();
-    const hasCredentialError =
-      lowerBody.includes('incorrect username or password') ||
-      lowerBody.includes('invalid username or password');
 
-    if (hasCredentialError) {
+    // Assai's login page includes the phrase "incorrect username or password" in static JS,
+    // so detect failed login by checking if we were sent back to the login form itself.
+    const returnedLoginForm =
+      resp.status === 200 &&
+      lowerBody.includes('id="form" action="login.aweb" method="post"') &&
+      lowerBody.includes('name="userid"') &&
+      lowerBody.includes('id="button_log_on"');
+
+    if (returnedLoginForm) {
       return { success: false, error: 'Incorrect username or password', response_time_ms: elapsed };
     }
 
-    // A redirect (302) or successful page load means login worked
+    // A redirect (302) or non-login page 200 means login likely worked
     if (resp.status === 302 || resp.status === 200) {
-      // Extract session cookie if present
       const setCookie = resp.headers.get('set-cookie') || '';
       const sessionMatch = setCookie.match(/JSESSIONID=([^;]+)/);
       return {
