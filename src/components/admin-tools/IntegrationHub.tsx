@@ -25,6 +25,8 @@ import gocompletionsLogo from '@/assets/logos/gocompletions.png';
 import assaiLogo from '@/assets/logos/assai.png';
 import sharepointLogo from '@/assets/logos/sharepoint.png';
 import teamsLogo from '@/assets/logos/teams.png';
+import wrenchLogo from '@/assets/logos/wrench.png';
+import documentumLogo from '@/assets/logos/documentum.png';
 
 interface IntegrationHubProps {
   onBack: () => void;
