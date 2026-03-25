@@ -282,7 +282,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const totalFilteredItems = useMemo(() => 
     filteredSections.reduce((sum, s) => sum + s.items.length, 0),
   [filteredSections]);
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   // Generate breadcrumbs based on current view
   const getBreadcrumbs = () => {
