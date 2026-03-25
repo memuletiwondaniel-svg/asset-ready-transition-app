@@ -473,7 +473,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
       {/* Detail Panel */}
       <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
-        <SheetContent className="w-full sm:max-w-[480px] overflow-y-auto p-0" hideClose>
+        <SheetContent className="w-full sm:max-w-[480px] overflow-y-auto p-0">
           {panelPlatform && (
             <>
               {/* Panel Header */}
