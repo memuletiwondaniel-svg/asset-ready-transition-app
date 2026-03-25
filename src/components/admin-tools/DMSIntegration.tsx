@@ -81,10 +81,10 @@ const DMSIntegration: React.FC<DMSIntegrationProps> = ({ onBack }) => {
   const fetchProjects = async () => {
     const { data } = await supabase
       .from('projects')
-      .select('id, name, project_code')
-      .order('name');
-    setProjects(data || []);
-    if (data && data.length > 0) setSelectedProject(data[0].id);
+      .select('id, project_title, project_id_prefix')
+      .order('project_title');
+    setProjects((data as any[]) || []);
+    if (data && data.length > 0) setSelectedProject((data[0] as any).id);
   };
 
   const fetchData = async () => {
