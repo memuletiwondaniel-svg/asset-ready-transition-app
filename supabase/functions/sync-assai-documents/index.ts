@@ -129,24 +129,53 @@ async function getAssaiBearerToken(
 
   const crValue = extractHidden("cr");
   const origRequestFromForm = extractHidden("orig_request");
+
+  // Extract ALL form details for diagnostics
+  const formMatch = loginPageBody.match(/<form[^>]*>([\s\S]*?)<\/form>/i);
+  const formTag = loginPageBody.match(/<form[^>]*/i)?.[0] || "no form found";
   const formAction = loginPageBody.match(/action=["']([^"']+)["']/i)?.[1] || "";
+  const formMethod = loginPageBody.match(/method=["']([^"']+)["']/i)?.[1] || "GET";
 
-  console.log(`[sync-assai] Hidden fields: cr=${crValue ? "present" : "empty"}, orig_request=${origRequestFromForm ? "present" : "empty"}, form_action=${formAction}`);
+  // Log all input fields to understand the form structure
+  const inputFields: string[] = [];
+  const inputRegex = /<input[^>]*>/gi;
+  let inputMatch;
+  while ((inputMatch = inputRegex.exec(loginPageBody)) !== null) {
+    const nameMatch = inputMatch[0].match(/name=["']([^"']+)["']/i);
+    const typeMatch = inputMatch[0].match(/type=["']([^"']+)["']/i);
+    if (nameMatch) inputFields.push(`${nameMatch[1]}(${typeMatch?.[1] || "text"})`);
+  }
 
-  // Step 3: POST credentials to login.jsp (ALWAYS use HTTPS)
+  console.log(`[sync-assai] Form tag: ${formTag}`);
+  console.log(`[sync-assai] Form action=${formAction}, method=${formMethod}`);
+  console.log(`[sync-assai] Form inputs: ${inputFields.join(", ")}`);
+  console.log(`[sync-assai] Hidden cr=${crValue ? "present" : "empty"}, orig_request=${origRequestFromForm ? "present" : "empty"}`);
+  console.log(`[sync-assai] Login page body (first 2000): ${loginPageBody.substring(0, 2000)}`);
+
+  // Step 3: POST credentials to the form action URL (ALWAYS HTTPS)
   const loginPostUrl = (formAction
     ? new URL(formAction, loginFinalUrl).toString()
     : loginFinalUrl.split("?")[0]
   ).replace(/^http:\/\//i, "https://");
 
-  const formData = new URLSearchParams({
-    userid: username,
-    password: password,
-    ...(crValue ? { cr: crValue } : {}),
-    orig_request: origRequestFromForm || authorizeUrl,
-  });
+  // Build form data using discovered field names
+  const hasUseridField = inputFields.some(f => f.startsWith("userid"));
+  const hasUsernameField = inputFields.some(f => f.startsWith("username") || f.startsWith("j_username"));
+  const hasPasswordField = inputFields.some(f => f.startsWith("j_password"));
 
-  console.log(`[sync-assai] OAuth Step 3: POSTing credentials to ${loginPostUrl}`);
+  const formData = new URLSearchParams();
+  // Try the field names we found
+  if (hasUsernameField) {
+    const uField = inputFields.find(f => f.startsWith("j_username")) ? "j_username" : "username";
+    formData.set(uField, username);
+  } else {
+    formData.set("userid", username);
+  }
+  formData.set(hasPasswordField ? "j_password" : "password", password);
+  if (crValue) formData.set("cr", crValue);
+  formData.set("orig_request", origRequestFromForm || authorizeUrl);
+
+  console.log(`[sync-assai] OAuth Step 3: POSTing to ${loginPostUrl} with fields: ${Array.from(formData.keys()).join(", ")}`);
 
   const loginResp = await fetch(loginPostUrl, {
     method: "POST",
@@ -159,20 +188,24 @@ async function getAssaiBearerToken(
     redirect: "manual",
   });
   cookies = mergeCookies(cookies, extractCookies(loginResp));
-  await loginResp.text();
+  const loginRespBody = await loginResp.text();
 
-  let postLocation = loginResp.headers.get("location");
-  console.log(`[sync-assai] Login POST status=${loginResp.status}, location=${postLocation?.substring(0, 250)}`);
+  const postLocation = loginResp.headers.get("location");
+  console.log(`[sync-assai] Login POST status=${loginResp.status}, location=${postLocation?.substring(0, 250) ?? "null"}`);
+  if (loginResp.status >= 400) {
+    console.log(`[sync-assai] Login POST error body: ${loginRespBody.substring(0, 500)}`);
+  }
 
-  if (!postLocation && loginResp.status === 200) {
-    return { token: null, error: "Login POST returned 200 — credentials may be wrong or form structure changed" };
+  if (!postLocation) {
+    // No redirect — check if the response body contains a token or an error
+    const bodyToken = loginRespBody.match(/access_token[=:]["'\s]*([A-Za-z0-9\-._~+/]+=*)/);
+    if (bodyToken) return { token: bodyToken[1] };
+    return { token: null, error: `Login POST returned ${loginResp.status} with no redirect. Form method=${formMethod}, action=${formAction}` };
   }
 
   // Step 4: Follow the redirect chain after login to capture the token
-  let currentUrl = postLocation!;
-  if (!currentUrl.startsWith("http")) {
-    currentUrl = new URL(currentUrl, loginPostUrl).toString();
-  }
+  let currentUrl = postLocation.startsWith("http") ? postLocation : new URL(postLocation, loginPostUrl).toString();
+  currentUrl = currentUrl.replace(/^http:\/\//i, "https://");
 
   for (let hop = 0; hop < 10; hop++) {
     // Check current URL for token fragment
