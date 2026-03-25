@@ -447,7 +447,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60 whitespace-nowrap select-none group-hover/section:text-muted-foreground transition-colors">
             {title}
           </span>
-          <Badge variant="outline" className="text-xs text-muted-foreground/60">{platforms.length}</Badge>
+          <div className="flex-1 h-px bg-border/40" />
+          <span className="text-[10px] text-muted-foreground/40 tabular-nums">{platforms.length}</span>
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl">
