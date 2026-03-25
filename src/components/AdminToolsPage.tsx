@@ -100,7 +100,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   }, [(location.state as any)?.navKey]);
   const [searchQuery, setSearchQuery] = useState('');
   const [tenantSetupOpen, setTenantSetupOpen] = useState(false);
-  const [favoriteTools, setFavoriteTools] = useState<string[]>([]);
+  
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<{
     full_name: string;
