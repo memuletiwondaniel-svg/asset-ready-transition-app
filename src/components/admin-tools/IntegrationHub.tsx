@@ -98,10 +98,13 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const [authType, setAuthType] = useState<AuthType>('basic');
   const [formData, setFormData] = useState({
     base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
-    client_id: '', client_secret: '', token_url: '',
+    client_id: '', client_secret: '', token_url: '', scope: '',
     project_code_field: '', sync_enabled: false,
-    workflow_url: '', auth_token: '', automation_enabled: false,
+    platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false,
   });
+  const [urlError, setUrlError] = useState('');
+  const [triedSave, setTriedSave] = useState(false);
+  const [credentialsSaved, setCredentialsSaved] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
 
