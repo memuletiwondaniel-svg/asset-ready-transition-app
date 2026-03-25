@@ -687,7 +687,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                                           ? 'bg-blue-500/10 text-blue-600 border border-blue-200/50'
                                           : 'bg-emerald-500/10 text-emerald-600 border border-emerald-200/50'
                                       }`}>
-                                        {item.badge}
+                                        {item.badge as string}
                                       </span>
                                     )}
                                   </div>
