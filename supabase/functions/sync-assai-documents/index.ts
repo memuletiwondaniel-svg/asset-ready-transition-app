@@ -312,6 +312,29 @@ Deno.serve(async (req) => {
       const resolvedDb = loginResult.dbName!;
       const sessionCookies = loginResult.cookies!;
 
+      // Step 1.5: Discover the Assai interface by fetching the home/forward page
+      const forwardUrl = `${resolvedBase}/AW${resolvedDb}/forward.aweb?page=root/body`;
+      console.log(`[sync-assai] Fetching forward page: ${forwardUrl}`);
+      const forwardResp = await fetch(forwardUrl, {
+        headers: { Cookie: sessionCookies.join("; "), Accept: "text/html" },
+        redirect: "manual",
+      });
+      const forwardHtml = await forwardResp.text();
+      console.log(`[sync-assai] Forward page status=${forwardResp.status}, length=${forwardHtml.length}`);
+      
+      // Extract all .aweb links and JS references to discover navigation
+      const awebLinks = [...forwardHtml.matchAll(/href=["']([^"']*\.aweb[^"']*)["']/gi)].map(m => m[1]);
+      const pageRefs = [...forwardHtml.matchAll(/page=([a-zA-Z0-9/._-]+)/gi)].map(m => m[1]);
+      console.log(`[sync-assai] Found .aweb links: ${awebLinks.slice(0, 20).join(", ")}`);
+      console.log(`[sync-assai] Found page refs: ${pageRefs.slice(0, 20).join(", ")}`);
+      
+      // Extract DWR script references
+      const dwrScripts = [...forwardHtml.matchAll(/\/dwr\/interface\/(\w+)\.js/gi)].map(m => m[1]);
+      console.log(`[sync-assai] DWR scripts in forward page: ${dwrScripts.join(", ")}`);
+      
+      // Log a snippet of the page for analysis
+      console.log(`[sync-assai] Forward page snippet: ${forwardHtml.substring(0, 2000)}`);
+
       // Step 2: Fetch documents via DWR discovery
       console.log("[sync-assai] Attempting to fetch documents via DWR...");
       let documents = await fetchDocumentsViaDwr(resolvedBase, resolvedDb, sessionCookies);
