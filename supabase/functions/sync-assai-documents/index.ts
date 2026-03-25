@@ -92,29 +92,34 @@ async function getAssaiBearerToken(
     loginUrl = nextLoc.startsWith("http") ? nextLoc : new URL(nextLoc, loginUrl).toString();
   }
 
+  // CRITICAL: Force HTTPS to prevent http→https 301 which converts POST to GET
+  loginUrl = loginUrl.replace(/^http:\/\//i, "https://");
   console.log(`[sync-assai] OAuth Step 2: Login page URL = ${loginUrl.substring(0, 250)}`);
 
-  // Step 2: GET the login page to capture any hidden fields and cookies
-  const loginPageResp = await fetch(loginUrl, {
+  // Build the login URL with orig_request parameter so login.jsp redirects back to OAuth after auth
+  const loginUrlWithOrig = loginUrl.includes("orig_request")
+    ? loginUrl
+    : `${loginUrl}${loginUrl.includes("?") ? "&" : "?"}loginMethod=unpw&orig_request=${encodeURIComponent(authorizeUrl)}`;
+
+  console.log(`[sync-assai] Login URL with orig_request: ${loginUrlWithOrig.substring(0, 300)}`);
+
+  // Step 2: GET the login page to capture hidden fields (cr, etc.) and cookies
+  const loginPageResp = await fetch(loginUrlWithOrig, {
     method: "GET",
     headers: { "Cookie": cookies.join("; "), "Accept": "text/html" },
-    redirect: "manual",
+    redirect: "follow",  // Follow any remaining redirects
   });
   cookies = mergeCookies(cookies, extractCookies(loginPageResp));
   const loginPageBody = await loginPageResp.text();
+  const loginFinalUrl = loginPageResp.url || loginUrlWithOrig;
 
-  // If it redirected again (already authenticated), follow
-  if (loginPageResp.status >= 300 && loginPageResp.status < 400) {
-    const loc = loginPageResp.headers.get("location") || "";
-    console.log(`[sync-assai] Login page redirected (already auth?): ${loc.substring(0, 200)}`);
-    // Check for token in the redirect
-    const tokenMatch = loc.match(/[#&]access_token=([^&\s]+)/);
-    if (tokenMatch) return { token: tokenMatch[1] };
-  }
+  console.log(`[sync-assai] Login page final_url=${loginFinalUrl.substring(0, 200)}, status=${loginPageResp.status}, body_length=${loginPageBody.length}`);
 
-  console.log(`[sync-assai] Login page status=${loginPageResp.status}, body_length=${loginPageBody.length}`);
+  // Check if we already got a token (unlikely but possible)
+  const tokenInLoginUrl = loginFinalUrl.match(/[#&]access_token=([^&\s]+)/);
+  if (tokenInLoginUrl) return { token: tokenInLoginUrl[1] };
 
-  // Extract any hidden fields from the login form
+  // Extract hidden fields from the login form
   const extractHidden = (name: string): string => {
     const match = loginPageBody.match(new RegExp(`name=["']${name}["'][^>]*value=["']([^"']*)["']`, "i"));
     if (match) return match[1];
@@ -123,15 +128,22 @@ async function getAssaiBearerToken(
   };
 
   const crValue = extractHidden("cr");
-  const origRequest = extractHidden("orig_request");
+  const origRequestFromForm = extractHidden("orig_request");
+  const formAction = loginPageBody.match(/action=["']([^"']+)["']/i)?.[1] || "";
 
-  // Step 3: POST credentials to login.jsp
-  const loginPostUrl = loginUrl.split("?")[0]; // Base login URL without query params
+  console.log(`[sync-assai] Hidden fields: cr=${crValue ? "present" : "empty"}, orig_request=${origRequestFromForm ? "present" : "empty"}, form_action=${formAction}`);
+
+  // Step 3: POST credentials to login.jsp (ALWAYS use HTTPS)
+  const loginPostUrl = (formAction
+    ? new URL(formAction, loginFinalUrl).toString()
+    : loginFinalUrl.split("?")[0]
+  ).replace(/^http:\/\//i, "https://");
+
   const formData = new URLSearchParams({
     userid: username,
     password: password,
     ...(crValue ? { cr: crValue } : {}),
-    ...(origRequest ? { orig_request: origRequest } : {}),
+    orig_request: origRequestFromForm || authorizeUrl,
   });
 
   console.log(`[sync-assai] OAuth Step 3: POSTing credentials to ${loginPostUrl}`);
