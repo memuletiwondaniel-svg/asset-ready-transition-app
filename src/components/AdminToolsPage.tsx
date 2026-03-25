@@ -519,6 +519,16 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     height: 'md:row-span-2',
     onClick: () => setActiveView('ai-agent-strategy')
   }, {
+    id: 'dms-integration',
+    title: 'DMS Integration',
+    description: 'Connect Assai, Wrench, Documentum, or SharePoint — Selma syncs document status from external DMS platforms',
+    icon: Database,
+    gradient: 'from-blue-500 to-cyan-600',
+    tooltip: 'Configure external DMS platform connections for document status synchronisation',
+    stats: {},
+    height: 'md:row-span-2',
+    onClick: () => setActiveView('dms-integration')
+  }, {
     id: 'tenant-setup',
     title: 'Tenant Setup Wizard',
     description: 'Guided 7-step wizard to configure plants, fields, hubs, commissions, roles, and invite users for a new organisation',
