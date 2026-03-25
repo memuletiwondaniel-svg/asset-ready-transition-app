@@ -7,17 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format, formatDistanceToNow } from 'date-fns';
-import { isAPIConfigured } from '@/lib/api-config-storage';
+import { isAPIConfigured, getAPIConfig } from '@/lib/api-config-storage';
 import {
-  Plug, Search, Settings, Wifi, RefreshCw, Loader2, Eye, EyeOff,
-  ChevronDown, CheckCircle2, XCircle, AlertTriangle, Clock
+  Plug, Search, Wifi, RefreshCw, Loader2, Eye, EyeOff,
+  ChevronDown, CheckCircle2, XCircle, AlertTriangle, X, Zap, Bot, Info, Trash2
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 import sapLogo from '@/assets/logos/sap4hana.png';
 import primaveraLogo from '@/assets/logos/primavera.png';
@@ -37,6 +36,9 @@ interface SyncCredential {
   tenant_id: string;
   dms_platform: string;
   base_url: string | null;
+  username_encrypted: string | null;
+  password_encrypted: string | null;
+  project_code_field: string | null;
   sync_enabled: boolean;
   last_sync_at: string | null;
 }
@@ -65,14 +67,17 @@ interface Platform {
   badgeLabel: string;
 }
 
+type ConnectionMethod = 'api' | 'automation';
+type AuthType = 'basic' | 'api_key' | 'oauth';
+
 const ALL_PLATFORMS: Platform[] = [
   { id: 'assai', name: 'Assai', description: 'Enterprise document management for O&G', section: 'dms', logo: assaiLogo, logoScale: 1.15, hasEdgeFunction: true, accent: '#F97316', badgeLabel: 'assai' },
   { id: 'wrench', name: 'Wrench', description: 'Project document control and management', section: 'dms', logo: wrenchLogo, accent: '#2563EB', badgeLabel: 'wrench' },
   { id: 'documentum', name: 'Documentum', description: 'Enterprise content management platform', section: 'dms', logo: documentumLogo, logoScale: 1.35, accent: '#6D28D9', badgeLabel: 'Documentum' },
+  { id: 'sharepoint', name: 'SharePoint', description: 'Collaboration and document storage', section: 'dms', logo: sharepointLogo, logoScale: 1.4, accent: '#038387', badgeLabel: 'SharePoint' },
   { id: 'gocompletions', name: 'GoCompletions', description: 'Completions and commissioning management', section: 'enterprise', logo: gocompletionsLogo, logoScale: 1.6, accent: '#0EA5E9', badgeLabel: 'GoCompletions' },
   { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and financials', section: 'enterprise', logo: sapLogo, logoScale: 1.4, accent: '#0070F2', badgeLabel: 'SAP' },
   { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', section: 'enterprise', logo: primaveraLogo, logoScale: 1.5, accent: '#C74634', badgeLabel: 'Oracle' },
-  { id: 'sharepoint', name: 'SharePoint', description: 'Collaboration and document storage', section: 'enterprise', logo: sharepointLogo, logoScale: 1.8, accent: '#038387', badgeLabel: 'SharePoint' },
   { id: 'teams', name: 'Microsoft Teams', description: 'Team communication and collaboration', section: 'enterprise', logo: teamsLogo, logoScale: 1.5, accent: '#6264A7', badgeLabel: 'Teams' },
 ];
 
@@ -80,41 +85,39 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [credentials, setCredentials] = useState<SyncCredential[]>([]);
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
-  const [docCounts, setDocCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
-  // Configure panel state
-  const [configOpen, setConfigOpen] = useState(false);
-  const [configPlatform, setConfigPlatform] = useState<Platform | null>(null);
-  const [configForm, setConfigForm] = useState({ base_url: '', username: '', password: '', project_code_field: 'ProjectCode', sync_enabled: false });
+  // Panel state
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelPlatform, setPanelPlatform] = useState<Platform | null>(null);
+
+  // Panel form state
+  const [connectionMethod, setConnectionMethod] = useState<ConnectionMethod>('api');
+  const [authType, setAuthType] = useState<AuthType>('basic');
+  const [formData, setFormData] = useState({
+    base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
+    client_id: '', client_secret: '', token_url: '',
+    project_code_field: '', sync_enabled: false,
+    workflow_url: '', auth_token: '', automation_enabled: false,
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Action states
-  const [syncing, setSyncing] = useState<string | null>(null);
-  const [testing, setTesting] = useState<string | null>(null);
-  const [testResult, setTestResult] = useState<Record<string, { success: boolean; message: string; response_time_ms: number } | null>>({});
-  const [syncError, setSyncError] = useState<Record<string, string>>({});
-  const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({});
-
-  // Project selector for sync
-  const [selectedProject, setSelectedProject] = useState('');
-  const [projects, setProjects] = useState<{ id: string; project_title: string; project_id_prefix: string }[]>([]);
+  const [testingInPanel, setTestingInPanel] = useState(false);
+  const [testResultInPanel, setTestResultInPanel] = useState<{ success: boolean; message: string; response_time_ms: number } | null>(null);
+  const [syncingInPanel, setSyncingInPanel] = useState(false);
+  const [syncResultInPanel, setSyncResultInPanel] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   // GoCompletions localStorage status
   const [gocConfigured, setGocConfigured] = useState(false);
 
   useEffect(() => {
     fetchData();
-    fetchProjects();
     setGocConfigured(isAPIConfigured('gocompletions'));
   }, []);
-
-  const fetchProjects = async () => {
-    const { data } = await supabase.from('projects').select('id, project_title, project_id_prefix').order('project_title');
-    setProjects((data as any[]) || []);
-    if (data && data.length > 0) setSelectedProject((data[0] as any).id);
-  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -125,13 +128,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       ]);
       setCredentials((credsResult.data as SyncCredential[]) || []);
       setSyncLogs((logsResult.data as SyncLog[]) || []);
-
-      const counts: Record<string, number> = {};
-      for (const p of ALL_PLATFORMS.filter(p => p.section === 'dms')) {
-        const { count } = await supabase.from('dms_external_sync').select('id', { count: 'exact', head: true }).eq('dms_platform', p.id);
-        counts[p.id] = count || 0;
-      }
-      setDocCounts(counts);
     } catch (err) {
       console.error('Error fetching integration data:', err);
     } finally {
@@ -141,63 +137,120 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
   const getCredential = (platformId: string) => credentials.find(c => c.dms_platform === platformId);
 
-  const getStatusBadge = (platformId: string) => {
-    // GoCompletions uses localStorage
+  const getStatusInfo = (platformId: string) => {
     if (platformId === 'gocompletions') {
       return gocConfigured
         ? { label: 'Credentials saved', variant: 'configured' as const }
         : { label: 'Not configured', variant: 'none' as const };
     }
-
-    const tr = testResult[platformId];
-    if (tr) {
-      if (tr.success) return { label: `Connected · ${tr.response_time_ms}ms`, variant: 'connected' as const };
-      return { label: `Connection failed · ${tr.message.substring(0, 30)}`, variant: 'failed' as const };
-    }
-
     const cred = getCredential(platformId);
     if (!cred) return { label: 'Not configured', variant: 'none' as const };
-    if (cred.sync_enabled) return { label: 'Credentials saved', variant: 'configured' as const };
     return { label: 'Credentials saved', variant: 'configured' as const };
   };
 
-  const openConfig = (platform: Platform) => {
-    if (platform.id === 'gocompletions') {
-      toast.info('GoCompletions uses its own configuration. Check the APIs wizard.');
-      return;
+  const getConnectionMethodLabel = (platformId: string): string | null => {
+    if (platformId === 'gocompletions') {
+      const config = getAPIConfig('gocompletions');
+      if (config?.interfaceMethod === 'rpa') return 'Automation';
+      if (config?.interfaceMethod === 'api') return 'API';
+      return null;
     }
-    const existing = getCredential(platform.id);
-    setConfigPlatform(platform);
-    setConfigForm({
-      base_url: existing?.base_url || '',
-      username: '',
-      password: '',
-      project_code_field: 'ProjectCode',
-      sync_enabled: existing?.sync_enabled || false,
-    });
+    const cred = getCredential(platformId);
+    if (!cred) return null;
+    return 'API';
+  };
+
+  const openPanel = (platform: Platform) => {
+    setPanelPlatform(platform);
+    setTestResultInPanel(null);
+    setSyncResultInPanel(null);
+    setHistoryOpen(false);
+    setShowRemoveConfirm(false);
+
+    // Pre-populate from existing credentials
+    if (platform.id === 'gocompletions') {
+      const config = getAPIConfig('gocompletions');
+      if (config?.interfaceMethod === 'rpa' && config.rpaCredentials) {
+        setConnectionMethod('automation');
+        setFormData(prev => ({
+          ...prev, base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
+          client_id: '', client_secret: '', token_url: '', project_code_field: '', sync_enabled: false,
+          workflow_url: config.rpaCredentials!.portalUrl || '', auth_token: '', automation_enabled: true,
+        }));
+      } else if (config?.apiCredentials) {
+        setConnectionMethod('api');
+        setFormData(prev => ({
+          ...prev,
+          base_url: config.apiCredentials!.endpointUrl || '',
+          username: config.apiCredentials!.username || '',
+          password: config.apiCredentials!.password || '',
+          api_key: config.apiCredentials!.apiKey || '',
+          client_id: config.apiCredentials!.clientId || '',
+          client_secret: config.apiCredentials!.clientSecret || '',
+          token_url: config.apiCredentials!.tokenUrl || '',
+          project_code_field: '', sync_enabled: false,
+          workflow_url: '', auth_token: '', automation_enabled: false, header_name: 'X-API-Key',
+        }));
+      } else {
+        setConnectionMethod('api');
+        resetFormData();
+      }
+    } else {
+      const existing = getCredential(platform.id);
+      setConnectionMethod('api');
+      setFormData({
+        base_url: existing?.base_url || '',
+        username: '', password: '', api_key: '', header_name: 'X-API-Key',
+        client_id: '', client_secret: '', token_url: '',
+        project_code_field: existing?.project_code_field || '',
+        sync_enabled: existing?.sync_enabled || false,
+        workflow_url: '', auth_token: '', automation_enabled: false,
+      });
+    }
+    setAuthType('basic');
     setShowPassword(false);
-    setConfigOpen(true);
+    setPanelOpen(true);
+  };
+
+  const resetFormData = () => {
+    setFormData({
+      base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
+      client_id: '', client_secret: '', token_url: '',
+      project_code_field: '', sync_enabled: false,
+      workflow_url: '', auth_token: '', automation_enabled: false,
+    });
   };
 
   const saveConfig = async () => {
-    if (!configPlatform) return;
+    if (!panelPlatform) return;
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
       const tenantId = user.user_metadata?.tenant_id;
-      const existing = getCredential(configPlatform.id);
+      const existing = getCredential(panelPlatform.id);
 
       const record: Record<string, unknown> = {
         tenant_id: tenantId,
-        dms_platform: configPlatform.id,
-        base_url: configForm.base_url,
-        project_code_field: configForm.project_code_field,
-        sync_enabled: configForm.sync_enabled,
+        dms_platform: panelPlatform.id,
+        base_url: connectionMethod === 'api' ? formData.base_url : formData.workflow_url,
+        project_code_field: formData.project_code_field,
+        sync_enabled: connectionMethod === 'api' ? formData.sync_enabled : formData.automation_enabled,
         updated_at: new Date().toISOString(),
       };
-      if (configForm.username) record.username_encrypted = configForm.username;
-      if (configForm.password) record.password_encrypted = configForm.password;
+      if (connectionMethod === 'api') {
+        if (authType === 'basic') {
+          if (formData.username) record.username_encrypted = formData.username;
+          if (formData.password) record.password_encrypted = formData.password;
+        } else if (authType === 'api_key') {
+          if (formData.api_key) record.password_encrypted = formData.api_key;
+        } else if (authType === 'oauth') {
+          if (formData.client_id) record.username_encrypted = formData.client_id;
+          if (formData.client_secret) record.password_encrypted = formData.client_secret;
+        }
+      } else {
+        if (formData.auth_token) record.password_encrypted = formData.auth_token;
+      }
 
       if (existing) {
         const { error } = await supabase.from('dms_sync_credentials').update(record).eq('id', existing.id);
@@ -208,8 +261,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         if (error) throw error;
       }
 
-      toast.success(`${configPlatform.name} configuration saved`);
-      setConfigOpen(false);
+      toast.success(`${panelPlatform.name} configuration saved`);
       fetchData();
     } catch (err: any) {
       toast.error(err.message || 'Failed to save');
@@ -218,61 +270,67 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     }
   };
 
-  const testConnection = async (platform: Platform) => {
-    if (!platform.hasEdgeFunction) {
-      toast.info(`Test function not yet deployed for ${platform.name}`);
+  const testConnection = async () => {
+    if (!panelPlatform?.hasEdgeFunction) {
+      toast.info(`Test function not yet deployed for ${panelPlatform?.name}`);
       return;
     }
-    setTesting(platform.id);
-    setTestResult(prev => ({ ...prev, [platform.id]: null }));
+    setTestingInPanel(true);
+    setTestResultInPanel(null);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const tenantId = user?.user_metadata?.tenant_id;
       const { data, error } = await supabase.functions.invoke('test-assai-connection', { body: { tenant_id: tenantId } });
       if (error) throw error;
-      setTestResult(prev => ({ ...prev, [platform.id]: data }));
-      if (data?.success) toast.success(`Connection successful (${data.response_time_ms}ms)`);
-      else toast.error(data?.message || 'Connection failed');
+      setTestResultInPanel(data);
     } catch (err: any) {
-      setTestResult(prev => ({ ...prev, [platform.id]: { success: false, message: err.message, response_time_ms: 0 } }));
-      toast.error(err.message || 'Test failed');
+      setTestResultInPanel({ success: false, message: err.message, response_time_ms: 0 });
     } finally {
-      setTesting(null);
+      setTestingInPanel(false);
     }
   };
 
-  const triggerSync = async (platform: Platform) => {
-    if (!platform.hasEdgeFunction) {
-      toast.info(`Sync function not yet deployed for ${platform.name}`);
+  const triggerSync = async () => {
+    if (!panelPlatform?.hasEdgeFunction) {
+      toast.info(`Sync function not yet deployed for ${panelPlatform?.name}`);
       return;
     }
-    if (!selectedProject) { toast.error('Select a project first'); return; }
-    setSyncing(platform.id);
-    setSyncError(prev => ({ ...prev, [platform.id]: '' }));
+    setSyncingInPanel(true);
+    setSyncResultInPanel(null);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const tenantId = user?.user_metadata?.tenant_id;
       const { data, error } = await supabase.functions.invoke('sync-assai-documents', {
-        body: { project_id: selectedProject, tenant_id: tenantId, manual_trigger: true },
+        body: { tenant_id: tenantId, manual_trigger: true },
       });
       if (error) throw error;
       if (data?.success) {
-        toast.success(`Sync complete: ${data.synced_count} synced, ${data.new_documents} new`);
+        setSyncResultInPanel(`${data.synced_count} records synced, ${data.new_documents} new`);
       } else {
-        setSyncError(prev => ({ ...prev, [platform.id]: data?.error || 'Sync failed' }));
-        toast.error(data?.error || 'Sync failed');
+        setSyncResultInPanel(data?.error || 'Sync failed');
       }
       fetchData();
     } catch (err: any) {
-      setSyncError(prev => ({ ...prev, [platform.id]: err.message }));
-      toast.error(err.message || 'Sync failed');
+      setSyncResultInPanel(err.message || 'Sync failed');
     } finally {
-      setSyncing(null);
+      setSyncingInPanel(false);
     }
   };
 
+  const removeCredentials = async () => {
+    if (!panelPlatform) return;
+    const existing = getCredential(panelPlatform.id);
+    if (existing) {
+      await supabase.from('dms_sync_credentials').delete().eq('id', existing.id);
+    }
+    toast.success(`Credentials removed for ${panelPlatform.name}`);
+    setShowRemoveConfirm(false);
+    setPanelOpen(false);
+    fetchData();
+  };
+
   const getPlatformLogs = (platformId: string) =>
-    syncLogs.filter(l => l.dms_platform === platformId).slice(0, 5);
+    syncLogs.filter(l => l.dms_platform === platformId).slice(0, 10);
 
   const filteredPlatforms = useMemo(() => {
     if (!searchQuery.trim()) return ALL_PLATFORMS;
@@ -285,159 +343,68 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const dmsPlatforms = filteredPlatforms.filter(p => p.section === 'dms');
   const enterprisePlatforms = filteredPlatforms.filter(p => p.section === 'enterprise');
 
-  const StatusBadgeComponent = ({ platformId }: { platformId: string }) => {
-    const status = getStatusBadge(platformId);
-    const variantStyles: Record<string, string> = {
-      connected: 'bg-emerald-500/10 text-emerald-600 border-emerald-200',
-      configured: 'bg-teal-500/10 text-teal-600 border-teal-200',
-      failed: 'bg-destructive/10 text-destructive border-destructive/20',
-      none: '',
-    };
-    const icons: Record<string, React.ReactNode> = {
-      connected: <CheckCircle2 className="h-3 w-3 mr-1" />,
-      configured: <CheckCircle2 className="h-3 w-3 mr-1" />,
-      failed: <XCircle className="h-3 w-3 mr-1" />,
-      none: <AlertTriangle className="h-3 w-3 mr-1" />,
-    };
+  const isFormValid = connectionMethod === 'api' ? !!formData.base_url.trim() : !!formData.workflow_url.trim();
+
+  const StatusBadge = ({ platformId }: { platformId: string }) => {
+    const status = getStatusInfo(platformId);
+    if (status.variant === 'configured') {
+      return (
+        <Badge className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200">
+          <CheckCircle2 className="h-3 w-3 mr-1" />
+          {status.label}
+        </Badge>
+      );
+    }
     return (
-      <Badge variant={status.variant === 'none' ? 'outline' : 'default'} className={`text-[10px] ${variantStyles[status.variant]}`}>
-        {icons[status.variant]}
+      <Badge variant="outline" className="text-[10px] text-muted-foreground">
         {status.label}
       </Badge>
     );
   };
 
   const renderPlatformCard = (platform: Platform) => {
-    const cred = getCredential(platform.id);
-    const count = docCounts[platform.id] || 0;
-    const hasCredentials = !!cred || (platform.id === 'gocompletions' && gocConfigured);
-    const logs = getPlatformLogs(platform.id);
-    const isExpanded = expandedLogs[platform.id] || false;
+    const methodLabel = getConnectionMethodLabel(platform.id);
 
     return (
-      <Card key={platform.id} className="group border-border/20 bg-card shadow-[0_1px_3px_0_rgb(0_0_0/0.04)] hover:shadow-[0_20px_40px_-12px_rgb(0_0_0/0.12)] hover:-translate-y-1.5 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden cursor-default">
+      <Card
+        key={platform.id}
+        className="group border-border/40 bg-card hover:border-border transition-colors duration-200 cursor-pointer overflow-hidden"
+        onClick={() => openPanel(platform)}
+      >
         {/* Status badge */}
         <div className="flex justify-end p-3 pb-0">
-          <StatusBadgeComponent platformId={platform.id} />
+          <StatusBadge platformId={platform.id} />
         </div>
 
         {/* Logo */}
         <div className="flex justify-center px-4 py-3">
-          <div className="h-12 w-full max-w-[160px] flex items-center justify-center bg-white dark:bg-white/95 rounded-xl border border-border/20 p-2 group-hover:border-primary/20 group-hover:shadow-[0_0_12px_-2px_hsl(var(--primary)/0.15)] group-hover:scale-105 transition-all duration-300">
+          <div className="h-12 w-full max-w-[140px] flex items-center justify-center bg-white dark:bg-white/95 rounded-xl border border-border/20 p-2">
             {platform.logo ? (
               <img
                 src={platform.logo}
                 alt={`${platform.name} logo`}
                 className="h-full max-w-full object-contain"
                 style={platform.logoScale ? { transform: `scale(${platform.logoScale})` } : undefined}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
               />
-            ) : null}
-            <span
-              className={`text-sm font-bold text-white px-3 py-1 rounded ${platform.logo ? 'hidden' : ''}`}
-              style={{ backgroundColor: platform.accent }}
-            >
-              {platform.badgeLabel}
-            </span>
+            ) : (
+              <span
+                className="text-sm font-bold text-white px-3 py-1 rounded"
+                style={{ backgroundColor: platform.accent }}
+              >
+                {platform.badgeLabel}
+              </span>
+            )}
           </div>
         </div>
 
-        <CardContent className="space-y-3 pt-0">
-          {/* Stats row - only if connected */}
-          {hasCredentials && (
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              {cred?.last_sync_at && (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {formatDistanceToNow(new Date(cred.last_sync_at), { addSuffix: true })}
-                </span>
-              )}
-              {count > 0 && <span className="font-medium text-foreground">{count.toLocaleString()} records</span>}
-            </div>
+        <CardContent className="pt-0 pb-4 text-center space-y-2">
+          <h3 className="font-semibold text-sm text-foreground">{platform.name}</h3>
+          <p className="text-xs text-muted-foreground leading-relaxed">{platform.description}</p>
+          {methodLabel && (
+            <Badge variant="outline" className="text-[10px] text-muted-foreground font-normal">
+              {methodLabel}
+            </Badge>
           )}
-
-          {/* Project selector for sync */}
-          {platform.hasEdgeFunction && hasCredentials && (
-            <Select value={selectedProject} onValueChange={setSelectedProject}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Select project" />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map(p => (
-                  <SelectItem key={p.id} value={p.id} className="text-xs">
-                    {p.project_id_prefix || p.project_title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {/* Button row */}
-          <div className="grid grid-cols-3 gap-1.5">
-            <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => openConfig(platform)}>
-              Configure
-            </Button>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="w-full">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs h-8 w-full"
-                      disabled={!hasCredentials || testing === platform.id}
-                      onClick={() => testConnection(platform)}
-                    >
-                      {testing === platform.id ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Test'}
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {!hasCredentials && <TooltipContent><p className="text-xs">Configure credentials first</p></TooltipContent>}
-              </Tooltip>
-            </TooltipProvider>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs h-8"
-              disabled={!hasCredentials || syncing === platform.id}
-              onClick={() => triggerSync(platform)}
-            >
-              {syncing === platform.id ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Sync Now'}
-            </Button>
-          </div>
-
-          {/* Sync error */}
-          {syncError[platform.id] && (
-            <p className="text-xs text-destructive">{syncError[platform.id]}</p>
-          )}
-
-          {/* Expandable sync log */}
-          <Collapsible open={isExpanded} onOpenChange={(o) => setExpandedLogs(prev => ({ ...prev, [platform.id]: o }))}>
-            <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors w-full">
-              <ChevronDown className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-              View sync history
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-2">
-              {logs.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">No syncs recorded yet</p>
-              ) : (
-                <div className="space-y-0 border rounded-md overflow-hidden">
-                  <div className="grid grid-cols-5 gap-1 px-2 py-1 bg-muted/50 text-[10px] font-medium text-muted-foreground">
-                    <span>Date</span><span className="text-right">Synced</span><span className="text-right">New</span><span className="text-right">Changed</span><span className="text-right">Failed</span>
-                  </div>
-                  {logs.map(log => (
-                    <div key={log.id} className="grid grid-cols-5 gap-1 px-2 py-1 text-[10px] border-t border-border/50">
-                      <span>{format(new Date(log.created_at), 'dd MMM HH:mm')}</span>
-                      <span className="text-right font-medium">{log.synced_count}</span>
-                      <span className="text-right text-emerald-600">{log.new_documents}</span>
-                      <span className="text-right text-amber-600">{log.status_changes}</span>
-                      <span className="text-right text-destructive">{log.failed_count}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CollapsibleContent>
-          </Collapsible>
         </CardContent>
       </Card>
     );
@@ -458,11 +425,13 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     );
   };
 
+  const panelLogs = panelPlatform ? getPlatformLogs(panelPlatform.id) : [];
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <AdminHeader
         title="Integration Hub"
-        description="Configure interfaces between ORSH and external applications"
+        description="Connect ORSH to external platforms and systems"
         icon={<Plug className="h-6 w-6" />}
         iconGradient="from-emerald-500 to-teal-600"
         favoritePath="/admin-tools/integration-hub"
@@ -502,81 +471,312 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         )}
       </div>
 
-      {/* Configure Slide-over */}
-      <Sheet open={configOpen} onOpenChange={setConfigOpen}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Configure {configPlatform?.name}
-            </SheetTitle>
-          </SheetHeader>
-          <div className="space-y-5 pt-6">
-            <div className="space-y-2">
-              <Label className="text-xs">Base URL</Label>
-              <Input
-                placeholder="https://your-instance.com"
-                value={configForm.base_url}
-                onChange={e => setConfigForm(f => ({ ...f, base_url: e.target.value }))}
-                className="text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Username</Label>
-              <Input
-                placeholder="API username"
-                value={configForm.username}
-                onChange={e => setConfigForm(f => ({ ...f, username: e.target.value }))}
-                className="text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Password</Label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="API password"
-                  value={configForm.password}
-                  onChange={e => setConfigForm(f => ({ ...f, password: e.target.value }))}
-                  className="text-sm pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-full w-10"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                </Button>
+      {/* Detail Panel */}
+      <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
+        <SheetContent className="w-full sm:max-w-[480px] overflow-y-auto p-0" hideClose>
+          {panelPlatform && (
+            <>
+              {/* Panel Header */}
+              <div className="sticky top-0 z-10 bg-background border-b border-border px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {panelPlatform.logo && (
+                      <div className="h-9 w-16 flex items-center justify-center bg-white rounded-lg border border-border/30 p-1">
+                        <img
+                          src={panelPlatform.logo}
+                          alt={panelPlatform.name}
+                          className="h-full max-w-full object-contain"
+                          style={panelPlatform.logoScale ? { transform: `scale(${panelPlatform.logoScale})` } : undefined}
+                        />
+                      </div>
+                    )}
+                    <h2 className="text-lg font-semibold text-foreground">{panelPlatform.name}</h2>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge platformId={panelPlatform.id} />
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPanelOpen(false)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <p className="text-[10px] text-muted-foreground">Credentials are encrypted before storage</p>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Project Code Field</Label>
-              <Input
-                placeholder="ProjectCode"
-                value={configForm.project_code_field}
-                onChange={e => setConfigForm(f => ({ ...f, project_code_field: e.target.value }))}
-                className="text-sm"
-              />
-              <p className="text-[10px] text-muted-foreground">The API field name used to filter by project</p>
-            </div>
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Enable Sync</Label>
-              <Switch
-                checked={configForm.sync_enabled}
-                onCheckedChange={v => setConfigForm(f => ({ ...f, sync_enabled: v }))}
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-4 border-t">
-              <Button variant="outline" size="sm" onClick={() => setConfigOpen(false)}>Cancel</Button>
-              <Button size="sm" onClick={saveConfig} disabled={saving}>
-                {saving && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                Save Configuration
-              </Button>
-            </div>
-          </div>
+
+              <div className="px-6 py-6 space-y-6">
+                {/* SECTION A: Connection Method */}
+                <div className="space-y-3">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                    Connection Method
+                  </span>
+                  <p className="text-xs text-muted-foreground">How would you like to connect?</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setConnectionMethod('api')}
+                      className={cn(
+                        'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-center',
+                        connectionMethod === 'api'
+                          ? 'border-2 border-primary bg-background'
+                          : 'border-border hover:border-border/80 bg-background'
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={cn('w-3 h-3 rounded-full border-2', connectionMethod === 'api' ? 'border-primary bg-primary' : 'border-muted-foreground/40')} />
+                        <Zap className="h-4 w-4 text-blue-600" />
+                        <span className="font-semibold text-sm">API</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">Direct connection via REST API</p>
+                      <p className="text-[10px] text-muted-foreground/70">Best for: real-time sync, large volumes</p>
+                    </button>
+                    <button
+                      onClick={() => setConnectionMethod('automation')}
+                      className={cn(
+                        'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-center',
+                        connectionMethod === 'automation'
+                          ? 'border-2 border-primary bg-background'
+                          : 'border-border hover:border-border/80 bg-background'
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={cn('w-3 h-3 rounded-full border-2', connectionMethod === 'automation' ? 'border-primary bg-primary' : 'border-muted-foreground/40')} />
+                        <Bot className="h-4 w-4 text-amber-600" />
+                        <span className="font-semibold text-sm">Automation</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">Browser-based workflow (RPA)</p>
+                      <p className="text-[10px] text-muted-foreground/70">Best for: systems without API access</p>
+                    </button>
+                  </div>
+                </div>
+
+                {/* SECTION B: Configuration Form */}
+                <div className="space-y-4">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                    Configuration
+                  </span>
+
+                  {connectionMethod === 'api' ? (
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Base URL</Label>
+                        <Input
+                          placeholder="https://client.assaisoftware.com"
+                          value={formData.base_url}
+                          onChange={e => setFormData(f => ({ ...f, base_url: e.target.value }))}
+                          className="h-10 text-sm rounded-lg"
+                        />
+                        <p className="text-[10px] text-muted-foreground">e.g. https://client.assaisoftware.com</p>
+                      </div>
+
+                      {/* Auth type selector */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Authentication Type</Label>
+                        <div className="flex rounded-lg border border-border overflow-hidden">
+                          {([['basic', 'Username / Password'], ['api_key', 'API Key'], ['oauth', 'OAuth 2.0']] as const).map(([key, label]) => (
+                            <button
+                              key={key}
+                              onClick={() => setAuthType(key)}
+                              className={cn(
+                                'flex-1 text-xs py-2 px-2 transition-colors font-medium',
+                                authType === key
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-background text-muted-foreground hover:bg-muted'
+                              )}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {authType === 'basic' && (
+                        <>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Username</Label>
+                            <Input value={formData.username} onChange={e => setFormData(f => ({ ...f, username: e.target.value }))} className="h-10 text-sm rounded-lg" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Password</Label>
+                            <div className="relative">
+                              <Input type={showPassword ? 'text' : 'password'} value={formData.password} onChange={e => setFormData(f => ({ ...f, password: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
+                              <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10" onClick={() => setShowPassword(!showPassword)}>
+                                {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                              </Button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {authType === 'api_key' && (
+                        <>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">API Key</Label>
+                            <div className="relative">
+                              <Input type={showPassword ? 'text' : 'password'} value={formData.api_key} onChange={e => setFormData(f => ({ ...f, api_key: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
+                              <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10" onClick={() => setShowPassword(!showPassword)}>
+                                {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Header Name</Label>
+                            <Input value={formData.header_name} onChange={e => setFormData(f => ({ ...f, header_name: e.target.value }))} className="h-10 text-sm rounded-lg" placeholder="X-API-Key" />
+                          </div>
+                        </>
+                      )}
+
+                      {authType === 'oauth' && (
+                        <>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Client ID</Label>
+                            <Input value={formData.client_id} onChange={e => setFormData(f => ({ ...f, client_id: e.target.value }))} className="h-10 text-sm rounded-lg" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Client Secret</Label>
+                            <div className="relative">
+                              <Input type={showPassword ? 'text' : 'password'} value={formData.client_secret} onChange={e => setFormData(f => ({ ...f, client_secret: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
+                              <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10" onClick={() => setShowPassword(!showPassword)}>
+                                {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Token URL</Label>
+                            <Input value={formData.token_url} onChange={e => setFormData(f => ({ ...f, token_url: e.target.value }))} className="h-10 text-sm rounded-lg" placeholder="https://auth.example.com/oauth/token" />
+                          </div>
+                        </>
+                      )}
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Project Code Field</Label>
+                        <Input value={formData.project_code_field} onChange={e => setFormData(f => ({ ...f, project_code_field: e.target.value }))} className="h-10 text-sm rounded-lg" placeholder="ProjectCode" />
+                        <p className="text-[10px] text-muted-foreground">Field used to filter documents by project</p>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="text-xs">Enable Sync</Label>
+                          <p className="text-[10px] text-muted-foreground">Allow ORSH to pull data from this platform</p>
+                        </div>
+                        <Switch checked={formData.sync_enabled} onCheckedChange={v => setFormData(f => ({ ...f, sync_enabled: v }))} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Workflow Endpoint URL</Label>
+                        <Input value={formData.workflow_url} onChange={e => setFormData(f => ({ ...f, workflow_url: e.target.value }))} className="h-10 text-sm rounded-lg" placeholder="https://prod-00.westus.logic.azure.com/..." />
+                        <p className="text-[10px] text-muted-foreground">URL of your automation workflow trigger</p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Authentication Token</Label>
+                        <div className="relative">
+                          <Input type={showPassword ? 'text' : 'password'} value={formData.auth_token} onChange={e => setFormData(f => ({ ...f, auth_token: e.target.value }))} className="h-10 text-sm rounded-lg pr-10" />
+                          <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10" onClick={() => setShowPassword(!showPassword)}>
+                            {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                          </Button>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">Bearer token to authenticate the trigger</p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Enable Automation</Label>
+                        <Switch checked={formData.automation_enabled} onCheckedChange={v => setFormData(f => ({ ...f, automation_enabled: v }))} />
+                      </div>
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/5 border border-blue-200/50">
+                        <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-blue-700 leading-relaxed">
+                          Automation workflows require a configured RPA tool such as Power Automate or UiPath. Contact your IT team to set up the workflow before enabling.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* SECTION C: Action Buttons */}
+                <div className="space-y-3">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                    Actions
+                  </span>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button variant="outline" size="sm" className="text-xs" disabled={!isFormValid || testingInPanel} onClick={testConnection}>
+                      {testingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wifi className="h-3 w-3 mr-1" />}
+                      Test
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-xs" disabled={!isFormValid || syncingInPanel} onClick={triggerSync}>
+                      {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                      Sync Now
+                    </Button>
+                    <Button size="sm" className="text-xs" disabled={!isFormValid || saving} onClick={saveConfig}>
+                      {saving && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+                      Save
+                    </Button>
+                  </div>
+                  {testResultInPanel && (
+                    <div className={cn('flex items-center gap-2 text-xs px-3 py-2 rounded-lg', testResultInPanel.success ? 'bg-emerald-500/10 text-emerald-600' : 'bg-destructive/10 text-destructive')}>
+                      {testResultInPanel.success ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                      {testResultInPanel.success ? `Connected · ${testResultInPanel.response_time_ms}ms` : testResultInPanel.message}
+                    </div>
+                  )}
+                  {syncResultInPanel && (
+                    <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-muted">
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      {syncResultInPanel}
+                    </div>
+                  )}
+                </div>
+
+                {/* SECTION D: Sync History */}
+                <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
+                  <CollapsibleTrigger className="flex items-center gap-2 w-full text-left">
+                    <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', historyOpen ? '' : '-rotate-90')} />
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                      Sync History (last 30 days)
+                    </span>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-3">
+                    {panelLogs.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic text-center py-4">No sync history yet</p>
+                    ) : (
+                      <div className="border rounded-lg overflow-hidden text-[11px]">
+                        <div className="grid grid-cols-5 gap-1 px-3 py-2 bg-muted/50 font-medium text-muted-foreground">
+                          <span>Date</span><span className="text-right">Synced</span><span className="text-right">New</span><span className="text-right">Changed</span><span className="text-right">Failed</span>
+                        </div>
+                        {panelLogs.map(log => (
+                          <div key={log.id} className="grid grid-cols-5 gap-1 px-3 py-2 border-t border-border/50">
+                            <span>{format(new Date(log.created_at), 'dd MMM HH:mm')}</span>
+                            <span className="text-right font-medium">{log.synced_count}</span>
+                            <span className="text-right text-emerald-600">{log.new_documents}</span>
+                            <span className="text-right text-amber-600">{log.status_changes}</span>
+                            <span className="text-right text-destructive">{log.failed_count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* SECTION E: Danger Zone */}
+                <div className="border-t border-border pt-4">
+                  {!showRemoveConfirm ? (
+                    <button
+                      onClick={() => setShowRemoveConfirm(true)}
+                      className="text-xs text-destructive hover:text-destructive/80 transition-colors flex items-center gap-1"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Remove credentials
+                    </button>
+                  ) : (
+                    <div className="space-y-2 p-3 rounded-lg border border-destructive/20 bg-destructive/5">
+                      <p className="text-xs text-foreground">
+                        This will delete all saved credentials for <strong>{panelPlatform.name}</strong>. Are you sure?
+                      </p>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setShowRemoveConfirm(false)}>Cancel</Button>
+                        <Button variant="destructive" size="sm" className="text-xs h-7" onClick={removeCredentials}>Remove</Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </SheetContent>
       </Sheet>
     </div>

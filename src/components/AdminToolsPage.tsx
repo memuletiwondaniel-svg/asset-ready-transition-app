@@ -239,10 +239,9 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     },
     {
       label: 'INTEGRATIONS',
-      columns: 2 as const,
+      columns: 3 as const,
       items: [
-        { id: 'integration-hub', title: 'DMS Integration', description: 'Assai, Wrench, Documentum sync', icon: Plug, gradient: 'from-emerald-500 to-teal-600', badge: 'configured' as const, onClick: () => setActiveView('integration-hub') },
-        { id: 'gocompletions', title: 'GoCompletions', description: 'ITR & ITP completion sync', icon: CheckCircle, gradient: 'from-green-500 to-emerald-600', onClick: () => setActiveView('integration-hub') },
+        { id: 'integration-hub', title: 'Integration Hub', description: 'Connect ORSH to external platforms and systems', icon: Plug, gradient: 'from-emerald-500 to-teal-600', badge: 'configured' as const, onClick: () => setActiveView('integration-hub') },
         { id: 'api-keys', title: 'API Key Management', description: 'Generate, scope, rotate API keys', icon: KeyRound, gradient: 'from-violet-500 to-purple-600', onClick: () => setActiveView('api-keys') },
         { id: 'webhook-security', title: 'Webhook Security', description: 'HMAC signature verification', icon: Webhook, gradient: 'from-sky-500 to-blue-600', onClick: () => setActiveView('webhook-security') },
         { id: 'integration-health', title: 'Integration Health', description: 'API success rates, latency monitoring', icon: HeartPulse, gradient: 'from-green-500 to-emerald-600', onClick: () => setActiveView('integration-health') },
