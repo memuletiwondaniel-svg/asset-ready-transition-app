@@ -68,9 +68,9 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
       </div>
 
       {/* Main Content with Tabs */}
-      <div className="flex-1 overflow-auto p-6 min-h-0">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="inline-flex h-12 w-auto">
+      <div className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6 min-h-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
+          <TabsList className="inline-flex h-10 md:h-12 w-auto overflow-x-auto max-w-full">
             <TabsTrigger 
               value="vcr" 
               className={cn(
