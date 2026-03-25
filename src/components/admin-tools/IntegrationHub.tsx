@@ -109,6 +109,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const [credentialsSaved, setCredentialsSaved] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [hasStoredCredentials, setHasStoredCredentials] = useState(false);
 
   // Action states
   const [testingInPanel, setTestingInPanel] = useState(false);
