@@ -621,10 +621,10 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
-          <div className="container pt-6 pb-8 max-w-6xl mx-auto px-6">
+          <div className="container pt-4 md:pt-6 pb-20 md:pb-8 max-w-6xl mx-auto px-4 md:px-6">
             {/* Search Bar */}
-            <div className="flex items-center justify-end mb-8">
-              <div className="relative w-80">
+            <div className="flex items-center justify-end mb-6 md:mb-8">
+              <div className="relative w-full sm:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input type="text" placeholder={t.searchAdminTools} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 pr-10 h-9 text-sm bg-card border-border/50 rounded-lg" />
                 {searchQuery && <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setSearchQuery('')}>
