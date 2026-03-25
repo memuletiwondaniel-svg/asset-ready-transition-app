@@ -217,7 +217,10 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false,
       });
     }
-    setAuthType('basic');
+    setAuthType('api_key');
+    setTriedSave(false);
+    setUrlError('');
+    setCredentialsSaved(!!getCredential(platform.id) || (platform.id === 'gocompletions' && gocConfigured));
     setShowPassword(false);
     setPanelOpen(true);
   };
