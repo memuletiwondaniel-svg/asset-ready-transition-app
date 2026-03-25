@@ -246,7 +246,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       const record: Record<string, unknown> = {
         tenant_id: tenantId,
         dms_platform: panelPlatform.id,
-        base_url: connectionMethod === 'api' ? formData.base_url : formData.workflow_url,
+        base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
         project_code_field: formData.project_code_field,
         sync_enabled: connectionMethod === 'api' ? formData.sync_enabled : formData.automation_enabled,
         updated_at: new Date().toISOString(),
