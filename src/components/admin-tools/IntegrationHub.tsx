@@ -779,7 +779,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[13px] font-medium text-foreground/80">Username</Label>
-                        <Input placeholder={hasStoredCredentials ? '••••••••' : ''} value={formData.username} onChange={e => setFormData(f => ({ ...f, username: e.target.value }))} className="h-10 text-sm rounded-lg" />
+                        <Input placeholder="user@company.com" value={formData.username} onChange={e => setFormData(f => ({ ...f, username: e.target.value }))} className="h-10 text-sm rounded-lg" />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[13px] font-medium text-foreground/80">Password</Label>
