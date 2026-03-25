@@ -43,8 +43,13 @@ export async function loginAssai(
 
     console.log(`[assai-auth] Response status=${resp.status}, body_length=${body.length}, elapsed=${elapsed}ms`);
 
-    // Check for error indicators
-    if (body.includes('Incorrect username or password') || body.includes('loginError')) {
+    // Check for explicit credential error indicators only
+    const lowerBody = body.toLowerCase();
+    const hasCredentialError =
+      lowerBody.includes('incorrect username or password') ||
+      lowerBody.includes('invalid username or password');
+
+    if (hasCredentialError) {
       return { success: false, error: 'Incorrect username or password', response_time_ms: elapsed };
     }
 
