@@ -743,8 +743,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
                       <div className="flex items-center justify-between">
                         <div>
-                          <Label className="text-[13px] font-medium text-foreground/80">Enable Sync</Label>
-                          <p className="text-xs text-muted-foreground">Allow ORSH to pull data from this platform</p>
+                          <Label className="text-[13px] font-medium text-foreground/80">Enable sync</Label>
+                          <p className="text-xs text-muted-foreground">Allow ORSH to sync data from this platform</p>
                         </div>
                         <Switch checked={formData.sync_enabled} onCheckedChange={v => setFormData(f => ({ ...f, sync_enabled: v }))} />
                       </div>
