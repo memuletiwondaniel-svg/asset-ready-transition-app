@@ -953,6 +953,78 @@ export type Database = {
         }
         Relationships: []
       }
+      dms_external_sync: {
+        Row: {
+          created_at: string | null
+          discipline_code: string | null
+          dms_platform: string
+          document_number: string
+          document_title: string | null
+          external_url: string | null
+          id: string
+          last_synced_at: string | null
+          package_tag: string | null
+          project_id: string | null
+          revision: string | null
+          status_code: string | null
+          sync_status: string | null
+          tenant_id: string | null
+          updated_at: string | null
+          vendor_po_sequence: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          discipline_code?: string | null
+          dms_platform: string
+          document_number: string
+          document_title?: string | null
+          external_url?: string | null
+          id?: string
+          last_synced_at?: string | null
+          package_tag?: string | null
+          project_id?: string | null
+          revision?: string | null
+          status_code?: string | null
+          sync_status?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          vendor_po_sequence?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          discipline_code?: string | null
+          dms_platform?: string
+          document_number?: string
+          document_title?: string | null
+          external_url?: string | null
+          id?: string
+          last_synced_at?: string | null
+          package_tag?: string | null
+          project_id?: string | null
+          revision?: string | null
+          status_code?: string | null
+          sync_status?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          vendor_po_sequence?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dms_external_sync_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dms_external_sync_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dms_numbering_segments: {
         Row: {
           created_at: string
@@ -1185,6 +1257,127 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      dms_sync_credentials: {
+        Row: {
+          base_url: string | null
+          created_at: string | null
+          dms_platform: string
+          id: string
+          last_sync_at: string | null
+          mdr_current_revision: string | null
+          mdr_document_number: string | null
+          mdr_last_fetched_at: string | null
+          password_encrypted: string | null
+          project_code_field: string | null
+          sync_enabled: boolean | null
+          tenant_id: string | null
+          updated_at: string | null
+          username_encrypted: string | null
+        }
+        Insert: {
+          base_url?: string | null
+          created_at?: string | null
+          dms_platform: string
+          id?: string
+          last_sync_at?: string | null
+          mdr_current_revision?: string | null
+          mdr_document_number?: string | null
+          mdr_last_fetched_at?: string | null
+          password_encrypted?: string | null
+          project_code_field?: string | null
+          sync_enabled?: boolean | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          username_encrypted?: string | null
+        }
+        Update: {
+          base_url?: string | null
+          created_at?: string | null
+          dms_platform?: string
+          id?: string
+          last_sync_at?: string | null
+          mdr_current_revision?: string | null
+          mdr_document_number?: string | null
+          mdr_last_fetched_at?: string | null
+          password_encrypted?: string | null
+          project_code_field?: string | null
+          sync_enabled?: boolean | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          username_encrypted?: string | null
+        }
+        Relationships: []
+      }
+      dms_sync_logs: {
+        Row: {
+          created_at: string | null
+          credential_id: string | null
+          dms_platform: string
+          error_message: string | null
+          failed_count: number | null
+          id: string
+          new_documents: number | null
+          project_id: string | null
+          status_changes: number | null
+          sync_status: string | null
+          synced_count: number | null
+          tenant_id: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credential_id?: string | null
+          dms_platform: string
+          error_message?: string | null
+          failed_count?: number | null
+          id?: string
+          new_documents?: number | null
+          project_id?: string | null
+          status_changes?: number | null
+          sync_status?: string | null
+          synced_count?: number | null
+          tenant_id?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credential_id?: string | null
+          dms_platform?: string
+          error_message?: string | null
+          failed_count?: number | null
+          id?: string
+          new_documents?: number | null
+          project_id?: string | null
+          status_changes?: number | null
+          sync_status?: string | null
+          synced_count?: number | null
+          tenant_id?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dms_sync_logs_credential_id_fkey"
+            columns: ["credential_id"]
+            isOneToOne: false
+            referencedRelation: "dms_sync_credentials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dms_sync_logs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dms_sync_logs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dms_units: {
         Row: {
