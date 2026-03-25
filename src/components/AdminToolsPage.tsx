@@ -637,61 +637,76 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
             </p>}
 
             {/* Sections */}
-            <div className="space-y-10">
-              {filteredSections.map((section) => (
-                <div key={section.label}>
-                  {/* Section Header */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60 whitespace-nowrap select-none">
-                      {section.label}
-                    </span>
-                    <div className="flex-1 h-px bg-border/40" />
-                  </div>
+            <div className="space-y-6">
+              {filteredSections.map((section) => {
+                const isOpen = !collapsedSections.has(section.label);
+                const toggleSection = () => {
+                  setCollapsedSections(prev => {
+                    const next = new Set(prev);
+                    if (next.has(section.label)) next.delete(section.label);
+                    else next.add(section.label);
+                    return next;
+                  });
+                };
+                return (
+                  <Collapsible key={section.label} open={isOpen} onOpenChange={toggleSection}>
+                    {/* Section Header */}
+                    <CollapsibleTrigger className="flex items-center gap-3 w-full group/header cursor-pointer mb-3">
+                      <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`} />
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60 whitespace-nowrap select-none group-hover/header:text-muted-foreground transition-colors">
+                        {section.label}
+                      </span>
+                      <div className="flex-1 h-px bg-border/40" />
+                      <span className="text-[10px] text-muted-foreground/40 tabular-nums">{section.items.length}</span>
+                    </CollapsibleTrigger>
 
-                  {/* Card Grid */}
-                  <div className={`grid gap-3 ${
-                    section.columns === 2
-                      ? 'grid-cols-1 sm:grid-cols-2'
-                      : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-                  }`}>
-                    {section.items.map((item) => {
-                      const IconComponent = item.icon;
-                      return (
-                        <div
-                          key={item.id}
-                          className="group bg-card border border-border/40 rounded-xl p-4 cursor-pointer hover:shadow-md hover:shadow-primary/5 hover:-translate-y-0.5 hover:border-border/80 transition-all duration-200"
-                          onClick={item.onClick}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200`}>
-                              <IconComponent className="h-4 w-4 text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
-                                  {item.title}
-                                </h3>
-                                {'badge' in item && item.badge && (
-                                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
-                                    item.badge === 'auto-update'
-                                      ? 'bg-blue-500/10 text-blue-600 border border-blue-200/50'
-                                      : 'bg-emerald-500/10 text-emerald-600 border border-emerald-200/50'
-                                  }`}>
-                                    {item.badge}
-                                  </span>
-                                )}
+                    <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+                      {/* Card Grid */}
+                      <div className={`grid gap-3 ${
+                        section.columns === 2
+                          ? 'grid-cols-1 sm:grid-cols-2'
+                          : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                      }`}>
+                        {section.items.map((item) => {
+                          const IconComponent = item.icon;
+                          return (
+                            <div
+                              key={item.id}
+                              className="group bg-card border border-border/40 rounded-xl p-4 cursor-pointer hover:shadow-md hover:shadow-primary/5 hover:-translate-y-0.5 hover:border-border/80 transition-all duration-200"
+                              onClick={item.onClick}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200`}>
+                                  <IconComponent className="h-4 w-4 text-white" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
+                                      {item.title}
+                                    </h3>
+                                    {'badge' in item && item.badge && (
+                                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+                                        item.badge === 'auto-update'
+                                          ? 'bg-blue-500/10 text-blue-600 border border-blue-200/50'
+                                          : 'bg-emerald-500/10 text-emerald-600 border border-emerald-200/50'
+                                      }`}>
+                                        {item.badge}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                                    {item.description}
+                                  </p>
+                                </div>
                               </div>
-                              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                                {item.description}
-                              </p>
                             </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+                          );
+                        })}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
             </div>
 
             {/* No Results */}
