@@ -315,7 +315,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     const isExpanded = expandedLogs[platform.id] || false;
 
     return (
-      <Card key={platform.id} className="border-border/40 transition-all duration-200 overflow-hidden">
+      <Card key={platform.id} className="group border-border/30 bg-card shadow-sm hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 transition-all duration-300 ease-out overflow-hidden cursor-default">
         {/* Status badge */}
         <div className="flex justify-end p-3 pb-0">
           <StatusBadgeComponent platformId={platform.id} />
@@ -323,7 +323,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
         {/* Logo */}
         <div className="flex justify-center px-4 py-3">
-          <div className="h-12 w-full max-w-[160px] flex items-center justify-center bg-white dark:bg-white/95 rounded-lg border border-border/30 p-2">
+          <div className="h-12 w-full max-w-[160px] flex items-center justify-center bg-white dark:bg-white/95 rounded-lg border border-border/20 p-2 group-hover:border-border/50 transition-colors duration-300">
             {platform.logo ? (
               <img
                 src={platform.logo}
