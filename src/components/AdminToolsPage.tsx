@@ -636,10 +636,10 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         </Suspense>
       </div>;
   }
-  if (activeView === 'apis') {
+  if (activeView === 'integration-hub') {
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
-          <APIManagement onBack={() => setActiveView('dashboard')} />
+          <IntegrationHub onBack={() => setActiveView('dashboard')} />
         </Suspense>
       </div>;
   }
