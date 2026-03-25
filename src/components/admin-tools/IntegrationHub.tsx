@@ -451,7 +451,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           <h2 className="text-base font-semibold text-foreground">{title}</h2>
           <Badge variant="outline" className="text-xs">{platforms.length}</Badge>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl">
           {platforms.map(renderPlatformCard)}
         </div>
       </div>
