@@ -26,6 +26,7 @@ import sharepointLogo from '@/assets/logos/sharepoint.png';
 import teamsLogo from '@/assets/logos/teams.png';
 import wrenchLogo from '@/assets/logos/wrench.png';
 import documentumLogo from '@/assets/logos/documentum.png';
+import outlookLogo from '@/assets/logos/outlook.png';
 
 interface IntegrationHubProps {
   onBack: () => void;
@@ -59,7 +60,7 @@ interface Platform {
   id: string;
   name: string;
   description: string;
-  section: 'dms' | 'enterprise';
+  section: 'dms' | 'enterprise' | 'comms';
   logo: string | null;
   logoScale?: number;
   hasEdgeFunction?: boolean;
@@ -78,7 +79,8 @@ const ALL_PLATFORMS: Platform[] = [
   { id: 'gocompletions', name: 'GoCompletions', description: 'Completions and commissioning management', section: 'enterprise', logo: gocompletionsLogo, logoScale: 1.6, accent: '#0EA5E9', badgeLabel: 'GoCompletions' },
   { id: 'sap4hana', name: 'SAP S/4HANA', description: 'Enterprise resource planning and financials', section: 'enterprise', logo: sapLogo, logoScale: 1.4, accent: '#0070F2', badgeLabel: 'SAP' },
   { id: 'primavera-p6', name: 'Oracle Primavera P6', description: 'Project planning, scheduling and control', section: 'enterprise', logo: primaveraLogo, logoScale: 1.5, accent: '#C74634', badgeLabel: 'Oracle' },
-  { id: 'teams', name: 'Microsoft Teams', description: 'Team communication and collaboration', section: 'enterprise', logo: teamsLogo, logoScale: 1.5, accent: '#6264A7', badgeLabel: 'Teams' },
+  { id: 'teams', name: 'Microsoft Teams', description: 'Team communication and collaboration', section: 'comms', logo: teamsLogo, logoScale: 1.5, accent: '#6264A7', badgeLabel: 'Teams' },
+  { id: 'outlook', name: 'Microsoft Outlook', description: 'Email and calendar integration for invitations', section: 'comms', logo: outlookLogo, logoScale: 1.4, accent: '#0078D4', badgeLabel: 'Outlook' },
 ];
 
 const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
@@ -342,6 +344,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
   const dmsPlatforms = filteredPlatforms.filter(p => p.section === 'dms');
   const enterprisePlatforms = filteredPlatforms.filter(p => p.section === 'enterprise');
+  const commsPlatforms = filteredPlatforms.filter(p => p.section === 'comms');
 
   const isFormValid = connectionMethod === 'api' ? !!formData.base_url.trim() : !!formData.workflow_url.trim();
 
@@ -461,6 +464,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           <>
             {renderSection('Document Management Systems', dmsPlatforms)}
             {renderSection('Project & Enterprise Systems', enterprisePlatforms)}
+            {renderSection('Communication & Collaboration', commsPlatforms)}
             {filteredPlatforms.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <Plug className="h-12 w-12 mx-auto mb-3 opacity-40" />
