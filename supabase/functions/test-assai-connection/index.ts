@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { deriveBaseUrl, authenticateAssai } from "../_shared/assai-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,8 +40,8 @@ Deno.serve(async (req) => {
     const { tenant_id } = await req.json();
     if (!tenant_id) {
       return new Response(
-        JSON.stringify({ error: "tenant_id is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: false, message: "tenant_id is required", response_time_ms: 0 }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -56,22 +57,14 @@ Deno.serve(async (req) => {
 
     if (credError || !creds) {
       return new Response(
-        JSON.stringify({
-          success: false,
-          message: "No Assai credentials configured for this tenant",
-          response_time_ms: 0,
-        }),
+        JSON.stringify({ success: false, message: "No Assai credentials configured for this tenant", response_time_ms: 0 }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (!creds.base_url) {
       return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Base URL is not configured",
-          response_time_ms: 0,
-        }),
+        JSON.stringify({ success: false, message: "Platform URL is not configured", response_time_ms: 0 }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -82,76 +75,57 @@ Deno.serve(async (req) => {
 
     try {
       const { decrypt, isEncrypted } = await import("../_shared/crypto.ts");
-      if (username && isEncrypted(username)) {
-        username = await decrypt(username);
-      }
-      if (password && isEncrypted(password)) {
-        password = await decrypt(password);
-      }
+      if (username && isEncrypted(username)) username = await decrypt(username);
+      if (password && isEncrypted(password)) password = await decrypt(password);
     } catch (decryptErr) {
       console.error("Decryption warning:", decryptErr);
     }
 
     if (!username || !password) {
       return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Username or password not configured",
-          response_time_ms: 0,
-        }),
+        JSON.stringify({ success: false, message: "Username or password not configured", response_time_ms: 0 }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Test connection — attempt authentication
-    const baseUrl = creds.base_url.replace(/\/$/, "");
-    const startTime = Date.now();
+    // Derive API base URL and attempt authentication
+    const baseUrl = deriveBaseUrl(creds.base_url);
+    console.log(`[test-assai] Derived base URL: ${baseUrl} from stored: ${creds.base_url}`);
 
-    try {
-      const authResponse = await fetch(`${baseUrl}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+    const authResult = await authenticateAssai(baseUrl, username, password);
 
-      const responseTimeMs = Date.now() - startTime;
+    console.log(`[test-assai] Auth result: success=${authResult.success}, attempts=${authResult.attempts.length}`);
+    for (const a of authResult.attempts) {
+      console.log(`[test-assai]   ${a.endpoint} → ${a.status}: ${a.body.substring(0, 200)}`);
+    }
 
-      if (authResponse.ok) {
-        const authData = await authResponse.json();
-        const hasToken = !!(authData.token || authData.access_token || authData.sessionId);
-        return new Response(
-          JSON.stringify({
-            success: hasToken,
-            message: hasToken
-              ? `Authentication successful — session token received`
-              : `Authentication returned OK but no session token found`,
-            response_time_ms: responseTimeMs,
-          }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      } else {
-        const errText = await authResponse.text();
-        return new Response(
-          JSON.stringify({
-            success: false,
-            message: `HTTP ${authResponse.status}: ${errText.substring(0, 200)}`,
-            response_time_ms: responseTimeMs,
-          }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    } catch (fetchErr) {
-      const responseTimeMs = Date.now() - startTime;
-      const message = fetchErr instanceof Error ? fetchErr.message : "Connection failed";
+    if (authResult.success) {
       return new Response(
         JSON.stringify({
-          success: false,
-          message: `Connection error: ${message}`,
-          response_time_ms: responseTimeMs,
+          success: true,
+          message: `Authentication successful via ${authResult.endpointUsed}`,
+          response_time_ms: authResult.responseTimeMs,
+          endpoint_used: authResult.endpointUsed,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Build descriptive failure message
+    const lastAttempt = authResult.attempts[authResult.attempts.length - 1];
+    const statusHint = lastAttempt?.status
+      ? `returned HTTP ${lastAttempt.status}`
+      : "connection failed";
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: `Authentication failed — ${statusHint}. Tried ${authResult.attempts.length} endpoint(s). Check credentials and Platform URL.`,
+        response_time_ms: authResult.responseTimeMs,
+        attempts: authResult.attempts.map(a => ({ endpoint: a.endpoint, status: a.status })),
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (err) {
     console.error("Unhandled error:", err);
     return new Response(
