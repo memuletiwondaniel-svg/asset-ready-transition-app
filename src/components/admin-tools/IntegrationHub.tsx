@@ -112,6 +112,11 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const [syncResultInPanel, setSyncResultInPanel] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    dms: true,
+    enterprise: false,
+    comms: false,
+  });
 
   // GoCompletions localStorage status
   const [gocConfigured, setGocConfigured] = useState(false);
