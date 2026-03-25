@@ -375,56 +375,170 @@ Deno.serve(async (req) => {
     const syncLogId = syncLog?.id;
 
     try {
-      // Step 1: Get Bearer token via OAuth flow (logs into AA login.jsp internally)
-      console.log(`[sync-assai] Starting OAuth token acquisition. base=${resolvedBase}, db=${resolvedDb}`);
-      const tokenResult = await getAssaiBearerToken(resolvedBase, resolvedDb, username, password);
+      // Step 1: Login via shared loginAssai to get session cookies
+      console.log(`[sync-assai] Logging in via loginAssai. base=${resolvedBase}, db=${resolvedDb}`);
+      const loginResult = await loginAssai(resolvedBase, resolvedDb, username, password);
 
-      if (!tokenResult.token) {
-        throw new Error(`Failed to acquire Bearer token: ${tokenResult.error}`);
+      if (!loginResult.success || !loginResult.cookies?.length) {
+        throw new Error(`Login failed: ${loginResult.error || "No session cookies"}`);
       }
 
-      const bearerToken = tokenResult.token;
-      console.log(`[sync-assai] Bearer token acquired: length=${bearerToken.length}`);
+      const sessionCookies = loginResult.cookies;
+      console.log(`[sync-assai] Login succeeded. ${sessionCookies.length} cookies.`);
 
-      // Step 2: Fetch documents with Bearer token
-      const docsUrl = `${resolvedBase}/AA${resolvedDb}/api/v1/documents`;
-      console.log(`[sync-assai] Fetching documents: ${docsUrl}`);
+      // ── ROUTE 1: OAuth Bearer token + REST API ──────────────────────
+      let documents: any[] = [];
+      let syncRoute = "none";
 
-      const docsResp = await fetch(docsUrl, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${bearerToken}`,
-          "Accept": "application/json",
-        },
-      });
+      try {
+        console.log("[sync-assai] Route 1: Attempting OAuth + REST API...");
 
-      const respText = await docsResp.text();
-      console.log(`[sync-assai] Docs status=${docsResp.status}, preview=${respText.substring(0, 500)}`);
+        const tokenPageUrl = `${resolvedBase}/AA${resolvedDb}/access_token.jsp?client_id=${resolvedDb}`;
+        const tokenResp = await fetch(tokenPageUrl, {
+          headers: { "Cookie": sessionCookies.join("; "), "Accept": "text/html" },
+          redirect: "follow",
+        });
+        const tokenHtml = await tokenResp.text();
 
-      if (!docsResp.ok) {
-        throw new Error(`Documents API ${docsResp.status}: ${respText.substring(0, 300)}`);
+        // Extract token from input field: <input ... value="Bearer xxxx">
+        const tokenMatch = tokenHtml.match(/value=["'](Bearer\s+[A-Za-z0-9\-._~+/]+=*)['"]/i)
+          || tokenHtml.match(/value=["']([A-Za-z0-9\-._~+/]{30,})['"]/);
+
+        const rawToken = tokenMatch?.[1] || null;
+        const bearerToken = rawToken?.startsWith("Bearer ") ? rawToken.replace("Bearer ", "").trim() : rawToken;
+
+        console.log(`[sync-assai] Route 1: Bearer token ${bearerToken ? "found (len=" + bearerToken.length + ")" : "NOT found"}`);
+
+        if (bearerToken) {
+          const docsResp = await fetch(`${resolvedBase}/AA${resolvedDb}/api/v1/documents`, {
+            headers: {
+              "Authorization": `Bearer ${bearerToken}`,
+              "Accept": "application/json",
+            },
+          });
+
+          console.log(`[sync-assai] Route 1: Docs API status=${docsResp.status}`);
+
+          if (docsResp.ok) {
+            const docsJson = await docsResp.json();
+            const parsed = Array.isArray(docsJson)
+              ? docsJson
+              : docsJson.data || docsJson.documents || docsJson.results || docsJson.items || [];
+
+            if (parsed.length > 0) {
+              documents = parsed.map((doc: any) => ({
+                document_number: doc.document_number || doc.documentNumber || doc.number || "",
+                document_title: doc.title || doc.document_title || doc.description || "",
+                revision: doc.revision || doc.rev || "",
+                status_code: doc.status || doc.status_code || "",
+                discipline_code: doc.discipline || doc.discipline_code || "",
+                work_package_code: doc.work_package || doc.workPackage || "",
+              }));
+              syncRoute = "oauth_rest";
+              console.log(`[sync-assai] Route 1 SUCCESS: ${documents.length} documents via OAuth REST`);
+            }
+          }
+        }
+      } catch (e) {
+        console.log(`[sync-assai] Route 1 failed: ${e}`);
       }
 
-      const docsJson = JSON.parse(respText);
-      const documents: any[] = Array.isArray(docsJson)
-        ? docsJson
-        : docsJson.data || docsJson.documents || docsJson.results || docsJson.items || [];
+      // ── ROUTE 2: DWR HTML scraping (fallback) ───────────────────────
+      if (documents.length === 0) {
+        console.log("[sync-assai] Route 2: Falling back to DWR HTML scraping...");
 
-      console.log(`[sync-assai] Total documents fetched: ${documents.length}`);
+        try {
+          const resultUrls = [
+            `${resolvedBase}/AW${resolvedDb}/result.aweb`,
+            `${resolvedBase}/AW${resolvedDb}/forward.aweb?page=root/body&subclass_type=DES_DOC`,
+            `${resolvedBase}/AW${resolvedDb}/forward.aweb?page=root/body/documentregister`,
+          ];
+
+          let html = "";
+          for (const url of resultUrls) {
+            const resp = await fetch(url, {
+              headers: { "Cookie": sessionCookies.join("; "), "Accept": "text/html" },
+              redirect: "follow",
+            });
+            const text = await resp.text();
+            console.log(`[sync-assai] Route 2: ${url} => status=${resp.status}, length=${text.length}`);
+            if (resp.status === 200 && text.length > 5000 && !text.includes('action="login.aweb"')) {
+              html = text;
+              break;
+            }
+          }
+
+          // Fallback POST with wildcard search
+          if (!html) {
+            const postResp = await fetch(`${resolvedBase}/AW${resolvedDb}/result.aweb`, {
+              method: "POST",
+              headers: {
+                "Cookie": sessionCookies.join("; "),
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: "documentNumber=%&title=%",
+              redirect: "follow",
+            });
+            html = await postResp.text();
+            console.log(`[sync-assai] Route 2: POST result.aweb => status=${postResp.status}, length=${html.length}`);
+          }
+
+          console.log(`[sync-assai] Route 2: HTML preview=${html.substring(0, 1000)}`);
+
+          // Parse HTML table rows
+          const seen = new Set<string>();
+          const stripTags = (s: string) => s.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").trim();
+          const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+          let rowMatch;
+
+          while ((rowMatch = rowPattern.exec(html)) !== null) {
+            const cells: string[] = [];
+            const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+            let cellMatch;
+            while ((cellMatch = cellPattern.exec(rowMatch[1])) !== null) {
+              cells.push(stripTags(cellMatch[1]));
+            }
+            if (cells.length < 3) continue;
+            const docNum = cells.find(c => /\d{3,}-[A-Z]/.test(c) || /^[A-Z]{2,}\d{3,}/.test(c));
+            if (!docNum || seen.has(docNum)) continue;
+            seen.add(docNum);
+            const i = cells.indexOf(docNum);
+            documents.push({
+              document_number: docNum,
+              document_title: cells[i + 4] || cells[cells.length - 1] || "",
+              revision: cells[i + 1] || "",
+              status_code: cells.find(c => /^(AFU|IFR|IFA|IFC|AFC|IDC|AP|FOR|VOID)/i.test(c)) || cells[i + 3] || "",
+              discipline_code: "",
+              work_package_code: "",
+            });
+          }
+
+          if (documents.length > 0) {
+            syncRoute = "dwr_scrape";
+            console.log(`[sync-assai] Route 2 SUCCESS: ${documents.length} documents via DWR scrape`);
+          } else {
+            console.log(`[sync-assai] Route 2: 0 documents. Full HTML (3000): ${html.substring(0, 3000)}`);
+          }
+        } catch (e) {
+          console.log(`[sync-assai] Route 2 failed: ${e}`);
+        }
+      }
+
+      console.log(`[sync-assai] Final: ${documents.length} documents via ${syncRoute}`);
 
       // Step 3: Upsert to dms_external_sync
       let syncedCount = 0, failedCount = 0, newCount = 0, statusChanges = 0;
 
       for (const doc of documents) {
         try {
-          const docNumber = doc.document_number || doc.documentNumber || doc.number || doc.doc_no || "";
+          const docNumber = doc.document_number || "";
           if (!docNumber) continue;
 
-          const docTitle = doc.title || doc.document_title || doc.documentTitle || doc.description || "";
-          const revision = doc.revision || doc.rev || doc.current_revision || "";
-          const statusCode = doc.status || doc.status_code || doc.documentStatus || "";
-          const disciplineCode = doc.discipline || doc.discipline_code || doc.disciplineCode || "";
-          const packageCode = doc.work_package || doc.workPackage || doc.package_code || "";
+          const docTitle = doc.document_title || "";
+          const revision = doc.revision || "";
+          const statusCode = doc.status_code || "";
+          const disciplineCode = doc.discipline_code || "";
+          const packageCode = doc.work_package_code || "";
 
           const { data: existing } = await supabase
             .from("dms_external_sync")
@@ -444,7 +558,7 @@ Deno.serve(async (req) => {
               package_tag: packageCode,
               last_synced_at: new Date().toISOString(),
               sync_status: "synced",
-              metadata: { raw: doc, last_sync_source: "rest_api" },
+              metadata: { raw: doc, last_sync_source: syncRoute },
             }).eq("id", existing.id);
           } else {
             await supabase.from("dms_external_sync").insert({
@@ -458,7 +572,7 @@ Deno.serve(async (req) => {
               last_synced_at: new Date().toISOString(),
               sync_status: "synced",
               tenant_id: creds.tenant_id,
-              metadata: { raw: doc, last_sync_source: "rest_api" },
+              metadata: { raw: doc, last_sync_source: syncRoute },
             });
             newCount++;
           }
@@ -490,9 +604,10 @@ Deno.serve(async (req) => {
           new_documents: newCount,
           status_changes: statusChanges,
           failed_count: failedCount,
+          sync_route: syncRoute,
           message: documents.length === 0
-            ? "Authenticated successfully but no documents returned. Check API permissions."
-            : `Synced ${syncedCount} documents (${newCount} new, ${statusChanges} status changes)`,
+            ? "Authenticated successfully but no documents returned via either route."
+            : `Synced ${syncedCount} documents (${newCount} new, ${statusChanges} status changes) via ${syncRoute}`,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
