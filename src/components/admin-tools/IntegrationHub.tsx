@@ -362,6 +362,21 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       } finally {
         setTestingInPanel(false);
       }
+    } else if (panelPlatform.id === 'gocompletions') {
+      setTestingInPanel(true);
+      setTestResultInPanel(null);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const { data, error } = await supabase.functions.invoke('test-gocompletions-connection', {
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        });
+        if (error) throw error;
+        setTestResultInPanel(data);
+      } catch (err: any) {
+        setTestResultInPanel({ success: false, message: err.message || 'Test failed' });
+      } finally {
+        setTestingInPanel(false);
+      }
     } else {
       toast.info(`Test function not yet available for ${panelPlatform?.name}`);
     }
