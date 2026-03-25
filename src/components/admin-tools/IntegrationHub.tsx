@@ -356,7 +356,14 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const enterprisePlatforms = filteredPlatforms.filter(p => p.section === 'enterprise');
   const commsPlatforms = filteredPlatforms.filter(p => p.section === 'comms');
 
-  const isFormValid = connectionMethod === 'api' ? !!formData.base_url.trim() : !!formData.workflow_url.trim();
+  const isFormValid = connectionMethod === 'api' ? !!formData.base_url.trim() : !!formData.platform_url.trim();
+
+  const validateUrl = (url: string) => {
+    if (url && !url.startsWith('https://')) {
+      return 'URL must start with https://';
+    }
+    return '';
+  };
 
   const StatusBadge = ({ platformId }: { platformId: string }) => {
     const status = getStatusInfo(platformId);
