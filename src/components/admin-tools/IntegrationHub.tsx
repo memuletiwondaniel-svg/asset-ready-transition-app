@@ -266,17 +266,25 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-      const tenantId = user.user_metadata?.tenant_id;
+
+      // Use tenant from hook, fall back to user metadata
+      const resolvedTenantId = tenantId || user.user_metadata?.tenant_id;
+      if (!resolvedTenantId) {
+        console.error('No tenant_id found for user', user.id);
+        throw new Error('No tenant associated with your account');
+      }
+
       const existing = getCredential(panelPlatform.id);
 
       const record: Record<string, unknown> = {
-        tenant_id: tenantId,
+        tenant_id: resolvedTenantId,
         dms_platform: panelPlatform.id,
         base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
-        project_code_field: formData.project_code_field,
+        project_code_field: connectionMethod === 'automation' ? '__automation__' : formData.project_code_field,
         sync_enabled: connectionMethod === 'api' ? formData.sync_enabled : formData.automation_enabled,
         updated_at: new Date().toISOString(),
       };
+
       if (connectionMethod === 'api') {
         if (authType === 'api_key') {
           if (formData.api_key) record.password_encrypted = formData.api_key;
@@ -291,20 +299,30 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         if (formData.password) record.password_encrypted = formData.password;
       }
 
+      console.log('[IntegrationHub] Saving credentials for', panelPlatform.id, 'method:', connectionMethod);
+
       if (existing) {
         const { error } = await supabase.from('dms_sync_credentials').update(record).eq('id', existing.id);
-        if (error) throw error;
+        if (error) {
+          console.error('[IntegrationHub] Update error:', error);
+          throw error;
+        }
       } else {
         record.created_at = new Date().toISOString();
         const { error } = await supabase.from('dms_sync_credentials').insert(record as any);
-        if (error) throw error;
+        if (error) {
+          console.error('[IntegrationHub] Insert error:', error);
+          throw error;
+        }
       }
 
       toast.success('Credentials saved');
       setCredentialsSaved(true);
+      setHasStoredCredentials(true);
       fetchData();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to save');
+      console.error('[IntegrationHub] Save failed:', err);
+      toast.error(err.message || 'Failed to save credentials — check console for details');
     } finally {
       setSaving(false);
     }
