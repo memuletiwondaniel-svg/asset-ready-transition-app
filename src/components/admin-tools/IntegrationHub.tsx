@@ -638,6 +638,16 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         {triedSave && !formData.base_url.trim() && <p className="text-xs text-destructive mt-1">Base URL is required</p>}
                       </div>
 
+                      {/* Assai-specific helper banner */}
+                      {panelPlatform.id === 'assai' && (
+                        <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50">
+                          <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                          <p className="text-[11px] text-blue-700 dark:text-blue-400 leading-relaxed">
+                            Assai API — enter your Assai instance URL and use API Key or Bearer Token authentication. Contact your Assai administrator for API credentials.
+                          </p>
+                        </div>
+                      )}
+
                       {/* Auth type selector */}
                       <div className="space-y-1">
                         <Label className="text-[13px] font-medium text-foreground/80">Authentication Type</Label>
