@@ -256,7 +256,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
       client_id: '', client_secret: '', token_url: '', scope: '',
       project_code_field: '', sync_enabled: false,
-      platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false,
+      platform_url: '', auth_token: '', automation_enabled: false,
     });
   };
 
