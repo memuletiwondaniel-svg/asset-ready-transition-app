@@ -911,16 +911,18 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                      disabled={!credentialsSaved || testingInPanel}
-                      onClick={testConnection}
-                    >
-                      {testingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wifi className="h-3 w-3 mr-1" />}
-                      Test
-                    </Button>
+                    {panelPlatform.id !== 'assai' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        disabled={!credentialsSaved || testingInPanel}
+                        onClick={testConnection}
+                      >
+                        {testingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wifi className="h-3 w-3 mr-1" />}
+                        Test
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       className="text-xs"
