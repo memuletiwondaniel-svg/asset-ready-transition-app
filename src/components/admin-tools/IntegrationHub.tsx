@@ -26,6 +26,7 @@ import sharepointLogo from '@/assets/logos/sharepoint.png';
 import teamsLogo from '@/assets/logos/teams.png';
 import wrenchLogo from '@/assets/logos/wrench.png';
 import documentumLogo from '@/assets/logos/documentum.png';
+import outlookLogo from '@/assets/logos/outlook.png';
 
 interface IntegrationHubProps {
   onBack: () => void;
