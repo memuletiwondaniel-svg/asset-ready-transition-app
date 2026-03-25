@@ -860,8 +860,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                   )}
                 </div>
 
-                {/* SYNC HISTORY — hidden for Assai */}
-                {panelPlatform.id !== 'assai' && (
+                {/* SYNC HISTORY */}
+                {(
                   <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
                     <CollapsibleTrigger className="flex items-center gap-2 w-full text-left">
                       <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', historyOpen ? '' : '-rotate-90')} />
