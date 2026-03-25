@@ -110,8 +110,8 @@ Deno.serve(async (req) => {
       }
 
       // Step 2: Fetch documents from REST API using session cookies
-      const docsUrl = `${apiBase}/api/v1/documents`;
-      console.log(`[sync-assai] Fetching: ${docsUrl}`);
+      const docsUrl = `${resolvedBase}/AA${resolvedDb}/api/v1/documents`;
+      console.log(`[sync-assai] Correct docs URL: ${docsUrl}`);
 
       const docsResp = await fetch(docsUrl, {
         method: "GET",
