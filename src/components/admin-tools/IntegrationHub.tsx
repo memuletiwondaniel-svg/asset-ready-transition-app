@@ -74,7 +74,7 @@ type ConnectionMethod = 'api' | 'automation';
 type AuthType = 'api_key' | 'oauth' | 'bearer';
 
 const ALL_PLATFORMS: Platform[] = [
-  { id: 'assai', name: 'Assai', description: 'Enterprise document management for O&G', section: 'dms', logo: assaiLogo, logoScale: 1.15, hasEdgeFunction: true, accent: '#F97316', badgeLabel: 'assai' },
+  { id: 'assai', name: 'Assai', description: 'Enterprise document management for O&G', section: 'dms', logo: assaiLogo, logoScale: 1.15, accent: '#F97316', badgeLabel: 'assai' },
   { id: 'wrench', name: 'Wrench', description: 'Project document control and management', section: 'dms', logo: wrenchLogo, accent: '#2563EB', badgeLabel: 'wrench' },
   { id: 'documentum', name: 'Documentum', description: 'Enterprise content management platform', section: 'dms', logo: documentumLogo, logoScale: 1.35, accent: '#6D28D9', badgeLabel: 'Documentum' },
   { id: 'sharepoint', name: 'SharePoint', description: 'Collaboration and document storage', section: 'dms', logo: sharepointLogo, logoScale: 2.2, accent: '#038387', badgeLabel: 'SharePoint' },
@@ -346,59 +346,11 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   };
 
   const testConnection = async () => {
-    if (!panelPlatform?.hasEdgeFunction) {
-      toast.info(`Test function not yet deployed for ${panelPlatform?.name}`);
-      return;
-    }
-    setTestingInPanel(true);
-    setTestResultInPanel(null);
-    try {
-      const resolvedTenant = tenantId;
-      if (!resolvedTenant) throw new Error('No tenant associated with your account');
-      const { data, error } = await supabase.functions.invoke('test-assai-connection', { body: { tenant_id: resolvedTenant } });
-      if (error) {
-        // supabase.functions.invoke throws on non-2xx — extract the message
-        const msg = typeof error === 'object' && error.message ? error.message : String(error);
-        setTestResultInPanel({ success: false, message: msg, response_time_ms: 0 });
-      } else {
-        setTestResultInPanel(data);
-      }
-    } catch (err: any) {
-      setTestResultInPanel({ success: false, message: err.message || 'Connection test failed', response_time_ms: 0 });
-    } finally {
-      setTestingInPanel(false);
-    }
+    toast.info(`Test function not yet available for ${panelPlatform?.name}`);
   };
 
   const triggerSync = async () => {
-    if (!panelPlatform?.hasEdgeFunction) {
-      toast.info(`Sync function not yet deployed for ${panelPlatform?.name}`);
-      return;
-    }
-    setSyncingInPanel(true);
-    setSyncResultInPanel(null);
-    try {
-      const resolvedTenant = tenantId;
-      if (!resolvedTenant) throw new Error('No tenant associated with your account');
-      const { data, error } = await supabase.functions.invoke('sync-assai-documents', {
-        body: { tenant_id: resolvedTenant, manual_trigger: true },
-      });
-      if (error) {
-        const msg = typeof error === 'object' && error.message ? error.message : String(error);
-        setSyncResultInPanel(`Sync failed: ${msg}`);
-      } else if (data?.success) {
-        setSyncResultInPanel(`${data.synced_count} records synced, ${data.new_documents} new`);
-      } else {
-        // Show specific error from the function
-        const errorMsg = data?.error || 'Sync failed';
-        setSyncResultInPanel(`Sync failed: ${errorMsg}`);
-      }
-      fetchData();
-    } catch (err: any) {
-      setSyncResultInPanel(`Sync failed: ${err.message || 'Unknown error'}`);
-    } finally {
-      setSyncingInPanel(false);
-    }
+    toast.info(`Sync function not yet available for ${panelPlatform?.name}`);
   };
 
   const removeCredentials = async () => {
@@ -861,62 +813,75 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                 {/* SYNC SECTION */}
                 <div className="space-y-3">
                   <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Sync</span>
-                  {(() => {
-                    const cred = getCredential(panelPlatform.id);
-                    const lastSync = cred?.last_sync_at;
-                    return (
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground">
-                          {lastSync ? `Last synced: ${formatDistanceToNow(new Date(lastSync), { addSuffix: true })}` : 'Never synced'}
-                        </p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs"
-                          disabled={!credentialsSaved || syncingInPanel}
-                          onClick={triggerSync}
-                        >
-                          {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
-                          Sync Now
-                        </Button>
-                      </div>
-                    );
-                  })()}
-                  {syncResultInPanel && (
-                    <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-muted">
-                      <RefreshCw className="h-3.5 w-3.5" />
-                      {syncResultInPanel}
+                  {panelPlatform.id === 'assai' ? (
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-muted border border-border/50">
+                      <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Automated sync coming soon. Configure credentials now to be ready when sync is enabled.
+                      </p>
                     </div>
+                  ) : (
+                    <>
+                      {(() => {
+                        const cred = getCredential(panelPlatform.id);
+                        const lastSync = cred?.last_sync_at;
+                        return (
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-muted-foreground">
+                              {lastSync ? `Last synced: ${formatDistanceToNow(new Date(lastSync), { addSuffix: true })}` : 'Never synced'}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs"
+                              disabled={!credentialsSaved || syncingInPanel}
+                              onClick={triggerSync}
+                            >
+                              {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                              Sync Now
+                            </Button>
+                          </div>
+                        );
+                      })()}
+                      {syncResultInPanel && (
+                        <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-muted">
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          {syncResultInPanel}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
-                {/* SYNC HISTORY */}
-                <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
-                  <CollapsibleTrigger className="flex items-center gap-2 w-full text-left">
-                    <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', historyOpen ? '' : '-rotate-90')} />
-                    <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Sync History</span>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pt-3">
-                    {panelLogs.length === 0 ? (
-                      <p className="text-xs text-muted-foreground italic text-center py-4">No sync history yet</p>
-                    ) : (
-                      <div className="border rounded-lg overflow-hidden text-[11px]">
-                        <div className="grid grid-cols-5 gap-1 px-3 py-2 bg-muted/50 font-medium text-muted-foreground">
-                          <span>Date</span><span className="text-right">Synced</span><span className="text-right">New</span><span className="text-right">Changed</span><span className="text-right">Failed</span>
-                        </div>
-                        {panelLogs.map(log => (
-                          <div key={log.id} className="grid grid-cols-5 gap-1 px-3 py-2 border-t border-border/50">
-                            <span>{format(new Date(log.created_at), 'dd MMM HH:mm')}</span>
-                            <span className="text-right font-medium">{log.synced_count}</span>
-                            <span className="text-right text-emerald-600">{log.new_documents}</span>
-                            <span className="text-right text-amber-600">{log.status_changes}</span>
-                            <span className="text-right text-destructive">{log.failed_count}</span>
+                {/* SYNC HISTORY — hidden for Assai */}
+                {panelPlatform.id !== 'assai' && (
+                  <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
+                    <CollapsibleTrigger className="flex items-center gap-2 w-full text-left">
+                      <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', historyOpen ? '' : '-rotate-90')} />
+                      <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Sync History</span>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-3">
+                      {panelLogs.length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic text-center py-4">No sync history yet</p>
+                      ) : (
+                        <div className="border rounded-lg overflow-hidden text-[11px]">
+                          <div className="grid grid-cols-5 gap-1 px-3 py-2 bg-muted/50 font-medium text-muted-foreground">
+                            <span>Date</span><span className="text-right">Synced</span><span className="text-right">New</span><span className="text-right">Changed</span><span className="text-right">Failed</span>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </CollapsibleContent>
-                </Collapsible>
+                          {panelLogs.map(log => (
+                            <div key={log.id} className="grid grid-cols-5 gap-1 px-3 py-2 border-t border-border/50">
+                              <span>{format(new Date(log.created_at), 'dd MMM HH:mm')}</span>
+                              <span className="text-right font-medium">{log.synced_count}</span>
+                              <span className="text-right text-emerald-600">{log.new_documents}</span>
+                              <span className="text-right text-amber-600">{log.status_changes}</span>
+                              <span className="text-right text-destructive">{log.failed_count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
               </div>
 
               {/* Sticky Footer */}
@@ -946,16 +911,18 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                      disabled={!credentialsSaved || testingInPanel}
-                      onClick={testConnection}
-                    >
-                      {testingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wifi className="h-3 w-3 mr-1" />}
-                      Test
-                    </Button>
+                    {panelPlatform.id !== 'assai' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        disabled={!credentialsSaved || testingInPanel}
+                        onClick={testConnection}
+                      >
+                        {testingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wifi className="h-3 w-3 mr-1" />}
+                        Test
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       className="text-xs"
