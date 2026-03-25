@@ -187,7 +187,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         setFormData(prev => ({
           ...prev, base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
           client_id: '', client_secret: '', token_url: '', project_code_field: '', sync_enabled: false,
-          workflow_url: config.rpaCredentials!.portalUrl || '', auth_token: '', automation_enabled: true,
+          platform_url: config.rpaCredentials!.portalUrl || '', auth_token: '', automation_enabled: true,
         }));
       } else if (config?.apiCredentials) {
         setConnectionMethod('api');
@@ -201,7 +201,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           client_secret: config.apiCredentials!.clientSecret || '',
           token_url: config.apiCredentials!.tokenUrl || '',
           scope: '', project_code_field: '', sync_enabled: false,
-          platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false, header_name: 'X-API-Key',
+          platform_url: '', auth_token: '', automation_enabled: false, header_name: 'X-API-Key',
         }));
       } else {
         setConnectionMethod('api');
@@ -209,15 +209,38 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       }
     } else {
       const existing = getCredential(platform.id);
-      setConnectionMethod('api');
-      setFormData({
-        base_url: existing?.base_url || '',
-        username: '', password: '', api_key: '', header_name: 'X-API-Key',
-        client_id: '', client_secret: '', token_url: '', scope: '',
-        project_code_field: existing?.project_code_field || '',
-        sync_enabled: existing?.sync_enabled || false,
-        platform_url: '', workflow_url: '', auth_token: '', automation_enabled: false,
-      });
+      if (existing) {
+        // Detect if it was saved as automation (has username_encrypted + password_encrypted but base_url looks like a portal URL)
+        // We store a "connection_method" hint via project_code_field prefix or simply check username_encrypted presence
+        const hasUserCreds = !!existing.username_encrypted && !!existing.password_encrypted;
+        const isAutomation = hasUserCreds && existing.project_code_field === '__automation__';
+        
+        if (isAutomation) {
+          setConnectionMethod('automation');
+          setFormData({
+            base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
+            client_id: '', client_secret: '', token_url: '', scope: '',
+            project_code_field: '', sync_enabled: false,
+            platform_url: existing.base_url || '', auth_token: '', automation_enabled: existing.sync_enabled || false,
+          });
+        } else {
+          setConnectionMethod('api');
+          setFormData({
+            base_url: existing.base_url || '',
+            username: '', password: '', api_key: '', header_name: 'X-API-Key',
+            client_id: '', client_secret: '', token_url: '', scope: '',
+            project_code_field: existing.project_code_field || '',
+            sync_enabled: existing.sync_enabled || false,
+            platform_url: '', auth_token: '', automation_enabled: false,
+          });
+        }
+        // Set placeholder state - credentials exist but we don't show decrypted values
+        setHasStoredCredentials(true);
+      } else {
+        setConnectionMethod('api');
+        resetFormData();
+        setHasStoredCredentials(false);
+      }
     }
     setAuthType('api_key');
     setTriedSave(false);
