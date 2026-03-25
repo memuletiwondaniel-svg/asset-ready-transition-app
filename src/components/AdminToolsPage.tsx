@@ -622,37 +622,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
           <div className="container pt-6 pb-8 max-w-6xl mx-auto px-6">
-            {/* Summary Metric Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-              <div className="bg-card border border-border/50 rounded-xl p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                  <Users className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{userStats.total}</p>
-                  <p className="text-xs text-muted-foreground">Users</p>
-                </div>
-              </div>
-              <div className="bg-card border border-border/50 rounded-xl p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center">
-                  <Shield className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{userStats.active}</p>
-                  <p className="text-xs text-muted-foreground">Active Users</p>
-                </div>
-              </div>
-              <div className="bg-card border border-border/50 rounded-xl p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-                  <Rocket className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">v2.4</p>
-                  <p className="text-xs text-muted-foreground">Current Version</p>
-                </div>
-              </div>
-            </div>
-
             {/* Search Bar */}
             <div className="flex items-center justify-end mb-8">
               <div className="relative w-80">
