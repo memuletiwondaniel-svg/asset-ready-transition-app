@@ -80,6 +80,35 @@ Deno.serve(async (req) => {
       const apiBase = resolvedBase.replace(/\/AW([^/]+)/, "/AA$1");
       console.log(`[sync-assai] Using API base: ${apiBase}`);
 
+      // Probe OAuth endpoints to find the right one
+      const clientId = resolvedDb || "eu578";
+      const tokenEndpoints = [
+        `${apiBase}/oauth/token`,
+        `${apiBase}/api/oauth/token`,
+        `${apiBase}/api/v1/oauth/token`,
+        `${apiBase}/token`,
+        `${resolvedBase.split('/AW')[0]}/AAeu578/oauth/token`,
+      ];
+
+      for (const endpoint of tokenEndpoints) {
+        try {
+          const r = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              grant_type: "password",
+              client_id: clientId,
+              username: username,
+              password: password,
+            }).toString(),
+          });
+          const t = await r.text();
+          console.log(`[sync-assai] TOKEN PROBE ${endpoint} => status=${r.status}, body=${t.substring(0, 200)}`);
+        } catch (e) {
+          console.log(`[sync-assai] TOKEN PROBE ${endpoint} => ERROR: ${e}`);
+        }
+      }
+
       // Step 2: Fetch documents from REST API using session cookies
       const docsUrl = `${apiBase}/api/v1/documents`;
       console.log(`[sync-assai] Fetching: ${docsUrl}`);
