@@ -273,7 +273,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         if (error) throw error;
       }
 
-      toast.success(`${panelPlatform.name} configuration saved`);
+      toast.success('Credentials saved');
+      setCredentialsSaved(true);
       fetchData();
     } catch (err: any) {
       toast.error(err.message || 'Failed to save');
