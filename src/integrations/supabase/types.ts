@@ -1303,6 +1303,7 @@ export type Database = {
         Row: {
           base_url: string | null
           created_at: string | null
+          db_name: string | null
           dms_platform: string
           id: string
           last_sync_at: string | null
@@ -1319,6 +1320,7 @@ export type Database = {
         Insert: {
           base_url?: string | null
           created_at?: string | null
+          db_name?: string | null
           dms_platform: string
           id?: string
           last_sync_at?: string | null
@@ -1335,6 +1337,7 @@ export type Database = {
         Update: {
           base_url?: string | null
           created_at?: string | null
+          db_name?: string | null
           dms_platform?: string
           id?: string
           last_sync_at?: string | null
