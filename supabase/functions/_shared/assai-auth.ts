@@ -22,6 +22,8 @@ export interface AssaiAuthDebugStep {
   form_body_masked?: string;
   success?: boolean;
   error?: string;
+  response_body_preview?: string;
+  is_cloudflare_block?: boolean;
 }
 
 export interface AssaiLoginResult {
@@ -129,6 +131,18 @@ export function generateScriptSessionId(): string {
 // ──────────────────────────────────────────────
 
 function extractLoginFormFields(html: string): Record<string, string> {
+  const allowedFields = new Set([
+    "isSecure",
+    "contentUrl",
+    "followUp",
+    "ssodata",
+    "loginMethod",
+    "uniqueName",
+    "siteLanguage",
+    "loggedOff",
+    "isFromLanguageForm",
+  ]);
+
   const fields: Record<string, string> = {};
   const matches = html.matchAll(/<input[^>]+type=["']hidden["'][^>]*>/gi);
   for (const match of matches) {
@@ -136,9 +150,8 @@ function extractLoginFormFields(html: string): Record<string, string> {
     const valueMatch = match[0].match(/value=["']([^"']*?)["']/i);
     if (nameMatch) {
       const name = nameMatch[1];
-      // Only include main login form fields
-      if (!name.startsWith('reset_') && !name.startsWith('forgetpwd_')) {
-        fields[name] = valueMatch ? valueMatch[1] : '';
+      if (allowedFields.has(name)) {
+        fields[name] = valueMatch ? valueMatch[1] : "";
       }
     }
   }
@@ -228,17 +241,27 @@ export async function loginAssai(
 
     // Step 3: Submit login — NO scriptSessionId, NO DWR
     console.log("[assai-auth] Step 3: Submit login POST");
-    const body = new URLSearchParams({
-      ...formFields,
+    const loginBodyFields = {
+      isSecure: formFields.isSecure ?? "",
+      contentUrl: formFields.contentUrl ?? "",
+      followUp: formFields.followUp ?? "",
+      ssodata: formFields.ssodata ?? "",
+      loginMethod: formFields.loginMethod ?? "",
+      uniqueName: formFields.uniqueName ?? "",
+      siteLanguage: formFields.siteLanguage ?? "",
+      loggedOff: formFields.loggedOff ?? "",
+      isFromLanguageForm: formFields.isFromLanguageForm ?? "",
       dbname: resolvedDbName,
       userid: username,
-      password: password,
+      password,
+    };
+
+    const body = new URLSearchParams({
+      ...loginBodyFields,
     });
 
     const maskedBody = new URLSearchParams({
-      ...formFields,
-      dbname: resolvedDbName,
-      userid: username,
+      ...loginBodyFields,
       password: "[REDACTED]",
     });
 
@@ -277,11 +300,12 @@ export async function loginAssai(
       status: r3.status,
       final_url: finalUrl,
       response_body_preview: responseBody.substring(0, 1000),
-      is_cloudflare_challenge: responseBody.includes('cf-challenge')
-        || responseBody.includes('checking your browser')
-        || responseBody.includes('jschl_vc')
-        || responseBody.includes('Ray ID'),
-    } as any);
+      is_cloudflare_block:
+        responseBody.includes("cf-challenge") ||
+        responseBody.includes("Ray ID") ||
+        responseBody.includes("checking your browser") ||
+        responseBody.includes("Just a moment"),
+    });
 
     if (!success) {
       console.log(`[assai-auth] Step 3 FAILED: status=${r3.status}, finalUrl=${finalUrl}`);
