@@ -1,0 +1,1 @@
+ALTER TABLE dms_sync_credentials ADD COLUMN IF NOT EXISTS db_name VARCHAR(100);

@@ -161,7 +161,8 @@ function extractHiddenFields(html: string): Record<string, string> {
 export async function loginAssai(
   baseUrl: string,
   username: string,
-  password: string
+  password: string,
+  dbname?: string
 ): Promise<AssaiLoginResult> {
   const startTime = Date.now();
   let cookies = "";
@@ -212,14 +213,14 @@ export async function loginAssai(
 
     const tenantCode = baseUrl.split("/").filter(Boolean).pop() || "";
     const derivedDbName = tenantCode.replace(/^AW/i, "").toLowerCase();
-    const dbname = (hiddenFields["reset_dbname"] || derivedDbName || "").trim();
+    const resolvedDbName = (dbname || hiddenFields["reset_dbname"] || derivedDbName || "").trim();
 
     const formParams = new URLSearchParams();
     for (const [k, v] of Object.entries(loginFields)) {
       formParams.set(k, v);
     }
-    if (dbname) {
-      formParams.set("dbname", dbname);
+    if (resolvedDbName) {
+      formParams.set("dbname", resolvedDbName);
     }
     formParams.set("userid", username);
     formParams.set("password", password);
@@ -235,7 +236,7 @@ export async function loginAssai(
       url: resB.url,
       cookies,
       hidden_fields_found: Object.keys(hiddenFields),
-      dbname_used: dbname,
+      dbname_used: resolvedDbName,
       form_body_preview: maskedFormBody.substring(0, 200),
       form_body_masked: maskedFormBody,
     });
