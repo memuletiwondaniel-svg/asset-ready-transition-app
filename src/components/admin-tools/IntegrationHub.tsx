@@ -346,59 +346,11 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   };
 
   const testConnection = async () => {
-    if (!panelPlatform?.hasEdgeFunction) {
-      toast.info(`Test function not yet deployed for ${panelPlatform?.name}`);
-      return;
-    }
-    setTestingInPanel(true);
-    setTestResultInPanel(null);
-    try {
-      const resolvedTenant = tenantId;
-      if (!resolvedTenant) throw new Error('No tenant associated with your account');
-      const { data, error } = await supabase.functions.invoke('test-assai-connection', { body: { tenant_id: resolvedTenant } });
-      if (error) {
-        // supabase.functions.invoke throws on non-2xx — extract the message
-        const msg = typeof error === 'object' && error.message ? error.message : String(error);
-        setTestResultInPanel({ success: false, message: msg, response_time_ms: 0 });
-      } else {
-        setTestResultInPanel(data);
-      }
-    } catch (err: any) {
-      setTestResultInPanel({ success: false, message: err.message || 'Connection test failed', response_time_ms: 0 });
-    } finally {
-      setTestingInPanel(false);
-    }
+    toast.info(`Test function not yet available for ${panelPlatform?.name}`);
   };
 
   const triggerSync = async () => {
-    if (!panelPlatform?.hasEdgeFunction) {
-      toast.info(`Sync function not yet deployed for ${panelPlatform?.name}`);
-      return;
-    }
-    setSyncingInPanel(true);
-    setSyncResultInPanel(null);
-    try {
-      const resolvedTenant = tenantId;
-      if (!resolvedTenant) throw new Error('No tenant associated with your account');
-      const { data, error } = await supabase.functions.invoke('sync-assai-documents', {
-        body: { tenant_id: resolvedTenant, manual_trigger: true },
-      });
-      if (error) {
-        const msg = typeof error === 'object' && error.message ? error.message : String(error);
-        setSyncResultInPanel(`Sync failed: ${msg}`);
-      } else if (data?.success) {
-        setSyncResultInPanel(`${data.synced_count} records synced, ${data.new_documents} new`);
-      } else {
-        // Show specific error from the function
-        const errorMsg = data?.error || 'Sync failed';
-        setSyncResultInPanel(`Sync failed: ${errorMsg}`);
-      }
-      fetchData();
-    } catch (err: any) {
-      setSyncResultInPanel(`Sync failed: ${err.message || 'Unknown error'}`);
-    } finally {
-      setSyncingInPanel(false);
-    }
+    toast.info(`Sync function not yet available for ${panelPlatform?.name}`);
   };
 
   const removeCredentials = async () => {
