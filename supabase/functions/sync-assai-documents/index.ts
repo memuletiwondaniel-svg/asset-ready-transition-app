@@ -136,71 +136,112 @@ async function getAssaiBearerToken(
   const formAction = loginPageBody.match(/action=["']([^"']+)["']/i)?.[1] || "";
   const formMethod = loginPageBody.match(/method=["']([^"']+)["']/i)?.[1] || "GET";
 
-  // Log all input fields to understand the form structure
-  const inputFields: string[] = [];
+  // Parse all input fields (name/type/value)
+  const inputFields: Array<{ name: string; type: string; value: string }> = [];
   const inputRegex = /<input[^>]*>/gi;
   let inputMatch;
   while ((inputMatch = inputRegex.exec(loginPageBody)) !== null) {
-    const nameMatch = inputMatch[0].match(/name=["']([^"']+)["']/i);
-    const typeMatch = inputMatch[0].match(/type=["']([^"']+)["']/i);
-    if (nameMatch) inputFields.push(`${nameMatch[1]}(${typeMatch?.[1] || "text"})`);
+    const tag = inputMatch[0];
+    const name = tag.match(/name=["']([^"']+)["']/i)?.[1] ?? "";
+    if (!name) continue;
+    const type = tag.match(/type=["']([^"']+)["']/i)?.[1]?.toLowerCase() ?? "text";
+    const value = tag.match(/value=["']([^"']*)["']/i)?.[1] ?? "";
+    inputFields.push({ name, type, value });
   }
+
+  const inputFieldLabels = inputFields.map((f) => `${f.name}(${f.type})`);
 
   console.log(`[sync-assai] Form tag: ${formTag}`);
   console.log(`[sync-assai] Form action=${formAction}, method=${formMethod}`);
-  console.log(`[sync-assai] Form inputs: ${inputFields.join(", ")}`);
+  console.log(`[sync-assai] Form inputs: ${inputFieldLabels.join(", ")}`);
   console.log(`[sync-assai] Hidden cr=${crValue ? "present" : "empty"}, orig_request=${origRequestFromForm ? "present" : "empty"}`);
   console.log(`[sync-assai] Login page body (first 2000): ${loginPageBody.substring(0, 2000)}`);
 
-  // Step 3: POST credentials to the form action URL (ALWAYS HTTPS)
-  const loginPostUrl = (formAction
-    ? new URL(formAction, loginFinalUrl).toString()
-    : loginFinalUrl.split("?")[0]
+  // Step 3: POST credentials using the discovered form structure
+  const loginFinalNoHash = loginFinalUrl.split("#")[0].replace(/^http:\/\//i, "https://");
+  const loginPostUrlFromAction = (formAction
+    ? new URL(formAction, loginFinalNoHash).toString()
+    : loginFinalNoHash
   ).replace(/^http:\/\//i, "https://");
 
-  // Build form data using discovered field names
-  const hasUseridField = inputFields.some(f => f.startsWith("userid"));
-  const hasUsernameField = inputFields.some(f => f.startsWith("username") || f.startsWith("j_username"));
-  const hasPasswordField = inputFields.some(f => f.startsWith("j_password"));
+  // Some Assai tenants require POST to login.jsp WITH query params (loginMethod/orig_request)
+  const loginPostUrlWithQuery = loginFinalNoHash;
+  const loginPostUrl =
+    /\/login\.jsp$/i.test(formAction || "") && loginPostUrlWithQuery.includes("?")
+      ? loginPostUrlWithQuery
+      : loginPostUrlFromAction;
+
+  const hasField = (name: string) => inputFields.some((f) => f.name === name);
+
+  const usernameField = ["j_username", "username", "userid", "userId"].find(hasField) || "username";
+  const passwordField = ["j_password", "password", "passwd"].find(hasField) || "password";
 
   const formData = new URLSearchParams();
-  // Try the field names we found
-  if (hasUsernameField) {
-    const uField = inputFields.find(f => f.startsWith("j_username")) ? "j_username" : "username";
-    formData.set(uField, username);
-  } else {
-    formData.set("userid", username);
+
+  // Preserve all hidden input fields first
+  for (const field of inputFields) {
+    if (field.type === "hidden") {
+      formData.set(field.name, field.value || "");
+    }
   }
-  formData.set(hasPasswordField ? "j_password" : "password", password);
-  if (crValue) formData.set("cr", crValue);
-  formData.set("orig_request", origRequestFromForm || authorizeUrl);
+
+  // Then override/set auth fields
+  formData.set(usernameField, username);
+  formData.set(passwordField, password);
+
+  // Ensure required fields are present
+  if (!formData.has("orig_request")) formData.set("orig_request", origRequestFromForm || authorizeUrl);
+  if (!formData.has("loginMethod")) formData.set("loginMethod", "unpw");
+  if (!formData.has("client_id")) formData.set("client_id", dbName);
 
   console.log(`[sync-assai] OAuth Step 3: POSTing to ${loginPostUrl} with fields: ${Array.from(formData.keys()).join(", ")}`);
 
-  const loginResp = await fetch(loginPostUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Cookie": cookies.join("; "),
-      "Accept": "text/html",
-    },
-    body: formData.toString(),
-    redirect: "manual",
-  });
-  cookies = mergeCookies(cookies, extractCookies(loginResp));
-  const loginRespBody = await loginResp.text();
+  const doLoginPost = async (url: string) => {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Cookie": cookies.join("; "),
+        "Accept": "text/html",
+        "Referer": loginFinalNoHash,
+        "Origin": new URL(url).origin,
+      },
+      body: formData.toString(),
+      redirect: "manual",
+    });
+    cookies = mergeCookies(cookies, extractCookies(resp));
+    const body = await resp.text();
+    return {
+      status: resp.status,
+      location: resp.headers.get("location"),
+      body,
+      url,
+    };
+  };
 
-  const postLocation = loginResp.headers.get("location");
-  console.log(`[sync-assai] Login POST status=${loginResp.status}, location=${postLocation?.substring(0, 250) ?? "null"}`);
-  if (loginResp.status >= 400) {
-    console.log(`[sync-assai] Login POST error body: ${loginRespBody.substring(0, 500)}`);
+  let loginAttempt = await doLoginPost(loginPostUrl);
+
+  // Fallback retry for the 405 case
+  if (loginAttempt.status === 405 && loginPostUrl !== loginPostUrlWithQuery) {
+    console.log(`[sync-assai] Login POST got 405, retrying with query URL: ${loginPostUrlWithQuery}`);
+    loginAttempt = await doLoginPost(loginPostUrlWithQuery);
+  }
+
+  const postLocation = loginAttempt.location;
+  console.log(`[sync-assai] Login POST status=${loginAttempt.status}, location=${postLocation?.substring(0, 250) ?? "null"}, url=${loginAttempt.url}`);
+
+  if (loginAttempt.status >= 400) {
+    console.log(`[sync-assai] Login POST error body: ${loginAttempt.body.substring(0, 500)}`);
   }
 
   if (!postLocation) {
-    // No redirect — check if the response body contains a token or an error
-    const bodyToken = loginRespBody.match(/access_token[=:]["'\s]*([A-Za-z0-9\-._~+/]+=*)/);
+    // No redirect — check if body contains token, otherwise return detailed error
+    const bodyToken = loginAttempt.body.match(/access_token[=:]["'\s]*([A-Za-z0-9\-._~+/]+=*)/);
     if (bodyToken) return { token: bodyToken[1] };
-    return { token: null, error: `Login POST returned ${loginResp.status} with no redirect. Form method=${formMethod}, action=${formAction}` };
+    return {
+      token: null,
+      error: `Login POST returned ${loginAttempt.status} with no redirect. method=${formMethod}, action=${formAction}, usernameField=${usernameField}, passwordField=${passwordField}`,
+    };
   }
 
   // Step 4: Follow the redirect chain after login to capture the token
