@@ -193,10 +193,10 @@ export async function loginAssai(
   };
 
   try {
-    console.log('[assai-auth] loginAssai called with:', {
+    console.log('[assai-login] Starting login:', {
       base_url: baseUrl,
-      username_length: (username || '').length,
-      password_length: (password || '').length,
+      username_length: username.length,
+      password_length: password.length,
       db_name: dbname,
     });
 
