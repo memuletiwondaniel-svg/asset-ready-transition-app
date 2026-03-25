@@ -49,14 +49,14 @@ Deno.serve(async (req) => {
 
     console.log(`[test-assai] base_url=${baseUrl}, username=${username}, db_name=${dbName}, password_length=${password.length}`);
 
-    if (!baseUrl || !username || !password || !dbName) {
+    if (!baseUrl || !username || !password) {
       return new Response(
-        JSON.stringify({ success: false, error: "Incomplete credentials: base_url, username, password, and db_name are required" }),
+        JSON.stringify({ success: false, error: "Incomplete credentials: base_url, username, and password are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const result = await loginAssai(baseUrl, username, password, dbName);
+    const result = await loginAssai(baseUrl, username, password, dbName || undefined);
 
     return new Response(JSON.stringify(result), {
       status: result.success ? 200 : 401,

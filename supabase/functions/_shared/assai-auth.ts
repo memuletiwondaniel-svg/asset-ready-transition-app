@@ -22,6 +22,11 @@ const normalizeAssaiBaseUrl = (rawBaseUrl: string): string => {
   }
 };
 
+const extractDbNameFromUrl = (rawBaseUrl: string): string | null => {
+  const match = rawBaseUrl.match(/\/AW([^/]+?)(?:\/|$)/i);
+  return match?.[1]?.toLowerCase() ?? null;
+};
+
 const extractInputValue = (html: string, fieldName: string, fallback = ""): string => {
   const regex = new RegExp(`(?:id|name)="${fieldName}"[^>]*value="([^"]*)"`, "i");
   return regex.exec(html)?.[1] ?? fallback;
@@ -117,10 +122,14 @@ export async function loginAssai(
   baseUrl: string,
   username: string,
   password: string,
-  dbName: string,
+  dbName?: string,
 ): Promise<AssaiLoginResult> {
   const normalizedBaseUrl = normalizeAssaiBaseUrl(baseUrl);
-  const loginPath = `/AW${dbName}/login.aweb`;
+  const resolvedDbName = dbName || extractDbNameFromUrl(baseUrl);
+  if (!resolvedDbName) {
+    return { success: false, error: "Cannot determine database name from URL. Expected URL containing /AW<dbname>/" };
+  }
+  const loginPath = `/AW${resolvedDbName}/login.aweb`;
   const loginPageUrl = `${normalizedBaseUrl}${loginPath}?loginMethod=unpw`;
   const loginPostUrl = `${normalizedBaseUrl}${loginPath}`;
   console.log(`[assai-auth] Attempting login to ${loginPostUrl} as ${username}`);
@@ -142,7 +151,7 @@ export async function loginAssai(
     const loginMethod = extractInputValue(loginPageBody, "loginMethod", "unpw");
 
     // 2) Request passphrase via DWR, same as submitSecureLogon() in Assai login.js
-    const dwrUrl = `${normalizedBaseUrl}/AW${dbName}/dwr/call/plaincall/DWRBean.getSessionID.dwr`;
+    const dwrUrl = `${normalizedBaseUrl}/AW${resolvedDbName}/dwr/call/plaincall/DWRBean.getSessionID.dwr`;
     const cookieHeader = uniqueCookiePairs(cookies).join("; ");
     const dwrBody = [
       "callCount=1",
@@ -152,7 +161,7 @@ export async function loginAssai(
       "c0-id=0",
       "batchId=0",
       "instanceId=0",
-      `page=${encodeURIComponent(`/AW${dbName}/login.aweb?loginMethod=unpw`)}`,
+      `page=${encodeURIComponent(`/AW${resolvedDbName}/login.aweb?loginMethod=unpw`)}`,
       `scriptSessionId=${Date.now()}`,
       "",
     ].join("\n");
@@ -195,7 +204,7 @@ export async function loginAssai(
       followUp,
       uniqueName,
       isSecure: "true",
-      dbname: dbName,
+      dbname: resolvedDbName,
       ssodata,
       loginMethod,
       remember_me: "false",
