@@ -271,15 +271,21 @@ export async function loginAssai(
       form_body_masked: maskedBody.toString(),
     });
 
-    // Log response body on failure for debugging
+    // Always log full response body details as a separate debug step
+    debugSteps.push({
+      step: "login_post_body",
+      status: r3.status,
+      final_url: finalUrl,
+      response_body_preview: responseBody.substring(0, 1000),
+      is_cloudflare_challenge: responseBody.includes('cf-challenge')
+        || responseBody.includes('checking your browser')
+        || responseBody.includes('jschl_vc')
+        || responseBody.includes('Ray ID'),
+    } as any);
+
     if (!success) {
       console.log(`[assai-auth] Step 3 FAILED: status=${r3.status}, finalUrl=${finalUrl}`);
       console.log(`[assai-auth] Response body (first 1500): ${responseBody.substring(0, 1500)}`);
-      // Extract any error message from the page
-      const errorMatch = responseBody.match(/class=["'](?:error|alert|message|warning)[^"']*["'][^>]*>([^<]+)</i);
-      const loginError = responseBody.match(/(?:invalid|incorrect|wrong|failed|error|locked|disabled)[^<]{0,100}/i);
-      if (errorMatch) console.log(`[assai-auth] Error element: ${errorMatch[1].trim()}`);
-      if (loginError) console.log(`[assai-auth] Login error hint: ${loginError[0].trim()}`);
     } else {
       console.log(`[assai-auth] Step 3 SUCCESS: finalUrl=${finalUrl}`);
     }
