@@ -508,7 +508,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
       {/* Detail Panel */}
       <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
-        <SheetContent className="w-full sm:max-w-[480px] p-0 flex flex-col" overlayClassName="">
+        <SheetContent className="w-full sm:max-w-[480px] p-0 flex flex-col [&>button.absolute]:hidden" overlayClassName="">
           {panelPlatform && (
             <>
               {/* Panel Header */}
