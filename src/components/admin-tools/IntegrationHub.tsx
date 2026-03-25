@@ -43,6 +43,7 @@ interface SyncCredential {
   project_code_field: string | null;
   sync_enabled: boolean;
   last_sync_at: string | null;
+  db_name?: string | null;
 }
 
 interface SyncLog {
@@ -244,6 +245,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
             project_code_field: existing.project_code_field || '',
             sync_enabled: existing.sync_enabled || false,
             platform_url: '', auth_token: '', automation_enabled: false,
+            db_name: '',
           });
         }
 
