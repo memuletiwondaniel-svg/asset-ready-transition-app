@@ -274,7 +274,12 @@ export async function loginAssai(
     // Log response body on failure for debugging
     if (!success) {
       console.log(`[assai-auth] Step 3 FAILED: status=${r3.status}, finalUrl=${finalUrl}`);
-      console.log(`[assai-auth] Response body (first 500): ${responseBody.substring(0, 500)}`);
+      console.log(`[assai-auth] Response body (first 1500): ${responseBody.substring(0, 1500)}`);
+      // Extract any error message from the page
+      const errorMatch = responseBody.match(/class=["'](?:error|alert|message|warning)[^"']*["'][^>]*>([^<]+)</i);
+      const loginError = responseBody.match(/(?:invalid|incorrect|wrong|failed|error|locked|disabled)[^<]{0,100}/i);
+      if (errorMatch) console.log(`[assai-auth] Error element: ${errorMatch[1].trim()}`);
+      if (loginError) console.log(`[assai-auth] Login error hint: ${loginError[0].trim()}`);
     } else {
       console.log(`[assai-auth] Step 3 SUCCESS: finalUrl=${finalUrl}`);
     }
