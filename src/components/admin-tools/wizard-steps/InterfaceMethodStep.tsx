@@ -23,12 +23,12 @@ const methods = [
   {
     id: 'rpa' as InterfaceMethod,
     title: 'RPA',
-    subtitle: 'Robotic Process Automation',
+    subtitle: 'Browser Automation',
     description: 'Interface via screen-scraping or web automation using portal credentials',
     icon: Bot,
     color: 'text-amber-600',
     bgColor: 'bg-amber-500/10',
-    borderColor: 'border-amber-500/40',
+    borderColor: 'border-amber-500/20',
     ringColor: 'ring-amber-500/30',
   },
   {
