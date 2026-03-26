@@ -540,7 +540,8 @@ Deno.serve(async (req) => {
             }
           }
         }
-      } catch (e) {
+      } catch (e: any) {
+        routeFailures['api'] = e?.message || String(e);
         console.log(`[sync-assai] API route failed: ${e}`);
       }
       } // end if api
