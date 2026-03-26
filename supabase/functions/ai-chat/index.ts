@@ -6796,6 +6796,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         
         // Parse myCells
         const myCellsMatch = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
+        console.log('search_assai_documents: myCells found:', !!myCellsMatch, ', html length:', html.length);
         
         let allDocuments: any[] = [];
         
