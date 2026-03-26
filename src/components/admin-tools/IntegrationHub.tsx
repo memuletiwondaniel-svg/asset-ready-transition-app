@@ -552,15 +552,22 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const renderSection = (key: string, title: string, platforms: Platform[]) => {
     if (platforms.length === 0) return null;
     const isOpen = openSections[key] ?? false;
+    const isFavSection = key === 'favorites';
     return (
       <Collapsible open={isOpen} onOpenChange={() => toggleSection(key)}>
         <CollapsibleTrigger className="flex items-center gap-3 w-full group/section cursor-pointer mb-3">
-          <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200", isOpen ? "" : "-rotate-90")} />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60 whitespace-nowrap select-none group-hover/section:text-muted-foreground transition-colors">
+          {isFavSection ? (
+            <Star className={cn("h-3.5 w-3.5 transition-transform duration-200", isOpen ? "text-amber-500 fill-amber-500" : "text-amber-400/60 fill-amber-400/60 -rotate-90")} />
+          ) : (
+            <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200", isOpen ? "" : "-rotate-90")} />
+          )}
+          <span className={cn("text-[11px] font-semibold uppercase tracking-[0.12em] whitespace-nowrap select-none transition-colors",
+            isFavSection ? "text-amber-600/80 group-hover/section:text-amber-600" : "text-muted-foreground/60 group-hover/section:text-muted-foreground"
+          )}>
             {title}
           </span>
-          <div className="flex-1 h-px bg-border/40" />
-          <span className="text-[10px] text-muted-foreground/40 tabular-nums">{platforms.length}</span>
+          <div className={cn("flex-1 h-px", isFavSection ? "bg-amber-300/30" : "bg-border/40")} />
+          <span className={cn("text-[10px] tabular-nums", isFavSection ? "text-amber-500/60" : "text-muted-foreground/40")}>{platforms.length}</span>
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl">
