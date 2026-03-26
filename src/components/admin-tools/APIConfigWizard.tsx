@@ -200,15 +200,19 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
           {currentStep === 1 && (
             <InterfaceMethodStep selected={interfaceMethod} onSelect={setInterfaceMethod} />
           )}
-          {currentStep === 2 && interfaceMethod === 'rpa' && (
-            <RPAConfigStep
-              credentials={rpaCredentials}
-              onChange={setRpaCredentials}
-              defaultPortalUrl={DEFAULT_PORTAL_URLS[api.id]}
-            />
-          )}
           {currentStep === 2 && interfaceMethod === 'api' && (
             <APIConfigStep credentials={apiCredentials} onChange={setApiCredentials} />
+          )}
+          {currentStep === 2 && interfaceMethod === 'agent' && (
+            <div className="space-y-4 py-2">
+              <div>
+                <h3 className="text-sm font-medium text-foreground">Agent Configuration</h3>
+                <p className="text-xs text-muted-foreground mt-1">Selma will use stored DMS credentials to authenticate and navigate Assai autonomously.</p>
+              </div>
+              <div className="rounded-lg border p-4 bg-emerald-50/50 dark:bg-emerald-950/20 text-sm text-muted-foreground">
+                No additional configuration needed — Selma uses credentials saved in DMS Settings.
+              </div>
+            </div>
           )}
           {currentStep === 3 && (
             <TestConnectionStep
