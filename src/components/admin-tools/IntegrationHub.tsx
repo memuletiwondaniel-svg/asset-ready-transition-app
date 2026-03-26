@@ -552,6 +552,18 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
   const isFormValid = connectionMethod === 'api' ? !!formData.base_url.trim() : !!formData.platform_url.trim();
 
+  const isDirty = useMemo(() => {
+    if (!savedDirtySignature) return false;
+    const current = JSON.stringify({
+      connectionMethod,
+      fallback1,
+      fallback2,
+      base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
+      username: formData.username,
+    });
+    return current !== savedDirtySignature || !!formData.password || !!formData.api_key || !!formData.auth_token || !!formData.client_secret;
+  }, [connectionMethod, fallback1, fallback2, formData, savedDirtySignature]);
+
   const validateUrl = (url: string) => {
     if (url && !url.startsWith('https://')) {
       return 'URL must start with https://';
