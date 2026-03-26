@@ -73,7 +73,7 @@ interface Platform {
   badgeLabel: string;
 }
 
-type ConnectionMethod = 'api' | 'automation' | 'agent';
+type ConnectionMethod = 'api' | 'agent';
 type AuthType = 'api_key' | 'oauth' | 'bearer';
 
 const mapDbMethodToUi = (method: string | null | undefined): ConnectionMethod | null => {
