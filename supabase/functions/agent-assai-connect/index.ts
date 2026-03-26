@@ -115,8 +115,11 @@ Deno.serve(async (req) => {
 
     try {
       // Try DWR-based login (Assai uses Direct Web Remoting)
-      const loginUrl = baseUrl.replace(/\/+$/, "");
-      const sessionUrl = `${loginUrl}/dwr/call/plaincall/LoginBean.getSessionID.dwr`;
+      // Strip everything after the app context root (e.g., /AWeu578) — remove index.aweb, query params, trailing slashes
+      const appRoot = baseUrl.replace(/\/+$/, "").split(/\/(index\.aweb|login\.html|dwr\/)/i)[0];
+      const sessionUrl = `${appRoot}/dwr/call/plaincall/LoginBean.getSessionID.dwr`;
+
+      console.log(`[agent-assai-connect] Derived app root: ${appRoot}`);
 
       const dwrBody = [
         "callCount=1",
@@ -127,7 +130,7 @@ Deno.serve(async (req) => {
         `c0-param1=string:${encodeURIComponent(password)}`,
         "c0-param2=string:",
         "batchId=0",
-        `page=${loginUrl}/login.html`,
+        `page=${appRoot}/login.html`,
         "httpSessionId=",
         `scriptSessionId=`,
       ].join("\n");
