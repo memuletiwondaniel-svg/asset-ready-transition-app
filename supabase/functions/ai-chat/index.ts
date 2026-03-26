@@ -6823,6 +6823,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         });
 
         const html = await searchRes.text();
+        console.log('result.aweb status:', searchRes.status, 'html length:', html.length, 'cookies sent:', cookieHeader.substring(0, 60));
         
         // Parse myCells
         const myCellsMatch = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
