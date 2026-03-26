@@ -16,7 +16,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { isAPIConfigured, getAPIConfig } from '@/lib/api-config-storage';
 import {
   Plug, Search, Wifi, RefreshCw, Loader2, Eye, EyeOff,
-  ChevronDown, CheckCircle2, XCircle, AlertTriangle, X, Zap, Bot, Info, Trash2, BrainCircuit, Star
+  ChevronDown, CheckCircle2, XCircle, AlertTriangle, X, Zap, MousePointerClick, Info, Trash2, BrainCircuit, Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
