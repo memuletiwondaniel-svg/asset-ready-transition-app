@@ -106,94 +106,118 @@ Deno.serve(async (req) => {
     const stepCount = steps?.length ?? 0;
     console.log(`[agent-assai-connect] Loaded ${stepCount} navigation steps`);
 
-    // --- Attempt login via HTTP (simulating agent's first step) ---
-    // Step 1: Fetch the login page to get session cookies
+    // --- Attempt login via standard HTTP form POST (like a normal user) ---
     const startTime = Date.now();
     let loginSuccess = false;
     let loginMessage = "";
     let responseTimeMs = 0;
 
     try {
-      // Try DWR-based login (Assai uses Direct Web Remoting)
-      // Strip everything after the app context root (e.g., /AWeu578) — remove index.aweb, query params, trailing slashes
-      const appRoot = baseUrl.replace(/\/+$/, "").split(/\/(index\.aweb|login\.html|dwr\/)/i)[0];
-      const sessionUrl = `${appRoot}/dwr/call/plaincall/LoginBean.getSessionID.dwr`;
+      // Selma logs in like a normal user — POST credentials to the login form
+      const loginUrl = baseUrl.replace(/\/+$/, "");
+      
+      console.log(`[agent-assai-connect] Step 1: GET login page at ${loginUrl}`);
 
-      console.log(`[agent-assai-connect] Derived app root: ${appRoot}`);
+      // Step 1: GET the login page to establish a session and find the form action
+      const pageResponse = await fetch(loginUrl, {
+        method: "GET",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        },
+        redirect: "follow",
+      });
 
-      const dwrBody = [
-        "callCount=1",
-        "windowName=",
-        "c0-scriptName=LoginBean",
-        "c0-methodName=getSessionID",
-        `c0-param0=string:${encodeURIComponent(username)}`,
-        `c0-param1=string:${encodeURIComponent(password)}`,
-        "c0-param2=string:",
-        "batchId=0",
-        `page=${appRoot}/login.html`,
-        "httpSessionId=",
-        `scriptSessionId=`,
-      ].join("\n");
+      const pageHtml = await pageResponse.text();
+      const cookies = pageResponse.headers.get("set-cookie") || "";
+      const finalUrl = pageResponse.url; // After any redirects
 
-      console.log(`[agent-assai-connect] Attempting DWR login at ${sessionUrl}`);
+      console.log(`[agent-assai-connect] Login page status: ${pageResponse.status}, final URL: ${finalUrl}`);
+      console.log(`[agent-assai-connect] Login page length: ${pageHtml.length} chars`);
+      console.log(`[agent-assai-connect] Cookies received: ${cookies.substring(0, 200)}`);
+      console.log(`[agent-assai-connect] Page preview: ${pageHtml.substring(0, 500)}`);
 
-      const loginResponse = await fetch(sessionUrl, {
+      // Step 2: Find the login form action URL
+      const formActionMatch = pageHtml.match(/form[^>]*action\s*=\s*["']([^"']+)["']/i);
+      const formAction = formActionMatch ? formActionMatch[1] : null;
+      console.log(`[agent-assai-connect] Form action found: ${formAction}`);
+
+      // Look for input field names (they might not be "username"/"password")
+      const inputNames = [...pageHtml.matchAll(/<input[^>]*name\s*=\s*["']([^"']+)["'][^>]*/gi)]
+        .map(m => ({ name: m[1], type: m[0].match(/type\s*=\s*["']([^"']+)["']/i)?.[1] || "text" }));
+      console.log(`[agent-assai-connect] Form inputs found: ${JSON.stringify(inputNames)}`);
+
+      // Determine the correct field names
+      const userField = inputNames.find(i => /user|login|email|name/i.test(i.name))?.name || "username";
+      const passField = inputNames.find(i => i.type === "password")?.name || "password";
+      console.log(`[agent-assai-connect] Using fields: user=${userField}, pass=${passField}`);
+
+      // Step 3: POST the login form
+      let postUrl: string;
+      if (formAction) {
+        if (formAction.startsWith("http")) {
+          postUrl = formAction;
+        } else if (formAction.startsWith("/")) {
+          const origin = new URL(finalUrl).origin;
+          postUrl = `${origin}${formAction}`;
+        } else {
+          const base = finalUrl.substring(0, finalUrl.lastIndexOf("/") + 1);
+          postUrl = `${base}${formAction}`;
+        }
+      } else {
+        postUrl = finalUrl; // POST back to same URL
+      }
+
+      console.log(`[agent-assai-connect] Step 2: POST credentials to ${postUrl}`);
+
+      const formBody = new URLSearchParams();
+      formBody.set(userField, username);
+      formBody.set(passField, password);
+
+      const loginResponse = await fetch(postUrl, {
         method: "POST",
         headers: {
-          "Content-Type": "text/plain",
-          "User-Agent": "ORSH-Agent-Selma/1.0",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Cookie": cookies.split(",").map(c => c.split(";")[0].trim()).join("; "),
+          "Referer": finalUrl,
         },
-        body: dwrBody,
+        body: formBody.toString(),
+        redirect: "follow",
       });
 
       responseTimeMs = Date.now() - startTime;
       const responseText = await loginResponse.text();
+      const postCookies = loginResponse.headers.get("set-cookie") || "";
+      const postFinalUrl = loginResponse.url;
 
-      console.log(`[agent-assai-connect] DWR response status: ${loginResponse.status}, time: ${responseTimeMs}ms`);
-      console.log(`[agent-assai-connect] DWR response length: ${responseText.length} chars`);
-      console.log(`[agent-assai-connect] DWR response preview: ${responseText.substring(0, 500)}`);
+      console.log(`[agent-assai-connect] POST response status: ${loginResponse.status}, time: ${responseTimeMs}ms`);
+      console.log(`[agent-assai-connect] POST final URL: ${postFinalUrl}`);
+      console.log(`[agent-assai-connect] POST cookies: ${postCookies.substring(0, 200)}`);
+      console.log(`[agent-assai-connect] POST response length: ${responseText.length} chars`);
+      console.log(`[agent-assai-connect] POST response preview: ${responseText.substring(0, 500)}`);
 
-      // Check for fast rejection (< 300ms typically means the request didn't reach auth logic)
-      if (responseTimeMs < 300 && responseText.length < 100) {
-        loginMessage = `Fast rejection detected (${responseTimeMs}ms) — DWR endpoint may not be accessible. Response: ${responseText.substring(0, 200)}`;
-        console.warn(`[agent-assai-connect] ${loginMessage}`);
+      // Determine login success by analyzing the response
+      const isRedirectedToApp = !postFinalUrl.includes("login") && !postFinalUrl.includes("loggedOff");
+      const hasSessionCookie = postCookies.toLowerCase().includes("jsessionid") || postCookies.toLowerCase().includes("session");
+      const hasErrorMessage = /invalid|incorrect|failed|wrong|denied|unauthorized/i.test(responseText.substring(0, 2000));
+      const hasWelcome = /welcome|dashboard|home|main|frame/i.test(responseText.substring(0, 2000));
+
+      console.log(`[agent-assai-connect] Analysis: redirectedToApp=${isRedirectedToApp}, sessionCookie=${hasSessionCookie}, error=${hasErrorMessage}, welcome=${hasWelcome}`);
+
+      if (hasErrorMessage) {
         loginSuccess = false;
+        loginMessage = `Login rejected — invalid credentials (${responseTimeMs}ms)`;
+      } else if (isRedirectedToApp || hasSessionCookie || hasWelcome) {
+        loginSuccess = true;
+        loginMessage = `Selma logged in successfully · ${responseTimeMs}ms`;
+      } else if (loginResponse.status >= 400) {
+        loginSuccess = false;
+        loginMessage = `Login failed with HTTP ${loginResponse.status} (${responseTimeMs}ms)`;
       } else {
-        // Parse DWR response for passphrase/session ID
-        // DWR responses contain: var s0="sessionid"; or dwr.engine._remoteHandleCallback('0','0',"sessionid")
-        const passphrasePatterns = [
-          /var\s+s\d+\s*=\s*"([^"]+)"/,
-          /dwr\.engine\._remoteHandleCallback\([^,]+,[^,]+,"([^"]+)"\)/,
-          /handleCallback\([^,]+,[^,]+,"([^"]+)"\)/,
-        ];
-
-        let passphrase: string | null = null;
-        for (const pattern of passphrasePatterns) {
-          const match = responseText.match(pattern);
-          if (match) {
-            passphrase = match[1];
-            console.log(`[agent-assai-connect] Passphrase extracted via pattern: ${pattern.source}`);
-            break;
-          }
-        }
-
-        if (passphrase && passphrase.length > 5) {
-          loginSuccess = true;
-          loginMessage = `Agent login successful · ${responseTimeMs}ms · Session obtained`;
-          console.log(`[agent-assai-connect] Login SUCCESS — passphrase length: ${passphrase.length}`);
-        } else if (responseText.includes("error") || responseText.includes("Error") || responseText.includes("exception")) {
-          loginSuccess = false;
-          loginMessage = `Login rejected by server (${responseTimeMs}ms). Check credentials.`;
-          console.warn(`[agent-assai-connect] Login FAILED — error in response`);
-        } else if (passphrase === null) {
-          loginSuccess = false;
-          loginMessage = `DWR passphrase extraction failed — regex did not match DWR response (${responseTimeMs}ms). Response preview: ${responseText.substring(0, 200)}`;
-          console.warn(`[agent-assai-connect] ${loginMessage}`);
-        } else {
-          loginSuccess = false;
-          loginMessage = `Login returned empty/short session (${responseTimeMs}ms). Credentials may be invalid.`;
-          console.warn(`[agent-assai-connect] Login FAILED — passphrase too short: "${passphrase}"`);
-        }
+        // Ambiguous — log details for debugging
+        loginSuccess = false;
+        loginMessage = `Login response ambiguous (${responseTimeMs}ms). Status: ${loginResponse.status}, URL: ${postFinalUrl}. Check edge function logs for details.`;
       }
     } catch (fetchErr: any) {
       responseTimeMs = Date.now() - startTime;
