@@ -41,6 +41,45 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Shared Assai authentication helper — simple form-based login (no DWR encryption)
+async function authenticateAssai(assaiBase: string, username: string, password: string): Promise<{ cookies: string; success: boolean; statusCode: number }> {
+  const sessionCookies: string[] = [];
+  const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+
+  // Step 1: GET login page to capture initial session cookies
+  const loginPageRes = await fetch(assaiBase + '/login.aweb?loginMethod=unpw', {
+    method: 'GET',
+    headers: { 'User-Agent': ua },
+    redirect: 'manual'
+  });
+  const loginPageSetCookies = loginPageRes.headers.getSetCookie?.() || [];
+  sessionCookies.push(...loginPageSetCookies.map((c: string) => c.split(';')[0]));
+  await loginPageRes.text();
+
+  // Step 2: POST login with plain credentials
+  const loginBody = `userid=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&dbname=eu578&loginMethod=unpw`;
+  const loginRes = await fetch(assaiBase + '/login.aweb', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Cookie': sessionCookies.join('; '),
+      'User-Agent': ua,
+      'Referer': assaiBase + '/login.aweb?loginMethod=unpw'
+    },
+    body: loginBody,
+    redirect: 'manual'
+  });
+  const loginSetCookies = loginRes.headers.getSetCookie?.() || [];
+  sessionCookies.push(...loginSetCookies.map((c: string) => c.split(';')[0]));
+  await loginRes.text();
+
+  const statusCode = loginRes.status;
+  const success = statusCode === 200 || statusCode === 302;
+  console.log(`Assai login status: ${statusCode}`);
+
+  return { cookies: sessionCookies.join('; '), success, statusCode };
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // BOB AI AGENT - PROPRIETARY & CONFIDENTIAL
 // Copyright © 2024-2025 ORSH Platform. All Rights Reserved.
