@@ -74,6 +74,18 @@ interface Platform {
 type ConnectionMethod = 'api' | 'automation' | 'agent';
 type AuthType = 'api_key' | 'oauth' | 'bearer';
 
+const CONNECTION_METHOD_BADGE_LABELS: Record<ConnectionMethod, string> = {
+  api: 'API',
+  automation: 'RPA',
+  agent: 'Agent',
+};
+
+const CONNECTION_METHOD_OPTION_LABELS: Record<ConnectionMethod, string> = {
+  api: 'API (REST)',
+  automation: 'RPA (Browser)',
+  agent: 'Agent (Selma AI)',
+};
+
 const ALL_PLATFORMS: Platform[] = [
   { id: 'assai', name: 'Assai', description: 'Enterprise document management for O&G', section: 'dms', logo: assaiLogo, logoScale: 1.15, accent: '#F97316', badgeLabel: 'assai' },
   { id: 'wrench', name: 'Wrench', description: 'Project document control and management', section: 'dms', logo: wrenchLogo, accent: '#2563EB', badgeLabel: 'wrench' },
@@ -174,13 +186,13 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const getConnectionMethodLabel = (platformId: string): string | null => {
     if (platformId === 'gocompletions') {
       const config = getAPIConfig('gocompletions');
-      if (config?.interfaceMethod === 'rpa') return 'Automation';
-      if (config?.interfaceMethod === 'api') return 'API';
+      if (config?.interfaceMethod === 'rpa') return CONNECTION_METHOD_BADGE_LABELS.automation;
+      if (config?.interfaceMethod === 'api') return CONNECTION_METHOD_BADGE_LABELS.api;
       return null;
     }
     const cred = getCredential(platformId);
     if (!cred) return null;
-    return 'API';
+    return CONNECTION_METHOD_BADGE_LABELS.api;
   };
 
   const openPanel = (platform: Platform) => {
@@ -713,65 +725,53 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Fallback Chain</span>
                       <span className="text-[10px] text-muted-foreground/60">If primary fails, try next</span>
                     </div>
-                    <div className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-2.5">
-                      {/* Fallback 1 */}
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/30 shrink-0">
-                          <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">1</span>
-                        </div>
+                    <div className="rounded-xl border border-border/50 bg-muted/20 p-2.5 space-y-2">
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                         <select
                           value={fallback1}
                           onChange={e => { setFallback1(e.target.value); if (e.target.value === 'none') setFallback2('none'); }}
-                          className="flex-1 h-8 text-xs rounded-md border border-border bg-background px-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                          className="h-8 text-xs rounded-md border border-border/60 bg-background px-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                         >
                           <option value="none">No fallback</option>
-                          {connectionMethod !== 'api' && <option value="api">API (REST)</option>}
-                          {connectionMethod !== 'automation' && <option value="automation">Automation (Browser)</option>}
-                          {connectionMethod !== 'agent' && <option value="agent">Agent (Selma AI)</option>}
+                          {connectionMethod !== 'api' && <option value="api">{CONNECTION_METHOD_OPTION_LABELS.api}</option>}
+                          {connectionMethod !== 'automation' && <option value="automation">{CONNECTION_METHOD_OPTION_LABELS.automation}</option>}
+                          {connectionMethod !== 'agent' && <option value="agent">{CONNECTION_METHOD_OPTION_LABELS.agent}</option>}
+                        </select>
+                        <span className="text-muted-foreground/50 text-xs">→</span>
+                        <select
+                          value={fallback2}
+                          onChange={e => setFallback2(e.target.value)}
+                          disabled={fallback1 === 'none'}
+                          className="h-8 text-xs rounded-md border border-border/60 bg-background px-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <option value="none">No second fallback</option>
+                          {connectionMethod !== 'api' && fallback1 !== 'api' && <option value="api">{CONNECTION_METHOD_OPTION_LABELS.api}</option>}
+                          {connectionMethod !== 'automation' && fallback1 !== 'automation' && <option value="automation">{CONNECTION_METHOD_OPTION_LABELS.automation}</option>}
+                          {connectionMethod !== 'agent' && fallback1 !== 'agent' && <option value="agent">{CONNECTION_METHOD_OPTION_LABELS.agent}</option>}
                         </select>
                       </div>
-                      {/* Fallback 2 — only show if Fallback 1 is set */}
-                      {fallback1 !== 'none' && (
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-orange-100 dark:bg-orange-900/30 shrink-0">
-                            <span className="text-[10px] font-bold text-orange-700 dark:text-orange-400">2</span>
-                          </div>
-                          <select
-                            value={fallback2}
-                            onChange={e => setFallback2(e.target.value)}
-                            className="flex-1 h-8 text-xs rounded-md border border-border bg-background px-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                          >
-                            <option value="none">No fallback</option>
-                            {connectionMethod !== 'api' && fallback1 !== 'api' && <option value="api">API (REST)</option>}
-                            {connectionMethod !== 'automation' && fallback1 !== 'automation' && <option value="automation">Automation (Browser)</option>}
-                            {connectionMethod !== 'agent' && fallback1 !== 'agent' && <option value="agent">Agent (Selma AI)</option>}
-                          </select>
-                        </div>
-                      )}
-                      {/* Visual chain summary */}
-                      <div className="flex items-center gap-1.5 pt-1 border-t border-border/30 mt-1">
-                        <span className="text-[10px] text-muted-foreground/70">Execution order:</span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[10px] font-medium text-foreground/80 bg-muted/60 px-1.5 py-0.5 rounded">
-                            {connectionMethod === 'api' ? 'API' : connectionMethod === 'automation' ? 'Automation' : 'Agent'}
-                          </span>
-                          {fallback1 !== 'none' && (
-                            <>
-                              <span className="text-[10px] text-muted-foreground/50">→</span>
-                              <span className="text-[10px] font-medium text-foreground/80 bg-amber-50 dark:bg-amber-950/30 px-1.5 py-0.5 rounded">
-                                {fallback1 === 'api' ? 'API' : fallback1 === 'automation' ? 'Automation' : 'Agent'}
-                              </span>
-                            </>
-                          )}
-                          {fallback2 !== 'none' && (
-                            <>
-                              <span className="text-[10px] text-muted-foreground/50">→</span>
-                              <span className="text-[10px] font-medium text-foreground/80 bg-orange-50 dark:bg-orange-950/30 px-1.5 py-0.5 rounded">
-                                {fallback2 === 'api' ? 'API' : fallback2 === 'automation' ? 'Automation' : 'Agent'}
-                              </span>
-                            </>
-                          )}
-                        </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border/40">
+                        <span className="text-[10px] text-muted-foreground/70">Run order</span>
+                        <Badge variant="secondary" className="h-5 px-2 text-[10px] font-medium">
+                          {CONNECTION_METHOD_BADGE_LABELS[connectionMethod]}
+                        </Badge>
+                        {fallback1 !== 'none' && (
+                          <>
+                            <span className="text-[10px] text-muted-foreground/50">→</span>
+                            <Badge variant="outline" className="h-5 px-2 text-[10px] font-medium">
+                              {CONNECTION_METHOD_BADGE_LABELS[fallback1 as ConnectionMethod]}
+                            </Badge>
+                          </>
+                        )}
+                        {fallback2 !== 'none' && (
+                          <>
+                            <span className="text-[10px] text-muted-foreground/50">→</span>
+                            <Badge variant="outline" className="h-5 px-2 text-[10px] font-medium">
+                              {CONNECTION_METHOD_BADGE_LABELS[fallback2 as ConnectionMethod]}
+                            </Badge>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
