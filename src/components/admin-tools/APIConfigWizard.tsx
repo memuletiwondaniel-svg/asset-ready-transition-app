@@ -61,7 +61,6 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
       const existing = getAPIConfig(api.id);
       if (existing) {
         setInterfaceMethod(existing.interfaceMethod);
-        if (existing.rpaCredentials) setRpaCredentials(existing.rpaCredentials);
         if (existing.apiCredentials) setApiCredentials(existing.apiCredentials);
       } else {
         setInterfaceMethod(null);
