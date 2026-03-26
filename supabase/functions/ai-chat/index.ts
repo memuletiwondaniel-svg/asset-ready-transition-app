@@ -8945,6 +8945,24 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       if (!finalResponse.ok) {
         const errorText = await finalResponse.text();
         console.error("Final AI response error:", finalResponse.status, errorText);
+        
+        // Handle rate limiting gracefully
+        if (finalResponse.status === 429) {
+          // Try to use the last tool result as a fallback response
+          const lastToolResult = toolResults[toolResults.length - 1];
+          if (lastToolResult) {
+            const fallbackContent = "I found some results but hit a temporary rate limit formatting the full response. Here's the raw data:\n\n```json\n" + JSON.stringify(lastToolResult, null, 2).substring(0, 3000) + "\n```\n\nPlease try again in a moment for a fully formatted response.";
+            return new Response(
+              JSON.stringify({ role: "assistant", content: fallbackContent }),
+              { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          return new Response(
+            JSON.stringify({ error: "Selma is temporarily busy — please try again in 30 seconds." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
         return new Response(
           JSON.stringify({ error: "AI error on final response" }), 
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
