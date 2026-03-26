@@ -232,6 +232,11 @@ export async function loginAssai(
         remember_me: "false",
       });
 
+      console.log(`[assai-auth] [${hashAlgo}] POST body: ${formBody.toString()}`);
+      console.log(`[assai-auth] [${hashAlgo}] POST cookies: ${cookies.join("; ")}`);
+      console.log(`[assai-auth] [${hashAlgo}] POST URL: ${loginPostUrl}`);
+
+      const postStart = Date.now();
       // 4) Perform encrypted login
       const loginResp = await fetch(loginPostUrl, {
         method: "POST",
@@ -246,8 +251,10 @@ export async function loginAssai(
         redirect: "manual",
       });
 
+      const postElapsed = Date.now() - postStart;
       const elapsed = Date.now() - start;
       const body = await loginResp.text();
+      console.log(`[assai-auth] [${hashAlgo}] POST took ${postElapsed}ms, total elapsed=${elapsed}ms, status=${loginResp.status}, body_length=${body.length}`);
       console.log(`[assai-auth] [${hashAlgo}] Response status=${loginResp.status}, body_length=${body.length}, elapsed=${elapsed}ms`);
 
       const lowerBody = body.toLowerCase();
