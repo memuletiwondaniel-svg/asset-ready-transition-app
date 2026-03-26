@@ -245,13 +245,25 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           });
         } else {
           setConnectionMethod('api');
+          // Infer auth type from stored data
+          const hasClientId = !!existing.username_encrypted;
+          const inferredAuthType: AuthType = hasClientId ? 'oauth' : 'bearer';
+          setAuthType(inferredAuthType);
           setFormData({
             base_url: existing.base_url || '',
-            username: '', password: '', api_key: '', header_name: 'X-API-Key',
-            client_id: '', client_secret: '', token_url: '', scope: '',
+            username: '',
+            password: '',
+            api_key: '',
+            header_name: 'X-API-Key',
+            client_id: hasClientId ? existing.username_encrypted || '' : '',
+            client_secret: '',
+            token_url: '',
+            scope: '',
             project_code_field: existing.project_code_field || '',
             sync_enabled: existing.sync_enabled || false,
-            platform_url: '', auth_token: '', automation_enabled: false,
+            platform_url: '',
+            auth_token: '',
+            automation_enabled: false,
             db_name: '',
           });
         }
@@ -264,7 +276,10 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         setHasStoredCredentials(false);
       }
     }
-    setAuthType('api_key');
+    // Only reset auth type if no existing credential (otherwise it was set above)
+    if (!getCredential(platform.id) || platform.id === 'gocompletions') {
+      setAuthType('api_key');
+    }
     setTriedSave(false);
     setUrlError('');
     setCredentialsSaved(!!getCredential(platform.id) || (platform.id === 'gocompletions' && gocConfigured));
@@ -652,7 +667,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                   <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Primary Method</span>
                   <div className="grid grid-cols-3 gap-2.5">
                     <button
-                      onClick={() => { setConnectionMethod('api'); setFallback1('none'); setFallback2('none'); }}
+                      onClick={() => setConnectionMethod('api')}
                       className={cn(
                         'flex flex-col items-center gap-2 p-3.5 rounded-xl border transition-all text-center min-h-[110px] justify-center',
                         connectionMethod === 'api'
@@ -665,7 +680,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <p className="text-[11px] text-muted-foreground leading-tight">REST endpoint sync</p>
                     </button>
                     <button
-                      onClick={() => { setConnectionMethod('automation'); setFallback1('none'); setFallback2('none'); }}
+                      onClick={() => setConnectionMethod('automation')}
                       className={cn(
                         'flex flex-col items-center gap-2 p-3.5 rounded-xl border transition-all text-center min-h-[110px] justify-center',
                         connectionMethod === 'automation'
@@ -678,7 +693,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <p className="text-[11px] text-muted-foreground leading-tight">Browser-based workflow</p>
                     </button>
                     <button
-                      onClick={() => { setConnectionMethod('agent'); setFallback1('none'); setFallback2('none'); }}
+                      onClick={() => setConnectionMethod('agent')}
                       className={cn(
                         'flex flex-col items-center gap-2 p-3.5 rounded-xl border transition-all text-center min-h-[110px] justify-center',
                         connectionMethod === 'agent'
@@ -783,6 +798,14 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                           <p className="text-xs text-muted-foreground mt-1">e.g. https://client.assaisoftware.com/api</p>
                         )}
                         {triedSave && !formData.base_url.trim() && <p className="text-xs text-destructive mt-1">Base URL is required</p>}
+                      </div>
+
+                      {/* API server-side pending banner */}
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50">
+                        <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
+                          <span className="font-semibold">Server-side integration pending</span> — API connectivity requires server-side configuration. Contact your administrator to enable the API endpoint for this platform.
+                        </p>
                       </div>
 
                       {/* Assai-specific helper banner */}
