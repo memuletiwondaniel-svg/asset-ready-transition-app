@@ -78,13 +78,11 @@ type AuthType = 'api_key' | 'oauth' | 'bearer';
 
 const mapDbMethodToUi = (method: string | null | undefined): ConnectionMethod | null => {
   if (method === 'api') return 'api';
-  if (method === 'rpa') return 'automation';
-  if (method === 'agent') return 'agent';
+  if (method === 'rpa' || method === 'agent') return 'agent';
   return null;
 };
 
-const mapUiMethodToDb = (method: ConnectionMethod): 'api' | 'rpa' | 'agent' =>
-  method === 'automation' ? 'rpa' : method;
+const mapUiMethodToDb = (method: ConnectionMethod): 'api' | 'agent' => method;
 
 const parseDbFallbackChain = (value: unknown): ConnectionMethod[] => {
   const parsed = typeof value === 'string'
