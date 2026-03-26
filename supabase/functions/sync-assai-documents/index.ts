@@ -443,81 +443,137 @@ Deno.serve(async (req) => {
         console.log(`[sync-assai] Route 1 failed: ${e}`);
       }
 
-      // ── ROUTE 2: DWR HTML scraping (fallback) ───────────────────────
+      // ── ROUTE 2: Form-based HTML scraping (proven fallback) ────────
       if (documents.length === 0) {
-        console.log("[sync-assai] Route 2: Falling back to DWR HTML scraping...");
+        console.log("[sync-assai] Route 2: Falling back to form-based HTML scraping...");
+        const awBase = `${resolvedBase}/AW${resolvedDb}`;
 
         try {
-          const resultUrls = [
-            `${resolvedBase}/AW${resolvedDb}/result.aweb`,
-            `${resolvedBase}/AW${resolvedDb}/forward.aweb?page=root/body&subclass_type=DES_DOC`,
-            `${resolvedBase}/AW${resolvedDb}/forward.aweb?page=root/body/documentregister`,
-          ];
+          // Step 2a: Fetch the search form to get hidden fields
+          const searchUrl = `${awBase}/search.aweb?subclass_type=DES_DOC`;
+          const searchResp = await fetch(searchUrl, {
+            headers: { Cookie: sessionCookies.join("; "), Accept: "text/html" },
+            redirect: "follow",
+          });
+          const searchHtml = await searchResp.text();
+          console.log(`[sync-assai] Route 2: Search form status=${searchResp.status}, length=${searchHtml.length}`);
 
-          let html = "";
-          for (const url of resultUrls) {
-            const resp = await fetch(url, {
-              headers: { "Cookie": sessionCookies.join("; "), "Accept": "text/html" },
-              redirect: "follow",
-            });
-            const text = await resp.text();
-            console.log(`[sync-assai] Route 2: ${url} => status=${resp.status}, length=${text.length}`);
-            if (resp.status === 200 && text.length > 5000 && !text.includes('action="login.aweb"')) {
-              html = text;
-              break;
-            }
+          // Parse all input fields from the search form
+          const formFields: Array<{ name: string; type: string; value: string }> = [];
+          const inputRegex = /<input[^>]*>/gi;
+          let inputM;
+          while ((inputM = inputRegex.exec(searchHtml)) !== null) {
+            const tag = inputM[0];
+            const name = tag.match(/name=["']([^"']+)["']/i)?.[1] ?? "";
+            if (!name) continue;
+            const type = tag.match(/type=["']([^"']+)["']/i)?.[1]?.toLowerCase() ?? "text";
+            const value = tag.match(/value=["']([^"']*)["']/i)?.[1] ?? "";
+            formFields.push({ name, type, value });
           }
 
-          // Fallback POST with wildcard search
-          if (!html) {
-            const postResp = await fetch(`${resolvedBase}/AW${resolvedDb}/result.aweb`, {
+          // Step 2b: Build POST body — hidden fields + empty text fields
+          const formData = new URLSearchParams();
+          for (const f of formFields) {
+            if (f.type === "hidden" && f.name && f.value) formData.set(f.name, f.value);
+          }
+          for (const f of formFields) {
+            if (f.type === "text" || f.type === "") formData.set(f.name, "");
+          }
+          formData.set("subclass_type", "DES_DOC");
+
+          // Step 2c: Submit search and parse results, with pagination
+          let pageNum = 0;
+          const maxPages = 50; // Safety limit (50 * 100 = 5000 docs max)
+          let hasMorePages = true;
+
+          while (hasMorePages && pageNum < maxPages) {
+            pageNum++;
+            if (pageNum > 1) {
+              formData.set("start_row", String((pageNum - 1) * 100 + 1));
+            }
+
+            console.log(`[sync-assai] Route 2: Fetching page ${pageNum}...`);
+            const resultResp = await fetch(`${awBase}/result.aweb`, {
               method: "POST",
               headers: {
-                "Cookie": sessionCookies.join("; "),
+                Cookie: sessionCookies.join("; "),
                 "Content-Type": "application/x-www-form-urlencoded",
+                Accept: "text/html",
+                Referer: searchUrl,
               },
-              body: "documentNumber=%&title=%",
+              body: formData.toString(),
               redirect: "follow",
             });
-            html = await postResp.text();
-            console.log(`[sync-assai] Route 2: POST result.aweb => status=${postResp.status}, length=${html.length}`);
-          }
+            const resultHtml = await resultResp.text();
 
-          console.log(`[sync-assai] Route 2: HTML preview=${html.substring(0, 1000)}`);
-
-          // Parse HTML table rows
-          const seen = new Set<string>();
-          const stripTags = (s: string) => s.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").trim();
-          const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
-          let rowMatch;
-
-          while ((rowMatch = rowPattern.exec(html)) !== null) {
-            const cells: string[] = [];
-            const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi;
-            let cellMatch;
-            while ((cellMatch = cellPattern.exec(rowMatch[1])) !== null) {
-              cells.push(stripTags(cellMatch[1]));
+            if (resultResp.status !== 200 || resultHtml.includes("applet:error") || resultHtml.length < 5000) {
+              console.log(`[sync-assai] Route 2: Page ${pageNum} error or empty (status=${resultResp.status}, len=${resultHtml.length})`);
+              hasMorePages = false;
+              break;
             }
-            if (cells.length < 3) continue;
-            const docNum = cells.find(c => /\d{3,}-[A-Z]/.test(c) || /^[A-Z]{2,}\d{3,}/.test(c));
-            if (!docNum || seen.has(docNum)) continue;
-            seen.add(docNum);
-            const i = cells.indexOf(docNum);
-            documents.push({
-              document_number: docNum,
-              document_title: cells[i + 4] || cells[cells.length - 1] || "",
-              revision: cells[i + 1] || "",
-              status_code: cells.find(c => /^(AFU|IFR|IFA|IFC|AFC|IDC|AP|FOR|VOID)/i.test(c)) || cells[i + 3] || "",
-              discipline_code: "",
-              work_package_code: "",
-            });
+
+            // Parse myCells JavaScript array (the proven data source)
+            const myCellsMatch = resultHtml.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function|\/\/|\n\s*\n)/);
+            if (myCellsMatch) {
+              try {
+                const myCells: string[][] = JSON.parse(myCellsMatch[1]);
+                console.log(`[sync-assai] Route 2: Page ${pageNum} - myCells has ${myCells.length} rows`);
+
+                for (const row of myCells) {
+                  if (!Array.isArray(row) || row.length < 10) continue;
+                  // Column mapping from probe6 findings:
+                  // [3] = Full document number, [4] = Revision, [5] = Date, [6] = Status
+                  // [8] = Title/Description, [10] = Originator, [13] = Discipline
+                  const fullDocNum = (row[3] || "").replace(/<[^>]+>/g, "").trim();
+                  if (!fullDocNum || fullDocNum === "DOCUMENT NR") continue;
+
+                  documents.push({
+                    document_number: fullDocNum,
+                    document_title: (row[8] || "").replace(/<[^>]+>/g, "").trim(),
+                    revision: (row[4] || "").replace(/<[^>]+>/g, "").trim(),
+                    status_code: (row[6] || "").replace(/<[^>]+>/g, "").trim(),
+                    discipline_code: (row[13] || "").replace(/<[^>]+>/g, "").trim(),
+                    originator: (row[10] || "").replace(/<[^>]+>/g, "").trim(),
+                    date: (row[5] || "").replace(/<[^>]+>/g, "").trim(),
+                  });
+                }
+
+                // Check if there are more pages
+                if (myCells.length < 100) {
+                  hasMorePages = false;
+                }
+              } catch (parseErr) {
+                console.log(`[sync-assai] Route 2: Failed to parse myCells JSON: ${parseErr}`);
+                hasMorePages = false;
+              }
+            } else {
+              // Fallback: try regex extraction of document numbers from raw HTML
+              console.log(`[sync-assai] Route 2: No myCells found on page ${pageNum}, trying regex fallback`);
+              const docPattern = /["'](\d{4}-[A-Z]{2,}-[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+-[A-Z]{2}-\d{4}-\d{5})["']/g;
+              let docMatch;
+              const seenOnPage = new Set<string>();
+              while ((docMatch = docPattern.exec(resultHtml)) !== null) {
+                const num = docMatch[1];
+                if (!seenOnPage.has(num)) {
+                  seenOnPage.add(num);
+                  documents.push({
+                    document_number: num,
+                    document_title: "",
+                    revision: "",
+                    status_code: "",
+                    discipline_code: "",
+                  });
+                }
+              }
+              hasMorePages = false;
+            }
           }
 
           if (documents.length > 0) {
-            syncRoute = "dwr_scrape";
-            console.log(`[sync-assai] Route 2 SUCCESS: ${documents.length} documents via DWR scrape`);
+            syncRoute = "form_scrape";
+            console.log(`[sync-assai] Route 2 SUCCESS: ${documents.length} documents via form scrape (${pageNum} pages)`);
           } else {
-            console.log(`[sync-assai] Route 2: 0 documents. Full HTML (3000): ${html.substring(0, 3000)}`);
+            console.log(`[sync-assai] Route 2: 0 documents extracted`);
           }
         } catch (e) {
           console.log(`[sync-assai] Route 2 failed: ${e}`);
