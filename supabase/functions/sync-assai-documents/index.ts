@@ -294,15 +294,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Parse request body for sync_method and fallback_chain
-    let syncMethod: string | null = null;
-    let fallbackChain: string[] = [];
+    // Parse request body for sync_method and fallback_chain overrides
+    let syncMethodOverride: string | null = null;
+    let fallbackChainOverride: string[] | null = null;
     try {
       const body = await req.json();
-      syncMethod = body?.sync_method || null;
-      fallbackChain = Array.isArray(body?.fallback_chain) ? body.fallback_chain : [];
+      syncMethodOverride = body?.sync_method || null;
+      fallbackChainOverride = Array.isArray(body?.fallback_chain) ? body.fallback_chain : null;
     } catch {
-      // No body or invalid JSON — default behavior
+      // No body or invalid JSON — will use DB values
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
