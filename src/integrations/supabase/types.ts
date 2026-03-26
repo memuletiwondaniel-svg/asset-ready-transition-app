@@ -1365,6 +1365,7 @@ export type Database = {
           new_documents: number | null
           project_id: string | null
           status_changes: number | null
+          sync_route_used: string | null
           sync_status: string | null
           synced_count: number | null
           tenant_id: string | null
@@ -1381,6 +1382,7 @@ export type Database = {
           new_documents?: number | null
           project_id?: string | null
           status_changes?: number | null
+          sync_route_used?: string | null
           sync_status?: string | null
           synced_count?: number | null
           tenant_id?: string | null
@@ -1397,6 +1399,7 @@ export type Database = {
           new_documents?: number | null
           project_id?: string | null
           status_changes?: number | null
+          sync_route_used?: string | null
           sync_status?: string | null
           synced_count?: number | null
           tenant_id?: string | null
