@@ -188,20 +188,93 @@ export async function loginAssai(
 
     const dwrText = await dwrResp.text();
     console.log(`[assai-auth] DWR response status=${dwrResp.status}, length=${dwrText.length}`);
-    console.log(`[assai-auth] DWR response preview: ${dwrText.substring(0, 300)}`);
+    console.log(`[assai-auth] DWR raw response: ${dwrText}`);
     cookies = uniqueCookiePairs([...cookies, ...extractCookiePairs(dwrResp)]);
     console.log(`[assai-auth] Step 2 - After DWR, merged cookies: ${JSON.stringify(cookies)}`);
 
-    const passphraseMatch = dwrText.match(/_remoteHandleCallback\('0','0',"([A-F0-9]+)"\)/i);
-    let passphrase = passphraseMatch?.[1];
-    console.log(`[assai-auth] Passphrase extracted: ${passphrase ? `yes (${passphrase.length} chars)` : 'NO'}`);
+    // More robust passphrase extraction with multiple fallback patterns
+    let passphrase =
+      dwrText.match(/_remoteHandleCallback\(\s*['"]0['"]\s*,\s*['"]0['"]\s*,\s*"([A-F0-9]+)"\s*\)/i)?.[1] ??
+      dwrText.match(/_remoteHandleCallback\([^)]*,\s*"([A-F0-9]{16,})"\s*\)/i)?.[1] ??
+      dwrText.match(/_remoteHandleCallback\([^)]*,\s*'([A-F0-9]{16,})'\s*\)/i)?.[1] ??
+      null;
+    console.log(`[assai-auth] Passphrase extracted: ${passphrase ? `yes (${passphrase.length} chars): ${passphrase}` : 'NO — regex did not match DWR response'}`);
 
     if (!passphrase) {
       const elapsed = Date.now() - start;
-      return { success: false, error: "Failed to initialize Assai secure login session", response_time_ms: elapsed };
+      return { success: false, error: "DWR passphrase extraction failed — regex did not match DWR response", response_time_ms: elapsed };
     }
 
-    // 3) Try SHA-256 first (newer CryptoJS default), then SHA-1 fallback
+    // 3a) First try plaintext login (isSecure=false) to verify session/credentials work
+    console.log(`[assai-auth] Trying plaintext login first to verify session...`);
+    const plaintextBody = new URLSearchParams({
+      userid: username,
+      password: password,
+      contentUrl,
+      followUp,
+      uniqueName,
+      isSecure: "false",
+      dbname: resolvedDbName,
+      ssodata,
+      loginMethod,
+      remember_me: "false",
+    });
+
+    const plaintextStart = Date.now();
+    const plaintextResp = await fetch(loginPostUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Referer": loginPageUrl,
+        "Origin": normalizedBaseUrl,
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        ...(cookies.length ? { Cookie: cookies.join("; ") } : {}),
+      },
+      body: plaintextBody.toString(),
+      redirect: "manual",
+    });
+
+    const plaintextElapsed = Date.now() - plaintextStart;
+    const plaintextRespBody = await plaintextResp.text();
+    const plaintextLower = plaintextRespBody.toLowerCase();
+    const plaintextHasLoginForm = plaintextLower.includes('id="form" action="login.aweb" method="post"') &&
+      plaintextLower.includes('name="userid"') && plaintextLower.includes('id="button_log_on"');
+    console.log(`[assai-auth] Plaintext POST: ${plaintextElapsed}ms, status=${plaintextResp.status}, body=${plaintextRespBody.length}, hasLoginForm=${plaintextHasLoginForm}, location=${plaintextResp.headers.get('location')}`);
+
+    if (!plaintextHasLoginForm && (plaintextResp.status === 302 || plaintextResp.status === 200)) {
+      // Plaintext login worked! The session is valid and credentials are correct
+      const allCookies = uniqueCookiePairs([...cookies, ...extractCookiePairs(plaintextResp)]);
+      const jsession = allCookies.find((c) => c.startsWith("JSESSIONID="));
+      const sessionId = jsession?.split("=")[1] ?? "unknown";
+      console.log(`[assai-auth] Plaintext login SUCCESS — encryption was the issue`);
+      return {
+        success: true,
+        sessionId,
+        cookies: allCookies,
+        baseUrl: normalizedBaseUrl,
+        dbName: resolvedDbName,
+        response_time_ms: Date.now() - start,
+      };
+    }
+    console.log(`[assai-auth] Plaintext login also failed — continuing with encrypted attempts`);
+
+    // Re-fetch session since we used up the current one
+    const freshResp2 = await fetch(loginPageUrl, { method: "GET", redirect: "manual" });
+    await freshResp2.text();
+    cookies = extractCookiePairs(freshResp2);
+    const freshCookieHeader2 = uniqueCookiePairs(cookies).join("; ");
+    const freshDwrResp2 = await fetch(dwrUrl, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain", ...(freshCookieHeader2 ? { Cookie: freshCookieHeader2 } : {}) },
+      body: dwrBody,
+      redirect: "manual",
+    });
+    const freshDwrText2 = await freshDwrResp2.text();
+    cookies = uniqueCookiePairs([...cookies, ...extractCookiePairs(freshDwrResp2)]);
+    const freshMatch2 = freshDwrText2.match(/_remoteHandleCallback\([^)]*,\s*"([A-F0-9]{16,})"\s*\)/i);
+    if (freshMatch2?.[1]) passphrase = freshMatch2[1];
+
+    // 3b) Try encrypted login with SHA-256 first, then SHA-1
     const hashAlgos = ["SHA-256", "SHA-1"];
     
     for (const hashAlgo of hashAlgos) {
@@ -228,6 +301,11 @@ export async function loginAssai(
         remember_me: "false",
       });
 
+      console.log(`[assai-auth] [${hashAlgo}] POST body: ${formBody.toString()}`);
+      console.log(`[assai-auth] [${hashAlgo}] POST cookies: ${cookies.join("; ")}`);
+      console.log(`[assai-auth] [${hashAlgo}] POST URL: ${loginPostUrl}`);
+
+      const postStart = Date.now();
       // 4) Perform encrypted login
       const loginResp = await fetch(loginPostUrl, {
         method: "POST",
@@ -242,8 +320,10 @@ export async function loginAssai(
         redirect: "manual",
       });
 
+      const postElapsed = Date.now() - postStart;
       const elapsed = Date.now() - start;
       const body = await loginResp.text();
+      console.log(`[assai-auth] [${hashAlgo}] POST took ${postElapsed}ms, total elapsed=${elapsed}ms, status=${loginResp.status}, body_length=${body.length}`);
       console.log(`[assai-auth] [${hashAlgo}] Response status=${loginResp.status}, body_length=${body.length}, elapsed=${elapsed}ms`);
 
       const lowerBody = body.toLowerCase();
