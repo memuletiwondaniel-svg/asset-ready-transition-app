@@ -494,8 +494,19 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         className="group border-border/40 bg-card hover:border-border transition-colors duration-200 cursor-pointer overflow-hidden min-h-[180px] flex flex-col"
         onClick={() => openPanel(platform)}
       >
-        {/* Status badge */}
-        <div className="flex justify-end p-3 pb-0">
+        {/* Status badge + Star */}
+        <div className="flex justify-between p-3 pb-0">
+          <button
+            onClick={(e) => toggleHubFavorite(platform.id, e)}
+            className={`p-1 rounded-md hover:bg-muted/50 transition-all duration-200 z-10 ${hubFavorites.includes(platform.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+            aria-label={hubFavorites.includes(platform.id) ? "Remove from favorites" : "Add to favorites"}
+          >
+            <Star className={`h-3.5 w-3.5 transition-all duration-200 ${
+              hubFavorites.includes(platform.id)
+                ? 'text-amber-400/80 fill-amber-400/80 hover:text-amber-500 hover:fill-amber-500'
+                : 'text-muted-foreground/40 hover:text-amber-400'
+            }`} />
+          </button>
           <StatusBadge platformId={platform.id} />
         </div>
 
