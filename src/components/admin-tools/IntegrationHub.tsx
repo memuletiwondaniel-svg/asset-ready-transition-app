@@ -481,10 +481,10 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
             message: 'API method not yet configured — use Agent (Selma) as primary method',
           });
         } else {
-          // RPA mode: not yet implemented
+          // Fallback: unknown method
           setTestResultInPanel({
             success: false,
-            message: 'RPA method not yet configured — use Agent (Selma) as primary method',
+            message: 'Unknown connection method — select API or Agent',
           });
         }
       } catch (err: any) {
