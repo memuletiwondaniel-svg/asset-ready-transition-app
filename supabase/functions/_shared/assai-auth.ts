@@ -205,7 +205,76 @@ export async function loginAssai(
       return { success: false, error: "DWR passphrase extraction failed — regex did not match DWR response", response_time_ms: elapsed };
     }
 
-    // 3) Try SHA-256 first (newer CryptoJS default), then SHA-1 fallback
+    // 3a) First try plaintext login (isSecure=false) to verify session/credentials work
+    console.log(`[assai-auth] Trying plaintext login first to verify session...`);
+    const plaintextBody = new URLSearchParams({
+      userid: username,
+      password: password,
+      contentUrl,
+      followUp,
+      uniqueName,
+      isSecure: "false",
+      dbname: resolvedDbName,
+      ssodata,
+      loginMethod,
+      remember_me: "false",
+    });
+
+    const plaintextStart = Date.now();
+    const plaintextResp = await fetch(loginPostUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Referer": loginPageUrl,
+        "Origin": normalizedBaseUrl,
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        ...(cookies.length ? { Cookie: cookies.join("; ") } : {}),
+      },
+      body: plaintextBody.toString(),
+      redirect: "manual",
+    });
+
+    const plaintextElapsed = Date.now() - plaintextStart;
+    const plaintextRespBody = await plaintextResp.text();
+    const plaintextLower = plaintextRespBody.toLowerCase();
+    const plaintextHasLoginForm = plaintextLower.includes('id="form" action="login.aweb" method="post"') &&
+      plaintextLower.includes('name="userid"') && plaintextLower.includes('id="button_log_on"');
+    console.log(`[assai-auth] Plaintext POST: ${plaintextElapsed}ms, status=${plaintextResp.status}, body=${plaintextRespBody.length}, hasLoginForm=${plaintextHasLoginForm}, location=${plaintextResp.headers.get('location')}`);
+
+    if (!plaintextHasLoginForm && (plaintextResp.status === 302 || plaintextResp.status === 200)) {
+      // Plaintext login worked! The session is valid and credentials are correct
+      const allCookies = uniqueCookiePairs([...cookies, ...extractCookiePairs(plaintextResp)]);
+      const jsession = allCookies.find((c) => c.startsWith("JSESSIONID="));
+      const sessionId = jsession?.split("=")[1] ?? "unknown";
+      console.log(`[assai-auth] Plaintext login SUCCESS — encryption was the issue`);
+      return {
+        success: true,
+        sessionId,
+        cookies: allCookies,
+        baseUrl: normalizedBaseUrl,
+        dbName: resolvedDbName,
+        response_time_ms: Date.now() - start,
+      };
+    }
+    console.log(`[assai-auth] Plaintext login also failed — continuing with encrypted attempts`);
+
+    // Re-fetch session since we used up the current one
+    const freshResp2 = await fetch(loginPageUrl, { method: "GET", redirect: "manual" });
+    await freshResp2.text();
+    cookies = extractCookiePairs(freshResp2);
+    const freshCookieHeader2 = uniqueCookiePairs(cookies).join("; ");
+    const freshDwrResp2 = await fetch(dwrUrl, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain", ...(freshCookieHeader2 ? { Cookie: freshCookieHeader2 } : {}) },
+      body: dwrBody,
+      redirect: "manual",
+    });
+    const freshDwrText2 = await freshDwrResp2.text();
+    cookies = uniqueCookiePairs([...cookies, ...extractCookiePairs(freshDwrResp2)]);
+    const freshMatch2 = freshDwrText2.match(/_remoteHandleCallback\([^)]*,\s*"([A-F0-9]{16,})"\s*\)/i);
+    if (freshMatch2?.[1]) passphrase = freshMatch2[1];
+
+    // 3b) Try encrypted login with SHA-256 first, then SHA-1
     const hashAlgos = ["SHA-256", "SHA-1"];
     
     for (const hashAlgo of hashAlgos) {
