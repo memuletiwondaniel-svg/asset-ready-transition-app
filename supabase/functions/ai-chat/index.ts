@@ -6949,7 +6949,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           searchParams.set('suty_seq_nr', '7');
           
           try {
-            const supRes = await fetch(baseUrl + '/result.aweb', {
+            const supRes = await fetch(assaiBase + '/result.aweb', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
