@@ -106,8 +106,7 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
     setTestError('');
     // Simulate a test — in production this would call the edge function
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    // For now, always succeed if credentials are present
-    if (interfaceMethod === 'rpa' && rpaCredentials.username && rpaCredentials.password) {
+    if (interfaceMethod === 'agent') {
       setTestStatus('success');
     } else if (interfaceMethod === 'api' && apiCredentials.endpointUrl) {
       setTestStatus('success');
