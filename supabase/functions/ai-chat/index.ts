@@ -2926,6 +2926,27 @@ const tools = [
       }
     }
   },
+  {
+    type: "function",
+    function: {
+      name: "read_assai_document",
+      description: "Fetches and reads the actual content of a document from Assai DMS. Use this when the user asks to read, summarise, review, or ask specific questions about the content of a document — not just its metadata. Input requires the full document number and the user's specific question.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_number: {
+            type: "string",
+            description: "Full Assai document number e.g. 6529-ABBE-C017-ISGP-U40300-ZV-A01-00006-001"
+          },
+          question: {
+            type: "string",
+            description: "What the user wants to know about the document content e.g. 'Summarise this document', 'List all open comments', 'What is the revision history?'"
+          }
+        },
+        required: ["document_number", "question"]
+      }
+    }
+  },
   // ═══════════════════════════════════════════════════════════════════════════
   // EXECUTIVE SUMMARY TOOL - For high-level status assessments
   // ═══════════════════════════════════════════════════════════════════════════
@@ -3283,7 +3304,7 @@ const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; m
     model: 'claude-sonnet-4-5'
   },
   document_agent: {
-    tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink', 'get_document_cross_discipline_comparison', 'get_document_search_by_number', 'get_document_bulk_status', 'get_document_trend_analysis', 'create_task_from_document_gap', 'get_document_quality_score', 'get_document_ora_linkage'],
+    tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink', 'get_document_cross_discipline_comparison', 'get_document_search_by_number', 'get_document_bulk_status', 'get_document_trend_analysis', 'create_task_from_document_gap', 'get_document_quality_score', 'get_document_ora_linkage', 'read_assai_document'],
     domains: ['dms', 'document', 'readiness', 'numbering', 'afc', 'ifr', 'rlmu', 'trend', 'velocity', 'comparison', 'quality', 'maturity', 'handover'],
     model: 'claude-sonnet-4-5'
   },
@@ -3395,7 +3416,7 @@ function detectAgentDomain(message: string): string {
   }
   
   // Selma (Document Intelligence Assistant) triggers
-  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|doc.*p2a)\b/i.test(lower)) {
+  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|doc.*p2a|read.*document|summarise.*\d{4}|summarize.*\d{4}|open comments|review.*crs|extract.*from.*doc|what does.*say)\b/i.test(lower)) {
     return 'document_agent';
   }
   
@@ -6299,6 +6320,299 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
 
+    case "read_assai_document": {
+      try {
+        const docNumber = args.document_number;
+        const question = args.question || 'Summarise this document';
+        
+        // STEP 1 — Find document in dms_external_sync
+        const { data: syncDoc, error: syncErr } = await supabaseClient
+          .from('dms_external_sync')
+          .select('*')
+          .eq('document_number', docNumber)
+          .eq('dms_platform', 'assai')
+          .maybeSingle();
+        
+        if (syncErr) {
+          console.error('read_assai_document sync lookup error:', syncErr);
+          return { error: 'Failed to query document sync records: ' + syncErr.message };
+        }
+        
+        if (!syncDoc) {
+          return { 
+            error: 'Document not found in synced records. Run Sync Now from DMS Settings to update the document register.',
+            suggestion: 'Navigate to Admin Tools > DMS Settings and trigger a fresh sync for this project.'
+          };
+        }
+        
+        const metadata = {
+          document_number: syncDoc.document_number,
+          title: syncDoc.document_title || 'Unknown',
+          status: syncDoc.status_code || 'Unknown',
+          revision: syncDoc.revision || 'Unknown',
+          external_url: syncDoc.external_url,
+          last_synced: syncDoc.last_synced_at,
+          discipline: syncDoc.discipline_code,
+          platform: syncDoc.dms_platform
+        };
+        
+        // STEP 2 — Authenticate with Assai
+        const { data: creds, error: credErr } = await supabaseClient
+          .from('dms_sync_credentials')
+          .select('*')
+          .eq('dms_platform', 'assai')
+          .maybeSingle();
+        
+        if (credErr || !creds) {
+          console.error('Assai credentials not found:', credErr);
+          return {
+            metadata,
+            content_available: false,
+            reason: 'Assai credentials not configured. Document metadata is available but file content could not be retrieved.',
+            question_asked: question
+          };
+        }
+        
+        const baseUrl = creds.base_url || 'https://eu.assaicloud.com/AWeu578';
+        const username = creds.username_encrypted;
+        const password = creds.password_encrypted;
+        
+        if (!username || !password) {
+          return {
+            metadata,
+            content_available: false,
+            reason: 'Assai login credentials are not configured. Please set up credentials in DMS Settings.',
+            question_asked: question
+          };
+        }
+        
+        // Step 2a — Get login page and session cookies
+        let sessionCookies: string[] = [];
+        try {
+          const loginPageRes = await fetch(baseUrl + '/login.aweb?loginMethod=unpw', {
+            method: 'GET',
+            redirect: 'manual'
+          });
+          
+          const loginPageCookies = loginPageRes.headers.getSetCookie?.() || [];
+          sessionCookies.push(...loginPageCookies);
+          const loginPageBody = await loginPageRes.text();
+          
+          // Step 2b — Extract form action
+          const formActionMatch = loginPageBody.match(/action=["']([^"']+)["']/i);
+          const formAction = formActionMatch ? formActionMatch[1] : '/AWeu578/login.aweb';
+          
+          // Step 2c — POST credentials
+          const loginRes = await fetch(baseUrl + (formAction.startsWith('/') ? '' : '/') + formAction, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Cookie': sessionCookies.join('; ')
+            },
+            body: new URLSearchParams({
+              'username': username,
+              'password': password,
+              'loginMethod': 'unpw'
+            }).toString(),
+            redirect: 'manual'
+          });
+          
+          const loginCookies = loginRes.headers.getSetCookie?.() || [];
+          sessionCookies.push(...loginCookies);
+          
+          // Check if login succeeded (302 redirect or 200)
+          if (loginRes.status !== 200 && loginRes.status !== 302) {
+            const body = await loginRes.text();
+            console.error('Assai login failed:', loginRes.status, body.substring(0, 200));
+            return {
+              metadata,
+              content_available: false,
+              reason: 'Assai authentication failed. Please verify credentials in DMS Settings.',
+              question_asked: question
+            };
+          }
+          await loginRes.text(); // consume body
+        } catch (authErr) {
+          console.error('Assai auth error:', authErr);
+          return {
+            metadata,
+            content_available: false,
+            reason: 'Could not connect to Assai portal. The service may be temporarily unavailable.',
+            question_asked: question
+          };
+        }
+        
+        // STEP 3 — Fetch document file
+        let pdfBase64: string | null = null;
+        let documentMediaType = 'application/pdf';
+        
+        try {
+          // Use external_url if available, otherwise construct from document number
+          let docUrl = syncDoc.external_url;
+          if (!docUrl) {
+            // Construct search URL pattern
+            docUrl = baseUrl + '/search.aweb?document_nr=' + encodeURIComponent(docNumber);
+          }
+          
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout
+          
+          const docRes = await fetch(docUrl, {
+            headers: {
+              'Cookie': sessionCookies.join('; ')
+            },
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          
+          if (!docRes.ok) {
+            console.error('Assai document fetch failed:', docRes.status);
+            return {
+              metadata,
+              content_available: false,
+              reason: 'Document file could not be downloaded from Assai (HTTP ' + docRes.status + '). Metadata is shown below.',
+              question_asked: question
+            };
+          }
+          
+          const contentType = docRes.headers.get('content-type') || '';
+          if (contentType.includes('pdf')) {
+            documentMediaType = 'application/pdf';
+          } else if (contentType.includes('image')) {
+            documentMediaType = contentType.split(';')[0].trim();
+          } else {
+            documentMediaType = 'application/pdf'; // default assumption
+          }
+          
+          const arrayBuffer = await docRes.arrayBuffer();
+          const bytes = new Uint8Array(arrayBuffer);
+          
+          // Check file size (10MB limit)
+          if (bytes.length > 10 * 1024 * 1024) {
+            return {
+              metadata,
+              content_available: false,
+              reason: 'Document file is larger than 10MB. Metadata is available but content reading is limited for large files.',
+              question_asked: question
+            };
+          }
+          
+          // Convert to base64
+          let binary = '';
+          for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          pdfBase64 = btoa(binary);
+        } catch (fetchErr: any) {
+          if (fetchErr?.name === 'AbortError') {
+            return {
+              metadata,
+              content_available: false,
+              reason: 'Document download timed out (>25 seconds). The file may be very large. Metadata is shown below.',
+              question_asked: question
+            };
+          }
+          console.error('Assai document fetch error:', fetchErr);
+          return {
+            metadata,
+            content_available: false,
+            reason: 'Failed to download document from Assai. Metadata is available.',
+            question_asked: question
+          };
+        }
+        
+        // STEP 4 — Pass document to Claude for reading
+        if (pdfBase64) {
+          try {
+            const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+            if (!ANTHROPIC_KEY) {
+              return {
+                metadata,
+                content_available: false,
+                reason: 'AI document reading service is not configured (missing API key).',
+                question_asked: question
+              };
+            }
+            
+            const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
+              method: "POST",
+              headers: {
+                "x-api-key": ANTHROPIC_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "claude-sonnet-4-5-20250929",
+                max_tokens: 2000,
+                messages: [{
+                  role: "user",
+                  content: [
+                    {
+                      type: "document",
+                      source: {
+                        type: "base64",
+                        media_type: documentMediaType,
+                        data: pdfBase64
+                      }
+                    },
+                    {
+                      type: "text",
+                      text: question
+                    }
+                  ]
+                }]
+              }),
+            });
+            
+            if (!claudeRes.ok) {
+              const errText = await claudeRes.text();
+              console.error('Claude document reading error:', claudeRes.status, errText.substring(0, 300));
+              return {
+                metadata,
+                content_available: false,
+                reason: 'AI could not process the document content (API error). Metadata is available.',
+                question_asked: question
+              };
+            }
+            
+            const claudeResult = await claudeRes.json();
+            const contentBlocks = claudeResult.content || [];
+            const textContent = contentBlocks
+              .filter((b: any) => b.type === 'text')
+              .map((b: any) => b.text)
+              .join('\n');
+            
+            // STEP 5 — Return combined answer
+            return {
+              metadata,
+              content_available: true,
+              document_content_answer: textContent,
+              question_asked: question,
+              note: 'This answer is based on the actual document content fetched from Assai DMS.'
+            };
+          } catch (claudeErr) {
+            console.error('Claude document reading exception:', claudeErr);
+            return {
+              metadata,
+              content_available: false,
+              reason: 'AI document reading encountered an error. Metadata is available.',
+              question_asked: question
+            };
+          }
+        }
+        
+        return {
+          metadata,
+          content_available: false,
+          reason: 'Document content could not be retrieved.',
+          question_asked: question
+        };
+      } catch (err) {
+        console.error('read_assai_document error:', err);
+        return { error: String(err) };
+      }
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // HANNAH (P2A HANDOVER INTELLIGENCE AGENT) TOOL HANDLERS
     // ═══════════════════════════════════════════════════════════════════════════
@@ -7746,7 +8060,114 @@ serve(async (req) => {
     // Agent-specific system prompts
     const DOCUMENT_AGENT_PROMPT = `You are Selma, ORSH's Document Intelligence Assistant. You are an expert in DMS (Document Management System) document readiness, gap analysis, quality scoring, document numbering configuration, and ORA phase linkage for Oil & Gas capital projects. You help users understand document status, identify gaps, analyze trends, and ensure documentation readiness for operational handover. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Selma, your Document Intelligence Assistant."
 
-EXTERNAL DMS SYNC AWARENESS: You are connected to external DMS platforms (Assai, Wrench, Documentum, SharePoint) via the dms_external_sync table. When answering document status questions, ALWAYS check dms_external_sync first for live document status synced from the external DMS. When providing document information, include the direct hyperlink to the document in the external DMS (external_url field) as an "Open in Assai" or "Open in [platform]" link. Always tell users when data was last synced (last_synced_at) and if data appears stale (>24 hours old), suggest triggering a fresh sync. Hannah and Ivan access document status by calling you — they do not connect to external DMS platforms directly. You are the single source of truth for document status across ORSH.`;
+EXTERNAL DMS SYNC AWARENESS: You are connected to external DMS platforms (Assai, Wrench, Documentum, SharePoint) via the dms_external_sync table. When answering document status questions, ALWAYS check dms_external_sync first for live document status synced from the external DMS. When providing document information, include the direct hyperlink to the document in the external DMS (external_url field) as an "Open in Assai" or "Open in [platform]" link. Always tell users when data was last synced (last_synced_at) and if data appears stale (>24 hours old), suggest triggering a fresh sync. Hannah and Ivan access document status by calling you — they do not connect to external DMS platforms directly. You are the single source of truth for document status across ORSH.
+
+=== ASSAI DMS KNOWLEDGE BASE ===
+
+INSTANCE DETAILS:
+- URL: https://eu.assaicloud.com/AWeu578/
+- Database: eu578
+- Primary project: BGC_PROJ (Basrah Gas Company Projects)
+
+NAVIGATION STRUCTURE:
+Top menu: Project | Documents | Queries | Assets | Planning | Tools | Log off | Help
+
+Under Documents menu:
+- Document Inbox — incoming documents requiring action
+- Transmittal Inbox — incoming transmittals
+- Redline File Inbox — redline markups
+- Search Documents — primary search (opens popup)
+- Search Favourites — saved searches
+- Search Non Document — non-document records
+- Search Package — work packages
+- Search Transmittals — transmittal records
+- Search Uploaded Documents — uploaded files
+- Search PO/SO — purchase/sales orders
+- Search Equipment — equipment records
+- Documents Tree — hierarchical browser
+- Discipline Tree — browse by discipline
+- Package Tree — browse by package
+- Company Tree — browse by company
+- Asset Package Tree — browse by asset package
+- New Package — create new package
+
+DOCUMENT NUMBERING STRUCTURE:
+Format: [Project]-[Originator]-[Plant]-[Site]-[Unit]-[Discipline]-[DocType]-[DocNo]-[Sequence]
+Example: 6529-ABBE-C017-ISGP-U40300-ZV-A01-00006-001
+
+Segment meanings:
+1. Project code (e.g. 6529 = ST/DP300 New Compression Station at Hammar Mishrif)
+2. Originator/Company (e.g. ABBE = ABB Engineering Shanghai Limited, WGEL = Wood Group Engineering Ltd)
+3. Plant code (e.g. C017 = Zubair Hammar Mishrif)
+4. Site code (e.g. ISGP = Iraq South Gas, TSGP = Iraq South Gas)
+5. Unit code (e.g. U40300 = specific unit, U13000 = Dehydration Unit)
+6. Discipline (e.g. ZV = Vendor Documentation, PX = Process Other, C01-C29 = Civil disciplines)
+7. Document type (e.g. A01 = Supplier Document Schedule/SDS, B01, C02, etc.)
+8. Document number (5 digits e.g. 00006)
+9. Sequence/Revision (3 digits e.g. 001, 002)
+
+Wildcard search: use 6529-% to find all documents for project 6529
+
+SEARCH DOCUMENTS POPUP FIELDS:
+Select project, Document nr., Revision, Title, Date from/before, Ext. ref. company, External reference, Keywords, File content, Originator, Responsible eng., Company, Discipline, Document type, Document status, Approval, Subclass code (DES_DOC for design docs), Priority, Classification, Language, Transmittal number, Inc. Transmittal, Sender reference, Archive, Package number, Work package code, Purchase order, Asset, Asset item, Checked out by
+
+DOCUMENT STATUS CODES:
+- AFU = Approved for Use
+- AFC = Approved for Construction
+- IFR = Issued for Review
+- IFA = Issued for Approval
+- IFI = Issued for Information
+
+PRIORITY TIERS:
+- TIER-1 = Critical/safety critical documents
+- TIER-2 = Important documents
+- N/A = Standard documents
+
+DOCUMENT DETAIL VIEW contains:
+Header: Document nr., Title, Status, Approval, Company, Responsible eng., Company ref., Work package, Purchase order, Project code, Discipline, Type, Access code, Retention date, Originator, Classification, Priority, Language, Start/End dates (Planned/Forecast/Actual), Estimated hours, % Complete, Weighting, Remarks
+Tabs: Revisions | Dist. history | Planning | Milestone | Custom attributes | Linked Objects | Workflow step | Transmittals | Asset items | Ext. ref. | Archive | X-ref | Packages
+Actions: Rev. comm. | Gantt chart | Email | Redline | Close
+
+PROJECTS IN BGC_PROJ:
+- 0000 = BGC Corporate Company - General
+- 1001 / DP-148 = Class 1 Metering - Installation of meters
+- 1002 = SUPPLY & INSTALLATION OF SIREN SYSTEM at various BGC plants CW13503
+- 1307 / DP-368 = West Qurna CS7 to CS6 Transfer Line
+- 1313 / DP-187 = New WQ Gas Export Pipeline
+- 1314 / DP-199 = CS2 to NR NGL Pipeline debottlenecking
+- 5529 / DP-300 = New Compression Station at Hammar Mishrif
+
+DOCUMENT TYPES YOU WILL ENCOUNTER:
+- Comments Resolution Sheets (CRS) — review comments and contractor responses
+- Supplier Document Schedules (SDS) — list of deliverable documents from a contractor
+- Process Flow Diagrams / P&IDs — process engineering drawings
+- General Arrangement Drawings — equipment layout drawings
+- Datasheets — equipment technical specifications
+- Inspection & Test Records — quality assurance records
+- O&M Manuals — operations and maintenance procedures
+- Transmittal Cover Sheets — document distribution records
+
+SELMA'S QUERY CAPABILITIES:
+You can answer questions about:
+1. Document search by number, status, discipline, type, date, project
+2. Revision history — current vs previous revisions
+3. Work package linkage
+4. Priority and tier classification
+5. Document content — summaries, open comments, compliance checks, data extraction (use read_assai_document tool)
+6. Cross-referencing documents against ORSH handover requirements
+
+DOCUMENT CONTENT READING:
+Use the read_assai_document tool when users ask to:
+- "Read this document: [doc number]"
+- "Summarise [doc number]"
+- "What does [doc number] say about [topic]?"
+- "Are there open comments in [doc number]?"
+- "What is the latest revision of [doc number] and what changed?"
+- "Check if [doc number] is approved"
+- "Extract the equipment data from [doc number]"
+- "Review the comments resolution sheet for [doc number]"
+- "Is [doc number] compliant with [standard]?"
+- Any question that requires knowing the CONTENT not just the STATUS of a document`;
 
     const PSSR_ORA_AGENT_PROMPT = `You are Fred, ORSH's PSSR & Operational Readiness Assistant. You are an expert in Pre-Startup Safety Reviews (PSSR), ORA (Operational Readiness Activity) planning, PSSR checklist management, and safety readiness for Oil & Gas facilities. You help users track PSSR progress, manage checklist items, identify pending approvals, and ensure safe startup readiness. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Fred, your PSSR & Operational Readiness Assistant."`;
 
