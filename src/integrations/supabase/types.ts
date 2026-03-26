@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_navigation_steps: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          description: string
+          id: string
+          is_active: boolean | null
+          max_retries: number | null
+          on_failure: string | null
+          platform: string
+          selector: string | null
+          step_order: number
+          updated_at: string | null
+          value: string | null
+          wait_ms: number | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          description: string
+          id?: string
+          is_active?: boolean | null
+          max_retries?: number | null
+          on_failure?: string | null
+          platform?: string
+          selector?: string | null
+          step_order: number
+          updated_at?: string | null
+          value?: string | null
+          wait_ms?: number | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          is_active?: boolean | null
+          max_retries?: number | null
+          on_failure?: string | null
+          platform?: string
+          selector?: string | null
+          step_order?: number
+          updated_at?: string | null
+          value?: string | null
+          wait_ms?: number | null
+        }
+        Relationships: []
+      }
       ai_agent_communications: {
         Row: {
           conversation_id: string | null
