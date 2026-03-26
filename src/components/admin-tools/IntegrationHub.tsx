@@ -621,11 +621,11 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                 {/* CONNECTION METHOD */}
                 <div className="space-y-3">
                   <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Primary Method</span>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-2.5">
                     <button
                       onClick={() => { setConnectionMethod('api'); setFallback1('none'); setFallback2('none'); }}
                       className={cn(
-                        'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-center min-h-[110px] justify-center',
+                        'flex flex-col items-center gap-2 p-3.5 rounded-xl border transition-all text-center min-h-[110px] justify-center',
                         connectionMethod === 'api'
                           ? 'border-2 border-blue-600 bg-blue-50 dark:bg-blue-950/30 shadow-sm'
                           : 'border border-border bg-background hover:border-border/80'
@@ -633,12 +633,12 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     >
                       <Zap className={cn('h-5 w-5', connectionMethod === 'api' ? 'text-blue-600' : 'text-muted-foreground')} />
                       <span className={cn('font-medium text-sm', connectionMethod === 'api' ? 'text-blue-700 dark:text-blue-400' : 'text-foreground')}>API</span>
-                      <p className="text-xs text-muted-foreground">Real-time sync via REST API</p>
+                      <p className="text-[11px] text-muted-foreground leading-tight">REST endpoint sync</p>
                     </button>
                     <button
                       onClick={() => { setConnectionMethod('automation'); setFallback1('none'); setFallback2('none'); }}
                       className={cn(
-                        'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-center min-h-[110px] justify-center',
+                        'flex flex-col items-center gap-2 p-3.5 rounded-xl border transition-all text-center min-h-[110px] justify-center',
                         connectionMethod === 'automation'
                           ? 'border-2 border-violet-600 bg-violet-50 dark:bg-violet-950/30 shadow-sm'
                           : 'border border-border bg-background hover:border-border/80'
@@ -646,7 +646,20 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     >
                       <Bot className={cn('h-5 w-5', connectionMethod === 'automation' ? 'text-violet-600' : 'text-muted-foreground')} />
                       <span className={cn('font-medium text-sm', connectionMethod === 'automation' ? 'text-violet-700 dark:text-violet-400' : 'text-foreground')}>Automation</span>
-                      <p className="text-xs text-muted-foreground">Browser-based workflow automation</p>
+                      <p className="text-[11px] text-muted-foreground leading-tight">Browser-based workflow</p>
+                    </button>
+                    <button
+                      onClick={() => { setConnectionMethod('agent'); setFallback1('none'); setFallback2('none'); }}
+                      className={cn(
+                        'flex flex-col items-center gap-2 p-3.5 rounded-xl border transition-all text-center min-h-[110px] justify-center',
+                        connectionMethod === 'agent'
+                          ? 'border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 shadow-sm'
+                          : 'border border-border bg-background hover:border-border/80'
+                      )}
+                    >
+                      <BrainCircuit className={cn('h-5 w-5', connectionMethod === 'agent' ? 'text-emerald-600' : 'text-muted-foreground')} />
+                      <span className={cn('font-medium text-sm', connectionMethod === 'agent' ? 'text-emerald-700 dark:text-emerald-400' : 'text-foreground')}>Agent</span>
+                      <p className="text-[11px] text-muted-foreground leading-tight">Selma AI navigator</p>
                     </button>
                   </div>
 
