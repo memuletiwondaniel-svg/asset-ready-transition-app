@@ -17,7 +17,7 @@ const methods = [
     icon: Plug,
     color: 'text-blue-600',
     bgColor: 'bg-blue-500/10',
-    borderColor: 'border-blue-500/40',
+    borderColor: 'border-blue-500/20',
     ringColor: 'ring-blue-500/30',
   },
   {
