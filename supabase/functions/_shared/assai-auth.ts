@@ -180,10 +180,13 @@ export async function loginAssai(
     });
 
     const dwrText = await dwrResp.text();
+    console.log(`[assai-auth] DWR response status=${dwrResp.status}, length=${dwrText.length}`);
+    console.log(`[assai-auth] DWR response preview: ${dwrText.substring(0, 300)}`);
     cookies = uniqueCookiePairs([...cookies, ...extractCookiePairs(dwrResp)]);
 
     const passphraseMatch = dwrText.match(/_remoteHandleCallback\('0','0',"([A-F0-9]+)"\)/i);
     const passphrase = passphraseMatch?.[1];
+    console.log(`[assai-auth] Passphrase extracted: ${passphrase ? `yes (${passphrase.length} chars)` : 'NO'}`);
 
     if (!passphrase) {
       const elapsed = Date.now() - start;
@@ -193,8 +196,10 @@ export async function loginAssai(
     // 3) Encrypt credentials exactly like submitSecureLogon()
     const ivHex = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
     const saltHex = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+    console.log(`[assai-auth] Encrypting: username_length=${username.length}, password_length=${password.length}, iv=${ivHex.substring(0,8)}..., salt=${saltHex.substring(0,8)}...`);
     const cipherusr = await encryptAssaiField(passphrase, username, saltHex, ivHex);
     const cipherpwd = await encryptAssaiField(passphrase, password, saltHex, ivHex);
+    console.log(`[assai-auth] Encrypted: cipherusr_length=${cipherusr.length}, cipherpwd_length=${cipherpwd.length}`);
 
     const formBody = new URLSearchParams({
       iv: ivHex,
