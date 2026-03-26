@@ -709,7 +709,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         <span className="text-[10px] text-muted-foreground/70">Execution order:</span>
                         <div className="flex items-center gap-1">
                           <span className="text-[10px] font-medium text-foreground/80 bg-muted/60 px-1.5 py-0.5 rounded">
-                            {connectionMethod === 'api' ? 'API' : 'Automation'}
+                            {connectionMethod === 'api' ? 'API' : connectionMethod === 'automation' ? 'Automation' : 'Agent'}
                           </span>
                           {fallback1 !== 'none' && (
                             <>
