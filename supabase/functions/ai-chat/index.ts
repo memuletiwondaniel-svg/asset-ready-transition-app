@@ -8340,7 +8340,285 @@ Users may ask Selma questions like:
 - "What is the latest approved revision of the P&ID for unit U40300?" → search DES_DOC, filter discipline PX or PI, unit U40300, status AFC/AFU, get latest revision
 - "Which vendor documents have not been reviewed yet?" → search SUP_DOC with status SR (submitted, awaiting review)
 - "List all documents in transmittal [number]" → search by transmittal number
-- "What assets are linked to document [number]?" → check Asset items tab on document detail`;
+- "What assets are linked to document [number]?" → check Asset items tab on document detail
+
+═══════════════════════════════════════════════
+EXTENDED ASSAI KNOWLEDGE — LIVE SYSTEM NAVIGATION (v2)
+═══════════════════════════════════════════════
+
+1. GLOBAL QUICK SEARCH BAR (available on every page)
+Located at top of every Assai page. Three components:
+
+A) DOCUMENT SUBCLASS DROPDOWN — switches context entirely:
+   Value        | Label          | What it searches
+   DES_DOC      | Design doc.    | Engineering/design documents (P&IDs, drawings, reports, calculations)
+   SUP_DOC      | Supplier doc.  | Vendor/supplier submittals (equipment manuals, datasheets, SDSDs)
+   QRY_QUERY    | Queries        | Technical Queries and RFIs
+   ASSET        | Asset items    | Physical equipment and asset records
+   PLANNING     | Work pack.     | Work packages, schedules, milestones
+
+B) DOCUMENT NUMBER BOX — type partial number with wildcard:
+   Example: "6529-%" returns ALL documents for project 6529
+   Example: "6529-ABBE-%" returns all ABB Engineering documents on that project
+
+C) QUICK FILTER BOX — advanced inline filter syntax:
+   Placeholder text: "e.g title: civil status: INI+IFA"
+   Syntax: fieldname: value (space-separated pairs)
+   Examples:
+     status: AFU                    → approved for use only
+     status: INI+IFA                → initiated OR issued for approval
+     title: compressor              → title contains "compressor"
+     discipline: ZV status: AFU    → vendor docs approved for use
+     civil status: INI+IFA         → civil discipline, INI or IFA status
+   The + operator means OR between status values
+
+D) "SHOW ALL ITEMS" BUTTON — returns all records for selected subclass
+   Use this when you want a complete picture, not filtered results
+
+2. COMPLETE TOP NAVIGATION MENU STRUCTURE
+
+PROJECT menu:
+   → Project administration, project settings, project codes
+
+DOCUMENTS menu → submenu:
+   → Design (DES_DOC subclass workflows)
+   → Supplier (SUP_DOC subclass workflows)
+
+CORRESPONDENCE menu → submenu:
+   → Incoming (received transmittals, letters from contractors/vendors)
+   → Outgoing (sent transmittals, letters to contractors/vendors)
+   NOTE: Correspondence is SEPARATE from documents. It tracks formal
+   project communications as a standalone module.
+
+QUERIES menu:
+   → Technical Queries (TQs) and Requests for Information (RFIs)
+
+ASSETS menu:
+   → Physical asset register and equipment hierarchy
+
+PLANNING menu:
+   → Work packages, milestones, schedules
+
+TOOLS menu → submenu:
+   → Assai Workspace    (collaborative project workspace)
+   → Package Browser    (visual hierarchical work package browser)
+   → Asset Browser      (visual equipment/asset hierarchy tree)
+   → Graph              (relationship graphs between documents/assets)
+   → Reports            (configurable project reports — generate and export)
+   → Scheduled jobs     (view/manage automated background tasks)
+   → On behalf of       (admin: act as another user for delegation)
+   → Clear local storage (resets column width preferences)
+   → Change language    (English / Russian available)
+
+HELP menu → submenu:
+   → Online help        (context-sensitive help)
+   → Assai Academy      (training portal)
+   → About Assai Web    (version info — current: v2.1.1.74)
+
+3. SEARCH DOCUMENTS — COMPLETE FIELD LIST (DES_DOC)
+
+IDENTIFICATION:
+  Select project        → project cabinet (e.g. BGC_PROJ)
+  Document nr.          → full or partial document number (use % wildcard)
+  Revision              → specific revision (e.g. 02A)
+  Title                 → document title (partial text search)
+
+DATES:
+  Date from             → issued/created after this date
+  Date before           → issued/created before this date
+
+REFERENCES:
+  Ext. ref. company     → external company reference
+  External reference    → external reference number
+  Keywords              → keyword tags on the document
+  File content          → full-text search inside attached files
+
+PEOPLE:
+  Originator            → person who created the document
+  Responsible eng.      → engineer responsible for the document
+  Company               → originating company code (e.g. ABBE, WGEL)
+
+CLASSIFICATION:
+  Discipline            → discipline code (ZV, PX, C01-C29, etc.)
+  Document type         → type code (A01, B01, C02, etc.)
+  Document status       → status code (AFU, AFC, IFR, IFA, etc.)
+  Approval              → approval state
+  Subclass code         → DES_DOC or SUP_DOC
+  Priority              → TIER-1, TIER-2, N/A
+  Classification        → security/access classification
+  Language              → document language
+
+TRANSMITTAL & PACKAGES:
+  Transmittal number    → find docs included in a specific transmittal
+  Inc. Transmittal      → included in transmittal (yes/no)
+  Sender reference      → sender's own reference number
+  Archive               → archived status
+  Package number        → work package number
+  Work package code     → work package code (e.g. ST/DP300)
+  Purchase order        → linked PO number
+
+ASSETS:
+  Asset                 → linked asset/equipment tag
+  Asset item            → specific asset item
+  Checked out by        → user who has document checked out for editing
+
+4. SEARCH RESULTS GRID — COLUMN STRUCTURE
+Results grid columns (in order):
+  Priority | Originator | Responsible eng. | Company code |
+  Discipline code | Document type | Work package code |
+  Purchase order | Classification | Company document nr.
+
+Pagination: results shown 50 per page
+Total records for BGC_PROJ: 2,676 design documents
+Search speed: typically 0.6 seconds
+Click any row to open Document Details panel.
+
+5. DOCUMENT DETAIL PANEL — COMPLETE FIELD MAP
+Header section fields:
+  Document nr.     | Title           | Status (AFU/AFC/IFR etc.)
+  Approval         | Company         | Responsible eng.
+  Company ref.     | Work package    | Purchase order
+  Project code     | Discipline      | Type (with description)
+  Access code      | Retention       | Retention date
+  Originator       | Classification  | Priority
+  Language
+
+Dates section:
+  Start: Planned | Forecast | Actual
+  End:   Planned | Forecast | Actual
+  Estimated hours | % Complete | Weighting
+  Remarks (free text field)
+
+Action buttons across middle:
+  Rev. comm. | Gantt chart | Email | Redline | Close
+
+Bottom tabs (click to expand):
+  Tab              | Contains
+  Revisions        | Full revision history: Rev, Title, Rev date, Status, Appx, Media size, Checked, Mainten.
+  Dist. history    | Distribution history — who received this doc and when
+  Planning         | Linked planning items and milestones
+  Milestone        | Milestone tracking
+  Custom attributes| Project-specific custom fields
+  Linked Objects   | Other documents/items linked to this one
+  Workflow step    | Current workflow state and approvers
+  Transmittals     | All transmittals this document was included in
+  Asset items      | Physical assets linked to this document
+  Ext. ref.        | External cross-references
+  Archive          | Archived versions
+  X-ref            | Cross-reference documents
+  Packages         | Work packages this document belongs to
+
+6. REVISION NAMING CONVENTION
+Revision codes follow a pattern:
+  01R = First revision, submitted for Review (R suffix = review/unapproved)
+  01A = First revision, Approved (A suffix = approved/issued)
+  02R = Second revision, for Review
+  02A = Second revision, Approved
+The Revisions tab shows ALL historical revisions in descending order.
+The LATEST revision is always at the top.
+Each revision has its own status — a document can have:
+  - Latest rev 02A with status AFU (current approved version)
+  - Previous rev 01A with status IFR (superseded)
+
+7. TRANSMITTAL MODULE — HOW IT WORKS
+Transmittals are formal cover sheets for document issuance.
+A transmittal contains:
+  - Unique transmittal reference number
+  - Issue date
+  - Sender (company/person)
+  - Receiver (company/person)
+  - List of documents included
+  - Purpose of issue (IFR/IFA/IFC/AFU etc.)
+  - Response required date
+  - Response received date
+Navigation: Documents menu → Incoming or Outgoing
+When Selma is asked "What was sent in transmittal X?":
+  → Search by Transmittal number in Search Documents
+  → All documents included in that transmittal will be returned
+
+8. CORRESPONDENCE MODULE — HOW IT DIFFERS FROM DOCUMENTS
+Correspondence is SEPARATE from the document register.
+It handles: letters, formal notices, meeting minutes, emails
+Correspondence fields include:
+  - Correspondence reference number
+  - Date sent/received
+  - Subject
+  - From/To parties
+  - Linked documents (cross-reference to doc register)
+  - Action required (yes/no)
+  - Action due date
+  - Response status
+Access via: Correspondence menu → Incoming / Outgoing
+
+9. ASSAI WORKSPACE AND PACKAGE BROWSER
+Assai Workspace (Tools menu):
+  - Collaborative project environment
+  - Shared views of document status across teams
+Package Browser (Tools menu):
+  - Visual hierarchical browser of work packages
+  - Shows document completion % per package
+  - Drill down from plant → area → system → work package
+  - Each work package shows: total docs, approved, outstanding
+Asset Browser (Tools menu):
+  - Visual equipment hierarchy tree
+  - Navigate: Plant → Unit → Equipment → Asset items
+  - Each asset shows linked documents and maintenance plans
+
+10. SELMA EXTENDED QUERY PATTERNS (v2)
+Document discovery:
+  "Find all P&IDs for unit U40300"
+  → DES_DOC, discipline PX or PI, unit U40300
+Vendor document tracking:
+  "Which supplier documents are still pending review?"
+  → SUP_DOC, status SR (Submitted for Review)
+  "How many documents does ABB have on project 6529?"
+  → DES_DOC, company ABBE, doc nr 6529-%
+Transmittal queries:
+  "What documents were issued in the last transmittal?"
+  → Search by transmittal number or sort by date
+Status reporting:
+  "What percentage of documents are approved for construction?"
+  → DES_DOC, status AFC, count vs total
+Overdue tracking:
+  "Which documents are past their planned end date?"
+  → DES_DOC, date before [today], status not AFC/AFU
+Work package completeness:
+  "Are all documents for work package ST/DP300 approved?"
+  → DES_DOC, work_package_code ST/DP300, check status
+Query/RFI tracking:
+  "How many open technical queries are there?"
+  → QRY_QUERY subclass, status Open
+Comments resolution:
+  "What are the open comments on document 6529-ABBE-C017-ISGP-U40300-ZV-A01-00006-001?"
+  → Use read_assai_document tool, read the CRS PDF content
+Cross-reference lookup:
+  "What documents reference this P&ID?"
+  → Open document detail → X-ref tab
+Asset-document linking:
+  "What manuals are linked to this pump?"
+  → Open asset in Asset Browser → linked documents tab
+
+11. IMPORTANT ASSAI BEHAVIOURS SELMA MUST KNOW
+1. Sessions expire — if Selma gets an authentication error, she must
+   re-authenticate using stored credentials before retrying
+2. Search results are limited to 50 per page — for full counts use
+   the result header "Showing results 1 to 50 of N records"
+3. Wildcard % works in document number field but NOT in title field
+   (title uses contains search automatically)
+4. Multiple status values use + as OR operator: AFU+AFC means
+   "approved for use OR approved for construction"
+5. Discipline codes are hierarchical — ZV includes all vendor docs,
+   C01-C29 are civil sub-disciplines
+6. Company document nr. (last column in results) is the FULL document
+   number as used on drawings — always starts with project code
+7. Checked out documents cannot be downloaded by other users —
+   check "Checked out by" field if download fails
+8. The Revisions tab on a document always shows the COMPLETE history
+   from initial submission to current revision
+9. Document files are attached as PDFs, DWGs (AutoCAD), or XLS files
+   depending on document type
+10. The "Appx" column in Revisions tab = Approval Index (A, B, C etc.)
+    tracking how many review cycles the document went through`;
 
     const PSSR_ORA_AGENT_PROMPT = `You are Fred, ORSH's PSSR & Operational Readiness Assistant. You are an expert in Pre-Startup Safety Reviews (PSSR), ORA (Operational Readiness Activity) planning, PSSR checklist management, and safety readiness for Oil & Gas facilities. You help users track PSSR progress, manage checklist items, identify pending approvals, and ensure safe startup readiness. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Fred, your PSSR & Operational Readiness Assistant."`;
 
