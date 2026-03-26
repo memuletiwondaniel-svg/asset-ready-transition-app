@@ -41,6 +41,45 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Shared Assai authentication helper — simple form-based login (no DWR encryption)
+async function authenticateAssai(assaiBase: string, username: string, password: string): Promise<{ cookies: string; success: boolean; statusCode: number }> {
+  const sessionCookies: string[] = [];
+  const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+
+  // Step 1: GET login page to capture initial session cookies
+  const loginPageRes = await fetch(assaiBase + '/login.aweb?loginMethod=unpw', {
+    method: 'GET',
+    headers: { 'User-Agent': ua },
+    redirect: 'manual'
+  });
+  const loginPageSetCookies = loginPageRes.headers.getSetCookie?.() || [];
+  sessionCookies.push(...loginPageSetCookies.map((c: string) => c.split(';')[0]));
+  await loginPageRes.text();
+
+  // Step 2: POST login with plain credentials
+  const loginBody = `userid=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&dbname=eu578&loginMethod=unpw`;
+  const loginRes = await fetch(assaiBase + '/login.aweb', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Cookie': sessionCookies.join('; '),
+      'User-Agent': ua,
+      'Referer': assaiBase + '/login.aweb?loginMethod=unpw'
+    },
+    body: loginBody,
+    redirect: 'manual'
+  });
+  const loginSetCookies = loginRes.headers.getSetCookie?.() || [];
+  sessionCookies.push(...loginSetCookies.map((c: string) => c.split(';')[0]));
+  await loginRes.text();
+
+  const statusCode = loginRes.status;
+  const success = statusCode === 200 || statusCode === 302;
+  console.log(`Assai login status: ${statusCode}`);
+
+  return { cookies: sessionCookies.join('; '), success, statusCode };
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // BOB AI AGENT - PROPRIETARY & CONFIDENTIAL
 // Copyright © 2024-2025 ORSH Platform. All Rights Reserved.
@@ -6415,112 +6454,19 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           };
         }
         
-        // STEP 3 — DWR Encrypted Login
+        // STEP 3 — Authenticate via shared helper
         let sessionCookies: string[] = [];
         try {
-          // Step 3a: GET login page
-          const loginPageRes = await fetch(baseUrl + '/login.aweb?loginMethod=unpw', {
-            method: 'GET',
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-            redirect: 'manual'
-          });
-          const loginPageSetCookies = loginPageRes.headers.getSetCookie?.() || [];
-          sessionCookies.push(...loginPageSetCookies.map(c => c.split(';')[0]));
-          await loginPageRes.text();
-          
-          // Step 3b: Get DWR passphrase
-          const dwrBody = [
-            'callCount=1',
-            'windowName=',
-            'c0-scriptName=DWRBean',
-            'c0-methodName=getSessionID',
-            'c0-id=0',
-            'batchId=0',
-            'instanceId=0',
-            'page=%2FAWeu578%2Flogin.aweb%3FloginMethod%3Dunpw',
-            'scriptSessionId='
-          ].join('\n');
-          
-          const dwrRes = await fetch(baseUrl + '/dwr/call/plaincall/DWRBean.getSessionID.dwr', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'text/plain',
-              'Cookie': sessionCookies.join('; '),
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            },
-            body: dwrBody
-          });
-          const dwrSetCookies = dwrRes.headers.getSetCookie?.() || [];
-          sessionCookies.push(...dwrSetCookies.map(c => c.split(';')[0]));
-          const dwrText = await dwrRes.text();
-          
-          // Extract passphrase
-          const passphraseMatch = dwrText.match(/_remoteHandleCallback\('0','0',"([A-F0-9]+)"\)/i);
-          
-          let loginBody: string;
-          if (passphraseMatch) {
-            const passphrase = passphraseMatch[1];
-            
-            // Encrypt password using Web Crypto (AES-CBC with PBKDF2)
-            const saltHex = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-              .map(b => b.toString(16).padStart(2, '0')).join('');
-            const ivHex = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-              .map(b => b.toString(16).padStart(2, '0')).join('');
-            
-            // Convert hex passphrase to bytes for PBKDF2
-            const passphraseBytes = new TextEncoder().encode(passphrase);
-            const saltBytes = new Uint8Array(saltHex.match(/.{2}/g)!.map(b => parseInt(b, 16)));
-            const ivBytes = new Uint8Array(ivHex.match(/.{2}/g)!.map(b => parseInt(b, 16)));
-            
-            // Derive key using PBKDF2
-            const keyMaterial = await crypto.subtle.importKey('raw', passphraseBytes, 'PBKDF2', false, ['deriveKey']);
-            const aesKey = await crypto.subtle.deriveKey(
-              { name: 'PBKDF2', salt: saltBytes, iterations: 1000, hash: 'SHA-1' },
-              keyMaterial,
-              { name: 'AES-CBC', length: 128 },
-              false,
-              ['encrypt']
-            );
-            
-            // Encrypt password
-            const passwordBytes = new TextEncoder().encode(password);
-            const encrypted = await crypto.subtle.encrypt({ name: 'AES-CBC', iv: ivBytes }, aesKey, passwordBytes);
-            const encryptedHex = Array.from(new Uint8Array(encrypted))
-              .map(b => b.toString(16).padStart(2, '0')).join('');
-            
-            const encryptedPassword = saltHex + encryptedHex + ivHex;
-            loginBody = `userid=${encodeURIComponent(username)}&password=${encryptedPassword}&dbname=eu578&isSecure=true&loginMethod=unpw`;
-          } else {
-            // Fallback: plain login
-            console.log('read_assai_document: DWR passphrase not found, falling back to plain login');
-            loginBody = `userid=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&dbname=eu578&isSecure=false&loginMethod=unpw`;
-          }
-          
-          // Step 3c: POST login
-          const loginRes = await fetch(baseUrl + '/login.aweb', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              'Cookie': sessionCookies.join('; '),
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-              'Referer': baseUrl + '/login.aweb?loginMethod=unpw'
-            },
-            body: loginBody,
-            redirect: 'manual'
-          });
-          const loginSetCookies = loginRes.headers.getSetCookie?.() || [];
-          sessionCookies.push(...loginSetCookies.map(c => c.split(';')[0]));
-          await loginRes.text();
-          
-          // Check login success
-          if (loginRes.status !== 200 && loginRes.status !== 302) {
+          const authResult = await authenticateAssai(baseUrl, username, password);
+          if (!authResult.success) {
             return {
               metadata,
               content_available: false,
-              reason: 'Assai authentication failed (HTTP ' + loginRes.status + '). Verify credentials in DMS Settings.',
+              reason: 'Assai authentication failed (HTTP ' + authResult.statusCode + '). Verify credentials in DMS Settings.',
               question_asked: question
             };
           }
+          sessionCookies = authResult.cookies.split('; ').filter(Boolean);
         } catch (authErr: any) {
           console.error('read_assai_document auth error:', authErr);
           return {
@@ -6796,92 +6742,14 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return { error: 'Assai login credentials are not configured.' };
         }
 
-        // DWR Encrypted Login
-        let sessionCookies: string[] = [];
+        // Authenticate via shared helper
         const assaiBase = baseUrl + instancePath;
-        
-        // Step 1: GET login page
-        const loginPageRes = await fetch(assaiBase + '/login.aweb?loginMethod=unpw', {
-          method: 'GET',
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-          redirect: 'manual'
-        });
-        const loginPageSetCookies = loginPageRes.headers.getSetCookie?.() || [];
-        sessionCookies.push(...loginPageSetCookies.map((c: string) => c.split(';')[0]));
-        await loginPageRes.text();
-        
-        // Step 2: Get DWR passphrase
-        const dwrBody = [
-          'callCount=1', 'windowName=', 'c0-scriptName=DWRBean',
-          'c0-methodName=getSessionID', 'c0-id=0', 'batchId=0',
-          'instanceId=0', `page=%2FAWeu578%2Flogin.aweb%3FloginMethod%3Dunpw`,
-          'scriptSessionId='
-        ].join('\n');
-        
-        const dwrRes = await fetch(assaiBase + '/dwr/call/plaincall/DWRBean.getSessionID.dwr', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain',
-            'Cookie': sessionCookies.join('; '),
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          },
-          body: dwrBody
-        });
-        const dwrSetCookies = dwrRes.headers.getSetCookie?.() || [];
-        sessionCookies.push(...dwrSetCookies.map((c: string) => c.split(';')[0]));
-        const dwrText = await dwrRes.text();
-        const passphraseMatch = dwrText.match(/_remoteHandleCallback\('0','0',"([A-F0-9]+)"\)/i);
-        
-        let loginBody: string;
-        if (passphraseMatch) {
-          const passphrase = passphraseMatch[1];
-          const saltHex = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-            .map(b => b.toString(16).padStart(2, '0')).join('');
-          const ivHex = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-            .map(b => b.toString(16).padStart(2, '0')).join('');
-          const passphraseBytes = new TextEncoder().encode(passphrase);
-          const saltBytes = new Uint8Array(saltHex.match(/.{2}/g)!.map(b => parseInt(b, 16)));
-          const ivBytes = new Uint8Array(ivHex.match(/.{2}/g)!.map(b => parseInt(b, 16)));
-          const keyMaterial = await crypto.subtle.importKey('raw', passphraseBytes, 'PBKDF2', false, ['deriveKey']);
-          const aesKey = await crypto.subtle.deriveKey(
-            { name: 'PBKDF2', salt: saltBytes, iterations: 1000, hash: 'SHA-1' },
-            keyMaterial,
-            { name: 'AES-CBC', length: 128 },
-            false,
-            ['encrypt']
-          );
-          const passwordBytes = new TextEncoder().encode(password);
-          const encrypted = await crypto.subtle.encrypt({ name: 'AES-CBC', iv: ivBytes }, aesKey, passwordBytes);
-          const encryptedHex = Array.from(new Uint8Array(encrypted))
-            .map(b => b.toString(16).padStart(2, '0')).join('');
-          const encryptedPassword = saltHex + encryptedHex + ivHex;
-          loginBody = `userid=${encodeURIComponent(username)}&password=${encryptedPassword}&dbname=${dbName}&isSecure=true&loginMethod=unpw`;
-        } else {
-          console.log('search_assai_documents: DWR passphrase not found, falling back to plain login');
-          loginBody = `userid=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&dbname=${dbName}&isSecure=false&loginMethod=unpw`;
+        const authResult = await authenticateAssai(assaiBase, username, password);
+        if (!authResult.success) {
+          return { error: 'Assai authentication failed (HTTP ' + authResult.statusCode + '). Verify credentials in DMS Settings.' };
         }
-        
-        // Step 3: POST login
-        const loginRes = await fetch(assaiBase + '/login.aweb', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Cookie': sessionCookies.join('; '),
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Referer': assaiBase + '/login.aweb?loginMethod=unpw'
-          },
-          body: loginBody,
-          redirect: 'manual'
-        });
-        const loginSetCookies = loginRes.headers.getSetCookie?.() || [];
-        sessionCookies.push(...loginSetCookies.map((c: string) => c.split(';')[0]));
-        await loginRes.text();
-        
-        if (loginRes.status !== 200 && loginRes.status !== 302) {
-          return { error: 'Assai authentication failed (HTTP ' + loginRes.status + '). Verify credentials in DMS Settings.' };
-        }
-        
-        const cookieHeader = sessionCookies.join('; ');
+        const cookieHeader = authResult.cookies;
+        console.log('search_assai_documents: authenticated OK');
         
         // Step 4: Search documents
         const searchParams = new URLSearchParams();
@@ -6928,6 +6796,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         
         // Parse myCells
         const myCellsMatch = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
+        console.log('search_assai_documents: myCells found:', !!myCellsMatch, ', html length:', html.length);
         
         let allDocuments: any[] = [];
         
