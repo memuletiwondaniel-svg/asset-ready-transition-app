@@ -99,6 +99,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   // Panel form state
   const [connectionMethod, setConnectionMethod] = useState<ConnectionMethod>('api');
   const [authType, setAuthType] = useState<AuthType>('api_key');
+  const [fallback1, setFallback1] = useState<string>('none');
+  const [fallback2, setFallback2] = useState<string>('none');
   const [formData, setFormData] = useState({
     base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
     client_id: '', client_secret: '', token_url: '', scope: '',
