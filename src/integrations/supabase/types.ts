@@ -1347,6 +1347,73 @@ export type Database = {
         }
         Relationships: []
       }
+      dms_sync_changes: {
+        Row: {
+          change_type: string
+          detected_at: string | null
+          document_number: string
+          document_sync_id: string | null
+          field_changed: string | null
+          id: string
+          is_vcr_critical: boolean | null
+          new_value: string | null
+          old_value: string | null
+          project_code: string | null
+          sync_log_id: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          change_type: string
+          detected_at?: string | null
+          document_number: string
+          document_sync_id?: string | null
+          field_changed?: string | null
+          id?: string
+          is_vcr_critical?: boolean | null
+          new_value?: string | null
+          old_value?: string | null
+          project_code?: string | null
+          sync_log_id?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          change_type?: string
+          detected_at?: string | null
+          document_number?: string
+          document_sync_id?: string | null
+          field_changed?: string | null
+          id?: string
+          is_vcr_critical?: boolean | null
+          new_value?: string | null
+          old_value?: string | null
+          project_code?: string | null
+          sync_log_id?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dms_sync_changes_document_sync_id_fkey"
+            columns: ["document_sync_id"]
+            isOneToOne: false
+            referencedRelation: "dms_external_sync"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dms_sync_changes_sync_log_id_fkey"
+            columns: ["sync_log_id"]
+            isOneToOne: false
+            referencedRelation: "dms_sync_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dms_sync_changes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dms_sync_credentials: {
         Row: {
           base_url: string | null
@@ -9530,6 +9597,41 @@ export type Database = {
             columns: ["parent_role_id"]
             isOneToOne: false
             referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      selma_config_snapshot: {
+        Row: {
+          config_data: Json
+          config_hash: string | null
+          config_type: string
+          id: string
+          last_synced_at: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          config_data?: Json
+          config_hash?: string | null
+          config_type: string
+          id?: string
+          last_synced_at?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          config_data?: Json
+          config_hash?: string | null
+          config_type?: string
+          id?: string
+          last_synced_at?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "selma_config_snapshot_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
