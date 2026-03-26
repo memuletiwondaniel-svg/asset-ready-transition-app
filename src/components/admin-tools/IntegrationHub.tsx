@@ -1228,9 +1228,14 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
               <div className="shrink-0 border-t border-border bg-background px-6 py-4 space-y-3">
                 {/* Test result inline */}
                 {testResultInPanel && (
-                  <div className={cn('flex items-center gap-2 text-xs px-3 py-2 rounded-lg', testResultInPanel.success ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20' : 'bg-destructive/10 text-destructive')}>
-                    {testResultInPanel.success ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-                    {testResultInPanel.success ? `Connected · ${testResultInPanel.response_time_ms}ms` : testResultInPanel.message}
+                  <div className={cn('flex items-center gap-2 text-xs px-3 py-2 rounded-lg',
+                    testResultInPanel.success ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20'
+                    : connectionMethod === 'api' && testResultInPanel.message?.includes('not yet enabled')
+                      ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/20'
+                      : 'bg-destructive/10 text-destructive'
+                  )}>
+                    {testResultInPanel.success ? <CheckCircle2 className="h-3.5 w-3.5" /> : connectionMethod === 'api' && testResultInPanel.message?.includes('not yet enabled') ? <AlertTriangle className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                    {testResultInPanel.message}
                   </div>
                 )}
                 <div className="flex items-center justify-between">
