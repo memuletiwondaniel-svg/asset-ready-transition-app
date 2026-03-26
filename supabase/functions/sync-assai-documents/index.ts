@@ -294,6 +294,15 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Parse request body for sync_method parameter
+    let syncMethod: string | null = null;
+    try {
+      const body = await req.json();
+      syncMethod = body?.sync_method || null;
+    } catch {
+      // No body or invalid JSON — default behavior
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -429,9 +438,15 @@ Deno.serve(async (req) => {
       const sessionCookies = loginResult.cookies;
       console.log(`[sync-assai] Login succeeded. ${sessionCookies.length} cookies.`);
 
+      // Determine which route(s) to run based on sync_method
+      const runRoute1 = !syncMethod || syncMethod === 'api';
+      const runRoute2 = !syncMethod || syncMethod === 'automation';
+      console.log(`[sync-assai] sync_method=${syncMethod || 'auto'}, runRoute1=${runRoute1}, runRoute2=${runRoute2}`);
+
       // ── ROUTE 1: OAuth Bearer token + REST API ──────────────────────
       let route1Success = false;
 
+      if (runRoute1) {
       try {
         console.log("[sync-assai] Route 1: Attempting OAuth + REST API...");
 
@@ -484,10 +499,11 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.log(`[sync-assai] Route 1 failed: ${e}`);
       }
+      } // end if (runRoute1)
 
-      // ── ROUTE 2: Form-based HTML scraping (proven fallback) ────────
-      if (!route1Success) {
-        console.log("[sync-assai] Route 2: Falling back to form-based HTML scraping...");
+      // ── ROUTE 2: Form-based HTML scraping ─────────────────────────
+      if (runRoute2 && !route1Success) {
+        console.log("[sync-assai] Route 2: Form-based HTML scraping...");
         const awBase = `${resolvedBase}/AW${resolvedDb}`;
 
         try {
