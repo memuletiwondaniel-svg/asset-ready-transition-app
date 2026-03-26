@@ -98,7 +98,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [tenantSetupOpen, setTenantSetupOpen] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set([
-    'LIVING DOCUMENTATION', 'AI AGENTS', 'INTEGRATIONS', 'SYSTEM', 'OPERATIONS & CONFIGURATION'
+    'USER MANAGEMENT', 'LIVING DOCUMENTATION', 'AI AGENTS', 'INTEGRATIONS', 'SYSTEM', 'OPERATIONS & CONFIGURATION'
   ]));
 
   // Admin favorites persisted in localStorage
