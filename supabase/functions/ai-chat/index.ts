@@ -6320,6 +6320,299 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
 
+    case "read_assai_document": {
+      try {
+        const docNumber = args.document_number;
+        const question = args.question || 'Summarise this document';
+        
+        // STEP 1 — Find document in dms_external_sync
+        const { data: syncDoc, error: syncErr } = await supabaseClient
+          .from('dms_external_sync')
+          .select('*')
+          .eq('document_number', docNumber)
+          .eq('dms_platform', 'assai')
+          .maybeSingle();
+        
+        if (syncErr) {
+          console.error('read_assai_document sync lookup error:', syncErr);
+          return { error: 'Failed to query document sync records: ' + syncErr.message };
+        }
+        
+        if (!syncDoc) {
+          return { 
+            error: 'Document not found in synced records. Run Sync Now from DMS Settings to update the document register.',
+            suggestion: 'Navigate to Admin Tools > DMS Settings and trigger a fresh sync for this project.'
+          };
+        }
+        
+        const metadata = {
+          document_number: syncDoc.document_number,
+          title: syncDoc.document_title || 'Unknown',
+          status: syncDoc.status_code || 'Unknown',
+          revision: syncDoc.revision || 'Unknown',
+          external_url: syncDoc.external_url,
+          last_synced: syncDoc.last_synced_at,
+          discipline: syncDoc.discipline_code,
+          platform: syncDoc.dms_platform
+        };
+        
+        // STEP 2 — Authenticate with Assai
+        const { data: creds, error: credErr } = await supabaseClient
+          .from('dms_sync_credentials')
+          .select('*')
+          .eq('dms_platform', 'assai')
+          .maybeSingle();
+        
+        if (credErr || !creds) {
+          console.error('Assai credentials not found:', credErr);
+          return {
+            metadata,
+            content_available: false,
+            reason: 'Assai credentials not configured. Document metadata is available but file content could not be retrieved.',
+            question_asked: question
+          };
+        }
+        
+        const baseUrl = creds.base_url || 'https://eu.assaicloud.com/AWeu578';
+        const username = creds.username_encrypted;
+        const password = creds.password_encrypted;
+        
+        if (!username || !password) {
+          return {
+            metadata,
+            content_available: false,
+            reason: 'Assai login credentials are not configured. Please set up credentials in DMS Settings.',
+            question_asked: question
+          };
+        }
+        
+        // Step 2a — Get login page and session cookies
+        let sessionCookies: string[] = [];
+        try {
+          const loginPageRes = await fetch(baseUrl + '/login.aweb?loginMethod=unpw', {
+            method: 'GET',
+            redirect: 'manual'
+          });
+          
+          const loginPageCookies = loginPageRes.headers.getSetCookie?.() || [];
+          sessionCookies.push(...loginPageCookies);
+          const loginPageBody = await loginPageRes.text();
+          
+          // Step 2b — Extract form action
+          const formActionMatch = loginPageBody.match(/action=["']([^"']+)["']/i);
+          const formAction = formActionMatch ? formActionMatch[1] : '/AWeu578/login.aweb';
+          
+          // Step 2c — POST credentials
+          const loginRes = await fetch(baseUrl + (formAction.startsWith('/') ? '' : '/') + formAction, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Cookie': sessionCookies.join('; ')
+            },
+            body: new URLSearchParams({
+              'username': username,
+              'password': password,
+              'loginMethod': 'unpw'
+            }).toString(),
+            redirect: 'manual'
+          });
+          
+          const loginCookies = loginRes.headers.getSetCookie?.() || [];
+          sessionCookies.push(...loginCookies);
+          
+          // Check if login succeeded (302 redirect or 200)
+          if (loginRes.status !== 200 && loginRes.status !== 302) {
+            const body = await loginRes.text();
+            console.error('Assai login failed:', loginRes.status, body.substring(0, 200));
+            return {
+              metadata,
+              content_available: false,
+              reason: 'Assai authentication failed. Please verify credentials in DMS Settings.',
+              question_asked: question
+            };
+          }
+          await loginRes.text(); // consume body
+        } catch (authErr) {
+          console.error('Assai auth error:', authErr);
+          return {
+            metadata,
+            content_available: false,
+            reason: 'Could not connect to Assai portal. The service may be temporarily unavailable.',
+            question_asked: question
+          };
+        }
+        
+        // STEP 3 — Fetch document file
+        let pdfBase64: string | null = null;
+        let documentMediaType = 'application/pdf';
+        
+        try {
+          // Use external_url if available, otherwise construct from document number
+          let docUrl = syncDoc.external_url;
+          if (!docUrl) {
+            // Construct search URL pattern
+            docUrl = baseUrl + '/search.aweb?document_nr=' + encodeURIComponent(docNumber);
+          }
+          
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout
+          
+          const docRes = await fetch(docUrl, {
+            headers: {
+              'Cookie': sessionCookies.join('; ')
+            },
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          
+          if (!docRes.ok) {
+            console.error('Assai document fetch failed:', docRes.status);
+            return {
+              metadata,
+              content_available: false,
+              reason: 'Document file could not be downloaded from Assai (HTTP ' + docRes.status + '). Metadata is shown below.',
+              question_asked: question
+            };
+          }
+          
+          const contentType = docRes.headers.get('content-type') || '';
+          if (contentType.includes('pdf')) {
+            documentMediaType = 'application/pdf';
+          } else if (contentType.includes('image')) {
+            documentMediaType = contentType.split(';')[0].trim();
+          } else {
+            documentMediaType = 'application/pdf'; // default assumption
+          }
+          
+          const arrayBuffer = await docRes.arrayBuffer();
+          const bytes = new Uint8Array(arrayBuffer);
+          
+          // Check file size (10MB limit)
+          if (bytes.length > 10 * 1024 * 1024) {
+            return {
+              metadata,
+              content_available: false,
+              reason: 'Document file is larger than 10MB. Metadata is available but content reading is limited for large files.',
+              question_asked: question
+            };
+          }
+          
+          // Convert to base64
+          let binary = '';
+          for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          pdfBase64 = btoa(binary);
+        } catch (fetchErr: any) {
+          if (fetchErr?.name === 'AbortError') {
+            return {
+              metadata,
+              content_available: false,
+              reason: 'Document download timed out (>25 seconds). The file may be very large. Metadata is shown below.',
+              question_asked: question
+            };
+          }
+          console.error('Assai document fetch error:', fetchErr);
+          return {
+            metadata,
+            content_available: false,
+            reason: 'Failed to download document from Assai. Metadata is available.',
+            question_asked: question
+          };
+        }
+        
+        // STEP 4 — Pass document to Claude for reading
+        if (pdfBase64) {
+          try {
+            const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+            if (!ANTHROPIC_KEY) {
+              return {
+                metadata,
+                content_available: false,
+                reason: 'AI document reading service is not configured (missing API key).',
+                question_asked: question
+              };
+            }
+            
+            const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
+              method: "POST",
+              headers: {
+                "x-api-key": ANTHROPIC_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "claude-sonnet-4-5-20250929",
+                max_tokens: 2000,
+                messages: [{
+                  role: "user",
+                  content: [
+                    {
+                      type: "document",
+                      source: {
+                        type: "base64",
+                        media_type: documentMediaType,
+                        data: pdfBase64
+                      }
+                    },
+                    {
+                      type: "text",
+                      text: question
+                    }
+                  ]
+                }]
+              }),
+            });
+            
+            if (!claudeRes.ok) {
+              const errText = await claudeRes.text();
+              console.error('Claude document reading error:', claudeRes.status, errText.substring(0, 300));
+              return {
+                metadata,
+                content_available: false,
+                reason: 'AI could not process the document content (API error). Metadata is available.',
+                question_asked: question
+              };
+            }
+            
+            const claudeResult = await claudeRes.json();
+            const contentBlocks = claudeResult.content || [];
+            const textContent = contentBlocks
+              .filter((b: any) => b.type === 'text')
+              .map((b: any) => b.text)
+              .join('\n');
+            
+            // STEP 5 — Return combined answer
+            return {
+              metadata,
+              content_available: true,
+              document_content_answer: textContent,
+              question_asked: question,
+              note: 'This answer is based on the actual document content fetched from Assai DMS.'
+            };
+          } catch (claudeErr) {
+            console.error('Claude document reading exception:', claudeErr);
+            return {
+              metadata,
+              content_available: false,
+              reason: 'AI document reading encountered an error. Metadata is available.',
+              question_asked: question
+            };
+          }
+        }
+        
+        return {
+          metadata,
+          content_available: false,
+          reason: 'Document content could not be retrieved.',
+          question_asked: question
+        };
+      } catch (err) {
+        console.error('read_assai_document error:', err);
+        return { error: String(err) };
+      }
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // HANNAH (P2A HANDOVER INTELLIGENCE AGENT) TOOL HANDLERS
     // ═══════════════════════════════════════════════════════════════════════════
