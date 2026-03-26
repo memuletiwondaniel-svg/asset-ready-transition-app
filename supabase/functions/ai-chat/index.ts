@@ -2957,7 +2957,7 @@ const tools = [
         properties: {
           document_number_pattern: {
             type: "string",
-            description: 'Document number search pattern. Use % as wildcard. E.g. "6529-%-00006-%" for project 6529 PO ending 00006, or "6529-%" for all project 6529 docs'
+            description: 'Document number or PO search pattern. For PO-based searches, pass the last 5 digits (e.g. "00006") and it will use Assai purchase_code field. For document number searches, use prefix patterns like "6529-%" . Assai wildcards only work as prefix/suffix, NOT mid-string.'
           },
           discipline_code: {
             type: "string",
