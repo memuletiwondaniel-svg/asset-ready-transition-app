@@ -242,45 +242,67 @@ export async function loginAssai(
         redirect: "manual",
       });
 
-    const elapsed = Date.now() - start;
-    const body = await loginResp.text();
-    console.log(`[assai-auth] Response status=${loginResp.status}, body_length=${body.length}, elapsed=${elapsed}ms`);
-    console.log(`[assai-auth] Response body preview (first 500 chars): ${body.substring(0, 500)}`);
-    console.log(`[assai-auth] Login POST cookies sent: ${cookies.length}`);
-    console.log(`[assai-auth] Login response Location header: ${loginResp.headers.get('location')}`);
+      const elapsed = Date.now() - start;
+      const body = await loginResp.text();
+      console.log(`[assai-auth] [${hashAlgo}] Response status=${loginResp.status}, body_length=${body.length}, elapsed=${elapsed}ms`);
 
-    const lowerBody = body.toLowerCase();
-    const hasForm = lowerBody.includes('id="form" action="login.aweb" method="post"');
-    const hasUserid = lowerBody.includes('name="userid"');
-    const hasButton = lowerBody.includes('id="button_log_on"');
-    const returnedLoginForm = loginResp.status === 200 && hasForm && hasUserid && hasButton;
+      const lowerBody = body.toLowerCase();
+      const hasForm = lowerBody.includes('id="form" action="login.aweb" method="post"');
+      const hasUserid = lowerBody.includes('name="userid"');
+      const hasButton = lowerBody.includes('id="button_log_on"');
+      const returnedLoginForm = loginResp.status === 200 && hasForm && hasUserid && hasButton;
 
-    console.log(`[assai-auth] Login form detection: hasForm=${hasForm}, hasUserid=${hasUserid}, hasButton=${hasButton}, returnedLoginForm=${returnedLoginForm}`);
+      if (returnedLoginForm) {
+        console.log(`[assai-auth] [${hashAlgo}] Login form returned — trying next hash algo if available`);
+        // Need fresh session for next attempt — get new cookies and passphrase
+        if (hashAlgo !== hashAlgos[hashAlgos.length - 1]) {
+          // Re-fetch login page for a fresh session
+          const freshResp = await fetch(loginPageUrl, { method: "GET", redirect: "manual" });
+          const freshBody = await freshResp.text();
+          cookies = extractCookiePairs(freshResp);
+          const freshCookieHeader = uniqueCookiePairs(cookies).join("; ");
+          
+          const freshDwrResp = await fetch(dwrUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain", ...(freshCookieHeader ? { Cookie: freshCookieHeader } : {}) },
+            body: dwrBody,
+            redirect: "manual",
+          });
+          const freshDwrText = await freshDwrResp.text();
+          cookies = uniqueCookiePairs([...cookies, ...extractCookiePairs(freshDwrResp)]);
+          const freshMatch = freshDwrText.match(/_remoteHandleCallback\('0','0',"([A-F0-9]+)"\)/i);
+          if (freshMatch?.[1]) {
+            passphrase = freshMatch[1];
+            console.log(`[assai-auth] Refreshed session for next attempt, new passphrase: ${passphrase.substring(0,8)}...`);
+          }
+          continue;
+        }
+        // Last attempt failed
+        const errorMatch = body.match(/class="error[^"]*"[^>]*>(.*?)<\//i) || body.match(/loginError[^>]*>(.*?)<\//i);
+        const errorDetail = errorMatch?.[1]?.trim() || 'Decryption mismatch';
+        return { success: false, error: `Login failed after trying all hash algorithms (${errorDetail})`, response_time_ms: elapsed };
+      }
 
-    if (returnedLoginForm) {
-      // Check for specific error messages in the response
-      const errorMatch = body.match(/class="error[^"]*"[^>]*>(.*?)<\//i) || body.match(/loginError[^>]*>(.*?)<\//i);
-      const errorDetail = errorMatch?.[1]?.trim() || 'No specific error message found';
-      console.log(`[assai-auth] Assai login error detail: ${errorDetail}`);
-      return { success: false, error: `Incorrect username or password (${errorDetail})`, response_time_ms: elapsed };
+      if (loginResp.status === 302 || loginResp.status === 200) {
+        const allCookies = uniqueCookiePairs([...cookies, ...extractCookiePairs(loginResp)]);
+        const jsession = allCookies.find((cookie) => cookie.startsWith("JSESSIONID="));
+        const sessionId = jsession?.split("=")[1] ?? "unknown";
+        console.log(`[assai-auth] [${hashAlgo}] Login SUCCESS!`);
+
+        return {
+          success: true,
+          sessionId,
+          cookies: allCookies,
+          baseUrl: normalizedBaseUrl,
+          dbName: resolvedDbName,
+          response_time_ms: elapsed,
+        };
+      }
+
+      return { success: false, error: `Unexpected status: ${loginResp.status}`, response_time_ms: elapsed };
     }
 
-    if (loginResp.status === 302 || loginResp.status === 200) {
-      const allCookies = uniqueCookiePairs([...cookies, ...extractCookiePairs(loginResp)]);
-      const jsession = allCookies.find((cookie) => cookie.startsWith("JSESSIONID="));
-      const sessionId = jsession?.split("=")[1] ?? "unknown";
-
-      return {
-        success: true,
-        sessionId,
-        cookies: allCookies,
-        baseUrl: normalizedBaseUrl,
-        dbName: resolvedDbName,
-        response_time_ms: elapsed,
-      };
-    }
-
-    return { success: false, error: `Unexpected status: ${loginResp.status}`, response_time_ms: elapsed };
+    return { success: false, error: "All hash algorithms exhausted", response_time_ms: Date.now() - start };
   } catch (err: any) {
     const elapsed = Date.now() - start;
     console.error(`[assai-auth] Login error:`, err);
