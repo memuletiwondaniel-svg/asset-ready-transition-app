@@ -1240,7 +1240,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     <Button
                       size="sm"
                       className="text-xs"
-                      disabled={!isFormValid || saving}
+                      disabled={!isFormValid || saving || !isDirty}
                       onClick={() => { setTriedSave(true); if (isFormValid) saveConfig(); }}
                     >
                       {saving && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
