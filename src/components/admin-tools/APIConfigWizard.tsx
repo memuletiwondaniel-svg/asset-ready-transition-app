@@ -119,7 +119,6 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
   const handleSave = () => {
     const config: APIConfig = {
       interfaceMethod: interfaceMethod!,
-      rpaCredentials: interfaceMethod === 'rpa' ? rpaCredentials : undefined,
       apiCredentials: interfaceMethod === 'api' ? apiCredentials : undefined,
       configuredAt: new Date().toISOString(),
       status: 'configured',
