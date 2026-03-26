@@ -276,7 +276,10 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         setHasStoredCredentials(false);
       }
     }
-    setAuthType('api_key');
+    // Only reset auth type if no existing credential (otherwise it was set above)
+    if (!getCredential(platform.id) || platform.id === 'gocompletions') {
+      setAuthType('api_key');
+    }
     setTriedSave(false);
     setUrlError('');
     setCredentialsSaved(!!getCredential(platform.id) || (platform.id === 'gocompletions' && gocConfigured));
