@@ -836,7 +836,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         >
                           <option value="none">No second fallback</option>
                           {connectionMethod !== 'api' && fallback1 !== 'api' && <option value="api">{CONNECTION_METHOD_OPTION_LABELS.api}</option>}
-                          {connectionMethod !== 'automation' && fallback1 !== 'automation' && <option value="automation">{CONNECTION_METHOD_OPTION_LABELS.automation}</option>}
                           {connectionMethod !== 'agent' && fallback1 !== 'agent' && <option value="agent">{CONNECTION_METHOD_OPTION_LABELS.agent}</option>}
                         </select>
                       </div>
