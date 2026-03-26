@@ -772,15 +772,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                                     <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
                                       {item.title}
                                     </h3>
-                                    {'badge' in item && item.badge && (
-                                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
-                                        item.badge === 'auto-update'
-                                          ? 'bg-blue-500/10 text-blue-600 border border-blue-200/50'
-                                          : 'bg-emerald-500/10 text-emerald-600 border border-emerald-200/50'
-                                      }`}>
-                                        {item.badge as string}
-                                      </span>
-                                    )}
                                   </div>
                                   <p className="text-xs text-muted-foreground/60 mt-0.5 leading-relaxed line-clamp-1">
                                     {item.description}
