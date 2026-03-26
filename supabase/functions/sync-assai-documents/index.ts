@@ -499,10 +499,11 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.log(`[sync-assai] Route 1 failed: ${e}`);
       }
+      } // end if (runRoute1)
 
-      // ── ROUTE 2: Form-based HTML scraping (proven fallback) ────────
-      if (!route1Success) {
-        console.log("[sync-assai] Route 2: Falling back to form-based HTML scraping...");
+      // ── ROUTE 2: Form-based HTML scraping ─────────────────────────
+      if (runRoute2 && !route1Success) {
+        console.log("[sync-assai] Route 2: Form-based HTML scraping...");
         const awBase = `${resolvedBase}/AW${resolvedDb}`;
 
         try {
