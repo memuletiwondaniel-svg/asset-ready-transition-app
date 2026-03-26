@@ -465,12 +465,46 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       setTestingInPanel(true);
       setTestResultInPanel(null);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const { data, error } = await supabase.functions.invoke('test-assai-connection', {
-          headers: { Authorization: `Bearer ${session?.access_token}` },
-        });
-        if (error) throw error;
-        setTestResultInPanel(data);
+        if (connectionMethod === 'agent') {
+          // Agent mode: query local dms_external_sync table
+          const { count, error } = await supabase
+            .from('dms_external_sync')
+            .select('*', { count: 'exact', head: true })
+            .eq('dms_platform', 'assai');
+          if (error) throw error;
+          const docCount = count ?? 0;
+          if (docCount > 0) {
+            setTestResultInPanel({ success: true, message: `Agent (Selma) Ready — ${docCount} documents available in local sync` });
+          } else {
+            setTestResultInPanel({ success: false, message: 'Agent (Selma) — No documents synced yet. Run Sync Now first to populate Selma\'s document store' });
+          }
+        } else {
+          // RPA or API mode: call test-assai-connection edge function
+          const { data: { session } } = await supabase.auth.getSession();
+          const { data, error } = await supabase.functions.invoke('test-assai-connection', {
+            headers: { Authorization: `Bearer ${session?.access_token}` },
+          });
+          if (error) throw error;
+          if (connectionMethod === 'api') {
+            // API mode: show the result but add amber note about REST module
+            setTestResultInPanel({
+              success: data?.success ?? false,
+              message: data?.success
+                ? `API Login OK · ${data.response_time_ms ?? '—'}ms — REST API module not yet enabled on server`
+                : data?.message || 'API connection failed',
+              response_time_ms: data?.response_time_ms,
+            });
+          } else {
+            // RPA mode
+            setTestResultInPanel({
+              success: data?.success ?? false,
+              message: data?.success
+                ? `RPA Login: Connected · ${data.response_time_ms ?? '—'}ms`
+                : `RPA Login: Failed — ${data?.message || 'Unknown error'}`,
+              response_time_ms: data?.response_time_ms,
+            });
+          }
+        }
       } catch (err: any) {
         setTestResultInPanel({ success: false, message: err.message || 'Test failed' });
       } finally {
