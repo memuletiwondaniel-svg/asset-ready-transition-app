@@ -180,10 +180,13 @@ export async function loginAssai(
     });
 
     const dwrText = await dwrResp.text();
+    console.log(`[assai-auth] DWR response status=${dwrResp.status}, length=${dwrText.length}`);
+    console.log(`[assai-auth] DWR response preview: ${dwrText.substring(0, 300)}`);
     cookies = uniqueCookiePairs([...cookies, ...extractCookiePairs(dwrResp)]);
 
     const passphraseMatch = dwrText.match(/_remoteHandleCallback\('0','0',"([A-F0-9]+)"\)/i);
     const passphrase = passphraseMatch?.[1];
+    console.log(`[assai-auth] Passphrase extracted: ${passphrase ? `yes (${passphrase.length} chars)` : 'NO'}`);
 
     if (!passphrase) {
       const elapsed = Date.now() - start;
@@ -193,8 +196,10 @@ export async function loginAssai(
     // 3) Encrypt credentials exactly like submitSecureLogon()
     const ivHex = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
     const saltHex = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+    console.log(`[assai-auth] Encrypting: username_length=${username.length}, password_length=${password.length}, iv=${ivHex.substring(0,8)}..., salt=${saltHex.substring(0,8)}...`);
     const cipherusr = await encryptAssaiField(passphrase, username, saltHex, ivHex);
     const cipherpwd = await encryptAssaiField(passphrase, password, saltHex, ivHex);
+    console.log(`[assai-auth] Encrypted: cipherusr_length=${cipherusr.length}, cipherpwd_length=${cipherpwd.length}`);
 
     const formBody = new URLSearchParams({
       iv: ivHex,
@@ -218,6 +223,9 @@ export async function loginAssai(
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
+        "Referer": loginPageUrl,
+        "Origin": normalizedBaseUrl,
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
         ...(cookies.length ? { Cookie: cookies.join("; ") } : {}),
       },
       body: formBody.toString(),
@@ -227,16 +235,24 @@ export async function loginAssai(
     const elapsed = Date.now() - start;
     const body = await loginResp.text();
     console.log(`[assai-auth] Response status=${loginResp.status}, body_length=${body.length}, elapsed=${elapsed}ms`);
+    console.log(`[assai-auth] Response body preview (first 500 chars): ${body.substring(0, 500)}`);
+    console.log(`[assai-auth] Login POST cookies sent: ${cookies.length}`);
+    console.log(`[assai-auth] Login response Location header: ${loginResp.headers.get('location')}`);
 
     const lowerBody = body.toLowerCase();
-    const returnedLoginForm =
-      loginResp.status === 200 &&
-      lowerBody.includes('id="form" action="login.aweb" method="post"') &&
-      lowerBody.includes('name="userid"') &&
-      lowerBody.includes('id="button_log_on"');
+    const hasForm = lowerBody.includes('id="form" action="login.aweb" method="post"');
+    const hasUserid = lowerBody.includes('name="userid"');
+    const hasButton = lowerBody.includes('id="button_log_on"');
+    const returnedLoginForm = loginResp.status === 200 && hasForm && hasUserid && hasButton;
+
+    console.log(`[assai-auth] Login form detection: hasForm=${hasForm}, hasUserid=${hasUserid}, hasButton=${hasButton}, returnedLoginForm=${returnedLoginForm}`);
 
     if (returnedLoginForm) {
-      return { success: false, error: "Incorrect username or password", response_time_ms: elapsed };
+      // Check for specific error messages in the response
+      const errorMatch = body.match(/class="error[^"]*"[^>]*>(.*?)<\//i) || body.match(/loginError[^>]*>(.*?)<\//i);
+      const errorDetail = errorMatch?.[1]?.trim() || 'No specific error message found';
+      console.log(`[assai-auth] Assai login error detail: ${errorDetail}`);
+      return { success: false, error: `Incorrect username or password (${errorDetail})`, response_time_ms: elapsed };
     }
 
     if (loginResp.status === 302 || loginResp.status === 200) {
