@@ -12,14 +12,12 @@ import { ChevronLeft, ChevronRight, Save, CheckCircle2, Plug, Bot } from 'lucide
 import { cn } from '@/lib/utils';
 import {
   InterfaceMethod,
-  RPACredentials,
   APICredentials,
   APIConfig,
   getAPIConfig,
   saveAPIConfig,
 } from '@/lib/api-config-storage';
 import { InterfaceMethodStep } from './wizard-steps/InterfaceMethodStep';
-import { RPAConfigStep } from './wizard-steps/RPAConfigStep';
 import { APIConfigStep } from './wizard-steps/APIConfigStep';
 import { TestConnectionStep } from './wizard-steps/TestConnectionStep';
 
@@ -53,7 +51,6 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [interfaceMethod, setInterfaceMethod] = useState<InterfaceMethod | null>(null);
-  const [rpaCredentials, setRpaCredentials] = useState<RPACredentials>({ portalUrl: '', username: '', password: '' });
   const [apiCredentials, setApiCredentials] = useState<APICredentials>({ endpointUrl: '', authType: 'api_key' });
   const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [testError, setTestError] = useState('');
@@ -64,11 +61,9 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
       const existing = getAPIConfig(api.id);
       if (existing) {
         setInterfaceMethod(existing.interfaceMethod);
-        if (existing.rpaCredentials) setRpaCredentials(existing.rpaCredentials);
         if (existing.apiCredentials) setApiCredentials(existing.apiCredentials);
       } else {
         setInterfaceMethod(null);
-        setRpaCredentials({ portalUrl: DEFAULT_PORTAL_URLS[api.id] || '', username: '', password: '' });
         setApiCredentials({ endpointUrl: '', authType: 'api_key' });
       }
       setCurrentStep(1);
@@ -85,8 +80,8 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
     switch (currentStep) {
       case 1: return !!interfaceMethod;
       case 2:
-        if (interfaceMethod === 'rpa') return !!rpaCredentials.username && !!rpaCredentials.password;
         if (interfaceMethod === 'api') return !!apiCredentials.endpointUrl;
+        if (interfaceMethod === 'agent') return true;
         return false;
       case 3: return testStatus === 'success';
       default: return true;
@@ -111,8 +106,7 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
     setTestError('');
     // Simulate a test — in production this would call the edge function
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    // For now, always succeed if credentials are present
-    if (interfaceMethod === 'rpa' && rpaCredentials.username && rpaCredentials.password) {
+    if (interfaceMethod === 'agent') {
       setTestStatus('success');
     } else if (interfaceMethod === 'api' && apiCredentials.endpointUrl) {
       setTestStatus('success');
@@ -125,7 +119,6 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
   const handleSave = () => {
     const config: APIConfig = {
       interfaceMethod: interfaceMethod!,
-      rpaCredentials: interfaceMethod === 'rpa' ? rpaCredentials : undefined,
       apiCredentials: interfaceMethod === 'api' ? apiCredentials : undefined,
       configuredAt: new Date().toISOString(),
       status: 'configured',
@@ -207,15 +200,19 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
           {currentStep === 1 && (
             <InterfaceMethodStep selected={interfaceMethod} onSelect={setInterfaceMethod} />
           )}
-          {currentStep === 2 && interfaceMethod === 'rpa' && (
-            <RPAConfigStep
-              credentials={rpaCredentials}
-              onChange={setRpaCredentials}
-              defaultPortalUrl={DEFAULT_PORTAL_URLS[api.id]}
-            />
-          )}
           {currentStep === 2 && interfaceMethod === 'api' && (
             <APIConfigStep credentials={apiCredentials} onChange={setApiCredentials} />
+          )}
+          {currentStep === 2 && interfaceMethod === 'agent' && (
+            <div className="space-y-4 py-2">
+              <div>
+                <h3 className="text-sm font-medium text-foreground">Agent Configuration</h3>
+                <p className="text-xs text-muted-foreground mt-1">Selma will use stored DMS credentials to authenticate and navigate Assai autonomously.</p>
+              </div>
+              <div className="rounded-lg border p-4 bg-emerald-50/50 dark:bg-emerald-950/20 text-sm text-muted-foreground">
+                No additional configuration needed — Selma uses credentials saved in DMS Settings.
+              </div>
+            </div>
           )}
           {currentStep === 3 && (
             <TestConnectionStep
@@ -235,26 +232,10 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">Interface Method</span>
                   <Badge variant="outline" className="gap-1">
-                    {interfaceMethod === 'rpa' ? <Bot className="h-3 w-3" /> : <Plug className="h-3 w-3" />}
-                    {interfaceMethod === 'rpa' ? 'RPA' : 'API'}
+                    {interfaceMethod === 'agent' ? <Bot className="h-3 w-3" /> : <Plug className="h-3 w-3" />}
+                    {interfaceMethod === 'agent' ? 'Agent (Selma AI)' : 'API'}
                   </Badge>
                 </div>
-                {interfaceMethod === 'rpa' && (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Portal URL</span>
-                      <span className="text-xs font-mono truncate max-w-[200px]">{rpaCredentials.portalUrl || '—'}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Username</span>
-                      <span className="text-xs">{rpaCredentials.username}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Password</span>
-                      <span className="text-xs">••••••••</span>
-                    </div>
-                  </>
-                )}
                 {interfaceMethod === 'api' && (
                   <>
                     <div className="flex items-center justify-between">

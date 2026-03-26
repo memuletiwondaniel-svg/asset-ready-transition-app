@@ -6325,38 +6325,26 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const docNumber = args.document_number;
         const question = args.question || 'Summarise this document';
         
-        // STEP 1 — Find document in dms_external_sync
-        const { data: syncDoc, error: syncErr } = await supabaseClient
+        // STEP 1 — Find document in dms_external_sync (optional — may not be synced yet)
+        const { data: syncDoc } = await supabaseClient
           .from('dms_external_sync')
           .select('*')
           .eq('document_number', docNumber)
           .eq('dms_platform', 'assai')
           .maybeSingle();
         
-        if (syncErr) {
-          console.error('read_assai_document sync lookup error:', syncErr);
-          return { error: 'Failed to query document sync records: ' + syncErr.message };
-        }
-        
-        if (!syncDoc) {
-          return { 
-            error: 'Document not found in synced records. Run Sync Now from DMS Settings to update the document register.',
-            suggestion: 'Navigate to Admin Tools > DMS Settings and trigger a fresh sync for this project.'
-          };
-        }
-        
-        const metadata = {
-          document_number: syncDoc.document_number,
-          title: syncDoc.document_title || 'Unknown',
-          status: syncDoc.status_code || 'Unknown',
-          revision: syncDoc.revision || 'Unknown',
-          external_url: syncDoc.external_url,
-          last_synced: syncDoc.last_synced_at,
-          discipline: syncDoc.discipline_code,
-          platform: syncDoc.dms_platform
+        const metadata: Record<string, any> = {
+          document_number: docNumber,
+          title: syncDoc?.document_title || 'Unknown',
+          status: syncDoc?.status_code || 'Unknown',
+          revision: syncDoc?.revision || 'Unknown',
+          external_url: syncDoc?.external_url,
+          last_synced: syncDoc?.last_synced_at,
+          discipline: syncDoc?.discipline_code,
+          platform: 'assai'
         };
         
-        // STEP 2 — Authenticate with Assai
+        // STEP 2 — Get credentials
         const { data: creds, error: credErr } = await supabaseClient
           .from('dms_sync_credentials')
           .select('*')
@@ -6364,7 +6352,6 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           .maybeSingle();
         
         if (credErr || !creds) {
-          console.error('Assai credentials not found:', credErr);
           return {
             metadata,
             content_available: false,
@@ -6373,131 +6360,299 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           };
         }
         
-        const baseUrl = creds.base_url || 'https://eu.assaicloud.com/AWeu578';
-        const username = creds.username_encrypted;
-        const password = creds.password_encrypted;
+        const baseUrl = (creds.base_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/+$/, '');
+        let username = creds.username_encrypted || '';
+        let password = creds.password_encrypted || '';
+        
+        // Decrypt if needed (using shared crypto)
+        try {
+          const { isEncrypted, decrypt } = await import("../_shared/crypto.ts");
+          if (username && isEncrypted(username)) username = await decrypt(username);
+          if (password && isEncrypted(password)) password = await decrypt(password);
+        } catch (decryptErr) {
+          console.error('read_assai_document: credential decryption failed:', decryptErr);
+        }
         
         if (!username || !password) {
           return {
             metadata,
             content_available: false,
-            reason: 'Assai login credentials are not configured. Please set up credentials in DMS Settings.',
+            reason: 'Assai login credentials are not configured.',
             question_asked: question
           };
         }
         
-        // Step 2a — Get login page and session cookies
+        // STEP 3 — DWR Encrypted Login
         let sessionCookies: string[] = [];
         try {
+          // Step 3a: GET login page
           const loginPageRes = await fetch(baseUrl + '/login.aweb?loginMethod=unpw', {
             method: 'GET',
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
             redirect: 'manual'
           });
+          const loginPageSetCookies = loginPageRes.headers.getSetCookie?.() || [];
+          sessionCookies.push(...loginPageSetCookies.map(c => c.split(';')[0]));
+          await loginPageRes.text();
           
-          const loginPageCookies = loginPageRes.headers.getSetCookie?.() || [];
-          sessionCookies.push(...loginPageCookies);
-          const loginPageBody = await loginPageRes.text();
+          // Step 3b: Get DWR passphrase
+          const dwrBody = [
+            'callCount=1',
+            'windowName=',
+            'c0-scriptName=DWRBean',
+            'c0-methodName=getSessionID',
+            'c0-id=0',
+            'batchId=0',
+            'instanceId=0',
+            'page=%2FAWeu578%2Flogin.aweb%3FloginMethod%3Dunpw',
+            'scriptSessionId='
+          ].join('\n');
           
-          // Step 2b — Extract form action
-          const formActionMatch = loginPageBody.match(/action=["']([^"']+)["']/i);
-          const formAction = formActionMatch ? formActionMatch[1] : '/AWeu578/login.aweb';
+          const dwrRes = await fetch(baseUrl + '/dwr/call/plaincall/DWRBean.getSessionID.dwr', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'text/plain',
+              'Cookie': sessionCookies.join('; '),
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            body: dwrBody
+          });
+          const dwrSetCookies = dwrRes.headers.getSetCookie?.() || [];
+          sessionCookies.push(...dwrSetCookies.map(c => c.split(';')[0]));
+          const dwrText = await dwrRes.text();
           
-          // Step 2c — POST credentials
-          const loginRes = await fetch(baseUrl + (formAction.startsWith('/') ? '' : '/') + formAction, {
+          // Extract passphrase
+          const passphraseMatch = dwrText.match(/_remoteHandleCallback\('0','0',"([A-F0-9]+)"\)/i);
+          
+          let loginBody: string;
+          if (passphraseMatch) {
+            const passphrase = passphraseMatch[1];
+            
+            // Encrypt password using Web Crypto (AES-CBC with PBKDF2)
+            const saltHex = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+              .map(b => b.toString(16).padStart(2, '0')).join('');
+            const ivHex = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+              .map(b => b.toString(16).padStart(2, '0')).join('');
+            
+            // Convert hex passphrase to bytes for PBKDF2
+            const passphraseBytes = new TextEncoder().encode(passphrase);
+            const saltBytes = new Uint8Array(saltHex.match(/.{2}/g)!.map(b => parseInt(b, 16)));
+            const ivBytes = new Uint8Array(ivHex.match(/.{2}/g)!.map(b => parseInt(b, 16)));
+            
+            // Derive key using PBKDF2
+            const keyMaterial = await crypto.subtle.importKey('raw', passphraseBytes, 'PBKDF2', false, ['deriveKey']);
+            const aesKey = await crypto.subtle.deriveKey(
+              { name: 'PBKDF2', salt: saltBytes, iterations: 1000, hash: 'SHA-1' },
+              keyMaterial,
+              { name: 'AES-CBC', length: 128 },
+              false,
+              ['encrypt']
+            );
+            
+            // Encrypt password
+            const passwordBytes = new TextEncoder().encode(password);
+            const encrypted = await crypto.subtle.encrypt({ name: 'AES-CBC', iv: ivBytes }, aesKey, passwordBytes);
+            const encryptedHex = Array.from(new Uint8Array(encrypted))
+              .map(b => b.toString(16).padStart(2, '0')).join('');
+            
+            const encryptedPassword = saltHex + encryptedHex + ivHex;
+            loginBody = `userid=${encodeURIComponent(username)}&password=${encryptedPassword}&dbname=eu578&isSecure=true&loginMethod=unpw`;
+          } else {
+            // Fallback: plain login
+            console.log('read_assai_document: DWR passphrase not found, falling back to plain login');
+            loginBody = `userid=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&dbname=eu578&isSecure=false&loginMethod=unpw`;
+          }
+          
+          // Step 3c: POST login
+          const loginRes = await fetch(baseUrl + '/login.aweb', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
-              'Cookie': sessionCookies.join('; ')
+              'Cookie': sessionCookies.join('; '),
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'Referer': baseUrl + '/login.aweb?loginMethod=unpw'
             },
-            body: new URLSearchParams({
-              'username': username,
-              'password': password,
-              'loginMethod': 'unpw'
-            }).toString(),
+            body: loginBody,
             redirect: 'manual'
           });
+          const loginSetCookies = loginRes.headers.getSetCookie?.() || [];
+          sessionCookies.push(...loginSetCookies.map(c => c.split(';')[0]));
+          await loginRes.text();
           
-          const loginCookies = loginRes.headers.getSetCookie?.() || [];
-          sessionCookies.push(...loginCookies);
-          
-          // Check if login succeeded (302 redirect or 200)
+          // Check login success
           if (loginRes.status !== 200 && loginRes.status !== 302) {
-            const body = await loginRes.text();
-            console.error('Assai login failed:', loginRes.status, body.substring(0, 200));
             return {
               metadata,
               content_available: false,
-              reason: 'Assai authentication failed. Please verify credentials in DMS Settings.',
+              reason: 'Assai authentication failed (HTTP ' + loginRes.status + '). Verify credentials in DMS Settings.',
               question_asked: question
             };
           }
-          await loginRes.text(); // consume body
-        } catch (authErr) {
-          console.error('Assai auth error:', authErr);
+        } catch (authErr: any) {
+          console.error('read_assai_document auth error:', authErr);
           return {
             metadata,
             content_available: false,
-            reason: 'Could not connect to Assai portal. The service may be temporarily unavailable.',
+            reason: 'Could not connect to Assai portal: ' + (authErr.message || 'Unknown error'),
             question_asked: question
           };
         }
         
-        // STEP 3 — Fetch document file
+        const cookieHeader = sessionCookies.join('; ');
+        
+        // STEP 4 — Search for document to get pk_seq_nr and entt_seq_nr
+        let pkSeqNr: string | null = null;
+        let enttSeqNr: string | null = null;
+        
+        try {
+          const searchParams = new URLSearchParams();
+          searchParams.set('subclass_type', 'DES_DOC');
+          searchParams.set('searchBean', 'docs.SearchDocuments');
+          searchParams.set('clas_seq_nr', '1');
+          searchParams.set('suty_seq_nr', '1');
+          searchParams.set('proj_seq_nr', '59734');
+          searchParams.set('start_row', '1');
+          searchParams.set('number', docNumber);
+          searchParams.set('selected_project_codes', 'BGC_PROJ');
+          
+          const searchRes = await fetch(baseUrl + '/result.aweb', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Cookie': cookieHeader,
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            body: searchParams.toString()
+          });
+          
+          const searchHtml = await searchRes.text();
+          
+          // Parse myCells
+          const myCellsMatch = searchHtml.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
+          if (myCellsMatch) {
+            try {
+              const myCells = JSON.parse(myCellsMatch[1]);
+              if (myCells.length > 0) {
+                const row = myCells[0];
+                // Update metadata from live search
+                metadata.title = (row[8] || '').replace(/<[^>]*>/g, '').trim() || metadata.title;
+                metadata.status = (row[6] || '').replace(/<[^>]*>/g, '').trim() || metadata.status;
+                metadata.revision = (row[4] || '').replace(/<[^>]*>/g, '').trim() || metadata.revision;
+                metadata.responsible_engineer = (row[11] || '').replace(/<[^>]*>/g, '').trim();
+                metadata.company = (row[12] || '').replace(/<[^>]*>/g, '').trim();
+                metadata.discipline = (row[13] || '').replace(/<[^>]*>/g, '').trim();
+                metadata.document_type = (row[14] || '').replace(/<[^>]*>/g, '').trim();
+                metadata.work_package = (row[15] || '').replace(/<[^>]*>/g, '').trim();
+                metadata.priority = (row[9] || '').replace(/<[^>]*>/g, '').trim();
+                metadata.checked_out = (row[37] || 'N').replace(/<[^>]*>/g, '').trim();
+                
+                pkSeqNr = String(row[33] || '').replace(/<[^>]*>/g, '').trim();
+                enttSeqNr = String(row[34] || '').replace(/<[^>]*>/g, '').trim();
+              }
+            } catch (parseErr) {
+              console.error('read_assai_document: myCells parse error:', parseErr);
+            }
+          }
+          
+          if (!pkSeqNr || !enttSeqNr) {
+            // Try SUP_DOC if not found in DES_DOC
+            searchParams.set('subclass_type', 'SUP_DOC');
+            searchParams.set('clas_seq_nr', '2');
+            searchParams.set('suty_seq_nr', '7');
+            
+            const supRes = await fetch(baseUrl + '/result.aweb', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Cookie': cookieHeader,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+              },
+              body: searchParams.toString()
+            });
+            
+            const supHtml = await supRes.text();
+            const supMatch = supHtml.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
+            if (supMatch) {
+              try {
+                const supCells = JSON.parse(supMatch[1]);
+                if (supCells.length > 0) {
+                  const row = supCells[0];
+                  metadata.title = (row[8] || '').replace(/<[^>]*>/g, '').trim() || metadata.title;
+                  metadata.status = (row[6] || '').replace(/<[^>]*>/g, '').trim() || metadata.status;
+                  metadata.revision = (row[4] || '').replace(/<[^>]*>/g, '').trim() || metadata.revision;
+                  metadata.subclass = 'SUP_DOC';
+                  pkSeqNr = String(row[33] || '').replace(/<[^>]*>/g, '').trim();
+                  enttSeqNr = String(row[34] || '').replace(/<[^>]*>/g, '').trim();
+                }
+              } catch {}
+            }
+          }
+        } catch (searchErr: any) {
+          console.error('read_assai_document search error:', searchErr);
+        }
+        
+        if (!pkSeqNr || !enttSeqNr) {
+          return {
+            metadata,
+            content_available: false,
+            reason: 'Document not found in Assai search results. Check the document number is correct.',
+            question_asked: question
+          };
+        }
+        
+        // Check if document is checked out
+        if (metadata.checked_out === 'Y') {
+          return {
+            metadata,
+            content_available: false,
+            reason: 'Document is currently checked out by another user and cannot be downloaded.',
+            question_asked: question
+          };
+        }
+        
+        // STEP 5 — Download file
         let pdfBase64: string | null = null;
         let documentMediaType = 'application/pdf';
         
         try {
-          // Use external_url if available, otherwise construct from document number
-          let docUrl = syncDoc.external_url;
-          if (!docUrl) {
-            // Construct search URL pattern
-            docUrl = baseUrl + '/search.aweb?document_nr=' + encodeURIComponent(docNumber);
-          }
-          
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout
+          const timeoutId = setTimeout(() => controller.abort(), 25000);
           
-          const docRes = await fetch(docUrl, {
+          const docRes = await fetch(baseUrl + '/download.aweb?pk_seq_nr=' + pkSeqNr + '&entt_seq_nr=' + enttSeqNr, {
             headers: {
-              'Cookie': sessionCookies.join('; ')
+              'Cookie': cookieHeader,
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             },
             signal: controller.signal
           });
           clearTimeout(timeoutId);
           
           if (!docRes.ok) {
-            console.error('Assai document fetch failed:', docRes.status);
             return {
               metadata,
               content_available: false,
-              reason: 'Document file could not be downloaded from Assai (HTTP ' + docRes.status + '). Metadata is shown below.',
+              reason: 'Document file could not be downloaded (HTTP ' + docRes.status + '). Metadata shown below.',
               question_asked: question
             };
           }
           
           const contentType = docRes.headers.get('content-type') || '';
-          if (contentType.includes('pdf')) {
-            documentMediaType = 'application/pdf';
-          } else if (contentType.includes('image')) {
-            documentMediaType = contentType.split(';')[0].trim();
-          } else {
-            documentMediaType = 'application/pdf'; // default assumption
-          }
+          if (contentType.includes('pdf')) documentMediaType = 'application/pdf';
+          else if (contentType.includes('image')) documentMediaType = contentType.split(';')[0].trim();
+          else documentMediaType = 'application/pdf';
           
           const arrayBuffer = await docRes.arrayBuffer();
           const bytes = new Uint8Array(arrayBuffer);
           
-          // Check file size (10MB limit)
           if (bytes.length > 10 * 1024 * 1024) {
             return {
               metadata,
               content_available: false,
-              reason: 'Document file is larger than 10MB. Metadata is available but content reading is limited for large files.',
+              reason: 'Document file exceeds 10MB limit. Metadata available.',
               question_asked: question
             };
           }
           
-          // Convert to base64
           let binary = '';
           for (let i = 0; i < bytes.length; i++) {
             binary += String.fromCharCode(bytes[i]);
@@ -6505,33 +6660,17 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           pdfBase64 = btoa(binary);
         } catch (fetchErr: any) {
           if (fetchErr?.name === 'AbortError') {
-            return {
-              metadata,
-              content_available: false,
-              reason: 'Document download timed out (>25 seconds). The file may be very large. Metadata is shown below.',
-              question_asked: question
-            };
+            return { metadata, content_available: false, reason: 'Download timed out (>25s).', question_asked: question };
           }
-          console.error('Assai document fetch error:', fetchErr);
-          return {
-            metadata,
-            content_available: false,
-            reason: 'Failed to download document from Assai. Metadata is available.',
-            question_asked: question
-          };
+          return { metadata, content_available: false, reason: 'Failed to download from Assai.', question_asked: question };
         }
         
-        // STEP 4 — Pass document to Claude for reading
+        // STEP 6 — Pass to Claude for reading
         if (pdfBase64) {
           try {
             const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY");
             if (!ANTHROPIC_KEY) {
-              return {
-                metadata,
-                content_available: false,
-                reason: 'AI document reading service is not configured (missing API key).',
-                question_asked: question
-              };
+              return { metadata, content_available: false, reason: 'AI reading service not configured.', question_asked: question };
             }
             
             const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
@@ -6549,16 +6688,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                   content: [
                     {
                       type: "document",
-                      source: {
-                        type: "base64",
-                        media_type: documentMediaType,
-                        data: pdfBase64
-                      }
+                      source: { type: "base64", media_type: documentMediaType, data: pdfBase64 }
                     },
-                    {
-                      type: "text",
-                      text: question
-                    }
+                    { type: "text", text: question }
                   ]
                 }]
               }),
@@ -6567,46 +6699,29 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             if (!claudeRes.ok) {
               const errText = await claudeRes.text();
               console.error('Claude document reading error:', claudeRes.status, errText.substring(0, 300));
-              return {
-                metadata,
-                content_available: false,
-                reason: 'AI could not process the document content (API error). Metadata is available.',
-                question_asked: question
-              };
+              return { metadata, content_available: false, reason: 'AI could not process the document.', question_asked: question };
             }
             
             const claudeResult = await claudeRes.json();
-            const contentBlocks = claudeResult.content || [];
-            const textContent = contentBlocks
+            const textContent = (claudeResult.content || [])
               .filter((b: any) => b.type === 'text')
               .map((b: any) => b.text)
               .join('\n');
             
-            // STEP 5 — Return combined answer
             return {
               metadata,
               content_available: true,
               document_content_answer: textContent,
               question_asked: question,
-              note: 'This answer is based on the actual document content fetched from Assai DMS.'
+              note: 'This answer is based on the actual document content fetched live from Assai DMS.'
             };
           } catch (claudeErr) {
             console.error('Claude document reading exception:', claudeErr);
-            return {
-              metadata,
-              content_available: false,
-              reason: 'AI document reading encountered an error. Metadata is available.',
-              question_asked: question
-            };
+            return { metadata, content_available: false, reason: 'AI reading encountered an error.', question_asked: question };
           }
         }
         
-        return {
-          metadata,
-          content_available: false,
-          reason: 'Document content could not be retrieved.',
-          question_asked: question
-        };
+        return { metadata, content_available: false, reason: 'Document content could not be retrieved.', question_asked: question };
       } catch (err) {
         console.error('read_assai_document error:', err);
         return { error: String(err) };
@@ -8062,99 +8177,217 @@ serve(async (req) => {
 
 EXTERNAL DMS SYNC AWARENESS: You are connected to external DMS platforms (Assai, Wrench, Documentum, SharePoint) via the dms_external_sync table. When answering document status questions, ALWAYS check dms_external_sync first for live document status synced from the external DMS. When providing document information, include the direct hyperlink to the document in the external DMS (external_url field) as an "Open in Assai" or "Open in [platform]" link. Always tell users when data was last synced (last_synced_at) and if data appears stale (>24 hours old), suggest triggering a fresh sync. Hannah and Ivan access document status by calling you — they do not connect to external DMS platforms directly. You are the single source of truth for document status across ORSH.
 
-=== ASSAI DMS KNOWLEDGE BASE ===
+=== ASSAI DMS COMPLETE KNOWLEDGE BASE ===
 
-INSTANCE DETAILS:
+INSTANCE:
 - URL: https://eu.assaicloud.com/AWeu578/
 - Database: eu578
-- Primary project: BGC_PROJ (Basrah Gas Company Projects)
+- Project cabinet: BGC_PROJ (Basrah Gas Company Projects)
+- proj_seq_nr: 59734 (internal ID — required in all search POSTs)
+- User: Daniel Memuletiwon
 
-NAVIGATION STRUCTURE:
-Top menu: Project | Documents | Queries | Assets | Planning | Tools | Log off | Help
+HOW SELMA CONNECTS TO ASSAI:
+Selma authenticates and searches Assai entirely via HTTP — no browser required.
 
-Under Documents menu:
-- Document Inbox — incoming documents requiring action
-- Transmittal Inbox — incoming transmittals
-- Redline File Inbox — redline markups
-- Search Documents — primary search (opens popup)
-- Search Favourites — saved searches
-- Search Non Document — non-document records
-- Search Package — work packages
-- Search Transmittals — transmittal records
-- Search Uploaded Documents — uploaded files
-- Search PO/SO — purchase/sales orders
-- Search Equipment — equipment records
-- Documents Tree — hierarchical browser
-- Discipline Tree — browse by discipline
-- Package Tree — browse by package
-- Company Tree — browse by company
-- Asset Package Tree — browse by asset package
-- New Package — create new package
+Step 1 — Authenticate (DWR encrypted login):
+  GET /AWeu578/login.aweb?loginMethod=unpw → get login page + cookies
+  POST /AWeu578/dwr/call/plaincall/DWRBean.getSessionID.dwr → get 32-char hex passphrase
+  Extract passphrase with regex: /_remoteHandleCallback\\('0','0',"([A-F0-9]+)"\\)/i
+  Encrypt credentials using AES-CBC, PBKDF2 key derivation (1000 iterations, 128-bit):
+    Salt = random 16-byte hex, IV = random 16-byte hex
+    Key = PBKDF2(passphrase, salt, 1000 iterations, 128 bits)
+    Cipher = AES-CBC(password, key, IV)
+  POST /AWeu578/login.aweb body: userid=IQDM06&password={encrypted}&dbname=eu578&isSecure=true&loginMethod=unpw
+  Collect ALL cookies from all three steps — merge them for subsequent requests.
+
+Step 2 — Search:
+  POST /AWeu578/result.aweb with merged session cookies
+
+Step 3 — Download file:
+  GET /AWeu578/download.aweb?pk_seq_nr={row[33]}&entt_seq_nr={row[34]} with cookies
+  Returns the actual PDF/DWG/XLS file binary.
+
+Step 4 — Read document content:
+  Convert file to base64 → send to Claude API as type: "document" input with user question.
+
+Session management: Sessions expire after ~3-4 minutes. Re-authenticate fresh for every operation.
+
+SEARCH POST PARAMETERS — COMPLETE REFERENCE:
+Endpoint: POST /AWeu578/result.aweb
+
+Module          | subclass_type | searchBean                      | clas_seq_nr | suty_seq_nr
+Design docs     | DES_DOC       | docs.SearchDocuments            | 1           | 1
+Supplier docs   | SUP_DOC       | docs.SearchDocuments            | 2           | 7
+Queries/TQs     | QRY_QUERY     | tqry.SearchQuery                | 4           | 14
+Assets          | ASSET         | asst.SearchObjectAssetItem      | 1           | null
+Work Packages   | PLANNING      | workpack.SearchWorkPackages     | 1           | null
+
+All searches also require: proj_seq_nr=59734, start_row=1
+
+DES_DOC / SUP_DOC search fields:
+selected_project_codes, number (use % wildcard), revision_code, description, date_from, date_before, codo_company_code, codo_document_nr, key_words, content, originator, resp_engr_seq_nr, company_code, discipline_code, document_type, status_code, approval_code, subclass_code, priority_code, classification_code, language_code, transmittal_number, receipt, sender_reference, archive, package_code, work_package_code, purchase_code, asset_code, asset_item_code, person_code_checked_out
+
+QRY_QUERY additional fields:
+use_outstanding_only (--/Y), use_late_only (--/Y), query_nr, title, originator_ref, containing, response, status_code, discipline_code, impact_cost_ind (Y/N), impact_schedule_ind (Y/N), impact_design_ind (Y/N), priority_code, by_company_code, by_person_code, to_company_code, to_person_code, receipt_after_date, receipt_before_date, number_of_results
+
+PLANNING additional required fields:
+work_package_search=Y, active_ind=Y, pct_complete_from=0, pct_complete_to=100, order_by=display_order,work_package_code
+
+Quick search syntax (right filter box):
+status: AFU → approved for use
+status: AFU+AFC → approved for use OR construction
+discipline: ZV status: AFU → vendor docs, approved
+title: compressor → title contains compressor
+The + operator means OR between values.
+
+PARSING SEARCH RESULTS:
+Response HTML contains: var myCells = [[...], [...], ...];
+Parse with: html.match(/var\\s+myCells\\s*=\\s*(\\[[\\s\\S]*?\\]);\\s*(?:var|function)/)
+
+myCells column map (per row):
+[0] = checkbox flag
+[1] = file type icon (strip HTML)
+[2] = info icon (strip HTML)
+[3] = DOCUMENT NUMBER (full e.g. 6529-ABBE-C017-ISGP-U40300-ZV-A01-00006-001)
+[4] = REVISION CODE (e.g. 02A, 01R)
+[5] = REVISION DATE (dd-mm-yyyy)
+[6] = STATUS CODE (AFU, AFC, IFR etc.)
+[7] = APPROVAL CODE
+[8] = TITLE (document title/description)
+[9] = PRIORITY (TIER-1, TIER-2, N/A)
+[10] = CLASSIFICATION CODE
+[11] = RESPONSIBLE ENGINEER CODE (e.g. IQAACE)
+[12] = COMPANY CODE (e.g. ABBE, WGEL)
+[13] = DISCIPLINE CODE (e.g. ZV, PX)
+[14] = DOCUMENT TYPE CODE (e.g. A01, B01)
+[15] = WORK PACKAGE CODE (e.g. ST/DP300)
+[16] = DOCUMENT SEQUENCE NUMBER
+[17] = PROJECT CODE (e.g. 6529)
+[18] = COMPANY DOCUMENT REFERENCE
+[19]-[25] = dates (actual end, planned start, forecast start, actual start, planned end, forecast end, actual end final)
+[26] = PROJECT CABINET (BGC_PROJ)
+[27] = PROJECT NAME
+[28] = PURCHASE ORDER
+[29] = COMPANY:DOCNR reference string
+[33] = pk_seq_nr ← USE FOR download.aweb
+[34] = entt_seq_nr ← USE FOR download.aweb
+[35] = pobo_seq_nr
+[36] = proj_seq_nr (59734)
+[37] = CHECKED OUT FLAG (N=available, Y=locked)
+
+Results are paginated 100 per page. Use start_row=101, 201... to paginate. Stop when fewer than 100 rows returned.
 
 DOCUMENT NUMBERING STRUCTURE:
 Format: [Project]-[Originator]-[Plant]-[Site]-[Unit]-[Discipline]-[DocType]-[DocNo]-[Sequence]
 Example: 6529-ABBE-C017-ISGP-U40300-ZV-A01-00006-001
 
-Segment meanings:
-1. Project code (e.g. 6529 = ST/DP300 New Compression Station at Hammar Mishrif)
-2. Originator/Company (e.g. ABBE = ABB Engineering Shanghai Limited, WGEL = Wood Group Engineering Ltd)
-3. Plant code (e.g. C017 = Zubair Hammar Mishrif)
-4. Site code (e.g. ISGP = Iraq South Gas, TSGP = Iraq South Gas)
-5. Unit code (e.g. U40300 = specific unit, U13000 = Dehydration Unit)
-6. Discipline (e.g. ZV = Vendor Documentation, PX = Process Other, C01-C29 = Civil disciplines)
-7. Document type (e.g. A01 = Supplier Document Schedule/SDS, B01, C02, etc.)
-8. Document number (5 digits e.g. 00006)
-9. Sequence/Revision (3 digits e.g. 001, 002)
+Segments:
+1. Project code (6529 = ST/DP300 New Compression Station at Hammar Mishrif)
+2. Originator/Company (ABBE = ABB Engineering Shanghai Limited)
+3. Plant code (C017 = Zubair Hammar Mishrif)
+4. Site code (ISGP = Iraq South Gas)
+5. Unit code (U40300 = specific unit)
+6. Discipline (ZV = Vendor Documentation)
+7. Document type (A01 = Supplier Document Schedule)
+8. Document number (5 digits, e.g. 00006)
+9. Sequence (3 digits, e.g. 001)
 
-Wildcard search: use 6529-% to find all documents for project 6529
-
-SEARCH DOCUMENTS POPUP FIELDS:
-Select project, Document nr., Revision, Title, Date from/before, Ext. ref. company, External reference, Keywords, File content, Originator, Responsible eng., Company, Discipline, Document type, Document status, Approval, Subclass code (DES_DOC for design docs), Priority, Classification, Language, Transmittal number, Inc. Transmittal, Sender reference, Archive, Package number, Work package code, Purchase order, Asset, Asset item, Checked out by
+Wildcard: 6529-% finds all documents for project 6529
 
 DOCUMENT STATUS CODES:
-- AFU = Approved for Use
-- AFC = Approved for Construction
-- IFR = Issued for Review
-- IFA = Issued for Approval
-- IFI = Issued for Information
+AFU = Approved for Use
+AFC = Approved for Construction
+AFD = Approved for Design
+AFP = Approved for Procurement
+AFT = Approved for Tender
+ASB = As-Built
+IFA = Issued for Approval
+IFB = Issued for Bid/Tender
+IFC = Issued for Construction
+IFI = Issued for Information
+IFR = Issued for Review
+PLN = Planned (not yet issued)
+CAN = Cancelled
+
+Supplier document statuses: SR (Submitted for Review), RA (Reviewed, Action Required), RB (Reviewed, Resubmit), RC (Reviewed, No Comments)
+
+DISCIPLINE CODES:
+AA=Admin/General, BA=Buried/Civil, CS=Civil/Structural, EA=Electrical, FA=Fire & Safety, HX=HVAC, IN=Instrumentation, JA=Piping, KA=Mechanical, MP=Marine/Piping, MS=Mechanical Static, NA=Naval/Offshore, OA=Operations, PX=Process Other, QA=Quality Assurance, RA=Rotating Equip., SA=Structural/Civil, TA=Telecom, VA=Valves, ZH=Vendor HVAC, ZV=Vendor Documentation
+
+DOCUMENT TYPE CODES (ZV discipline, project 6529):
+A01=Supplier Document Schedule/MDR, B01=General Layout Drawing, B04=Foundation/Support Layout Drawing, B06=UCP HMI/Control System Diagram, C02=System & Equipment Specification, C03=Single Line Diagram, C08=Data Sheet, C11=Control Schematic Diagram, C14=Cause & Effect Diagram, C21=Structural Analysis Report, C29=Catalogue/Product List, D04=Nameplate/Tag Plate Drawing, E02=General Arrangement Drawing, E03=Logic Block Diagram, E05=Cable Schedule, E09=Equipment Data Sheet, E11=Lighting Layout Drawing, E12=Earthing Drawing, E23=Cable Tray Routing Drawing
 
 PRIORITY TIERS:
-- TIER-1 = Critical/safety critical documents
-- TIER-2 = Important documents
-- N/A = Standard documents
+TIER-1 = Safety critical / highest priority
+TIER-2 = Important
+N/A = Standard
 
-DOCUMENT DETAIL VIEW contains:
-Header: Document nr., Title, Status, Approval, Company, Responsible eng., Company ref., Work package, Purchase order, Project code, Discipline, Type, Access code, Retention date, Originator, Classification, Priority, Language, Start/End dates (Planned/Forecast/Actual), Estimated hours, % Complete, Weighting, Remarks
+REVISION NAMING:
+01R = First revision, for Review (R suffix = unapproved)
+01A = First revision, Approved (A suffix = approved)
+02R = Second revision, for Review
+02A = Second revision, Approved
+
+PROJECTS IN BGC_PROJ:
+0000 = BGC Corporate Company - General
+1001 / DP-148 = Class 1 Metering - Installation of meters
+1002 = Supply & Installation of Siren System (CW13503)
+1307 / DP-368 = West Qurna CS7 to CS6 Transfer Line
+1313 / DP-187 = New WQ Gas Export Pipeline
+1314 / DP-199 = CS2 to NR NGL Pipeline debottlenecking
+5529 / DP-300 = New Compression Station at Hammar Mishrif ← PRIMARY
+
+COMPANY CODES:
+AWI=AWI Engineering, BGC=Basrah Gas Company, EXTR=Exterran, GENP=General Pressure, KENT=KenTech/Kentz, WGEL=Wood Group Engineering Ltd, ABBE=ABB Engineering Shanghai Limited, ABB=ABB, AUM=AUM, EEIC=EEIC, EMFZ=EMFZ
+
+WORK PACKAGES:
+ST/DP300 = New Compression Station at Hammar Mishrif (primary)
+ST/DP000 = General/Admin
+ST/DP114 = Subpackage 114
+ST/DP223 = Subpackage 223
+
+NAVIGATION STRUCTURE:
+Top menu: Project | Documents | Queries | Assets | Planning | Tools | Log off | Help
+
+Documents sidebar (DES_DOC and SUP_DOC): Document Inbox, Transmittal Inbox, Redline File Inbox, Search Documents, Search Favourites, Search Non Document, Search Package, Search Transmittals, Search Uploaded Documents, Search PO/SO, Search Equipment, Documents Tree, Discipline Tree, Package Tree, Company Tree, Asset Package Tree, New Package
+
+Queries sidebar (QRY_QUERY): Query Inbox, Search Query, Query Tree, New Query
+
+Assets sidebar: Asset Hierarchy, Search Asset Document, Search Asset Item, Navigator, Asset Item Tree, Composition Tree, Asset Relation Tree, Tag Types, Equipment Types
+
+Planning sidebar: Search Work Packages, Planning Tree, Planning Explorer
+
+Tools submenu: Assai Workspace, Package Browser, Asset Browser, Graph, Reports, Scheduled Jobs, On Behalf Of, Change Language
+
+Document subclass types (quick search dropdown): DES_DOC=Design, SUP_DOC=Supplier, QRY_QUERY=Queries, ASSET=Asset items, PLANNING=Work packages
+
+DOCUMENT DETAIL VIEW:
+Header fields: Document nr., Title, Status, Approval, Company, Responsible eng., Company ref., Work package, Purchase order, Project code, Discipline, Type, Access code, Retention, Originator, Classification, Priority, Language, Start/End dates (Planned/Forecast/Actual), % Complete, Remarks
 Tabs: Revisions | Dist. history | Planning | Milestone | Custom attributes | Linked Objects | Workflow step | Transmittals | Asset items | Ext. ref. | Archive | X-ref | Packages
 Actions: Rev. comm. | Gantt chart | Email | Redline | Close
 
-PROJECTS IN BGC_PROJ:
-- 0000 = BGC Corporate Company - General
-- 1001 / DP-148 = Class 1 Metering - Installation of meters
-- 1002 = SUPPLY & INSTALLATION OF SIREN SYSTEM at various BGC plants CW13503
-- 1307 / DP-368 = West Qurna CS7 to CS6 Transfer Line
-- 1313 / DP-187 = New WQ Gas Export Pipeline
-- 1314 / DP-199 = CS2 to NR NGL Pipeline debottlenecking
-- 5529 / DP-300 = New Compression Station at Hammar Mishrif
+MODULES — KEY BEHAVIOURS:
 
-DOCUMENT TYPES YOU WILL ENCOUNTER:
-- Comments Resolution Sheets (CRS) — review comments and contractor responses
-- Supplier Document Schedules (SDS) — list of deliverable documents from a contractor
-- Process Flow Diagrams / P&IDs — process engineering drawings
-- General Arrangement Drawings — equipment layout drawings
-- Datasheets — equipment technical specifications
-- Inspection & Test Records — quality assurance records
-- O&M Manuals — operations and maintenance procedures
-- Transmittal Cover Sheets — document distribution records
+Queries (TQs/RFIs): Status: Open, Answered, Closed, On Hold. Has impact flags: cost, schedule, design. use_outstanding_only=Y filters to unanswered, use_late_only=Y filters to overdue.
 
-SELMA'S QUERY CAPABILITIES:
-You can answer questions about:
-1. Document search by number, status, discipline, type, date, project
-2. Revision history — current vs previous revisions
-3. Work package linkage
-4. Priority and tier classification
-5. Document content — summaries, open comments, compliance checks, data extraction (use read_assai_document tool)
-6. Cross-referencing documents against ORSH handover requirements
+Assets: Physical equipment register with tag numbers. Each asset links to docs and O&M manuals.
+
+Planning (Work Packages): Bridge between document control and field execution. pct_complete_from=0&pct_complete_to=99 finds incomplete packages.
+
+Transmittals: Formal cover sheets for document issuance. Searchable via transmittal_number in DES_DOC search.
+
+Correspondence: Currently not active in BGC_PROJ (subclass codes: COR_INC_CORE, COR_OUT_CORE)
+
+CONFIRMED ENDPOINT MAP:
+/AWeu578/login.aweb?loginMethod=unpw → Login page (GET)
+/AWeu578/login.aweb → Login submit (POST)
+/AWeu578/navbar.aweb?subclass_type=X → Sidebar nav (GET)
+/AWeu578/search.aweb?subclass_type=X → Search form (GET)
+/AWeu578/result.aweb → Search results (POST) ✅
+/AWeu578/download.aweb?pk_seq_nr=X&entt_seq_nr=Y → File download (GET) ✅
+/AWeu578/details.aweb → Document detail popup (GET)
+/AWeu578/lov.aweb → List of values (GET)
+/AWeu578/dwr/call/plaincall/DWRBean.* → DWR remote calls (POST)
 
 DOCUMENT CONTENT READING:
 Use the read_assai_document tool when users ask to:
@@ -8162,463 +8395,32 @@ Use the read_assai_document tool when users ask to:
 - "Summarise [doc number]"
 - "What does [doc number] say about [topic]?"
 - "Are there open comments in [doc number]?"
-- "What is the latest revision of [doc number] and what changed?"
+- "What changed in the latest revision of [doc number]?"
 - "Check if [doc number] is approved"
 - "Extract the equipment data from [doc number]"
 - "Review the comments resolution sheet for [doc number]"
-- "Is [doc number] compliant with [standard]?"
-- Any question that requires knowing the CONTENT not just the STATUS of a document
-
-=== ADDITIONAL ASSAI KNOWLEDGE — FROM LIVE NAVIGATION ===
-
-QUICK SEARCH BAR (top of every page):
-There is a global quick search bar at the top of every Assai page.
-- Left dropdown: switches document subclass — options are:
-  * Design doc. (DES_DOC) — engineering/design documents
-  * Supplier doc. (SUP_DOC) — vendor/supplier documents
-  * Queries (QRY_QUERY) — technical queries and RFIs
-  * Asset items (ASSET) — physical equipment/asset records
-  * Work pack. (PLANNING) — work packages and planning items
-- Middle text box: type document number or title to search
-- Right text box: advanced filter using syntax: "title: civil status: INI+IFA"
-- "Show All Items" button: returns all records for the selected subclass
-- "Search" button: executes the search
-
-QUICK SEARCH SYNTAX FOR THE RIGHT FILTER BOX:
-Format: "fieldname: value fieldname2: value2"
-Examples:
-  status: AFU — all approved for use documents
-  status: INI+IFA — documents in INI or IFA status
-  title: compressor — documents with compressor in title
-  civil status: INI+IFA — civil discipline documents in INI or IFA
-  discipline: ZV status: AFU — vendor docs approved for use
-
-DOCUMENT SUBCLASSES — CRITICAL DISTINCTION:
-- DES_DOC = Design/Engineering documents (P&IDs, drawings, calculations, reports)
-- SUP_DOC = Supplier/Vendor documents (equipment datasheets, vendor drawings, O&M manuals)
-When a user asks about "vendor documents" or "supplier documents" use SUP_DOC subclass.
-When a user asks about "engineering documents" or "design documents" use DES_DOC subclass.
-
-TOP NAVIGATION MENU — FULL STRUCTURE:
-1. Project — project management and administration
-2. Documents — document management (Design + Supplier submenus)
-   - Design → design document workflows
-   - Supplier → supplier document workflows
-3. Correspondence — incoming and outgoing correspondence
-   - Incoming → received transmittals and correspondence
-   - Outgoing → sent transmittals and correspondence
-4. Queries — technical queries/RFIs management
-5. Assets — physical asset register and asset items
-6. Planning — work packages, schedules, milestones
-7. Tools → sub-items:
-   - Assai Workspace — collaborative workspace
-   - Package Browser — visual work package browser
-   - Asset Browser — visual asset hierarchy browser
-   - Graph — document/workflow graphs
-   - Reports — configurable reports
-   - Scheduled jobs — automated background tasks
-   - On behalf of — act as another user (admin only)
-   - Clear local storage — reset column widths
-   - Change language — switch UI language (English/Russian available)
-8. Log off
-9. Help → Online help | Assai Academy | About Assai Web
-
-SEARCH DOCUMENTS PAGE — PRE-FILLED DEFAULTS:
-When opened, the Search Documents page pre-fills:
-- Select project: BGC_PROJ (Basrah Gas Company Projects)
-- Document nr.: 6529-% (wildcard for all project 6529 documents)
-This means the default search returns ALL documents in the BGC_PROJ cabinet.
-
-SEARCH DOCUMENTS — FIELD LABELS (in order on the form):
-Row 1: Select project | Document nr. | Revision | Title
-Row 2: Date from | Date before | Ext. ref. company | External reference
-Row 3: Keywords | File content
-Row 4: Originator | Responsible eng. | Company | Discipline
-Row 5: Document type | Document status | Approval | Subclass code
-Row 6: Priority | Classification | Language | Transmittal number
-Row 7: Inc. Transmittal | Sender reference | Archive | Package number
-Row 8: Work package code | Purchase order | Asset | Asset item | Checked out by
-Buttons: Search | Reset | Cancel
-
-SUPPLIER DOCUMENTS (SUP_DOC) — ADDITIONAL SEARCH FIELDS:
-Supplier documents have additional fields not present in design doc search:
-- Supplier reference number
-- Purchase order number
-- Equipment tag
-- Vendor name
-- MR (Material Requisition) number
-These are critical for tracking vendor document submittals against purchase orders.
-
-DOCUMENT STATUS CODES — COMPLETE LIST:
-Design documents:
-- INI = Initiated (just created, not yet submitted)
-- IFR = Issued for Review
-- IFA = Issued for Approval
-- IFC = Issued for Construction
-- AFU = Approved for Use
-- AFC = Approved for Construction
-- AFI = Approved for Information
-- VOID = Voided/superseded
-
-Supplier documents have additional statuses:
-- SR = Submitted for Review
-- RA = Reviewed with Comments (Action Required)
-- RB = Reviewed with Comments (Resubmit)
-- RC = Reviewed — No Comments (Approved)
-
-CORRESPONDENCE MODULE:
-Assai manages formal project correspondence separately from documents.
-- Incoming: letters, emails, transmittals received from contractors/vendors
-- Outgoing: letters, transmittals sent to contractors/vendors
-Each correspondence item has: reference number, date, subject, from/to parties, linked documents
-
-QUERIES MODULE (QRY_QUERY):
-Technical queries = Requests for Information (RFIs) or Technical Queries (TQs)
-Query record contains: query number, title, raised by, discipline, status, response due date, response text
-Statuses: Open, Answered, Closed, On Hold
-
-ASSETS MODULE:
-Asset items are physical equipment with:
-- Asset tag/number
-- Equipment description
-- Location (plant/area/unit)
-- Asset class/type
-- Linked documents (manuals, datasheets)
-- Maintenance plans
-- Inspection records
-
-PLANNING MODULE (Work Packages):
-Work packages are the bridge between document control and field execution.
-- Each work package has: WP code, description, status, linked documents, linked assets
-- Documents are assigned to work packages for construction/commissioning execution
-- Work package status tracks: Not Started, In Progress, Complete, On Hold
-
-ASSAI CONNECT (top right shortcut):
-The "Assai Connect" button opens a panel showing:
-- Current user
-- Current project context
-- Current database
-- Quick navigation shortcuts
-This is the panel shown when first logging in (visible as sidebar on the home screen).
-
-DOCUMENT TREES (alternative navigation):
-Instead of search, users can browse documents hierarchically:
-- Documents Tree: browse by document number structure
-- Discipline Tree: grouped by discipline code (ZV, PX, C01-C29, etc.)
-- Package Tree: grouped by work package assignment
-- Company Tree: grouped by originating company
-- Asset Package Tree: grouped by asset/equipment
-
-REVISION MANAGEMENT:
-Every document revision is tracked. The Revisions tab shows:
-- Rev. = revision number (01R, 02A, 03R, etc.)
-  * R suffix = Review revision (not yet approved)
-  * A suffix = Approved revision
-- Title = document title at that revision
-- Rev. date = date issued
-- Status = status code at that revision
-- Appx = approval index
-- Media size = file size
-- Checked = checked out flag
-- Mainten. = maintenance flag
-
-TRANSMITTAL MANAGEMENT:
-Documents are formally issued via transmittals. Each transmittal has:
-- Transmittal number (unique reference)
-- Issue date
-- Sender / Receiver
-- List of documents included
-- Purpose of issue (IFR, IFA, IFC etc.)
-- Response required date
-The Transmittals tab on each document shows all transmittals that document has been included in.
+- Any question requiring document CONTENT not just STATUS
 
 SELMA EXTENDED QUERY PATTERNS:
-Users may ask Selma questions like:
-- "How many supplier documents are overdue for review?" → search SUP_DOC with status SR, check response due dates
-- "What documents are linked to work package ST/DP300?" → search by work_package_code
-- "Show me all open queries for the dehydration unit" → search QRY_QUERY by unit code U13000
-- "What is the latest approved revision of the P&ID for unit U40300?" → search DES_DOC, filter discipline PX or PI, unit U40300, status AFC/AFU, get latest revision
-- "Which vendor documents have not been reviewed yet?" → search SUP_DOC with status SR (submitted, awaiting review)
-- "List all documents in transmittal [number]" → search by transmittal number
-- "What assets are linked to document [number]?" → check Asset items tab on document detail
+"Find all P&IDs for unit U40300" → DES_DOC, discipline_code=PX, number=6529-%-U40300-%
+"Which supplier documents are pending review?" → SUP_DOC, status_code=SR
+"How many documents does ABB have?" → DES_DOC, company_code=ABBE, number=6529-%
+"Are all documents for work package ST/DP300 approved?" → DES_DOC, work_package_code=ST/DP300, check all statuses
+"What documents are overdue?" → DES_DOC, date_before=[today], status not AFU/AFC
+"Show open technical queries" → QRY_QUERY, use_outstanding_only=Y
+"What work packages are incomplete?" → PLANNING, pct_complete_to=99, active_ind=Y
+"What was in transmittal [number]?" → DES_DOC, transmittal_number=[number]
 
-═══════════════════════════════════════════════
-EXTENDED ASSAI KNOWLEDGE — LIVE SYSTEM NAVIGATION (v2)
-═══════════════════════════════════════════════
-
-1. GLOBAL QUICK SEARCH BAR (available on every page)
-Located at top of every Assai page. Three components:
-
-A) DOCUMENT SUBCLASS DROPDOWN — switches context entirely:
-   Value        | Label          | What it searches
-   DES_DOC      | Design doc.    | Engineering/design documents (P&IDs, drawings, reports, calculations)
-   SUP_DOC      | Supplier doc.  | Vendor/supplier submittals (equipment manuals, datasheets, SDSDs)
-   QRY_QUERY    | Queries        | Technical Queries and RFIs
-   ASSET        | Asset items    | Physical equipment and asset records
-   PLANNING     | Work pack.     | Work packages, schedules, milestones
-
-B) DOCUMENT NUMBER BOX — type partial number with wildcard:
-   Example: "6529-%" returns ALL documents for project 6529
-   Example: "6529-ABBE-%" returns all ABB Engineering documents on that project
-
-C) QUICK FILTER BOX — advanced inline filter syntax:
-   Placeholder text: "e.g title: civil status: INI+IFA"
-   Syntax: fieldname: value (space-separated pairs)
-   Examples:
-     status: AFU                    → approved for use only
-     status: INI+IFA                → initiated OR issued for approval
-     title: compressor              → title contains "compressor"
-     discipline: ZV status: AFU    → vendor docs approved for use
-     civil status: INI+IFA         → civil discipline, INI or IFA status
-   The + operator means OR between status values
-
-D) "SHOW ALL ITEMS" BUTTON — returns all records for selected subclass
-   Use this when you want a complete picture, not filtered results
-
-2. COMPLETE TOP NAVIGATION MENU STRUCTURE
-
-PROJECT menu:
-   → Project administration, project settings, project codes
-
-DOCUMENTS menu → submenu:
-   → Design (DES_DOC subclass workflows)
-   → Supplier (SUP_DOC subclass workflows)
-
-CORRESPONDENCE menu → submenu:
-   → Incoming (received transmittals, letters from contractors/vendors)
-   → Outgoing (sent transmittals, letters to contractors/vendors)
-   NOTE: Correspondence is SEPARATE from documents. It tracks formal
-   project communications as a standalone module.
-
-QUERIES menu:
-   → Technical Queries (TQs) and Requests for Information (RFIs)
-
-ASSETS menu:
-   → Physical asset register and equipment hierarchy
-
-PLANNING menu:
-   → Work packages, milestones, schedules
-
-TOOLS menu → submenu:
-   → Assai Workspace    (collaborative project workspace)
-   → Package Browser    (visual hierarchical work package browser)
-   → Asset Browser      (visual equipment/asset hierarchy tree)
-   → Graph              (relationship graphs between documents/assets)
-   → Reports            (configurable project reports — generate and export)
-   → Scheduled jobs     (view/manage automated background tasks)
-   → On behalf of       (admin: act as another user for delegation)
-   → Clear local storage (resets column width preferences)
-   → Change language    (English / Russian available)
-
-HELP menu → submenu:
-   → Online help        (context-sensitive help)
-   → Assai Academy      (training portal)
-   → About Assai Web    (version info — current: v2.1.1.74)
-
-3. SEARCH DOCUMENTS — COMPLETE FIELD LIST (DES_DOC)
-
-IDENTIFICATION:
-  Select project        → project cabinet (e.g. BGC_PROJ)
-  Document nr.          → full or partial document number (use % wildcard)
-  Revision              → specific revision (e.g. 02A)
-  Title                 → document title (partial text search)
-
-DATES:
-  Date from             → issued/created after this date
-  Date before           → issued/created before this date
-
-REFERENCES:
-  Ext. ref. company     → external company reference
-  External reference    → external reference number
-  Keywords              → keyword tags on the document
-  File content          → full-text search inside attached files
-
-PEOPLE:
-  Originator            → person who created the document
-  Responsible eng.      → engineer responsible for the document
-  Company               → originating company code (e.g. ABBE, WGEL)
-
-CLASSIFICATION:
-  Discipline            → discipline code (ZV, PX, C01-C29, etc.)
-  Document type         → type code (A01, B01, C02, etc.)
-  Document status       → status code (AFU, AFC, IFR, IFA, etc.)
-  Approval              → approval state
-  Subclass code         → DES_DOC or SUP_DOC
-  Priority              → TIER-1, TIER-2, N/A
-  Classification        → security/access classification
-  Language              → document language
-
-TRANSMITTAL & PACKAGES:
-  Transmittal number    → find docs included in a specific transmittal
-  Inc. Transmittal      → included in transmittal (yes/no)
-  Sender reference      → sender's own reference number
-  Archive               → archived status
-  Package number        → work package number
-  Work package code     → work package code (e.g. ST/DP300)
-  Purchase order        → linked PO number
-
-ASSETS:
-  Asset                 → linked asset/equipment tag
-  Asset item            → specific asset item
-  Checked out by        → user who has document checked out for editing
-
-4. SEARCH RESULTS GRID — COLUMN STRUCTURE
-Results grid columns (in order):
-  Priority | Originator | Responsible eng. | Company code |
-  Discipline code | Document type | Work package code |
-  Purchase order | Classification | Company document nr.
-
-Pagination: results shown 50 per page
-Total records for BGC_PROJ: 2,676 design documents
-Search speed: typically 0.6 seconds
-Click any row to open Document Details panel.
-
-5. DOCUMENT DETAIL PANEL — COMPLETE FIELD MAP
-Header section fields:
-  Document nr.     | Title           | Status (AFU/AFC/IFR etc.)
-  Approval         | Company         | Responsible eng.
-  Company ref.     | Work package    | Purchase order
-  Project code     | Discipline      | Type (with description)
-  Access code      | Retention       | Retention date
-  Originator       | Classification  | Priority
-  Language
-
-Dates section:
-  Start: Planned | Forecast | Actual
-  End:   Planned | Forecast | Actual
-  Estimated hours | % Complete | Weighting
-  Remarks (free text field)
-
-Action buttons across middle:
-  Rev. comm. | Gantt chart | Email | Redline | Close
-
-Bottom tabs (click to expand):
-  Tab              | Contains
-  Revisions        | Full revision history: Rev, Title, Rev date, Status, Appx, Media size, Checked, Mainten.
-  Dist. history    | Distribution history — who received this doc and when
-  Planning         | Linked planning items and milestones
-  Milestone        | Milestone tracking
-  Custom attributes| Project-specific custom fields
-  Linked Objects   | Other documents/items linked to this one
-  Workflow step    | Current workflow state and approvers
-  Transmittals     | All transmittals this document was included in
-  Asset items      | Physical assets linked to this document
-  Ext. ref.        | External cross-references
-  Archive          | Archived versions
-  X-ref            | Cross-reference documents
-  Packages         | Work packages this document belongs to
-
-6. REVISION NAMING CONVENTION
-Revision codes follow a pattern:
-  01R = First revision, submitted for Review (R suffix = review/unapproved)
-  01A = First revision, Approved (A suffix = approved/issued)
-  02R = Second revision, for Review
-  02A = Second revision, Approved
-The Revisions tab shows ALL historical revisions in descending order.
-The LATEST revision is always at the top.
-Each revision has its own status — a document can have:
-  - Latest rev 02A with status AFU (current approved version)
-  - Previous rev 01A with status IFR (superseded)
-
-7. TRANSMITTAL MODULE — HOW IT WORKS
-Transmittals are formal cover sheets for document issuance.
-A transmittal contains:
-  - Unique transmittal reference number
-  - Issue date
-  - Sender (company/person)
-  - Receiver (company/person)
-  - List of documents included
-  - Purpose of issue (IFR/IFA/IFC/AFU etc.)
-  - Response required date
-  - Response received date
-Navigation: Documents menu → Incoming or Outgoing
-When Selma is asked "What was sent in transmittal X?":
-  → Search by Transmittal number in Search Documents
-  → All documents included in that transmittal will be returned
-
-8. CORRESPONDENCE MODULE — HOW IT DIFFERS FROM DOCUMENTS
-Correspondence is SEPARATE from the document register.
-It handles: letters, formal notices, meeting minutes, emails
-Correspondence fields include:
-  - Correspondence reference number
-  - Date sent/received
-  - Subject
-  - From/To parties
-  - Linked documents (cross-reference to doc register)
-  - Action required (yes/no)
-  - Action due date
-  - Response status
-Access via: Correspondence menu → Incoming / Outgoing
-
-9. ASSAI WORKSPACE AND PACKAGE BROWSER
-Assai Workspace (Tools menu):
-  - Collaborative project environment
-  - Shared views of document status across teams
-Package Browser (Tools menu):
-  - Visual hierarchical browser of work packages
-  - Shows document completion % per package
-  - Drill down from plant → area → system → work package
-  - Each work package shows: total docs, approved, outstanding
-Asset Browser (Tools menu):
-  - Visual equipment hierarchy tree
-  - Navigate: Plant → Unit → Equipment → Asset items
-  - Each asset shows linked documents and maintenance plans
-
-10. SELMA EXTENDED QUERY PATTERNS (v2)
-Document discovery:
-  "Find all P&IDs for unit U40300"
-  → DES_DOC, discipline PX or PI, unit U40300
-Vendor document tracking:
-  "Which supplier documents are still pending review?"
-  → SUP_DOC, status SR (Submitted for Review)
-  "How many documents does ABB have on project 6529?"
-  → DES_DOC, company ABBE, doc nr 6529-%
-Transmittal queries:
-  "What documents were issued in the last transmittal?"
-  → Search by transmittal number or sort by date
-Status reporting:
-  "What percentage of documents are approved for construction?"
-  → DES_DOC, status AFC, count vs total
-Overdue tracking:
-  "Which documents are past their planned end date?"
-  → DES_DOC, date before [today], status not AFC/AFU
-Work package completeness:
-  "Are all documents for work package ST/DP300 approved?"
-  → DES_DOC, work_package_code ST/DP300, check status
-Query/RFI tracking:
-  "How many open technical queries are there?"
-  → QRY_QUERY subclass, status Open
-Comments resolution:
-  "What are the open comments on document 6529-ABBE-C017-ISGP-U40300-ZV-A01-00006-001?"
-  → Use read_assai_document tool, read the CRS PDF content
-Cross-reference lookup:
-  "What documents reference this P&ID?"
-  → Open document detail → X-ref tab
-Asset-document linking:
-  "What manuals are linked to this pump?"
-  → Open asset in Asset Browser → linked documents tab
-
-11. IMPORTANT ASSAI BEHAVIOURS SELMA MUST KNOW
-1. Sessions expire — if Selma gets an authentication error, she must
-   re-authenticate using stored credentials before retrying
-2. Search results are limited to 50 per page — for full counts use
-   the result header "Showing results 1 to 50 of N records"
-3. Wildcard % works in document number field but NOT in title field
-   (title uses contains search automatically)
-4. Multiple status values use + as OR operator: AFU+AFC means
-   "approved for use OR approved for construction"
-5. Discipline codes are hierarchical — ZV includes all vendor docs,
-   C01-C29 are civil sub-disciplines
-6. Company document nr. (last column in results) is the FULL document
-   number as used on drawings — always starts with project code
-7. Checked out documents cannot be downloaded by other users —
-   check "Checked out by" field if download fails
-8. The Revisions tab on a document always shows the COMPLETE history
-   from initial submission to current revision
-9. Document files are attached as PDFs, DWGs (AutoCAD), or XLS files
-   depending on document type
-10. The "Appx" column in Revisions tab = Approval Index (A, B, C etc.)
-    tracking how many review cycles the document went through`;
+IMPORTANT ASSAI BEHAVIOURS:
+1. Results are 100 per page — use start_row=101, 201... for pagination
+2. Wildcard % works in document number field; title uses contains search automatically
+3. Status filter AFU+AFC uses + as OR operator
+4. Checked out documents (row[37]='Y') cannot be downloaded by others
+5. Sessions expire ~3-4 minutes — re-authenticate per operation
+6. detail.aweb only works as popup from frameset — use download.aweb directly
+7. The download.aweb endpoint requires SAME session cookies as the search
+8. Document files are attached as PDFs, DWGs (AutoCAD), or XLS files
+9. The "Appx" column in Revisions tab = Approval Index tracking review cycles`;
 
     const PSSR_ORA_AGENT_PROMPT = `You are Fred, ORSH's PSSR & Operational Readiness Assistant. You are an expert in Pre-Startup Safety Reviews (PSSR), ORA (Operational Readiness Activity) planning, PSSR checklist management, and safety readiness for Oil & Gas facilities. You help users track PSSR progress, manage checklist items, identify pending approvals, and ensure safe startup readiness. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Fred, your PSSR & Operational Readiness Assistant."`;
 

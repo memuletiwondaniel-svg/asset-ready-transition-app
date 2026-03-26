@@ -1,4 +1,4 @@
-export type InterfaceMethod = 'api' | 'rpa' | 'agent';
+export type InterfaceMethod = 'api' | 'agent';
 
 export type APIAuthType = 'api_key' | 'oauth' | 'basic_auth' | 'sso';
 
@@ -48,7 +48,7 @@ export function getAPIConfig(apiId: string): APIConfig | null {
       if (legacy) {
         const parsed = JSON.parse(legacy) as { portalUrl: string; username: string; password: string };
         const migrated: APIConfig = {
-          interfaceMethod: 'rpa',
+          interfaceMethod: 'agent',
           rpaCredentials: {
             portalUrl: parsed.portalUrl,
             username: parsed.username,

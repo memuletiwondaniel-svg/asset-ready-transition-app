@@ -16,7 +16,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { isAPIConfigured, getAPIConfig } from '@/lib/api-config-storage';
 import {
   Plug, Search, Wifi, RefreshCw, Loader2, Eye, EyeOff,
-  ChevronDown, CheckCircle2, XCircle, AlertTriangle, X, Zap, MousePointerClick, Info, Trash2, BrainCircuit, Star
+  ChevronDown, CheckCircle2, XCircle, AlertTriangle, X, Zap, Info, Trash2, BrainCircuit, Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -73,18 +73,16 @@ interface Platform {
   badgeLabel: string;
 }
 
-type ConnectionMethod = 'api' | 'automation' | 'agent';
+type ConnectionMethod = 'api' | 'agent';
 type AuthType = 'api_key' | 'oauth' | 'bearer';
 
 const mapDbMethodToUi = (method: string | null | undefined): ConnectionMethod | null => {
   if (method === 'api') return 'api';
-  if (method === 'rpa') return 'automation';
-  if (method === 'agent') return 'agent';
+  if (method === 'rpa' || method === 'agent') return 'agent';
   return null;
 };
 
-const mapUiMethodToDb = (method: ConnectionMethod): 'api' | 'rpa' | 'agent' =>
-  method === 'automation' ? 'rpa' : method;
+const mapUiMethodToDb = (method: ConnectionMethod): 'api' | 'agent' => method;
 
 const parseDbFallbackChain = (value: unknown): ConnectionMethod[] => {
   const parsed = typeof value === 'string'
@@ -107,19 +105,16 @@ const parseDbFallbackChain = (value: unknown): ConnectionMethod[] => {
 
 const CONNECTION_METHOD_BADGE_LABELS: Record<ConnectionMethod, string> = {
   api: 'API',
-  automation: 'RPA',
   agent: 'Agent',
 };
 
 const CONNECTION_METHOD_OPTION_LABELS: Record<ConnectionMethod, string> = {
   api: 'API (REST)',
-  automation: 'RPA (Browser)',
   agent: 'Agent (Selma AI)',
 };
 
 const CONNECTION_METHOD_COLORS: Record<ConnectionMethod, string> = {
   api: 'bg-blue-50 text-blue-700 border-blue-200/60 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800/40',
-  automation: 'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800/40',
   agent: 'bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/40',
 };
 
@@ -224,7 +219,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const getConnectionMethodLabel = (platformId: string): string | null => {
     if (platformId === 'gocompletions') {
       const config = getAPIConfig('gocompletions');
-      if (config?.interfaceMethod === 'rpa') return CONNECTION_METHOD_BADGE_LABELS.automation;
+      if (config?.interfaceMethod === 'agent') return CONNECTION_METHOD_BADGE_LABELS.agent;
       if (config?.interfaceMethod === 'api') return CONNECTION_METHOD_BADGE_LABELS.api;
       return null;
     }
@@ -243,12 +238,12 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     // Pre-populate from existing credentials
     if (platform.id === 'gocompletions') {
       const config = getAPIConfig('gocompletions');
-      if (config?.interfaceMethod === 'rpa' && config.rpaCredentials) {
-        setConnectionMethod('automation');
+      if (config?.interfaceMethod === 'agent') {
+        setConnectionMethod('agent');
         setFormData(prev => ({
           ...prev, base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
           client_id: '', client_secret: '', token_url: '', project_code_field: '', sync_enabled: false,
-          platform_url: config.rpaCredentials!.portalUrl || '', auth_token: '', automation_enabled: true,
+          platform_url: '', auth_token: '', automation_enabled: true,
         }));
       } else if (config?.apiCredentials) {
         setConnectionMethod('api');
@@ -279,7 +274,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         if (dbMethod) {
           setConnectionMethod(dbMethod);
         } else if (isAutomation) {
-          setConnectionMethod('automation');
+          setConnectionMethod('agent');
         } else {
           setConnectionMethod('api');
         }
@@ -396,7 +391,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         tenant_id: resolvedTenantId,
         dms_platform: panelPlatform.id,
         base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
-        project_code_field: connectionMethod === 'automation' ? '__automation__' : formData.project_code_field,
+        project_code_field: formData.project_code_field,
         sync_enabled: connectionMethod === 'api' ? formData.sync_enabled : formData.automation_enabled,
         primary_method: mapUiMethodToDb(connectionMethod),
         fallback_chain: JSON.stringify(
@@ -486,10 +481,10 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
             message: 'API method not yet configured — use Agent (Selma) as primary method',
           });
         } else {
-          // RPA mode: not yet implemented
+          // Fallback: unknown method
           setTestResultInPanel({
             success: false,
-            message: 'RPA method not yet configured — use Agent (Selma) as primary method',
+            message: 'Unknown connection method — select API or Agent',
           });
         }
       } catch (err: any) {
@@ -786,7 +781,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                 {/* CONNECTION METHOD */}
                 <div className="space-y-3">
                   <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Primary Method</span>
-                  <div className="grid grid-cols-3 gap-2.5">
+                  <div className="grid grid-cols-2 gap-2.5">
                     <button
                       onClick={() => setConnectionMethod('api')}
                       className={cn(
@@ -799,19 +794,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <Zap className={cn('h-5 w-5', connectionMethod === 'api' ? 'text-blue-600' : 'text-muted-foreground')} />
                       <span className={cn('font-medium text-sm', connectionMethod === 'api' ? 'text-blue-700 dark:text-blue-400' : 'text-foreground')}>API</span>
                       <p className="text-[11px] text-muted-foreground leading-tight">REST endpoint</p>
-                      </button>
-                    <button
-                      onClick={() => setConnectionMethod('automation')}
-                      className={cn(
-                        'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
-                        connectionMethod === 'automation'
-                          ? 'border border-amber-400/40 bg-amber-50 dark:bg-amber-950/30 shadow-md ring-1 ring-amber-400/20'
-                          : 'border border-border/30 bg-background hover:border-border/50 hover:shadow-md hover:-translate-y-0.5'
-                      )}
-                    >
-                      <MousePointerClick className={cn('h-5 w-5', connectionMethod === 'automation' ? 'text-amber-600' : 'text-muted-foreground')} />
-                      <span className={cn('font-medium text-sm', connectionMethod === 'automation' ? 'text-amber-700 dark:text-amber-400' : 'text-foreground')}>RPA</span>
-                      <p className="text-[11px] text-muted-foreground leading-tight">Browser based</p>
                       </button>
                     <button
                       onClick={() => setConnectionMethod('agent')}
@@ -843,7 +825,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         >
                           <option value="none">No fallback</option>
                           {connectionMethod !== 'api' && <option value="api">{CONNECTION_METHOD_OPTION_LABELS.api}</option>}
-                          {connectionMethod !== 'automation' && <option value="automation">{CONNECTION_METHOD_OPTION_LABELS.automation}</option>}
                           {connectionMethod !== 'agent' && <option value="agent">{CONNECTION_METHOD_OPTION_LABELS.agent}</option>}
                         </select>
                         <span className="text-muted-foreground/50 text-xs">→</span>
@@ -855,7 +836,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         >
                           <option value="none">No second fallback</option>
                           {connectionMethod !== 'api' && fallback1 !== 'api' && <option value="api">{CONNECTION_METHOD_OPTION_LABELS.api}</option>}
-                          {connectionMethod !== 'automation' && fallback1 !== 'automation' && <option value="automation">{CONNECTION_METHOD_OPTION_LABELS.automation}</option>}
                           {connectionMethod !== 'agent' && fallback1 !== 'agent' && <option value="agent">{CONNECTION_METHOD_OPTION_LABELS.agent}</option>}
                         </select>
                       </div>
