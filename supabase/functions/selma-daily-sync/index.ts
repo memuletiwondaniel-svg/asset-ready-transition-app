@@ -79,14 +79,26 @@ async function assaiLogin(baseUrl: string, username: string, password: string) {
     ...postCookies.split(",").map(c => c.split(";")[0].trim()),
   ].filter(Boolean).join("; ");
 
-  const hasError = /invalid|incorrect|failed|wrong|denied/i.test(resText.substring(0, 2000));
+  const hasError = /invalid|incorrect|failed|wrong|denied|unauthorized/i.test(resText.substring(0, 2000));
   const hasWelcome = /welcome|dashboard|home|main|frame/i.test(resText.substring(0, 2000));
-  const isRedirected = !loginRes.url.includes("login");
+  const isRedirected = !loginRes.url.includes("login") && !loginRes.url.includes("loggedOff");
+  const hasSessionCookie = allCookies.toLowerCase().includes("jsessionid") || postCookies.toLowerCase().includes("session");
+
+  console.log(`[selma-sync] Login analysis: redirected=${isRedirected}, session=${hasSessionCookie}, error=${hasError}, welcome=${hasWelcome}`);
 
   if (hasError) throw new Error("Login rejected — invalid credentials");
-  if (!isRedirected && !hasWelcome) throw new Error("Login response ambiguous");
-
-  return { sessionCookies: allCookies, appUrl: loginRes.url };
+  if (isRedirected || hasSessionCookie || hasWelcome) {
+    return { sessionCookies: allCookies, appUrl: loginRes.url };
+  }
+  if (loginRes.status >= 400) throw new Error(`Login failed with HTTP ${loginRes.status}`);
+  
+  // Even if ambiguous, if we got cookies and a 200, try to proceed
+  if (loginRes.status === 200 && allCookies.length > 10) {
+    console.log("[selma-sync] Login ambiguous but proceeding with cookies");
+    return { sessionCookies: allCookies, appUrl: loginRes.url };
+  }
+  
+  throw new Error(`Login response ambiguous — status ${loginRes.status}, URL: ${loginRes.url}`);
 }
 
 // ─── Assai Search (HTTP-based document search) ──────────────────────────────
