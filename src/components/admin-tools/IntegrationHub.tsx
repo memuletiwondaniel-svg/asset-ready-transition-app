@@ -238,12 +238,12 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     // Pre-populate from existing credentials
     if (platform.id === 'gocompletions') {
       const config = getAPIConfig('gocompletions');
-      if (config?.interfaceMethod === 'rpa' && config.rpaCredentials) {
-        setConnectionMethod('automation');
+      if (config?.interfaceMethod === 'agent') {
+        setConnectionMethod('agent');
         setFormData(prev => ({
           ...prev, base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
           client_id: '', client_secret: '', token_url: '', project_code_field: '', sync_enabled: false,
-          platform_url: config.rpaCredentials!.portalUrl || '', auth_token: '', automation_enabled: true,
+          platform_url: '', auth_token: '', automation_enabled: true,
         }));
       } else if (config?.apiCredentials) {
         setConnectionMethod('api');
