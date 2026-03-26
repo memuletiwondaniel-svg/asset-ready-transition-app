@@ -25,7 +25,7 @@ const methods = [
     title: 'RPA',
     subtitle: 'Browser Automation',
     description: 'Interface via screen-scraping or web automation using portal credentials',
-    icon: Bot,
+    icon: MousePointerClick,
     color: 'text-amber-600',
     bgColor: 'bg-amber-500/10',
     borderColor: 'border-amber-500/20',
