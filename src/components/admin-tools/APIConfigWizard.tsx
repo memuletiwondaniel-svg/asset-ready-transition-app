@@ -232,26 +232,10 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">Interface Method</span>
                   <Badge variant="outline" className="gap-1">
-                    {interfaceMethod === 'rpa' ? <Bot className="h-3 w-3" /> : <Plug className="h-3 w-3" />}
-                    {interfaceMethod === 'rpa' ? 'RPA' : 'API'}
+                    {interfaceMethod === 'agent' ? <Bot className="h-3 w-3" /> : <Plug className="h-3 w-3" />}
+                    {interfaceMethod === 'agent' ? 'Agent (Selma AI)' : 'API'}
                   </Badge>
                 </div>
-                {interfaceMethod === 'rpa' && (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Portal URL</span>
-                      <span className="text-xs font-mono truncate max-w-[200px]">{rpaCredentials.portalUrl || '—'}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Username</span>
-                      <span className="text-xs">{rpaCredentials.username}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Password</span>
-                      <span className="text-xs">••••••••</span>
-                    </div>
-                  </>
-                )}
                 {interfaceMethod === 'api' && (
                   <>
                     <div className="flex items-center justify-between">
