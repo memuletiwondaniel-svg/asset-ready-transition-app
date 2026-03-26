@@ -700,7 +700,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                             <option value="none">No fallback</option>
                             {connectionMethod !== 'api' && fallback1 !== 'api' && <option value="api">API (REST)</option>}
                             {connectionMethod !== 'automation' && fallback1 !== 'automation' && <option value="automation">Automation (Browser)</option>}
-                            <option value="agent" disabled>Agent (Coming Soon)</option>
+                            {connectionMethod !== 'agent' && fallback1 !== 'agent' && <option value="agent">Agent (Selma AI)</option>}
                           </select>
                         </div>
                       )}
