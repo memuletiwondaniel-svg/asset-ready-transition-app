@@ -219,7 +219,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const getConnectionMethodLabel = (platformId: string): string | null => {
     if (platformId === 'gocompletions') {
       const config = getAPIConfig('gocompletions');
-      if (config?.interfaceMethod === 'rpa') return CONNECTION_METHOD_BADGE_LABELS.automation;
+      if (config?.interfaceMethod === 'agent') return CONNECTION_METHOD_BADGE_LABELS.agent;
       if (config?.interfaceMethod === 'api') return CONNECTION_METHOD_BADGE_LABELS.api;
       return null;
     }
