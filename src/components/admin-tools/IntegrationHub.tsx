@@ -688,7 +688,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                           : 'border border-border/30 bg-background hover:border-border/50 hover:shadow-md hover:-translate-y-0.5'
                       )}
                     >
-                      <Bot className={cn('h-5 w-5', connectionMethod === 'automation' ? 'text-amber-600' : 'text-muted-foreground')} />
+                      <MousePointerClick className={cn('h-5 w-5', connectionMethod === 'automation' ? 'text-amber-600' : 'text-muted-foreground')} />
                       <span className={cn('font-medium text-sm', connectionMethod === 'automation' ? 'text-amber-700 dark:text-amber-400' : 'text-foreground')}>RPA</span>
                       <p className="text-[11px] text-muted-foreground leading-tight">Browser automation</p>
                     </button>
