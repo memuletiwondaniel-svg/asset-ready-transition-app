@@ -391,7 +391,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         tenant_id: resolvedTenantId,
         dms_platform: panelPlatform.id,
         base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
-        project_code_field: connectionMethod === 'automation' ? '__automation__' : formData.project_code_field,
+        project_code_field: formData.project_code_field,
         sync_enabled: connectionMethod === 'api' ? formData.sync_enabled : formData.automation_enabled,
         primary_method: mapUiMethodToDb(connectionMethod),
         fallback_chain: JSON.stringify(
