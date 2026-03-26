@@ -465,12 +465,46 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       setTestingInPanel(true);
       setTestResultInPanel(null);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const { data, error } = await supabase.functions.invoke('test-assai-connection', {
-          headers: { Authorization: `Bearer ${session?.access_token}` },
-        });
-        if (error) throw error;
-        setTestResultInPanel(data);
+        if (connectionMethod === 'agent') {
+          // Agent mode: query local dms_external_sync table
+          const { count, error } = await supabase
+            .from('dms_external_sync')
+            .select('*', { count: 'exact', head: true })
+            .eq('dms_platform', 'assai');
+          if (error) throw error;
+          const docCount = count ?? 0;
+          if (docCount > 0) {
+            setTestResultInPanel({ success: true, message: `Agent (Selma) Ready — ${docCount} documents available in local sync` });
+          } else {
+            setTestResultInPanel({ success: false, message: 'Agent (Selma) — No documents synced yet. Run Sync Now first to populate Selma\'s document store' });
+          }
+        } else {
+          // RPA or API mode: call test-assai-connection edge function
+          const { data: { session } } = await supabase.auth.getSession();
+          const { data, error } = await supabase.functions.invoke('test-assai-connection', {
+            headers: { Authorization: `Bearer ${session?.access_token}` },
+          });
+          if (error) throw error;
+          if (connectionMethod === 'api') {
+            // API mode: show the result but add amber note about REST module
+            setTestResultInPanel({
+              success: data?.success ?? false,
+              message: data?.success
+                ? `API Login OK · ${data.response_time_ms ?? '—'}ms — REST API module not yet enabled on server`
+                : data?.message || 'API connection failed',
+              response_time_ms: data?.response_time_ms,
+            });
+          } else {
+            // RPA mode
+            setTestResultInPanel({
+              success: data?.success ?? false,
+              message: data?.success
+                ? `RPA Login: Connected · ${data.response_time_ms ?? '—'}ms`
+                : `RPA Login: Failed — ${data?.message || 'Unknown error'}`,
+              response_time_ms: data?.response_time_ms,
+            });
+          }
+        }
       } catch (err: any) {
         setTestResultInPanel({ success: false, message: err.message || 'Test failed' });
       } finally {
@@ -1194,9 +1228,14 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
               <div className="shrink-0 border-t border-border bg-background px-6 py-4 space-y-3">
                 {/* Test result inline */}
                 {testResultInPanel && (
-                  <div className={cn('flex items-center gap-2 text-xs px-3 py-2 rounded-lg', testResultInPanel.success ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20' : 'bg-destructive/10 text-destructive')}>
-                    {testResultInPanel.success ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-                    {testResultInPanel.success ? `Connected · ${testResultInPanel.response_time_ms}ms` : testResultInPanel.message}
+                  <div className={cn('flex items-center gap-2 text-xs px-3 py-2 rounded-lg',
+                    testResultInPanel.success ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20'
+                    : connectionMethod === 'api' && testResultInPanel.message?.includes('not yet enabled')
+                      ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/20'
+                      : 'bg-destructive/10 text-destructive'
+                  )}>
+                    {testResultInPanel.success ? <CheckCircle2 className="h-3.5 w-3.5" /> : connectionMethod === 'api' && testResultInPanel.message?.includes('not yet enabled') ? <AlertTriangle className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                    {testResultInPanel.message}
                   </div>
                 )}
                 <div className="flex items-center justify-between">
