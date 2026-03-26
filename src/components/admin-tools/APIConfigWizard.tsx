@@ -80,8 +80,8 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
     switch (currentStep) {
       case 1: return !!interfaceMethod;
       case 2:
-        if (interfaceMethod === 'rpa') return !!rpaCredentials.username && !!rpaCredentials.password;
         if (interfaceMethod === 'api') return !!apiCredentials.endpointUrl;
+        if (interfaceMethod === 'agent') return true;
         return false;
       case 3: return testStatus === 'success';
       default: return true;
