@@ -398,6 +398,12 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
         project_code_field: connectionMethod === 'automation' ? '__automation__' : formData.project_code_field,
         sync_enabled: connectionMethod === 'api' ? formData.sync_enabled : formData.automation_enabled,
+        primary_method: mapUiMethodToDb(connectionMethod),
+        fallback_chain: JSON.stringify(
+          [fallback1, fallback2]
+            .filter(f => f !== 'none')
+            .map(f => mapUiMethodToDb(f as ConnectionMethod))
+        ),
         updated_at: new Date().toISOString(),
       };
 
@@ -436,6 +442,14 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       toast.success('Credentials saved');
       setCredentialsSaved(true);
       setHasStoredCredentials(true);
+      // Update dirty signature to current state so isDirty becomes false
+      setSavedDirtySignature(JSON.stringify({
+        connectionMethod,
+        fallback1,
+        fallback2,
+        base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
+        username: formData.username,
+      }));
       fetchData();
     } catch (err: any) {
       console.error('[IntegrationHub] Save failed:', err);
