@@ -294,6 +294,15 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Parse request body for sync_method parameter
+    let syncMethod: string | null = null;
+    try {
+      const body = await req.json();
+      syncMethod = body?.sync_method || null;
+    } catch {
+      // No body or invalid JSON — default behavior
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
