@@ -768,7 +768,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                               >
                                 <Star className={`h-3.5 w-3.5 transition-all duration-200 ${
                                   isFav 
-                                    ? 'text-amber-500 fill-amber-500' 
+                                    ? 'text-amber-400/80 fill-amber-400/80 hover:text-amber-500 hover:fill-amber-500' 
                                     : 'text-muted-foreground/40 hover:text-amber-400'
                                 }`} />
                               </button>
