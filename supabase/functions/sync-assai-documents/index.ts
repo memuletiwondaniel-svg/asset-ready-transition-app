@@ -590,6 +590,7 @@ Deno.serve(async (req) => {
           failed_count: failedCount,
           new_documents: newCount,
           status_changes: statusChanges,
+          sync_route_used: syncRoute,
         }).eq("id", syncLogId);
       }
 
