@@ -686,18 +686,18 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                     return (
                       <div
                         key={`fav-${item.id}`}
-                        className="group bg-card border border-amber-200/50 rounded-xl p-4 cursor-pointer hover:shadow-md hover:shadow-amber-500/10 hover:-translate-y-0.5 hover:border-amber-300/60 transition-all duration-200 relative"
+                        className="group bg-card border border-amber-200/50 rounded-xl p-4 cursor-pointer hover:shadow-lg hover:shadow-amber-500/15 hover:-translate-y-1 hover:border-amber-300/60 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] relative h-[72px] flex items-center"
                         onClick={item.onClick}
                       >
                         <button
                           onClick={(e) => toggleAdminFavorite(item.id, e)}
-                          className="absolute top-3 right-3 p-1 rounded-md hover:bg-muted/50 transition-colors z-10"
+                          className="absolute top-3 right-3 p-1 rounded-md hover:bg-muted/50 transition-all duration-200 z-10 opacity-0 group-hover:opacity-100"
                           aria-label="Remove from favorites"
                         >
                           <Star className="h-3.5 w-3.5 text-amber-400/60 fill-amber-400/60 hover:text-amber-500 hover:fill-amber-500 transition-all duration-200" />
                         </button>
-                        <div className="flex items-start gap-3 pr-6">
-                          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200`}>
+                        <div className="flex items-start gap-3 pr-6 w-full">
+                          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
                             <IconComponent className="h-4 w-4 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -715,7 +715,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                            <p className="text-xs text-muted-foreground/60 mt-0.5 leading-relaxed line-clamp-1">
                               {item.description}
                             </p>
                           </div>
