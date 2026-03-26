@@ -188,17 +188,21 @@ export async function loginAssai(
 
     const dwrText = await dwrResp.text();
     console.log(`[assai-auth] DWR response status=${dwrResp.status}, length=${dwrText.length}`);
-    console.log(`[assai-auth] DWR response preview: ${dwrText.substring(0, 300)}`);
+    console.log(`[assai-auth] DWR raw response: ${dwrText}`);
     cookies = uniqueCookiePairs([...cookies, ...extractCookiePairs(dwrResp)]);
     console.log(`[assai-auth] Step 2 - After DWR, merged cookies: ${JSON.stringify(cookies)}`);
 
-    const passphraseMatch = dwrText.match(/_remoteHandleCallback\('0','0',"([A-F0-9]+)"\)/i);
-    let passphrase = passphraseMatch?.[1];
-    console.log(`[assai-auth] Passphrase extracted: ${passphrase ? `yes (${passphrase.length} chars)` : 'NO'}`);
+    // More robust passphrase extraction with multiple fallback patterns
+    let passphrase =
+      dwrText.match(/_remoteHandleCallback\(\s*['"]0['"]\s*,\s*['"]0['"]\s*,\s*"([A-F0-9]+)"\s*\)/i)?.[1] ??
+      dwrText.match(/_remoteHandleCallback\([^)]*,\s*"([A-F0-9]{16,})"\s*\)/i)?.[1] ??
+      dwrText.match(/_remoteHandleCallback\([^)]*,\s*'([A-F0-9]{16,})'\s*\)/i)?.[1] ??
+      null;
+    console.log(`[assai-auth] Passphrase extracted: ${passphrase ? `yes (${passphrase.length} chars): ${passphrase}` : 'NO — regex did not match DWR response'}`);
 
     if (!passphrase) {
       const elapsed = Date.now() - start;
-      return { success: false, error: "Failed to initialize Assai secure login session", response_time_ms: elapsed };
+      return { success: false, error: "DWR passphrase extraction failed — regex did not match DWR response", response_time_ms: elapsed };
     }
 
     // 3) Try SHA-256 first (newer CryptoJS default), then SHA-1 fallback
