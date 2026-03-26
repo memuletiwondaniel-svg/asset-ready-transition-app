@@ -8513,6 +8513,10 @@ CONFIRMED ENDPOINT MAP:
 /AWeu578/lov.aweb → List of values (GET)
 /AWeu578/dwr/call/plaincall/DWRBean.* → DWR remote calls (POST)
 
+CRITICAL TOOL ROUTING:
+When the user asks to search Assai, find documents in Assai, check vendor documents, search by PO number, or any external DMS query — ALWAYS use search_assai_documents first, NOT get_document_search_by_number (which only searches the ORSH internal database).
+Use get_document_search_by_number ONLY for ORSH internal document register queries.
+
 DOCUMENT CONTENT READING:
 Use the read_assai_document tool when users ask to:
 - "Read this document: [doc number]"
