@@ -236,19 +236,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       ],
     },
     {
-      label: 'LIVING DOCUMENTATION',
-      columns: 3 as const,
-      items: [
-        { id: 'northstar-document', title: 'Strategic North Star', description: 'Vision, mission, product strategy', icon: Compass, gradient: 'from-amber-600 to-orange-700', badge: 'auto-update' as const, onClick: () => setActiveView('northstar-document') },
-        { id: 'platform-guide', title: 'Platform Guide', description: 'How to use ORSH, agent intros', icon: BookOpen, gradient: 'from-blue-600 to-indigo-700', badge: 'auto-update' as const, onClick: () => setActiveView('platform-guide') },
-        { id: 'ai-agent-strategy', title: 'AI Agent Strategy', description: 'Agent roadmap, tool registry', icon: Brain, gradient: 'from-violet-600 to-purple-700', badge: 'auto-update' as const, onClick: () => setActiveView('ai-agent-strategy') },
-        { id: 'security-document', title: 'Security & Compliance', description: 'Security posture, SOC 2 progress', icon: FileText, gradient: 'from-slate-600 to-zinc-700', badge: 'auto-update' as const, onClick: () => setActiveView('security-document') },
-        { id: 'journey-maps', title: 'Customer Journey Maps', description: 'Persona journeys, onboarding flows', icon: MapPin, gradient: 'from-pink-600 to-rose-700', onClick: () => setActiveView('journey-maps') },
-        { id: 'deployment-log', title: 'Deployment Log', description: 'Version history, release notes', icon: Rocket, gradient: 'from-emerald-500 to-teal-600', badge: 'auto-update' as const, onClick: () => setActiveView('deployment-log') },
-        { id: 'process-flows', title: 'Process Flow Maps', description: 'Workflows, approval chains', icon: GitBranch, gradient: 'from-emerald-600 to-teal-700', onClick: () => setActiveView('process-flows') },
-      ],
-    },
-    {
       label: 'AI AGENTS',
       columns: 3 as const,
       items: [
@@ -283,7 +270,32 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         { id: 'deployment-configs', title: 'Deployment Configs', description: 'Docker, CI/CD pipelines', icon: Container, gradient: 'from-cyan-600 to-blue-700', onClick: () => setActiveView('deployment-configs') },
       ],
     },
+    {
+      label: 'LIVING DOCUMENTATION',
+      columns: 3 as const,
+      items: [
+        { id: 'northstar-document', title: 'Strategic North Star', description: 'Vision, mission, product strategy', icon: Compass, gradient: 'from-amber-600 to-orange-700', badge: 'auto-update' as const, onClick: () => setActiveView('northstar-document') },
+        { id: 'platform-guide', title: 'Platform Guide', description: 'How to use ORSH, agent intros', icon: BookOpen, gradient: 'from-blue-600 to-indigo-700', badge: 'auto-update' as const, onClick: () => setActiveView('platform-guide') },
+        { id: 'ai-agent-strategy', title: 'AI Agent Strategy', description: 'Agent roadmap, tool registry', icon: Brain, gradient: 'from-violet-600 to-purple-700', badge: 'auto-update' as const, onClick: () => setActiveView('ai-agent-strategy') },
+        { id: 'security-document', title: 'Security & Compliance', description: 'Security posture, SOC 2 progress', icon: FileText, gradient: 'from-slate-600 to-zinc-700', badge: 'auto-update' as const, onClick: () => setActiveView('security-document') },
+        { id: 'journey-maps', title: 'Customer Journey Maps', description: 'Persona journeys, onboarding flows', icon: MapPin, gradient: 'from-pink-600 to-rose-700', onClick: () => setActiveView('journey-maps') },
+        { id: 'deployment-log', title: 'Deployment Log', description: 'Version history, release notes', icon: Rocket, gradient: 'from-emerald-500 to-teal-600', badge: 'auto-update' as const, onClick: () => setActiveView('deployment-log') },
+        { id: 'process-flows', title: 'Process Flow Maps', description: 'Workflows, approval chains', icon: GitBranch, gradient: 'from-emerald-600 to-teal-700', onClick: () => setActiveView('process-flows') },
+      ],
+    },
   ], [navigate, t]);
+
+  // Build a flat map of all items for favorites lookup
+  const allItemsMap = useMemo(() => {
+    const map = new Map<string, typeof sections[0]['items'][0]>();
+    sections.forEach(s => s.items.forEach(item => map.set(item.id, item)));
+    return map;
+  }, [sections]);
+
+  // Favorite items derived from sections
+  const favoriteItems = useMemo(() => 
+    adminFavorites.map(id => allItemsMap.get(id)).filter(Boolean) as typeof sections[0]['items'][0][],
+  [adminFavorites, allItemsMap]);
 
   // Filter sections based on search
   const filteredSections = useMemo(() => {
