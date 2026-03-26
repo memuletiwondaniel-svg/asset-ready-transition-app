@@ -1017,57 +1017,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                   </div>
                 </div>
               </div>
-              {/* Sticky Footer */}
-              <div className="shrink-0 border-t border-border bg-background px-6 py-4">
-                {/* Test result inline */}
-                {testResultInPanel && (
-                  <div className={cn('flex items-center gap-2 text-xs px-3 py-2 rounded-lg mb-3', testResultInPanel.success ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20' : 'bg-destructive/10 text-destructive')}>
-                    {testResultInPanel.success ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-                    {testResultInPanel.success ? `Connected · ${testResultInPanel.response_time_ms}ms` : testResultInPanel.message}
-                  </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <div>
-                    {!showRemoveConfirm ? (
-                      <button
-                        onClick={() => setShowRemoveConfirm(true)}
-                        className="text-xs text-destructive hover:text-destructive/80 transition-colors flex items-center gap-1"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        Remove credentials
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Button variant="destructive" size="sm" className="text-xs h-7" onClick={removeCredentials}>Remove</Button>
-                        <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setShowRemoveConfirm(false)}>Cancel</Button>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {(
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs"
-                        disabled={!credentialsSaved || testingInPanel}
-                        onClick={testConnection}
-                      >
-                        {testingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wifi className="h-3 w-3 mr-1" />}
-                        Test
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      className="text-xs"
-                      disabled={!isFormValid || saving}
-                      onClick={() => { setTriedSave(true); if (isFormValid) saveConfig(); }}
-                    >
-                      {saving && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
-                      Save
-                    </Button>
-                  </div>
-                </div>
-              </div>
             </>
           )}
         </SheetContent>
