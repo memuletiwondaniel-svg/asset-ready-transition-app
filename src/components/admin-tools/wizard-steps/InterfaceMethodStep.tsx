@@ -17,18 +17,18 @@ const methods = [
     icon: Plug,
     color: 'text-blue-600',
     bgColor: 'bg-blue-500/10',
-    borderColor: 'border-blue-500/40',
+    borderColor: 'border-blue-500/20',
     ringColor: 'ring-blue-500/30',
   },
   {
     id: 'rpa' as InterfaceMethod,
     title: 'RPA',
-    subtitle: 'Robotic Process Automation',
+    subtitle: 'Browser Automation',
     description: 'Interface via screen-scraping or web automation using portal credentials',
     icon: Bot,
     color: 'text-amber-600',
     bgColor: 'bg-amber-500/10',
-    borderColor: 'border-amber-500/40',
+    borderColor: 'border-amber-500/20',
     ringColor: 'ring-amber-500/30',
   },
   {
@@ -39,7 +39,7 @@ const methods = [
     icon: BrainCircuit,
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-500/10',
-    borderColor: 'border-emerald-500/40',
+    borderColor: 'border-emerald-500/20',
     ringColor: 'ring-emerald-500/30',
   },
 ];
@@ -63,7 +63,7 @@ export const InterfaceMethodStep: React.FC<InterfaceMethodStepProps> = ({ select
                 'flex flex-col items-center gap-2.5 p-5 rounded-xl border-2 transition-all duration-200 text-left',
                 isSelected
                   ? `${method.borderColor} ${method.bgColor} ring-2 ${method.ringColor}`
-                  : 'border-border hover:border-primary/30 hover:bg-accent/50'
+                  : 'border-border/50 hover:border-primary/20 hover:bg-accent/50'
               )}
             >
               <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', method.bgColor)}>
