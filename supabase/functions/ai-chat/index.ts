@@ -8317,6 +8317,97 @@ AA=Admin/General, BA=Buried/Civil, CS=Civil/Structural, EA=Electrical, FA=Fire &
 DOCUMENT TYPE CODES (ZV discipline, project 6529):
 A01=Supplier Document Schedule/MDR, B01=General Layout Drawing, B04=Foundation/Support Layout Drawing, B06=UCP HMI/Control System Diagram, C02=System & Equipment Specification, C03=Single Line Diagram, C08=Data Sheet, C11=Control Schematic Diagram, C14=Cause & Effect Diagram, C21=Structural Analysis Report, C29=Catalogue/Product List, D04=Nameplate/Tag Plate Drawing, E02=General Arrangement Drawing, E03=Logic Block Diagram, E05=Cable Schedule, E09=Equipment Data Sheet, E11=Lighting Layout Drawing, E12=Earthing Drawing, E23=Cable Tray Routing Drawing
 
+ZV VENDOR DOCUMENT INTELLIGENCE:
+
+=== THE PURCHASE ORDER → DOCUMENT NUMBER LINK ===
+Every vendor document package is tied to a Purchase Order (PO).
+The last 5 digits of the PO form the document sequence identifier.
+Structure: [Project]-[EPC]-[Plant]-[Site]-[Unit]-ZV-[TypeCode]-[PO_last5]-[Seq]
+Example:
+  PO: 4514232395 (issued to Emerson for Differential Pressure Transmitters)
+  Last 5: 32395
+  SDR: 7114-WGEL-N003-ISGP-U60000-ZV-A01-32395-001
+  IOM: 7114-WGEL-N003-ISGP-U60000-ZV-J01-32395-001
+Another example:
+  PO: 4514212060 → last 5: 12060
+  IOM: 1307-WGEL-G000-ISGP-U40300-ZV-J01-12060-001 = Swarm S2 Manual
+The full PO number is stored in myCells[28] in Assai search results.
+To find ALL documents for a vendor package:
+  Search: number = [project]-%-[po_last5]-% with discipline_code=ZV
+
+=== ZV DOCUMENT TYPE CODES — WHAT THEY CONTAIN ===
+ADMINISTRATIVE:
+  A01 = Supplier Document Register (SDR) — master doc list per PO. Contains every document the vendor contracted to supply with doc numbers, review class (O/I/R), planned dates, tag numbers. ALWAYS start here.
+  A02 = Fabrication/Production Schedule
+  A03 = Progress Report (weekly/monthly)
+  A04 = Sub-Supplier List
+  A05 = Design Deviation Request (DDR) — needs client approval
+DRAWINGS:
+  B01 = General Arrangement Drawing — overall equipment layout/dimensions (Tier 1)
+  B04 = Foundation/Support Layout — civil interface loads
+  B06 = Control Panel / UCP Diagram
+TECHNICAL:
+  C03 = Single Line Diagram — electrical power distribution (Tier 2)
+  C04 = Bill of Materials
+  C06 = Utilities Schedule
+  C08 = Equipment Datasheet — operating parameters, materials, performance (Tier 1)
+  C11 = Control/Electrical Schematic
+  C18 = Detailed Parts List
+INSTRUMENT/ELECTRICAL:
+  E01 = Interconnection/Hook-up Diagram — field wiring (Tier 2)
+  E04 = Terminal Block Diagram
+  E09 = Instrument Datasheet — tag, range, process conditions (Tier 2)
+  E11 = Lighting Layout
+  E12 = Earthing Drawing
+  E23 = Cable Tray Routing
+  E99 = Network/Communication Drawing
+CALCULATIONS:
+  F02 = HVAC/Thermal Calculation
+  F38 = Lighting Calculation
+INSTALLATION/SHIPPING:
+  G01 = Erection/Installation Procedure (Tier 2)
+  G03 = Packing, Handling and Shipping Procedure
+QUALITY/TESTING:
+  H02 = Inspection and Test Plan (ITP) — quality roadmap (Tier 1)
+  H04 = FAT Procedure (Tier 1)
+  H05 = SAT Procedure (Tier 1)
+  H08 = Performance/Acceptance Test Report (Tier 1)
+  H09 = Hydrostatic/Pressure Test Record
+  H13 = ISO 9001/Quality Certificate
+OPERATIONS & MAINTENANCE (critical for handover):
+  J01 = IOM Manual — THE most critical document for operations (Tier 1). Contains safety, specs, install, startup/shutdown, operating procedures, maintenance, troubleshooting, spares.
+  J03 = Maintenance Manual
+  J04 = Recommended Spare Parts List (Tier 2)
+HANDOVER & CERTIFICATES:
+  K01 = Handover/As-Built Package (Tier 1)
+  K05 = FAT Report (Tier 1)
+  K10 = Certification Data Book (Tier 1)
+  L01 = Material Test Certificate (MTC)
+  L10 = Instrument Calibration Certificate (Tier 1)
+  L14 = Certificate of Compliance (CoC)
+  L48 = Inspection Release Note
+  M01 = Packing and Shipping List
+
+=== VENDOR DOCUMENT REVIEW PROCESS ===
+Review classes (from SDR A01):
+  O = For Originator use / Information only (no client review)
+  I = For Client Information (comment optional)
+  R = For Client Review (mandatory response required)
+Review result codes:
+  Code 1 = No Comments — approved, submit final
+  Code 2 = Comments — revise and resubmit, work may proceed
+  Code 3 = Comments — revise and resubmit, work may NOT proceed
+  Code 4 = For Information Only — no further review needed
+
+=== SELMA VENDOR DOCUMENT QUERIES ===
+"Find all documents for PO ending in 32395" → Search: number=%-32395-%, discipline_code=ZV
+"Has the vendor submitted their IOM manual?" → Search document_type=J01, check status
+"What documents is this vendor still missing?" → Read A01 (SDR) with read_assai_document, extract expected list, search each, report gaps
+"Show me all vendor ITPs" → Search: discipline_code=ZV, document_type=H02
+"Are all Tier 1 vendor documents approved?" → Search ZV Tier 1 types (A01,B01,C08,H02,H04,H05,H08,J01,K01,K05,K10,L10), check status for AFU
+"What calibration certificates exist?" → Search: discipline_code=ZV, document_type=L10
+"Read the IOM manual for this instrument" → Find: number=%-[po_last5]-%, type=J01, use read_assai_document
+
 PRIORITY TIERS:
 TIER-1 = Safety critical / highest priority
 TIER-2 = Important
