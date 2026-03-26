@@ -364,6 +364,8 @@ Deno.serve(async (req) => {
     let totalNew = 0;
     let totalStatusChanges = 0;
     let syncRoute = "none";
+    const routeFailures: Record<string, string> = {};
+    const routesAttempted: string[] = [];
 
     /**
      * Upsert a batch of documents immediately and update the sync log.
