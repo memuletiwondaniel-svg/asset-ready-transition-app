@@ -63,7 +63,7 @@ export const InterfaceMethodStep: React.FC<InterfaceMethodStepProps> = ({ select
                 'flex flex-col items-center gap-2.5 p-5 rounded-xl border-2 transition-all duration-200 text-left',
                 isSelected
                   ? `${method.borderColor} ${method.bgColor} ring-2 ${method.ringColor}`
-                  : 'border-border hover:border-primary/30 hover:bg-accent/50'
+                  : 'border-border/50 hover:border-primary/20 hover:bg-accent/50'
               )}
             >
               <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', method.bgColor)}>
