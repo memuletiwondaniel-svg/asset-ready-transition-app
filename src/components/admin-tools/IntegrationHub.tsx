@@ -482,7 +482,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         <div className="flex justify-between p-3 pb-0">
           <button
             onClick={(e) => toggleHubFavorite(platform.id, e)}
-            className={`p-1 rounded-md hover:bg-muted/50 transition-all duration-200 z-10 ${hubFavorites.includes(platform.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+            className="p-1 rounded-md hover:bg-muted/50 transition-all duration-200 z-10 opacity-0 group-hover:opacity-100"
             aria-label={hubFavorites.includes(platform.id) ? "Remove from favorites" : "Add to favorites"}
           >
             <Star className={`h-3.5 w-3.5 transition-all duration-200 ${
