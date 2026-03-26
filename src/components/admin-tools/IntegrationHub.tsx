@@ -486,12 +486,11 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           });
           if (error) throw error;
           if (connectionMethod === 'api') {
-            // API mode: show the result but add amber note about REST module
             setTestResultInPanel({
               success: data?.success ?? false,
               message: data?.success
                 ? `API Login OK · ${data.response_time_ms ?? '—'}ms — REST API module not yet enabled on server`
-                : data?.message || 'API connection failed',
+                : data?.error || data?.message || 'API connection failed',
               response_time_ms: data?.response_time_ms,
             });
           } else {
@@ -500,7 +499,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
               success: data?.success ?? false,
               message: data?.success
                 ? `RPA Login: Connected · ${data.response_time_ms ?? '—'}ms`
-                : `RPA Login: Failed — ${data?.message || 'Unknown error'}`,
+                : `RPA Login: Failed — ${data?.error || data?.message || 'Unknown error'}`,
               response_time_ms: data?.response_time_ms,
             });
           }
