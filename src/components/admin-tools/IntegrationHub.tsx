@@ -15,7 +15,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { isAPIConfigured, getAPIConfig } from '@/lib/api-config-storage';
 import {
   Plug, Search, Wifi, RefreshCw, Loader2, Eye, EyeOff,
-  ChevronDown, CheckCircle2, XCircle, AlertTriangle, X, Zap, Bot, Info, Trash2
+  ChevronDown, CheckCircle2, XCircle, AlertTriangle, X, Zap, Bot, Info, Trash2, BrainCircuit
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -70,7 +70,7 @@ interface Platform {
   badgeLabel: string;
 }
 
-type ConnectionMethod = 'api' | 'automation';
+type ConnectionMethod = 'api' | 'automation' | 'agent';
 type AuthType = 'api_key' | 'oauth' | 'bearer';
 
 const ALL_PLATFORMS: Platform[] = [
@@ -621,11 +621,11 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                 {/* CONNECTION METHOD */}
                 <div className="space-y-3">
                   <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Primary Method</span>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-2.5">
                     <button
                       onClick={() => { setConnectionMethod('api'); setFallback1('none'); setFallback2('none'); }}
                       className={cn(
-                        'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-center min-h-[110px] justify-center',
+                        'flex flex-col items-center gap-2 p-3.5 rounded-xl border transition-all text-center min-h-[110px] justify-center',
                         connectionMethod === 'api'
                           ? 'border-2 border-blue-600 bg-blue-50 dark:bg-blue-950/30 shadow-sm'
                           : 'border border-border bg-background hover:border-border/80'
@@ -633,12 +633,12 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     >
                       <Zap className={cn('h-5 w-5', connectionMethod === 'api' ? 'text-blue-600' : 'text-muted-foreground')} />
                       <span className={cn('font-medium text-sm', connectionMethod === 'api' ? 'text-blue-700 dark:text-blue-400' : 'text-foreground')}>API</span>
-                      <p className="text-xs text-muted-foreground">Real-time sync via REST API</p>
+                      <p className="text-[11px] text-muted-foreground leading-tight">REST endpoint sync</p>
                     </button>
                     <button
                       onClick={() => { setConnectionMethod('automation'); setFallback1('none'); setFallback2('none'); }}
                       className={cn(
-                        'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-center min-h-[110px] justify-center',
+                        'flex flex-col items-center gap-2 p-3.5 rounded-xl border transition-all text-center min-h-[110px] justify-center',
                         connectionMethod === 'automation'
                           ? 'border-2 border-violet-600 bg-violet-50 dark:bg-violet-950/30 shadow-sm'
                           : 'border border-border bg-background hover:border-border/80'
@@ -646,7 +646,20 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     >
                       <Bot className={cn('h-5 w-5', connectionMethod === 'automation' ? 'text-violet-600' : 'text-muted-foreground')} />
                       <span className={cn('font-medium text-sm', connectionMethod === 'automation' ? 'text-violet-700 dark:text-violet-400' : 'text-foreground')}>Automation</span>
-                      <p className="text-xs text-muted-foreground">Browser-based workflow automation</p>
+                      <p className="text-[11px] text-muted-foreground leading-tight">Browser-based workflow</p>
+                    </button>
+                    <button
+                      onClick={() => { setConnectionMethod('agent'); setFallback1('none'); setFallback2('none'); }}
+                      className={cn(
+                        'flex flex-col items-center gap-2 p-3.5 rounded-xl border transition-all text-center min-h-[110px] justify-center',
+                        connectionMethod === 'agent'
+                          ? 'border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 shadow-sm'
+                          : 'border border-border bg-background hover:border-border/80'
+                      )}
+                    >
+                      <BrainCircuit className={cn('h-5 w-5', connectionMethod === 'agent' ? 'text-emerald-600' : 'text-muted-foreground')} />
+                      <span className={cn('font-medium text-sm', connectionMethod === 'agent' ? 'text-emerald-700 dark:text-emerald-400' : 'text-foreground')}>Agent</span>
+                      <p className="text-[11px] text-muted-foreground leading-tight">Selma AI navigator</p>
                     </button>
                   </div>
 
@@ -670,7 +683,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                           <option value="none">No fallback</option>
                           {connectionMethod !== 'api' && <option value="api">API (REST)</option>}
                           {connectionMethod !== 'automation' && <option value="automation">Automation (Browser)</option>}
-                          <option value="agent" disabled>Agent (Coming Soon)</option>
+                          {connectionMethod !== 'agent' && <option value="agent">Agent (Selma AI)</option>}
                         </select>
                       </div>
                       {/* Fallback 2 — only show if Fallback 1 is set */}
@@ -687,7 +700,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                             <option value="none">No fallback</option>
                             {connectionMethod !== 'api' && fallback1 !== 'api' && <option value="api">API (REST)</option>}
                             {connectionMethod !== 'automation' && fallback1 !== 'automation' && <option value="automation">Automation (Browser)</option>}
-                            <option value="agent" disabled>Agent (Coming Soon)</option>
+                            {connectionMethod !== 'agent' && fallback1 !== 'agent' && <option value="agent">Agent (Selma AI)</option>}
                           </select>
                         </div>
                       )}
@@ -696,7 +709,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         <span className="text-[10px] text-muted-foreground/70">Execution order:</span>
                         <div className="flex items-center gap-1">
                           <span className="text-[10px] font-medium text-foreground/80 bg-muted/60 px-1.5 py-0.5 rounded">
-                            {connectionMethod === 'api' ? 'API' : 'Automation'}
+                            {connectionMethod === 'api' ? 'API' : connectionMethod === 'automation' ? 'Automation' : 'Agent'}
                           </span>
                           {fallback1 !== 'none' && (
                             <>

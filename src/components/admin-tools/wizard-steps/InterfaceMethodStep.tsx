@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plug, Bot } from 'lucide-react';
+import { Plug, Bot, BrainCircuit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InterfaceMethod } from '@/lib/api-config-storage';
 
@@ -31,6 +31,17 @@ const methods = [
     borderColor: 'border-amber-500/40',
     ringColor: 'ring-amber-500/30',
   },
+  {
+    id: 'agent' as InterfaceMethod,
+    title: 'Agent',
+    subtitle: 'AI-Driven Interface',
+    description: 'Selma navigates Assai as a user — logging in, searching, and extracting documents autonomously',
+    icon: BrainCircuit,
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-500/10',
+    borderColor: 'border-emerald-500/40',
+    ringColor: 'ring-emerald-500/30',
+  },
 ];
 
 export const InterfaceMethodStep: React.FC<InterfaceMethodStepProps> = ({ selected, onSelect }) => {
@@ -40,7 +51,7 @@ export const InterfaceMethodStep: React.FC<InterfaceMethodStepProps> = ({ select
         <h3 className="text-sm font-medium text-foreground">Select Interface Method</h3>
         <p className="text-xs text-muted-foreground mt-1">How should ORSH communicate with this application?</p>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-3">
         {methods.map((method) => {
           const isSelected = selected === method.id;
           const Icon = method.icon;
@@ -49,20 +60,20 @@ export const InterfaceMethodStep: React.FC<InterfaceMethodStepProps> = ({ select
               key={method.id}
               onClick={() => onSelect(method.id)}
               className={cn(
-                'flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-all duration-200 text-left',
+                'flex flex-col items-center gap-2.5 p-5 rounded-xl border-2 transition-all duration-200 text-left',
                 isSelected
                   ? `${method.borderColor} ${method.bgColor} ring-2 ${method.ringColor}`
                   : 'border-border hover:border-primary/30 hover:bg-accent/50'
               )}
             >
-              <div className={cn('w-12 h-12 rounded-lg flex items-center justify-center', method.bgColor)}>
-                <Icon className={cn('h-6 w-6', method.color)} />
+              <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', method.bgColor)}>
+                <Icon className={cn('h-5 w-5', method.color)} />
               </div>
               <div className="text-center">
                 <p className="font-semibold text-sm">{method.title}</p>
                 <p className="text-[10px] text-muted-foreground font-medium">{method.subtitle}</p>
               </div>
-              <p className="text-xs text-muted-foreground text-center leading-relaxed">{method.description}</p>
+              <p className="text-[11px] text-muted-foreground text-center leading-relaxed">{method.description}</p>
             </button>
           );
         })}
