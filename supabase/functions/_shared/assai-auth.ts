@@ -189,6 +189,7 @@ export async function loginAssai(
     console.log(`[assai-auth] DWR response status=${dwrResp.status}, length=${dwrText.length}`);
     console.log(`[assai-auth] DWR response preview: ${dwrText.substring(0, 300)}`);
     cookies = uniqueCookiePairs([...cookies, ...extractCookiePairs(dwrResp)]);
+    console.log(`[assai-auth] Step 2 - After DWR, merged cookies: ${JSON.stringify(cookies)}`);
 
     const passphraseMatch = dwrText.match(/_remoteHandleCallback\('0','0',"([A-F0-9]+)"\)/i);
     const passphrase = passphraseMatch?.[1];
