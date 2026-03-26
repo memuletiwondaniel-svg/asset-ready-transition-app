@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plug, Bot, BrainCircuit } from 'lucide-react';
+import { Plug, MousePointerClick, BrainCircuit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InterfaceMethod } from '@/lib/api-config-storage';
 
@@ -25,7 +25,7 @@ const methods = [
     title: 'RPA',
     subtitle: 'Browser Automation',
     description: 'Interface via screen-scraping or web automation using portal credentials',
-    icon: Bot,
+    icon: MousePointerClick,
     color: 'text-amber-600',
     bgColor: 'bg-amber-500/10',
     borderColor: 'border-amber-500/20',
@@ -60,10 +60,10 @@ export const InterfaceMethodStep: React.FC<InterfaceMethodStepProps> = ({ select
               key={method.id}
               onClick={() => onSelect(method.id)}
               className={cn(
-                'flex flex-col items-center gap-2.5 p-5 rounded-xl border-2 transition-all duration-200 text-left',
+                'flex flex-col items-center gap-2.5 p-5 rounded-xl transition-all duration-200 text-left',
                 isSelected
-                  ? `${method.borderColor} ${method.bgColor} ring-2 ${method.ringColor}`
-                  : 'border-border/50 hover:border-primary/20 hover:bg-accent/50'
+                  ? `border ${method.borderColor} ${method.bgColor} shadow-md ring-1 ${method.ringColor}`
+                  : 'border border-border/30 hover:border-border/50 hover:shadow-md hover:-translate-y-0.5'
               )}
             >
               <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', method.bgColor)}>

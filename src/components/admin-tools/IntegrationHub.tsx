@@ -16,7 +16,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { isAPIConfigured, getAPIConfig } from '@/lib/api-config-storage';
 import {
   Plug, Search, Wifi, RefreshCw, Loader2, Eye, EyeOff,
-  ChevronDown, CheckCircle2, XCircle, AlertTriangle, X, Zap, Bot, Info, Trash2, BrainCircuit, Star
+  ChevronDown, CheckCircle2, XCircle, AlertTriangle, X, Zap, MousePointerClick, Info, Trash2, BrainCircuit, Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -669,10 +669,10 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     <button
                       onClick={() => setConnectionMethod('api')}
                       className={cn(
-                        'flex flex-col items-center gap-2 p-3.5 rounded-xl border transition-all text-center min-h-[110px] justify-center',
+                        'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
                         connectionMethod === 'api'
-                          ? 'border-2 border-blue-600 bg-blue-50 dark:bg-blue-950/30 shadow-sm'
-                          : 'border border-border bg-background hover:border-border/80'
+                          ? 'border border-blue-400/40 bg-blue-50 dark:bg-blue-950/30 shadow-md ring-1 ring-blue-400/20'
+                          : 'border border-border/30 bg-background hover:border-border/50 hover:shadow-md hover:-translate-y-0.5'
                       )}
                     >
                       <Zap className={cn('h-5 w-5', connectionMethod === 'api' ? 'text-blue-600' : 'text-muted-foreground')} />
@@ -682,23 +682,23 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     <button
                       onClick={() => setConnectionMethod('automation')}
                       className={cn(
-                        'flex flex-col items-center gap-2 p-3.5 rounded-xl border transition-all text-center min-h-[110px] justify-center',
+                        'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
                         connectionMethod === 'automation'
-                          ? 'border-2 border-violet-600 bg-violet-50 dark:bg-violet-950/30 shadow-sm'
-                          : 'border border-border bg-background hover:border-border/80'
+                          ? 'border border-amber-400/40 bg-amber-50 dark:bg-amber-950/30 shadow-md ring-1 ring-amber-400/20'
+                          : 'border border-border/30 bg-background hover:border-border/50 hover:shadow-md hover:-translate-y-0.5'
                       )}
                     >
-                      <Bot className={cn('h-5 w-5', connectionMethod === 'automation' ? 'text-violet-600' : 'text-muted-foreground')} />
-                      <span className={cn('font-medium text-sm', connectionMethod === 'automation' ? 'text-violet-700 dark:text-violet-400' : 'text-foreground')}>Automation</span>
-                      <p className="text-[11px] text-muted-foreground leading-tight">Browser-based workflow</p>
+                      <MousePointerClick className={cn('h-5 w-5', connectionMethod === 'automation' ? 'text-amber-600' : 'text-muted-foreground')} />
+                      <span className={cn('font-medium text-sm', connectionMethod === 'automation' ? 'text-amber-700 dark:text-amber-400' : 'text-foreground')}>RPA</span>
+                      <p className="text-[11px] text-muted-foreground leading-tight">Browser automation</p>
                     </button>
                     <button
                       onClick={() => setConnectionMethod('agent')}
                       className={cn(
-                        'flex flex-col items-center gap-2 p-3.5 rounded-xl border transition-all text-center min-h-[110px] justify-center',
+                        'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
                         connectionMethod === 'agent'
-                          ? 'border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 shadow-sm'
-                          : 'border border-border bg-background hover:border-border/80'
+                          ? 'border border-emerald-400/40 bg-emerald-50 dark:bg-emerald-950/30 shadow-md ring-1 ring-emerald-400/20'
+                          : 'border border-border/30 bg-background hover:border-border/50 hover:shadow-md hover:-translate-y-0.5'
                       )}
                     >
                       <BrainCircuit className={cn('h-5 w-5', connectionMethod === 'agent' ? 'text-emerald-600' : 'text-muted-foreground')} />
