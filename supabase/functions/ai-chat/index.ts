@@ -2947,6 +2947,39 @@ const tools = [
       }
     }
   },
+  {
+    type: "function",
+    function: {
+      name: "search_assai_documents",
+      description: "Search Assai DMS (the external document management system) for documents. Use this when the user asks to search Assai, find vendor documents, check document status in Assai, or asks about documents for a specific PO/purchase order number. Returns a list of matching documents with their type, status, revision, and title. ALWAYS use this instead of get_document_search_by_number when the user wants to search the external Assai system.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_number_pattern: {
+            type: "string",
+            description: 'Document number search pattern. Use % as wildcard. E.g. "6529-%-00006-%" for project 6529 PO ending 00006, or "6529-%" for all project 6529 docs'
+          },
+          discipline_code: {
+            type: "string",
+            description: 'Filter by discipline code, e.g. "ZV" for vendor documents, "PX" for process, "EA" for electrical'
+          },
+          document_type: {
+            type: "string",
+            description: 'Filter by ZV document type code, e.g. "A01" for SDR, "J01" for IOM manual, "H02" for ITP'
+          },
+          status_code: {
+            type: "string",
+            description: 'Filter by status, e.g. "AFU" for approved, "IFR" for under review'
+          },
+          company_code: {
+            type: "string",
+            description: 'Filter by originating company, e.g. "ABBE" for ABB Shanghai'
+          }
+        },
+        required: ["document_number_pattern"]
+      }
+    }
+  },
   // ═══════════════════════════════════════════════════════════════════════════
   // EXECUTIVE SUMMARY TOOL - For high-level status assessments
   // ═══════════════════════════════════════════════════════════════════════════
