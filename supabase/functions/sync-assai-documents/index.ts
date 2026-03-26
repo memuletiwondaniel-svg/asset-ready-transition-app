@@ -498,18 +498,17 @@ Deno.serve(async (req) => {
                 work_package_code: doc.work_package || doc.workPackage || "",
               }));
               await upsertBatch(documents, "oauth_rest");
-              route1Success = true;
-              console.log(`[sync-assai] Route 1 SUCCESS: ${documents.length} documents via OAuth REST`);
+              routeSucceeded = true;
+              console.log(`[sync-assai] API route SUCCESS: ${documents.length} documents via OAuth REST`);
             }
           }
         }
       } catch (e) {
-        console.log(`[sync-assai] Route 1 failed: ${e}`);
+        console.log(`[sync-assai] API route failed: ${e}`);
       }
-      } // end if (runRoute1)
+      } // end if api
 
-      // ── ROUTE 2: Form-based HTML scraping ─────────────────────────
-      if (runRoute2 && !route1Success) {
+      if (currentRoute === 'automation' && !routeSucceeded) {
         console.log("[sync-assai] Route 2: Form-based HTML scraping...");
         const awBase = `${resolvedBase}/AW${resolvedDb}`;
 
