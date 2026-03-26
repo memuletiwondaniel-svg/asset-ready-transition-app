@@ -64,7 +64,6 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
         if (existing.apiCredentials) setApiCredentials(existing.apiCredentials);
       } else {
         setInterfaceMethod(null);
-        setRpaCredentials({ portalUrl: DEFAULT_PORTAL_URLS[api.id] || '', username: '', password: '' });
         setApiCredentials({ endpointUrl: '', authType: 'api_key' });
       }
       setCurrentStep(1);
