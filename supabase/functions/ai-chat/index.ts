@@ -2957,7 +2957,7 @@ const tools = [
         properties: {
           document_number_pattern: {
             type: "string",
-            description: 'Document number search pattern. Use % as wildcard. E.g. "6529-%-00006-%" for project 6529 PO ending 00006, or "6529-%" for all project 6529 docs'
+            description: 'Document number or PO search pattern. For PO-based searches, pass the last 5 digits (e.g. "00006") and it will use Assai purchase_code field. For document number searches, use prefix patterns like "6529-%" . Assai wildcards only work as prefix/suffix, NOT mid-string.'
           },
           discipline_code: {
             type: "string",
@@ -6886,7 +6886,21 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // Step 4: Search documents
         const searchParams = new URLSearchParams();
         searchParams.set('selected_project_codes', projectCabinet);
-        searchParams.set('number', document_number_pattern);
+        
+        // Detect PO-based search: pattern ending in 5 digits like "%-00006-%" or just "00006"
+        const isPOSearch = document_number_pattern.match(/%-?(\d{5})-?%?$/) || document_number_pattern.match(/^(\d{5})$/);
+        const poDigits = isPOSearch?.[1];
+        
+        if (poDigits) {
+          // Use purchase_code field — confirmed working for vendor doc package lookups
+          searchParams.set('purchase_code', poDigits);
+          console.log('search_assai_documents: PO-based search using purchase_code=' + poDigits);
+        } else {
+          // Regular document number search (prefix match works in Assai)
+          searchParams.set('number', document_number_pattern);
+          console.log('search_assai_documents: number-based search using number=' + document_number_pattern);
+        }
+        
         searchParams.set('subclass_type', 'DES_DOC');
         searchParams.set('searchBean', 'docs.SearchDocuments');
         searchParams.set('start_row', '1');
