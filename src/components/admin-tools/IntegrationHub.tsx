@@ -390,9 +390,12 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       toast.info('Starting Assai document sync...');
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        const fallbackChain = [connectionMethod];
+        if (fallback1 !== 'none') fallbackChain.push(fallback1);
+        if (fallback2 !== 'none') fallbackChain.push(fallback2);
         const { data, error } = await supabase.functions.invoke('sync-assai-documents', {
           headers: { Authorization: `Bearer ${session?.access_token}` },
-          body: { sync_method: connectionMethod },
+          body: { sync_method: connectionMethod, fallback_chain: fallbackChain },
         });
         if (error) throw error;
         if (data?.success) {
