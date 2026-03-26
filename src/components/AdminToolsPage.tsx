@@ -694,7 +694,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                           className="absolute top-3 right-3 p-1 rounded-md hover:bg-muted/50 transition-colors z-10"
                           aria-label="Remove from favorites"
                         >
-                          <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 transition-all duration-200" />
+                          <Star className="h-3.5 w-3.5 text-amber-400/60 fill-amber-400/60 hover:text-amber-500 hover:fill-amber-500 transition-all duration-200" />
                         </button>
                         <div className="flex items-start gap-3 pr-6">
                           <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200`}>
