@@ -590,6 +590,7 @@ Deno.serve(async (req) => {
           failed_count: failedCount,
           new_documents: newCount,
           status_changes: statusChanges,
+          sync_route_used: syncRoute,
         }).eq("id", syncLogId);
       }
 
@@ -619,6 +620,7 @@ Deno.serve(async (req) => {
           sync_status: "failed",
           error_message: syncErr.message,
           error_details: { stack: syncErr.stack },
+          sync_route_used: syncRoute || "none",
         }).eq("id", syncLogId);
       }
       return new Response(
