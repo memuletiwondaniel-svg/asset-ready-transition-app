@@ -6325,38 +6325,26 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const docNumber = args.document_number;
         const question = args.question || 'Summarise this document';
         
-        // STEP 1 — Find document in dms_external_sync
-        const { data: syncDoc, error: syncErr } = await supabaseClient
+        // STEP 1 — Find document in dms_external_sync (optional — may not be synced yet)
+        const { data: syncDoc } = await supabaseClient
           .from('dms_external_sync')
           .select('*')
           .eq('document_number', docNumber)
           .eq('dms_platform', 'assai')
           .maybeSingle();
         
-        if (syncErr) {
-          console.error('read_assai_document sync lookup error:', syncErr);
-          return { error: 'Failed to query document sync records: ' + syncErr.message };
-        }
-        
-        if (!syncDoc) {
-          return { 
-            error: 'Document not found in synced records. Run Sync Now from DMS Settings to update the document register.',
-            suggestion: 'Navigate to Admin Tools > DMS Settings and trigger a fresh sync for this project.'
-          };
-        }
-        
-        const metadata = {
-          document_number: syncDoc.document_number,
-          title: syncDoc.document_title || 'Unknown',
-          status: syncDoc.status_code || 'Unknown',
-          revision: syncDoc.revision || 'Unknown',
-          external_url: syncDoc.external_url,
-          last_synced: syncDoc.last_synced_at,
-          discipline: syncDoc.discipline_code,
-          platform: syncDoc.dms_platform
+        const metadata: Record<string, any> = {
+          document_number: docNumber,
+          title: syncDoc?.document_title || 'Unknown',
+          status: syncDoc?.status_code || 'Unknown',
+          revision: syncDoc?.revision || 'Unknown',
+          external_url: syncDoc?.external_url,
+          last_synced: syncDoc?.last_synced_at,
+          discipline: syncDoc?.discipline_code,
+          platform: 'assai'
         };
         
-        // STEP 2 — Authenticate with Assai
+        // STEP 2 — Get credentials
         const { data: creds, error: credErr } = await supabaseClient
           .from('dms_sync_credentials')
           .select('*')
@@ -6364,7 +6352,6 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           .maybeSingle();
         
         if (credErr || !creds) {
-          console.error('Assai credentials not found:', credErr);
           return {
             metadata,
             content_available: false,
@@ -6373,131 +6360,299 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           };
         }
         
-        const baseUrl = creds.base_url || 'https://eu.assaicloud.com/AWeu578';
-        const username = creds.username_encrypted;
-        const password = creds.password_encrypted;
+        const baseUrl = (creds.base_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/+$/, '');
+        let username = creds.username_encrypted || '';
+        let password = creds.password_encrypted || '';
+        
+        // Decrypt if needed (using shared crypto)
+        try {
+          const { isEncrypted, decrypt } = await import("../_shared/crypto.ts");
+          if (username && isEncrypted(username)) username = await decrypt(username);
+          if (password && isEncrypted(password)) password = await decrypt(password);
+        } catch (decryptErr) {
+          console.error('read_assai_document: credential decryption failed:', decryptErr);
+        }
         
         if (!username || !password) {
           return {
             metadata,
             content_available: false,
-            reason: 'Assai login credentials are not configured. Please set up credentials in DMS Settings.',
+            reason: 'Assai login credentials are not configured.',
             question_asked: question
           };
         }
         
-        // Step 2a — Get login page and session cookies
+        // STEP 3 — DWR Encrypted Login
         let sessionCookies: string[] = [];
         try {
+          // Step 3a: GET login page
           const loginPageRes = await fetch(baseUrl + '/login.aweb?loginMethod=unpw', {
             method: 'GET',
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
             redirect: 'manual'
           });
+          const loginPageSetCookies = loginPageRes.headers.getSetCookie?.() || [];
+          sessionCookies.push(...loginPageSetCookies.map(c => c.split(';')[0]));
+          await loginPageRes.text();
           
-          const loginPageCookies = loginPageRes.headers.getSetCookie?.() || [];
-          sessionCookies.push(...loginPageCookies);
-          const loginPageBody = await loginPageRes.text();
+          // Step 3b: Get DWR passphrase
+          const dwrBody = [
+            'callCount=1',
+            'windowName=',
+            'c0-scriptName=DWRBean',
+            'c0-methodName=getSessionID',
+            'c0-id=0',
+            'batchId=0',
+            'instanceId=0',
+            'page=%2FAWeu578%2Flogin.aweb%3FloginMethod%3Dunpw',
+            'scriptSessionId='
+          ].join('\n');
           
-          // Step 2b — Extract form action
-          const formActionMatch = loginPageBody.match(/action=["']([^"']+)["']/i);
-          const formAction = formActionMatch ? formActionMatch[1] : '/AWeu578/login.aweb';
+          const dwrRes = await fetch(baseUrl + '/dwr/call/plaincall/DWRBean.getSessionID.dwr', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'text/plain',
+              'Cookie': sessionCookies.join('; '),
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            body: dwrBody
+          });
+          const dwrSetCookies = dwrRes.headers.getSetCookie?.() || [];
+          sessionCookies.push(...dwrSetCookies.map(c => c.split(';')[0]));
+          const dwrText = await dwrRes.text();
           
-          // Step 2c — POST credentials
-          const loginRes = await fetch(baseUrl + (formAction.startsWith('/') ? '' : '/') + formAction, {
+          // Extract passphrase
+          const passphraseMatch = dwrText.match(/_remoteHandleCallback\('0','0',"([A-F0-9]+)"\)/i);
+          
+          let loginBody: string;
+          if (passphraseMatch) {
+            const passphrase = passphraseMatch[1];
+            
+            // Encrypt password using Web Crypto (AES-CBC with PBKDF2)
+            const saltHex = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+              .map(b => b.toString(16).padStart(2, '0')).join('');
+            const ivHex = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+              .map(b => b.toString(16).padStart(2, '0')).join('');
+            
+            // Convert hex passphrase to bytes for PBKDF2
+            const passphraseBytes = new TextEncoder().encode(passphrase);
+            const saltBytes = new Uint8Array(saltHex.match(/.{2}/g)!.map(b => parseInt(b, 16)));
+            const ivBytes = new Uint8Array(ivHex.match(/.{2}/g)!.map(b => parseInt(b, 16)));
+            
+            // Derive key using PBKDF2
+            const keyMaterial = await crypto.subtle.importKey('raw', passphraseBytes, 'PBKDF2', false, ['deriveKey']);
+            const aesKey = await crypto.subtle.deriveKey(
+              { name: 'PBKDF2', salt: saltBytes, iterations: 1000, hash: 'SHA-1' },
+              keyMaterial,
+              { name: 'AES-CBC', length: 128 },
+              false,
+              ['encrypt']
+            );
+            
+            // Encrypt password
+            const passwordBytes = new TextEncoder().encode(password);
+            const encrypted = await crypto.subtle.encrypt({ name: 'AES-CBC', iv: ivBytes }, aesKey, passwordBytes);
+            const encryptedHex = Array.from(new Uint8Array(encrypted))
+              .map(b => b.toString(16).padStart(2, '0')).join('');
+            
+            const encryptedPassword = saltHex + encryptedHex + ivHex;
+            loginBody = `userid=${encodeURIComponent(username)}&password=${encryptedPassword}&dbname=eu578&isSecure=true&loginMethod=unpw`;
+          } else {
+            // Fallback: plain login
+            console.log('read_assai_document: DWR passphrase not found, falling back to plain login');
+            loginBody = `userid=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&dbname=eu578&isSecure=false&loginMethod=unpw`;
+          }
+          
+          // Step 3c: POST login
+          const loginRes = await fetch(baseUrl + '/login.aweb', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
-              'Cookie': sessionCookies.join('; ')
+              'Cookie': sessionCookies.join('; '),
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'Referer': baseUrl + '/login.aweb?loginMethod=unpw'
             },
-            body: new URLSearchParams({
-              'username': username,
-              'password': password,
-              'loginMethod': 'unpw'
-            }).toString(),
+            body: loginBody,
             redirect: 'manual'
           });
+          const loginSetCookies = loginRes.headers.getSetCookie?.() || [];
+          sessionCookies.push(...loginSetCookies.map(c => c.split(';')[0]));
+          await loginRes.text();
           
-          const loginCookies = loginRes.headers.getSetCookie?.() || [];
-          sessionCookies.push(...loginCookies);
-          
-          // Check if login succeeded (302 redirect or 200)
+          // Check login success
           if (loginRes.status !== 200 && loginRes.status !== 302) {
-            const body = await loginRes.text();
-            console.error('Assai login failed:', loginRes.status, body.substring(0, 200));
             return {
               metadata,
               content_available: false,
-              reason: 'Assai authentication failed. Please verify credentials in DMS Settings.',
+              reason: 'Assai authentication failed (HTTP ' + loginRes.status + '). Verify credentials in DMS Settings.',
               question_asked: question
             };
           }
-          await loginRes.text(); // consume body
-        } catch (authErr) {
-          console.error('Assai auth error:', authErr);
+        } catch (authErr: any) {
+          console.error('read_assai_document auth error:', authErr);
           return {
             metadata,
             content_available: false,
-            reason: 'Could not connect to Assai portal. The service may be temporarily unavailable.',
+            reason: 'Could not connect to Assai portal: ' + (authErr.message || 'Unknown error'),
             question_asked: question
           };
         }
         
-        // STEP 3 — Fetch document file
+        const cookieHeader = sessionCookies.join('; ');
+        
+        // STEP 4 — Search for document to get pk_seq_nr and entt_seq_nr
+        let pkSeqNr: string | null = null;
+        let enttSeqNr: string | null = null;
+        
+        try {
+          const searchParams = new URLSearchParams();
+          searchParams.set('subclass_type', 'DES_DOC');
+          searchParams.set('searchBean', 'docs.SearchDocuments');
+          searchParams.set('clas_seq_nr', '1');
+          searchParams.set('suty_seq_nr', '1');
+          searchParams.set('proj_seq_nr', '59734');
+          searchParams.set('start_row', '1');
+          searchParams.set('number', docNumber);
+          searchParams.set('selected_project_codes', 'BGC_PROJ');
+          
+          const searchRes = await fetch(baseUrl + '/result.aweb', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Cookie': cookieHeader,
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            body: searchParams.toString()
+          });
+          
+          const searchHtml = await searchRes.text();
+          
+          // Parse myCells
+          const myCellsMatch = searchHtml.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
+          if (myCellsMatch) {
+            try {
+              const myCells = JSON.parse(myCellsMatch[1]);
+              if (myCells.length > 0) {
+                const row = myCells[0];
+                // Update metadata from live search
+                metadata.title = (row[8] || '').replace(/<[^>]*>/g, '').trim() || metadata.title;
+                metadata.status = (row[6] || '').replace(/<[^>]*>/g, '').trim() || metadata.status;
+                metadata.revision = (row[4] || '').replace(/<[^>]*>/g, '').trim() || metadata.revision;
+                metadata.responsible_engineer = (row[11] || '').replace(/<[^>]*>/g, '').trim();
+                metadata.company = (row[12] || '').replace(/<[^>]*>/g, '').trim();
+                metadata.discipline = (row[13] || '').replace(/<[^>]*>/g, '').trim();
+                metadata.document_type = (row[14] || '').replace(/<[^>]*>/g, '').trim();
+                metadata.work_package = (row[15] || '').replace(/<[^>]*>/g, '').trim();
+                metadata.priority = (row[9] || '').replace(/<[^>]*>/g, '').trim();
+                metadata.checked_out = (row[37] || 'N').replace(/<[^>]*>/g, '').trim();
+                
+                pkSeqNr = String(row[33] || '').replace(/<[^>]*>/g, '').trim();
+                enttSeqNr = String(row[34] || '').replace(/<[^>]*>/g, '').trim();
+              }
+            } catch (parseErr) {
+              console.error('read_assai_document: myCells parse error:', parseErr);
+            }
+          }
+          
+          if (!pkSeqNr || !enttSeqNr) {
+            // Try SUP_DOC if not found in DES_DOC
+            searchParams.set('subclass_type', 'SUP_DOC');
+            searchParams.set('clas_seq_nr', '2');
+            searchParams.set('suty_seq_nr', '7');
+            
+            const supRes = await fetch(baseUrl + '/result.aweb', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Cookie': cookieHeader,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+              },
+              body: searchParams.toString()
+            });
+            
+            const supHtml = await supRes.text();
+            const supMatch = supHtml.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
+            if (supMatch) {
+              try {
+                const supCells = JSON.parse(supMatch[1]);
+                if (supCells.length > 0) {
+                  const row = supCells[0];
+                  metadata.title = (row[8] || '').replace(/<[^>]*>/g, '').trim() || metadata.title;
+                  metadata.status = (row[6] || '').replace(/<[^>]*>/g, '').trim() || metadata.status;
+                  metadata.revision = (row[4] || '').replace(/<[^>]*>/g, '').trim() || metadata.revision;
+                  metadata.subclass = 'SUP_DOC';
+                  pkSeqNr = String(row[33] || '').replace(/<[^>]*>/g, '').trim();
+                  enttSeqNr = String(row[34] || '').replace(/<[^>]*>/g, '').trim();
+                }
+              } catch {}
+            }
+          }
+        } catch (searchErr: any) {
+          console.error('read_assai_document search error:', searchErr);
+        }
+        
+        if (!pkSeqNr || !enttSeqNr) {
+          return {
+            metadata,
+            content_available: false,
+            reason: 'Document not found in Assai search results. Check the document number is correct.',
+            question_asked: question
+          };
+        }
+        
+        // Check if document is checked out
+        if (metadata.checked_out === 'Y') {
+          return {
+            metadata,
+            content_available: false,
+            reason: 'Document is currently checked out by another user and cannot be downloaded.',
+            question_asked: question
+          };
+        }
+        
+        // STEP 5 — Download file
         let pdfBase64: string | null = null;
         let documentMediaType = 'application/pdf';
         
         try {
-          // Use external_url if available, otherwise construct from document number
-          let docUrl = syncDoc.external_url;
-          if (!docUrl) {
-            // Construct search URL pattern
-            docUrl = baseUrl + '/search.aweb?document_nr=' + encodeURIComponent(docNumber);
-          }
-          
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout
+          const timeoutId = setTimeout(() => controller.abort(), 25000);
           
-          const docRes = await fetch(docUrl, {
+          const docRes = await fetch(baseUrl + '/download.aweb?pk_seq_nr=' + pkSeqNr + '&entt_seq_nr=' + enttSeqNr, {
             headers: {
-              'Cookie': sessionCookies.join('; ')
+              'Cookie': cookieHeader,
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             },
             signal: controller.signal
           });
           clearTimeout(timeoutId);
           
           if (!docRes.ok) {
-            console.error('Assai document fetch failed:', docRes.status);
             return {
               metadata,
               content_available: false,
-              reason: 'Document file could not be downloaded from Assai (HTTP ' + docRes.status + '). Metadata is shown below.',
+              reason: 'Document file could not be downloaded (HTTP ' + docRes.status + '). Metadata shown below.',
               question_asked: question
             };
           }
           
           const contentType = docRes.headers.get('content-type') || '';
-          if (contentType.includes('pdf')) {
-            documentMediaType = 'application/pdf';
-          } else if (contentType.includes('image')) {
-            documentMediaType = contentType.split(';')[0].trim();
-          } else {
-            documentMediaType = 'application/pdf'; // default assumption
-          }
+          if (contentType.includes('pdf')) documentMediaType = 'application/pdf';
+          else if (contentType.includes('image')) documentMediaType = contentType.split(';')[0].trim();
+          else documentMediaType = 'application/pdf';
           
           const arrayBuffer = await docRes.arrayBuffer();
           const bytes = new Uint8Array(arrayBuffer);
           
-          // Check file size (10MB limit)
           if (bytes.length > 10 * 1024 * 1024) {
             return {
               metadata,
               content_available: false,
-              reason: 'Document file is larger than 10MB. Metadata is available but content reading is limited for large files.',
+              reason: 'Document file exceeds 10MB limit. Metadata available.',
               question_asked: question
             };
           }
           
-          // Convert to base64
           let binary = '';
           for (let i = 0; i < bytes.length; i++) {
             binary += String.fromCharCode(bytes[i]);
@@ -6505,33 +6660,17 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           pdfBase64 = btoa(binary);
         } catch (fetchErr: any) {
           if (fetchErr?.name === 'AbortError') {
-            return {
-              metadata,
-              content_available: false,
-              reason: 'Document download timed out (>25 seconds). The file may be very large. Metadata is shown below.',
-              question_asked: question
-            };
+            return { metadata, content_available: false, reason: 'Download timed out (>25s).', question_asked: question };
           }
-          console.error('Assai document fetch error:', fetchErr);
-          return {
-            metadata,
-            content_available: false,
-            reason: 'Failed to download document from Assai. Metadata is available.',
-            question_asked: question
-          };
+          return { metadata, content_available: false, reason: 'Failed to download from Assai.', question_asked: question };
         }
         
-        // STEP 4 — Pass document to Claude for reading
+        // STEP 6 — Pass to Claude for reading
         if (pdfBase64) {
           try {
             const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY");
             if (!ANTHROPIC_KEY) {
-              return {
-                metadata,
-                content_available: false,
-                reason: 'AI document reading service is not configured (missing API key).',
-                question_asked: question
-              };
+              return { metadata, content_available: false, reason: 'AI reading service not configured.', question_asked: question };
             }
             
             const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
@@ -6549,16 +6688,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                   content: [
                     {
                       type: "document",
-                      source: {
-                        type: "base64",
-                        media_type: documentMediaType,
-                        data: pdfBase64
-                      }
+                      source: { type: "base64", media_type: documentMediaType, data: pdfBase64 }
                     },
-                    {
-                      type: "text",
-                      text: question
-                    }
+                    { type: "text", text: question }
                   ]
                 }]
               }),
@@ -6567,46 +6699,29 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             if (!claudeRes.ok) {
               const errText = await claudeRes.text();
               console.error('Claude document reading error:', claudeRes.status, errText.substring(0, 300));
-              return {
-                metadata,
-                content_available: false,
-                reason: 'AI could not process the document content (API error). Metadata is available.',
-                question_asked: question
-              };
+              return { metadata, content_available: false, reason: 'AI could not process the document.', question_asked: question };
             }
             
             const claudeResult = await claudeRes.json();
-            const contentBlocks = claudeResult.content || [];
-            const textContent = contentBlocks
+            const textContent = (claudeResult.content || [])
               .filter((b: any) => b.type === 'text')
               .map((b: any) => b.text)
               .join('\n');
             
-            // STEP 5 — Return combined answer
             return {
               metadata,
               content_available: true,
               document_content_answer: textContent,
               question_asked: question,
-              note: 'This answer is based on the actual document content fetched from Assai DMS.'
+              note: 'This answer is based on the actual document content fetched live from Assai DMS.'
             };
           } catch (claudeErr) {
             console.error('Claude document reading exception:', claudeErr);
-            return {
-              metadata,
-              content_available: false,
-              reason: 'AI document reading encountered an error. Metadata is available.',
-              question_asked: question
-            };
+            return { metadata, content_available: false, reason: 'AI reading encountered an error.', question_asked: question };
           }
         }
         
-        return {
-          metadata,
-          content_available: false,
-          reason: 'Document content could not be retrieved.',
-          question_asked: question
-        };
+        return { metadata, content_available: false, reason: 'Document content could not be retrieved.', question_asked: question };
       } catch (err) {
         console.error('read_assai_document error:', err);
         return { error: String(err) };
