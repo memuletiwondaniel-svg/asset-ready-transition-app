@@ -730,7 +730,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <p className="text-[11px] text-muted-foreground leading-tight">REST endpoint</p>
                       </button>
                     <button
-                      onClick={() => { setConnectionMethod('automation'); setFallback1('none'); setFallback2('none'); }}
+                      onClick={() => setConnectionMethod('automation')}
                       className={cn(
                         'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
                         connectionMethod === 'automation'
