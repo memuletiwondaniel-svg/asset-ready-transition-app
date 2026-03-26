@@ -86,6 +86,12 @@ const CONNECTION_METHOD_OPTION_LABELS: Record<ConnectionMethod, string> = {
   agent: 'Agent (Selma AI)',
 };
 
+const CONNECTION_METHOD_COLORS: Record<ConnectionMethod, string> = {
+  api: 'bg-blue-50 text-blue-700 border-blue-200/60 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800/40',
+  automation: 'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800/40',
+  agent: 'bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/40',
+};
+
 const ALL_PLATFORMS: Platform[] = [
   { id: 'assai', name: 'Assai', description: 'Enterprise document management for O&G', section: 'dms', logo: assaiLogo, logoScale: 1.15, accent: '#F97316', badgeLabel: 'assai' },
   { id: 'wrench', name: 'Wrench', description: 'Project document control and management', section: 'dms', logo: wrenchLogo, accent: '#2563EB', badgeLabel: 'wrench' },
@@ -753,13 +759,13 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
                       <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border/40">
                         <span className="text-[10px] text-muted-foreground/70">Run order</span>
-                        <Badge variant="secondary" className="h-5 px-2 text-[10px] font-medium">
+                        <Badge variant="outline" className={cn("h-5 px-2 text-[10px] font-medium", CONNECTION_METHOD_COLORS[connectionMethod])}>
                           {CONNECTION_METHOD_BADGE_LABELS[connectionMethod]}
                         </Badge>
                         {fallback1 !== 'none' && (
                           <>
                             <span className="text-[10px] text-muted-foreground/50">→</span>
-                            <Badge variant="outline" className="h-5 px-2 text-[10px] font-medium">
+                            <Badge variant="outline" className={cn("h-5 px-2 text-[10px] font-medium", CONNECTION_METHOD_COLORS[fallback1 as ConnectionMethod])}>
                               {CONNECTION_METHOD_BADGE_LABELS[fallback1 as ConnectionMethod]}
                             </Badge>
                           </>
@@ -767,7 +773,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         {fallback2 !== 'none' && (
                           <>
                             <span className="text-[10px] text-muted-foreground/50">→</span>
-                            <Badge variant="outline" className="h-5 px-2 text-[10px] font-medium">
+                            <Badge variant="outline" className={cn("h-5 px-2 text-[10px] font-medium", CONNECTION_METHOD_COLORS[fallback2 as ConnectionMethod])}>
                               {CONNECTION_METHOD_BADGE_LABELS[fallback2 as ConnectionMethod]}
                             </Badge>
                           </>
