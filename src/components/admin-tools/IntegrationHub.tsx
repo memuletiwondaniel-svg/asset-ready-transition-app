@@ -781,7 +781,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                 {/* CONNECTION METHOD */}
                 <div className="space-y-3">
                   <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Primary Method</span>
-                  <div className="grid grid-cols-3 gap-2.5">
+                  <div className="grid grid-cols-2 gap-2.5">
                     <button
                       onClick={() => setConnectionMethod('api')}
                       className={cn(
@@ -794,19 +794,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <Zap className={cn('h-5 w-5', connectionMethod === 'api' ? 'text-blue-600' : 'text-muted-foreground')} />
                       <span className={cn('font-medium text-sm', connectionMethod === 'api' ? 'text-blue-700 dark:text-blue-400' : 'text-foreground')}>API</span>
                       <p className="text-[11px] text-muted-foreground leading-tight">REST endpoint</p>
-                      </button>
-                    <button
-                      onClick={() => setConnectionMethod('automation')}
-                      className={cn(
-                        'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
-                        connectionMethod === 'automation'
-                          ? 'border border-amber-400/40 bg-amber-50 dark:bg-amber-950/30 shadow-md ring-1 ring-amber-400/20'
-                          : 'border border-border/30 bg-background hover:border-border/50 hover:shadow-md hover:-translate-y-0.5'
-                      )}
-                    >
-                      <MousePointerClick className={cn('h-5 w-5', connectionMethod === 'automation' ? 'text-amber-600' : 'text-muted-foreground')} />
-                      <span className={cn('font-medium text-sm', connectionMethod === 'automation' ? 'text-amber-700 dark:text-amber-400' : 'text-foreground')}>RPA</span>
-                      <p className="text-[11px] text-muted-foreground leading-tight">Browser based</p>
                       </button>
                     <button
                       onClick={() => setConnectionMethod('agent')}
