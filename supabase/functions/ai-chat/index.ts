@@ -6768,15 +6768,19 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // Get Assai credentials
         const { data: creds } = await supabaseClient
           .from('dms_sync_credentials')
-          .select('*')
+          .select('base_url, username_encrypted, password_encrypted, project_code_field')
           .eq('dms_platform', 'assai')
-          .maybeSingle();
+          .single();
         
         if (!creds) {
           return { error: 'Assai credentials not configured. Please set up Assai connection in Integration Hub.' };
         }
 
-        const baseUrl = (creds.base_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/+$/, '');
+        const baseUrl = (creds.base_url || 'https://eu.assaicloud.com').replace(/\/+$/, '');
+        const instancePath = '/AWeu578';
+        const dbName = 'eu578';
+        const projSeqNr = '59734';
+        const projectCabinet = 'BGC_PROJ';
         let username = creds.username_encrypted || '';
         let password = creds.password_encrypted || '';
         
@@ -6792,11 +6796,12 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return { error: 'Assai login credentials are not configured.' };
         }
 
-        // DWR Encrypted Login (same flow as read_assai_document)
+        // DWR Encrypted Login
         let sessionCookies: string[] = [];
+        const assaiBase = baseUrl + instancePath;
         
         // Step 1: GET login page
-        const loginPageRes = await fetch(baseUrl + '/login.aweb?loginMethod=unpw', {
+        const loginPageRes = await fetch(assaiBase + '/login.aweb?loginMethod=unpw', {
           method: 'GET',
           headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
           redirect: 'manual'
@@ -6809,11 +6814,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const dwrBody = [
           'callCount=1', 'windowName=', 'c0-scriptName=DWRBean',
           'c0-methodName=getSessionID', 'c0-id=0', 'batchId=0',
-          'instanceId=0', 'page=%2FAWeu578%2Flogin.aweb%3FloginMethod%3Dunpw',
+          'instanceId=0', `page=%2FAWeu578%2Flogin.aweb%3FloginMethod%3Dunpw`,
           'scriptSessionId='
         ].join('\n');
         
-        const dwrRes = await fetch(baseUrl + '/dwr/call/plaincall/DWRBean.getSessionID.dwr', {
+        const dwrRes = await fetch(assaiBase + '/dwr/call/plaincall/DWRBean.getSessionID.dwr', {
           method: 'POST',
           headers: {
             'Content-Type': 'text/plain',
@@ -6850,20 +6855,20 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           const encryptedHex = Array.from(new Uint8Array(encrypted))
             .map(b => b.toString(16).padStart(2, '0')).join('');
           const encryptedPassword = saltHex + encryptedHex + ivHex;
-          loginBody = `userid=${encodeURIComponent(username)}&password=${encryptedPassword}&dbname=eu578&isSecure=true&loginMethod=unpw`;
+          loginBody = `userid=${encodeURIComponent(username)}&password=${encryptedPassword}&dbname=${dbName}&isSecure=true&loginMethod=unpw`;
         } else {
           console.log('search_assai_documents: DWR passphrase not found, falling back to plain login');
-          loginBody = `userid=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&dbname=eu578&isSecure=false&loginMethod=unpw`;
+          loginBody = `userid=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&dbname=${dbName}&isSecure=false&loginMethod=unpw`;
         }
         
         // Step 3: POST login
-        const loginRes = await fetch(baseUrl + '/login.aweb', {
+        const loginRes = await fetch(assaiBase + '/login.aweb', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Cookie': sessionCookies.join('; '),
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Referer': baseUrl + '/login.aweb?loginMethod=unpw'
+            'Referer': assaiBase + '/login.aweb?loginMethod=unpw'
           },
           body: loginBody,
           redirect: 'manual'
@@ -6880,12 +6885,12 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         
         // Step 4: Search documents
         const searchParams = new URLSearchParams();
-        searchParams.set('selected_project_codes', 'BGC_PROJ');
+        searchParams.set('selected_project_codes', projectCabinet);
         searchParams.set('number', document_number_pattern);
         searchParams.set('subclass_type', 'DES_DOC');
         searchParams.set('searchBean', 'docs.SearchDocuments');
         searchParams.set('start_row', '1');
-        searchParams.set('proj_seq_nr', '59734');
+        searchParams.set('proj_seq_nr', projSeqNr);
         searchParams.set('clas_seq_nr', '1');
         searchParams.set('suty_seq_nr', '1');
         searchParams.set('entity_code', 'DOCS');
@@ -6895,7 +6900,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         if (status_code) searchParams.set('status_code', status_code);
         if (company_code) searchParams.set('company_code', company_code);
 
-        const searchRes = await fetch(baseUrl + '/result.aweb', {
+        const searchRes = await fetch(assaiBase + '/result.aweb', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -6944,7 +6949,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           searchParams.set('suty_seq_nr', '7');
           
           try {
-            const supRes = await fetch(baseUrl + '/result.aweb', {
+            const supRes = await fetch(assaiBase + '/result.aweb', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
