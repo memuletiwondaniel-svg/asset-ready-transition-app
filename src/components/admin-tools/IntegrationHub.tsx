@@ -274,7 +274,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         if (dbMethod) {
           setConnectionMethod(dbMethod);
         } else if (isAutomation) {
-          setConnectionMethod('automation');
+          setConnectionMethod('agent');
         } else {
           setConnectionMethod('api');
         }
