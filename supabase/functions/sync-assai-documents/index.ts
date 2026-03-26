@@ -438,9 +438,15 @@ Deno.serve(async (req) => {
       const sessionCookies = loginResult.cookies;
       console.log(`[sync-assai] Login succeeded. ${sessionCookies.length} cookies.`);
 
+      // Determine which route(s) to run based on sync_method
+      const runRoute1 = !syncMethod || syncMethod === 'api';
+      const runRoute2 = !syncMethod || syncMethod === 'automation';
+      console.log(`[sync-assai] sync_method=${syncMethod || 'auto'}, runRoute1=${runRoute1}, runRoute2=${runRoute2}`);
+
       // ── ROUTE 1: OAuth Bearer token + REST API ──────────────────────
       let route1Success = false;
 
+      if (runRoute1) {
       try {
         console.log("[sync-assai] Route 1: Attempting OAuth + REST API...");
 
