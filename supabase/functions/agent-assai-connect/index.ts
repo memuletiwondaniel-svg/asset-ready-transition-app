@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
         `c0-param1=string:${encodeURIComponent(password)}`,
         "c0-param2=string:",
         "batchId=0",
-        `page=${loginUrl}/login.html`,
+        `page=${appRoot}/login.html`,
         "httpSessionId=",
         `scriptSessionId=`,
       ].join("\n");
