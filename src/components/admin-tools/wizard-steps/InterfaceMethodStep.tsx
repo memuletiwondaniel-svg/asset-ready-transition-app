@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plug, MousePointerClick, BrainCircuit } from 'lucide-react';
+import { Plug, BrainCircuit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InterfaceMethod } from '@/lib/api-config-storage';
 
@@ -21,21 +21,10 @@ const methods = [
     ringColor: 'ring-blue-500/30',
   },
   {
-    id: 'rpa' as InterfaceMethod,
-    title: 'RPA',
-    subtitle: 'Browser Automation',
-    description: 'Interface via screen-scraping or web automation using portal credentials',
-    icon: MousePointerClick,
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-500/10',
-    borderColor: 'border-amber-500/20',
-    ringColor: 'ring-amber-500/30',
-  },
-  {
     id: 'agent' as InterfaceMethod,
     title: 'Agent',
-    subtitle: 'AI-Driven Interface',
-    description: 'Selma navigates Assai as a user — logging in, searching, and extracting documents autonomously',
+    subtitle: 'Selma AI',
+    description: 'Selma navigates Assai as a user — authenticating, searching, and extracting documents autonomously via HTTP',
     icon: BrainCircuit,
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-500/10',
@@ -51,7 +40,7 @@ export const InterfaceMethodStep: React.FC<InterfaceMethodStepProps> = ({ select
         <h3 className="text-sm font-medium text-foreground">Select Interface Method</h3>
         <p className="text-xs text-muted-foreground mt-1">How should ORSH communicate with this application?</p>
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {methods.map((method) => {
           const isSelected = selected === method.id;
           const Icon = method.icon;
