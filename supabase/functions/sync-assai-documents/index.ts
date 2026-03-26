@@ -371,46 +371,60 @@ Deno.serve(async (req) => {
      */
     async function upsertBatch(docs: any[], route: string) {
       syncRoute = route;
-      for (const doc of docs) {
-        try {
-          const docNumber = doc.document_number || "";
-          if (!docNumber) continue;
+      const validDocs = docs.filter(d => d.document_number?.trim());
+      if (validDocs.length === 0) return;
 
-          const payload = {
-            document_title: doc.document_title || "",
-            revision: doc.revision || "",
-            status_code: doc.status_code || "",
-            discipline_code: doc.discipline_code || "",
-            package_tag: doc.work_package_code || "",
-            last_synced_at: new Date().toISOString(),
-            sync_status: "synced",
-            metadata: { raw: doc, last_sync_source: route },
-          };
+      const now = new Date().toISOString();
 
-          const { data: existing } = await supabase
-            .from("dms_external_sync")
-            .select("id, status_code")
-            .eq("dms_platform", "assai")
-            .eq("document_number", docNumber)
-            .limit(1)
-            .maybeSingle();
+      // Fetch existing docs in one query to detect new vs updated
+      const docNumbers = validDocs.map(d => d.document_number.trim());
+      const { data: existingDocs } = await supabase
+        .from("dms_external_sync")
+        .select("document_number, status_code")
+        .eq("dms_platform", "assai")
+        .in("document_number", docNumbers);
 
-          if (existing) {
-            if (existing.status_code !== payload.status_code) totalStatusChanges++;
-            await supabase.from("dms_external_sync").update(payload).eq("id", existing.id);
-          } else {
-            await supabase.from("dms_external_sync").insert({
-              ...payload,
-              dms_platform: "assai",
-              document_number: docNumber,
-              tenant_id: creds.tenant_id,
-            });
-            totalNew++;
-          }
-          totalSynced++;
-        } catch (e) {
-          console.error(`[sync-assai] Failed to sync doc:`, e);
-          totalFailed++;
+      const existingMap = new Map<string, string>();
+      for (const e of existingDocs || []) {
+        existingMap.set(e.document_number, e.status_code || "");
+      }
+
+      // Build rows for bulk upsert
+      const rows = validDocs.map(doc => {
+        const docNum = doc.document_number.trim();
+        const statusCode = doc.status_code || "";
+        const isNew = !existingMap.has(docNum);
+        if (isNew) totalNew++;
+        else if (existingMap.get(docNum) !== statusCode) totalStatusChanges++;
+
+        return {
+          dms_platform: "assai" as const,
+          document_number: docNum,
+          document_title: doc.document_title || "",
+          revision: doc.revision || "",
+          status_code: statusCode,
+          discipline_code: doc.discipline_code || "",
+          package_tag: doc.work_package_code || "",
+          last_synced_at: now,
+          sync_status: "synced",
+          metadata: { raw: doc, last_sync_source: route },
+          tenant_id: creds.tenant_id,
+        };
+      });
+
+      // Bulk upsert in chunks of 200 using the partial unique index
+      const CHUNK = 200;
+      for (let i = 0; i < rows.length; i += CHUNK) {
+        const chunk = rows.slice(i, i + CHUNK);
+        const { error: upsertErr } = await supabase
+          .from("dms_external_sync")
+          .upsert(chunk, { onConflict: "dms_platform,document_number", ignoreDuplicates: false });
+
+        if (upsertErr) {
+          console.error(`[sync-assai] Bulk upsert chunk error:`, upsertErr.message);
+          totalFailed += chunk.length;
+        } else {
+          totalSynced += chunk.length;
         }
       }
 
