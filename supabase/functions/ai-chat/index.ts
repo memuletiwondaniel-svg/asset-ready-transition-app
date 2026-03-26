@@ -6761,6 +6761,258 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
 
+    case "search_assai_documents": {
+      try {
+        const { document_number_pattern, discipline_code, document_type, status_code, company_code } = args;
+        
+        // Get Assai credentials
+        const { data: creds } = await supabaseClient
+          .from('dms_sync_credentials')
+          .select('*')
+          .eq('dms_platform', 'assai')
+          .maybeSingle();
+        
+        if (!creds) {
+          return { error: 'Assai credentials not configured. Please set up Assai connection in Integration Hub.' };
+        }
+
+        const baseUrl = (creds.base_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/+$/, '');
+        let username = creds.username_encrypted || '';
+        let password = creds.password_encrypted || '';
+        
+        try {
+          const { isEncrypted, decrypt } = await import("../_shared/crypto.ts");
+          if (username && isEncrypted(username)) username = await decrypt(username);
+          if (password && isEncrypted(password)) password = await decrypt(password);
+        } catch (decryptErr) {
+          console.error('search_assai_documents: credential decryption failed:', decryptErr);
+        }
+        
+        if (!username || !password) {
+          return { error: 'Assai login credentials are not configured.' };
+        }
+
+        // DWR Encrypted Login (same flow as read_assai_document)
+        let sessionCookies: string[] = [];
+        
+        // Step 1: GET login page
+        const loginPageRes = await fetch(baseUrl + '/login.aweb?loginMethod=unpw', {
+          method: 'GET',
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+          redirect: 'manual'
+        });
+        const loginPageSetCookies = loginPageRes.headers.getSetCookie?.() || [];
+        sessionCookies.push(...loginPageSetCookies.map((c: string) => c.split(';')[0]));
+        await loginPageRes.text();
+        
+        // Step 2: Get DWR passphrase
+        const dwrBody = [
+          'callCount=1', 'windowName=', 'c0-scriptName=DWRBean',
+          'c0-methodName=getSessionID', 'c0-id=0', 'batchId=0',
+          'instanceId=0', 'page=%2FAWeu578%2Flogin.aweb%3FloginMethod%3Dunpw',
+          'scriptSessionId='
+        ].join('\n');
+        
+        const dwrRes = await fetch(baseUrl + '/dwr/call/plaincall/DWRBean.getSessionID.dwr', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain',
+            'Cookie': sessionCookies.join('; '),
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          },
+          body: dwrBody
+        });
+        const dwrSetCookies = dwrRes.headers.getSetCookie?.() || [];
+        sessionCookies.push(...dwrSetCookies.map((c: string) => c.split(';')[0]));
+        const dwrText = await dwrRes.text();
+        const passphraseMatch = dwrText.match(/_remoteHandleCallback\('0','0',"([A-F0-9]+)"\)/i);
+        
+        let loginBody: string;
+        if (passphraseMatch) {
+          const passphrase = passphraseMatch[1];
+          const saltHex = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+            .map(b => b.toString(16).padStart(2, '0')).join('');
+          const ivHex = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+            .map(b => b.toString(16).padStart(2, '0')).join('');
+          const passphraseBytes = new TextEncoder().encode(passphrase);
+          const saltBytes = new Uint8Array(saltHex.match(/.{2}/g)!.map(b => parseInt(b, 16)));
+          const ivBytes = new Uint8Array(ivHex.match(/.{2}/g)!.map(b => parseInt(b, 16)));
+          const keyMaterial = await crypto.subtle.importKey('raw', passphraseBytes, 'PBKDF2', false, ['deriveKey']);
+          const aesKey = await crypto.subtle.deriveKey(
+            { name: 'PBKDF2', salt: saltBytes, iterations: 1000, hash: 'SHA-1' },
+            keyMaterial,
+            { name: 'AES-CBC', length: 128 },
+            false,
+            ['encrypt']
+          );
+          const passwordBytes = new TextEncoder().encode(password);
+          const encrypted = await crypto.subtle.encrypt({ name: 'AES-CBC', iv: ivBytes }, aesKey, passwordBytes);
+          const encryptedHex = Array.from(new Uint8Array(encrypted))
+            .map(b => b.toString(16).padStart(2, '0')).join('');
+          const encryptedPassword = saltHex + encryptedHex + ivHex;
+          loginBody = `userid=${encodeURIComponent(username)}&password=${encryptedPassword}&dbname=eu578&isSecure=true&loginMethod=unpw`;
+        } else {
+          console.log('search_assai_documents: DWR passphrase not found, falling back to plain login');
+          loginBody = `userid=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&dbname=eu578&isSecure=false&loginMethod=unpw`;
+        }
+        
+        // Step 3: POST login
+        const loginRes = await fetch(baseUrl + '/login.aweb', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Cookie': sessionCookies.join('; '),
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Referer': baseUrl + '/login.aweb?loginMethod=unpw'
+          },
+          body: loginBody,
+          redirect: 'manual'
+        });
+        const loginSetCookies = loginRes.headers.getSetCookie?.() || [];
+        sessionCookies.push(...loginSetCookies.map((c: string) => c.split(';')[0]));
+        await loginRes.text();
+        
+        if (loginRes.status !== 200 && loginRes.status !== 302) {
+          return { error: 'Assai authentication failed (HTTP ' + loginRes.status + '). Verify credentials in DMS Settings.' };
+        }
+        
+        const cookieHeader = sessionCookies.join('; ');
+        
+        // Step 4: Search documents
+        const searchParams = new URLSearchParams();
+        searchParams.set('selected_project_codes', 'BGC_PROJ');
+        searchParams.set('number', document_number_pattern);
+        searchParams.set('subclass_type', 'DES_DOC');
+        searchParams.set('searchBean', 'docs.SearchDocuments');
+        searchParams.set('start_row', '1');
+        searchParams.set('proj_seq_nr', '59734');
+        searchParams.set('clas_seq_nr', '1');
+        searchParams.set('suty_seq_nr', '1');
+        searchParams.set('entity_code', 'DOCS');
+        
+        if (discipline_code) searchParams.set('discipline_code', discipline_code);
+        if (document_type) searchParams.set('document_type', document_type);
+        if (status_code) searchParams.set('status_code', status_code);
+        if (company_code) searchParams.set('company_code', company_code);
+
+        const searchRes = await fetch(baseUrl + '/result.aweb', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Cookie': cookieHeader,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          },
+          body: searchParams.toString()
+        });
+
+        const html = await searchRes.text();
+        
+        // Parse myCells
+        const myCellsMatch = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
+        
+        let allDocuments: any[] = [];
+        
+        if (myCellsMatch) {
+          try {
+            const myCells = JSON.parse(myCellsMatch[1]);
+            allDocuments = myCells.map((row: any) => ({
+              document_number: String(row[3] || '').replace(/<[^>]*>/g, '').trim(),
+              revision: String(row[4] || '').replace(/<[^>]*>/g, '').trim(),
+              revision_date: String(row[5] || '').replace(/<[^>]*>/g, '').trim(),
+              status: String(row[6] || '').replace(/<[^>]*>/g, '').trim(),
+              title: String(row[8] || '').replace(/<[^>]*>/g, '').trim(),
+              priority: String(row[9] || '').replace(/<[^>]*>/g, '').trim(),
+              responsible_engineer: String(row[11] || '').replace(/<[^>]*>/g, '').trim(),
+              company: String(row[12] || '').replace(/<[^>]*>/g, '').trim(),
+              discipline: String(row[13] || '').replace(/<[^>]*>/g, '').trim(),
+              type_code: String(row[14] || '').replace(/<[^>]*>/g, '').trim(),
+              work_package: String(row[15] || '').replace(/<[^>]*>/g, '').trim(),
+              purchase_order: String(row[16] || '').replace(/<[^>]*>/g, '').trim(),
+              pk_seq_nr: String(row[33] || '').replace(/<[^>]*>/g, '').trim(),
+              entt_seq_nr: String(row[34] || '').replace(/<[^>]*>/g, '').trim(),
+              subclass: 'DES_DOC'
+            }));
+          } catch (parseErr) {
+            console.error('search_assai_documents: myCells parse error:', parseErr);
+          }
+        }
+        
+        // Also try SUP_DOC if discipline is ZV or no results yet
+        if (allDocuments.length === 0 || discipline_code === 'ZV') {
+          searchParams.set('subclass_type', 'SUP_DOC');
+          searchParams.set('clas_seq_nr', '2');
+          searchParams.set('suty_seq_nr', '7');
+          
+          try {
+            const supRes = await fetch(baseUrl + '/result.aweb', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Cookie': cookieHeader,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+              },
+              body: searchParams.toString()
+            });
+            const supHtml = await supRes.text();
+            const supMatch = supHtml.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
+            if (supMatch) {
+              const supCells = JSON.parse(supMatch[1]);
+              const supDocs = supCells.map((row: any) => ({
+                document_number: String(row[3] || '').replace(/<[^>]*>/g, '').trim(),
+                revision: String(row[4] || '').replace(/<[^>]*>/g, '').trim(),
+                revision_date: String(row[5] || '').replace(/<[^>]*>/g, '').trim(),
+                status: String(row[6] || '').replace(/<[^>]*>/g, '').trim(),
+                title: String(row[8] || '').replace(/<[^>]*>/g, '').trim(),
+                priority: String(row[9] || '').replace(/<[^>]*>/g, '').trim(),
+                responsible_engineer: String(row[11] || '').replace(/<[^>]*>/g, '').trim(),
+                company: String(row[12] || '').replace(/<[^>]*>/g, '').trim(),
+                discipline: String(row[13] || '').replace(/<[^>]*>/g, '').trim(),
+                type_code: String(row[14] || '').replace(/<[^>]*>/g, '').trim(),
+                work_package: String(row[15] || '').replace(/<[^>]*>/g, '').trim(),
+                purchase_order: String(row[16] || '').replace(/<[^>]*>/g, '').trim(),
+                pk_seq_nr: String(row[33] || '').replace(/<[^>]*>/g, '').trim(),
+                entt_seq_nr: String(row[34] || '').replace(/<[^>]*>/g, '').trim(),
+                subclass: 'SUP_DOC'
+              }));
+              allDocuments.push(...supDocs);
+            }
+          } catch (supErr) {
+            console.error('search_assai_documents: SUP_DOC search error:', supErr);
+          }
+        }
+        
+        if (allDocuments.length === 0) {
+          return { found: false, total_found: 0, message: 'No documents found matching the search criteria in Assai.', search_pattern: document_number_pattern };
+        }
+
+        // Build summaries
+        const statusSummary: Record<string, number> = {};
+        const typeSummary: Record<string, { count: number; statuses: string[] }> = {};
+        allDocuments.forEach((d: any) => {
+          statusSummary[d.status] = (statusSummary[d.status] || 0) + 1;
+          if (!typeSummary[d.type_code]) typeSummary[d.type_code] = { count: 0, statuses: [] };
+          typeSummary[d.type_code].count++;
+          if (!typeSummary[d.type_code].statuses.includes(d.status)) {
+            typeSummary[d.type_code].statuses.push(d.status);
+          }
+        });
+
+        return {
+          found: true,
+          total_found: allDocuments.length,
+          search_pattern: document_number_pattern,
+          filters_applied: { discipline_code, document_type, status_code, company_code },
+          status_summary: statusSummary,
+          type_summary: typeSummary,
+          documents: allDocuments.slice(0, 50),
+          note: allDocuments.length > 50 ? `Showing first 50 of ${allDocuments.length} results. Refine your search for more specific results.` : undefined
+        };
+      } catch (err: any) {
+        console.error('search_assai_documents error:', err);
+        return { error: 'Assai search failed: ' + (err.message || String(err)) };
+      }
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // HANNAH (P2A HANDOVER INTELLIGENCE AGENT) TOOL HANDLERS
     // ═══════════════════════════════════════════════════════════════════════════
