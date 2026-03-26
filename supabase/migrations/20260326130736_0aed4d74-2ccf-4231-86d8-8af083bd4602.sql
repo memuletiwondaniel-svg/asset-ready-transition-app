@@ -1,0 +1,17 @@
+INSERT INTO agent_navigation_steps (step_order, platform, action_type, description, selector, value, wait_ms, max_retries, on_failure, is_active) VALUES
+(8, 'assai', 'lookup', 'Resolve DP number to Assai project code from dms_projects table', NULL, '{{dp_number}}', 1000, 2, 'stop', true),
+(9, 'assai', 'navigate', 'Navigate to Search Documents section in Assai', 'a[href*="search"], .menu-search, #searchDocuments', '{{base_url}}/search', 3000, 3, 'retry', true),
+(10, 'assai', 'wait', 'Wait for search form and filters to load', '#searchForm, .search-filters, input[name="documentNumber"]', NULL, 5000, 3, 'retry', true),
+(11, 'assai', 'select', 'Set project filter to All Projects to broaden search scope', 'select[name="project"], #projectFilter, .project-selector', 'ALL', 1000, 2, 'skip', true),
+(12, 'assai', 'input', 'Enter project code with wildcard suffix in document number field', 'input[name="documentNumber"], input[name="docNumber"], #documentNumber', '{{project_code}}-%', 500, 2, 'stop', true),
+(13, 'assai', 'click', 'Click Search button to find all documents matching project code', 'button[type="submit"], input[type="submit"], #searchButton, .btn-search', NULL, 3000, 2, 'retry', true),
+(14, 'assai', 'wait', 'Wait for search results table to populate', 'table.results, .search-results, #resultsTable, tbody tr', NULL, 10000, 3, 'retry', true),
+(15, 'assai', 'extract', 'Extract document list: number, title, revision, status, work package code', 'table.results tbody tr, .search-results tr, #resultsTable tbody tr', 'document_number,title,revision,status_code,work_package_code', 2000, 2, 'skip', true),
+(16, 'assai', 'extract', 'Verify Work Package Code column confirms correct DP number', 'td.workPackageCode, .col-workpackage', 'work_package_code_verification', 1000, 1, 'skip', true),
+(17, 'assai', 'click', 'Click info button on document row to open detail page', '.btn-info, .info-icon, a[title="Info"], button[title="Details"]', NULL, 3000, 2, 'retry', true),
+(18, 'assai', 'wait', 'Wait for document detail and history page to load', '.document-detail, .doc-history, #documentInfo, .revision-history', NULL, 5000, 3, 'retry', true),
+(19, 'assai', 'extract', 'Extract revision history, current status, dates, and file info', '.revision-history tr, .document-detail, #documentInfo', 'revision,status,date,file_type,file_size', 2000, 2, 'skip', true),
+(20, 'assai', 'click', 'Download document file via download link or double-click', 'a[href*="download"], .download-link, .file-row', NULL, 5000, 3, 'retry', true),
+(21, 'assai', 'click', 'Click Print button to export search results to PDF or Excel', 'button.print, #printButton, a[title="Print"], .btn-print', NULL, 2000, 2, 'skip', true),
+(22, 'assai', 'click', 'Select export format and confirm download', '#exportPDF, #exportExcel, .export-confirm', NULL, 3000, 2, 'skip', true),
+(23, 'assai', 'input', 'Filter by document type code for specific categories like BFD', 'input[name="documentType"], #documentTypeFilter', '{{document_type_code}}', 500, 2, 'skip', true);
