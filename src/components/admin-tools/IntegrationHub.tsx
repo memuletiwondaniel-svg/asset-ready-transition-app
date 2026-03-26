@@ -390,6 +390,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         const { data: { session } } = await supabase.auth.getSession();
         const { data, error } = await supabase.functions.invoke('sync-assai-documents', {
           headers: { Authorization: `Bearer ${session?.access_token}` },
+          body: { sync_method: connectionMethod },
         });
         if (error) throw error;
         if (data?.success) {
