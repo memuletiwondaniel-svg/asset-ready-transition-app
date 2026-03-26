@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plug, Bot, BrainCircuit } from 'lucide-react';
+import { Plug, MousePointerClick, BrainCircuit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InterfaceMethod } from '@/lib/api-config-storage';
 
