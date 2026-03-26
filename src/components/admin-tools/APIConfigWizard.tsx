@@ -12,14 +12,12 @@ import { ChevronLeft, ChevronRight, Save, CheckCircle2, Plug, Bot } from 'lucide
 import { cn } from '@/lib/utils';
 import {
   InterfaceMethod,
-  RPACredentials,
   APICredentials,
   APIConfig,
   getAPIConfig,
   saveAPIConfig,
 } from '@/lib/api-config-storage';
 import { InterfaceMethodStep } from './wizard-steps/InterfaceMethodStep';
-import { RPAConfigStep } from './wizard-steps/RPAConfigStep';
 import { APIConfigStep } from './wizard-steps/APIConfigStep';
 import { TestConnectionStep } from './wizard-steps/TestConnectionStep';
 
