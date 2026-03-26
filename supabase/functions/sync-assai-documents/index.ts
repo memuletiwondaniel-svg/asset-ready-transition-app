@@ -446,10 +446,14 @@ Deno.serve(async (req) => {
         : [syncMethod || 'automation'];
       console.log(`[sync-assai] execution_chain=${JSON.stringify(executionChain)}`);
 
-      // ── ROUTE 1: OAuth Bearer token + REST API ──────────────────────
-      let route1Success = false;
+      // ── Execute routes in chain order ──────────────────────
+      let routeSucceeded = false;
 
-      if (runRoute1) {
+      for (const currentRoute of executionChain) {
+        if (routeSucceeded) break;
+        console.log(`[sync-assai] Trying route: ${currentRoute}`);
+
+      if (currentRoute === 'api') {
       try {
         console.log("[sync-assai] Route 1: Attempting OAuth + REST API...");
 
