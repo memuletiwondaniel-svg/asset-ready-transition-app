@@ -274,8 +274,22 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         // Detect automation credentials via marker
         const isAutomation = existing.project_code_field === '__automation__';
 
-        if (isAutomation) {
+        // Load primary_method from DB
+        const dbMethod = mapDbMethodToUi(existing.primary_method);
+        if (dbMethod) {
+          setConnectionMethod(dbMethod);
+        } else if (isAutomation) {
           setConnectionMethod('automation');
+        } else {
+          setConnectionMethod('api');
+        }
+
+        // Load fallback_chain from DB
+        const dbFallbacks = parseDbFallbackChain(existing.fallback_chain);
+        setFallback1(dbFallbacks[0] || 'none');
+        setFallback2(dbFallbacks[1] || 'none');
+
+        if (isAutomation || (dbMethod && dbMethod !== 'api')) {
           setFormData({
             base_url: '',
             username: existing.username_encrypted || '',
@@ -294,7 +308,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
             db_name: existing.db_name || '',
           });
         } else {
-          setConnectionMethod('api');
           // Infer auth type from stored data
           const hasClientId = !!existing.username_encrypted;
           const inferredAuthType: AuthType = hasClientId ? 'oauth' : 'bearer';
@@ -322,6 +335,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         setHasStoredCredentials(!!existing.password_encrypted);
       } else {
         setConnectionMethod('api');
+        setFallback1('none');
+        setFallback2('none');
         resetFormData();
         setHasStoredCredentials(false);
       }
@@ -334,6 +349,19 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     setUrlError('');
     setCredentialsSaved(!!getCredential(platform.id) || (platform.id === 'gocompletions' && gocConfigured));
     setShowPassword(false);
+
+    // Set initial dirty signature after state is set
+    const existing = getCredential(platform.id);
+    const dbMethod = mapDbMethodToUi(existing?.primary_method) || 'api';
+    const dbFallbacks = parseDbFallbackChain(existing?.fallback_chain);
+    setSavedDirtySignature(JSON.stringify({
+      connectionMethod: dbMethod,
+      fallback1: dbFallbacks[0] || 'none',
+      fallback2: dbFallbacks[1] || 'none',
+      base_url: existing?.base_url || '',
+      username: existing?.username_encrypted || '',
+    }));
+
     setPanelOpen(true);
   };
 
