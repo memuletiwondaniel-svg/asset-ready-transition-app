@@ -1,4 +1,4 @@
-export type InterfaceMethod = 'api' | 'rpa' | 'agent';
+export type InterfaceMethod = 'api' | 'rpa';
 
 export type APIAuthType = 'api_key' | 'oauth' | 'basic_auth' | 'sso';
 

@@ -294,17 +294,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Parse request body for sync_method and fallback_chain overrides
-    let syncMethodOverride: string | null = null;
-    let fallbackChainOverride: string[] | null = null;
-    try {
-      const body = await req.json();
-      syncMethodOverride = body?.sync_method || null;
-      fallbackChainOverride = Array.isArray(body?.fallback_chain) ? body.fallback_chain : null;
-    } catch {
-      // No body or invalid JSON — will use DB values
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -364,8 +353,6 @@ Deno.serve(async (req) => {
     let totalNew = 0;
     let totalStatusChanges = 0;
     let syncRoute = "none";
-    const routeFailures: Record<string, string> = {};
-    const routesAttempted: string[] = [];
 
     /**
      * Upsert a batch of documents immediately and update the sync log.
@@ -373,60 +360,46 @@ Deno.serve(async (req) => {
      */
     async function upsertBatch(docs: any[], route: string) {
       syncRoute = route;
-      const validDocs = docs.filter(d => d.document_number?.trim());
-      if (validDocs.length === 0) return;
+      for (const doc of docs) {
+        try {
+          const docNumber = doc.document_number || "";
+          if (!docNumber) continue;
 
-      const now = new Date().toISOString();
+          const payload = {
+            document_title: doc.document_title || "",
+            revision: doc.revision || "",
+            status_code: doc.status_code || "",
+            discipline_code: doc.discipline_code || "",
+            package_tag: doc.work_package_code || "",
+            last_synced_at: new Date().toISOString(),
+            sync_status: "synced",
+            metadata: { raw: doc, last_sync_source: route },
+          };
 
-      // Fetch existing docs in one query to detect new vs updated
-      const docNumbers = validDocs.map(d => d.document_number.trim());
-      const { data: existingDocs } = await supabase
-        .from("dms_external_sync")
-        .select("document_number, status_code")
-        .eq("dms_platform", "assai")
-        .in("document_number", docNumbers);
+          const { data: existing } = await supabase
+            .from("dms_external_sync")
+            .select("id, status_code")
+            .eq("dms_platform", "assai")
+            .eq("document_number", docNumber)
+            .limit(1)
+            .maybeSingle();
 
-      const existingMap = new Map<string, string>();
-      for (const e of existingDocs || []) {
-        existingMap.set(e.document_number, e.status_code || "");
-      }
-
-      // Build rows for bulk upsert
-      const rows = validDocs.map(doc => {
-        const docNum = doc.document_number.trim();
-        const statusCode = doc.status_code || "";
-        const isNew = !existingMap.has(docNum);
-        if (isNew) totalNew++;
-        else if (existingMap.get(docNum) !== statusCode) totalStatusChanges++;
-
-        return {
-          dms_platform: "assai" as const,
-          document_number: docNum,
-          document_title: doc.document_title || "",
-          revision: doc.revision || "",
-          status_code: statusCode,
-          discipline_code: doc.discipline_code || "",
-          package_tag: doc.work_package_code || "",
-          last_synced_at: now,
-          sync_status: "synced",
-          metadata: { raw: doc, last_sync_source: route },
-          tenant_id: creds.tenant_id,
-        };
-      });
-
-      // Bulk upsert in chunks of 200 using the partial unique index
-      const CHUNK = 200;
-      for (let i = 0; i < rows.length; i += CHUNK) {
-        const chunk = rows.slice(i, i + CHUNK);
-        const { error: upsertErr } = await supabase
-          .from("dms_external_sync")
-          .upsert(chunk, { onConflict: "dms_platform,document_number", ignoreDuplicates: false });
-
-        if (upsertErr) {
-          console.error(`[sync-assai] Bulk upsert chunk error:`, upsertErr.message);
-          totalFailed += chunk.length;
-        } else {
-          totalSynced += chunk.length;
+          if (existing) {
+            if (existing.status_code !== payload.status_code) totalStatusChanges++;
+            await supabase.from("dms_external_sync").update(payload).eq("id", existing.id);
+          } else {
+            await supabase.from("dms_external_sync").insert({
+              ...payload,
+              dms_platform: "assai",
+              document_number: docNumber,
+              tenant_id: creds.tenant_id,
+            });
+            totalNew++;
+          }
+          totalSynced++;
+        } catch (e) {
+          console.error(`[sync-assai] Failed to sync doc:`, e);
+          totalFailed++;
         }
       }
 
@@ -456,41 +429,9 @@ Deno.serve(async (req) => {
       const sessionCookies = loginResult.cookies;
       console.log(`[sync-assai] Login succeeded. ${sessionCookies.length} cookies.`);
 
-      // Build execution chain: prefer request override, then DB values, then default
-      const mapMethod = (m: string): string => {
-        if (m === 'rpa' || m === 'automation') return 'automation';
-        if (m === 'agent') return 'agent';
-        if (m === 'api') return 'api';
-        return m;
-      };
+      // ── ROUTE 1: OAuth Bearer token + REST API ──────────────────────
+      let route1Success = false;
 
-      let executionChain: string[];
-      if (fallbackChainOverride && fallbackChainOverride.length > 0) {
-        executionChain = fallbackChainOverride.map(mapMethod).filter(m => m === 'api' || m === 'automation' || m === 'agent');
-      } else {
-        // Read from DB
-        const dbPrimary = mapMethod(creds.primary_method || 'rpa');
-        let dbFallbacks: string[] = [];
-        try {
-          const parsed = typeof creds.fallback_chain === 'string' ? JSON.parse(creds.fallback_chain) : creds.fallback_chain;
-          if (Array.isArray(parsed)) {
-            dbFallbacks = parsed.map((m: string) => mapMethod(m)).filter((m: string) => m === 'api' || m === 'automation' || m === 'agent');
-          }
-        } catch { /* ignore */ }
-        executionChain = [dbPrimary, ...dbFallbacks];
-      }
-      if (executionChain.length === 0) executionChain = ['automation'];
-      console.log(`[sync-assai] execution_chain=${JSON.stringify(executionChain)}`);
-
-      // ── Execute routes in chain order ──────────────────────
-      let routeSucceeded = false;
-
-      for (const currentRoute of executionChain) {
-        if (routeSucceeded) break;
-        routesAttempted.push(currentRoute);
-        console.log(`[sync-assai] Trying route: ${currentRoute}`);
-
-      if (currentRoute === 'api') {
       try {
         console.log("[sync-assai] Route 1: Attempting OAuth + REST API...");
 
@@ -535,19 +476,18 @@ Deno.serve(async (req) => {
                 work_package_code: doc.work_package || doc.workPackage || "",
               }));
               await upsertBatch(documents, "oauth_rest");
-              routeSucceeded = true;
-              console.log(`[sync-assai] API route SUCCESS: ${documents.length} documents via OAuth REST`);
+              route1Success = true;
+              console.log(`[sync-assai] Route 1 SUCCESS: ${documents.length} documents via OAuth REST`);
             }
           }
         }
-      } catch (e: any) {
-        routeFailures['api'] = e?.message || String(e);
-        console.log(`[sync-assai] API route failed: ${e}`);
+      } catch (e) {
+        console.log(`[sync-assai] Route 1 failed: ${e}`);
       }
-      } // end if api
 
-      if (currentRoute === 'automation' && !routeSucceeded) {
-        console.log("[sync-assai] Route 2: Form-based HTML scraping...");
+      // ── ROUTE 2: Form-based HTML scraping (proven fallback) ────────
+      if (!route1Success) {
+        console.log("[sync-assai] Route 2: Falling back to form-based HTML scraping...");
         const awBase = `${resolvedBase}/AW${resolvedDb}`;
 
         try {
@@ -676,15 +616,10 @@ Deno.serve(async (req) => {
           } else if (totalSynced === 0) {
             console.log(`[sync-assai] Route 2: 0 documents extracted`);
           }
-        } catch (e: any) {
-          routeFailures['automation'] = e?.message || String(e);
-          console.log(`[sync-assai] Automation route failed: ${e}`);
+        } catch (e) {
+          console.log(`[sync-assai] Route 2 failed: ${e}`);
         }
-
-        if (totalSynced > 0) routeSucceeded = true;
-      } // end if automation
-
-      } // end for executionChain
+      }
 
       console.log(`[sync-assai] Final: ${totalSynced} documents via ${syncRoute}`);
 
@@ -697,7 +632,6 @@ Deno.serve(async (req) => {
           new_documents: totalNew,
           status_changes: totalStatusChanges,
           sync_route_used: syncRoute,
-          error_details: { routes_attempted: routesAttempted, route_succeeded: syncRoute, route_failures: routeFailures },
         }).eq("id", syncLogId);
       }
 

@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Users, Settings, CheckCircle, Home, Search, X, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container, MapPin, GitBranch, Files, Brain, ChevronDown, Star } from 'lucide-react';
+import { Users, Settings, CheckCircle, Home, Search, X, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container, MapPin, GitBranch, Files, Brain, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
-import { useUserScopedFavorites } from '@/hooks/useUserScopedFavorites';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './admin/ThemeToggle';
@@ -99,14 +98,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [tenantSetupOpen, setTenantSetupOpen] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set([
-    'USER MANAGEMENT', 'LIVING DOCUMENTATION', 'AI AGENTS', 'INTEGRATIONS', 'SYSTEM', 'OPERATIONS & CONFIGURATION'
+    'LIVING DOCUMENTATION', 'AI AGENTS', 'INTEGRATIONS', 'SYSTEM', 'OPERATIONS & CONFIGURATION'
   ]));
-
-  // Admin favorites - user-scoped and persisted
-  const { favorites: adminFavorites, toggleFavorite: toggleAdminFavoriteRaw } = useUserScopedFavorites('orsh-admin-favorites');
-  const toggleAdminFavorite = useCallback((itemId: string, e: React.MouseEvent) => {
-    toggleAdminFavoriteRaw(itemId, e);
-  }, [toggleAdminFavoriteRaw]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<{
     full_name: string;
@@ -223,6 +216,19 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       ],
     },
     {
+      label: 'LIVING DOCUMENTATION',
+      columns: 3 as const,
+      items: [
+        { id: 'northstar-document', title: 'Strategic North Star', description: 'Vision, mission, product strategy', icon: Compass, gradient: 'from-amber-600 to-orange-700', badge: 'auto-update' as const, onClick: () => setActiveView('northstar-document') },
+        { id: 'platform-guide', title: 'Platform Guide', description: 'How to use ORSH, agent intros', icon: BookOpen, gradient: 'from-blue-600 to-indigo-700', badge: 'auto-update' as const, onClick: () => setActiveView('platform-guide') },
+        { id: 'ai-agent-strategy', title: 'AI Agent Strategy', description: 'Agent roadmap, tool registry', icon: Brain, gradient: 'from-violet-600 to-purple-700', badge: 'auto-update' as const, onClick: () => setActiveView('ai-agent-strategy') },
+        { id: 'security-document', title: 'Security & Compliance', description: 'Security posture, SOC 2 progress', icon: FileText, gradient: 'from-slate-600 to-zinc-700', badge: 'auto-update' as const, onClick: () => setActiveView('security-document') },
+        { id: 'journey-maps', title: 'Customer Journey Maps', description: 'Persona journeys, onboarding flows', icon: MapPin, gradient: 'from-pink-600 to-rose-700', onClick: () => setActiveView('journey-maps') },
+        { id: 'deployment-log', title: 'Deployment Log', description: 'Version history, release notes', icon: Rocket, gradient: 'from-emerald-500 to-teal-600', badge: 'auto-update' as const, onClick: () => setActiveView('deployment-log') },
+        { id: 'process-flows', title: 'Process Flow Maps', description: 'Workflows, approval chains', icon: GitBranch, gradient: 'from-emerald-600 to-teal-700', onClick: () => setActiveView('process-flows') },
+      ],
+    },
+    {
       label: 'AI AGENTS',
       columns: 3 as const,
       items: [
@@ -257,32 +263,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         { id: 'deployment-configs', title: 'Deployment Configs', description: 'Docker, CI/CD pipelines', icon: Container, gradient: 'from-cyan-600 to-blue-700', onClick: () => setActiveView('deployment-configs') },
       ],
     },
-    {
-      label: 'LIVING DOCUMENTATION',
-      columns: 3 as const,
-      items: [
-        { id: 'northstar-document', title: 'Strategic North Star', description: 'Vision, mission, product strategy', icon: Compass, gradient: 'from-amber-600 to-orange-700', badge: 'auto-update' as const, onClick: () => setActiveView('northstar-document') },
-        { id: 'platform-guide', title: 'Platform Guide', description: 'How to use ORSH, agent intros', icon: BookOpen, gradient: 'from-blue-600 to-indigo-700', badge: 'auto-update' as const, onClick: () => setActiveView('platform-guide') },
-        { id: 'ai-agent-strategy', title: 'AI Agent Strategy', description: 'Agent roadmap, tool registry', icon: Brain, gradient: 'from-violet-600 to-purple-700', badge: 'auto-update' as const, onClick: () => setActiveView('ai-agent-strategy') },
-        { id: 'security-document', title: 'Security & Compliance', description: 'Security posture, SOC 2 progress', icon: FileText, gradient: 'from-slate-600 to-zinc-700', badge: 'auto-update' as const, onClick: () => setActiveView('security-document') },
-        { id: 'journey-maps', title: 'Customer Journey Maps', description: 'Persona journeys, onboarding flows', icon: MapPin, gradient: 'from-pink-600 to-rose-700', onClick: () => setActiveView('journey-maps') },
-        { id: 'deployment-log', title: 'Deployment Log', description: 'Version history, release notes', icon: Rocket, gradient: 'from-emerald-500 to-teal-600', badge: 'auto-update' as const, onClick: () => setActiveView('deployment-log') },
-        { id: 'process-flows', title: 'Process Flow Maps', description: 'Workflows, approval chains', icon: GitBranch, gradient: 'from-emerald-600 to-teal-700', onClick: () => setActiveView('process-flows') },
-      ],
-    },
   ], [navigate, t]);
-
-  // Build a flat map of all items for favorites lookup
-  const allItemsMap = useMemo(() => {
-    const map = new Map<string, typeof sections[0]['items'][0]>();
-    sections.forEach(s => s.items.forEach(item => map.set(item.id, item)));
-    return map;
-  }, [sections]);
-
-  // Favorite items derived from sections
-  const favoriteItems = useMemo(() => 
-    adminFavorites.map(id => allItemsMap.get(id)).filter(Boolean) as typeof sections[0]['items'][0][],
-  [adminFavorites, allItemsMap]);
 
   // Filter sections based on search
   const filteredSections = useMemo(() => {
@@ -656,55 +637,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
               Found {totalFilteredItems} {totalFilteredItems === 1 ? 'result' : 'results'}
             </p>}
 
-            {/* Favorites Section */}
-            {favoriteItems.length > 0 && !searchQuery && (
-              <div className="mb-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-600/80 whitespace-nowrap select-none">
-                    FAVORITES
-                  </span>
-                  <div className="flex-1 h-px bg-amber-300/30" />
-                  <span className="text-[10px] text-amber-500/60 tabular-nums">{favoriteItems.length}</span>
-                </div>
-                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                  {favoriteItems.map((item) => {
-                    const IconComponent = item.icon;
-                    return (
-                      <div
-                        key={`fav-${item.id}`}
-                        className="group bg-card border border-amber-200/50 rounded-xl p-4 cursor-pointer hover:shadow-lg hover:shadow-amber-500/15 hover:-translate-y-1 hover:border-amber-300/60 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] relative h-[72px] flex items-center"
-                        onClick={item.onClick}
-                      >
-                        <button
-                          onClick={(e) => toggleAdminFavorite(item.id, e)}
-                          className="absolute top-3 right-3 p-1 rounded-md hover:bg-muted/50 transition-all duration-200 z-10 opacity-0 group-hover:opacity-100"
-                          aria-label="Remove from favorites"
-                        >
-                          <Star className="h-3.5 w-3.5 text-amber-400/60 fill-amber-400/60 hover:text-amber-500 hover:fill-amber-500 transition-all duration-200" />
-                        </button>
-                        <div className="flex items-start gap-3 pr-6 w-full">
-                          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
-                            <IconComponent className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
-                                {item.title}
-                              </h3>
-                            </div>
-                            <p className="text-xs text-muted-foreground/60 mt-0.5 leading-relaxed line-clamp-1">
-                              {item.description}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
             {/* Sections */}
             <div className="space-y-6">
               {filteredSections.map((section) => {
@@ -719,6 +651,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                 };
                 return (
                   <Collapsible key={section.label} open={isOpen} onOpenChange={toggleSection}>
+                    {/* Section Header */}
                     <CollapsibleTrigger className="flex items-center gap-3 w-full group/header cursor-pointer mb-3">
                       <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`} />
                       <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60 whitespace-nowrap select-none group-hover/header:text-muted-foreground transition-colors">
@@ -729,29 +662,18 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                     </CollapsibleTrigger>
 
                     <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+                      {/* Card Grid */}
                       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                         {section.items.map((item) => {
                           const IconComponent = item.icon;
-                          const isFav = adminFavorites.includes(item.id);
                           return (
                             <div
                               key={item.id}
-                              className="group bg-card border border-border/40 rounded-xl p-4 cursor-pointer hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 hover:border-border/80 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] relative h-[72px] flex items-center"
+                              className="group bg-card border border-border/40 rounded-xl p-4 cursor-pointer hover:shadow-md hover:shadow-primary/5 hover:-translate-y-0.5 hover:border-border/80 transition-all duration-200"
                               onClick={item.onClick}
                             >
-                              <button
-                                onClick={(e) => toggleAdminFavorite(item.id, e)}
-                                className="absolute top-3 right-3 p-1 rounded-md hover:bg-muted/50 transition-all duration-200 z-10 opacity-0 group-hover:opacity-100"
-                                aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
-                              >
-                                <Star className={`h-3.5 w-3.5 transition-all duration-200 ${
-                                  isFav 
-                                    ? 'text-amber-400/80 fill-amber-400/80 hover:text-amber-500 hover:fill-amber-500' 
-                                    : 'text-muted-foreground/40 hover:text-amber-400'
-                                }`} />
-                              </button>
-                              <div className="flex items-start gap-3 pr-6 w-full">
-                                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                              <div className="flex items-start gap-3">
+                                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200`}>
                                   <IconComponent className="h-4 w-4 text-white" />
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -759,8 +681,17 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                                     <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
                                       {item.title}
                                     </h3>
+                                    {'badge' in item && item.badge && (
+                                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+                                        item.badge === 'auto-update'
+                                          ? 'bg-blue-500/10 text-blue-600 border border-blue-200/50'
+                                          : 'bg-emerald-500/10 text-emerald-600 border border-emerald-200/50'
+                                      }`}>
+                                        {item.badge as string}
+                                      </span>
+                                    )}
                                   </div>
-                                  <p className="text-xs text-muted-foreground/60 mt-0.5 leading-relaxed line-clamp-1">
+                                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                                     {item.description}
                                   </p>
                                 </div>

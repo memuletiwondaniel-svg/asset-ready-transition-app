@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useUserScopedFavorites } from '@/hooks/useUserScopedFavorites';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +15,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { isAPIConfigured, getAPIConfig } from '@/lib/api-config-storage';
 import {
   Plug, Search, Wifi, RefreshCw, Loader2, Eye, EyeOff,
-  ChevronDown, CheckCircle2, XCircle, AlertTriangle, X, Zap, MousePointerClick, Info, Trash2, BrainCircuit, Star
+  ChevronDown, CheckCircle2, XCircle, AlertTriangle, X, Zap, Bot, Info, Trash2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -45,8 +44,6 @@ interface SyncCredential {
   sync_enabled: boolean;
   last_sync_at: string | null;
   db_name?: string | null;
-  primary_method?: string | null;
-  fallback_chain?: unknown;
 }
 
 interface SyncLog {
@@ -73,55 +70,8 @@ interface Platform {
   badgeLabel: string;
 }
 
-type ConnectionMethod = 'api' | 'automation' | 'agent';
+type ConnectionMethod = 'api' | 'automation';
 type AuthType = 'api_key' | 'oauth' | 'bearer';
-
-const mapDbMethodToUi = (method: string | null | undefined): ConnectionMethod | null => {
-  if (method === 'api') return 'api';
-  if (method === 'rpa') return 'automation';
-  if (method === 'agent') return 'agent';
-  return null;
-};
-
-const mapUiMethodToDb = (method: ConnectionMethod): 'api' | 'rpa' | 'agent' =>
-  method === 'automation' ? 'rpa' : method;
-
-const parseDbFallbackChain = (value: unknown): ConnectionMethod[] => {
-  const parsed = typeof value === 'string'
-    ? (() => {
-        try {
-          return JSON.parse(value);
-        } catch {
-          return [];
-        }
-      })()
-    : value;
-
-  if (!Array.isArray(parsed)) return [];
-
-  return parsed
-    .map((entry) => mapDbMethodToUi(typeof entry === 'string' ? entry : null))
-    .filter((entry): entry is ConnectionMethod => !!entry)
-    .slice(0, 2);
-};
-
-const CONNECTION_METHOD_BADGE_LABELS: Record<ConnectionMethod, string> = {
-  api: 'API',
-  automation: 'RPA',
-  agent: 'Agent',
-};
-
-const CONNECTION_METHOD_OPTION_LABELS: Record<ConnectionMethod, string> = {
-  api: 'API (REST)',
-  automation: 'RPA (Browser)',
-  agent: 'Agent (Selma AI)',
-};
-
-const CONNECTION_METHOD_COLORS: Record<ConnectionMethod, string> = {
-  api: 'bg-blue-50 text-blue-700 border-blue-200/60 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800/40',
-  automation: 'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800/40',
-  agent: 'bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/40',
-};
 
 const ALL_PLATFORMS: Platform[] = [
   { id: 'assai', name: 'Assai', description: 'Enterprise document management for O&G', section: 'dms', logo: assaiLogo, logoScale: 1.15, accent: '#F97316', badgeLabel: 'assai' },
@@ -149,8 +99,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   // Panel form state
   const [connectionMethod, setConnectionMethod] = useState<ConnectionMethod>('api');
   const [authType, setAuthType] = useState<AuthType>('api_key');
-  const [fallback1, setFallback1] = useState<string>('none');
-  const [fallback2, setFallback2] = useState<string>('none');
   const [formData, setFormData] = useState({
     base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
     client_id: '', client_secret: '', token_url: '', scope: '',
@@ -165,7 +113,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const [dbNameAutoDetected, setDbNameAutoDetected] = useState(false);
   const [saving, setSaving] = useState(false);
   const [hasStoredCredentials, setHasStoredCredentials] = useState(false);
-  const [savedDirtySignature, setSavedDirtySignature] = useState('');
 
   // Action states
   const [testingInPanel, setTestingInPanel] = useState(false);
@@ -175,14 +122,10 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    favorites: true,
-    dms: false,
+    dms: true,
     enterprise: false,
     comms: false,
   });
-
-  // Integration Hub favorites - user-scoped and persisted
-  const { favorites: hubFavorites, toggleFavorite: toggleHubFavorite } = useUserScopedFavorites('orsh-integration-hub-favorites');
 
   // GoCompletions localStorage status
   const [gocConfigured, setGocConfigured] = useState(false);
@@ -224,13 +167,13 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const getConnectionMethodLabel = (platformId: string): string | null => {
     if (platformId === 'gocompletions') {
       const config = getAPIConfig('gocompletions');
-      if (config?.interfaceMethod === 'rpa') return CONNECTION_METHOD_BADGE_LABELS.automation;
-      if (config?.interfaceMethod === 'api') return CONNECTION_METHOD_BADGE_LABELS.api;
+      if (config?.interfaceMethod === 'rpa') return 'Automation';
+      if (config?.interfaceMethod === 'api') return 'API';
       return null;
     }
     const cred = getCredential(platformId);
     if (!cred) return null;
-    return CONNECTION_METHOD_BADGE_LABELS.api;
+    return 'API';
   };
 
   const openPanel = (platform: Platform) => {
@@ -274,22 +217,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         // Detect automation credentials via marker
         const isAutomation = existing.project_code_field === '__automation__';
 
-        // Load primary_method from DB
-        const dbMethod = mapDbMethodToUi(existing.primary_method);
-        if (dbMethod) {
-          setConnectionMethod(dbMethod);
-        } else if (isAutomation) {
+        if (isAutomation) {
           setConnectionMethod('automation');
-        } else {
-          setConnectionMethod('api');
-        }
-
-        // Load fallback_chain from DB
-        const dbFallbacks = parseDbFallbackChain(existing.fallback_chain);
-        setFallback1(dbFallbacks[0] || 'none');
-        setFallback2(dbFallbacks[1] || 'none');
-
-        if (isAutomation || (dbMethod && dbMethod !== 'api')) {
           setFormData({
             base_url: '',
             username: existing.username_encrypted || '',
@@ -308,25 +237,14 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
             db_name: existing.db_name || '',
           });
         } else {
-          // Infer auth type from stored data
-          const hasClientId = !!existing.username_encrypted;
-          const inferredAuthType: AuthType = hasClientId ? 'oauth' : 'bearer';
-          setAuthType(inferredAuthType);
+          setConnectionMethod('api');
           setFormData({
             base_url: existing.base_url || '',
-            username: '',
-            password: '',
-            api_key: '',
-            header_name: 'X-API-Key',
-            client_id: hasClientId ? existing.username_encrypted || '' : '',
-            client_secret: '',
-            token_url: '',
-            scope: '',
+            username: '', password: '', api_key: '', header_name: 'X-API-Key',
+            client_id: '', client_secret: '', token_url: '', scope: '',
             project_code_field: existing.project_code_field || '',
             sync_enabled: existing.sync_enabled || false,
-            platform_url: '',
-            auth_token: '',
-            automation_enabled: false,
+            platform_url: '', auth_token: '', automation_enabled: false,
             db_name: '',
           });
         }
@@ -335,33 +253,15 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         setHasStoredCredentials(!!existing.password_encrypted);
       } else {
         setConnectionMethod('api');
-        setFallback1('none');
-        setFallback2('none');
         resetFormData();
         setHasStoredCredentials(false);
       }
     }
-    // Only reset auth type if no existing credential (otherwise it was set above)
-    if (!getCredential(platform.id) || platform.id === 'gocompletions') {
-      setAuthType('api_key');
-    }
+    setAuthType('api_key');
     setTriedSave(false);
     setUrlError('');
     setCredentialsSaved(!!getCredential(platform.id) || (platform.id === 'gocompletions' && gocConfigured));
     setShowPassword(false);
-
-    // Set initial dirty signature after state is set
-    const existing = getCredential(platform.id);
-    const dbMethod = mapDbMethodToUi(existing?.primary_method) || 'api';
-    const dbFallbacks = parseDbFallbackChain(existing?.fallback_chain);
-    setSavedDirtySignature(JSON.stringify({
-      connectionMethod: dbMethod,
-      fallback1: dbFallbacks[0] || 'none',
-      fallback2: dbFallbacks[1] || 'none',
-      base_url: existing?.base_url || '',
-      username: existing?.username_encrypted || '',
-    }));
-
     setPanelOpen(true);
   };
 
@@ -398,12 +298,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
         project_code_field: connectionMethod === 'automation' ? '__automation__' : formData.project_code_field,
         sync_enabled: connectionMethod === 'api' ? formData.sync_enabled : formData.automation_enabled,
-        primary_method: mapUiMethodToDb(connectionMethod),
-        fallback_chain: JSON.stringify(
-          [fallback1, fallback2]
-            .filter(f => f !== 'none')
-            .map(f => mapUiMethodToDb(f as ConnectionMethod))
-        ),
         updated_at: new Date().toISOString(),
       };
 
@@ -442,14 +336,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       toast.success('Credentials saved');
       setCredentialsSaved(true);
       setHasStoredCredentials(true);
-      // Update dirty signature to current state so isDirty becomes false
-      setSavedDirtySignature(JSON.stringify({
-        connectionMethod,
-        fallback1,
-        fallback2,
-        base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
-        username: formData.username,
-      }));
       fetchData();
     } catch (err: any) {
       console.error('[IntegrationHub] Save failed:', err);
@@ -465,45 +351,12 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       setTestingInPanel(true);
       setTestResultInPanel(null);
       try {
-        if (connectionMethod === 'agent') {
-          // Agent mode: query local dms_external_sync table
-          const { count, error } = await supabase
-            .from('dms_external_sync')
-            .select('*', { count: 'exact', head: true })
-            .eq('dms_platform', 'assai');
-          if (error) throw error;
-          const docCount = count ?? 0;
-          if (docCount > 0) {
-            setTestResultInPanel({ success: true, message: `Agent (Selma) Ready — ${docCount} documents available in local sync` });
-          } else {
-            setTestResultInPanel({ success: false, message: 'Agent (Selma) — No documents synced yet. Run Sync Now first to populate Selma\'s document store' });
-          }
-        } else {
-          // RPA or API mode: call test-assai-connection edge function
-          const { data: { session } } = await supabase.auth.getSession();
-          const { data, error } = await supabase.functions.invoke('test-assai-connection', {
-            headers: { Authorization: `Bearer ${session?.access_token}` },
-          });
-          if (error) throw error;
-          if (connectionMethod === 'api') {
-            setTestResultInPanel({
-              success: data?.success ?? false,
-              message: data?.success
-                ? `API Login OK · ${data.response_time_ms ?? '—'}ms — REST API module not yet enabled on server`
-                : data?.error || data?.message || 'API connection failed',
-              response_time_ms: data?.response_time_ms,
-            });
-          } else {
-            // RPA mode
-            setTestResultInPanel({
-              success: data?.success ?? false,
-              message: data?.success
-                ? `RPA Login: Connected · ${data.response_time_ms ?? '—'}ms`
-                : `RPA Login: Failed — ${data?.error || data?.message || 'Unknown error'}`,
-              response_time_ms: data?.response_time_ms,
-            });
-          }
-        }
+        const { data: { session } } = await supabase.auth.getSession();
+        const { data, error } = await supabase.functions.invoke('test-assai-connection', {
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        });
+        if (error) throw error;
+        setTestResultInPanel(data);
       } catch (err: any) {
         setTestResultInPanel({ success: false, message: err.message || 'Test failed' });
       } finally {
@@ -535,12 +388,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       toast.info('Starting Assai document sync...');
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        const fallbackChain: string[] = [connectionMethod];
-        if (fallback1 !== 'none') fallbackChain.push(fallback1 as string);
-        if (fallback2 !== 'none') fallbackChain.push(fallback2 as string);
         const { data, error } = await supabase.functions.invoke('sync-assai-documents', {
           headers: { Authorization: `Bearer ${session?.access_token}` },
-          body: { sync_method: connectionMethod, fallback_chain: fallbackChain },
         });
         if (error) throw error;
         if (data?.success) {
@@ -585,18 +434,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
   const isFormValid = connectionMethod === 'api' ? !!formData.base_url.trim() : !!formData.platform_url.trim();
 
-  const isDirty = useMemo(() => {
-    if (!savedDirtySignature) return false;
-    const current = JSON.stringify({
-      connectionMethod,
-      fallback1,
-      fallback2,
-      base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
-      username: formData.username,
-    });
-    return current !== savedDirtySignature || !!formData.password || !!formData.api_key || !!formData.auth_token || !!formData.client_secret;
-  }, [connectionMethod, fallback1, fallback2, formData, savedDirtySignature]);
-
   const validateUrl = (url: string) => {
     if (url && !url.startsWith('https://')) {
       return 'URL must start with https://';
@@ -627,22 +464,11 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     return (
       <Card
         key={platform.id}
-        className="group border-border/40 bg-card hover:border-border/80 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1.5 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] cursor-pointer overflow-hidden min-h-[180px] flex flex-col shadow-md"
+        className="group border-border/40 bg-card hover:border-border transition-colors duration-200 cursor-pointer overflow-hidden min-h-[180px] flex flex-col"
         onClick={() => openPanel(platform)}
       >
-        {/* Status badge + Star */}
-        <div className="flex justify-between p-3 pb-0">
-          <button
-            onClick={(e) => toggleHubFavorite(platform.id, e)}
-            className="p-1 rounded-md hover:bg-muted/50 transition-all duration-200 z-10 opacity-0 group-hover:opacity-100"
-            aria-label={hubFavorites.includes(platform.id) ? "Remove from favorites" : "Add to favorites"}
-          >
-            <Star className={`h-3.5 w-3.5 transition-all duration-200 ${
-              hubFavorites.includes(platform.id)
-                ? 'text-amber-400/80 fill-amber-400/80 hover:text-amber-500 hover:fill-amber-500'
-                : 'text-muted-foreground/40 hover:text-amber-400'
-            }`} />
-          </button>
+        {/* Status badge */}
+        <div className="flex justify-end p-3 pb-0">
           <StatusBadge platformId={platform.id} />
         </div>
 
@@ -688,22 +514,15 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const renderSection = (key: string, title: string, platforms: Platform[]) => {
     if (platforms.length === 0) return null;
     const isOpen = openSections[key] ?? false;
-    const isFavSection = key === 'favorites';
     return (
       <Collapsible open={isOpen} onOpenChange={() => toggleSection(key)}>
         <CollapsibleTrigger className="flex items-center gap-3 w-full group/section cursor-pointer mb-3">
-          {isFavSection ? (
-            <Star className={cn("h-3.5 w-3.5 transition-transform duration-200", isOpen ? "text-amber-500 fill-amber-500" : "text-amber-400/60 fill-amber-400/60 -rotate-90")} />
-          ) : (
-            <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200", isOpen ? "" : "-rotate-90")} />
-          )}
-          <span className={cn("text-[11px] font-semibold uppercase tracking-[0.12em] whitespace-nowrap select-none transition-colors",
-            isFavSection ? "text-amber-600/80 group-hover/section:text-amber-600" : "text-muted-foreground/60 group-hover/section:text-muted-foreground"
-          )}>
+          <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200", isOpen ? "" : "-rotate-90")} />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60 whitespace-nowrap select-none group-hover/section:text-muted-foreground transition-colors">
             {title}
           </span>
-          <div className={cn("flex-1 h-px", isFavSection ? "bg-amber-300/30" : "bg-border/40")} />
-          <span className={cn("text-[10px] tabular-nums", isFavSection ? "text-amber-500/60" : "text-muted-foreground/40")}>{platforms.length}</span>
+          <div className="flex-1 h-px bg-border/40" />
+          <span className="text-[10px] text-muted-foreground/40 tabular-nums">{platforms.length}</span>
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl">
@@ -748,12 +567,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           </div>
         ) : (
           <>
-            {/* Favorites Section */}
-            {hubFavorites.length > 0 && !searchQuery && (() => {
-              const favPlatforms = hubFavorites.map(id => ALL_PLATFORMS.find(p => p.id === id)).filter(Boolean) as Platform[];
-              if (favPlatforms.length === 0) return null;
-              return renderSection('favorites', 'Favorites', favPlatforms);
-            })()}
             {renderSection('dms', 'Document Management', dmsPlatforms)}
             {renderSection('enterprise', 'Project & Enterprise Systems', enterprisePlatforms)}
             {renderSection('comms', 'Communication & Collaboration', commsPlatforms)}
@@ -801,104 +614,34 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
               <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
                 {/* CONNECTION METHOD */}
                 <div className="space-y-3">
-                  <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Primary Method</span>
-                  <div className="grid grid-cols-3 gap-2.5">
+                  <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Connection Method</span>
+                  <div className="grid grid-cols-2 gap-3">
                     <button
                       onClick={() => setConnectionMethod('api')}
                       className={cn(
-                        'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
+                        'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-center min-h-[110px] justify-center',
                         connectionMethod === 'api'
-                          ? 'border border-blue-400/40 bg-blue-50 dark:bg-blue-950/30 shadow-md ring-1 ring-blue-400/20'
-                          : 'border border-border/30 bg-background hover:border-border/50 hover:shadow-md hover:-translate-y-0.5'
+                          ? 'border-2 border-blue-600 bg-blue-50 dark:bg-blue-950/30'
+                          : 'border border-border bg-background hover:border-border/80'
                       )}
                     >
                       <Zap className={cn('h-5 w-5', connectionMethod === 'api' ? 'text-blue-600' : 'text-muted-foreground')} />
                       <span className={cn('font-medium text-sm', connectionMethod === 'api' ? 'text-blue-700 dark:text-blue-400' : 'text-foreground')}>API</span>
-                      <p className="text-[11px] text-muted-foreground leading-tight">REST endpoint</p>
-                      </button>
+                      <p className="text-xs text-muted-foreground">Real-time sync via REST API</p>
+                    </button>
                     <button
                       onClick={() => setConnectionMethod('automation')}
                       className={cn(
-                        'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
+                        'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-center min-h-[110px] justify-center',
                         connectionMethod === 'automation'
-                          ? 'border border-amber-400/40 bg-amber-50 dark:bg-amber-950/30 shadow-md ring-1 ring-amber-400/20'
-                          : 'border border-border/30 bg-background hover:border-border/50 hover:shadow-md hover:-translate-y-0.5'
+                          ? 'border-2 border-violet-600 bg-violet-50 dark:bg-violet-950/30'
+                          : 'border border-border bg-background hover:border-border/80'
                       )}
                     >
-                      <MousePointerClick className={cn('h-5 w-5', connectionMethod === 'automation' ? 'text-amber-600' : 'text-muted-foreground')} />
-                      <span className={cn('font-medium text-sm', connectionMethod === 'automation' ? 'text-amber-700 dark:text-amber-400' : 'text-foreground')}>RPA</span>
-                      <p className="text-[11px] text-muted-foreground leading-tight">Browser based</p>
-                      </button>
-                    <button
-                      onClick={() => setConnectionMethod('agent')}
-                      className={cn(
-                        'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
-                        connectionMethod === 'agent'
-                          ? 'border border-emerald-400/40 bg-emerald-50 dark:bg-emerald-950/30 shadow-md ring-1 ring-emerald-400/20'
-                          : 'border border-border/30 bg-background hover:border-border/50 hover:shadow-md hover:-translate-y-0.5'
-                      )}
-                    >
-                      <BrainCircuit className={cn('h-5 w-5', connectionMethod === 'agent' ? 'text-emerald-600' : 'text-muted-foreground')} />
-                      <span className={cn('font-medium text-sm', connectionMethod === 'agent' ? 'text-emerald-700 dark:text-emerald-400' : 'text-foreground')}>Agent</span>
-                      <p className="text-[11px] text-muted-foreground leading-tight">Selma AI</p>
-                      </button>
-                  </div>
-
-                  {/* FALLBACK CHAIN */}
-                  <div className="space-y-2 pt-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Fallback Chain</span>
-                      <span className="text-[10px] text-muted-foreground/60">If primary fails, try next</span>
-                    </div>
-                    <div className="rounded-xl border border-border/50 bg-muted/20 p-2.5 space-y-2">
-                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                        <select
-                          value={fallback1}
-                          onChange={e => { setFallback1(e.target.value); if (e.target.value === 'none') setFallback2('none'); }}
-                          className="h-8 text-xs rounded-md border border-border/60 bg-background px-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                        >
-                          <option value="none">No fallback</option>
-                          {connectionMethod !== 'api' && <option value="api">{CONNECTION_METHOD_OPTION_LABELS.api}</option>}
-                          {connectionMethod !== 'automation' && <option value="automation">{CONNECTION_METHOD_OPTION_LABELS.automation}</option>}
-                          {connectionMethod !== 'agent' && <option value="agent">{CONNECTION_METHOD_OPTION_LABELS.agent}</option>}
-                        </select>
-                        <span className="text-muted-foreground/50 text-xs">→</span>
-                        <select
-                          value={fallback2}
-                          onChange={e => setFallback2(e.target.value)}
-                          disabled={fallback1 === 'none'}
-                          className="h-8 text-xs rounded-md border border-border/60 bg-background px-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <option value="none">No second fallback</option>
-                          {connectionMethod !== 'api' && fallback1 !== 'api' && <option value="api">{CONNECTION_METHOD_OPTION_LABELS.api}</option>}
-                          {connectionMethod !== 'automation' && fallback1 !== 'automation' && <option value="automation">{CONNECTION_METHOD_OPTION_LABELS.automation}</option>}
-                          {connectionMethod !== 'agent' && fallback1 !== 'agent' && <option value="agent">{CONNECTION_METHOD_OPTION_LABELS.agent}</option>}
-                        </select>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border/40">
-                        <span className="text-[10px] text-muted-foreground/70">Run order</span>
-                        <Badge variant="outline" className={cn("h-5 px-2 text-[10px] font-medium", CONNECTION_METHOD_COLORS[connectionMethod])}>
-                          {CONNECTION_METHOD_BADGE_LABELS[connectionMethod]}
-                        </Badge>
-                        {fallback1 !== 'none' && (
-                          <>
-                            <span className="text-[10px] text-muted-foreground/50">→</span>
-                            <Badge variant="outline" className={cn("h-5 px-2 text-[10px] font-medium", CONNECTION_METHOD_COLORS[fallback1 as ConnectionMethod])}>
-                              {CONNECTION_METHOD_BADGE_LABELS[fallback1 as ConnectionMethod]}
-                            </Badge>
-                          </>
-                        )}
-                        {fallback2 !== 'none' && (
-                          <>
-                            <span className="text-[10px] text-muted-foreground/50">→</span>
-                            <Badge variant="outline" className={cn("h-5 px-2 text-[10px] font-medium", CONNECTION_METHOD_COLORS[fallback2 as ConnectionMethod])}>
-                              {CONNECTION_METHOD_BADGE_LABELS[fallback2 as ConnectionMethod]}
-                            </Badge>
-                          </>
-                        )}
-                      </div>
-                    </div>
+                      <Bot className={cn('h-5 w-5', connectionMethod === 'automation' ? 'text-violet-600' : 'text-muted-foreground')} />
+                      <span className={cn('font-medium text-sm', connectionMethod === 'automation' ? 'text-violet-700 dark:text-violet-400' : 'text-foreground')}>Automation</span>
+                      <p className="text-xs text-muted-foreground">Browser-based workflow automation</p>
+                    </button>
                   </div>
                 </div>
 
@@ -923,14 +666,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                           <p className="text-xs text-muted-foreground mt-1">e.g. https://client.assaisoftware.com/api</p>
                         )}
                         {triedSave && !formData.base_url.trim() && <p className="text-xs text-destructive mt-1">Base URL is required</p>}
-                      </div>
-
-                      {/* API server-side pending banner */}
-                      <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50">
-                        <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                        <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
-                          <span className="font-semibold">Server-side integration pending</span> — API connectivity requires server-side configuration. Contact your administrator to enable the API endpoint for this platform.
-                        </p>
                       </div>
 
                       {/* Assai-specific helper banner */}
@@ -1227,14 +962,9 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
               <div className="shrink-0 border-t border-border bg-background px-6 py-4 space-y-3">
                 {/* Test result inline */}
                 {testResultInPanel && (
-                  <div className={cn('flex items-center gap-2 text-xs px-3 py-2 rounded-lg',
-                    testResultInPanel.success ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20'
-                    : connectionMethod === 'api' && testResultInPanel.message?.includes('not yet enabled')
-                      ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/20'
-                      : 'bg-destructive/10 text-destructive'
-                  )}>
-                    {testResultInPanel.success ? <CheckCircle2 className="h-3.5 w-3.5" /> : connectionMethod === 'api' && testResultInPanel.message?.includes('not yet enabled') ? <AlertTriangle className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-                    {testResultInPanel.message}
+                  <div className={cn('flex items-center gap-2 text-xs px-3 py-2 rounded-lg', testResultInPanel.success ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20' : 'bg-destructive/10 text-destructive')}>
+                    {testResultInPanel.success ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                    {testResultInPanel.success ? `Connected · ${testResultInPanel.response_time_ms}ms` : testResultInPanel.message}
                   </div>
                 )}
                 <div className="flex items-center justify-between">
@@ -1278,7 +1008,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     <Button
                       size="sm"
                       className="text-xs"
-                      disabled={!isFormValid || saving || !isDirty}
+                      disabled={!isFormValid || saving}
                       onClick={() => { setTriedSave(true); if (isFormValid) saveConfig(); }}
                     >
                       {saving && <Loader2 className="h-3 w-3 animate-spin mr-1" />}

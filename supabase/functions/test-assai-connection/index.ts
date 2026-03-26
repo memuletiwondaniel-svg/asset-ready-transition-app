@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     const result = await loginAssai(baseUrl, username, password, dbName || undefined);
 
     return new Response(JSON.stringify(result), {
-      status: 200,
+      status: result.success ? 200 : 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
