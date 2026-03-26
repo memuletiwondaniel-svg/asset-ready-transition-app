@@ -454,10 +454,30 @@ Deno.serve(async (req) => {
       const sessionCookies = loginResult.cookies;
       console.log(`[sync-assai] Login succeeded. ${sessionCookies.length} cookies.`);
 
-      // Build execution chain from fallback_chain or single sync_method
-      const executionChain = fallbackChain.length > 0 
-        ? fallbackChain.filter(m => m === 'api' || m === 'automation')
-        : [syncMethod || 'automation'];
+      // Build execution chain: prefer request override, then DB values, then default
+      const mapMethod = (m: string): string => {
+        if (m === 'rpa' || m === 'automation') return 'automation';
+        if (m === 'agent') return 'agent';
+        if (m === 'api') return 'api';
+        return m;
+      };
+
+      let executionChain: string[];
+      if (fallbackChainOverride && fallbackChainOverride.length > 0) {
+        executionChain = fallbackChainOverride.map(mapMethod).filter(m => m === 'api' || m === 'automation' || m === 'agent');
+      } else {
+        // Read from DB
+        const dbPrimary = mapMethod(creds.primary_method || 'rpa');
+        let dbFallbacks: string[] = [];
+        try {
+          const parsed = typeof creds.fallback_chain === 'string' ? JSON.parse(creds.fallback_chain) : creds.fallback_chain;
+          if (Array.isArray(parsed)) {
+            dbFallbacks = parsed.map((m: string) => mapMethod(m)).filter((m: string) => m === 'api' || m === 'automation' || m === 'agent');
+          }
+        } catch { /* ignore */ }
+        executionChain = [dbPrimary, ...dbFallbacks];
+      }
+      if (executionChain.length === 0) executionChain = ['automation'];
       console.log(`[sync-assai] execution_chain=${JSON.stringify(executionChain)}`);
 
       // ── Execute routes in chain order ──────────────────────
