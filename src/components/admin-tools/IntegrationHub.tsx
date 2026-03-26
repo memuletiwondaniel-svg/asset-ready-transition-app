@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { isAPIConfigured, getAPIConfig } from '@/lib/api-config-storage';
 import {
   Plug, Search, Wifi, RefreshCw, Loader2, Eye, EyeOff,
-  ChevronDown, CheckCircle2, XCircle, AlertTriangle, X, Zap, Bot, Info, Trash2, BrainCircuit
+  ChevronDown, CheckCircle2, XCircle, AlertTriangle, X, Zap, Bot, Info, Trash2, BrainCircuit, Star
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -124,10 +124,31 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    dms: true,
+    favorites: true,
+    dms: false,
     enterprise: false,
     comms: false,
   });
+
+  // Integration Hub favorites
+  const HUB_FAV_KEY = 'orsh-integration-hub-favorites';
+  const [hubFavorites, setHubFavorites] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(HUB_FAV_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(HUB_FAV_KEY, JSON.stringify(hubFavorites));
+  }, [hubFavorites]);
+
+  const toggleHubFavorite = useCallback((platformId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setHubFavorites(prev =>
+      prev.includes(platformId) ? prev.filter(id => id !== platformId) : [...prev, platformId]
+    );
+  }, []);
 
   // GoCompletions localStorage status
   const [gocConfigured, setGocConfigured] = useState(false);
@@ -473,8 +494,19 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         className="group border-border/40 bg-card hover:border-border transition-colors duration-200 cursor-pointer overflow-hidden min-h-[180px] flex flex-col"
         onClick={() => openPanel(platform)}
       >
-        {/* Status badge */}
-        <div className="flex justify-end p-3 pb-0">
+        {/* Status badge + Star */}
+        <div className="flex justify-between p-3 pb-0">
+          <button
+            onClick={(e) => toggleHubFavorite(platform.id, e)}
+            className={`p-1 rounded-md hover:bg-muted/50 transition-all duration-200 z-10 ${hubFavorites.includes(platform.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+            aria-label={hubFavorites.includes(platform.id) ? "Remove from favorites" : "Add to favorites"}
+          >
+            <Star className={`h-3.5 w-3.5 transition-all duration-200 ${
+              hubFavorites.includes(platform.id)
+                ? 'text-amber-400/80 fill-amber-400/80 hover:text-amber-500 hover:fill-amber-500'
+                : 'text-muted-foreground/40 hover:text-amber-400'
+            }`} />
+          </button>
           <StatusBadge platformId={platform.id} />
         </div>
 
@@ -520,15 +552,22 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const renderSection = (key: string, title: string, platforms: Platform[]) => {
     if (platforms.length === 0) return null;
     const isOpen = openSections[key] ?? false;
+    const isFavSection = key === 'favorites';
     return (
       <Collapsible open={isOpen} onOpenChange={() => toggleSection(key)}>
         <CollapsibleTrigger className="flex items-center gap-3 w-full group/section cursor-pointer mb-3">
-          <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200", isOpen ? "" : "-rotate-90")} />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60 whitespace-nowrap select-none group-hover/section:text-muted-foreground transition-colors">
+          {isFavSection ? (
+            <Star className={cn("h-3.5 w-3.5 transition-transform duration-200", isOpen ? "text-amber-500 fill-amber-500" : "text-amber-400/60 fill-amber-400/60 -rotate-90")} />
+          ) : (
+            <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200", isOpen ? "" : "-rotate-90")} />
+          )}
+          <span className={cn("text-[11px] font-semibold uppercase tracking-[0.12em] whitespace-nowrap select-none transition-colors",
+            isFavSection ? "text-amber-600/80 group-hover/section:text-amber-600" : "text-muted-foreground/60 group-hover/section:text-muted-foreground"
+          )}>
             {title}
           </span>
-          <div className="flex-1 h-px bg-border/40" />
-          <span className="text-[10px] text-muted-foreground/40 tabular-nums">{platforms.length}</span>
+          <div className={cn("flex-1 h-px", isFavSection ? "bg-amber-300/30" : "bg-border/40")} />
+          <span className={cn("text-[10px] tabular-nums", isFavSection ? "text-amber-500/60" : "text-muted-foreground/40")}>{platforms.length}</span>
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl">
@@ -573,6 +612,12 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           </div>
         ) : (
           <>
+            {/* Favorites Section */}
+            {hubFavorites.length > 0 && !searchQuery && (() => {
+              const favPlatforms = hubFavorites.map(id => ALL_PLATFORMS.find(p => p.id === id)).filter(Boolean) as Platform[];
+              if (favPlatforms.length === 0) return null;
+              return renderSection('favorites', 'Favorites', favPlatforms);
+            })()}
             {renderSection('dms', 'Document Management', dmsPlatforms)}
             {renderSection('enterprise', 'Project & Enterprise Systems', enterprisePlatforms)}
             {renderSection('comms', 'Communication & Collaboration', commsPlatforms)}
