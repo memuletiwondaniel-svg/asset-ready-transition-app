@@ -846,74 +846,123 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                   )}
                 </div>
 
-                {/* SYNC SECTION */}
-                <div className="space-y-3">
-                  <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Sync</span>
+                {/* SYNC & HISTORY SECTION */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Sync</span>
+                    <div className="h-px flex-1 bg-border/40" />
+                  </div>
+
+                  {/* Last synced + sync result */}
                   {(() => {
                     const cred = getCredential(panelPlatform.id);
                     const lastSync = cred?.last_sync_at;
                     return (
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-muted-foreground">
-                          {lastSync ? `Last synced: ${formatDistanceToNow(new Date(lastSync), { addSuffix: true })}` : 'Never synced'}
-                        </p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs"
-                          disabled={!credentialsSaved || syncingInPanel}
-                          onClick={triggerSync}
-                        >
-                          {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
-                          Sync Now
-                        </Button>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          {lastSync ? (
+                            <>
+                              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                              <p className="text-xs text-muted-foreground">
+                                Last synced {formatDistanceToNow(new Date(lastSync), { addSuffix: true })}
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <div className="h-2 w-2 rounded-full bg-muted-foreground/30" />
+                              <p className="text-xs text-muted-foreground">Never synced</p>
+                            </>
+                          )}
+                        </div>
+                        {syncResultInPanel && (
+                          <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/50 text-emerald-700 dark:text-emerald-400">
+                            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                            <span className="leading-snug">{syncResultInPanel}</span>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
-                  {syncResultInPanel && (
-                    <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-muted">
-                      <RefreshCw className="h-3.5 w-3.5" />
-                      {syncResultInPanel}
-                    </div>
-                  )}
-                </div>
 
-                {/* SYNC HISTORY */}
-                {(
+                  {/* Sync History */}
                   <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
-                    <CollapsibleTrigger className="flex items-center gap-2 w-full text-left">
-                      <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', historyOpen ? '' : '-rotate-90')} />
-                      <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Sync History</span>
+                    <CollapsibleTrigger className="flex items-center gap-2 w-full text-left group">
+                      <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform duration-200', historyOpen ? '' : '-rotate-90')} />
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground group-hover:text-foreground transition-colors">
+                        History
+                      </span>
+                      {panelLogs.length > 0 && (
+                        <span className="text-[10px] tabular-nums text-muted-foreground/60 ml-auto">
+                          {panelLogs.length} {panelLogs.length === 1 ? 'entry' : 'entries'}
+                        </span>
+                      )}
                     </CollapsibleTrigger>
                     <CollapsibleContent className="pt-3">
                       {panelLogs.length === 0 ? (
-                        <p className="text-xs text-muted-foreground italic text-center py-4">No sync history yet</p>
-                      ) : (
-                        <div className="border rounded-lg overflow-hidden text-[11px]">
-                          <div className="grid grid-cols-5 gap-1 px-3 py-2 bg-muted/50 font-medium text-muted-foreground">
-                            <span>Date</span><span className="text-right">Synced</span><span className="text-right">New</span><span className="text-right">Changed</span><span className="text-right">Failed</span>
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                          <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+                            <RefreshCw className="h-4 w-4 text-muted-foreground/50" />
                           </div>
-                          {panelLogs.map(log => (
-                            <div key={log.id} className="grid grid-cols-5 gap-1 px-3 py-2 border-t border-border/50">
-                              <span>{format(new Date(log.created_at), 'dd MMM HH:mm')}</span>
-                              <span className="text-right font-medium">{log.synced_count}</span>
-                              <span className="text-right text-emerald-600">{log.new_documents}</span>
-                              <span className="text-right text-amber-600">{log.status_changes}</span>
-                              <span className="text-right text-destructive">{log.failed_count}</span>
-                            </div>
-                          ))}
+                          <p className="text-xs text-muted-foreground">No sync history yet</p>
+                          <p className="text-[11px] text-muted-foreground/60 mt-1">Run your first sync to see results here</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {panelLogs.map((log, idx) => {
+                            const isPartial = log.sync_status === 'partial';
+                            const isFailed = log.sync_status === 'failed';
+                            const isInProgress = log.sync_status === 'in_progress';
+                            const isSuccess = !isPartial && !isFailed && !isInProgress;
+                            return (
+                              <div
+                                key={log.id}
+                                className={cn(
+                                  'flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors',
+                                  idx === 0 ? 'bg-muted/30 border-border' : 'border-transparent hover:bg-muted/20'
+                                )}
+                              >
+                                {/* Status indicator */}
+                                <div className={cn(
+                                  'h-2 w-2 rounded-full shrink-0',
+                                  isSuccess && 'bg-emerald-500',
+                                  isPartial && 'bg-amber-500',
+                                  isFailed && 'bg-destructive',
+                                  isInProgress && 'bg-blue-500 animate-pulse',
+                                )} />
+
+                                {/* Date */}
+                                <span className="text-[11px] text-muted-foreground tabular-nums w-[80px] shrink-0">
+                                  {format(new Date(log.created_at), 'dd MMM HH:mm')}
+                                </span>
+
+                                {/* Stats row */}
+                                <div className="flex items-center gap-3 ml-auto text-[11px] tabular-nums">
+                                  <span className="text-foreground font-medium">{log.synced_count ?? 0}</span>
+                                  {(log.new_documents ?? 0) > 0 && (
+                                    <span className="text-emerald-600">+{log.new_documents}</span>
+                                  )}
+                                  {(log.status_changes ?? 0) > 0 && (
+                                    <span className="text-amber-600">~{log.status_changes}</span>
+                                  )}
+                                  {(log.failed_count ?? 0) > 0 && (
+                                    <span className="text-destructive">✕{log.failed_count}</span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </CollapsibleContent>
                   </Collapsible>
-                )}
+                </div>
               </div>
 
               {/* Sticky Footer */}
-              <div className="shrink-0 border-t border-border bg-background px-6 py-4">
+              <div className="shrink-0 border-t border-border bg-background px-6 py-4 space-y-3">
                 {/* Test result inline */}
                 {testResultInPanel && (
-                  <div className={cn('flex items-center gap-2 text-xs px-3 py-2 rounded-lg mb-3', testResultInPanel.success ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20' : 'bg-destructive/10 text-destructive')}>
+                  <div className={cn('flex items-center gap-2 text-xs px-3 py-2 rounded-lg', testResultInPanel.success ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20' : 'bg-destructive/10 text-destructive')}>
                     {testResultInPanel.success ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
                     {testResultInPanel.success ? `Connected · ${testResultInPanel.response_time_ms}ms` : testResultInPanel.message}
                   </div>
@@ -936,18 +985,26 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {(
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs"
-                        disabled={!credentialsSaved || testingInPanel}
-                        onClick={testConnection}
-                      >
-                        {testingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wifi className="h-3 w-3 mr-1" />}
-                        Test
-                      </Button>
-                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      disabled={!credentialsSaved || testingInPanel}
+                      onClick={testConnection}
+                    >
+                      {testingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wifi className="h-3 w-3 mr-1" />}
+                      Test Connection
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      disabled={!credentialsSaved || syncingInPanel}
+                      onClick={triggerSync}
+                    >
+                      {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                      Sync Now
+                    </Button>
                     <Button
                       size="sm"
                       className="text-xs"
