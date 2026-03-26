@@ -294,15 +294,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Parse request body for sync_method and fallback_chain
-    let syncMethod: string | null = null;
-    let fallbackChain: string[] = [];
+    // Parse request body for sync_method and fallback_chain overrides
+    let syncMethodOverride: string | null = null;
+    let fallbackChainOverride: string[] | null = null;
     try {
       const body = await req.json();
-      syncMethod = body?.sync_method || null;
-      fallbackChain = Array.isArray(body?.fallback_chain) ? body.fallback_chain : [];
+      syncMethodOverride = body?.sync_method || null;
+      fallbackChainOverride = Array.isArray(body?.fallback_chain) ? body.fallback_chain : null;
     } catch {
-      // No body or invalid JSON — default behavior
+      // No body or invalid JSON — will use DB values
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -364,6 +364,8 @@ Deno.serve(async (req) => {
     let totalNew = 0;
     let totalStatusChanges = 0;
     let syncRoute = "none";
+    const routeFailures: Record<string, string> = {};
+    const routesAttempted: string[] = [];
 
     /**
      * Upsert a batch of documents immediately and update the sync log.
@@ -454,10 +456,30 @@ Deno.serve(async (req) => {
       const sessionCookies = loginResult.cookies;
       console.log(`[sync-assai] Login succeeded. ${sessionCookies.length} cookies.`);
 
-      // Build execution chain from fallback_chain or single sync_method
-      const executionChain = fallbackChain.length > 0 
-        ? fallbackChain.filter(m => m === 'api' || m === 'automation')
-        : [syncMethod || 'automation'];
+      // Build execution chain: prefer request override, then DB values, then default
+      const mapMethod = (m: string): string => {
+        if (m === 'rpa' || m === 'automation') return 'automation';
+        if (m === 'agent') return 'agent';
+        if (m === 'api') return 'api';
+        return m;
+      };
+
+      let executionChain: string[];
+      if (fallbackChainOverride && fallbackChainOverride.length > 0) {
+        executionChain = fallbackChainOverride.map(mapMethod).filter(m => m === 'api' || m === 'automation' || m === 'agent');
+      } else {
+        // Read from DB
+        const dbPrimary = mapMethod(creds.primary_method || 'rpa');
+        let dbFallbacks: string[] = [];
+        try {
+          const parsed = typeof creds.fallback_chain === 'string' ? JSON.parse(creds.fallback_chain) : creds.fallback_chain;
+          if (Array.isArray(parsed)) {
+            dbFallbacks = parsed.map((m: string) => mapMethod(m)).filter((m: string) => m === 'api' || m === 'automation' || m === 'agent');
+          }
+        } catch { /* ignore */ }
+        executionChain = [dbPrimary, ...dbFallbacks];
+      }
+      if (executionChain.length === 0) executionChain = ['automation'];
       console.log(`[sync-assai] execution_chain=${JSON.stringify(executionChain)}`);
 
       // ── Execute routes in chain order ──────────────────────
@@ -465,6 +487,7 @@ Deno.serve(async (req) => {
 
       for (const currentRoute of executionChain) {
         if (routeSucceeded) break;
+        routesAttempted.push(currentRoute);
         console.log(`[sync-assai] Trying route: ${currentRoute}`);
 
       if (currentRoute === 'api') {
@@ -517,7 +540,8 @@ Deno.serve(async (req) => {
             }
           }
         }
-      } catch (e) {
+      } catch (e: any) {
+        routeFailures['api'] = e?.message || String(e);
         console.log(`[sync-assai] API route failed: ${e}`);
       }
       } // end if api
@@ -652,9 +676,12 @@ Deno.serve(async (req) => {
           } else if (totalSynced === 0) {
             console.log(`[sync-assai] Route 2: 0 documents extracted`);
           }
-        } catch (e) {
+        } catch (e: any) {
+          routeFailures['automation'] = e?.message || String(e);
           console.log(`[sync-assai] Automation route failed: ${e}`);
         }
+
+        if (totalSynced > 0) routeSucceeded = true;
       } // end if automation
 
       } // end for executionChain
@@ -670,6 +697,7 @@ Deno.serve(async (req) => {
           new_documents: totalNew,
           status_changes: totalStatusChanges,
           sync_route_used: syncRoute,
+          error_details: { routes_attempted: routesAttempted, route_succeeded: syncRoute, route_failures: routeFailures },
         }).eq("id", syncLogId);
       }
 

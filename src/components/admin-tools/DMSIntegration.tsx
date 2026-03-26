@@ -182,11 +182,60 @@ const DMSIntegration: React.FC<DMSIntegrationProps> = ({ onBack }) => {
   };
 
   const triggerSync = async (platformId: string) => {
-    toast.info('Sync function not yet available');
+    if (platformId !== 'assai') {
+      toast.info('Sync function not yet available for this platform');
+      return;
+    }
+    setSyncing(platformId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke('sync-assai-documents', {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+        body: { sync_method: 'automation' },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        toast.success(data.message || `Sync complete: ${data.synced_count} documents`);
+      } else {
+        toast.error(data?.error || 'Sync failed');
+      }
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || 'Sync failed');
+    } finally {
+      setSyncing(null);
+    }
   };
 
   const testConnection = async (platformId: string) => {
-    toast.info('Test function not yet available');
+    if (platformId !== 'assai') {
+      toast.info('Test function not yet available for this platform');
+      return;
+    }
+    setTesting(platformId);
+    setTestResult(prev => ({ ...prev, [platformId]: null }));
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke('test-assai-connection', {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (error) throw error;
+      setTestResult(prev => ({
+        ...prev,
+        [platformId]: {
+          success: data.success,
+          message: data.success ? 'Connected successfully' : (data.error || 'Connection failed'),
+          response_time_ms: data.response_time_ms || 0,
+        },
+      }));
+    } catch (err: any) {
+      setTestResult(prev => ({
+        ...prev,
+        [platformId]: { success: false, message: err.message || 'Test failed', response_time_ms: 0 },
+      }));
+    } finally {
+      setTesting(null);
+    }
   };
 
   const getCredential = (platformId: string) =>

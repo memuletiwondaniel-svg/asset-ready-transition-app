@@ -274,8 +274,22 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         // Detect automation credentials via marker
         const isAutomation = existing.project_code_field === '__automation__';
 
-        if (isAutomation) {
+        // Load primary_method from DB
+        const dbMethod = mapDbMethodToUi(existing.primary_method);
+        if (dbMethod) {
+          setConnectionMethod(dbMethod);
+        } else if (isAutomation) {
           setConnectionMethod('automation');
+        } else {
+          setConnectionMethod('api');
+        }
+
+        // Load fallback_chain from DB
+        const dbFallbacks = parseDbFallbackChain(existing.fallback_chain);
+        setFallback1(dbFallbacks[0] || 'none');
+        setFallback2(dbFallbacks[1] || 'none');
+
+        if (isAutomation || (dbMethod && dbMethod !== 'api')) {
           setFormData({
             base_url: '',
             username: existing.username_encrypted || '',
@@ -294,7 +308,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
             db_name: existing.db_name || '',
           });
         } else {
-          setConnectionMethod('api');
           // Infer auth type from stored data
           const hasClientId = !!existing.username_encrypted;
           const inferredAuthType: AuthType = hasClientId ? 'oauth' : 'bearer';
@@ -322,6 +335,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         setHasStoredCredentials(!!existing.password_encrypted);
       } else {
         setConnectionMethod('api');
+        setFallback1('none');
+        setFallback2('none');
         resetFormData();
         setHasStoredCredentials(false);
       }
@@ -334,6 +349,19 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     setUrlError('');
     setCredentialsSaved(!!getCredential(platform.id) || (platform.id === 'gocompletions' && gocConfigured));
     setShowPassword(false);
+
+    // Set initial dirty signature after state is set
+    const existing = getCredential(platform.id);
+    const dbMethod = mapDbMethodToUi(existing?.primary_method) || 'api';
+    const dbFallbacks = parseDbFallbackChain(existing?.fallback_chain);
+    setSavedDirtySignature(JSON.stringify({
+      connectionMethod: dbMethod,
+      fallback1: dbFallbacks[0] || 'none',
+      fallback2: dbFallbacks[1] || 'none',
+      base_url: existing?.base_url || '',
+      username: existing?.username_encrypted || '',
+    }));
+
     setPanelOpen(true);
   };
 
@@ -370,6 +398,12 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
         project_code_field: connectionMethod === 'automation' ? '__automation__' : formData.project_code_field,
         sync_enabled: connectionMethod === 'api' ? formData.sync_enabled : formData.automation_enabled,
+        primary_method: mapUiMethodToDb(connectionMethod),
+        fallback_chain: JSON.stringify(
+          [fallback1, fallback2]
+            .filter(f => f !== 'none')
+            .map(f => mapUiMethodToDb(f as ConnectionMethod))
+        ),
         updated_at: new Date().toISOString(),
       };
 
@@ -408,6 +442,14 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
       toast.success('Credentials saved');
       setCredentialsSaved(true);
       setHasStoredCredentials(true);
+      // Update dirty signature to current state so isDirty becomes false
+      setSavedDirtySignature(JSON.stringify({
+        connectionMethod,
+        fallback1,
+        fallback2,
+        base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
+        username: formData.username,
+      }));
       fetchData();
     } catch (err: any) {
       console.error('[IntegrationHub] Save failed:', err);
@@ -509,6 +551,18 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const commsPlatforms = filteredPlatforms.filter(p => p.section === 'comms');
 
   const isFormValid = connectionMethod === 'api' ? !!formData.base_url.trim() : !!formData.platform_url.trim();
+
+  const isDirty = useMemo(() => {
+    if (!savedDirtySignature) return false;
+    const current = JSON.stringify({
+      connectionMethod,
+      fallback1,
+      fallback2,
+      base_url: connectionMethod === 'api' ? formData.base_url : formData.platform_url,
+      username: formData.username,
+    });
+    return current !== savedDirtySignature || !!formData.password || !!formData.api_key || !!formData.auth_token || !!formData.client_secret;
+  }, [connectionMethod, fallback1, fallback2, formData, savedDirtySignature]);
 
   const validateUrl = (url: string) => {
     if (url && !url.startsWith('https://')) {
@@ -717,7 +771,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                   <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Primary Method</span>
                   <div className="grid grid-cols-3 gap-2.5">
                     <button
-                      onClick={() => { setConnectionMethod('api'); setFallback1('none'); setFallback2('none'); }}
+                      onClick={() => setConnectionMethod('api')}
                       className={cn(
                         'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
                         connectionMethod === 'api'
@@ -730,7 +784,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <p className="text-[11px] text-muted-foreground leading-tight">REST endpoint</p>
                       </button>
                     <button
-                      onClick={() => { setConnectionMethod('automation'); setFallback1('none'); setFallback2('none'); }}
+                      onClick={() => setConnectionMethod('automation')}
                       className={cn(
                         'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
                         connectionMethod === 'automation'
@@ -743,7 +797,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <p className="text-[11px] text-muted-foreground leading-tight">Browser based</p>
                       </button>
                     <button
-                      onClick={() => { setConnectionMethod('agent'); setFallback1('none'); setFallback2('none'); }}
+                      onClick={() => setConnectionMethod('agent')}
                       className={cn(
                         'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
                         connectionMethod === 'agent'
@@ -1186,7 +1240,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     <Button
                       size="sm"
                       className="text-xs"
-                      disabled={!isFormValid || saving}
+                      disabled={!isFormValid || saving || !isDirty}
                       onClick={() => { setTriedSave(true); if (isFormValid) saveConfig(); }}
                     >
                       {saving && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
