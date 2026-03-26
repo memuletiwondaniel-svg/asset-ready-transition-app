@@ -825,7 +825,6 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         >
                           <option value="none">No fallback</option>
                           {connectionMethod !== 'api' && <option value="api">{CONNECTION_METHOD_OPTION_LABELS.api}</option>}
-                          {connectionMethod !== 'automation' && <option value="automation">{CONNECTION_METHOD_OPTION_LABELS.automation}</option>}
                           {connectionMethod !== 'agent' && <option value="agent">{CONNECTION_METHOD_OPTION_LABELS.agent}</option>}
                         </select>
                         <span className="text-muted-foreground/50 text-xs">→</span>
