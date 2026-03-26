@@ -520,21 +520,17 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const triggerSync = async () => {
     if (!panelPlatform) return;
     if (panelPlatform.id === 'assai') {
-      toast.info('Starting Assai document sync...');
+      toast.info('Starting Assai document sync via Agent (Selma)...');
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        const fallbackChain: string[] = [connectionMethod];
-        if (fallback1 !== 'none') fallbackChain.push(fallback1 as string);
-        if (fallback2 !== 'none') fallbackChain.push(fallback2 as string);
-        const { data, error } = await supabase.functions.invoke('sync-assai-documents', {
+        const { data, error } = await supabase.functions.invoke('agent-assai-connect', {
           headers: { Authorization: `Bearer ${session?.access_token}` },
-          body: { sync_method: connectionMethod, fallback_chain: fallbackChain },
         });
         if (error) throw error;
         if (data?.success) {
-          toast.success(data.message || `Sync complete: ${data.synced_count} documents`);
+          toast.success(data.message || 'Agent connected successfully');
         } else {
-          toast.error(data?.error || 'Sync failed');
+          toast.error(data?.message || data?.error || 'Sync failed');
         }
       } catch (err: any) {
         toast.error(err.message || 'Sync failed');
