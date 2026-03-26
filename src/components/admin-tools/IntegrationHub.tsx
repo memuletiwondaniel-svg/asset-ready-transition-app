@@ -245,13 +245,25 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           });
         } else {
           setConnectionMethod('api');
+          // Infer auth type from stored data
+          const hasClientId = !!existing.username_encrypted;
+          const inferredAuthType: AuthType = hasClientId ? 'oauth' : 'bearer';
+          setAuthType(inferredAuthType);
           setFormData({
             base_url: existing.base_url || '',
-            username: '', password: '', api_key: '', header_name: 'X-API-Key',
-            client_id: '', client_secret: '', token_url: '', scope: '',
+            username: '',
+            password: '',
+            api_key: '',
+            header_name: 'X-API-Key',
+            client_id: hasClientId ? existing.username_encrypted || '' : '',
+            client_secret: '',
+            token_url: '',
+            scope: '',
             project_code_field: existing.project_code_field || '',
             sync_enabled: existing.sync_enabled || false,
-            platform_url: '', auth_token: '', automation_enabled: false,
+            platform_url: '',
+            auth_token: '',
+            automation_enabled: false,
             db_name: '',
           });
         }
