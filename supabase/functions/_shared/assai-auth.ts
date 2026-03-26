@@ -86,6 +86,7 @@ const encryptAssaiField = async (
   plainText: string,
   saltHex: string,
   ivHex: string,
+  hashAlgo: string = "SHA-1",
 ): Promise<string> => {
   const passphraseKey = await crypto.subtle.importKey(
     "raw",
@@ -98,7 +99,7 @@ const encryptAssaiField = async (
   const aesKey = await crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
-      hash: "SHA-1",
+      hash: hashAlgo,
       salt: hexToBytes(saltHex),
       iterations: 1000,
     },
