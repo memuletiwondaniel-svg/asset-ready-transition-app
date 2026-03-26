@@ -9,6 +9,7 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
+import { useUserScopedFavorites } from '@/hooks/useUserScopedFavorites';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './admin/ThemeToggle';
