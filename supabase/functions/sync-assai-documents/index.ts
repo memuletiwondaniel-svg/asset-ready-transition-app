@@ -440,10 +440,11 @@ Deno.serve(async (req) => {
       const sessionCookies = loginResult.cookies;
       console.log(`[sync-assai] Login succeeded. ${sessionCookies.length} cookies.`);
 
-      // Determine which route(s) to run based on sync_method
-      const runRoute1 = !syncMethod || syncMethod === 'api';
-      const runRoute2 = !syncMethod || syncMethod === 'automation';
-      console.log(`[sync-assai] sync_method=${syncMethod || 'auto'}, runRoute1=${runRoute1}, runRoute2=${runRoute2}`);
+      // Build execution chain from fallback_chain or single sync_method
+      const executionChain = fallbackChain.length > 0 
+        ? fallbackChain.filter(m => m === 'api' || m === 'automation')
+        : [syncMethod || 'automation'];
+      console.log(`[sync-assai] execution_chain=${JSON.stringify(executionChain)}`);
 
       // ── ROUTE 1: OAuth Bearer token + REST API ──────────────────────
       let route1Success = false;
