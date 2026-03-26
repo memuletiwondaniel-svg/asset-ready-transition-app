@@ -99,14 +99,33 @@ async function authenticateAssai(assaiBase: string, username: string, password: 
     redirect: 'follow'
   });
   const cookies2 = extractCookies(loginRes.headers);
-  const allCookies = mergeCookies(cookies1, cookies2);
+  let allCookies = mergeCookies(cookies1, cookies2);
   await loginRes.text();
 
   const statusCode = loginRes.status;
   const success = statusCode === 200 || statusCode === 302;
   console.log('Assai login status:', statusCode);
-  console.log('Assai cookies extracted:', allCookies.substring(0, 80));
 
+  // Step 3: Activate server-side session (required before result.aweb works)
+  if (success) {
+    const activationUrls = [
+      assaiBase + '/label.aweb',
+      assaiBase + '/activateApplet.aweb',
+      assaiBase + '/navbar.aweb?subclass_type=null'
+    ];
+    for (const url of activationUrls) {
+      try {
+        const r = await fetch(url, { headers: { 'Cookie': allCookies, 'User-Agent': ua }, redirect: 'follow' });
+        allCookies = mergeCookies(allCookies, extractCookies(r.headers));
+        await r.text();
+        console.log('Session activation:', url.split('/').pop(), 'status:', r.status);
+      } catch (e) {
+        console.error('Session activation failed for', url, e);
+      }
+    }
+  }
+
+  console.log('Assai cookies final:', allCookies.substring(0, 80));
   return { cookies: allCookies, success, statusCode };
 }
 
