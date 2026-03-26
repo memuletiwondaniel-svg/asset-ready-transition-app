@@ -294,11 +294,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Parse request body for sync_method parameter
+    // Parse request body for sync_method and fallback_chain
     let syncMethod: string | null = null;
+    let fallbackChain: string[] = [];
     try {
       const body = await req.json();
       syncMethod = body?.sync_method || null;
+      fallbackChain = Array.isArray(body?.fallback_chain) ? body.fallback_chain : [];
     } catch {
       // No body or invalid JSON — default behavior
     }
