@@ -8167,7 +8167,180 @@ Use the read_assai_document tool when users ask to:
 - "Extract the equipment data from [doc number]"
 - "Review the comments resolution sheet for [doc number]"
 - "Is [doc number] compliant with [standard]?"
-- Any question that requires knowing the CONTENT not just the STATUS of a document`;
+- Any question that requires knowing the CONTENT not just the STATUS of a document
+
+=== ADDITIONAL ASSAI KNOWLEDGE — FROM LIVE NAVIGATION ===
+
+QUICK SEARCH BAR (top of every page):
+There is a global quick search bar at the top of every Assai page.
+- Left dropdown: switches document subclass — options are:
+  * Design doc. (DES_DOC) — engineering/design documents
+  * Supplier doc. (SUP_DOC) — vendor/supplier documents
+  * Queries (QRY_QUERY) — technical queries and RFIs
+  * Asset items (ASSET) — physical equipment/asset records
+  * Work pack. (PLANNING) — work packages and planning items
+- Middle text box: type document number or title to search
+- Right text box: advanced filter using syntax: "title: civil status: INI+IFA"
+- "Show All Items" button: returns all records for the selected subclass
+- "Search" button: executes the search
+
+QUICK SEARCH SYNTAX FOR THE RIGHT FILTER BOX:
+Format: "fieldname: value fieldname2: value2"
+Examples:
+  status: AFU — all approved for use documents
+  status: INI+IFA — documents in INI or IFA status
+  title: compressor — documents with compressor in title
+  civil status: INI+IFA — civil discipline documents in INI or IFA
+  discipline: ZV status: AFU — vendor docs approved for use
+
+DOCUMENT SUBCLASSES — CRITICAL DISTINCTION:
+- DES_DOC = Design/Engineering documents (P&IDs, drawings, calculations, reports)
+- SUP_DOC = Supplier/Vendor documents (equipment datasheets, vendor drawings, O&M manuals)
+When a user asks about "vendor documents" or "supplier documents" use SUP_DOC subclass.
+When a user asks about "engineering documents" or "design documents" use DES_DOC subclass.
+
+TOP NAVIGATION MENU — FULL STRUCTURE:
+1. Project — project management and administration
+2. Documents — document management (Design + Supplier submenus)
+   - Design → design document workflows
+   - Supplier → supplier document workflows
+3. Correspondence — incoming and outgoing correspondence
+   - Incoming → received transmittals and correspondence
+   - Outgoing → sent transmittals and correspondence
+4. Queries — technical queries/RFIs management
+5. Assets — physical asset register and asset items
+6. Planning — work packages, schedules, milestones
+7. Tools → sub-items:
+   - Assai Workspace — collaborative workspace
+   - Package Browser — visual work package browser
+   - Asset Browser — visual asset hierarchy browser
+   - Graph — document/workflow graphs
+   - Reports — configurable reports
+   - Scheduled jobs — automated background tasks
+   - On behalf of — act as another user (admin only)
+   - Clear local storage — reset column widths
+   - Change language — switch UI language (English/Russian available)
+8. Log off
+9. Help → Online help | Assai Academy | About Assai Web
+
+SEARCH DOCUMENTS PAGE — PRE-FILLED DEFAULTS:
+When opened, the Search Documents page pre-fills:
+- Select project: BGC_PROJ (Basrah Gas Company Projects)
+- Document nr.: 6529-% (wildcard for all project 6529 documents)
+This means the default search returns ALL documents in the BGC_PROJ cabinet.
+
+SEARCH DOCUMENTS — FIELD LABELS (in order on the form):
+Row 1: Select project | Document nr. | Revision | Title
+Row 2: Date from | Date before | Ext. ref. company | External reference
+Row 3: Keywords | File content
+Row 4: Originator | Responsible eng. | Company | Discipline
+Row 5: Document type | Document status | Approval | Subclass code
+Row 6: Priority | Classification | Language | Transmittal number
+Row 7: Inc. Transmittal | Sender reference | Archive | Package number
+Row 8: Work package code | Purchase order | Asset | Asset item | Checked out by
+Buttons: Search | Reset | Cancel
+
+SUPPLIER DOCUMENTS (SUP_DOC) — ADDITIONAL SEARCH FIELDS:
+Supplier documents have additional fields not present in design doc search:
+- Supplier reference number
+- Purchase order number
+- Equipment tag
+- Vendor name
+- MR (Material Requisition) number
+These are critical for tracking vendor document submittals against purchase orders.
+
+DOCUMENT STATUS CODES — COMPLETE LIST:
+Design documents:
+- INI = Initiated (just created, not yet submitted)
+- IFR = Issued for Review
+- IFA = Issued for Approval
+- IFC = Issued for Construction
+- AFU = Approved for Use
+- AFC = Approved for Construction
+- AFI = Approved for Information
+- VOID = Voided/superseded
+
+Supplier documents have additional statuses:
+- SR = Submitted for Review
+- RA = Reviewed with Comments (Action Required)
+- RB = Reviewed with Comments (Resubmit)
+- RC = Reviewed — No Comments (Approved)
+
+CORRESPONDENCE MODULE:
+Assai manages formal project correspondence separately from documents.
+- Incoming: letters, emails, transmittals received from contractors/vendors
+- Outgoing: letters, transmittals sent to contractors/vendors
+Each correspondence item has: reference number, date, subject, from/to parties, linked documents
+
+QUERIES MODULE (QRY_QUERY):
+Technical queries = Requests for Information (RFIs) or Technical Queries (TQs)
+Query record contains: query number, title, raised by, discipline, status, response due date, response text
+Statuses: Open, Answered, Closed, On Hold
+
+ASSETS MODULE:
+Asset items are physical equipment with:
+- Asset tag/number
+- Equipment description
+- Location (plant/area/unit)
+- Asset class/type
+- Linked documents (manuals, datasheets)
+- Maintenance plans
+- Inspection records
+
+PLANNING MODULE (Work Packages):
+Work packages are the bridge between document control and field execution.
+- Each work package has: WP code, description, status, linked documents, linked assets
+- Documents are assigned to work packages for construction/commissioning execution
+- Work package status tracks: Not Started, In Progress, Complete, On Hold
+
+ASSAI CONNECT (top right shortcut):
+The "Assai Connect" button opens a panel showing:
+- Current user
+- Current project context
+- Current database
+- Quick navigation shortcuts
+This is the panel shown when first logging in (visible as sidebar on the home screen).
+
+DOCUMENT TREES (alternative navigation):
+Instead of search, users can browse documents hierarchically:
+- Documents Tree: browse by document number structure
+- Discipline Tree: grouped by discipline code (ZV, PX, C01-C29, etc.)
+- Package Tree: grouped by work package assignment
+- Company Tree: grouped by originating company
+- Asset Package Tree: grouped by asset/equipment
+
+REVISION MANAGEMENT:
+Every document revision is tracked. The Revisions tab shows:
+- Rev. = revision number (01R, 02A, 03R, etc.)
+  * R suffix = Review revision (not yet approved)
+  * A suffix = Approved revision
+- Title = document title at that revision
+- Rev. date = date issued
+- Status = status code at that revision
+- Appx = approval index
+- Media size = file size
+- Checked = checked out flag
+- Mainten. = maintenance flag
+
+TRANSMITTAL MANAGEMENT:
+Documents are formally issued via transmittals. Each transmittal has:
+- Transmittal number (unique reference)
+- Issue date
+- Sender / Receiver
+- List of documents included
+- Purpose of issue (IFR, IFA, IFC etc.)
+- Response required date
+The Transmittals tab on each document shows all transmittals that document has been included in.
+
+SELMA EXTENDED QUERY PATTERNS:
+Users may ask Selma questions like:
+- "How many supplier documents are overdue for review?" → search SUP_DOC with status SR, check response due dates
+- "What documents are linked to work package ST/DP300?" → search by work_package_code
+- "Show me all open queries for the dehydration unit" → search QRY_QUERY by unit code U13000
+- "What is the latest approved revision of the P&ID for unit U40300?" → search DES_DOC, filter discipline PX or PI, unit U40300, status AFC/AFU, get latest revision
+- "Which vendor documents have not been reviewed yet?" → search SUP_DOC with status SR (submitted, awaiting review)
+- "List all documents in transmittal [number]" → search by transmittal number
+- "What assets are linked to document [number]?" → check Asset items tab on document detail`;
 
     const PSSR_ORA_AGENT_PROMPT = `You are Fred, ORSH's PSSR & Operational Readiness Assistant. You are an expert in Pre-Startup Safety Reviews (PSSR), ORA (Operational Readiness Activity) planning, PSSR checklist management, and safety readiness for Oil & Gas facilities. You help users track PSSR progress, manage checklist items, identify pending approvals, and ensure safe startup readiness. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Fred, your PSSR & Operational Readiness Assistant."`;
 
