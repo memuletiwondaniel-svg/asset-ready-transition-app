@@ -41,43 +41,73 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Shared Assai authentication helper — simple form-based login (no DWR encryption)
+// Helper: extract all Set-Cookie values into a single Cookie string
+function extractCookies(headers: Headers): string {
+  const setCookieValues: string[] = [];
+  headers.forEach((value, key) => {
+    if (key.toLowerCase() === 'set-cookie') {
+      const nameValue = value.split(';')[0].trim();
+      if (nameValue) setCookieValues.push(nameValue);
+    }
+  });
+  // Also try getSetCookie for Deno
+  const gsc = (headers as any).getSetCookie?.() || [];
+  for (const sc of gsc) {
+    const nameValue = sc.split(';')[0].trim();
+    if (nameValue && !setCookieValues.includes(nameValue)) setCookieValues.push(nameValue);
+  }
+  return setCookieValues.join('; ');
+}
+
+// Helper: merge two cookie strings, newer values override older
+function mergeCookies(existing: string, newer: string): string {
+  const map = new Map<string, string>();
+  [...existing.split('; '), ...newer.split('; ')].forEach(pair => {
+    const [name] = pair.split('=');
+    if (name?.trim()) map.set(name.trim(), pair.trim());
+  });
+  return [...map.values()].join('; ');
+}
+
+// Shared Assai authentication helper — simple form-based login
 async function authenticateAssai(assaiBase: string, username: string, password: string): Promise<{ cookies: string; success: boolean; statusCode: number }> {
-  const sessionCookies: string[] = [];
   const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
-  // Step 1: GET login page to capture initial session cookies
+  // Step 1: GET login page to get initial session cookies
   const loginPageRes = await fetch(assaiBase + '/login.aweb?loginMethod=unpw', {
     method: 'GET',
     headers: { 'User-Agent': ua },
-    redirect: 'manual'
+    redirect: 'follow'
   });
-  const loginPageSetCookies = loginPageRes.headers.getSetCookie?.() || [];
-  sessionCookies.push(...loginPageSetCookies.map((c: string) => c.split(';')[0]));
+  const cookies1 = extractCookies(loginPageRes.headers);
   await loginPageRes.text();
 
-  // Step 2: POST login with plain credentials
-  const loginBody = `userid=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&dbname=eu578&loginMethod=unpw`;
+  // Step 2: POST credentials with initial cookies
   const loginRes = await fetch(assaiBase + '/login.aweb', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Cookie': sessionCookies.join('; '),
-      'User-Agent': ua,
-      'Referer': assaiBase + '/login.aweb?loginMethod=unpw'
+      'Cookie': cookies1,
+      'User-Agent': ua
     },
-    body: loginBody,
-    redirect: 'manual'
+    body: new URLSearchParams({
+      userid: username,
+      password: password,
+      dbname: 'eu578',
+      loginMethod: 'unpw'
+    }).toString(),
+    redirect: 'follow'
   });
-  const loginSetCookies = loginRes.headers.getSetCookie?.() || [];
-  sessionCookies.push(...loginSetCookies.map((c: string) => c.split(';')[0]));
+  const cookies2 = extractCookies(loginRes.headers);
+  const allCookies = mergeCookies(cookies1, cookies2);
   await loginRes.text();
 
   const statusCode = loginRes.status;
   const success = statusCode === 200 || statusCode === 302;
-  console.log(`Assai login status: ${statusCode}`);
+  console.log('Assai login status:', statusCode);
+  console.log('Assai cookies extracted:', allCookies.substring(0, 80));
 
-  return { cookies: sessionCookies.join('; '), success, statusCode };
+  return { cookies: allCookies, success, statusCode };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
