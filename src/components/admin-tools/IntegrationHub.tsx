@@ -105,13 +105,11 @@ const parseDbFallbackChain = (value: unknown): ConnectionMethod[] => {
 
 const CONNECTION_METHOD_BADGE_LABELS: Record<ConnectionMethod, string> = {
   api: 'API',
-  automation: 'RPA',
   agent: 'Agent',
 };
 
 const CONNECTION_METHOD_OPTION_LABELS: Record<ConnectionMethod, string> = {
   api: 'API (REST)',
-  automation: 'RPA (Browser)',
   agent: 'Agent (Selma AI)',
 };
 
