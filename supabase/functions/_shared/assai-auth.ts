@@ -144,8 +144,11 @@ export async function loginAssai(
   try {
     // 1) Load login page and capture hidden form fields + cookies
     const loginPageResp = await fetch(loginPageUrl, { method: "GET", redirect: "manual" });
+    const loginPageStatus = loginPageResp.status;
     const loginPageBody = await loginPageResp.text();
     let cookies = extractCookiePairs(loginPageResp);
+
+    console.log(`[assai-auth] Step 1 - Login page GET: status=${loginPageStatus}, cookies=${JSON.stringify(cookies)}`);
 
     const contentUrl = extractInputValue(loginPageBody, "contentUrl", "./forward.aweb?page=root/body");
     const followUp = extractInputValue(loginPageBody, "followUp", "null");
@@ -153,9 +156,12 @@ export async function loginAssai(
     const ssodata = extractInputValue(loginPageBody, "ssodata", "null");
     const loginMethod = extractInputValue(loginPageBody, "loginMethod", "unpw");
 
+    console.log(`[assai-auth] Hidden fields: contentUrl=${contentUrl}, followUp=${followUp}, uniqueName=${uniqueName}, ssodata=${ssodata}, loginMethod=${loginMethod}`);
+
     // 2) Request passphrase via DWR, same as submitSecureLogon() in Assai login.js
     const dwrUrl = `${normalizedBaseUrl}/AW${resolvedDbName}/dwr/call/plaincall/DWRBean.getSessionID.dwr`;
     const cookieHeader = uniqueCookiePairs(cookies).join("; ");
+    console.log(`[assai-auth] Step 2 - DWR call cookies: ${cookieHeader}`);
     const dwrBody = [
       "callCount=1",
       "windowName=",
