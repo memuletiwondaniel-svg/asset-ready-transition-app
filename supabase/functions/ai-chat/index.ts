@@ -73,21 +73,53 @@ function mergeCookies(existing: string, newer: string): string {
 async function authenticateAssai(assaiBase: string, username: string, password: string): Promise<{ cookies: string; success: boolean; statusCode: number }> {
   const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
-  // Step 1: GET login page to get initial session cookies
-  const loginPageRes = await fetch(assaiBase + '/login.aweb?loginMethod=unpw', {
-    method: 'GET',
-    headers: { 'User-Agent': ua },
-    redirect: 'follow'
-  });
-  const cookies1 = extractCookies(loginPageRes.headers);
-  await loginPageRes.text();
+  // Helper: fetch with redirect:'manual', capture cookies from every hop (302s included)
+  async function fetchCaptureCookies(url: string, init: RequestInit, currentCookies: string): Promise<{ cookies: string; finalStatus: number; body: string }> {
+    let cookies = currentCookies;
+    let attempts = 0;
+    let currentUrl = url;
+    let lastStatus = 0;
+    let body = '';
 
-  // Step 2: POST credentials with initial cookies
-  const loginRes = await fetch(assaiBase + '/login.aweb', {
+    while (attempts < 8) {
+      attempts++;
+      const mergedInit = { ...init, redirect: 'manual' as RequestRedirect, headers: { ...init.headers as Record<string,string>, 'Cookie': cookies } };
+      const res = await fetch(currentUrl, mergedInit);
+      // Capture Set-Cookie from this response (including 302s!)
+      cookies = mergeCookies(cookies, extractCookies(res.headers));
+      lastStatus = res.status;
+
+      if (res.status >= 300 && res.status < 400) {
+        const location = res.headers.get('location');
+        await res.text(); // consume body
+        if (!location) break;
+        // Resolve relative redirects
+        currentUrl = location.startsWith('http') ? location : new URL(location, currentUrl).href;
+        // After redirect, switch to GET and drop body
+        init = { method: 'GET', headers: { 'User-Agent': ua } };
+        continue;
+      }
+
+      body = await res.text();
+      break;
+    }
+    return { cookies, finalStatus: lastStatus, body };
+  }
+
+  // Step 1: GET login page — capture initial session cookies (including from redirects)
+  let allCookies = '';
+  const step1 = await fetchCaptureCookies(assaiBase + '/login.aweb?loginMethod=unpw', {
+    method: 'GET',
+    headers: { 'User-Agent': ua }
+  }, allCookies);
+  allCookies = step1.cookies;
+  console.log('Assai GET login page status:', step1.finalStatus, 'cookies:', allCookies.substring(0, 80));
+
+  // Step 2: POST credentials — capture cookies from 302 redirect response
+  const step2 = await fetchCaptureCookies(assaiBase + '/login.aweb', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Cookie': cookies1,
       'User-Agent': ua
     },
     body: new URLSearchParams({
@@ -95,16 +127,13 @@ async function authenticateAssai(assaiBase: string, username: string, password: 
       password: password,
       dbname: 'eu578',
       loginMethod: 'unpw'
-    }).toString(),
-    redirect: 'follow'
-  });
-  const cookies2 = extractCookies(loginRes.headers);
-  let allCookies = mergeCookies(cookies1, cookies2);
-  await loginRes.text();
+    }).toString()
+  }, allCookies);
+  allCookies = step2.cookies;
 
-  const statusCode = loginRes.status;
+  const statusCode = step2.finalStatus;
   const success = statusCode === 200 || statusCode === 302;
-  console.log('Assai login status:', statusCode);
+  console.log('Assai login status:', statusCode, 'cookies after login:', allCookies.substring(0, 100));
 
   // Step 3: Activate server-side session (required before result.aweb works)
   if (success) {
@@ -115,17 +144,16 @@ async function authenticateAssai(assaiBase: string, username: string, password: 
     ];
     for (const url of activationUrls) {
       try {
-        const r = await fetch(url, { headers: { 'Cookie': allCookies, 'User-Agent': ua }, redirect: 'follow' });
-        allCookies = mergeCookies(allCookies, extractCookies(r.headers));
-        await r.text();
-        console.log('Session activation:', url.split('/').pop(), 'status:', r.status);
+        const r = await fetchCaptureCookies(url, { method: 'GET', headers: { 'User-Agent': ua } }, allCookies);
+        allCookies = r.cookies;
+        console.log('Session activation:', url.split('/').pop(), 'status:', r.finalStatus);
       } catch (e) {
         console.error('Session activation failed for', url, e);
       }
     }
   }
 
-  console.log('Assai cookies final:', allCookies.substring(0, 80));
+  console.log('Assai cookies final:', allCookies.substring(0, 120));
   return { cookies: allCookies, success, statusCode };
 }
 
