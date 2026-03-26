@@ -697,6 +697,7 @@ Deno.serve(async (req) => {
           new_documents: totalNew,
           status_changes: totalStatusChanges,
           sync_route_used: syncRoute,
+          error_details: { routes_attempted: routesAttempted, route_succeeded: syncRoute, route_failures: routeFailures },
         }).eq("id", syncLogId);
       }
 
