@@ -696,7 +696,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <Zap className={cn('h-5 w-5', connectionMethod === 'api' ? 'text-blue-600' : 'text-muted-foreground')} />
                       <span className={cn('font-medium text-sm', connectionMethod === 'api' ? 'text-blue-700 dark:text-blue-400' : 'text-foreground')}>API</span>
                       <p className="text-[11px] text-muted-foreground leading-tight">REST endpoint sync</p>
-                    </button>
+                      </button>
                     <button
                       onClick={() => setConnectionMethod('automation')}
                       className={cn(
@@ -709,7 +709,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <MousePointerClick className={cn('h-5 w-5', connectionMethod === 'automation' ? 'text-amber-600' : 'text-muted-foreground')} />
                       <span className={cn('font-medium text-sm', connectionMethod === 'automation' ? 'text-amber-700 dark:text-amber-400' : 'text-foreground')}>RPA</span>
                       <p className="text-[11px] text-muted-foreground leading-tight">Browser automation</p>
-                    </button>
+                      </button>
                     <button
                       onClick={() => setConnectionMethod('agent')}
                       className={cn(
@@ -722,7 +722,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <BrainCircuit className={cn('h-5 w-5', connectionMethod === 'agent' ? 'text-emerald-600' : 'text-muted-foreground')} />
                       <span className={cn('font-medium text-sm', connectionMethod === 'agent' ? 'text-emerald-700 dark:text-emerald-400' : 'text-foreground')}>Agent</span>
                       <p className="text-[11px] text-muted-foreground leading-tight">Selma AI navigator</p>
-                    </button>
+                      </button>
                   </div>
 
                   {/* FALLBACK CHAIN */}
