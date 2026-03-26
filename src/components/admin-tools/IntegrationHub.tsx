@@ -685,7 +685,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                   <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Primary Method</span>
                   <div className="grid grid-cols-3 gap-2.5">
                     <button
-                      onClick={() => setConnectionMethod('api')}
+                      onClick={() => { setConnectionMethod('api'); setFallback1('none'); setFallback2('none'); }}
                       className={cn(
                         'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
                         connectionMethod === 'api'
@@ -698,7 +698,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <p className="text-[11px] text-muted-foreground leading-tight">REST endpoint</p>
                       </button>
                     <button
-                      onClick={() => setConnectionMethod('automation')}
+                      onClick={() => { setConnectionMethod('automation'); setFallback1('none'); setFallback2('none'); }}
                       className={cn(
                         'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
                         connectionMethod === 'automation'
@@ -711,7 +711,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <p className="text-[11px] text-muted-foreground leading-tight">Browser based</p>
                       </button>
                     <button
-                      onClick={() => setConnectionMethod('agent')}
+                      onClick={() => { setConnectionMethod('agent'); setFallback1('none'); setFallback2('none'); }}
                       className={cn(
                         'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
                         connectionMethod === 'agent'
