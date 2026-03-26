@@ -100,6 +100,26 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set([
     'LIVING DOCUMENTATION', 'AI AGENTS', 'INTEGRATIONS', 'SYSTEM', 'OPERATIONS & CONFIGURATION'
   ]));
+
+  // Admin favorites persisted in localStorage
+  const ADMIN_FAV_KEY = 'orsh-admin-favorites';
+  const [adminFavorites, setAdminFavorites] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(ADMIN_FAV_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(ADMIN_FAV_KEY, JSON.stringify(adminFavorites));
+  }, [adminFavorites]);
+
+  const toggleAdminFavorite = useCallback((itemId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAdminFavorites(prev => 
+      prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]
+    );
+  }, []);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<{
     full_name: string;
