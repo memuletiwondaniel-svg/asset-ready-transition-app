@@ -39,7 +39,7 @@ const methods = [
     icon: BrainCircuit,
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-500/10',
-    borderColor: 'border-emerald-500/40',
+    borderColor: 'border-emerald-500/20',
     ringColor: 'ring-emerald-500/30',
   },
 ];
