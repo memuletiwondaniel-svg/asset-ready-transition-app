@@ -620,14 +620,14 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
               <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
                 {/* CONNECTION METHOD */}
                 <div className="space-y-3">
-                  <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Connection Method</span>
+                  <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Primary Method</span>
                   <div className="grid grid-cols-2 gap-3">
                     <button
-                      onClick={() => setConnectionMethod('api')}
+                      onClick={() => { setConnectionMethod('api'); setFallback1('none'); setFallback2('none'); }}
                       className={cn(
                         'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-center min-h-[110px] justify-center',
                         connectionMethod === 'api'
-                          ? 'border-2 border-blue-600 bg-blue-50 dark:bg-blue-950/30'
+                          ? 'border-2 border-blue-600 bg-blue-50 dark:bg-blue-950/30 shadow-sm'
                           : 'border border-border bg-background hover:border-border/80'
                       )}
                     >
@@ -636,11 +636,11 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <p className="text-xs text-muted-foreground">Real-time sync via REST API</p>
                     </button>
                     <button
-                      onClick={() => setConnectionMethod('automation')}
+                      onClick={() => { setConnectionMethod('automation'); setFallback1('none'); setFallback2('none'); }}
                       className={cn(
                         'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-center min-h-[110px] justify-center',
                         connectionMethod === 'automation'
-                          ? 'border-2 border-violet-600 bg-violet-50 dark:bg-violet-950/30'
+                          ? 'border-2 border-violet-600 bg-violet-50 dark:bg-violet-950/30 shadow-sm'
                           : 'border border-border bg-background hover:border-border/80'
                       )}
                     >
@@ -648,6 +648,75 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <span className={cn('font-medium text-sm', connectionMethod === 'automation' ? 'text-violet-700 dark:text-violet-400' : 'text-foreground')}>Automation</span>
                       <p className="text-xs text-muted-foreground">Browser-based workflow automation</p>
                     </button>
+                  </div>
+
+                  {/* FALLBACK CHAIN */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Fallback Chain</span>
+                      <span className="text-[10px] text-muted-foreground/60">If primary fails, try next</span>
+                    </div>
+                    <div className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-2.5">
+                      {/* Fallback 1 */}
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/30 shrink-0">
+                          <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">1</span>
+                        </div>
+                        <select
+                          value={fallback1}
+                          onChange={e => { setFallback1(e.target.value); if (e.target.value === 'none') setFallback2('none'); }}
+                          className="flex-1 h-8 text-xs rounded-md border border-border bg-background px-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                        >
+                          <option value="none">No fallback</option>
+                          {connectionMethod !== 'api' && <option value="api">API (REST)</option>}
+                          {connectionMethod !== 'automation' && <option value="automation">Automation (Browser)</option>}
+                          <option value="agent" disabled>Agent (Coming Soon)</option>
+                        </select>
+                      </div>
+                      {/* Fallback 2 — only show if Fallback 1 is set */}
+                      {fallback1 !== 'none' && (
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-orange-100 dark:bg-orange-900/30 shrink-0">
+                            <span className="text-[10px] font-bold text-orange-700 dark:text-orange-400">2</span>
+                          </div>
+                          <select
+                            value={fallback2}
+                            onChange={e => setFallback2(e.target.value)}
+                            className="flex-1 h-8 text-xs rounded-md border border-border bg-background px-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                          >
+                            <option value="none">No fallback</option>
+                            {connectionMethod !== 'api' && fallback1 !== 'api' && <option value="api">API (REST)</option>}
+                            {connectionMethod !== 'automation' && fallback1 !== 'automation' && <option value="automation">Automation (Browser)</option>}
+                            <option value="agent" disabled>Agent (Coming Soon)</option>
+                          </select>
+                        </div>
+                      )}
+                      {/* Visual chain summary */}
+                      <div className="flex items-center gap-1.5 pt-1 border-t border-border/30 mt-1">
+                        <span className="text-[10px] text-muted-foreground/70">Execution order:</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] font-medium text-foreground/80 bg-muted/60 px-1.5 py-0.5 rounded">
+                            {connectionMethod === 'api' ? 'API' : 'Automation'}
+                          </span>
+                          {fallback1 !== 'none' && (
+                            <>
+                              <span className="text-[10px] text-muted-foreground/50">→</span>
+                              <span className="text-[10px] font-medium text-foreground/80 bg-amber-50 dark:bg-amber-950/30 px-1.5 py-0.5 rounded">
+                                {fallback1 === 'api' ? 'API' : fallback1 === 'automation' ? 'Automation' : 'Agent'}
+                              </span>
+                            </>
+                          )}
+                          {fallback2 !== 'none' && (
+                            <>
+                              <span className="text-[10px] text-muted-foreground/50">→</span>
+                              <span className="text-[10px] font-medium text-foreground/80 bg-orange-50 dark:bg-orange-950/30 px-1.5 py-0.5 rounded">
+                                {fallback2 === 'api' ? 'API' : fallback2 === 'automation' ? 'Automation' : 'Agent'}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

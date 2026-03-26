@@ -639,9 +639,11 @@ Deno.serve(async (req) => {
             console.log(`[sync-assai] Route 2: 0 documents extracted`);
           }
         } catch (e) {
-          console.log(`[sync-assai] Route 2 failed: ${e}`);
+          console.log(`[sync-assai] Automation route failed: ${e}`);
         }
-      }
+      } // end if automation
+
+      } // end for executionChain
 
       console.log(`[sync-assai] Final: ${totalSynced} documents via ${syncRoute}`);
 
