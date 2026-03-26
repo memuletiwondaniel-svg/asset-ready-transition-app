@@ -2926,6 +2926,27 @@ const tools = [
       }
     }
   },
+  {
+    type: "function",
+    function: {
+      name: "read_assai_document",
+      description: "Fetches and reads the actual content of a document from Assai DMS. Use this when the user asks to read, summarise, review, or ask specific questions about the content of a document — not just its metadata. Input requires the full document number and the user's specific question.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_number: {
+            type: "string",
+            description: "Full Assai document number e.g. 6529-ABBE-C017-ISGP-U40300-ZV-A01-00006-001"
+          },
+          question: {
+            type: "string",
+            description: "What the user wants to know about the document content e.g. 'Summarise this document', 'List all open comments', 'What is the revision history?'"
+          }
+        },
+        required: ["document_number", "question"]
+      }
+    }
+  },
   // ═══════════════════════════════════════════════════════════════════════════
   // EXECUTIVE SUMMARY TOOL - For high-level status assessments
   // ═══════════════════════════════════════════════════════════════════════════
