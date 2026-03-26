@@ -51,7 +51,6 @@ const APIConfigWizard: React.FC<APIConfigWizardProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [interfaceMethod, setInterfaceMethod] = useState<InterfaceMethod | null>(null);
-  const [rpaCredentials, setRpaCredentials] = useState<RPACredentials>({ portalUrl: '', username: '', password: '' });
   const [apiCredentials, setApiCredentials] = useState<APICredentials>({ endpointUrl: '', authType: 'api_key' });
   const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [testError, setTestError] = useState('');
