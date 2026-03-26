@@ -487,6 +487,7 @@ Deno.serve(async (req) => {
 
       for (const currentRoute of executionChain) {
         if (routeSucceeded) break;
+        routesAttempted.push(currentRoute);
         console.log(`[sync-assai] Trying route: ${currentRoute}`);
 
       if (currentRoute === 'api') {
