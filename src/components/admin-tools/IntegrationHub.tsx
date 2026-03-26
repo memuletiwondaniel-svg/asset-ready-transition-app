@@ -605,6 +605,12 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           </div>
         ) : (
           <>
+            {/* Favorites Section */}
+            {hubFavorites.length > 0 && !searchQuery && (() => {
+              const favPlatforms = hubFavorites.map(id => ALL_PLATFORMS.find(p => p.id === id)).filter(Boolean) as Platform[];
+              if (favPlatforms.length === 0) return null;
+              return renderSection('favorites', 'Favorites', favPlatforms);
+            })()}
             {renderSection('dms', 'Document Management', dmsPlatforms)}
             {renderSection('enterprise', 'Project & Enterprise Systems', enterprisePlatforms)}
             {renderSection('comms', 'Communication & Collaboration', commsPlatforms)}
