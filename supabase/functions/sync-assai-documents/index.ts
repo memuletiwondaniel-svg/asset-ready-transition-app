@@ -676,9 +676,12 @@ Deno.serve(async (req) => {
           } else if (totalSynced === 0) {
             console.log(`[sync-assai] Route 2: 0 documents extracted`);
           }
-        } catch (e) {
+        } catch (e: any) {
+          routeFailures['automation'] = e?.message || String(e);
           console.log(`[sync-assai] Automation route failed: ${e}`);
         }
+
+        if (totalSynced > 0) routeSucceeded = true;
       } // end if automation
 
       } // end for executionChain
