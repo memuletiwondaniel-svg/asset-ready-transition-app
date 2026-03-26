@@ -131,25 +131,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     comms: false,
   });
 
-  // Integration Hub favorites
-  const HUB_FAV_KEY = 'orsh-integration-hub-favorites';
-  const [hubFavorites, setHubFavorites] = useState<string[]>(() => {
-    try {
-      const stored = localStorage.getItem(HUB_FAV_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch { return []; }
-  });
-
-  useEffect(() => {
-    localStorage.setItem(HUB_FAV_KEY, JSON.stringify(hubFavorites));
-  }, [hubFavorites]);
-
-  const toggleHubFavorite = useCallback((platformId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setHubFavorites(prev =>
-      prev.includes(platformId) ? prev.filter(id => id !== platformId) : [...prev, platformId]
-    );
-  }, []);
+  // Integration Hub favorites - user-scoped and persisted
+  const { favorites: hubFavorites, toggleFavorite: toggleHubFavorite } = useUserScopedFavorites('orsh-integration-hub-favorites');
 
   // GoCompletions localStorage status
   const [gocConfigured, setGocConfigured] = useState(false);
