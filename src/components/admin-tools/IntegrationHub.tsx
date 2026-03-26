@@ -70,7 +70,7 @@ interface Platform {
   badgeLabel: string;
 }
 
-type ConnectionMethod = 'api' | 'automation';
+type ConnectionMethod = 'api' | 'automation' | 'agent';
 type AuthType = 'api_key' | 'oauth' | 'bearer';
 
 const ALL_PLATFORMS: Platform[] = [
