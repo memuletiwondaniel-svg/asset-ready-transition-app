@@ -201,44 +201,46 @@ export async function loginAssai(
       return { success: false, error: "Failed to initialize Assai secure login session", response_time_ms: elapsed };
     }
 
-    // 3) Encrypt credentials exactly like submitSecureLogon()
-    const ivHex = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
-    const saltHex = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
-    console.log(`[assai-auth] Encrypting: username_length=${username.length}, password_length=${password.length}, iv=${ivHex.substring(0,8)}..., salt=${saltHex.substring(0,8)}...`);
-    const cipherusr = await encryptAssaiField(passphrase, username, saltHex, ivHex);
-    const cipherpwd = await encryptAssaiField(passphrase, password, saltHex, ivHex);
-    console.log(`[assai-auth] Encrypted: cipherusr_length=${cipherusr.length}, cipherpwd_length=${cipherpwd.length}`);
+    // 3) Try SHA-256 first (newer CryptoJS default), then SHA-1 fallback
+    const hashAlgos = ["SHA-256", "SHA-1"];
+    
+    for (const hashAlgo of hashAlgos) {
+      const ivHex = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+      const saltHex = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
+      console.log(`[assai-auth] Trying ${hashAlgo}: username_length=${username.length}, password_length=${password.length}`);
+      const cipherusr = await encryptAssaiField(passphrase, username, saltHex, ivHex, hashAlgo);
+      const cipherpwd = await encryptAssaiField(passphrase, password, saltHex, ivHex, hashAlgo);
 
-    const formBody = new URLSearchParams({
-      iv: ivHex,
-      salt: saltHex,
-      cipherusr,
-      cipherpwd,
-      iterationCount: "1000",
-      keySize: "128",
-      contentUrl,
-      followUp,
-      uniqueName,
-      isSecure: "true",
-      dbname: resolvedDbName,
-      ssodata,
-      loginMethod,
-      remember_me: "false",
-    });
+      const formBody = new URLSearchParams({
+        iv: ivHex,
+        salt: saltHex,
+        cipherusr,
+        cipherpwd,
+        iterationCount: "1000",
+        keySize: "128",
+        contentUrl,
+        followUp,
+        uniqueName,
+        isSecure: "true",
+        dbname: resolvedDbName,
+        ssodata,
+        loginMethod,
+        remember_me: "false",
+      });
 
-    // 4) Perform encrypted login
-    const loginResp = await fetch(loginPostUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Referer": loginPageUrl,
-        "Origin": normalizedBaseUrl,
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        ...(cookies.length ? { Cookie: cookies.join("; ") } : {}),
-      },
-      body: formBody.toString(),
-      redirect: "manual",
-    });
+      // 4) Perform encrypted login
+      const loginResp = await fetch(loginPostUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Referer": loginPageUrl,
+          "Origin": normalizedBaseUrl,
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          ...(cookies.length ? { Cookie: cookies.join("; ") } : {}),
+        },
+        body: formBody.toString(),
+        redirect: "manual",
+      });
 
     const elapsed = Date.now() - start;
     const body = await loginResp.text();
