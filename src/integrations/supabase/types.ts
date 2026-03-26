@@ -1305,12 +1305,14 @@ export type Database = {
           created_at: string | null
           db_name: string | null
           dms_platform: string
+          fallback_chain: Json | null
           id: string
           last_sync_at: string | null
           mdr_current_revision: string | null
           mdr_document_number: string | null
           mdr_last_fetched_at: string | null
           password_encrypted: string | null
+          primary_method: string | null
           project_code_field: string | null
           sync_enabled: boolean | null
           tenant_id: string | null
@@ -1322,12 +1324,14 @@ export type Database = {
           created_at?: string | null
           db_name?: string | null
           dms_platform: string
+          fallback_chain?: Json | null
           id?: string
           last_sync_at?: string | null
           mdr_current_revision?: string | null
           mdr_document_number?: string | null
           mdr_last_fetched_at?: string | null
           password_encrypted?: string | null
+          primary_method?: string | null
           project_code_field?: string | null
           sync_enabled?: boolean | null
           tenant_id?: string | null
@@ -1339,12 +1343,14 @@ export type Database = {
           created_at?: string | null
           db_name?: string | null
           dms_platform?: string
+          fallback_chain?: Json | null
           id?: string
           last_sync_at?: string | null
           mdr_current_revision?: string | null
           mdr_document_number?: string | null
           mdr_last_fetched_at?: string | null
           password_encrypted?: string | null
+          primary_method?: string | null
           project_code_field?: string | null
           sync_enabled?: boolean | null
           tenant_id?: string | null

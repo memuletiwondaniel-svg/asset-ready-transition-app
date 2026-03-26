@@ -45,6 +45,8 @@ interface SyncCredential {
   sync_enabled: boolean;
   last_sync_at: string | null;
   db_name?: string | null;
+  primary_method?: string | null;
+  fallback_chain?: unknown;
 }
 
 interface SyncLog {
@@ -73,6 +75,35 @@ interface Platform {
 
 type ConnectionMethod = 'api' | 'automation' | 'agent';
 type AuthType = 'api_key' | 'oauth' | 'bearer';
+
+const mapDbMethodToUi = (method: string | null | undefined): ConnectionMethod | null => {
+  if (method === 'api') return 'api';
+  if (method === 'rpa') return 'automation';
+  if (method === 'agent') return 'agent';
+  return null;
+};
+
+const mapUiMethodToDb = (method: ConnectionMethod): 'api' | 'rpa' | 'agent' =>
+  method === 'automation' ? 'rpa' : method;
+
+const parseDbFallbackChain = (value: unknown): ConnectionMethod[] => {
+  const parsed = typeof value === 'string'
+    ? (() => {
+        try {
+          return JSON.parse(value);
+        } catch {
+          return [];
+        }
+      })()
+    : value;
+
+  if (!Array.isArray(parsed)) return [];
+
+  return parsed
+    .map((entry) => mapDbMethodToUi(typeof entry === 'string' ? entry : null))
+    .filter((entry): entry is ConnectionMethod => !!entry)
+    .slice(0, 2);
+};
 
 const CONNECTION_METHOD_BADGE_LABELS: Record<ConnectionMethod, string> = {
   api: 'API',
@@ -134,6 +165,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const [dbNameAutoDetected, setDbNameAutoDetected] = useState(false);
   const [saving, setSaving] = useState(false);
   const [hasStoredCredentials, setHasStoredCredentials] = useState(false);
+  const [savedDirtySignature, setSavedDirtySignature] = useState('');
 
   // Action states
   const [testingInPanel, setTestingInPanel] = useState(false);
