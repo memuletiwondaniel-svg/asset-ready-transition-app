@@ -524,7 +524,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       // Detect stub/incomplete responses (ends with ":" and very short, or no content)
       const trimmed = assistantMessage.trim();
       if (!trimmed || (trimmed.endsWith(':') && trimmed.length < 200 && !trimmed.includes('\n'))) {
-        const errorMsg = "I wasn't able to complete that request — please try again.";
+        const userQuery = textToSend.substring(0, 60).trim();
+        const errorMsg = `I wasn't able to process your request about "${userQuery}".\n\nThis could be due to a temporary backend issue. Here's what you can try:\n• **Rephrase** your question with more specific details (e.g. vendor name, PO number, or document type)\n• **Try again** in a moment — this is usually a brief interruption\n• **Start a new chat** if the issue persists`;
         setMessages([...newMessages, { role: 'assistant', content: errorMsg }]);
         await saveMessage('assistant', errorMsg);
         loadConversations();
