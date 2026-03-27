@@ -9318,14 +9318,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           IFR: "Issued for Review", AFD: "Approved for Design",
           IFD: "Issued for Design", IFU: "Issued for Use"
         };
-        const TYPE_DESCS: Record<string, string> = {
-          A01: "Supplier Document Register", A02: "Basis for Design",
-          B01: "General Arrangement Drawing", B04: "Foundation Layout",
-          C02: "System/Equipment Specification", C03: "Single Line Diagram",
-          C08: "Equipment Datasheet", C11: "Control Schematic",
-          C14: "Cause & Effect Diagram", H02: "Inspection & Test Plan",
-          H08: "Factory Acceptance Test", J01: "Installation/O&M Manual"
-        };
+        const TYPE_DESCS: Record<string, string> = dynamicTypeDescs;
 
         // Extract highlights from Bob's text (numbered items)
         const highlights: string[] = [];
