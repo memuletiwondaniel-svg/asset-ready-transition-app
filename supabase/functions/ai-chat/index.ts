@@ -3079,13 +3079,13 @@ const tools = [
     type: "function",
     function: {
       name: "search_assai_documents",
-      description: "Search Assai DMS (the external document management system) for documents. Returns ALL matching documents (up to 500) by automatically paginating through Assai result pages. Use this when the user asks to search Assai, find vendor documents, check document status in Assai, or asks about documents for a specific PO/purchase order number. Returns a list of matching documents with their type, status, revision, and title. ALWAYS use this instead of get_document_search_by_number when the user wants to search the external Assai system.",
+      description: "Search Assai DMS (the external document management system) for documents. Returns ALL matching documents by automatically splitting into sub-searches when results exceed 100. IMPORTANT: Always use the MOST SPECIFIC search pattern possible. When searching for a specific company's documents, ALWAYS include the company code in the document_number_pattern (e.g. '6529-ABBE-%' not '6529-%'). The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit]-[Discipline]-[Type]-[PO]-[Seq]. Use this when the user asks to search Assai, find vendor documents, check document status in Assai, or asks about documents for a specific PO/purchase order number.",
       parameters: {
         type: "object",
         properties: {
           document_number_pattern: {
             type: "string",
-            description: 'Document number or PO search pattern. For PO-based searches, pass the last 5 digits (e.g. "00006") and it will use Assai purchase_code field. For document number searches, use prefix patterns like "6529-%" . Assai wildcards only work as prefix/suffix, NOT mid-string.'
+            description: 'Document number search pattern. ALWAYS be as specific as possible. When the user mentions a company like ABB, use "6529-ABBE-%" NOT "6529-%". For PO-based searches, pass the 5-digit PO number (e.g. "00006"). Format: [Project]-[Originator]-[Plant]-[Area]-[Unit]-[Discipline]-[Type]-[PO]-[Seq]. Use % as wildcard suffix only.'
           },
           discipline_code: {
             type: "string",
