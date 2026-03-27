@@ -699,29 +699,18 @@ FORMATTING RULES (MANDATORY):
 - Never put emojis inside bullet text — TTS strips them but it looks cluttered.
 - Use a ## header only when the response covers 3 or more distinct topics.
 
-DOCUMENT TYPE RESOLUTION (CRITICAL — TWO-UNIVERSE MODEL):
+DOCUMENT TYPE RESOLUTION (CRITICAL):
+ALL documents — engineering, vendor, planning — reside in Assai. The dms_document_types table in ORSH is the master reference for Assai document type codes.
 
-IMPORTANT — There are TWO separate document universes in ORSH:
-
-UNIVERSE 1 — Assai Vendor Document Register:
-- Contains documents SUBMITTED BY VENDORS as part of their contract deliverables
-- Codes are short alphanumeric: A01, B01, C03, H02, H08, J01, etc.
-- Searchable via the search_assai_documents tool
-- Example: vendor GA drawings, vendor ITPs, vendor FAT reports, vendor IOMs, vendor SDRs
-
-UNIVERSE 2 — Internal Engineering Document Register (EDMS):
-- Contains documents produced by the EPC contractor or owner
-- Codes are 4-digit numeric: 0901, 1206, 2305, 7704, etc.
-- Examples: Basis for Design (BfD), PFDs, P&IDs, Engineering Calculations, Design Basis
-- NOT searchable via search_assai_documents — these are in a separate system
-
-CRITICAL RULES:
-1. To resolve a document type name to a code, ALWAYS call the resolve_document_type tool FIRST. Never guess or assume a type code.
-2. If resolve_document_type shows the document is NOT a vendor document (is_vendor_document=false), tell the user: "This document type is an engineering/owner document and is not stored in the Assai vendor document register. It would be found in the project engineering document management system (EDMS), not Assai."
-3. If the result shows it IS a vendor document (is_vendor_document=true), proceed to search Assai using search_assai_documents with the correct code.
-4. If resolve_document_type returns multiple matches, ask the user: "I found [N] document types matching [X]. Which one did you mean?" and list them before proceeding.
-5. Never search Assai with a wildcard pattern like '6529-%' alone — always include at minimum a company_code, document_type, or purchase_order filter.
-6. If no specific filter is available, ask the user: "To search Assai, I need at least one of: the vendor name, the PO number, or the document type code. Which can you provide?"
+When a user asks for a document by type name or abbreviation:
+1. ALWAYS call resolve_document_type first with the name/abbreviation they used
+2. If exactly one match: use its code as the document_type parameter in search_assai_documents
+3. If multiple matches: show the user the options and ask which one they mean before searching
+4. If no match: tell the user the document type was not found in the register and ask them to clarify
+5. Never guess or hardcode a type code — ALWAYS resolve dynamically via the tool
+6. Never search Assai without a document_type, company_code, or purchase_order filter — a bare project prefix like '6529-%' is NOT acceptable
+7. Never expose internal search patterns, wildcards, or codes to the user — only show human-readable results
+8. If no specific filter is available, ask the user: "To search Assai, I need at least one of: the vendor name, the PO number, or the document type. Which can you provide?"
 
 PLANT/UNIT CODE MAPPING (use when user mentions DP numbers or plant areas):
 DP300 = U40300, DP200 = U40200, DP100 = U40100, DP400 = U40400, DP500 = U40500.
@@ -3088,13 +3077,13 @@ const tools = [
     type: "function",
     function: {
       name: "search_assai_documents",
-      description: `Search Assai DMS for VENDOR documents. Returns ALL matching documents by automatically splitting into sub-searches when results exceed 100. IMPORTANT: Always use the MOST SPECIFIC search pattern possible.
+      description: `Search Assai DMS for documents. ALL document types (engineering and vendor) are stored in Assai. Returns ALL matching documents by automatically splitting into sub-searches when results exceed 100. IMPORTANT: Always use the MOST SPECIFIC search pattern possible.
 
-BEFORE calling this tool, you MUST first call resolve_document_type to verify the document type is a vendor document (is_vendor_document=true). If it is NOT a vendor document, do NOT search Assai — tell the user it lives in the EDMS instead.
+BEFORE calling this tool, you MUST first call resolve_document_type to get the correct document type code. Never guess or hardcode type codes.
 
 The search MUST include at least one specific filter beyond the project number: document_type, company_code, or a PO-based pattern. Searching with only '6529-%' is FORBIDDEN — it returns thousands of irrelevant documents.
 
-The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit]-[Discipline]-[Type]-[PO]-[Seq]. Use this when the user asks to search Assai, find vendor documents, check document status, or asks about documents for a specific PO/purchase order number.`,
+The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit]-[Discipline]-[Type]-[PO]-[Seq]. Use this when the user asks to search Assai, find documents, check document status, or asks about documents for a specific PO/purchase order number.`,
       parameters: {
         type: "object",
         properties: {
@@ -6856,17 +6845,14 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           matches: data.map(d => ({
             code: d.code,
             name: d.document_name,
-            description: d.document_description,
+            description: d.document_description?.substring(0, 200),
             tier: d.tier,
             discipline_code: d.discipline_code,
-            discipline_name: d.discipline_name,
-            is_vendor_document: d.is_vendor_document === true || d.rlmu === 'Vendor' || d.discipline_code === 'ZV'
+            discipline_name: d.discipline_name
           })),
-          note: data.length > 1 
-            ? 'Multiple matches found — confirm with user which one they mean before searching Assai.' 
-            : (data[0].is_vendor_document === true || data[0].rlmu === 'Vendor' || data[0].discipline_code === 'ZV')
-              ? 'This is a vendor document — you can search Assai with this code.'
-              : 'This is an engineering/owner document — it is NOT in the Assai vendor register. It would be in the project EDMS.'
+          instruction: data.length === 1
+            ? `Use code "${data[0].code}" as the document_type filter in search_assai_documents`
+            : 'Multiple matches found — confirm with the user which document type they mean before searching Assai'
         };
       } catch (err) {
         console.error('resolve_document_type error:', err);
