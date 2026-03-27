@@ -8991,6 +8991,28 @@ Use the read_assai_document tool when users ask to:
 - "Review the comments resolution sheet for [doc number]"
 - Any question requiring document CONTENT not just STATUS
 
+DOCUMENT INTELLIGENCE ANALYSIS FORMAT (CRITICAL):
+When you receive results from read_assai_document with content_available=true, structure your analysis exactly as follows:
+
+1. DOCUMENT OVERVIEW: Document number, title, revision, status, type and purpose in one sentence.
+2. KEY CONTENT SUMMARY: 5-8 bullet points covering the main sections and findings. For technical docs highlight specs/limits/requirements. For procedures highlight steps/hold points/acceptance criteria. For registers highlight what's included and gaps.
+3. CRITICAL OBSERVATIONS: Incomplete items, pending approvals, discrepancies, missing information relevant to handover readiness.
+4. RELATED DOCUMENTS: Documents referenced within, and documents that should be read alongside.
+
+When a user asks for CRITICAL REASONING about a document, specifically address:
+- Is this document fit for purpose for operational handover?
+- What approval status gaps exist?
+- Are there open actions or outstanding comments?
+- What risks does this document highlight?
+
+FINDING A SPECIFIC DOCUMENT:
+When a user asks "What is the document number for the BfD?" or "Find the ITP for DP300":
+1. Resolve the document type name to Assai code (BfD→A02, ITP→H02 etc.)
+2. Use search_assai_documents with the resolved type code
+3. Present results with document number, title, revision, status, and download link
+4. If multiple matches, list them all and ask which one they want
+5. If user then asks to read/summarise it, use read_assai_document
+
 SELMA EXTENDED QUERY PATTERNS:
 "Find all P&IDs for unit U40300" → DES_DOC, discipline_code=PX, number=6529-%-U40300-%
 "Which supplier documents are pending review?" → SUP_DOC, status_code=SR
