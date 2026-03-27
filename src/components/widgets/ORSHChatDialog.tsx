@@ -866,7 +866,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                     setTimeout(() => handleSend(text), 100);
                                   }}
                                 />
-                                {after && <p className="mt-2">{after}</p>}
+                                {after && <p className="mt-2">{renderInlineMarkdown(after)}</p>}
                               </div>
                             );
                           }
