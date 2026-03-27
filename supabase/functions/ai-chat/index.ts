@@ -137,19 +137,27 @@ async function authenticateAssai(assaiBase: string, username: string, password: 
 
   // Step 3: Activate server-side session (required before result.aweb works)
   if (success) {
-    const activationUrls = [
-      assaiBase + '/label.aweb',
-      assaiBase + '/activateApplet.aweb',
-      assaiBase + '/navbar.aweb?subclass_type=null'
-    ];
-    for (const url of activationUrls) {
-      try {
-        const r = await fetchCaptureCookies(url, { method: 'GET', headers: { 'User-Agent': ua } }, allCookies);
-        allCookies = r.cookies;
-        console.log('Session activation:', url.split('/').pop(), 'status:', r.finalStatus);
-      } catch (e) {
-        console.error('Session activation failed for', url, e);
-      }
+    // Session activation — required by Assai after login
+    const [labelResp, appletResp] = await Promise.all([
+      fetch(assaiBase + '/label.aweb', { headers: { 'Cookie': allCookies, 'User-Agent': ua }, redirect: 'follow' }),
+      fetch(assaiBase + '/activateApplet.aweb', { headers: { 'Cookie': allCookies, 'User-Agent': ua }, redirect: 'follow' })
+    ]);
+    const cookies3 = mergeCookies(allCookies, extractCookies(labelResp.headers));
+    const finalCookies = mergeCookies(cookies3, extractCookies(appletResp.headers));
+    allCookies = finalCookies;
+    // Consume response bodies
+    await labelResp.text().catch(() => {});
+    await appletResp.text().catch(() => {});
+    console.log('Session activation: label.aweb status:', labelResp.status, 'activateApplet.aweb status:', appletResp.status);
+
+    // Final activation call: navbar
+    try {
+      const navResp = await fetch(assaiBase + '/navbar.aweb?subclass_type=null', { headers: { 'Cookie': allCookies, 'User-Agent': ua }, redirect: 'follow' });
+      allCookies = mergeCookies(allCookies, extractCookies(navResp.headers));
+      await navResp.text().catch(() => {});
+      console.log('Session activation: navbar.aweb status:', navResp.status);
+    } catch (e) {
+      console.error('Session activation failed for navbar.aweb', e);
     }
   }
 
