@@ -705,7 +705,7 @@ When you receive results from search_assai_documents, you MUST respond with a JS
 <structured_response>
 {
   "type": "document_search",
-  "summary": "Found X documents for [description]",
+  "summary": "Found **X** documents for [description]",
   "status_table": [
     { "status": "AFU", "description": "Approved for Use", "count": N },
     { "status": "AFC", "description": "Approved for Construction", "count": N }
