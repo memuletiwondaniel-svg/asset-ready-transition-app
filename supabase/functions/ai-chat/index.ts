@@ -9354,7 +9354,71 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         console.log('search_assai_documents: deterministic structured_response built server-side');
       }
 
-      // Fallback: if model returns no content after tools, deterministically format the last tool result
+      // PART 1b: Deterministic structured_response for document reading/analysis
+      if (lastToolName === 'read_assai_document' && lastToolResult && lastToolResult.content_available && lastToolResult.document_content_answer) {
+        const meta = lastToolResult.metadata || {};
+        const answer = lastToolResult.document_content_answer || '';
+        const assaiBaseUrl = (meta.external_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/[^/]*$/, '');
+        
+        // Parse Bob's analysis text into sections
+        const keySummary: string[] = [];
+        const criticalObs: string[] = [];
+        const relatedDocs: string[] = [];
+        let overview = '';
+        
+        // Extract sections from Bob's response
+        const lines = finalContent.split('\n').filter((l: string) => l.trim());
+        let currentSection = '';
+        
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.match(/overview|document overview/i)) { currentSection = 'overview'; continue; }
+          if (trimmed.match(/key.*summary|content.*summary/i)) { currentSection = 'summary'; continue; }
+          if (trimmed.match(/critical|observation|warning/i)) { currentSection = 'critical'; continue; }
+          if (trimmed.match(/related.*doc/i)) { currentSection = 'related'; continue; }
+          
+          const bulletContent = trimmed.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '');
+          if (!bulletContent) continue;
+          
+          if (currentSection === 'overview') overview += (overview ? ' ' : '') + bulletContent;
+          else if (currentSection === 'summary') keySummary.push(bulletContent);
+          else if (currentSection === 'critical') criticalObs.push(bulletContent);
+          else if (currentSection === 'related') relatedDocs.push(bulletContent);
+        }
+        
+        // If parsing didn't yield sections, use the full AI answer as summary
+        if (keySummary.length === 0 && !overview) {
+          overview = answer.substring(0, 500);
+        }
+
+        const structured = {
+          type: "document_analysis",
+          summary: `Analysis of **${meta.document_number || 'document'}** — ${meta.title || 'Untitled'}`,
+          document: {
+            document_number: meta.document_number || '',
+            title: meta.title || 'Untitled',
+            revision: meta.revision || '',
+            status: meta.status || '',
+            type_code: meta.document_type || '',
+            download_url: meta.pk_seq_nr && meta.entt_seq_nr
+              ? `https://eu.assaicloud.com/AWeu578/download.aweb?pk_seq_nr=${meta.pk_seq_nr}&entt_seq_nr=${meta.entt_seq_nr}`
+              : undefined
+          },
+          overview: overview || undefined,
+          key_summary: keySummary.length > 0 ? keySummary : undefined,
+          critical_observations: criticalObs.length > 0 ? criticalObs : undefined,
+          related_documents: relatedDocs.length > 0 ? relatedDocs : undefined,
+          followup: [
+            `Show me all ${meta.document_type || ''} documents`,
+            `What is the revision history for ${meta.document_number || 'this document'}?`,
+            `Are there any open comments on ${meta.document_number || 'this document'}?`
+          ]
+        };
+
+        finalContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+        console.log('read_assai_document: deterministic structured_response built server-side');
+      }
+
       if (!finalContent || !finalContent.trim()) {
         if (lastToolResult?.error) {
           finalContent = `I couldn't find that information: ${lastToolResult.error}`;
