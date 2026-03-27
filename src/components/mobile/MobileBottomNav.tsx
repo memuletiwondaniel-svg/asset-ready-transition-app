@@ -17,10 +17,15 @@ export const MobileBottomNav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { translations: t } = useLanguage();
+  const { hasPermission } = usePermissions();
+
+  const navItems = baseNavItems.filter(item => 
+    !item.requiresPermission || hasPermission(item.requiresPermission)
+  );
 
   const getLabel = (key: string) => (t as any)[key] || key;
 
-  const isActive = (item: typeof navItems[0]) => {
+  const isActive = (item: typeof baseNavItems[0]) => {
     const path = location.pathname;
     if (item.section === 'home') return path === '/' || path === '/home';
     if (item.section === 'projects') return path.startsWith('/vcrs') || path.startsWith('/projects') || path.startsWith('/project/');
