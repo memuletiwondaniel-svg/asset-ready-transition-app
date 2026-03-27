@@ -6919,6 +6919,67 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
 
+    case "learn_acronym": {
+      try {
+        const acronym = (args.acronym || '').trim().toUpperCase().replace(/[^A-Z0-9&]/g, '');
+        const full_name = args.full_name || '';
+        const type_code = args.type_code || '';
+        const notes = args.notes || '';
+        
+        if (!acronym || !full_name) {
+          return { success: false, message: 'Both acronym and full_name are required.' };
+        }
+        
+        // Check if it already exists
+        const { data: existing } = await supabaseClient
+          .from('dms_document_type_acronyms')
+          .select('acronym, full_name, type_code')
+          .eq('acronym', acronym)
+          .maybeSingle();
+        
+        if (existing) {
+          await supabaseClient
+            .from('dms_document_type_acronyms')
+            .update({
+              full_name,
+              type_code: type_code || existing.type_code,
+              notes: notes || null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('acronym', acronym);
+          
+          return {
+            success: true,
+            action: 'updated',
+            message: `Updated "${acronym}". Previously "${existing.full_name}", now "${full_name}".`
+          };
+        }
+        
+        const { error } = await supabaseClient
+          .from('dms_document_type_acronyms')
+          .insert({
+            acronym,
+            full_name,
+            type_code: type_code || null,
+            notes: notes || null,
+            is_learned: true
+          });
+        
+        if (error) {
+          return { success: false, message: `Failed to save: ${error.message}` };
+        }
+        
+        return {
+          success: true,
+          action: 'created',
+          message: `Saved "${acronym}" as "${full_name}" to the knowledge base. This will be remembered in all future conversations.`
+        };
+      } catch (err) {
+        console.error('learn_acronym error:', err);
+        return { success: false, error: String(err) };
+      }
+    }
+
     case "search_assai_documents": {
       try {
         const { document_number_pattern, discipline_code, document_type, status_code, company_code } = args;
