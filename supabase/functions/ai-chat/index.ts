@@ -105,53 +105,24 @@ async function fetchCaptureCookies(url: string, init: RequestInit, currentCookie
 
 // Shared Assai authentication helper — simple form-based login
 async function authenticateAssai(assaiBase: string, username: string, password: string): Promise<{ cookies: string; success: boolean; statusCode: number }> {
-  const ua = ASSAI_UA;
+  // Extract origin and dbName from assaiBase (e.g. https://eu.assaicloud.com/AWeu578)
+  const originMatch = assaiBase.match(/^(https?:\/\/[^/]+)/);
+  const origin = originMatch ? originMatch[1] : assaiBase;
+  const dbMatch = assaiBase.match(/\/AW([^/]+?)(?:\/|$)/i);
+  const dbName = dbMatch?.[1]?.toLowerCase() ?? 'eu578';
 
-  // Step 1: GET login page — capture initial session cookies (including from redirects)
-  let allCookies = '';
-  const step1 = await fetchCaptureCookies(assaiBase + '/login.aweb?loginMethod=unpw', {
-    method: 'GET',
-    headers: { 'User-Agent': ua }
-  }, allCookies);
-  allCookies = step1.cookies;
-  console.log('Assai GET login page status:', step1.finalStatus, 'cookies:', allCookies.substring(0, 80));
-
-  // Step 2: POST credentials — capture cookies from 302 redirect response
-  const step2 = await fetchCaptureCookies(assaiBase + '/login.aweb', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': ua
-    },
-    body: new URLSearchParams({
-      userid: username,
-      password: password,
-      dbname: 'eu578',
-      loginMethod: 'unpw'
-    }).toString()
-  }, allCookies);
-  allCookies = step2.cookies;
-
-  const statusCode = step2.finalStatus;
-  const success = statusCode === 200 || statusCode === 302;
-  console.log('Assai login status:', statusCode, 'cookies after login:', allCookies.substring(0, 100));
-
-  // Step 3: Activate server-side session sequentially (required before result.aweb works)
-  // Must be sequential — each call may update session cookies that the next call needs
-  if (success) {
-    // 3a: label.aweb — captures any session cookies from redirects
-    const labelResult = await fetchCaptureCookies(assaiBase + '/label.aweb', {
-      method: 'GET',
-      headers: { 'User-Agent': ua }
-    }, allCookies);
-    allCookies = labelResult.cookies;
-    console.log('Session activation: label.aweb status:', labelResult.finalStatus);
-    console.info('label.aweb html length: ' + labelResult.body.length);
-    console.info('label.aweb body snippet: ' + labelResult.body.substring(0, 500));
+  console.log('[authenticateAssai] Using loginAssai with origin=' + origin + ', dbName=' + dbName);
+  const result = await loginAssai(origin, username, password, dbName);
+  
+  if (!result.success || !result.cookies?.length) {
+    console.log('[authenticateAssai] loginAssai failed:', result.error);
+    return { cookies: '', success: false, statusCode: 0 };
   }
 
-  console.log('Assai cookies final:', allCookies.substring(0, 120));
-  return { cookies: allCookies, success, statusCode };
+  const cookieStr = result.cookies.join('; ');
+  console.log('loginAssai result: success=' + result.success + ', cookie count=' + result.cookies.length);
+  console.log('Assai cookies final:', cookieStr.substring(0, 120));
+  return { cookies: cookieStr, success: true, statusCode: 200 };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
