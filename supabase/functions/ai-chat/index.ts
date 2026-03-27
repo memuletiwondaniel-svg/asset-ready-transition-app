@@ -8619,8 +8619,7 @@ serve(async (req) => {
       }
     }
 
-    // Load document type codes dynamically from dms_document_types table
-    let docTypeLookupPrompt = '';
+    // Load document type codes dynamically for summary/display purposes only (NOT for system prompt injection)
     let dynamicTypeDescs: Record<string, string> = {};
     try {
       const { data: docTypes } = await supabase
@@ -8636,10 +8635,7 @@ serve(async (req) => {
           }
         }
         dynamicTypeDescs = Object.fromEntries(codeMap);
-        const entries = Array.from(codeMap.entries()).slice(0, 150);
-        const tableRows = entries.map(([code, name]) => `${code} = ${name}`).join('\n');
-        docTypeLookupPrompt = '\n\nDOCUMENT TYPE CODE REFERENCE (from project database — ' + codeMap.size + ' types total):\n' + tableRows + '\n\nIMPORTANT: When a user mentions a document type by name or abbreviation (e.g. "BfD", "Basis for Design", "ITP", "P&ID"), find the matching code from this list and pass it as document_type to search_assai_documents. If the name is ambiguous or not found, ask the user to clarify. NEVER guess a code.\n';
-        console.log('Loaded ' + codeMap.size + ' document type codes from dms_document_types');
+        console.log('Loaded ' + codeMap.size + ' document type codes for display purposes');
       }
     } catch (err) {
       console.error('Failed to load document type codes:', err);
