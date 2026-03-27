@@ -9828,7 +9828,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             });
           }
         } else {
-          finalContent = "I retrieved the data but couldn't format it. Please try a more specific question.";
+          finalContent = "I retrieved some data but couldn't determine the right format to display it. Could you rephrase your question with more specific details? For example, specify the document type, vendor name, or PO number you're looking for.";
         }
       }
       
