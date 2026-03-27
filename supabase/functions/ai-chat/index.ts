@@ -701,7 +701,17 @@ FORMATTING RULES (MANDATORY):
 
 DOCUMENT TYPE LOOKUP TABLE (use when the user mentions document types by name):
 BfD/BFD = A02, SDR = A01, ITP = H02, FAT = H08, IOM = J01, SLD = C03, C&E = C14, GA/GAD = B01, Datasheet = C08, Spec = C02, Control Schematic = C11, Foundation Layout = B04.
-When a user asks about a document type by name or abbreviation, resolve it to the Assai type code and pass it as document_type to search_assai_documents.
+CRITICAL: When a user asks about a document type by name or abbreviation (e.g. "find the BfD", "show me ITPs"), you MUST:
+1. Resolve the name to the Assai type code (BfD→A02, ITP→H02, etc.)
+2. Pass the resolved code as the document_type parameter to search_assai_documents
+3. Do NOT rely solely on a broad wildcard like 6529-% — the document_type filter is how you narrow results
+These type codes work for ALL documents (engineering, vendor, planning), not just vendor/ZV documents.
+
+PLANT/UNIT CODE MAPPING (use when user mentions DP numbers or plant areas):
+DP300 = U40300, DP200 = U40200, DP100 = U40100, DP400 = U40400, DP500 = U40500.
+When the user mentions a DP number, map it to the unit code and include it in the document_number_pattern for precision.
+Example: "Find the BfD for DP300" → document_number_pattern="6529-%-%-%-U40300-%", document_type="A02"
+If you don't know the DP-to-unit mapping, ask the user to clarify.
 
 ERROR HANDLING FOR TOOL RESULTS (CRITICAL):
 - If a tool returns { found: false, total_found: 0 }, respond: "I searched Assai for [description] but found no matching documents. Would you like me to try a broader search?"
@@ -3096,7 +3106,7 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
           },
           document_type: {
             type: "string",
-            description: 'Filter by ZV document type code, e.g. "A01" for SDR, "J01" for IOM manual, "H02" for ITP'
+            description: 'Filter by document type code. Works for ALL documents, not just vendor. Examples: A02 (Basis for Design/BfD), C02 (Specification), B01 (GA Drawing), H02 (ITP), A01 (SDR), H08 (FAT), J01 (IOM). ALWAYS pass this when the user mentions a document type by name or abbreviation.'
           },
           status_code: {
             type: "string",
@@ -6846,9 +6856,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const ua = ASSAI_UA;
 
         // Determine module: ZV discipline or PO-based searches target SUP_DOC; otherwise DES_DOC first
+        // When document_type is provided without explicit discipline, search BOTH modules proactively
         const isPOSearch = document_number_pattern.match(/%-?(\d{5})-?%?$/) || document_number_pattern.match(/^(\d{5})$/);
         const poDigits = isPOSearch?.[1];
         const useSupDoc = discipline_code === 'ZV' || !!poDigits;
+        const searchBothModules = !useSupDoc && !!document_type && !discipline_code;
         
         const moduleParams = useSupDoc
           ? { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' }
@@ -7166,15 +7178,24 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         let allDocuments = await paginateSearch(moduleParams);
         console.log('search_assai_documents: primary search returned ' + allDocuments.length + ' docs total');
         
-        // Also try the other module if no results yet
-        if (allDocuments.length === 0) {
+        // If searchBothModules (document_type provided without explicit discipline), proactively search the other module too
+        if (searchBothModules || allDocuments.length === 0) {
           const altParams = useSupDoc
             ? { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' }
             : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
           
           try {
-            console.info('Paginated search (alt): sending for', altParams.subclass_type);
-            allDocuments = await paginateSearch(altParams);
+            console.info('Paginated search (alt): sending for', altParams.subclass_type, searchBothModules ? '(proactive dual-module)' : '(fallback)');
+            const altDocs = await paginateSearch(altParams);
+            // Merge results, dedup by document_number
+            const seen = new Set(allDocuments.map((d: any) => d.document_number));
+            for (const doc of altDocs) {
+              if (doc.document_number && !seen.has(doc.document_number)) {
+                seen.add(doc.document_number);
+                allDocuments.push(doc);
+              }
+            }
+            console.log('search_assai_documents: after alt module merge, total docs:', allDocuments.length);
           } catch (altErr) {
             console.error('search_assai_documents: alt module search error:', altErr);
           }
@@ -9187,7 +9208,32 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           content: JSON.stringify(result)
         });
       }
-      
+
+      // Helper: build user-friendly search summary from tool result filters
+      const TYPE_DESCS_SUMMARY: Record<string, string> = {
+        A01: "Supplier Document Register", A02: "Basis for Design", B01: "General Arrangement Drawing",
+        B04: "Foundation Layout", C02: "Specification", C03: "Single Line Diagram", C08: "Equipment Datasheet",
+        C11: "Control Schematic", C14: "Cause & Effect Diagram", H02: "Inspection & Test Plan",
+        H08: "Factory Acceptance Test", J01: "Installation/O&M Manual", K01: "Certificate", L10: "Calibration Certificate"
+      };
+      const buildSearchSummary = (toolResult: any): string => {
+        const total = toolResult.total_found || 0;
+        const filters = toolResult.filters_applied || {};
+        const parts: string[] = [];
+        if (filters.document_type && TYPE_DESCS_SUMMARY[filters.document_type]) {
+          parts.push(TYPE_DESCS_SUMMARY[filters.document_type]);
+        } else if (filters.document_type) {
+          parts.push(`type ${filters.document_type}`);
+        }
+        if (filters.discipline_code) parts.push(`discipline ${filters.discipline_code}`);
+        if (filters.status_code) parts.push(`status ${filters.status_code}`);
+        if (filters.company_code) parts.push(`originator ${filters.company_code}`);
+        if (parts.length > 0) {
+          return `Found **${total}** ${parts.join(', ')} documents`;
+        }
+        return `Found **${total}** documents`;
+      };
+
       // Second API call - send tool results back to AI for final response
       // Build messages: original conversation + assistant message with tool_use + user message with tool_results
       const finalResponse = await fetch("https://api.anthropic.com/v1/messages", {
@@ -9230,7 +9276,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             };
             const statusTable = Object.entries(lastToolResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS[s] ?? s }));
             const typeTable = Object.entries(lastToolResult.type_summary || {}).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 10).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
-            const structured = { type: "document_search", summary: `Found **${lastToolResult.total_found}** documents matching ${lastToolResult.search_pattern || 'your search'}`, status_table: statusTable, type_table: typeTable, highlights: ["Results retrieved successfully despite temporary rate limit"], followup: ["Show me only pending documents", "Break down by discipline", "Which documents are overdue?"] };
+            const structured = { type: "document_search", summary: buildSearchSummary(lastToolResult), status_table: statusTable, type_table: typeTable, highlights: ["Results retrieved successfully despite temporary rate limit"], followup: ["Show me only pending documents", "Break down by discipline", "Which documents are overdue?"] };
             const fallbackContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
             const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
             return new Response(sseFallback, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
@@ -9342,7 +9388,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
         const structured = {
           type: "document_search",
-          summary: `Found **${lastToolResult.total_found}** documents matching ${lastToolResult.search_pattern || 'your search'}`,
+          summary: buildSearchSummary(lastToolResult),
           status_table: statusTable,
           type_table: typeTable,
           documents: docList,
