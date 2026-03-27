@@ -3830,9 +3830,36 @@ async function extractAndPersistContext(supabaseClient: any, userId: string, mes
     console.log('📝 MEMORY: Context persisted for user', userId);
   } catch (e) {
     console.error('Failed to extract/persist context:', e);
-  }
-}
+      }
+    }
 
+    // Load document type codes dynamically from dms_document_types table
+    let docTypeLookupPrompt = '';
+    let dynamicTypeDescs: Record<string, string> = {};
+    try {
+      const { data: docTypes } = await supabase
+        .from('dms_document_types')
+        .select('code, document_name')
+        .eq('is_active', true)
+        .order('document_name');
+      if (docTypes && docTypes.length > 0) {
+        // Deduplicate by code (some codes appear multiple times with different disciplines)
+        const codeMap = new Map<string, string>();
+        for (const dt of docTypes) {
+          if (!codeMap.has(dt.code)) {
+            codeMap.set(dt.code, dt.document_name);
+          }
+        }
+        dynamicTypeDescs = Object.fromEntries(codeMap);
+        // Build a compact lookup table for the system prompt (top 100 most common)
+        const entries = Array.from(codeMap.entries()).slice(0, 150);
+        const tableRows = entries.map(([code, name]) => `${code} = ${name}`).join('\n');
+        docTypeLookupPrompt = `\n\nDOCUMENT TYPE CODE REFERENCE (from project database — ${codeMap.size} types total):\n${tableRows}\n\nWhen a user mentions a document type by name or abbreviation, find the matching code from this list and pass it as document_type to search_assai_documents. If the type name is ambiguous or not found, ask the user to clarify. NEVER guess a code — always match from this list.\n`;
+        console.log(`Loaded ${codeMap.size} document type codes from dms_document_types`);
+      }
+    } catch (err) {
+      console.error('Failed to load document type codes:', err);
+    }
 
 
 async function getProactiveInsights(supabaseClient: any, scope: string, projectCode?: string): Promise<any> {
