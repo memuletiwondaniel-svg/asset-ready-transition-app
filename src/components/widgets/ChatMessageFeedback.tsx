@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ThumbsUp, ThumbsDown, Send, Volume2, Loader2, VolumeX } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Send, Volume2, Loader2, Square, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
