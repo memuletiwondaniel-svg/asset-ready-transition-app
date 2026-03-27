@@ -699,18 +699,18 @@ FORMATTING RULES (MANDATORY):
 - Never put emojis inside bullet text — TTS strips them but it looks cluttered.
 - Use a ## header only when the response covers 3 or more distinct topics.
 
-DOCUMENT TYPE LOOKUP TABLE (use when the user mentions document types by name):
-BfD/BFD = A02, SDR = A01, ITP = H02, FAT = H08, IOM = J01, SLD = C03, C&E = C14, GA/GAD = B01, Datasheet = C08, Spec = C02, Control Schematic = C11, Foundation Layout = B04.
-CRITICAL: When a user asks about a document type by name or abbreviation (e.g. "find the BfD", "show me ITPs"), you MUST:
-1. Resolve the name to the Assai type code (BfD→A02, ITP→H02, etc.)
+DOCUMENT TYPE RESOLUTION (CRITICAL):
+Document type codes are loaded dynamically from the project's dms_document_types database table and injected at the end of this prompt. When a user mentions a document type by name or abbreviation (e.g. "BfD", "Basis for Design", "ITP", "P&ID", "datasheet"), you MUST:
+1. Look up the matching code from the DOCUMENT TYPE CODE REFERENCE section at the end of this prompt
 2. Pass the resolved code as the document_type parameter to search_assai_documents
 3. Do NOT rely solely on a broad wildcard like 6529-% — the document_type filter is how you narrow results
+4. If you cannot find a matching code, ASK the user to clarify — NEVER guess
 These type codes work for ALL documents (engineering, vendor, planning), not just vendor/ZV documents.
 
 PLANT/UNIT CODE MAPPING (use when user mentions DP numbers or plant areas):
 DP300 = U40300, DP200 = U40200, DP100 = U40100, DP400 = U40400, DP500 = U40500.
 When the user mentions a DP number, map it to the unit code and include it in the document_number_pattern for precision.
-Example: "Find the BfD for DP300" → document_number_pattern="6529-%-%-%-U40300-%", document_type="A02"
+Example: "Find the BfD for DP300" → look up BfD code from the reference table, use document_number_pattern="6529-%-%-%-U40300-%"
 If you don't know the DP-to-unit mapping, ask the user to clarify.
 
 ERROR HANDLING FOR TOOL RESULTS (CRITICAL):
@@ -3074,23 +3074,7 @@ const tools = [
       name: "search_assai_documents",
       description: `Search Assai DMS for documents. Returns ALL matching documents by automatically splitting into sub-searches when results exceed 100. IMPORTANT: Always use the MOST SPECIFIC search pattern possible.
 
-DOCUMENT TYPE VOCABULARY — resolve user names to type codes:
-| Common Name | Aliases | Type Code |
-|---|---|---|
-| Basis for Design | BfD, BFD | A02 |
-| Supplier Doc Register | SDR, Master Doc List | A01 |
-| Inspection & Test Plan | ITP | H02 |
-| Factory Acceptance Test | FAT, FAT Report | H08 |
-| Installation/O&M Manual | IOM, IOM Manual | J01 |
-| Single Line Diagram | SLD | C03 |
-| Control Schematic | — | C11 |
-| General Arrangement | GA, GAD | B01 |
-| Cause & Effect Diagram | C&E | C14 |
-| Equipment Datasheet | Datasheet | C08 |
-| Foundation Layout | — | B04 |
-| System & Equipment Spec | Spec, Specification | C02 |
-
-When a user mentions a document type by name or abbreviation, resolve it to the Assai type code and pass it as document_type. If the type name is ambiguous, ask the user to clarify.
+Document type codes are available in the system prompt's DOCUMENT TYPE CODE REFERENCE section. When the user mentions a document type by name, look up the code from that reference and pass it as document_type. NEVER hardcode or guess type codes.
 
 The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit]-[Discipline]-[Type]-[PO]-[Seq]. Use this when the user asks to search Assai, find vendor documents, check document status, or asks about documents for a specific PO/purchase order number.`,
       parameters: {
@@ -3106,7 +3090,7 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
           },
           document_type: {
             type: "string",
-            description: 'Filter by document type code. Works for ALL documents, not just vendor. Examples: A02 (Basis for Design/BfD), C02 (Specification), B01 (GA Drawing), H02 (ITP), A01 (SDR), H08 (FAT), J01 (IOM). ALWAYS pass this when the user mentions a document type by name or abbreviation.'
+            description: 'Filter by document type code. Works for ALL documents, not just vendor. Look up the correct code from the DOCUMENT TYPE CODE REFERENCE in the system prompt. ALWAYS pass this when the user mentions a document type by name or abbreviation.'
           },
           status_code: {
             type: "string",
@@ -3832,7 +3816,6 @@ async function extractAndPersistContext(supabaseClient: any, userId: string, mes
     console.error('Failed to extract/persist context:', e);
   }
 }
-
 
 
 async function getProactiveInsights(supabaseClient: any, scope: string, projectCode?: string): Promise<any> {
@@ -8618,7 +8601,31 @@ serve(async (req) => {
       }
     }
 
-    // Check last user message for injection attempts - BLOCK if detected
+    // Load document type codes dynamically from dms_document_types table
+    let docTypeLookupPrompt = '';
+    let dynamicTypeDescs: Record<string, string> = {};
+    try {
+      const { data: docTypes } = await supabase
+        .from('dms_document_types')
+        .select('code, document_name')
+        .eq('is_active', true)
+        .order('document_name');
+      if (docTypes && docTypes.length > 0) {
+        const codeMap = new Map<string, string>();
+        for (const dt of docTypes) {
+          if (!codeMap.has(dt.code)) {
+            codeMap.set(dt.code, dt.document_name);
+          }
+        }
+        dynamicTypeDescs = Object.fromEntries(codeMap);
+        const entries = Array.from(codeMap.entries()).slice(0, 150);
+        const tableRows = entries.map(([code, name]) => `${code} = ${name}`).join('\n');
+        docTypeLookupPrompt = '\n\nDOCUMENT TYPE CODE REFERENCE (from project database — ' + codeMap.size + ' types total):\n' + tableRows + '\n\nIMPORTANT: When a user mentions a document type by name or abbreviation (e.g. "BfD", "Basis for Design", "ITP", "P&ID"), find the matching code from this list and pass it as document_type to search_assai_documents. If the name is ambiguous or not found, ask the user to clarify. NEVER guess a code.\n';
+        console.log('Loaded ' + codeMap.size + ' document type codes from dms_document_types');
+      }
+    } catch (err) {
+      console.error('Failed to load document type codes:', err);
+    }
     const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop();
     if (lastUserMessage && detectInjectionAttempt(lastUserMessage.content)) {
       console.log("🛡️ SECURITY: Blocking injection attempt and returning protective response");
@@ -9028,7 +9035,7 @@ When a user asks for CRITICAL REASONING about a document, specifically address:
 
 FINDING A SPECIFIC DOCUMENT:
 When a user asks "What is the document number for the BfD?" or "Find the ITP for DP300":
-1. Resolve the document type name to Assai code (BfD→A02, ITP→H02 etc.)
+1. Look up the document type name in the DOCUMENT TYPE CODE REFERENCE at the end of this prompt to find the correct code
 2. Use search_assai_documents with the resolved type code
 3. Present results with document number, title, revision, status, and download link
 4. If multiple matches, list them all and ask which one they want
@@ -9085,14 +9092,14 @@ You NEVER give vague answers on safety matters. You are specific, technically pr
 
 You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Ivan, your Process Technical Authority Agent."`;
 
-    // Select system prompt based on detected agent
-    let systemPrompt = BOB_SYSTEM_PROMPT + userContextPrompt;
+    // Select system prompt based on detected agent, inject dynamic doc type lookup
+    let systemPrompt = BOB_SYSTEM_PROMPT + docTypeLookupPrompt + userContextPrompt;
     if (detectedAgent === 'document_agent') {
-      systemPrompt = DOCUMENT_AGENT_PROMPT + userContextPrompt;
+      systemPrompt = DOCUMENT_AGENT_PROMPT + docTypeLookupPrompt + userContextPrompt;
     } else if (detectedAgent === 'pssr_ora_agent') {
       systemPrompt = PSSR_ORA_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'hannah') {
-      systemPrompt = HANNAH_AGENT_PROMPT + userContextPrompt;
+      systemPrompt = HANNAH_AGENT_PROMPT + docTypeLookupPrompt + userContextPrompt;
     } else if (detectedAgent === 'ivan') {
       systemPrompt = IVAN_AGENT_PROMPT + userContextPrompt;
     }
@@ -9210,12 +9217,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       }
 
       // Helper: build user-friendly search summary from tool result filters
-      const TYPE_DESCS_SUMMARY: Record<string, string> = {
-        A01: "Supplier Document Register", A02: "Basis for Design", B01: "General Arrangement Drawing",
-        B04: "Foundation Layout", C02: "Specification", C03: "Single Line Diagram", C08: "Equipment Datasheet",
-        C11: "Control Schematic", C14: "Cause & Effect Diagram", H02: "Inspection & Test Plan",
-        H08: "Factory Acceptance Test", J01: "Installation/O&M Manual", K01: "Certificate", L10: "Calibration Certificate"
-      };
+      const TYPE_DESCS_SUMMARY: Record<string, string> = dynamicTypeDescs;
       const buildSearchSummary = (toolResult: any): string => {
         const total = toolResult.total_found || 0;
         const filters = toolResult.filters_applied || {};
@@ -9268,12 +9270,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
               IFI: "Issued for Information", IFA: "Issued for Approval", IFC: "Issued for Construction", CAN: "Cancelled",
               REV: "Under Revision", SUP: "Superseded", IFR: "Issued for Review", AFD: "Approved for Design"
             };
-            const TYPE_DESCS: Record<string, string> = {
-              A01: "Supplier Document Register", A02: "Basis for Design", B01: "General Arrangement Drawing",
-              C02: "System/Equipment Specification", C03: "Single Line Diagram", C08: "Equipment Datasheet",
-              C11: "Control Schematic", C14: "Cause & Effect Diagram", H02: "Inspection & Test Plan",
-              H08: "Factory Acceptance Test", J01: "Installation/O&M Manual", B04: "Foundation Layout"
-            };
+            const TYPE_DESCS: Record<string, string> = dynamicTypeDescs;
             const statusTable = Object.entries(lastToolResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS[s] ?? s }));
             const typeTable = Object.entries(lastToolResult.type_summary || {}).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 10).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
             const structured = { type: "document_search", summary: buildSearchSummary(lastToolResult), status_table: statusTable, type_table: typeTable, highlights: ["Results retrieved successfully despite temporary rate limit"], followup: ["Show me only pending documents", "Break down by discipline", "Which documents are overdue?"] };
@@ -9320,14 +9317,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           IFR: "Issued for Review", AFD: "Approved for Design",
           IFD: "Issued for Design", IFU: "Issued for Use"
         };
-        const TYPE_DESCS: Record<string, string> = {
-          A01: "Supplier Document Register", A02: "Basis for Design",
-          B01: "General Arrangement Drawing", B04: "Foundation Layout",
-          C02: "System/Equipment Specification", C03: "Single Line Diagram",
-          C08: "Equipment Datasheet", C11: "Control Schematic",
-          C14: "Cause & Effect Diagram", H02: "Inspection & Test Plan",
-          H08: "Factory Acceptance Test", J01: "Installation/O&M Manual"
-        };
+        const TYPE_DESCS: Record<string, string> = dynamicTypeDescs;
 
         // Extract highlights from Bob's text (numbered items)
         const highlights: string[] = [];
