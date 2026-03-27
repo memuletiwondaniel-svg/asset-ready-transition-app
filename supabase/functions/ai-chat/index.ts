@@ -7034,7 +7034,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 headers: {
                   'Content-Type': 'application/x-www-form-urlencoded',
                   'User-Agent': ua,
-                  'Referer': assaiBase + '/forward.aweb?page=root/body&subclass_type=' + altParams.subclass_type,
+                  'Referer': assaiBase + '/search.aweb',
                   'Origin': 'https://eu.assaicloud.com'
                 },
                 body: altSearchParams.toString()
