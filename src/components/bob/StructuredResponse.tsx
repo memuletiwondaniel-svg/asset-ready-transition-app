@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StatusBadge } from './StatusBadge';
+import { Download, Search, ChevronDown, ChevronRight, FileText, AlertTriangle, BookOpen, Link2 } from 'lucide-react';
 
 /** Parse minimal markdown bold/italic into JSX */
 export function renderInlineMarkdown(text: string): React.ReactNode {
@@ -25,13 +26,43 @@ interface TypeRow {
   statuses: string[];
 }
 
+interface DocumentRow {
+  document_number: string;
+  title: string;
+  revision: string;
+  status: string;
+  type_code: string;
+  download_url?: string;
+  pk_seq_nr?: string;
+  entt_seq_nr?: string;
+}
+
+interface DocumentAnalysisSection {
+  title: string;
+  items: string[];
+}
+
 interface StructuredResponseData {
   type: string;
   summary: string;
-  status_table: StatusRow[];
-  type_table: TypeRow[];
-  highlights: string[];
-  followup: string[];
+  status_table?: StatusRow[];
+  type_table?: TypeRow[];
+  highlights?: string[];
+  followup?: string[];
+  documents?: DocumentRow[];
+  // Document analysis fields
+  document?: {
+    document_number: string;
+    title: string;
+    revision: string;
+    status: string;
+    type_code?: string;
+    download_url?: string;
+  };
+  overview?: string;
+  key_summary?: string[];
+  critical_observations?: string[];
+  related_documents?: string[];
 }
 
 interface StructuredResponseProps {
@@ -39,7 +70,174 @@ interface StructuredResponseProps {
   onFollowupClick?: (text: string) => void;
 }
 
+/** Expandable card section with color-coded border */
+function AnalysisCard({ 
+  title, 
+  icon: Icon, 
+  borderColor, 
+  children, 
+  defaultExpanded = false 
+}: { 
+  title: string; 
+  icon: React.ElementType; 
+  borderColor: string; 
+  children: React.ReactNode; 
+  defaultExpanded?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  
+  return (
+    <div className={`border-l-[3px] ${borderColor} bg-muted/20 rounded-r-lg overflow-hidden`}>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted/40 transition-colors cursor-pointer text-left"
+      >
+        {expanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
+        <Icon className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+        <span className="text-xs font-semibold text-foreground">{title}</span>
+      </button>
+      {expanded && (
+        <div className="px-4 pb-3">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function StructuredResponse({ data, onFollowupClick }: StructuredResponseProps) {
+  // Document Analysis type
+  if (data.type === 'document_analysis') {
+    return (
+      <div className="space-y-2">
+        {/* Document Header */}
+        {data.document && (
+          <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-mono font-semibold text-foreground truncate">{data.document.document_number}</p>
+                <p className="text-sm font-semibold text-foreground mt-0.5">{data.document.title}</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  {data.document.revision && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+                      Rev {data.document.revision}
+                    </span>
+                  )}
+                  {data.document.status && <StatusBadge code={data.document.status} />}
+                  {data.document.type_code && (
+                    <span className="text-[10px] text-muted-foreground">{data.document.type_code}</span>
+                  )}
+                </div>
+              </div>
+              {data.document.download_url && (
+                <a
+                  href={data.document.download_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors flex-shrink-0"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Summary */}
+        {data.summary && (
+          <p className="text-sm text-foreground leading-relaxed">
+            {renderInlineMarkdown(data.summary)}
+          </p>
+        )}
+
+        {/* Analysis Sections as Expandable Cards */}
+        <div className="space-y-1.5">
+          {data.overview && (
+            <AnalysisCard title="Document Overview" icon={FileText} borderColor="border-l-blue-500" defaultExpanded>
+              <p className="text-xs text-foreground leading-relaxed">{renderInlineMarkdown(data.overview)}</p>
+            </AnalysisCard>
+          )}
+
+          {data.key_summary && data.key_summary.length > 0 && (
+            <AnalysisCard title="Key Content Summary" icon={BookOpen} borderColor="border-l-green-500" defaultExpanded>
+              <ul className="space-y-1">
+                {data.key_summary.map((item, i) => (
+                  <li key={i} className="text-xs text-foreground leading-relaxed flex gap-2">
+                    <span className="text-muted-foreground mt-0.5">•</span>
+                    <span>{renderInlineMarkdown(item)}</span>
+                  </li>
+                ))}
+              </ul>
+            </AnalysisCard>
+          )}
+
+          {data.critical_observations && data.critical_observations.length > 0 && (
+            <AnalysisCard title="Critical Observations" icon={AlertTriangle} borderColor="border-l-amber-500" defaultExpanded>
+              <ul className="space-y-1">
+                {data.critical_observations.map((item, i) => (
+                  <li key={i} className="text-xs text-foreground leading-relaxed flex gap-2">
+                    <span className="text-amber-500 mt-0.5">⚠</span>
+                    <span>{renderInlineMarkdown(item)}</span>
+                  </li>
+                ))}
+              </ul>
+            </AnalysisCard>
+          )}
+
+          {data.related_documents && data.related_documents.length > 0 && (
+            <AnalysisCard title="Related Documents" icon={Link2} borderColor="border-l-purple-500">
+              <ul className="space-y-1">
+                {data.related_documents.map((item, i) => (
+                  <li key={i} className="text-xs text-foreground leading-relaxed flex gap-2">
+                    <span className="text-muted-foreground mt-0.5">→</span>
+                    <span>{renderInlineMarkdown(item)}</span>
+                  </li>
+                ))}
+              </ul>
+            </AnalysisCard>
+          )}
+        </div>
+
+        {/* Highlights (fallback for non-analysis structured content) */}
+        {data.highlights && data.highlights.length > 0 && (
+          <div>
+            <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 mt-4">
+              Key Highlights
+            </h4>
+            <ol className="list-decimal list-inside space-y-1.5">
+              {data.highlights.map((h, i) => (
+                <li key={i} className="text-xs text-foreground leading-relaxed">{renderInlineMarkdown(h)}</li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {/* Follow-up Actions */}
+        {data.followup && data.followup.length > 0 && (
+          <div>
+            <hr className="border-border/30 my-3" />
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+              What would you like me to do next?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {data.followup.map((f, i) => (
+                <button
+                  key={i}
+                  onClick={() => onFollowupClick?.(f)}
+                  className="text-xs px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 hover:bg-primary/15 hover:shadow-md hover:border-primary/50 text-foreground transition-all duration-150 cursor-pointer"
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Document Search type (default)
   return (
     <div className="space-y-1">
       {/* Summary */}
@@ -104,6 +302,63 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Document List (first 5 with download/read actions) */}
+      {data.documents && data.documents.length > 0 && (
+        <div>
+          <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 mt-4">
+            Documents Found
+          </h4>
+          <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+            <thead>
+              <tr className="bg-muted/50">
+                <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Document Number</th>
+                <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Title</th>
+                <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Rev</th>
+                <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Status</th>
+                <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-center font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.documents.slice(0, 10).map((doc, i) => (
+                <tr key={doc.document_number} className={i % 2 === 1 ? 'bg-muted/20' : ''} style={{ borderBottom: '1px solid hsl(var(--border) / 0.3)' }}>
+                  <td className="py-2 px-3 text-xs font-mono text-foreground">{doc.document_number}</td>
+                  <td className="py-2 px-3 text-xs text-foreground max-w-[200px] truncate">{doc.title}</td>
+                  <td className="py-2 px-3 text-xs text-muted-foreground">{doc.revision}</td>
+                  <td className="py-2 px-3"><StatusBadge code={doc.status} /></td>
+                  <td className="py-2 px-3">
+                    <div className="flex items-center justify-center gap-1.5">
+                      {doc.download_url && (
+                        <a
+                          href={doc.download_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Download document"
+                          className="p-1 rounded hover:bg-muted/60 text-blue-500 hover:text-blue-600 transition-colors"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </a>
+                      )}
+                      <button
+                        onClick={() => onFollowupClick?.(`Read and summarise ${doc.document_number}`)}
+                        title="Read & summarise"
+                        className="p-1 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      >
+                        <Search className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {data.documents.length > 10 && (
+            <p className="text-[10px] text-muted-foreground mt-1.5 px-3">
+              Showing first 10 of {data.documents.length} documents
+            </p>
+          )}
         </div>
       )}
 

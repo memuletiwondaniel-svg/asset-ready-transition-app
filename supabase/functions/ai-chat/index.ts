@@ -7184,10 +7184,15 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return { found: false, total_found: 0, message: 'No documents found matching the search criteria in Assai.', search_pattern: document_number_pattern };
         }
 
-        // Build summaries
+        // Build summaries and add download URLs
+        const assaiBase = (creds?.base_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/+$/, '');
         const statusSummary: Record<string, number> = {};
         const typeSummary: Record<string, { count: number; statuses: string[] }> = {};
         allDocuments.forEach((d: any) => {
+          // Add download URL to each document
+          if (d.pk_seq_nr && d.entt_seq_nr) {
+            d.download_url = assaiBase + '/download.aweb?pk_seq_nr=' + d.pk_seq_nr + '&entt_seq_nr=' + d.entt_seq_nr;
+          }
           statusSummary[d.status] = (statusSummary[d.status] || 0) + 1;
           if (!typeSummary[d.type_code]) typeSummary[d.type_code] = { count: 0, statuses: [] };
           typeSummary[d.type_code].count++;
@@ -8986,6 +8991,28 @@ Use the read_assai_document tool when users ask to:
 - "Review the comments resolution sheet for [doc number]"
 - Any question requiring document CONTENT not just STATUS
 
+DOCUMENT INTELLIGENCE ANALYSIS FORMAT (CRITICAL):
+When you receive results from read_assai_document with content_available=true, structure your analysis exactly as follows:
+
+1. DOCUMENT OVERVIEW: Document number, title, revision, status, type and purpose in one sentence.
+2. KEY CONTENT SUMMARY: 5-8 bullet points covering the main sections and findings. For technical docs highlight specs/limits/requirements. For procedures highlight steps/hold points/acceptance criteria. For registers highlight what's included and gaps.
+3. CRITICAL OBSERVATIONS: Incomplete items, pending approvals, discrepancies, missing information relevant to handover readiness.
+4. RELATED DOCUMENTS: Documents referenced within, and documents that should be read alongside.
+
+When a user asks for CRITICAL REASONING about a document, specifically address:
+- Is this document fit for purpose for operational handover?
+- What approval status gaps exist?
+- Are there open actions or outstanding comments?
+- What risks does this document highlight?
+
+FINDING A SPECIFIC DOCUMENT:
+When a user asks "What is the document number for the BfD?" or "Find the ITP for DP300":
+1. Resolve the document type name to Assai code (BfD→A02, ITP→H02 etc.)
+2. Use search_assai_documents with the resolved type code
+3. Present results with document number, title, revision, status, and download link
+4. If multiple matches, list them all and ask which one they want
+5. If user then asks to read/summarise it, use read_assai_document
+
 SELMA EXTENDED QUERY PATTERNS:
 "Find all P&IDs for unit U40300" → DES_DOC, discipline_code=PX, number=6529-%-U40300-%
 "Which supplier documents are pending review?" → SUP_DOC, status_code=SR
@@ -9301,11 +9328,24 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             description: TYPE_DESCS[code] ?? code
           }));
 
+        // Include first 10 documents with download URLs for actionable UI
+        const docList = (lastToolResult.documents || []).slice(0, 10).map((d: any) => ({
+          document_number: d.document_number,
+          title: d.title,
+          revision: d.revision,
+          status: d.status,
+          type_code: d.type_code,
+          download_url: d.download_url || null,
+          pk_seq_nr: d.pk_seq_nr,
+          entt_seq_nr: d.entt_seq_nr
+        }));
+
         const structured = {
           type: "document_search",
           summary: `Found **${lastToolResult.total_found}** documents matching ${lastToolResult.search_pattern || 'your search'}`,
           status_table: statusTable,
           type_table: typeTable,
+          documents: docList,
           highlights,
           followup
         };
@@ -9314,7 +9354,71 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         console.log('search_assai_documents: deterministic structured_response built server-side');
       }
 
-      // Fallback: if model returns no content after tools, deterministically format the last tool result
+      // PART 1b: Deterministic structured_response for document reading/analysis
+      if (lastToolName === 'read_assai_document' && lastToolResult && lastToolResult.content_available && lastToolResult.document_content_answer) {
+        const meta = lastToolResult.metadata || {};
+        const answer = lastToolResult.document_content_answer || '';
+        const assaiBaseUrl = (meta.external_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/[^/]*$/, '');
+        
+        // Parse Bob's analysis text into sections
+        const keySummary: string[] = [];
+        const criticalObs: string[] = [];
+        const relatedDocs: string[] = [];
+        let overview = '';
+        
+        // Extract sections from Bob's response
+        const lines = finalContent.split('\n').filter((l: string) => l.trim());
+        let currentSection = '';
+        
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.match(/overview|document overview/i)) { currentSection = 'overview'; continue; }
+          if (trimmed.match(/key.*summary|content.*summary/i)) { currentSection = 'summary'; continue; }
+          if (trimmed.match(/critical|observation|warning/i)) { currentSection = 'critical'; continue; }
+          if (trimmed.match(/related.*doc/i)) { currentSection = 'related'; continue; }
+          
+          const bulletContent = trimmed.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '');
+          if (!bulletContent) continue;
+          
+          if (currentSection === 'overview') overview += (overview ? ' ' : '') + bulletContent;
+          else if (currentSection === 'summary') keySummary.push(bulletContent);
+          else if (currentSection === 'critical') criticalObs.push(bulletContent);
+          else if (currentSection === 'related') relatedDocs.push(bulletContent);
+        }
+        
+        // If parsing didn't yield sections, use the full AI answer as summary
+        if (keySummary.length === 0 && !overview) {
+          overview = answer.substring(0, 500);
+        }
+
+        const structured = {
+          type: "document_analysis",
+          summary: `Analysis of **${meta.document_number || 'document'}** — ${meta.title || 'Untitled'}`,
+          document: {
+            document_number: meta.document_number || '',
+            title: meta.title || 'Untitled',
+            revision: meta.revision || '',
+            status: meta.status || '',
+            type_code: meta.document_type || '',
+            download_url: meta.pk_seq_nr && meta.entt_seq_nr
+              ? `https://eu.assaicloud.com/AWeu578/download.aweb?pk_seq_nr=${meta.pk_seq_nr}&entt_seq_nr=${meta.entt_seq_nr}`
+              : undefined
+          },
+          overview: overview || undefined,
+          key_summary: keySummary.length > 0 ? keySummary : undefined,
+          critical_observations: criticalObs.length > 0 ? criticalObs : undefined,
+          related_documents: relatedDocs.length > 0 ? relatedDocs : undefined,
+          followup: [
+            `Show me all ${meta.document_type || ''} documents`,
+            `What is the revision history for ${meta.document_number || 'this document'}?`,
+            `Are there any open comments on ${meta.document_number || 'this document'}?`
+          ]
+        };
+
+        finalContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+        console.log('read_assai_document: deterministic structured_response built server-side');
+      }
+
       if (!finalContent || !finalContent.trim()) {
         if (lastToolResult?.error) {
           finalContent = `I couldn't find that information: ${lastToolResult.error}`;
