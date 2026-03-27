@@ -6830,6 +6830,50 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
 
+    case "resolve_document_type": {
+      try {
+        const query = args.query || '';
+        if (!query) return { found: false, message: 'Please provide a document type name or abbreviation to look up.' };
+        
+        const { data, error } = await supabaseClient
+          .from('dms_document_types')
+          .select('code, document_name, document_description, tier, rlmu, is_vendor_document, discipline_code, discipline_name')
+          .or(`document_name.ilike.%${query}%,document_description.ilike.%${query}%,code.ilike.%${query}%`)
+          .eq('is_active', true)
+          .order('code')
+          .limit(20);
+        
+        if (error || !data || data.length === 0) {
+          return { 
+            found: false, 
+            message: `No document types found matching "${query}" in the ORSH document register. This document type may not exist in the system, or may be known by a different name. Try a broader keyword or ask the user for the exact name.` 
+          };
+        }
+        
+        return {
+          found: true,
+          count: data.length,
+          matches: data.map(d => ({
+            code: d.code,
+            name: d.document_name,
+            description: d.document_description,
+            tier: d.tier,
+            discipline_code: d.discipline_code,
+            discipline_name: d.discipline_name,
+            is_vendor_document: d.is_vendor_document === true || d.rlmu === 'Vendor' || d.discipline_code === 'ZV'
+          })),
+          note: data.length > 1 
+            ? 'Multiple matches found — confirm with user which one they mean before searching Assai.' 
+            : (data[0].is_vendor_document === true || data[0].rlmu === 'Vendor' || data[0].discipline_code === 'ZV')
+              ? 'This is a vendor document — you can search Assai with this code.'
+              : 'This is an engineering/owner document — it is NOT in the Assai vendor register. It would be in the project EDMS.'
+        };
+      } catch (err) {
+        console.error('resolve_document_type error:', err);
+        return { error: String(err) };
+      }
+    }
+
     case "search_assai_documents": {
       try {
         const { document_number_pattern, discipline_code, document_type, status_code, company_code } = args;
