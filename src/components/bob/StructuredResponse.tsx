@@ -1,6 +1,17 @@
 import React from 'react';
 import { StatusBadge } from './StatusBadge';
 
+/** Parse minimal markdown bold/italic into JSX */
+export function renderInlineMarkdown(text: string): React.ReactNode {
+  const parts = text.split(/\*\*(.+?)\*\*/g);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) =>
+    i % 2 === 1
+      ? <strong key={i} className="font-semibold text-foreground">{part}</strong>
+      : part
+  );
+}
+
 interface StatusRow {
   status: string;
   description: string;
@@ -33,16 +44,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
     <div className="space-y-1">
       {/* Summary */}
       <p className="text-sm text-foreground leading-relaxed">
-        {(() => {
-          // Parse minimal markdown bold (**text**) into <strong> elements
-          const parts = data.summary.split(/\*\*(.+?)\*\*/g);
-          if (parts.length === 1) return data.summary;
-          return parts.map((part, i) =>
-            i % 2 === 1
-              ? <strong key={i} className="font-semibold text-foreground">{part}</strong>
-              : part
-          );
-        })()}
+        {renderInlineMarkdown(data.summary)}
       </p>
 
       {/* Status Summary */}
@@ -113,7 +115,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
           </h4>
           <ol className="list-decimal list-inside space-y-1.5">
             {data.highlights.map((h, i) => (
-              <li key={i} className="text-xs text-foreground leading-relaxed">{h}</li>
+              <li key={i} className="text-xs text-foreground leading-relaxed">{renderInlineMarkdown(h)}</li>
             ))}
           </ol>
         </div>
