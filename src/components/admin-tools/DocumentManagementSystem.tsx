@@ -25,6 +25,7 @@ import DmsUnitsTab from './dms/DmsUnitsTab';
 import DmsDocumentTypesTab from './dms/DmsDocumentTypesTab';
 import DmsStatusCodesTab from './dms/DmsStatusCodesTab';
 import DmsConfigurationTab from './dms/DmsConfigurationTab';
+import DmsAcronymsTab from './dms/DmsAcronymsTab';
 
 interface DocumentManagementSystemProps {
   onBack: () => void;
