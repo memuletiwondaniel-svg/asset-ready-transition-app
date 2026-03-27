@@ -1,15 +1,16 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Key, AlertTriangle, CalendarCheck, MessageSquare } from 'lucide-react';
+import { Home, Key, AlertTriangle, CalendarCheck, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { usePermissions } from '@/hooks/usePermissions';
 
-const navItems = [
+const baseNavItems = [
   { icon: Home, labelKey: 'navHome', path: '/home', section: 'home' },
   { icon: Key, labelKey: 'navProjects', path: '/vcrs', section: 'projects' },
   { icon: AlertTriangle, labelKey: 'navPSSR', path: '/pssr', section: 'pssr' },
   { icon: CalendarCheck, labelKey: 'navMyTasks', path: '/my-tasks', section: 'my-tasks' },
-  { icon: MessageSquare, labelKey: 'navAskBob', path: '/ask-orsh', section: 'ask-orsh' },
+  { icon: Settings, labelKey: 'adminTools', path: '/admin-tools', section: 'admin-tools', requiresPermission: 'access_admin' as const },
 ];
 
 export const MobileBottomNav: React.FC = () => {
