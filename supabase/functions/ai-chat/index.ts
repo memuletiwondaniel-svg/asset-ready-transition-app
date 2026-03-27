@@ -6837,46 +6837,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           ? { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' }
           : { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' };
 
-        // GET search.aweb to establish server-side form context (the actual search form, not the frameset)
-        const searchFormParams = new URLSearchParams({
-          searchBean: 'docs.SearchDocuments',
-          clas_seq_nr: moduleParams.clas_seq_nr,
-          suty_seq_nr: moduleParams.suty_seq_nr,
-          proj_seq_nr: projSeqNr,
-          dbName: dbName,
-          projectCabinet: projectCabinet,
-          subclass_type: moduleParams.subclass_type,
-          entity_code: 'DOCS'
-        });
-        console.info('webroute value:', (updatedCookies.match(/webroute=([^;]+)/)?.[1] || 'not found'));
-        console.info('search.aweb GET: sending for', moduleParams.subclass_type);
-        const forwardResult = await fetchCaptureCookies(
-          assaiBase + '/search.aweb?' + searchFormParams.toString(),
-          { method: 'GET', headers: { 'User-Agent': ua } },
-          updatedCookies
-        );
-        updatedCookies = forwardResult.cookies;
-
-        // Extract hidden input fields from search.aweb response
-        const hiddenFields: Record<string, string> = {};
-        const hiddenRegex = /<input[^>]+type=["']hidden["'][^>]*>/gi;
-        let hiddenMatch;
-        while ((hiddenMatch = hiddenRegex.exec(forwardResult.body)) !== null) {
-          const nameMatch = hiddenMatch[0].match(/name=["']([^"']+)["']/);
-          const valueMatch = hiddenMatch[0].match(/value=["']([^"']*?)["']/);
-          if (nameMatch) {
-            hiddenFields[nameMatch[1]] = valueMatch ? valueMatch[1] : '';
-          }
-        }
-        console.info('search.aweb GET: status', forwardResult.finalStatus, ', html length:', forwardResult.body.length, ', hidden fields:', Object.keys(hiddenFields).length);
-
-        // Build search parameters
+        // Build search parameters — go directly to result.aweb (search.aweb requires activateApplet state we can't replicate)
         const searchParams = new URLSearchParams();
-        
-        // Include hidden fields from forward.aweb (form context tokens)
-        for (const [key, value] of Object.entries(hiddenFields)) {
-          searchParams.set(key, value);
-        }
         
         searchParams.set('selected_project_codes', projectCabinet);
         
@@ -6895,13 +6857,17 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         searchParams.set('clas_seq_nr', moduleParams.clas_seq_nr);
         searchParams.set('suty_seq_nr', moduleParams.suty_seq_nr);
         searchParams.set('entity_code', 'DOCS');
+        searchParams.set('dbName', dbName);
+        searchParams.set('projectCabinet', projectCabinet);
         
         if (discipline_code) searchParams.set('discipline_code', discipline_code);
         if (document_type) searchParams.set('document_type', document_type);
         if (status_code) searchParams.set('status_code', status_code);
         if (company_code) searchParams.set('company_code', company_code);
 
-        // POST to result.aweb using fetchCaptureCookies with redirect:'manual'
+        console.info('webroute value:', (updatedCookies.match(/webroute=([^;]+)/)?.[1] || 'not found'));
+
+        // POST directly to result.aweb with valid label.aweb session cookies
         const searchResult = await fetchCaptureCookies(
           assaiBase + '/result.aweb',
           {
@@ -6909,7 +6875,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
               'User-Agent': ua,
-              'Referer': assaiBase + '/search.aweb',
+              'Referer': assaiBase + '/label.aweb',
               'Origin': 'https://eu.assaicloud.com'
             },
             body: searchParams.toString()
@@ -6918,7 +6884,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         );
         updatedCookies = searchResult.cookies;
         const html = searchResult.body;
-        console.info('result.aweb POST: status', searchResult.finalStatus, ', html length:', html.length);
+        console.info('result.aweb POST direct: status', searchResult.finalStatus, ', html length:', html.length);
         
         // Parse myCells
         const myCellsMatch = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
@@ -6958,40 +6924,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
           
           try {
-            // Establish form context for alt module via search.aweb
-            const altSearchFormParams = new URLSearchParams({
-              searchBean: 'docs.SearchDocuments',
-              clas_seq_nr: altParams.clas_seq_nr,
-              suty_seq_nr: altParams.suty_seq_nr,
-              proj_seq_nr: projSeqNr,
-              dbName: dbName,
-              projectCabinet: projectCabinet,
-              subclass_type: altParams.subclass_type,
-              entity_code: 'DOCS'
-            });
-            console.info('search.aweb GET: sending for alt module', altParams.subclass_type);
-            const altForward = await fetchCaptureCookies(
-              assaiBase + '/search.aweb?' + altSearchFormParams.toString(),
-              { method: 'GET', headers: { 'User-Agent': ua } },
-              updatedCookies
-            );
-            updatedCookies = altForward.cookies;
-            console.info('search.aweb GET (alt): status', altForward.finalStatus, ', html length:', altForward.body.length);
-
-            // Extract hidden fields from alt forward
-            const altHidden: Record<string, string> = {};
-            let altHM;
-            const altHR = /<input[^>]+type=["']hidden["'][^>]*>/gi;
-            while ((altHM = altHR.exec(altForward.body)) !== null) {
-              const n = altHM[0].match(/name=["']([^"']+)["']/);
-              const v = altHM[0].match(/value=["']([^"']*?)["']/);
-              if (n) altHidden[n[1]] = v ? v[1] : '';
-            }
-
+            // Build alt search params — go directly to result.aweb
             const altSearchParams = new URLSearchParams();
-            for (const [key, value] of Object.entries(altHidden)) {
-              altSearchParams.set(key, value);
-            }
             altSearchParams.set('selected_project_codes', projectCabinet);
             if (poDigits) {
               altSearchParams.set('purchase_code', poDigits);
@@ -7005,11 +6939,14 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             altSearchParams.set('clas_seq_nr', altParams.clas_seq_nr);
             altSearchParams.set('suty_seq_nr', altParams.suty_seq_nr);
             altSearchParams.set('entity_code', 'DOCS');
+            altSearchParams.set('dbName', dbName);
+            altSearchParams.set('projectCabinet', projectCabinet);
             if (discipline_code) altSearchParams.set('discipline_code', discipline_code);
             if (document_type) altSearchParams.set('document_type', document_type);
             if (status_code) altSearchParams.set('status_code', status_code);
             if (company_code) altSearchParams.set('company_code', company_code);
 
+            console.info('result.aweb POST (alt): sending for', altParams.subclass_type);
             const altResult = await fetchCaptureCookies(
               assaiBase + '/result.aweb',
               {
@@ -7017,7 +6954,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 headers: {
                   'Content-Type': 'application/x-www-form-urlencoded',
                   'User-Agent': ua,
-                  'Referer': assaiBase + '/search.aweb',
+                  'Referer': assaiBase + '/label.aweb',
                   'Origin': 'https://eu.assaicloud.com'
                 },
                 body: altSearchParams.toString()
@@ -7025,6 +6962,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               updatedCookies
             );
             const altHtml = altResult.body;
+            console.info('result.aweb POST (alt): status', altResult.finalStatus, ', html length:', altHtml.length);
             const altMatch = altHtml.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
             if (altMatch) {
               const altCells = JSON.parse(altMatch[1]);
