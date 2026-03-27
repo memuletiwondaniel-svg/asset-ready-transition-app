@@ -9217,11 +9217,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       }
 
       // Helper: build user-friendly search summary from tool result filters
-      const TYPE_DESCS_SUMMARY: Record<string, string> = {
-        A01: "Supplier Document Register", A02: "Basis for Design", B01: "General Arrangement Drawing",
-        B04: "Foundation Layout", C02: "Specification", C03: "Single Line Diagram", C08: "Equipment Datasheet",
-        C11: "Control Schematic", C14: "Cause & Effect Diagram", H02: "Inspection & Test Plan",
-        H08: "Factory Acceptance Test", J01: "Installation/O&M Manual", K01: "Certificate", L10: "Calibration Certificate"
+      const TYPE_DESCS_SUMMARY: Record<string, string> = dynamicTypeDescs;
       };
       const buildSearchSummary = (toolResult: any): string => {
         const total = toolResult.total_found || 0;
