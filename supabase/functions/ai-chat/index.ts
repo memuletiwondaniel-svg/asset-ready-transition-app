@@ -6861,21 +6861,26 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         if (!query) return { found: false, message: 'Please provide a document type name or abbreviation to look up.' };
         
         const cleanQuery = query.trim().toUpperCase().replace(/[^A-Z0-9&]/g, '');
+        console.log('resolve_document_type: raw query:', query, '→ cleanQuery:', cleanQuery);
         
-        // Step 1: Check acronym table first (exact match)
-        const { data: acronymMatch } = await supabaseClient
+        // Step 1a: Exact acronym match on dms_document_type_acronyms
+        const { data: acronymMatch, error: acronymError } = await supabaseClient
           .from('dms_document_type_acronyms')
-          .select('acronym, type_code, full_name, notes')
+          .select('acronym, type_code, full_name, notes, usage_count')
           .eq('acronym', cleanQuery)
           .maybeSingle();
         
-        if (acronymMatch) {
-          // Increment usage count
-          try {
-            await supabaseClient.rpc('increment_acronym_usage', { acronym_text: cleanQuery });
-          } catch (_) { /* non-critical */ }
+        console.log('resolve_document_type: acronym lookup result:', acronymMatch ? `FOUND ${acronymMatch.acronym}→${acronymMatch.type_code}` : 'no match', 'error:', acronymError);
+        
+        if (acronymMatch && !acronymError) {
+          // Increment usage count (fire-and-forget)
+          supabaseClient
+            .from('dms_document_type_acronyms')
+            .update({ usage_count: (acronymMatch.usage_count || 0) + 1, updated_at: new Date().toISOString() })
+            .eq('acronym', cleanQuery)
+            .then(() => {});
           
-          // Fetch the full document type details
+          // Fetch full document type details
           const { data: typeDetails } = await supabaseClient
             .from('dms_document_types')
             .select('code, document_name, document_description, tier')
@@ -6893,6 +6898,59 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               tier: typeDetails?.tier ?? null
             }],
             instruction: `Use code "${acronymMatch.type_code}" as the document_type filter in search_assai_documents`
+          };
+        }
+        
+        // Step 1b: Check if query matches a full_name in the acronym table (e.g. "Basis for Design" → BFD)
+        const { data: fullNameMatch } = await supabaseClient
+          .from('dms_document_type_acronyms')
+          .select('acronym, type_code, full_name, notes, usage_count')
+          .ilike('full_name', `%${query}%`)
+          .limit(3);
+        
+        console.log('resolve_document_type: full_name lookup found:', fullNameMatch?.length ?? 0);
+        
+        if (fullNameMatch && fullNameMatch.length > 0) {
+          // Increment usage for first match
+          supabaseClient
+            .from('dms_document_type_acronyms')
+            .update({ usage_count: (fullNameMatch[0].usage_count || 0) + 1, updated_at: new Date().toISOString() })
+            .eq('acronym', fullNameMatch[0].acronym)
+            .then(() => {});
+          
+          if (fullNameMatch.length === 1) {
+            const match = fullNameMatch[0];
+            const { data: typeDetails } = await supabaseClient
+              .from('dms_document_types')
+              .select('code, document_name, document_description, tier')
+              .eq('code', match.type_code)
+              .maybeSingle();
+            
+            return {
+              found: true,
+              count: 1,
+              source: 'acronym_fullname_lookup',
+              matches: [{
+                code: match.type_code,
+                name: match.full_name,
+                description: typeDetails?.document_description?.substring(0, 200) ?? match.notes,
+                tier: typeDetails?.tier ?? null
+              }],
+              instruction: `Use code "${match.type_code}" as the document_type filter in search_assai_documents`
+            };
+          }
+          
+          return {
+            found: true,
+            count: fullNameMatch.length,
+            source: 'acronym_fullname_lookup',
+            matches: fullNameMatch.map(m => ({
+              code: m.type_code,
+              name: m.full_name,
+              description: m.notes,
+              tier: null
+            })),
+            instruction: 'Multiple acronym matches — confirm with user which document type they mean'
           };
         }
         
