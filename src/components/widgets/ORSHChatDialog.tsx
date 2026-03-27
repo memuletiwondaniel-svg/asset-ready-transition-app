@@ -1011,16 +1011,25 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                           variant="ghost"
                           size="icon"
                           onClick={handleVoiceInput}
-                          disabled={isLoading || uploadingFiles}
+                          disabled={isLoading || uploadingFiles || isTranscribing}
                           className={cn(
                             "h-9 w-9 rounded-xl hover:bg-background",
-                            isListening && "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                            isListening && "bg-destructive/10 text-destructive hover:bg-destructive/20 animate-pulse",
+                            isTranscribing && "opacity-70"
                           )}
                         >
-                          {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5 text-muted-foreground" />}
+                          {isTranscribing ? (
+                            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                          ) : isListening ? (
+                            <MicOff className="h-5 w-5" />
+                          ) : (
+                            <Mic className="h-5 w-5 text-muted-foreground" />
+                          )}
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{isListening ? 'Stop recording' : 'Voice input'}</TooltipContent>
+                      <TooltipContent>
+                        {isTranscribing ? 'Transcribing...' : isListening ? 'Stop recording' : 'Voice input'}
+                      </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )}
