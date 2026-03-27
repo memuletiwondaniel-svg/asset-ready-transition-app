@@ -9035,7 +9035,7 @@ When a user asks for CRITICAL REASONING about a document, specifically address:
 
 FINDING A SPECIFIC DOCUMENT:
 When a user asks "What is the document number for the BfD?" or "Find the ITP for DP300":
-1. Resolve the document type name to Assai code (BfD→A02, ITP→H02 etc.)
+1. Look up the document type name in the DOCUMENT TYPE CODE REFERENCE at the end of this prompt to find the correct code
 2. Use search_assai_documents with the resolved type code
 3. Present results with document number, title, revision, status, and download link
 4. If multiple matches, list them all and ask which one they want
