@@ -77,7 +77,6 @@ interface ORSHChatDialogProps {
   onOpenChange: (open: boolean) => void;
   onUnreadCountChange?: (count: number) => void;
   initialMessage?: string;
-  mode?: 'dialog' | 'inline';
 }
 
 
