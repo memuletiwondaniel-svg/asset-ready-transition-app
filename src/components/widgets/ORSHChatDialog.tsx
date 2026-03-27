@@ -142,11 +142,18 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     }
   }, [open, initialMessage]);
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+    requestAnimationFrame(() => {
+      if (scrollRef.current) {
+        // ScrollArea's actual scrollable element is the Viewport child
+        const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+        if (viewport) {
+          viewport.scrollTop = viewport.scrollHeight;
+        }
+      }
+    });
+  }, [messages, isLoading]);
 
   useEffect(() => {
     const channel = supabase
