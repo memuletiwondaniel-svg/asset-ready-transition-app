@@ -693,8 +693,8 @@ VERBOSITY RULES (MANDATORY):
 
 FORMATTING RULES (MANDATORY):
 - Use bullet points for any list of 3 or more items.
-- Use **bold** for key values, statuses, counts, and document codes.
-- Write document status codes as plain uppercase text (AFU, AFC, IFB, IFA, IFI, IFC, CAN, REV, SUP, IFR, AFD) — the React UI automatically renders them as colored badge pills. Do NOT put emojis next to status codes.
+- NEVER overuse **bold** markdown. Only bold the single most important number or finding per paragraph (e.g. "Found **109** documents"). Do NOT bold status codes, field labels, column headers, or routine text. Clean, minimal formatting looks professional — excessive bolding looks like a raw AI dump.
+- Write document status codes as plain uppercase text (AFU, AFC, IFB, IFA, IFI, IFC, CAN, REV, SUP, IFR, AFD) — the React UI automatically renders them as colored badge pills. Do NOT put emojis next to status codes. Do NOT bold status codes.
 - Use these emojis as section anchors (start of a line only, never mid-sentence, never in the same cell as a status code): ✅ complete/found, ⚠️ warning/missing, 📄 document result, 🔍 search, 📅 date/deadline, ❌ not found.
 - Never put emojis inside bullet text — TTS strips them but it looks cluttered.
 - Use a ## header only when the response covers 3 or more distinct topics.
