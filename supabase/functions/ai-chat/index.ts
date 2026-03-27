@@ -9188,11 +9188,31 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         
         // Handle rate limiting gracefully
         if (finalResponse.status === 429) {
-          // Try to use the last tool result as a fallback response — return as SSE so streaming client can parse
-          const lastToolResult = toolResultContents[toolResultContents.length - 1];
+          // For search_assai_documents, build structured response deterministically even on rate limit
+          if (lastToolName === 'search_assai_documents' && lastToolResult && lastToolResult.found && lastToolResult.total_found > 0) {
+            const STATUS_DESCS: Record<string, string> = {
+              AFU: "Approved for Use", AFC: "Approved for Construction", IFB: "Issued for Bid", IFT: "Issued for Tender",
+              IFI: "Issued for Information", IFA: "Issued for Approval", IFC: "Issued for Construction", CAN: "Cancelled",
+              REV: "Under Revision", SUP: "Superseded", IFR: "Issued for Review", AFD: "Approved for Design"
+            };
+            const TYPE_DESCS: Record<string, string> = {
+              A01: "Supplier Document Register", A02: "Basis for Design", B01: "General Arrangement Drawing",
+              C02: "System/Equipment Specification", C03: "Single Line Diagram", C08: "Equipment Datasheet",
+              C11: "Control Schematic", C14: "Cause & Effect Diagram", H02: "Inspection & Test Plan",
+              H08: "Factory Acceptance Test", J01: "Installation/O&M Manual", B04: "Foundation Layout"
+            };
+            const statusTable = Object.entries(lastToolResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS[s] ?? s }));
+            const typeTable = Object.entries(lastToolResult.type_summary || {}).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 10).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
+            const structured = { type: "document_search", summary: `Found **${lastToolResult.total_found}** documents matching ${lastToolResult.search_pattern || 'your search'}`, status_table: statusTable, type_table: typeTable, highlights: ["Results retrieved successfully despite temporary rate limit"], followup: ["Show me only pending documents", "Break down by discipline", "Which documents are overdue?"] };
+            const fallbackContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+            const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
+            return new Response(sseFallback, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+          }
+          // Generic fallback for other tools
+          const lastTR = toolResultContents[toolResultContents.length - 1];
           let fallbackContent: string;
-          if (lastToolResult) {
-            fallbackContent = "I found the results but hit a temporary rate limit formatting the full response. Here's the raw data:\n\n```json\n" + JSON.stringify(lastToolResult, null, 2).substring(0, 3000) + "\n```\n\nPlease try again in a moment for a fully formatted response.";
+          if (lastTR) {
+            fallbackContent = "I found the results but hit a temporary rate limit formatting the full response. Here's the raw data:\n\n```json\n" + JSON.stringify(lastTR, null, 2).substring(0, 3000) + "\n```\n\nPlease try again in a moment for a fully formatted response.";
           } else {
             fallbackContent = "I'm experiencing high demand right now. Please try again in about 30 seconds.";
           }
