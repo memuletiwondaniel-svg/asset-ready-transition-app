@@ -903,6 +903,33 @@ export type Database = {
         }
         Relationships: []
       }
+      dms_document_type_acronyms: {
+        Row: {
+          acronym: string
+          created_at: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          type_code: string
+        }
+        Insert: {
+          acronym: string
+          created_at?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          type_code: string
+        }
+        Update: {
+          acronym?: string
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          type_code?: string
+        }
+        Relationships: []
+      }
       dms_document_type_secondary_disciplines: {
         Row: {
           created_at: string
