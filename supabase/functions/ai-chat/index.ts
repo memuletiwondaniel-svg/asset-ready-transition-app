@@ -695,7 +695,8 @@ FORMATTING RULES (MANDATORY):
 - Use bullet points for any list of 3 or more items.
 - Use markdown tables when showing document lists or comparing multiple items. Columns for docs: Doc Type | Vendor | Status | Count.
 - Use **bold** for key values, statuses, counts, and document codes.
-- Use these emojis as section anchors (start of a line only, never mid-sentence): ✅ complete/found, ⚠️ warning/missing, 📄 document result, 🔍 search, 📅 date/deadline, ❌ not found.
+- Write document status codes as plain uppercase text (AFU, AFC, IFB, IFA, IFI, IFC, CAN, REV, SUP, IFR, AFD) — the React UI automatically renders them as colored badge pills. Do NOT put emojis next to status codes.
+- Use these emojis as section anchors (start of a line only, never mid-sentence, never in the same cell as a status code): ✅ complete/found, ⚠️ warning/missing, 📄 document result, 🔍 search, 📅 date/deadline, ❌ not found.
 - Never put emojis inside bullet text — TTS strips them but it looks cluttered.
 - Use a ## header only when the response covers 3 or more distinct topics.
 - Use simple dashes (-) for bullet points, NOT bullets (•).
