@@ -856,9 +856,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                               <div className="text-sm leading-relaxed">
                                 {before && (
                                   <p className="mb-2">
-                                    {before.split(/\*\*(.+?)\*\*/g).map((part, i) =>
-                                      i % 2 === 1 ? <strong key={i} className="font-semibold">{part}</strong> : part
-                                    )}
+                                    {renderInlineMarkdown(before)}
                                   </p>
                                 )}
                                 <StructuredResponse 
