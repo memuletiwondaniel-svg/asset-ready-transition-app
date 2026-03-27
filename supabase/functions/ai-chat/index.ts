@@ -6866,6 +6866,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           subclass_type: moduleParams.subclass_type,
           entity_code: 'DOCS'
         });
+        console.info('webroute value:', (updatedCookies.match(/webroute=([^;]+)/)?.[1] || 'not found'));
         console.info('search.aweb GET: sending for', moduleParams.subclass_type);
         const forwardResult = await fetchCaptureCookies(
           assaiBase + '/search.aweb?' + searchFormParams.toString(),
@@ -9071,7 +9072,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         // Handle rate limiting gracefully
         if (finalResponse.status === 429) {
           // Try to use the last tool result as a fallback response
-          const lastToolResult = toolResults[toolResults.length - 1];
+          const lastToolResult = toolResultContents[toolResultContents.length - 1];
           if (lastToolResult) {
             const fallbackContent = "I found some results but hit a temporary rate limit formatting the full response. Here's the raw data:\n\n```json\n" + JSON.stringify(lastToolResult, null, 2).substring(0, 3000) + "\n```\n\nPlease try again in a moment for a fully formatted response.";
             return new Response(
