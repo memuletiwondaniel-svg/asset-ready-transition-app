@@ -6974,39 +6974,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return allDocs;
         };
 
-        // Execute primary search
-        const html = await searchModule(moduleParams);
-        
-        // Parse myCells
-        const myCellsMatch = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
-        console.log('search_assai_documents: myCells found:', !!myCellsMatch, ', html length:', html.length);
-        
-        let allDocuments: any[] = [];
-        
-        if (myCellsMatch) {
-          try {
-            const myCells = JSON.parse(myCellsMatch[1]);
-            allDocuments = myCells.map((row: any) => ({
-              document_number: String(row[3] || '').replace(/<[^>]*>/g, '').trim(),
-              revision: String(row[4] || '').replace(/<[^>]*>/g, '').trim(),
-              revision_date: String(row[5] || '').replace(/<[^>]*>/g, '').trim(),
-              status: String(row[6] || '').replace(/<[^>]*>/g, '').trim(),
-              title: String(row[8] || '').replace(/<[^>]*>/g, '').trim(),
-              priority: String(row[9] || '').replace(/<[^>]*>/g, '').trim(),
-              responsible_engineer: String(row[11] || '').replace(/<[^>]*>/g, '').trim(),
-              company: String(row[12] || '').replace(/<[^>]*>/g, '').trim(),
-              discipline: String(row[13] || '').replace(/<[^>]*>/g, '').trim(),
-              type_code: String(row[14] || '').replace(/<[^>]*>/g, '').trim(),
-              work_package: String(row[15] || '').replace(/<[^>]*>/g, '').trim(),
-              purchase_order: String(row[16] || '').replace(/<[^>]*>/g, '').trim(),
-              pk_seq_nr: String(row[33] || '').replace(/<[^>]*>/g, '').trim(),
-              entt_seq_nr: String(row[34] || '').replace(/<[^>]*>/g, '').trim(),
-              subclass: moduleParams.subclass_type
-            }));
-          } catch (parseErr) {
-            console.error('search_assai_documents: myCells parse error:', parseErr);
-          }
-        }
+        // Execute primary search with pagination
+        let allDocuments = await paginateSearch(moduleParams);
+        console.log('search_assai_documents: primary search returned ' + allDocuments.length + ' docs total');
         
         // Also try the other module if no results yet
         if (allDocuments.length === 0) {
@@ -7015,30 +6985,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
           
           try {
-            console.info('result.aweb POST (alt): sending for', altParams.subclass_type);
-            const altHtml = await searchModule(altParams);
-            const altMatch = altHtml.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
-            if (altMatch) {
-              const altCells = JSON.parse(altMatch[1]);
-              const altDocs = altCells.map((row: any) => ({
-                document_number: String(row[3] || '').replace(/<[^>]*>/g, '').trim(),
-                revision: String(row[4] || '').replace(/<[^>]*>/g, '').trim(),
-                revision_date: String(row[5] || '').replace(/<[^>]*>/g, '').trim(),
-                status: String(row[6] || '').replace(/<[^>]*>/g, '').trim(),
-                title: String(row[8] || '').replace(/<[^>]*>/g, '').trim(),
-                priority: String(row[9] || '').replace(/<[^>]*>/g, '').trim(),
-                responsible_engineer: String(row[11] || '').replace(/<[^>]*>/g, '').trim(),
-                company: String(row[12] || '').replace(/<[^>]*>/g, '').trim(),
-                discipline: String(row[13] || '').replace(/<[^>]*>/g, '').trim(),
-                type_code: String(row[14] || '').replace(/<[^>]*>/g, '').trim(),
-                work_package: String(row[15] || '').replace(/<[^>]*>/g, '').trim(),
-                purchase_order: String(row[16] || '').replace(/<[^>]*>/g, '').trim(),
-                pk_seq_nr: String(row[33] || '').replace(/<[^>]*>/g, '').trim(),
-                entt_seq_nr: String(row[34] || '').replace(/<[^>]*>/g, '').trim(),
-                subclass: altParams.subclass_type
-              }));
-              allDocuments.push(...altDocs);
-            }
+            console.info('Paginated search (alt): sending for', altParams.subclass_type);
+            allDocuments = await paginateSearch(altParams);
           } catch (altErr) {
             console.error('search_assai_documents: alt module search error:', altErr);
           }
@@ -7067,8 +7015,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           filters_applied: { discipline_code, document_type, status_code, company_code },
           status_summary: statusSummary,
           type_summary: typeSummary,
-          documents: allDocuments.slice(0, 50),
-          note: allDocuments.length > 50 ? `Showing first 50 of ${allDocuments.length} results. Refine your search for more specific results.` : undefined
+          documents: allDocuments.slice(0, 100),
+          note: allDocuments.length > 100 ? `Showing first 100 of ${allDocuments.length} results. Full summaries reflect all ${allDocuments.length} documents.` : undefined
         };
       } catch (err: any) {
         console.error('search_assai_documents error:', err);
