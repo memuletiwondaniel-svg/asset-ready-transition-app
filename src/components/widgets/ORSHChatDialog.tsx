@@ -778,7 +778,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                 </div>
                 <div>
                   <h2 className="font-semibold text-sm">Bob</h2>
-                  <p className="text-xs text-muted-foreground">ORSH Assistant</p>
+                  <p className="text-xs text-muted-foreground">Co-Pilot</p>
                 </div>
               </div>
             </div>
