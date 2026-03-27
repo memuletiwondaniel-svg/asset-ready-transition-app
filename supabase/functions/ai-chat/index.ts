@@ -9363,7 +9363,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
         const structured = {
           type: "document_search",
-          summary: `Found **${lastToolResult.total_found}** documents matching ${lastToolResult.search_pattern || 'your search'}`,
+          summary: buildSearchSummary(lastToolResult),
           status_table: statusTable,
           type_table: typeTable,
           documents: docList,
