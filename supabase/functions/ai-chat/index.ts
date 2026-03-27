@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { loginAssai } from "../_shared/assai-auth.ts";
 
 // Smart region inference from project titles
 function inferRegionFromTitle(title: string): 'North' | 'Central' | 'South' | null {
