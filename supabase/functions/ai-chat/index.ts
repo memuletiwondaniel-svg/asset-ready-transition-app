@@ -9572,9 +9572,10 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           const lastTR = toolResultContents[toolResultContents.length - 1];
           let fallbackContent: string;
           if (lastTR) {
-            fallbackContent = "I found the results but hit a temporary rate limit formatting the full response. Here's the raw data:\n\n```json\n" + JSON.stringify(lastTR, null, 2).substring(0, 3000) + "\n```\n\nPlease try again in a moment for a fully formatted response.";
+            fallbackContent = "I found some results but hit a temporary rate limit while formatting the response. The data is ready — please try your question again in about 30 seconds and I'll format it properly.";
           } else {
-            fallbackContent = "I'm experiencing high demand right now. Please try again in about 30 seconds.";
+            const lastUserMsg = messages?.filter((m: any) => m.role === 'user').pop()?.content || '';
+            fallbackContent = `I was working on your request about "${lastUserMsg.substring(0, 60).trim()}" but hit a temporary rate limit.\n\nPlease try again in about 30 seconds — your request was valid and should work on the next attempt.`;
           }
           const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
           return new Response(sseFallback, {
