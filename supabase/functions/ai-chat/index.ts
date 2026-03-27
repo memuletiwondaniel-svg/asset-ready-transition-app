@@ -699,13 +699,29 @@ FORMATTING RULES (MANDATORY):
 - Never put emojis inside bullet text — TTS strips them but it looks cluttered.
 - Use a ## header only when the response covers 3 or more distinct topics.
 
-DOCUMENT TYPE RESOLUTION (CRITICAL):
-Document type codes are loaded dynamically from the project's dms_document_types database table and injected at the end of this prompt. When a user mentions a document type by name or abbreviation (e.g. "BfD", "Basis for Design", "ITP", "P&ID", "datasheet"), you MUST:
-1. Look up the matching code from the DOCUMENT TYPE CODE REFERENCE section at the end of this prompt
-2. Pass the resolved code as the document_type parameter to search_assai_documents
-3. Do NOT rely solely on a broad wildcard like 6529-% — the document_type filter is how you narrow results
-4. If you cannot find a matching code, ASK the user to clarify — NEVER guess
-These type codes work for ALL documents (engineering, vendor, planning), not just vendor/ZV documents.
+DOCUMENT TYPE RESOLUTION (CRITICAL — TWO-UNIVERSE MODEL):
+
+IMPORTANT — There are TWO separate document universes in ORSH:
+
+UNIVERSE 1 — Assai Vendor Document Register:
+- Contains documents SUBMITTED BY VENDORS as part of their contract deliverables
+- Codes are short alphanumeric: A01, B01, C03, H02, H08, J01, etc.
+- Searchable via the search_assai_documents tool
+- Example: vendor GA drawings, vendor ITPs, vendor FAT reports, vendor IOMs, vendor SDRs
+
+UNIVERSE 2 — Internal Engineering Document Register (EDMS):
+- Contains documents produced by the EPC contractor or owner
+- Codes are 4-digit numeric: 0901, 1206, 2305, 7704, etc.
+- Examples: Basis for Design (BfD), PFDs, P&IDs, Engineering Calculations, Design Basis
+- NOT searchable via search_assai_documents — these are in a separate system
+
+CRITICAL RULES:
+1. To resolve a document type name to a code, ALWAYS call the resolve_document_type tool FIRST. Never guess or assume a type code.
+2. If resolve_document_type shows the document is NOT a vendor document (is_vendor_document=false), tell the user: "This document type is an engineering/owner document and is not stored in the Assai vendor document register. It would be found in the project engineering document management system (EDMS), not Assai."
+3. If the result shows it IS a vendor document (is_vendor_document=true), proceed to search Assai using search_assai_documents with the correct code.
+4. If resolve_document_type returns multiple matches, ask the user: "I found [N] document types matching [X]. Which one did you mean?" and list them before proceeding.
+5. Never search Assai with a wildcard pattern like '6529-%' alone — always include at minimum a company_code, document_type, or purchase_order filter.
+6. If no specific filter is available, ask the user: "To search Assai, I need at least one of: the vendor name, the PO number, or the document type code. Which can you provide?"
 
 PLANT/UNIT CODE MAPPING (use when user mentions DP numbers or plant areas):
 DP300 = U40300, DP200 = U40200, DP100 = U40100, DP400 = U40400, DP500 = U40500.
@@ -3072,9 +3088,11 @@ const tools = [
     type: "function",
     function: {
       name: "search_assai_documents",
-      description: `Search Assai DMS for documents. Returns ALL matching documents by automatically splitting into sub-searches when results exceed 100. IMPORTANT: Always use the MOST SPECIFIC search pattern possible.
+      description: `Search Assai DMS for VENDOR documents. Returns ALL matching documents by automatically splitting into sub-searches when results exceed 100. IMPORTANT: Always use the MOST SPECIFIC search pattern possible.
 
-Document type codes are available in the system prompt's DOCUMENT TYPE CODE REFERENCE section. When the user mentions a document type by name, look up the code from that reference and pass it as document_type. NEVER hardcode or guess type codes.
+BEFORE calling this tool, you MUST first call resolve_document_type to verify the document type is a vendor document (is_vendor_document=true). If it is NOT a vendor document, do NOT search Assai — tell the user it lives in the EDMS instead.
+
+The search MUST include at least one specific filter beyond the project number: document_type, company_code, or a PO-based pattern. Searching with only '6529-%' is FORBIDDEN — it returns thousands of irrelevant documents.
 
 The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit]-[Discipline]-[Type]-[PO]-[Seq]. Use this when the user asks to search Assai, find vendor documents, check document status, or asks about documents for a specific PO/purchase order number.`,
       parameters: {
@@ -3090,7 +3108,7 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
           },
           document_type: {
             type: "string",
-            description: 'Filter by document type code. Works for ALL documents, not just vendor. Look up the correct code from the DOCUMENT TYPE CODE REFERENCE in the system prompt. ALWAYS pass this when the user mentions a document type by name or abbreviation.'
+            description: 'Filter by Assai vendor document type code (e.g. A01, B01, H02, J01). Only use codes confirmed as vendor documents by resolve_document_type. ALWAYS call resolve_document_type FIRST before using this filter.'
           },
           status_code: {
             type: "string",
@@ -3102,6 +3120,26 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
           }
         },
         required: ["document_number_pattern"]
+      }
+    }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RESOLVE DOCUMENT TYPE TOOL - Look up type codes from ORSH database
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "resolve_document_type",
+      description: "Looks up document type codes and descriptions from the ORSH document management database. Use this BEFORE searching Assai whenever the user mentions a document type by name or abbreviation (e.g. 'BfD', 'ITP', 'datasheet', 'GA drawing'). Returns matching document types with their codes, descriptions, and whether they are vendor documents. If multiple matches are found, ask the user to clarify before proceeding.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "The document type name, abbreviation, or keyword to search for, e.g. 'Basis for Design', 'BfD', 'ITP', 'datasheet', 'GA'"
+          }
+        },
+        required: ["query"]
       }
     }
   },
@@ -6792,6 +6830,50 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
 
+    case "resolve_document_type": {
+      try {
+        const query = args.query || '';
+        if (!query) return { found: false, message: 'Please provide a document type name or abbreviation to look up.' };
+        
+        const { data, error } = await supabaseClient
+          .from('dms_document_types')
+          .select('code, document_name, document_description, tier, rlmu, is_vendor_document, discipline_code, discipline_name')
+          .or(`document_name.ilike.%${query}%,document_description.ilike.%${query}%,code.ilike.%${query}%`)
+          .eq('is_active', true)
+          .order('code')
+          .limit(20);
+        
+        if (error || !data || data.length === 0) {
+          return { 
+            found: false, 
+            message: `No document types found matching "${query}" in the ORSH document register. This document type may not exist in the system, or may be known by a different name. Try a broader keyword or ask the user for the exact name.` 
+          };
+        }
+        
+        return {
+          found: true,
+          count: data.length,
+          matches: data.map(d => ({
+            code: d.code,
+            name: d.document_name,
+            description: d.document_description,
+            tier: d.tier,
+            discipline_code: d.discipline_code,
+            discipline_name: d.discipline_name,
+            is_vendor_document: d.is_vendor_document === true || d.rlmu === 'Vendor' || d.discipline_code === 'ZV'
+          })),
+          note: data.length > 1 
+            ? 'Multiple matches found — confirm with user which one they mean before searching Assai.' 
+            : (data[0].is_vendor_document === true || data[0].rlmu === 'Vendor' || data[0].discipline_code === 'ZV')
+              ? 'This is a vendor document — you can search Assai with this code.'
+              : 'This is an engineering/owner document — it is NOT in the Assai vendor register. It would be in the project EDMS.'
+        };
+      } catch (err) {
+        console.error('resolve_document_type error:', err);
+        return { error: String(err) };
+      }
+    }
+
     case "search_assai_documents": {
       try {
         const { document_number_pattern, discipline_code, document_type, status_code, company_code } = args;
@@ -8601,8 +8683,7 @@ serve(async (req) => {
       }
     }
 
-    // Load document type codes dynamically from dms_document_types table
-    let docTypeLookupPrompt = '';
+    // Load document type codes dynamically for summary/display purposes only (NOT for system prompt injection)
     let dynamicTypeDescs: Record<string, string> = {};
     try {
       const { data: docTypes } = await supabase
@@ -8618,10 +8699,7 @@ serve(async (req) => {
           }
         }
         dynamicTypeDescs = Object.fromEntries(codeMap);
-        const entries = Array.from(codeMap.entries()).slice(0, 150);
-        const tableRows = entries.map(([code, name]) => `${code} = ${name}`).join('\n');
-        docTypeLookupPrompt = '\n\nDOCUMENT TYPE CODE REFERENCE (from project database — ' + codeMap.size + ' types total):\n' + tableRows + '\n\nIMPORTANT: When a user mentions a document type by name or abbreviation (e.g. "BfD", "Basis for Design", "ITP", "P&ID"), find the matching code from this list and pass it as document_type to search_assai_documents. If the name is ambiguous or not found, ask the user to clarify. NEVER guess a code.\n';
-        console.log('Loaded ' + codeMap.size + ' document type codes from dms_document_types');
+        console.log('Loaded ' + codeMap.size + ' document type codes for display purposes');
       }
     } catch (err) {
       console.error('Failed to load document type codes:', err);
@@ -9092,14 +9170,14 @@ You NEVER give vague answers on safety matters. You are specific, technically pr
 
 You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Ivan, your Process Technical Authority Agent."`;
 
-    // Select system prompt based on detected agent, inject dynamic doc type lookup
-    let systemPrompt = BOB_SYSTEM_PROMPT + docTypeLookupPrompt + userContextPrompt;
+    // Select system prompt based on detected agent
+    let systemPrompt = BOB_SYSTEM_PROMPT + userContextPrompt;
     if (detectedAgent === 'document_agent') {
-      systemPrompt = DOCUMENT_AGENT_PROMPT + docTypeLookupPrompt + userContextPrompt;
+      systemPrompt = DOCUMENT_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'pssr_ora_agent') {
       systemPrompt = PSSR_ORA_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'hannah') {
-      systemPrompt = HANNAH_AGENT_PROMPT + docTypeLookupPrompt + userContextPrompt;
+      systemPrompt = HANNAH_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'ivan') {
       systemPrompt = IVAN_AGENT_PROMPT + userContextPrompt;
     }
