@@ -9271,12 +9271,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
               IFI: "Issued for Information", IFA: "Issued for Approval", IFC: "Issued for Construction", CAN: "Cancelled",
               REV: "Under Revision", SUP: "Superseded", IFR: "Issued for Review", AFD: "Approved for Design"
             };
-            const TYPE_DESCS: Record<string, string> = {
-              A01: "Supplier Document Register", A02: "Basis for Design", B01: "General Arrangement Drawing",
-              C02: "System/Equipment Specification", C03: "Single Line Diagram", C08: "Equipment Datasheet",
-              C11: "Control Schematic", C14: "Cause & Effect Diagram", H02: "Inspection & Test Plan",
-              H08: "Factory Acceptance Test", J01: "Installation/O&M Manual", B04: "Foundation Layout"
-            };
+            const TYPE_DESCS: Record<string, string> = dynamicTypeDescs;
             const statusTable = Object.entries(lastToolResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS[s] ?? s }));
             const typeTable = Object.entries(lastToolResult.type_summary || {}).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 10).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
             const structured = { type: "document_search", summary: buildSearchSummary(lastToolResult), status_table: statusTable, type_table: typeTable, highlights: ["Results retrieved successfully despite temporary rate limit"], followup: ["Show me only pending documents", "Break down by discipline", "Which documents are overdue?"] };
