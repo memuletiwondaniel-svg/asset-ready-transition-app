@@ -9208,7 +9208,32 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           content: JSON.stringify(result)
         });
       }
-      
+
+      // Helper: build user-friendly search summary from tool result filters
+      const TYPE_DESCS_SUMMARY: Record<string, string> = {
+        A01: "Supplier Document Register", A02: "Basis for Design", B01: "General Arrangement Drawing",
+        B04: "Foundation Layout", C02: "Specification", C03: "Single Line Diagram", C08: "Equipment Datasheet",
+        C11: "Control Schematic", C14: "Cause & Effect Diagram", H02: "Inspection & Test Plan",
+        H08: "Factory Acceptance Test", J01: "Installation/O&M Manual", K01: "Certificate", L10: "Calibration Certificate"
+      };
+      const buildSearchSummary = (toolResult: any): string => {
+        const total = toolResult.total_found || 0;
+        const filters = toolResult.filters_applied || {};
+        const parts: string[] = [];
+        if (filters.document_type && TYPE_DESCS_SUMMARY[filters.document_type]) {
+          parts.push(TYPE_DESCS_SUMMARY[filters.document_type]);
+        } else if (filters.document_type) {
+          parts.push(`type ${filters.document_type}`);
+        }
+        if (filters.discipline_code) parts.push(`discipline ${filters.discipline_code}`);
+        if (filters.status_code) parts.push(`status ${filters.status_code}`);
+        if (filters.company_code) parts.push(`originator ${filters.company_code}`);
+        if (parts.length > 0) {
+          return `Found **${total}** ${parts.join(', ')} documents`;
+        }
+        return `Found **${total}** documents`;
+      };
+
       // Second API call - send tool results back to AI for final response
       // Build messages: original conversation + assistant message with tool_use + user message with tool_results
       const finalResponse = await fetch("https://api.anthropic.com/v1/messages", {
