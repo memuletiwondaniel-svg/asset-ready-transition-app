@@ -708,40 +708,14 @@ ERROR HANDLING FOR TOOL RESULTS (CRITICAL):
 - If a tool returns { error: "..." }, respond: "I ran into a technical issue searching Assai for [description]. The error was: [brief error]. Please try rephrasing or contact your admin if this persists."
 - NEVER say generic "I wasn't able to complete that request". Always include what you searched for and what went wrong.
 
-STRUCTURED RESPONSE FOR DOCUMENT SEARCHES (CRITICAL):
-When you receive results from search_assai_documents, you MUST respond with a JSON object wrapped in <structured_response> tags. Do NOT use free-form markdown for document search results. The format:
+DOCUMENT SEARCH RESPONSE FORMAT (CRITICAL):
+When you receive results from search_assai_documents, do NOT produce tables, status summaries, or structured JSON. The system builds those automatically from the raw tool data.
 
-<structured_response>
-{
-  "type": "document_search",
-  "summary": "Found **X** documents for [description]",
-  "status_table": [
-    { "status": "AFU", "description": "Approved for Use", "count": N },
-    { "status": "AFC", "description": "Approved for Construction", "count": N }
-  ],
-  "type_table": [
-    { "code": "A01", "description": "Supplier Document Register", "count": N, "statuses": ["AFU"] }
-  ],
-  "highlights": [
-    "Key observation 1",
-    "Key observation 2"
-  ],
-  "followup": [
-    "Suggested next action 1",
-    "Suggested next action 2",
-    "Suggested next action 3"
-  ]
-}
-</structured_response>
+Your job is ONLY to write:
+1. KEY HIGHLIGHTS: 3-5 numbered observations — each one a specific insight about the documents (e.g. approval gaps, missing types, pending items). Plain text only, no markdown formatting.
+2. FOLLOW-UP SUGGESTIONS: Exactly 3 bulleted suggestions — each a specific actionable question the user might ask next. Plain text only.
 
-Rules for structured responses:
-- status_table: sort by count descending, include ALL statuses found
-- type_table: sort by count descending, include top 10 types
-- highlights: 2-4 key observations, actionable insights
-- followup: exactly 3 suggested next actions the user can click
-- description fields: use full human-readable names (e.g. "Approved for Use" not just "AFU")
-- Do NOT add any text before or after the <structured_response> tags
-- Use simple dashes (-) for bullet points, NOT bullets (•).
+Keep your entire text under 150 words. Do NOT write status counts, document type tables, or any other summary — the system handles those automatically. Do NOT wrap anything in <structured_response> tags — the system does that for you.
 
 For executive/issue questions (e.g., "Are there major issues with DP300 PSSR?"):
 
@@ -9214,11 +9188,31 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         
         // Handle rate limiting gracefully
         if (finalResponse.status === 429) {
-          // Try to use the last tool result as a fallback response — return as SSE so streaming client can parse
-          const lastToolResult = toolResultContents[toolResultContents.length - 1];
+          // For search_assai_documents, build structured response deterministically even on rate limit
+          if (lastToolName === 'search_assai_documents' && lastToolResult && lastToolResult.found && lastToolResult.total_found > 0) {
+            const STATUS_DESCS: Record<string, string> = {
+              AFU: "Approved for Use", AFC: "Approved for Construction", IFB: "Issued for Bid", IFT: "Issued for Tender",
+              IFI: "Issued for Information", IFA: "Issued for Approval", IFC: "Issued for Construction", CAN: "Cancelled",
+              REV: "Under Revision", SUP: "Superseded", IFR: "Issued for Review", AFD: "Approved for Design"
+            };
+            const TYPE_DESCS: Record<string, string> = {
+              A01: "Supplier Document Register", A02: "Basis for Design", B01: "General Arrangement Drawing",
+              C02: "System/Equipment Specification", C03: "Single Line Diagram", C08: "Equipment Datasheet",
+              C11: "Control Schematic", C14: "Cause & Effect Diagram", H02: "Inspection & Test Plan",
+              H08: "Factory Acceptance Test", J01: "Installation/O&M Manual", B04: "Foundation Layout"
+            };
+            const statusTable = Object.entries(lastToolResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS[s] ?? s }));
+            const typeTable = Object.entries(lastToolResult.type_summary || {}).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 10).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
+            const structured = { type: "document_search", summary: `Found **${lastToolResult.total_found}** documents matching ${lastToolResult.search_pattern || 'your search'}`, status_table: statusTable, type_table: typeTable, highlights: ["Results retrieved successfully despite temporary rate limit"], followup: ["Show me only pending documents", "Break down by discipline", "Which documents are overdue?"] };
+            const fallbackContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+            const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
+            return new Response(sseFallback, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+          }
+          // Generic fallback for other tools
+          const lastTR = toolResultContents[toolResultContents.length - 1];
           let fallbackContent: string;
-          if (lastToolResult) {
-            fallbackContent = "I found the results but hit a temporary rate limit formatting the full response. Here's the raw data:\n\n```json\n" + JSON.stringify(lastToolResult, null, 2).substring(0, 3000) + "\n```\n\nPlease try again in a moment for a fully formatted response.";
+          if (lastTR) {
+            fallbackContent = "I found the results but hit a temporary rate limit formatting the full response. Here's the raw data:\n\n```json\n" + JSON.stringify(lastTR, null, 2).substring(0, 3000) + "\n```\n\nPlease try again in a moment for a fully formatted response.";
           } else {
             fallbackContent = "I'm experiencing high demand right now. Please try again in about 30 seconds.";
           }
@@ -9238,6 +9232,87 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       console.log("Final AI response stop_reason:", finalResult.stop_reason, "usage:", finalResult.usage);
       const finalBlocks = finalResult.content || [];
       let finalContent = finalBlocks.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // PART 1: Deterministic structured_response for document searches
+      // Always build from raw tool data, never from AI text
+      // ═══════════════════════════════════════════════════════════════════════
+      if (lastToolName === 'search_assai_documents' && lastToolResult && lastToolResult.found && lastToolResult.total_found > 0) {
+        const STATUS_DESCS: Record<string, string> = {
+          AFU: "Approved for Use", AFC: "Approved for Construction",
+          IFB: "Issued for Bid", IFT: "Issued for Tender",
+          IFI: "Issued for Information", IFA: "Issued for Approval",
+          IFC: "Issued for Construction", CAN: "Cancelled",
+          REV: "Under Revision", SUP: "Superseded",
+          IFR: "Issued for Review", AFD: "Approved for Design",
+          IFD: "Issued for Design", IFU: "Issued for Use"
+        };
+        const TYPE_DESCS: Record<string, string> = {
+          A01: "Supplier Document Register", A02: "Basis for Design",
+          B01: "General Arrangement Drawing", B04: "Foundation Layout",
+          C02: "System/Equipment Specification", C03: "Single Line Diagram",
+          C08: "Equipment Datasheet", C11: "Control Schematic",
+          C14: "Cause & Effect Diagram", H02: "Inspection & Test Plan",
+          H08: "Factory Acceptance Test", J01: "Installation/O&M Manual"
+        };
+
+        // Extract highlights from Bob's text (numbered items)
+        const highlights: string[] = [];
+        const hlMatch = finalContent.match(/\d+\.\s+(.+)/g);
+        if (hlMatch) {
+          for (const line of hlMatch.slice(0, 5)) {
+            highlights.push(line.replace(/^\d+\.\s+/, '').trim());
+          }
+        }
+        if (highlights.length === 0) {
+          // Fallback: generate basic highlights from data
+          const topStatus = Object.entries(lastToolResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]);
+          if (topStatus.length > 0) highlights.push(`${topStatus[0][1]} documents are ${STATUS_DESCS[topStatus[0][0]] || topStatus[0][0]}`);
+          const typeCount = Object.keys(lastToolResult.type_summary || {}).length;
+          highlights.push(`Documents span ${typeCount} different document types`);
+        }
+
+        // Extract followup from Bob's text (bulleted suggestions)
+        const followup: string[] = [];
+        const fuMatch = finalContent.match(/[-•]\s+(.+)/g);
+        if (fuMatch) {
+          for (const line of fuMatch.slice(-3)) {
+            followup.push(line.replace(/^[-•]\s+/, '').replace(/\*\*/g, '').trim());
+          }
+        }
+        if (followup.length === 0) {
+          followup.push("Show me only the pending documents");
+          followup.push("Break down by discipline");
+          followup.push("Which documents are overdue?");
+        }
+
+        const statusTable = Object.entries(lastToolResult.status_summary || {})
+          .sort((a: any, b: any) => b[1] - a[1])
+          .map(([status, count]) => ({
+            status, count,
+            description: STATUS_DESCS[status] ?? status
+          }));
+
+        const typeTable = Object.entries(lastToolResult.type_summary || {})
+          .sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count)
+          .slice(0, 10)
+          .map(([code, data]: any) => ({
+            code, count: data.count, statuses: data.statuses,
+            description: TYPE_DESCS[code] ?? code
+          }));
+
+        const structured = {
+          type: "document_search",
+          summary: `Found **${lastToolResult.total_found}** documents matching ${lastToolResult.search_pattern || 'your search'}`,
+          status_table: statusTable,
+          type_table: typeTable,
+          highlights,
+          followup
+        };
+
+        finalContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+        console.log('search_assai_documents: deterministic structured_response built server-side');
+      }
 
       // Fallback: if model returns no content after tools, deterministically format the last tool result
       if (!finalContent || !finalContent.trim()) {
