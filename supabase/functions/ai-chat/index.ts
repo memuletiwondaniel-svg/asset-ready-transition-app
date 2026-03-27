@@ -7025,46 +7025,99 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return null;
         };
 
-        // Paginate through all result pages — search.aweb called ONCE, result.aweb called per page
-        const PAGE_SIZE = 100;
-        const MAX_PAGES = 5; // safety cap: 500 docs max
+        // Multi-query search: if first unfiltered search hits 100-row cap, split into
+        // independent status-filtered sub-searches, each with its own search.aweb session.
+        // This bypasses Assai's broken start_row pagination entirely.
+        const PAGE_CAP = 100;
+        const MAX_STATUS_QUERIES = 15; // safety: at most 15 sub-searches
         const paginateSearch = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }): Promise<any[]> => {
-          // Step 1: Initialise search session ONCE
+          // Step 1: Unfiltered search — gets first page (up to 100 docs)
           const { hiddenFields, textFields } = await initSearch(params);
           console.info('search_assai_documents: PO=' + (poDigits || 'none') + ', number=' + document_number_pattern);
 
-          // Step 2: Fetch page 1
           const firstHtml = await fetchResultPage(hiddenFields, textFields, params);
           const firstDocs = parseDocuments(firstHtml, params.subclass_type);
           if (firstDocs.length === 0) return [];
 
           const totalFromHtml = parseTotalCount(firstHtml);
-          console.info('search_assai_documents: page 1 returned ' + firstDocs.length + ' docs, parsed total: ' + (totalFromHtml ?? 'unknown'));
+          console.info('search_assai_documents: initial search returned ' + firstDocs.length + ' docs, parsed total: ' + (totalFromHtml ?? 'unknown'));
 
-          // If first page returned fewer than PAGE_SIZE, no more pages
-          if (firstDocs.length < PAGE_SIZE) return firstDocs;
+          // If we got fewer than the cap, we have everything
+          if (firstDocs.length < PAGE_CAP) return firstDocs;
 
-          // Step 3: Fetch subsequent pages using SAME hidden fields, 1-based start_row
-          const allDocs = [...firstDocs];
-          let page = 2;
-          while (page <= MAX_PAGES) {
-            const startRow = ((page - 1) * PAGE_SIZE) + 1; // 1-based: 101, 201, 301...
-            // If we know total and already have enough, stop
-            if (totalFromHtml !== null && allDocs.length >= totalFromHtml) break;
+          // Step 2: We hit the 100-row cap. Split into sub-searches by status code.
+          // Each sub-search gets its own search.aweb session — no broken pagination.
+          const statusCodes = [...new Set(firstDocs.map((d: any) => d.status).filter(Boolean))];
+          console.info('search_assai_documents: hit ' + PAGE_CAP + ' cap. Splitting into ' + statusCodes.length + ' status-filtered sub-searches: ' + statusCodes.join(', '));
 
-            // 300ms delay between page requests
-            await new Promise(r => setTimeout(r, 300));
-            console.info('Fetching page ' + page + ' of result.aweb (start_row=' + startRow + ')...');
-
-            const pageHtml = await fetchResultPage(hiddenFields, textFields, params, startRow);
-            const pageDocs = parseDocuments(pageHtml, params.subclass_type);
-            console.info('search_assai_documents: page ' + page + ' returned ' + pageDocs.length + ' docs');
-
-            if (pageDocs.length === 0) break;
-            allDocs.push(...pageDocs);
-            if (pageDocs.length < PAGE_SIZE) break; // last page
-            page++;
+          if (statusCodes.length <= 1) {
+            // All 100 docs share one status — can't split further, return what we have
+            console.warn('search_assai_documents: all docs have same status, cannot split further');
+            return firstDocs;
           }
+
+          const allDocs: any[] = [];
+          const seen = new Set<string>();
+          let queryCount = 0;
+
+          for (const sc of statusCodes) {
+            if (queryCount >= MAX_STATUS_QUERIES) break;
+            queryCount++;
+
+            // 300ms delay between sub-searches to avoid hammering
+            await new Promise(r => setTimeout(r, 300));
+            console.info('search_assai_documents: sub-search ' + queryCount + '/' + statusCodes.length + ' for status=' + sc);
+
+            try {
+              // Each sub-search is fully independent: new search.aweb session
+              const { hiddenFields: subHidden, textFields: subText } = await initSearch(params);
+
+              // Build a modified fetchResultPage that includes the status filter
+              const formData = new URLSearchParams();
+              for (const f of subHidden) formData.set(f.name, f.value);
+              for (const f of subText) formData.set(f.name, '');
+              formData.set('subclass_type', params.subclass_type);
+              if (poDigits) {
+                formData.set('purchase_code', poDigits);
+              } else {
+                formData.set('number', document_number_pattern);
+              }
+              if (discipline_code) formData.set('discipline_code', discipline_code);
+              if (document_type) formData.set('document_type', document_type);
+              if (company_code) formData.set('company_code', company_code);
+              // KEY: filter by this specific status code
+              formData.set('status_code', sc);
+
+              const searchUrl = assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
+              const resp = await fetch(assaiBase + '/result.aweb', {
+                method: 'POST',
+                headers: {
+                  Cookie: cookieHeader,
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  Accept: 'text/html',
+                  Referer: searchUrl,
+                  'User-Agent': ua,
+                },
+                body: formData.toString(),
+                redirect: 'follow',
+              });
+              const html = await resp.text();
+              const docs = parseDocuments(html, params.subclass_type);
+              console.info('search_assai_documents: status=' + sc + ' returned ' + docs.length + ' docs');
+
+              for (const doc of docs) {
+                const key = doc.document_number;
+                if (key && !seen.has(key)) {
+                  seen.add(key);
+                  allDocs.push(doc);
+                }
+              }
+            } catch (subErr) {
+              console.error('search_assai_documents: sub-search for status=' + sc + ' failed:', subErr);
+            }
+          }
+
+          console.info('search_assai_documents: multi-query complete. Total unique docs: ' + allDocs.length);
           return allDocs;
         };
 
