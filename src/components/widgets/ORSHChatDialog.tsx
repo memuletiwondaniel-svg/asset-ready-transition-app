@@ -642,7 +642,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[700px] max-w-[95vw] h-[85vh] flex p-0 gap-0 bg-background border-border/50 shadow-2xl overflow-hidden">
+      <DialogContent className="w-[900px] max-w-[95vw] h-[85vh] flex p-0 gap-0 bg-background border-border/50 shadow-2xl overflow-hidden">
         {/* Sidebar */}
         <div className={cn(
           "flex flex-col border-r border-border/50 bg-muted/30 transition-all duration-300",
