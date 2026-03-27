@@ -9328,11 +9328,24 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             description: TYPE_DESCS[code] ?? code
           }));
 
+        // Include first 10 documents with download URLs for actionable UI
+        const docList = (lastToolResult.documents || []).slice(0, 10).map((d: any) => ({
+          document_number: d.document_number,
+          title: d.title,
+          revision: d.revision,
+          status: d.status,
+          type_code: d.type_code,
+          download_url: d.download_url || null,
+          pk_seq_nr: d.pk_seq_nr,
+          entt_seq_nr: d.entt_seq_nr
+        }));
+
         const structured = {
           type: "document_search",
           summary: `Found **${lastToolResult.total_found}** documents matching ${lastToolResult.search_pattern || 'your search'}`,
           status_table: statusTable,
           type_table: typeTable,
+          documents: docList,
           highlights,
           followup
         };
