@@ -9106,14 +9106,14 @@ You NEVER give vague answers on safety matters. You are specific, technically pr
 
 You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Ivan, your Process Technical Authority Agent."`;
 
-    // Select system prompt based on detected agent, inject dynamic doc type lookup
-    let systemPrompt = BOB_SYSTEM_PROMPT + docTypeLookupPrompt + userContextPrompt;
+    // Select system prompt based on detected agent
+    let systemPrompt = BOB_SYSTEM_PROMPT + userContextPrompt;
     if (detectedAgent === 'document_agent') {
-      systemPrompt = DOCUMENT_AGENT_PROMPT + docTypeLookupPrompt + userContextPrompt;
+      systemPrompt = DOCUMENT_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'pssr_ora_agent') {
       systemPrompt = PSSR_ORA_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'hannah') {
-      systemPrompt = HANNAH_AGENT_PROMPT + docTypeLookupPrompt + userContextPrompt;
+      systemPrompt = HANNAH_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'ivan') {
       systemPrompt = IVAN_AGENT_PROMPT + userContextPrompt;
     }
