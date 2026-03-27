@@ -1,51 +1,57 @@
 
 
-## Analysis: Why probe-assai-dwr6 Works but ai-chat Doesn't
+# Fix Bob's Document Search Intelligence
 
-**Root cause**: The probe function uses a completely different authentication mechanism (`loginAssai` from `_shared/assai-auth.ts`) AND uses native `redirect: "follow"` for both `search.aweb` and `result.aweb`. The ai-chat function uses a custom `fetchCaptureCookies` with `redirect: "manual"` everywhere.
+## Problems Identified
 
-The probe's flow:
-1. `loginAssai()` — shared auth module (now deleted from `_shared/`)
-2. `search.aweb` GET with `redirect: "follow"` — returns full HTML with hidden form fields
-3. `result.aweb` POST with `redirect: "follow"` — returns actual document data
+1. **Bob searches too broadly** — uses `6529-%` instead of passing `document_type: A02` when user asks for "BfD"
+2. **Summary exposes raw wildcard pattern** — users see "Found 25 documents matching 6529-%" which is meaningless
+3. **document_type described as "ZV document type code"** — misleads the AI into thinking type codes are vendor-only
+4. **No plant/area code mapping** — "DP300" means nothing to Bob; it should map to a unit code segment
+5. **Module routing ignores document_type** — A02 (BfD) exists in both DES_DOC and SUP_DOC but routing doesn't consider the type
 
-The ai-chat flow:
-1. Custom `authenticateAssai()` with manual redirects
-2. Skips `search.aweb` entirely (because it returned 2368)
-3. `result.aweb` POST with manual redirects — returns 2368
+## Changes
 
-**The real problem**: `search.aweb` returned 2368 for ai-chat but works in the probe. The difference is authentication — the probe's `loginAssai` likely performs a different/more complete login sequence that properly initializes server-side session state.
+### 1. Fix the search tool description (ai-chat/index.ts ~line 3097-3099)
 
-## Plan
+Change `document_type` parameter description from:
+> "Filter by ZV document type code"
 
-### Step 1: Recreate `_shared/assai-auth.ts`
+To:
+> "Filter by document type code. Works for ALL documents, not just vendor. Examples: A02 (Basis for Design), C02 (Specification), B01 (GA Drawing), H02 (ITP). ALWAYS pass this when the user mentions a document type by name."
 
-Reverse-engineer from the probe imports. The function signature is known: `loginAssai(resolvedBase, username, password, resolvedDb)` returns `{ success, cookies, error }`. Build it using native `redirect: "follow"` (matching the probe pattern) rather than `fetchCaptureCookies`.
+### 2. Strengthen the system prompt instructions (ai-chat/index.ts ~line 702-704)
 
-### Step 2: Rewrite `authenticateAssai()` in ai-chat to use the shared module
+Replace the document type lookup section with explicit instructions:
 
-Replace the current manual-redirect auth with a call to `loginAssai` from `_shared/assai-auth.ts`, exactly as the probes do. The cookies come back as an array — join them into a single Cookie header string.
+- When the user mentions a document type (BfD, ITP, SDR, etc.), Bob MUST pass the resolved type code as `document_type` parameter — not just use a broad wildcard
+- When the user mentions a plant/unit like "DP300", use it in the document_number_pattern as `6529-%-%-%-U40300-%-%-%-%` or similar partial match
+- Add a plant code reference: DP300 = U40300, and instruct Bob to ask if uncertain
 
-### Step 3: Re-add `search.aweb` GET with `redirect: "follow"`
+### 3. Fix the summary line (ai-chat/index.ts ~line 9345)
 
-The probe proves this works. Re-add the `search.aweb` GET call using native `redirect: "follow"` (NOT `fetchCaptureCookies`). Extract hidden form fields from the HTML. This is the step that initializes server-side search context.
+Change the deterministic summary from:
+```
+`Found **${total}** documents matching ${lastToolResult.search_pattern}`
+```
+To a user-friendly version that describes what was searched rather than showing the raw pattern:
+```
+`Found **${total}** documents`
+```
+Then append context from `filters_applied` — e.g., if `document_type` was A02, say "Found **25** Basis for Design documents". Build a human-readable description from the filters instead of showing the wildcard.
 
-### Step 4: POST to `result.aweb` using hidden fields from search.aweb
+### 4. Fix module routing to consider document_type (ai-chat/index.ts ~line 6848-6855)
 
-Merge the hidden fields from `search.aweb` with the search parameters (number, purchase_code, subclass_type, etc.) and POST to `result.aweb` with `redirect: "follow"` — exactly as the probe does.
+Currently only checks `discipline_code === 'ZV'` or PO digits. Add: when `document_type` is provided and no explicit discipline is set, search BOTH DES_DOC and SUP_DOC (since type codes like A02 can exist in either module). The fallback logic at line 7170 already does this for 0 results, but we should search both proactively when type code is the primary filter.
 
-### Step 5: Deploy and test
+### 5. Add DP-to-unit-code mapping to system prompt
 
-Deploy ai-chat. Add diagnostic logs:
-- `loginAssai result: success={}, cookie count={}`
-- `search.aweb html length: {}, hidden fields: {}`
-- `result.aweb html length: {}`
+Add a reference table for known plant/unit codes so Bob can construct specific patterns:
+- DP300 → U40300 (unit code segment)
+- Other known DP codes from the project
 
-### Technical Details
+Instruct Bob: "When the user mentions a DP number, map it to the unit code and include it in the search pattern for precision."
 
-**File changes**:
-- `supabase/functions/_shared/assai-auth.ts` — recreate with `loginAssai()` function using standard form POST login with `redirect: "follow"`
-- `supabase/functions/ai-chat/index.ts` — import `loginAssai`, rewrite `authenticateAssai()` to use it, re-add `search.aweb` GET + `result.aweb` POST both with native redirect follow
-
-**Key difference from previous attempts**: Using `redirect: "follow"` instead of `redirect: "manual"` for the search/result calls. The probe proves this combination works. The manual redirect handling in `fetchCaptureCookies` may be losing cookies or not properly following the redirect chain that `search.aweb` requires.
+### Files Modified
+- `supabase/functions/ai-chat/index.ts` — system prompt, tool description, summary builder, module routing
 
