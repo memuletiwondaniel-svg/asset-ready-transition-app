@@ -699,6 +699,15 @@ FORMATTING RULES (MANDATORY):
 - Never put emojis inside bullet text — TTS strips them but it looks cluttered.
 - Use a ## header only when the response covers 3 or more distinct topics.
 
+DOCUMENT TYPE LOOKUP TABLE (use when the user mentions document types by name):
+BfD/BFD = A02, SDR = A01, ITP = H02, FAT = H08, IOM = J01, SLD = C03, C&E = C14, GA/GAD = B01, Datasheet = C08, Spec = C02, Control Schematic = C11, Foundation Layout = B04.
+When a user asks about a document type by name or abbreviation, resolve it to the Assai type code and pass it as document_type to search_assai_documents.
+
+ERROR HANDLING FOR TOOL RESULTS (CRITICAL):
+- If a tool returns { found: false, total_found: 0 }, respond: "I searched Assai for [description] but found no matching documents. Would you like me to try a broader search?"
+- If a tool returns { error: "..." }, respond: "I ran into a technical issue searching Assai for [description]. The error was: [brief error]. Please try rephrasing or contact your admin if this persists."
+- NEVER say generic "I wasn't able to complete that request". Always include what you searched for and what went wrong.
+
 STRUCTURED RESPONSE FOR DOCUMENT SEARCHES (CRITICAL):
 When you receive results from search_assai_documents, you MUST respond with a JSON object wrapped in <structured_response> tags. Do NOT use free-form markdown for document search results. The format:
 
@@ -3079,7 +3088,27 @@ const tools = [
     type: "function",
     function: {
       name: "search_assai_documents",
-      description: "Search Assai DMS (the external document management system) for documents. Returns ALL matching documents by automatically splitting into sub-searches when results exceed 100. IMPORTANT: Always use the MOST SPECIFIC search pattern possible. When searching for a specific company's documents, ALWAYS include the company code in the document_number_pattern (e.g. '6529-ABBE-%' not '6529-%'). The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit]-[Discipline]-[Type]-[PO]-[Seq]. Use this when the user asks to search Assai, find vendor documents, check document status in Assai, or asks about documents for a specific PO/purchase order number.",
+      description: `Search Assai DMS for documents. Returns ALL matching documents by automatically splitting into sub-searches when results exceed 100. IMPORTANT: Always use the MOST SPECIFIC search pattern possible.
+
+DOCUMENT TYPE VOCABULARY — resolve user names to type codes:
+| Common Name | Aliases | Type Code |
+|---|---|---|
+| Basis for Design | BfD, BFD | A02 |
+| Supplier Doc Register | SDR, Master Doc List | A01 |
+| Inspection & Test Plan | ITP | H02 |
+| Factory Acceptance Test | FAT, FAT Report | H08 |
+| Installation/O&M Manual | IOM, IOM Manual | J01 |
+| Single Line Diagram | SLD | C03 |
+| Control Schematic | — | C11 |
+| General Arrangement | GA, GAD | B01 |
+| Cause & Effect Diagram | C&E | C14 |
+| Equipment Datasheet | Datasheet | C08 |
+| Foundation Layout | — | B04 |
+| System & Equipment Spec | Spec, Specification | C02 |
+
+When a user mentions a document type by name or abbreviation, resolve it to the Assai type code and pass it as document_type. If the type name is ambiguous, ask the user to clarify.
+
+The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit]-[Discipline]-[Type]-[PO]-[Seq]. Use this when the user asks to search Assai, find vendor documents, check document status, or asks about documents for a specific PO/purchase order number.`,
       parameters: {
         type: "object",
         properties: {

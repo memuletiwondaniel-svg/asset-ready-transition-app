@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { renderWithStatusBadges } from '@/components/bob/StatusBadge';
-import { StructuredResponse, parseStructuredResponse } from '@/components/bob/StructuredResponse';
+import { StructuredResponse, parseStructuredResponse, renderInlineMarkdown } from '@/components/bob/StructuredResponse';
 
 /** Replace known status codes in text children with colored badges */
 function processChildren(children: React.ReactNode): React.ReactNode {
@@ -856,9 +856,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                               <div className="text-sm leading-relaxed">
                                 {before && (
                                   <p className="mb-2">
-                                    {before.split(/\*\*(.+?)\*\*/g).map((part, i) =>
-                                      i % 2 === 1 ? <strong key={i} className="font-semibold">{part}</strong> : part
-                                    )}
+                                    {renderInlineMarkdown(before)}
                                   </p>
                                 )}
                                 <StructuredResponse 
@@ -868,7 +866,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                     setTimeout(() => handleSend(text), 100);
                                   }}
                                 />
-                                {after && <p className="mt-2">{after}</p>}
+                                {after && <p className="mt-2">{renderInlineMarkdown(after)}</p>}
                               </div>
                             );
                           }
