@@ -1,6 +1,70 @@
 import React, { useState } from 'react';
 import { StatusBadge } from './StatusBadge';
 import { Download, Search, ChevronDown, ChevronRight, FileText, AlertTriangle, BookOpen, Link2 } from 'lucide-react';
+import { assaiDetailsUrl, assaiDownloadUrl, ASSAI_DOC_NUMBER_REGEX } from '@/lib/assaiLinks';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+/** Render document number as a clickable details link + download icon */
+export function DocumentNumberLink({ docNumber }: { docNumber: string }) {
+  const detailsUrl = assaiDetailsUrl(docNumber);
+  const downloadUrl = assaiDownloadUrl(docNumber);
+  return (
+    <span className="inline-flex items-center gap-1">
+      <TooltipProvider delayDuration={300}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <a
+              href={detailsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-primary underline underline-offset-2 decoration-primary/40 hover:decoration-primary hover:text-primary/80 transition-colors"
+            >
+              {docNumber}
+            </a>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-[10px] max-w-xs break-all">{detailsUrl}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <TooltipProvider delayDuration={300}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <a
+              href={downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Download className="h-3 w-3" />
+            </a>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-[10px]">Download document</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </span>
+  );
+}
+
+/** Render inline markdown AND auto-link any Assai document numbers found in text */
+export function renderInlineMarkdownWithLinks(text: string): React.ReactNode {
+  // First split by doc numbers
+  const docRegex = /\b(\d{4}-[A-Z]{2,6}-[A-Z0-9]+-[A-Z]+-[A-Z0-9]+-[A-Z]{2}-[A-Z]\d{2}-\d{5}-\d{3})\b/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+
+  while ((match = docRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(<React.Fragment key={key++}>{renderInlineMarkdown(text.slice(lastIndex, match.index))}</React.Fragment>);
+    }
+    parts.push(<DocumentNumberLink key={key++} docNumber={match[1]} />);
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    parts.push(<React.Fragment key={key++}>{renderInlineMarkdown(text.slice(lastIndex))}</React.Fragment>);
+  }
+  return parts.length > 0 ? <>{parts}</> : renderInlineMarkdown(text);
+}
 
 /** Parse minimal markdown bold/italic into JSX */
 export function renderInlineMarkdown(text: string): React.ReactNode {
@@ -113,33 +177,22 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
         {/* Document Header */}
         {data.document && (
           <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-mono font-semibold text-foreground truncate">{data.document.document_number}</p>
-                <p className="text-sm font-semibold text-foreground mt-0.5">{data.document.title}</p>
-                <div className="flex items-center gap-2 mt-1.5">
-                  {data.document.revision && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
-                      Rev {data.document.revision}
-                    </span>
-                  )}
-                  {data.document.status && <StatusBadge code={data.document.status} />}
-                  {data.document.type_code && (
-                    <span className="text-[10px] text-muted-foreground">{data.document.type_code}</span>
-                  )}
-                </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs">
+                <DocumentNumberLink docNumber={data.document.document_number} />
               </div>
-              {data.document.download_url && (
-                <a
-                  href={data.document.download_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors flex-shrink-0"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  Download
-                </a>
-              )}
+              <p className="text-sm font-semibold text-foreground mt-0.5">{data.document.title}</p>
+              <div className="flex items-center gap-2 mt-1.5">
+                {data.document.revision && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+                    Rev {data.document.revision}
+                  </span>
+                )}
+                {data.document.status && <StatusBadge code={data.document.status} />}
+                {data.document.type_code && (
+                  <span className="text-[10px] text-muted-foreground">{data.document.type_code}</span>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -147,7 +200,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
         {/* Summary */}
         {data.summary && (
           <p className="text-sm text-foreground leading-relaxed">
-            {renderInlineMarkdown(data.summary)}
+            {renderInlineMarkdownWithLinks(data.summary)}
           </p>
         )}
 
@@ -155,7 +208,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
         <div className="space-y-1.5">
           {data.overview && (
             <AnalysisCard title="Document Overview" icon={FileText} borderColor="border-l-blue-500" defaultExpanded>
-              <p className="text-xs text-foreground leading-relaxed">{renderInlineMarkdown(data.overview)}</p>
+              <p className="text-xs text-foreground leading-relaxed">{renderInlineMarkdownWithLinks(data.overview)}</p>
             </AnalysisCard>
           )}
 
@@ -165,7 +218,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                 {data.key_summary.map((item, i) => (
                   <li key={i} className="text-xs text-foreground leading-relaxed flex gap-2">
                     <span className="text-muted-foreground mt-0.5">•</span>
-                    <span>{renderInlineMarkdown(item)}</span>
+                    <span>{renderInlineMarkdownWithLinks(item)}</span>
                   </li>
                 ))}
               </ul>
@@ -178,7 +231,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                 {data.critical_observations.map((item, i) => (
                   <li key={i} className="text-xs text-foreground leading-relaxed flex gap-2">
                     <span className="text-amber-500 mt-0.5">⚠</span>
-                    <span>{renderInlineMarkdown(item)}</span>
+                    <span>{renderInlineMarkdownWithLinks(item)}</span>
                   </li>
                 ))}
               </ul>
@@ -191,7 +244,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                 {data.related_documents.map((item, i) => (
                   <li key={i} className="text-xs text-foreground leading-relaxed flex gap-2">
                     <span className="text-muted-foreground mt-0.5">→</span>
-                    <span>{renderInlineMarkdown(item)}</span>
+                    <span>{renderInlineMarkdownWithLinks(item)}</span>
                   </li>
                 ))}
               </ul>
@@ -207,7 +260,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
             </h4>
             <ol className="list-decimal list-inside space-y-1.5">
               {data.highlights.map((h, i) => (
-                <li key={i} className="text-xs text-foreground leading-relaxed">{renderInlineMarkdown(h)}</li>
+                <li key={i} className="text-xs text-foreground leading-relaxed">{renderInlineMarkdownWithLinks(h)}</li>
               ))}
             </ol>
           </div>
@@ -242,7 +295,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
     <div className="space-y-1">
       {/* Summary */}
       <p className="text-sm text-foreground leading-relaxed">
-        {renderInlineMarkdown(data.summary)}
+        {renderInlineMarkdownWithLinks(data.summary)}
       </p>
 
       {/* Status Summary */}
@@ -318,38 +371,24 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                 <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Title</th>
                 <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Rev</th>
                 <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Status</th>
-                <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-center font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {data.documents.slice(0, 10).map((doc, i) => (
                 <tr key={doc.document_number} className={i % 2 === 1 ? 'bg-muted/20' : ''} style={{ borderBottom: '1px solid hsl(var(--border) / 0.3)' }}>
-                  <td className="py-2 px-3 text-xs font-mono text-foreground">{doc.document_number}</td>
+                  <td className="py-2 px-3 text-xs">
+                    <DocumentNumberLink docNumber={doc.document_number} />
+                    <button
+                      onClick={() => onFollowupClick?.(`Read and summarise ${doc.document_number}`)}
+                      title="Read & summarise"
+                      className="ml-1 p-0.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors cursor-pointer inline-flex align-middle"
+                    >
+                      <Search className="h-3 w-3" />
+                    </button>
+                  </td>
                   <td className="py-2 px-3 text-xs text-foreground max-w-[200px] truncate">{doc.title}</td>
                   <td className="py-2 px-3 text-xs text-muted-foreground">{doc.revision}</td>
                   <td className="py-2 px-3"><StatusBadge code={doc.status} /></td>
-                  <td className="py-2 px-3">
-                    <div className="flex items-center justify-center gap-1.5">
-                      {doc.download_url && (
-                        <a
-                          href={doc.download_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Download document"
-                          className="p-1 rounded hover:bg-muted/60 text-blue-500 hover:text-blue-600 transition-colors"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                        </a>
-                      )}
-                      <button
-                        onClick={() => onFollowupClick?.(`Read and summarise ${doc.document_number}`)}
-                        title="Read & summarise"
-                        className="p-1 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                      >
-                        <Search className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -370,7 +409,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
           </h4>
           <ol className="list-decimal list-inside space-y-1.5">
             {data.highlights.map((h, i) => (
-              <li key={i} className="text-xs text-foreground leading-relaxed">{renderInlineMarkdown(h)}</li>
+              <li key={i} className="text-xs text-foreground leading-relaxed">{renderInlineMarkdownWithLinks(h)}</li>
             ))}
           </ol>
         </div>
