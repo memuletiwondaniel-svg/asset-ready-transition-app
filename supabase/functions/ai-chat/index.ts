@@ -3108,7 +3108,7 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
           },
           document_type: {
             type: "string",
-            description: 'Filter by document type code. Works for ALL documents, not just vendor. Look up the correct code from the DOCUMENT TYPE CODE REFERENCE in the system prompt. ALWAYS pass this when the user mentions a document type by name or abbreviation.'
+            description: 'Filter by Assai vendor document type code (e.g. A01, B01, H02, J01). Only use codes confirmed as vendor documents by resolve_document_type. ALWAYS call resolve_document_type FIRST before using this filter.'
           },
           status_code: {
             type: "string",
