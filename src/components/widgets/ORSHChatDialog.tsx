@@ -85,7 +85,6 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   onOpenChange, 
   onUnreadCountChange, 
   initialMessage,
-  mode = 'dialog'
 }) => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
