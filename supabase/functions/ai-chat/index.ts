@@ -7185,7 +7185,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         }
 
         // Build summaries and add download URLs
-        const assaiBase = (creds?.base_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/+$/, '');
+        const assaiBaseForUrls = (creds?.base_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/+$/, '');
         const statusSummary: Record<string, number> = {};
         const typeSummary: Record<string, { count: number; statuses: string[] }> = {};
         allDocuments.forEach((d: any) => {
