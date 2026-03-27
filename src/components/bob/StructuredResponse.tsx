@@ -200,7 +200,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
         {/* Summary */}
         {data.summary && (
           <p className="text-sm text-foreground leading-relaxed">
-            {renderInlineMarkdown(data.summary)}
+            {renderInlineMarkdownWithLinks(data.summary)}
           </p>
         )}
 
@@ -208,7 +208,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
         <div className="space-y-1.5">
           {data.overview && (
             <AnalysisCard title="Document Overview" icon={FileText} borderColor="border-l-blue-500" defaultExpanded>
-              <p className="text-xs text-foreground leading-relaxed">{renderInlineMarkdown(data.overview)}</p>
+              <p className="text-xs text-foreground leading-relaxed">{renderInlineMarkdownWithLinks(data.overview)}</p>
             </AnalysisCard>
           )}
 
@@ -218,7 +218,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                 {data.key_summary.map((item, i) => (
                   <li key={i} className="text-xs text-foreground leading-relaxed flex gap-2">
                     <span className="text-muted-foreground mt-0.5">•</span>
-                    <span>{renderInlineMarkdown(item)}</span>
+                    <span>{renderInlineMarkdownWithLinks(item)}</span>
                   </li>
                 ))}
               </ul>
@@ -231,7 +231,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                 {data.critical_observations.map((item, i) => (
                   <li key={i} className="text-xs text-foreground leading-relaxed flex gap-2">
                     <span className="text-amber-500 mt-0.5">⚠</span>
-                    <span>{renderInlineMarkdown(item)}</span>
+                    <span>{renderInlineMarkdownWithLinks(item)}</span>
                   </li>
                 ))}
               </ul>
@@ -244,7 +244,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                 {data.related_documents.map((item, i) => (
                   <li key={i} className="text-xs text-foreground leading-relaxed flex gap-2">
                     <span className="text-muted-foreground mt-0.5">→</span>
-                    <span>{renderInlineMarkdown(item)}</span>
+                    <span>{renderInlineMarkdownWithLinks(item)}</span>
                   </li>
                 ))}
               </ul>
@@ -260,7 +260,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
             </h4>
             <ol className="list-decimal list-inside space-y-1.5">
               {data.highlights.map((h, i) => (
-                <li key={i} className="text-xs text-foreground leading-relaxed">{renderInlineMarkdown(h)}</li>
+                <li key={i} className="text-xs text-foreground leading-relaxed">{renderInlineMarkdownWithLinks(h)}</li>
               ))}
             </ol>
           </div>
@@ -295,7 +295,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
     <div className="space-y-1">
       {/* Summary */}
       <p className="text-sm text-foreground leading-relaxed">
-        {renderInlineMarkdown(data.summary)}
+        {renderInlineMarkdownWithLinks(data.summary)}
       </p>
 
       {/* Status Summary */}
@@ -409,7 +409,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
           </h4>
           <ol className="list-decimal list-inside space-y-1.5">
             {data.highlights.map((h, i) => (
-              <li key={i} className="text-xs text-foreground leading-relaxed">{renderInlineMarkdown(h)}</li>
+              <li key={i} className="text-xs text-foreground leading-relaxed">{renderInlineMarkdownWithLinks(h)}</li>
             ))}
           </ol>
         </div>
