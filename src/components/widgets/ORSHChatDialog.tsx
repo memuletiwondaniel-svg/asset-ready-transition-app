@@ -77,6 +77,7 @@ interface ORSHChatDialogProps {
   onOpenChange: (open: boolean) => void;
   onUnreadCountChange?: (count: number) => void;
   initialMessage?: string;
+  mode?: 'dialog' | 'inline';
 }
 
 
@@ -84,7 +85,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   open, 
   onOpenChange, 
   onUnreadCountChange, 
-  initialMessage 
+  initialMessage,
+  mode = 'dialog'
 }) => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
