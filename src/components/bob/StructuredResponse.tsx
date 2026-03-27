@@ -32,7 +32,18 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
   return (
     <div className="space-y-1">
       {/* Summary */}
-      <p className="text-sm text-foreground leading-relaxed">{data.summary}</p>
+      <p className="text-sm text-foreground leading-relaxed">
+        {(() => {
+          // Parse minimal markdown bold (**text**) into <strong> elements
+          const parts = data.summary.split(/\*\*(.+?)\*\*/g);
+          if (parts.length === 1) return data.summary;
+          return parts.map((part, i) =>
+            i % 2 === 1
+              ? <strong key={i} className="font-semibold text-foreground">{part}</strong>
+              : part
+          );
+        })()}
+      </p>
 
       {/* Status Summary */}
       {data.status_table && data.status_table.length > 0 && (
