@@ -3124,6 +3124,26 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
     }
   },
   // ═══════════════════════════════════════════════════════════════════════════
+  // RESOLVE DOCUMENT TYPE TOOL - Look up type codes from ORSH database
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "resolve_document_type",
+      description: "Looks up document type codes and descriptions from the ORSH document management database. Use this BEFORE searching Assai whenever the user mentions a document type by name or abbreviation (e.g. 'BfD', 'ITP', 'datasheet', 'GA drawing'). Returns matching document types with their codes, descriptions, and whether they are vendor documents. If multiple matches are found, ask the user to clarify before proceeding.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "The document type name, abbreviation, or keyword to search for, e.g. 'Basis for Design', 'BfD', 'ITP', 'datasheet', 'GA'"
+          }
+        },
+        required: ["query"]
+      }
+    }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
   // EXECUTIVE SUMMARY TOOL - For high-level status assessments
   // ═══════════════════════════════════════════════════════════════════════════
   {
