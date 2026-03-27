@@ -854,7 +854,13 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                           if (structuredData) {
                             return (
                               <div className="text-sm leading-relaxed">
-                                {before && <p className="mb-2">{before}</p>}
+                                {before && (
+                                  <p className="mb-2">
+                                    {before.split(/\*\*(.+?)\*\*/g).map((part, i) =>
+                                      i % 2 === 1 ? <strong key={i} className="font-semibold">{part}</strong> : part
+                                    )}
+                                  </p>
+                                )}
                                 <StructuredResponse 
                                   data={structuredData} 
                                   onFollowupClick={(text) => {
