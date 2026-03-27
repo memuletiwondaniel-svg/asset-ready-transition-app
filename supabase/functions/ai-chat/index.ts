@@ -3088,9 +3088,11 @@ const tools = [
     type: "function",
     function: {
       name: "search_assai_documents",
-      description: `Search Assai DMS for documents. Returns ALL matching documents by automatically splitting into sub-searches when results exceed 100. IMPORTANT: Always use the MOST SPECIFIC search pattern possible.
+      description: `Search Assai DMS for VENDOR documents. Returns ALL matching documents by automatically splitting into sub-searches when results exceed 100. IMPORTANT: Always use the MOST SPECIFIC search pattern possible.
 
-Document type codes are available in the system prompt's DOCUMENT TYPE CODE REFERENCE section. When the user mentions a document type by name, look up the code from that reference and pass it as document_type. NEVER hardcode or guess type codes.
+BEFORE calling this tool, you MUST first call resolve_document_type to verify the document type is a vendor document (is_vendor_document=true). If it is NOT a vendor document, do NOT search Assai — tell the user it lives in the EDMS instead.
+
+The search MUST include at least one specific filter beyond the project number: document_type, company_code, or a PO-based pattern. Searching with only '6529-%' is FORBIDDEN — it returns thousands of irrelevant documents.
 
 The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit]-[Discipline]-[Type]-[PO]-[Seq]. Use this when the user asks to search Assai, find vendor documents, check document status, or asks about documents for a specific PO/purchase order number.`,
       parameters: {
