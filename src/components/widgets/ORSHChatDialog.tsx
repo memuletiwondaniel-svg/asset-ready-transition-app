@@ -1064,7 +1064,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        {isTranscribing ? 'Transcribing...' : isListening ? 'Stop recording' : 'Voice input'}
+                        {isTranscribing ? 'Transcribing...' : isListening ? 'Stop recording' : 'Speak to Bob'}
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
