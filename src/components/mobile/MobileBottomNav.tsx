@@ -1,25 +1,31 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Key, AlertTriangle, CalendarCheck, MessageSquare } from 'lucide-react';
+import { Home, Key, AlertTriangle, CalendarCheck, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { usePermissions } from '@/hooks/usePermissions';
 
-const navItems = [
+const baseNavItems = [
   { icon: Home, labelKey: 'navHome', path: '/home', section: 'home' },
   { icon: Key, labelKey: 'navProjects', path: '/vcrs', section: 'projects' },
   { icon: AlertTriangle, labelKey: 'navPSSR', path: '/pssr', section: 'pssr' },
   { icon: CalendarCheck, labelKey: 'navMyTasks', path: '/my-tasks', section: 'my-tasks' },
-  { icon: MessageSquare, labelKey: 'navAskBob', path: '/ask-orsh', section: 'ask-orsh' },
+  { icon: Settings, labelKey: 'adminTools', path: '/admin-tools', section: 'admin-tools', requiresPermission: 'access_admin' as const },
 ];
 
 export const MobileBottomNav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { translations: t } = useLanguage();
+  const { hasPermission } = usePermissions();
+
+  const navItems = baseNavItems.filter(item => 
+    !item.requiresPermission || hasPermission(item.requiresPermission)
+  );
 
   const getLabel = (key: string) => (t as any)[key] || key;
 
-  const isActive = (item: typeof navItems[0]) => {
+  const isActive = (item: typeof baseNavItems[0]) => {
     const path = location.pathname;
     if (item.section === 'home') return path === '/' || path === '/home';
     if (item.section === 'projects') return path.startsWith('/vcrs') || path.startsWith('/projects') || path.startsWith('/project/');
