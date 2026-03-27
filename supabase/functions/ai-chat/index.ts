@@ -8617,7 +8617,31 @@ serve(async (req) => {
       }
     }
 
-    // Check last user message for injection attempts - BLOCK if detected
+    // Load document type codes dynamically from dms_document_types table
+    let docTypeLookupPrompt = '';
+    let dynamicTypeDescs: Record<string, string> = {};
+    try {
+      const { data: docTypes } = await supabase
+        .from('dms_document_types')
+        .select('code, document_name')
+        .eq('is_active', true)
+        .order('document_name');
+      if (docTypes && docTypes.length > 0) {
+        const codeMap = new Map<string, string>();
+        for (const dt of docTypes) {
+          if (!codeMap.has(dt.code)) {
+            codeMap.set(dt.code, dt.document_name);
+          }
+        }
+        dynamicTypeDescs = Object.fromEntries(codeMap);
+        const entries = Array.from(codeMap.entries()).slice(0, 150);
+        const tableRows = entries.map(([code, name]) => `${code} = ${name}`).join('\n');
+        docTypeLookupPrompt = '\n\nDOCUMENT TYPE CODE REFERENCE (from project database — ' + codeMap.size + ' types total):\n' + tableRows + '\n\nIMPORTANT: When a user mentions a document type by name or abbreviation (e.g. "BfD", "Basis for Design", "ITP", "P&ID"), find the matching code from this list and pass it as document_type to search_assai_documents. If the name is ambiguous or not found, ask the user to clarify. NEVER guess a code.\n';
+        console.log('Loaded ' + codeMap.size + ' document type codes from dms_document_types');
+      }
+    } catch (err) {
+      console.error('Failed to load document type codes:', err);
+    }
     const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop();
     if (lastUserMessage && detectInjectionAttempt(lastUserMessage.content)) {
       console.log("🛡️ SECURITY: Blocking injection attempt and returning protective response");
