@@ -6924,40 +6924,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
           
           try {
-            // Establish form context for alt module via search.aweb
-            const altSearchFormParams = new URLSearchParams({
-              searchBean: 'docs.SearchDocuments',
-              clas_seq_nr: altParams.clas_seq_nr,
-              suty_seq_nr: altParams.suty_seq_nr,
-              proj_seq_nr: projSeqNr,
-              dbName: dbName,
-              projectCabinet: projectCabinet,
-              subclass_type: altParams.subclass_type,
-              entity_code: 'DOCS'
-            });
-            console.info('search.aweb GET: sending for alt module', altParams.subclass_type);
-            const altForward = await fetchCaptureCookies(
-              assaiBase + '/search.aweb?' + altSearchFormParams.toString(),
-              { method: 'GET', headers: { 'User-Agent': ua } },
-              updatedCookies
-            );
-            updatedCookies = altForward.cookies;
-            console.info('search.aweb GET (alt): status', altForward.finalStatus, ', html length:', altForward.body.length);
-
-            // Extract hidden fields from alt forward
-            const altHidden: Record<string, string> = {};
-            let altHM;
-            const altHR = /<input[^>]+type=["']hidden["'][^>]*>/gi;
-            while ((altHM = altHR.exec(altForward.body)) !== null) {
-              const n = altHM[0].match(/name=["']([^"']+)["']/);
-              const v = altHM[0].match(/value=["']([^"']*?)["']/);
-              if (n) altHidden[n[1]] = v ? v[1] : '';
-            }
-
+            // Build alt search params — go directly to result.aweb
             const altSearchParams = new URLSearchParams();
-            for (const [key, value] of Object.entries(altHidden)) {
-              altSearchParams.set(key, value);
-            }
             altSearchParams.set('selected_project_codes', projectCabinet);
             if (poDigits) {
               altSearchParams.set('purchase_code', poDigits);
@@ -6971,11 +6939,14 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             altSearchParams.set('clas_seq_nr', altParams.clas_seq_nr);
             altSearchParams.set('suty_seq_nr', altParams.suty_seq_nr);
             altSearchParams.set('entity_code', 'DOCS');
+            altSearchParams.set('dbName', dbName);
+            altSearchParams.set('projectCabinet', projectCabinet);
             if (discipline_code) altSearchParams.set('discipline_code', discipline_code);
             if (document_type) altSearchParams.set('document_type', document_type);
             if (status_code) altSearchParams.set('status_code', status_code);
             if (company_code) altSearchParams.set('company_code', company_code);
 
+            console.info('result.aweb POST (alt): sending for', altParams.subclass_type);
             const altResult = await fetchCaptureCookies(
               assaiBase + '/result.aweb',
               {
@@ -6983,7 +6954,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 headers: {
                   'Content-Type': 'application/x-www-form-urlencoded',
                   'User-Agent': ua,
-                  'Referer': assaiBase + '/search.aweb',
+                  'Referer': assaiBase + '/label.aweb',
                   'Origin': 'https://eu.assaicloud.com'
                 },
                 body: altSearchParams.toString()
@@ -6991,6 +6962,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               updatedCookies
             );
             const altHtml = altResult.body;
+            console.info('result.aweb POST (alt): status', altResult.finalStatus, ', html length:', altHtml.length);
             const altMatch = altHtml.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
             if (altMatch) {
               const altCells = JSON.parse(altMatch[1]);
