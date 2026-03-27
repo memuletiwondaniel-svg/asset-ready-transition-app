@@ -882,9 +882,10 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                           <ChatMessageFeedback
                             messageIndex={index}
                             conversationId={currentConversationId}
-agentName="bob"
+                            agentName="bob"
                             feedbackGiven={message.feedbackGiven}
                             onFeedbackChange={handleFeedbackChange}
+                            messageContent={message.content}
                           />
                         </div>
                       )}
