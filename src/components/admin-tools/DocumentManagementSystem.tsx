@@ -42,6 +42,7 @@ const TAB_CONFIG = [
   { id: 'unit', label: 'Unit', icon: Box, activeColor: 'text-orange-600 dark:text-orange-400' },
   { id: 'status-code', label: 'Status Code', icon: CheckSquare, activeColor: 'text-teal-600 dark:text-teal-400' },
   { id: 'configuration', label: 'Configuration', icon: Settings2, activeColor: 'text-gray-600 dark:text-gray-400' },
+  { id: 'acronyms', label: 'Acronyms', icon: FileText, activeColor: 'text-indigo-600 dark:text-indigo-400' },
 ] as const;
 
 type TabId = typeof TAB_CONFIG[number]['id'];
