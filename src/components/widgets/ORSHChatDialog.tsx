@@ -1020,7 +1020,6 @@ agentName="bob"
             </div>
           </div>
         </div>
-      </div>
     </>
   );
 
