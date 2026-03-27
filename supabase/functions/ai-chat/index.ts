@@ -69,42 +69,42 @@ function mergeCookies(existing: string, newer: string): string {
   return [...map.values()].join('; ');
 }
 
+// Module-level User-Agent constant for Assai requests
+const ASSAI_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+
+// Module-level helper: fetch with redirect:'manual', capture cookies from every hop (302s included)
+async function fetchCaptureCookies(url: string, init: RequestInit, currentCookies: string): Promise<{ cookies: string; finalStatus: number; body: string }> {
+  let cookies = currentCookies;
+  let attempts = 0;
+  let currentUrl = url;
+  let lastStatus = 0;
+  let body = '';
+
+  while (attempts < 8) {
+    attempts++;
+    const mergedInit = { ...init, redirect: 'manual' as RequestRedirect, headers: { ...init.headers as Record<string,string>, 'Cookie': cookies } };
+    const res = await fetch(currentUrl, mergedInit);
+    cookies = mergeCookies(cookies, extractCookies(res.headers));
+    lastStatus = res.status;
+
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get('location');
+      await res.text();
+      if (!location) break;
+      currentUrl = location.startsWith('http') ? location : new URL(location, currentUrl).href;
+      init = { method: 'GET', headers: { 'User-Agent': ASSAI_UA } };
+      continue;
+    }
+
+    body = await res.text();
+    break;
+  }
+  return { cookies, finalStatus: lastStatus, body };
+}
+
 // Shared Assai authentication helper — simple form-based login
 async function authenticateAssai(assaiBase: string, username: string, password: string): Promise<{ cookies: string; success: boolean; statusCode: number }> {
-  const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
-
-  // Helper: fetch with redirect:'manual', capture cookies from every hop (302s included)
-  async function fetchCaptureCookies(url: string, init: RequestInit, currentCookies: string): Promise<{ cookies: string; finalStatus: number; body: string }> {
-    let cookies = currentCookies;
-    let attempts = 0;
-    let currentUrl = url;
-    let lastStatus = 0;
-    let body = '';
-
-    while (attempts < 8) {
-      attempts++;
-      const mergedInit = { ...init, redirect: 'manual' as RequestRedirect, headers: { ...init.headers as Record<string,string>, 'Cookie': cookies } };
-      const res = await fetch(currentUrl, mergedInit);
-      // Capture Set-Cookie from this response (including 302s!)
-      cookies = mergeCookies(cookies, extractCookies(res.headers));
-      lastStatus = res.status;
-
-      if (res.status >= 300 && res.status < 400) {
-        const location = res.headers.get('location');
-        await res.text(); // consume body
-        if (!location) break;
-        // Resolve relative redirects
-        currentUrl = location.startsWith('http') ? location : new URL(location, currentUrl).href;
-        // After redirect, switch to GET and drop body
-        init = { method: 'GET', headers: { 'User-Agent': ua } };
-        continue;
-      }
-
-      body = await res.text();
-      break;
-    }
-    return { cookies, finalStatus: lastStatus, body };
-  }
+  const ua = ASSAI_UA;
 
   // Step 1: GET login page — capture initial session cookies (including from redirects)
   let allCookies = '';
@@ -6842,30 +6842,65 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const cookieHeader = authResult.cookies;
         console.log('search_assai_documents: authenticated OK');
         
-        // Step 4: Search documents
-        const searchParams = new URLSearchParams();
-        searchParams.set('selected_project_codes', projectCabinet);
-        
-        // Detect PO-based search: pattern ending in 5 digits like "%-00006-%" or just "00006"
+        // Step 4: Establish form context via forward.aweb (required by Assai servlet model)
+        const ua = ASSAI_UA;
+        let updatedCookies = cookieHeader;
+
+        // Determine module: ZV discipline or PO-based searches target SUP_DOC; otherwise DES_DOC first
         const isPOSearch = document_number_pattern.match(/%-?(\d{5})-?%?$/) || document_number_pattern.match(/^(\d{5})$/);
         const poDigits = isPOSearch?.[1];
+        const useSupDoc = discipline_code === 'ZV' || !!poDigits;
+        
+        const moduleParams = useSupDoc
+          ? { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' }
+          : { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' };
+
+        // GET forward.aweb to establish server-side form context bound to JSESSIONID
+        console.info('forward.aweb GET: sending for', moduleParams.subclass_type);
+        const forwardResult = await fetchCaptureCookies(
+          assaiBase + '/forward.aweb?page=root/body&subclass_type=' + moduleParams.subclass_type,
+          { method: 'GET', headers: { 'User-Agent': ua } },
+          updatedCookies
+        );
+        updatedCookies = forwardResult.cookies;
+
+        // Extract hidden input fields from forward.aweb response
+        const hiddenFields: Record<string, string> = {};
+        const hiddenRegex = /<input[^>]+type=["']hidden["'][^>]*>/gi;
+        let hiddenMatch;
+        while ((hiddenMatch = hiddenRegex.exec(forwardResult.body)) !== null) {
+          const nameMatch = hiddenMatch[0].match(/name=["']([^"']+)["']/);
+          const valueMatch = hiddenMatch[0].match(/value=["']([^"']*?)["']/);
+          if (nameMatch) {
+            hiddenFields[nameMatch[1]] = valueMatch ? valueMatch[1] : '';
+          }
+        }
+        console.info('forward.aweb GET: status', forwardResult.finalStatus, ', hidden fields found:', Object.keys(hiddenFields).length);
+
+        // Build search parameters
+        const searchParams = new URLSearchParams();
+        
+        // Include hidden fields from forward.aweb (form context tokens)
+        for (const [key, value] of Object.entries(hiddenFields)) {
+          searchParams.set(key, value);
+        }
+        
+        searchParams.set('selected_project_codes', projectCabinet);
         
         if (poDigits) {
-          // Use purchase_code field — confirmed working for vendor doc package lookups
           searchParams.set('purchase_code', poDigits);
           console.log('search_assai_documents: PO-based search using purchase_code=' + poDigits);
         } else {
-          // Regular document number search (prefix match works in Assai)
           searchParams.set('number', document_number_pattern);
           console.log('search_assai_documents: number-based search using number=' + document_number_pattern);
         }
         
-        searchParams.set('subclass_type', 'DES_DOC');
+        searchParams.set('subclass_type', moduleParams.subclass_type);
         searchParams.set('searchBean', 'docs.SearchDocuments');
         searchParams.set('start_row', '1');
         searchParams.set('proj_seq_nr', projSeqNr);
-        searchParams.set('clas_seq_nr', '1');
-        searchParams.set('suty_seq_nr', '1');
+        searchParams.set('clas_seq_nr', moduleParams.clas_seq_nr);
+        searchParams.set('suty_seq_nr', moduleParams.suty_seq_nr);
         searchParams.set('entity_code', 'DOCS');
         
         if (discipline_code) searchParams.set('discipline_code', discipline_code);
@@ -6873,18 +6908,24 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         if (status_code) searchParams.set('status_code', status_code);
         if (company_code) searchParams.set('company_code', company_code);
 
-        const searchRes = await fetch(assaiBase + '/result.aweb', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Cookie': cookieHeader,
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        // POST to result.aweb using fetchCaptureCookies with redirect:'manual'
+        const searchResult = await fetchCaptureCookies(
+          assaiBase + '/result.aweb',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'User-Agent': ua,
+              'Referer': assaiBase + '/forward.aweb?page=root/body&subclass_type=' + moduleParams.subclass_type,
+              'Origin': 'https://eu.assaicloud.com'
+            },
+            body: searchParams.toString()
           },
-          body: searchParams.toString()
-        });
-
-        const html = await searchRes.text();
-        console.log('result.aweb status:', searchRes.status, 'html length:', html.length, 'cookies sent:', cookieHeader.substring(0, 60));
+          updatedCookies
+        );
+        updatedCookies = searchResult.cookies;
+        const html = searchResult.body;
+        console.info('result.aweb POST: status', searchResult.finalStatus, ', html length:', html.length);
         
         // Parse myCells
         const myCellsMatch = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
@@ -6910,34 +6951,80 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               purchase_order: String(row[16] || '').replace(/<[^>]*>/g, '').trim(),
               pk_seq_nr: String(row[33] || '').replace(/<[^>]*>/g, '').trim(),
               entt_seq_nr: String(row[34] || '').replace(/<[^>]*>/g, '').trim(),
-              subclass: 'DES_DOC'
+              subclass: moduleParams.subclass_type
             }));
           } catch (parseErr) {
             console.error('search_assai_documents: myCells parse error:', parseErr);
           }
         }
         
-        // Also try SUP_DOC if discipline is ZV or no results yet
-        if (allDocuments.length === 0 || discipline_code === 'ZV') {
-          searchParams.set('subclass_type', 'SUP_DOC');
-          searchParams.set('clas_seq_nr', '2');
-          searchParams.set('suty_seq_nr', '7');
+        // Also try the other module if no results yet
+        if (allDocuments.length === 0) {
+          const altParams = useSupDoc
+            ? { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' }
+            : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
           
           try {
-            const supRes = await fetch(assaiBase + '/result.aweb', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Cookie': cookieHeader,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            // Establish form context for alt module
+            console.info('forward.aweb GET: sending for alt module', altParams.subclass_type);
+            const altForward = await fetchCaptureCookies(
+              assaiBase + '/forward.aweb?page=root/body&subclass_type=' + altParams.subclass_type,
+              { method: 'GET', headers: { 'User-Agent': ua } },
+              updatedCookies
+            );
+            updatedCookies = altForward.cookies;
+
+            // Extract hidden fields from alt forward
+            const altHidden: Record<string, string> = {};
+            let altHM;
+            const altHR = /<input[^>]+type=["']hidden["'][^>]*>/gi;
+            while ((altHM = altHR.exec(altForward.body)) !== null) {
+              const n = altHM[0].match(/name=["']([^"']+)["']/);
+              const v = altHM[0].match(/value=["']([^"']*?)["']/);
+              if (n) altHidden[n[1]] = v ? v[1] : '';
+            }
+
+            const altSearchParams = new URLSearchParams();
+            for (const [key, value] of Object.entries(altHidden)) {
+              altSearchParams.set(key, value);
+            }
+            altSearchParams.set('selected_project_codes', projectCabinet);
+            if (poDigits) {
+              altSearchParams.set('purchase_code', poDigits);
+            } else {
+              altSearchParams.set('number', document_number_pattern);
+            }
+            altSearchParams.set('subclass_type', altParams.subclass_type);
+            altSearchParams.set('searchBean', 'docs.SearchDocuments');
+            altSearchParams.set('start_row', '1');
+            altSearchParams.set('proj_seq_nr', projSeqNr);
+            altSearchParams.set('clas_seq_nr', altParams.clas_seq_nr);
+            altSearchParams.set('suty_seq_nr', altParams.suty_seq_nr);
+            altSearchParams.set('entity_code', 'DOCS');
+            if (discipline_code) altSearchParams.set('discipline_code', discipline_code);
+            if (document_type) altSearchParams.set('document_type', document_type);
+            if (status_code) altSearchParams.set('status_code', status_code);
+            if (company_code) altSearchParams.set('company_code', company_code);
+
+            const altResult = await fetchCaptureCookies(
+              assaiBase + '/result.aweb',
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  'User-Agent': ua,
+                  'Referer': assaiBase + '/forward.aweb?page=root/body&subclass_type=' + altParams.subclass_type,
+                  'Origin': 'https://eu.assaicloud.com'
+                },
+                body: altSearchParams.toString()
               },
-              body: searchParams.toString()
-            });
-            const supHtml = await supRes.text();
-            const supMatch = supHtml.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
-            if (supMatch) {
-              const supCells = JSON.parse(supMatch[1]);
-              const supDocs = supCells.map((row: any) => ({
+              updatedCookies
+            );
+            const altHtml = altResult.body;
+            const altMatch = altHtml.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
+            if (altMatch) {
+              const altCells = JSON.parse(altMatch[1]);
+              const altDocs = altCells.map((row: any) => ({
                 document_number: String(row[3] || '').replace(/<[^>]*>/g, '').trim(),
                 revision: String(row[4] || '').replace(/<[^>]*>/g, '').trim(),
                 revision_date: String(row[5] || '').replace(/<[^>]*>/g, '').trim(),
@@ -6952,12 +7039,12 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 purchase_order: String(row[16] || '').replace(/<[^>]*>/g, '').trim(),
                 pk_seq_nr: String(row[33] || '').replace(/<[^>]*>/g, '').trim(),
                 entt_seq_nr: String(row[34] || '').replace(/<[^>]*>/g, '').trim(),
-                subclass: 'SUP_DOC'
+                subclass: altParams.subclass_type
               }));
-              allDocuments.push(...supDocs);
+              allDocuments.push(...altDocs);
             }
-          } catch (supErr) {
-            console.error('search_assai_documents: SUP_DOC search error:', supErr);
+          } catch (altErr) {
+            console.error('search_assai_documents: alt module search error:', altErr);
           }
         }
         
