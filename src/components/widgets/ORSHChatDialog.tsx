@@ -2,10 +2,6 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import {
-  Dialog,
-  DialogContent,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
@@ -77,7 +73,6 @@ interface ORSHChatDialogProps {
   onOpenChange: (open: boolean) => void;
   onUnreadCountChange?: (count: number) => void;
   initialMessage?: string;
-  mode?: 'dialog' | 'inline';
 }
 
 
@@ -86,7 +81,6 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   onOpenChange, 
   onUnreadCountChange, 
   initialMessage,
-  mode = 'dialog'
 }) => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -144,11 +138,18 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     }
   }, [open, initialMessage]);
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+    requestAnimationFrame(() => {
+      if (scrollRef.current) {
+        // ScrollArea's actual scrollable element is the Viewport child
+        const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+        if (viewport) {
+          viewport.scrollTop = viewport.scrollHeight;
+        }
+      }
+    });
+  }, [messages, isLoading]);
 
   useEffect(() => {
     const channel = supabase
@@ -773,7 +774,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                 </div>
                 <div>
                   <h2 className="font-semibold text-sm">Bob</h2>
-                  <p className="text-xs text-muted-foreground">ORSH Assistant</p>
+                  <p className="text-xs text-muted-foreground">Co-Pilot</p>
                 </div>
               </div>
             </div>
@@ -804,7 +805,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                   </div>
                   <h1 className="text-2xl font-bold mb-2">Hi, I'm Bob</h1>
                   <p className="text-muted-foreground mb-8 max-w-md">
-                    Your ORSH assistant. Ask me anything or let me navigate you around.
+                    Your Co-Pilot. Ask me anything or let me navigate you around.
                   </p>
                   
                 </div>
@@ -1035,27 +1036,17 @@ agentName="bob"
 
   if (!open) return null;
 
-  if (mode === 'inline') {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
-        {/* Dark backdrop */}
-        <div 
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
-          onClick={() => onOpenChange(false)}
-        />
-        {/* Chat panel — slides up from center */}
-        <div className="relative z-10 w-[960px] max-w-[95vw] h-[90vh] flex bg-background border border-border/50 shadow-2xl rounded-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
-          {chatContent}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[900px] max-w-[95vw] h-[85vh] flex p-0 gap-0 bg-background border-border/50 shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Dark backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        onClick={() => onOpenChange(false)}
+      />
+      {/* Chat panel */}
+      <div className="relative z-10 w-[960px] max-w-[95vw] h-[90vh] flex bg-background border border-border/50 shadow-2xl rounded-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
         {chatContent}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
