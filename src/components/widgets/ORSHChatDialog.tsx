@@ -842,7 +842,15 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                       )}>
                         {message.content && (
                           <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border/50 [&_th]:px-3 [&_th]:py-1.5 [&_th]:bg-muted/50 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_td]:border [&_td]:border-border/50 [&_td]:px-3 [&_td]:py-1.5 [&_td]:text-xs [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_pre]:bg-background/50 [&_pre]:rounded-lg [&_code]:text-xs">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                p: ({ children }) => <p>{processChildren(children)}</p>,
+                                li: ({ children }) => <li>{processChildren(children)}</li>,
+                                td: ({ children }) => <td>{processChildren(children)}</td>,
+                                th: ({ children }) => <th>{processChildren(children)}</th>,
+                              }}
+                            >
                               {message.content}
                             </ReactMarkdown>
                           </div>
