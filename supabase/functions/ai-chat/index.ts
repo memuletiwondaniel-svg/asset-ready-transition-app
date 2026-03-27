@@ -6866,6 +6866,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           subclass_type: moduleParams.subclass_type,
           entity_code: 'DOCS'
         });
+        console.info('webroute value:', (updatedCookies.match(/webroute=([^;]+)/)?.[1] || 'not found'));
         console.info('search.aweb GET: sending for', moduleParams.subclass_type);
         const forwardResult = await fetchCaptureCookies(
           assaiBase + '/search.aweb?' + searchFormParams.toString(),
