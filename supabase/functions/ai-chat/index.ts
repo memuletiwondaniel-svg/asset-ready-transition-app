@@ -9446,8 +9446,9 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         });
       }
       
-      // Graceful fallback
-      const fallbackContent = "I'm experiencing a temporary issue connecting to my AI backend. Please try again in a moment. If this persists, contact your ORSH administrator.";
+      // Graceful fallback — contextual based on what the user asked
+      const lastUserMsg = messages?.filter((m: any) => m.role === 'user').pop()?.content || '';
+      const fallbackContent = `I wasn't able to process your request about "${lastUserMsg.substring(0, 60).trim()}..." due to a temporary backend issue.\n\nWhat you can try:\n• Rephrase your question with more specific details\n• Try again in a moment — this is usually a brief interruption\n• Contact your ORSH administrator if this keeps happening`;
       const sseData = `data: ${JSON.stringify({
         choices: [{ delta: { content: fallbackContent } }]
       })}\n\ndata: [DONE]\n\n`;
