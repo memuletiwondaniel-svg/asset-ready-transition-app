@@ -6855,16 +6855,26 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           ? { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' }
           : { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' };
 
-        // GET forward.aweb to establish server-side form context bound to JSESSIONID
-        console.info('forward.aweb GET: sending for', moduleParams.subclass_type);
+        // GET search.aweb to establish server-side form context (the actual search form, not the frameset)
+        const searchFormParams = new URLSearchParams({
+          searchBean: 'docs.SearchDocuments',
+          clas_seq_nr: moduleParams.clas_seq_nr,
+          suty_seq_nr: moduleParams.suty_seq_nr,
+          proj_seq_nr: projSeqNr,
+          dbName: dbName,
+          projectCabinet: projectCabinet,
+          subclass_type: moduleParams.subclass_type,
+          entity_code: 'DOCS'
+        });
+        console.info('search.aweb GET: sending for', moduleParams.subclass_type);
         const forwardResult = await fetchCaptureCookies(
-          assaiBase + '/forward.aweb?page=root/body&subclass_type=' + moduleParams.subclass_type,
+          assaiBase + '/search.aweb?' + searchFormParams.toString(),
           { method: 'GET', headers: { 'User-Agent': ua } },
           updatedCookies
         );
         updatedCookies = forwardResult.cookies;
 
-        // Extract hidden input fields from forward.aweb response
+        // Extract hidden input fields from search.aweb response
         const hiddenFields: Record<string, string> = {};
         const hiddenRegex = /<input[^>]+type=["']hidden["'][^>]*>/gi;
         let hiddenMatch;
@@ -6875,7 +6885,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             hiddenFields[nameMatch[1]] = valueMatch ? valueMatch[1] : '';
           }
         }
-        console.info('forward.aweb GET: status', forwardResult.finalStatus, ', hidden fields found:', Object.keys(hiddenFields).length);
+        console.info('search.aweb GET: status', forwardResult.finalStatus, ', html length:', forwardResult.body.length, ', hidden fields:', Object.keys(hiddenFields).length);
 
         // Build search parameters
         const searchParams = new URLSearchParams();
@@ -6916,7 +6926,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
               'User-Agent': ua,
-              'Referer': assaiBase + '/forward.aweb?page=root/body&subclass_type=' + moduleParams.subclass_type,
+              'Referer': assaiBase + '/search.aweb',
               'Origin': 'https://eu.assaicloud.com'
             },
             body: searchParams.toString()
@@ -6965,14 +6975,25 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
           
           try {
-            // Establish form context for alt module
-            console.info('forward.aweb GET: sending for alt module', altParams.subclass_type);
+            // Establish form context for alt module via search.aweb
+            const altSearchFormParams = new URLSearchParams({
+              searchBean: 'docs.SearchDocuments',
+              clas_seq_nr: altParams.clas_seq_nr,
+              suty_seq_nr: altParams.suty_seq_nr,
+              proj_seq_nr: projSeqNr,
+              dbName: dbName,
+              projectCabinet: projectCabinet,
+              subclass_type: altParams.subclass_type,
+              entity_code: 'DOCS'
+            });
+            console.info('search.aweb GET: sending for alt module', altParams.subclass_type);
             const altForward = await fetchCaptureCookies(
-              assaiBase + '/forward.aweb?page=root/body&subclass_type=' + altParams.subclass_type,
+              assaiBase + '/search.aweb?' + altSearchFormParams.toString(),
               { method: 'GET', headers: { 'User-Agent': ua } },
               updatedCookies
             );
             updatedCookies = altForward.cookies;
+            console.info('search.aweb GET (alt): status', altForward.finalStatus, ', html length:', altForward.body.length);
 
             // Extract hidden fields from alt forward
             const altHidden: Record<string, string> = {};
@@ -7013,7 +7034,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 headers: {
                   'Content-Type': 'application/x-www-form-urlencoded',
                   'User-Agent': ua,
-                  'Referer': assaiBase + '/forward.aweb?page=root/body&subclass_type=' + altParams.subclass_type,
+                  'Referer': assaiBase + '/search.aweb',
                   'Origin': 'https://eu.assaicloud.com'
                 },
                 body: altSearchParams.toString()
