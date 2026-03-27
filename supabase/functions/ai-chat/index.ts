@@ -9213,6 +9213,87 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       const finalBlocks = finalResult.content || [];
       let finalContent = finalBlocks.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
 
+      // ═══════════════════════════════════════════════════════════════════════
+      // PART 1: Deterministic structured_response for document searches
+      // Always build from raw tool data, never from AI text
+      // ═══════════════════════════════════════════════════════════════════════
+      if (lastToolName === 'search_assai_documents' && lastToolResult && lastToolResult.found && lastToolResult.total_found > 0) {
+        const STATUS_DESCS: Record<string, string> = {
+          AFU: "Approved for Use", AFC: "Approved for Construction",
+          IFB: "Issued for Bid", IFT: "Issued for Tender",
+          IFI: "Issued for Information", IFA: "Issued for Approval",
+          IFC: "Issued for Construction", CAN: "Cancelled",
+          REV: "Under Revision", SUP: "Superseded",
+          IFR: "Issued for Review", AFD: "Approved for Design",
+          IFD: "Issued for Design", IFU: "Issued for Use"
+        };
+        const TYPE_DESCS: Record<string, string> = {
+          A01: "Supplier Document Register", A02: "Basis for Design",
+          B01: "General Arrangement Drawing", B04: "Foundation Layout",
+          C02: "System/Equipment Specification", C03: "Single Line Diagram",
+          C08: "Equipment Datasheet", C11: "Control Schematic",
+          C14: "Cause & Effect Diagram", H02: "Inspection & Test Plan",
+          H08: "Factory Acceptance Test", J01: "Installation/O&M Manual"
+        };
+
+        // Extract highlights from Bob's text (numbered items)
+        const highlights: string[] = [];
+        const hlMatch = finalContent.match(/\d+\.\s+(.+)/g);
+        if (hlMatch) {
+          for (const line of hlMatch.slice(0, 5)) {
+            highlights.push(line.replace(/^\d+\.\s+/, '').trim());
+          }
+        }
+        if (highlights.length === 0) {
+          // Fallback: generate basic highlights from data
+          const topStatus = Object.entries(lastToolResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]);
+          if (topStatus.length > 0) highlights.push(`${topStatus[0][1]} documents are ${STATUS_DESCS[topStatus[0][0]] || topStatus[0][0]}`);
+          const typeCount = Object.keys(lastToolResult.type_summary || {}).length;
+          highlights.push(`Documents span ${typeCount} different document types`);
+        }
+
+        // Extract followup from Bob's text (bulleted suggestions)
+        const followup: string[] = [];
+        const fuMatch = finalContent.match(/[-•]\s+(.+)/g);
+        if (fuMatch) {
+          for (const line of fuMatch.slice(-3)) {
+            followup.push(line.replace(/^[-•]\s+/, '').replace(/\*\*/g, '').trim());
+          }
+        }
+        if (followup.length === 0) {
+          followup.push("Show me only the pending documents");
+          followup.push("Break down by discipline");
+          followup.push("Which documents are overdue?");
+        }
+
+        const statusTable = Object.entries(lastToolResult.status_summary || {})
+          .sort((a: any, b: any) => b[1] - a[1])
+          .map(([status, count]) => ({
+            status, count,
+            description: STATUS_DESCS[status] ?? status
+          }));
+
+        const typeTable = Object.entries(lastToolResult.type_summary || {})
+          .sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count)
+          .slice(0, 10)
+          .map(([code, data]: any) => ({
+            code, count: data.count, statuses: data.statuses,
+            description: TYPE_DESCS[code] ?? code
+          }));
+
+        const structured = {
+          type: "document_search",
+          summary: `Found **${lastToolResult.total_found}** documents matching ${lastToolResult.search_pattern || 'your search'}`,
+          status_table: statusTable,
+          type_table: typeTable,
+          highlights,
+          followup
+        };
+
+        finalContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+        console.log('search_assai_documents: deterministic structured_response built server-side');
+      }
+
       // Fallback: if model returns no content after tools, deterministically format the last tool result
       if (!finalContent || !finalContent.trim()) {
         if (lastToolResult?.error) {
