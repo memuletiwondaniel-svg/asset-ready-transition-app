@@ -6824,35 +6824,66 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const query = args.query || '';
         if (!query) return { found: false, message: 'Please provide a document type name or abbreviation to look up.' };
         
-        const { data, error } = await supabaseClient
+        const cleanQuery = query.trim().toUpperCase().replace(/[^A-Z0-9&]/g, '');
+        
+        // Step 1: Check acronym table first (exact match)
+        const { data: acronymMatch } = await supabaseClient
+          .from('dms_document_type_acronyms')
+          .select('acronym, type_code, full_name, notes')
+          .eq('acronym', cleanQuery)
+          .maybeSingle();
+        
+        if (acronymMatch) {
+          // Fetch the full document type details
+          const { data: typeDetails } = await supabaseClient
+            .from('dms_document_types')
+            .select('code, document_name, document_description, tier')
+            .eq('code', acronymMatch.type_code)
+            .maybeSingle();
+          
+          return {
+            found: true,
+            count: 1,
+            source: 'acronym_lookup',
+            matches: [{
+              code: acronymMatch.type_code,
+              name: acronymMatch.full_name,
+              description: typeDetails?.document_description?.substring(0, 200) ?? acronymMatch.notes,
+              tier: typeDetails?.tier ?? null
+            }],
+            instruction: `Use code "${acronymMatch.type_code}" as the document_type filter in search_assai_documents`
+          };
+        }
+        
+        // Step 2: Fuzzy search on document_name and document_description
+        const { data: nameMatches } = await supabaseClient
           .from('dms_document_types')
-          .select('code, document_name, document_description, tier, rlmu, is_vendor_document, discipline_code, discipline_name')
+          .select('code, document_name, document_description, tier')
           .or(`document_name.ilike.%${query}%,document_description.ilike.%${query}%,code.ilike.%${query}%`)
           .eq('is_active', true)
-          .order('code')
-          .limit(20);
+          .order('document_name')
+          .limit(8);
         
-        if (error || !data || data.length === 0) {
-          return { 
-            found: false, 
-            message: `No document types found matching "${query}" in the ORSH document register. This document type may not exist in the system, or may be known by a different name. Try a broader keyword or ask the user for the exact name.` 
+        if (!nameMatches || nameMatches.length === 0) {
+          return {
+            found: false,
+            message: `No document type found for "${query}". Ask the user to clarify — they may be using a project-specific abbreviation not yet in the system.`
           };
         }
         
         return {
           found: true,
-          count: data.length,
-          matches: data.map(d => ({
+          count: nameMatches.length,
+          source: 'name_search',
+          matches: nameMatches.map(d => ({
             code: d.code,
             name: d.document_name,
-            description: d.document_description?.substring(0, 200),
-            tier: d.tier,
-            discipline_code: d.discipline_code,
-            discipline_name: d.discipline_name
+            description: d.document_description?.substring(0, 150),
+            tier: d.tier
           })),
-          instruction: data.length === 1
-            ? `Use code "${data[0].code}" as the document_type filter in search_assai_documents`
-            : 'Multiple matches found — confirm with the user which document type they mean before searching Assai'
+          instruction: nameMatches.length === 1
+            ? `Use code "${nameMatches[0].code}" as document_type in search_assai_documents`
+            : 'Multiple matches — confirm which document type the user means before searching'
         };
       } catch (err) {
         console.error('resolve_document_type error:', err);
