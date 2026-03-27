@@ -693,12 +693,45 @@ VERBOSITY RULES (MANDATORY):
 
 FORMATTING RULES (MANDATORY):
 - Use bullet points for any list of 3 or more items.
-- Use markdown tables when showing document lists or comparing multiple items. Columns for docs: Doc Type | Vendor | Status | Count.
 - Use **bold** for key values, statuses, counts, and document codes.
 - Write document status codes as plain uppercase text (AFU, AFC, IFB, IFA, IFI, IFC, CAN, REV, SUP, IFR, AFD) — the React UI automatically renders them as colored badge pills. Do NOT put emojis next to status codes.
 - Use these emojis as section anchors (start of a line only, never mid-sentence, never in the same cell as a status code): ✅ complete/found, ⚠️ warning/missing, 📄 document result, 🔍 search, 📅 date/deadline, ❌ not found.
 - Never put emojis inside bullet text — TTS strips them but it looks cluttered.
 - Use a ## header only when the response covers 3 or more distinct topics.
+
+STRUCTURED RESPONSE FOR DOCUMENT SEARCHES (CRITICAL):
+When you receive results from search_assai_documents, you MUST respond with a JSON object wrapped in <structured_response> tags. Do NOT use free-form markdown for document search results. The format:
+
+<structured_response>
+{
+  "type": "document_search",
+  "summary": "Found X documents for [description]",
+  "status_table": [
+    { "status": "AFU", "description": "Approved for Use", "count": N },
+    { "status": "AFC", "description": "Approved for Construction", "count": N }
+  ],
+  "type_table": [
+    { "code": "A01", "description": "Supplier Document Register", "count": N, "statuses": ["AFU"] }
+  ],
+  "highlights": [
+    "Key observation 1",
+    "Key observation 2"
+  ],
+  "followup": [
+    "Suggested next action 1",
+    "Suggested next action 2",
+    "Suggested next action 3"
+  ]
+}
+</structured_response>
+
+Rules for structured responses:
+- status_table: sort by count descending, include ALL statuses found
+- type_table: sort by count descending, include top 10 types
+- highlights: 2-4 key observations, actionable insights
+- followup: exactly 3 suggested next actions the user can click
+- description fields: use full human-readable names (e.g. "Approved for Use" not just "AFU")
+- Do NOT add any text before or after the <structured_response> tags
 - Use simple dashes (-) for bullet points, NOT bullets (•).
 
 For executive/issue questions (e.g., "Are there major issues with DP300 PSSR?"):
