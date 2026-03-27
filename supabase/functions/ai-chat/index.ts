@@ -135,27 +135,33 @@ async function authenticateAssai(assaiBase: string, username: string, password: 
   const success = statusCode === 200 || statusCode === 302;
   console.log('Assai login status:', statusCode, 'cookies after login:', allCookies.substring(0, 100));
 
-  // Step 3: Activate server-side session (required before result.aweb works)
+  // Step 3: Activate server-side session sequentially (required before result.aweb works)
+  // Must be sequential — each call may update session cookies that the next call needs
   if (success) {
-    // Session activation — required by Assai after login
-    const [labelResp, appletResp] = await Promise.all([
-      fetch(assaiBase + '/label.aweb', { headers: { 'Cookie': allCookies, 'User-Agent': ua }, redirect: 'follow' }),
-      fetch(assaiBase + '/activateApplet.aweb', { headers: { 'Cookie': allCookies, 'User-Agent': ua }, redirect: 'follow' })
-    ]);
-    const cookies3 = mergeCookies(allCookies, extractCookies(labelResp.headers));
-    const finalCookies = mergeCookies(cookies3, extractCookies(appletResp.headers));
-    allCookies = finalCookies;
-    // Consume response bodies
-    await labelResp.text().catch(() => {});
-    await appletResp.text().catch(() => {});
-    console.log('Session activation: label.aweb status:', labelResp.status, 'activateApplet.aweb status:', appletResp.status);
+    // 3a: label.aweb — captures any session cookies from redirects
+    const labelResult = await fetchCaptureCookies(assaiBase + '/label.aweb', {
+      method: 'GET',
+      headers: { 'User-Agent': ua }
+    }, allCookies);
+    allCookies = labelResult.cookies;
+    console.log('Session activation: label.aweb status:', labelResult.finalStatus);
 
-    // Final activation call: navbar
+    // 3b: activateApplet.aweb — must use cookies from label step
+    const appletResult = await fetchCaptureCookies(assaiBase + '/activateApplet.aweb', {
+      method: 'GET',
+      headers: { 'User-Agent': ua }
+    }, allCookies);
+    allCookies = appletResult.cookies;
+    console.log('Session activation: activateApplet.aweb status:', appletResult.finalStatus);
+
+    // 3c: navbar.aweb — final activation
     try {
-      const navResp = await fetch(assaiBase + '/navbar.aweb?subclass_type=null', { headers: { 'Cookie': allCookies, 'User-Agent': ua }, redirect: 'follow' });
-      allCookies = mergeCookies(allCookies, extractCookies(navResp.headers));
-      await navResp.text().catch(() => {});
-      console.log('Session activation: navbar.aweb status:', navResp.status);
+      const navResult = await fetchCaptureCookies(assaiBase + '/navbar.aweb?subclass_type=null', {
+        method: 'GET',
+        headers: { 'User-Agent': ua }
+      }, allCookies);
+      allCookies = navResult.cookies;
+      console.log('Session activation: navbar.aweb status:', navResult.finalStatus);
     } catch (e) {
       console.error('Session activation failed for navbar.aweb', e);
     }
