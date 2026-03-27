@@ -708,40 +708,14 @@ ERROR HANDLING FOR TOOL RESULTS (CRITICAL):
 - If a tool returns { error: "..." }, respond: "I ran into a technical issue searching Assai for [description]. The error was: [brief error]. Please try rephrasing or contact your admin if this persists."
 - NEVER say generic "I wasn't able to complete that request". Always include what you searched for and what went wrong.
 
-STRUCTURED RESPONSE FOR DOCUMENT SEARCHES (CRITICAL):
-When you receive results from search_assai_documents, you MUST respond with a JSON object wrapped in <structured_response> tags. Do NOT use free-form markdown for document search results. The format:
+DOCUMENT SEARCH RESPONSE FORMAT (CRITICAL):
+When you receive results from search_assai_documents, do NOT produce tables, status summaries, or structured JSON. The system builds those automatically from the raw tool data.
 
-<structured_response>
-{
-  "type": "document_search",
-  "summary": "Found **X** documents for [description]",
-  "status_table": [
-    { "status": "AFU", "description": "Approved for Use", "count": N },
-    { "status": "AFC", "description": "Approved for Construction", "count": N }
-  ],
-  "type_table": [
-    { "code": "A01", "description": "Supplier Document Register", "count": N, "statuses": ["AFU"] }
-  ],
-  "highlights": [
-    "Key observation 1",
-    "Key observation 2"
-  ],
-  "followup": [
-    "Suggested next action 1",
-    "Suggested next action 2",
-    "Suggested next action 3"
-  ]
-}
-</structured_response>
+Your job is ONLY to write:
+1. KEY HIGHLIGHTS: 3-5 numbered observations — each one a specific insight about the documents (e.g. approval gaps, missing types, pending items). Plain text only, no markdown formatting.
+2. FOLLOW-UP SUGGESTIONS: Exactly 3 bulleted suggestions — each a specific actionable question the user might ask next. Plain text only.
 
-Rules for structured responses:
-- status_table: sort by count descending, include ALL statuses found
-- type_table: sort by count descending, include top 10 types
-- highlights: 2-4 key observations, actionable insights
-- followup: exactly 3 suggested next actions the user can click
-- description fields: use full human-readable names (e.g. "Approved for Use" not just "AFU")
-- Do NOT add any text before or after the <structured_response> tags
-- Use simple dashes (-) for bullet points, NOT bullets (•).
+Keep your entire text under 150 words. Do NOT write status counts, document type tables, or any other summary — the system handles those automatically. Do NOT wrap anything in <structured_response> tags — the system does that for you.
 
 For executive/issue questions (e.g., "Are there major issues with DP300 PSSR?"):
 
