@@ -1,6 +1,70 @@
 import React, { useState } from 'react';
 import { StatusBadge } from './StatusBadge';
 import { Download, Search, ChevronDown, ChevronRight, FileText, AlertTriangle, BookOpen, Link2 } from 'lucide-react';
+import { assaiDetailsUrl, assaiDownloadUrl, ASSAI_DOC_NUMBER_REGEX } from '@/lib/assaiLinks';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+/** Render document number as a clickable details link + download icon */
+export function DocumentNumberLink({ docNumber }: { docNumber: string }) {
+  const detailsUrl = assaiDetailsUrl(docNumber);
+  const downloadUrl = assaiDownloadUrl(docNumber);
+  return (
+    <span className="inline-flex items-center gap-1">
+      <TooltipProvider delayDuration={300}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <a
+              href={detailsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-primary underline underline-offset-2 decoration-primary/40 hover:decoration-primary hover:text-primary/80 transition-colors"
+            >
+              {docNumber}
+            </a>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-[10px] max-w-xs break-all">{detailsUrl}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <TooltipProvider delayDuration={300}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <a
+              href={downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Download className="h-3 w-3" />
+            </a>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-[10px]">Download document</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </span>
+  );
+}
+
+/** Render inline markdown AND auto-link any Assai document numbers found in text */
+export function renderInlineMarkdownWithLinks(text: string): React.ReactNode {
+  // First split by doc numbers
+  const docRegex = /\b(\d{4}-[A-Z]{2,6}-[A-Z0-9]+-[A-Z]+-[A-Z0-9]+-[A-Z]{2}-[A-Z]\d{2}-\d{5}-\d{3})\b/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+
+  while ((match = docRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(<React.Fragment key={key++}>{renderInlineMarkdown(text.slice(lastIndex, match.index))}</React.Fragment>);
+    }
+    parts.push(<DocumentNumberLink key={key++} docNumber={match[1]} />);
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    parts.push(<React.Fragment key={key++}>{renderInlineMarkdown(text.slice(lastIndex))}</React.Fragment>);
+  }
+  return parts.length > 0 ? <>{parts}</> : renderInlineMarkdown(text);
+}
 
 /** Parse minimal markdown bold/italic into JSX */
 export function renderInlineMarkdown(text: string): React.ReactNode {
