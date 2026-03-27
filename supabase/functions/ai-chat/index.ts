@@ -3136,6 +3136,26 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
     }
   },
   // ═══════════════════════════════════════════════════════════════════════════
+  // LEARN ACRONYM TOOL - Save new acronym mappings from user conversations
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "learn_acronym",
+      description: "Saves a new acronym or abbreviation mapping to the ORSH knowledge base. Call this when a user explains what an acronym means that was not previously known. This allows the system to remember it permanently for all future conversations. Always confirm with the user before saving.",
+      parameters: {
+        type: "object",
+        properties: {
+          acronym: { type: "string", description: "The acronym or abbreviation in uppercase (e.g. PCN, PES, HEMP)" },
+          full_name: { type: "string", description: "The full expanded name (e.g. Project Change Notice)" },
+          type_code: { type: "string", description: "The Assai document type code if known, otherwise empty string" },
+          notes: { type: "string", description: "Any additional context about this acronym" }
+        },
+        required: ["acronym", "full_name"]
+      }
+    }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
   // EXECUTIVE SUMMARY TOOL - For high-level status assessments
   // ═══════════════════════════════════════════════════════════════════════════
   {
