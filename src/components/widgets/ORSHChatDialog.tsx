@@ -6,10 +6,31 @@ import { renderWithStatusBadges } from '@/components/bob/StatusBadge';
 import { StructuredResponse, parseStructuredResponse, renderInlineMarkdown, DocumentNumberLink } from '@/components/bob/StructuredResponse';
 import { ASSAI_DOC_NUMBER_REGEX } from '@/lib/assaiLinks';
 
-/** Replace known status codes in text children with colored badges */
+/** Replace known status codes and Assai doc numbers in text children */
 function processChildren(children: React.ReactNode): React.ReactNode {
   return React.Children.map(children, (child) => {
-    if (typeof child === 'string') return <>{renderWithStatusBadges(child)}</>;
+    if (typeof child === 'string') {
+      // First auto-link document numbers, then apply status badges to remaining text
+      const docRegex = /\b(\d{4}-[A-Z]{2,6}-[A-Z0-9]+-[A-Z]+-[A-Z0-9]+-[A-Z]{2}-[A-Z]\d{2}-\d{5}-\d{3})\b/g;
+      const parts: React.ReactNode[] = [];
+      let lastIndex = 0;
+      let match: RegExpExecArray | null;
+      let key = 0;
+      while ((match = docRegex.exec(child)) !== null) {
+        if (match.index > lastIndex) {
+          parts.push(<React.Fragment key={key++}>{renderWithStatusBadges(child.slice(lastIndex, match.index))}</React.Fragment>);
+        }
+        parts.push(<DocumentNumberLink key={key++} docNumber={match[1]} />);
+        lastIndex = match.index + match[0].length;
+      }
+      if (parts.length > 0) {
+        if (lastIndex < child.length) {
+          parts.push(<React.Fragment key={key++}>{renderWithStatusBadges(child.slice(lastIndex))}</React.Fragment>);
+        }
+        return <>{parts}</>;
+      }
+      return <>{renderWithStatusBadges(child)}</>;
+    }
     return child;
   });
 }
