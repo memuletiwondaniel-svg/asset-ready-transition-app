@@ -177,33 +177,22 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
         {/* Document Header */}
         {data.document && (
           <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-mono font-semibold text-foreground truncate">{data.document.document_number}</p>
-                <p className="text-sm font-semibold text-foreground mt-0.5">{data.document.title}</p>
-                <div className="flex items-center gap-2 mt-1.5">
-                  {data.document.revision && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
-                      Rev {data.document.revision}
-                    </span>
-                  )}
-                  {data.document.status && <StatusBadge code={data.document.status} />}
-                  {data.document.type_code && (
-                    <span className="text-[10px] text-muted-foreground">{data.document.type_code}</span>
-                  )}
-                </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs">
+                <DocumentNumberLink docNumber={data.document.document_number} />
               </div>
-              {data.document.download_url && (
-                <a
-                  href={data.document.download_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors flex-shrink-0"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  Download
-                </a>
-              )}
+              <p className="text-sm font-semibold text-foreground mt-0.5">{data.document.title}</p>
+              <div className="flex items-center gap-2 mt-1.5">
+                {data.document.revision && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+                    Rev {data.document.revision}
+                  </span>
+                )}
+                {data.document.status && <StatusBadge code={data.document.status} />}
+                {data.document.type_code && (
+                  <span className="text-[10px] text-muted-foreground">{data.document.type_code}</span>
+                )}
+              </div>
             </div>
           </div>
         )}
