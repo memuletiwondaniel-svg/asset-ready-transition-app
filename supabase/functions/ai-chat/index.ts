@@ -3046,7 +3046,7 @@ const tools = [
     type: "function",
     function: {
       name: "search_assai_documents",
-      description: "Search Assai DMS (the external document management system) for documents. Use this when the user asks to search Assai, find vendor documents, check document status in Assai, or asks about documents for a specific PO/purchase order number. Returns a list of matching documents with their type, status, revision, and title. ALWAYS use this instead of get_document_search_by_number when the user wants to search the external Assai system.",
+      description: "Search Assai DMS (the external document management system) for documents. Returns ALL matching documents (up to 500) by automatically paginating through Assai result pages. Use this when the user asks to search Assai, find vendor documents, check document status in Assai, or asks about documents for a specific PO/purchase order number. Returns a list of matching documents with their type, status, revision, and title. ALWAYS use this instead of get_document_search_by_number when the user wants to search the external Assai system.",
       parameters: {
         type: "object",
         properties: {
@@ -6835,7 +6835,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         };
 
         // Helper: perform search.aweb GET + result.aweb POST for a given subclass (probe-proven pattern)
-        const searchModule = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }): Promise<string> => {
+        // startRow controls pagination (0-based); pass 0 for first page
+        const searchModule = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }, startRow = 0): Promise<string> => {
           // Step 1: GET search.aweb with redirect:follow (proven working in probe functions)
           const searchUrl = assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
           const searchResp = await fetch(searchUrl, {
@@ -6863,15 +6864,20 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           formData.set('subclass_type', params.subclass_type);
           if (poDigits) {
             formData.set('purchase_code', poDigits);
-            console.log('search_assai_documents: PO-based search using purchase_code=' + poDigits);
+            if (startRow === 0) console.log('search_assai_documents: PO-based search using purchase_code=' + poDigits);
           } else {
             formData.set('number', document_number_pattern);
-            console.log('search_assai_documents: number-based search using number=' + document_number_pattern);
+            if (startRow === 0) console.log('search_assai_documents: number-based search using number=' + document_number_pattern);
           }
           if (discipline_code) formData.set('discipline_code', discipline_code);
           if (document_type) formData.set('document_type', document_type);
           if (status_code) formData.set('status_code', status_code);
           if (company_code) formData.set('company_code', company_code);
+          // Pagination: set start_row for pages beyond the first
+          if (startRow > 0) {
+            formData.set('start_row', String(startRow));
+            formData.set('firstRow', String(startRow)); // alternate param name
+          }
 
           // Step 3: POST to result.aweb with redirect:follow (probe-proven pattern)
           const resultResp = await fetch(assaiBase + '/result.aweb', {
@@ -6887,23 +6893,17 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             redirect: 'follow',
           });
           const resultHtml = await resultResp.text();
-          console.info('result.aweb POST: status ' + resultResp.status + ', html length: ' + resultHtml.length);
+          console.info('result.aweb POST (startRow=' + startRow + '): status ' + resultResp.status + ', html length: ' + resultHtml.length);
           return resultHtml;
         };
 
-        // Execute primary search
-        const html = await searchModule(moduleParams);
-        
-        // Parse myCells
-        const myCellsMatch = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
-        console.log('search_assai_documents: myCells found:', !!myCellsMatch, ', html length:', html.length);
-        
-        let allDocuments: any[] = [];
-        
-        if (myCellsMatch) {
+        // Helper: parse myCells from result HTML and return documents array
+        const parseDocuments = (html: string, subclass: string): any[] => {
+          const match = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
+          if (!match) return [];
           try {
-            const myCells = JSON.parse(myCellsMatch[1]);
-            allDocuments = myCells.map((row: any) => ({
+            const myCells = JSON.parse(match[1]);
+            return myCells.map((row: any) => ({
               document_number: String(row[3] || '').replace(/<[^>]*>/g, '').trim(),
               revision: String(row[4] || '').replace(/<[^>]*>/g, '').trim(),
               revision_date: String(row[5] || '').replace(/<[^>]*>/g, '').trim(),
@@ -6918,12 +6918,65 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               purchase_order: String(row[16] || '').replace(/<[^>]*>/g, '').trim(),
               pk_seq_nr: String(row[33] || '').replace(/<[^>]*>/g, '').trim(),
               entt_seq_nr: String(row[34] || '').replace(/<[^>]*>/g, '').trim(),
-              subclass: moduleParams.subclass_type
+              subclass,
             }));
-          } catch (parseErr) {
-            console.error('search_assai_documents: myCells parse error:', parseErr);
+          } catch (e) {
+            console.error('parseDocuments: myCells parse error:', e);
+            return [];
           }
-        }
+        };
+
+        // Helper: try to extract total count from HTML (e.g. "Showing 1-100 of 109")
+        const parseTotalCount = (html: string): number | null => {
+          const m = html.match(/(?:showing|results?)\s+\d+\s*[-–]\s*\d+\s+of\s+(\d+)/i);
+          if (m) return parseInt(m[1], 10);
+          const m2 = html.match(/total[:\s]+(\d+)/i);
+          if (m2) return parseInt(m2[1], 10);
+          const m3 = html.match(/resultCount[^>]*>(\d+)/i);
+          if (m3) return parseInt(m3[1], 10);
+          return null;
+        };
+
+        // Helper: paginate through all result pages for a module
+        const PAGE_SIZE = 100;
+        const MAX_PAGES = 5; // safety cap: 500 docs max
+        const paginateSearch = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }): Promise<any[]> => {
+          const firstHtml = await searchModule(params, 0);
+          const firstDocs = parseDocuments(firstHtml, params.subclass_type);
+          if (firstDocs.length === 0) return [];
+
+          const totalFromHtml = parseTotalCount(firstHtml);
+          console.info('search_assai_documents: page 1 returned ' + firstDocs.length + ' docs, parsed total: ' + (totalFromHtml ?? 'unknown'));
+
+          // If first page returned fewer than PAGE_SIZE, no more pages
+          if (firstDocs.length < PAGE_SIZE) return firstDocs;
+
+          const allDocs = [...firstDocs];
+          let page = 2;
+          while (page <= MAX_PAGES) {
+            const startRow = (page - 1) * PAGE_SIZE;
+            // If we know total and already have enough, stop
+            if (totalFromHtml !== null && allDocs.length >= totalFromHtml) break;
+
+            // 300ms delay between page requests
+            await new Promise(r => setTimeout(r, 300));
+            console.info('Fetching page ' + page + ' of result.aweb (startRow=' + startRow + ')...');
+
+            const pageHtml = await searchModule(params, startRow);
+            const pageDocs = parseDocuments(pageHtml, params.subclass_type);
+            console.info('search_assai_documents: page ' + page + ' returned ' + pageDocs.length + ' docs');
+
+            if (pageDocs.length === 0) break;
+            allDocs.push(...pageDocs);
+            if (pageDocs.length < PAGE_SIZE) break; // last page
+            page++;
+          }
+          return allDocs;
+        };
+
+        // Execute primary search with pagination
+        let allDocuments = await paginateSearch(moduleParams);
+        console.log('search_assai_documents: primary search returned ' + allDocuments.length + ' docs total');
         
         // Also try the other module if no results yet
         if (allDocuments.length === 0) {
@@ -6932,30 +6985,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
           
           try {
-            console.info('result.aweb POST (alt): sending for', altParams.subclass_type);
-            const altHtml = await searchModule(altParams);
-            const altMatch = altHtml.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
-            if (altMatch) {
-              const altCells = JSON.parse(altMatch[1]);
-              const altDocs = altCells.map((row: any) => ({
-                document_number: String(row[3] || '').replace(/<[^>]*>/g, '').trim(),
-                revision: String(row[4] || '').replace(/<[^>]*>/g, '').trim(),
-                revision_date: String(row[5] || '').replace(/<[^>]*>/g, '').trim(),
-                status: String(row[6] || '').replace(/<[^>]*>/g, '').trim(),
-                title: String(row[8] || '').replace(/<[^>]*>/g, '').trim(),
-                priority: String(row[9] || '').replace(/<[^>]*>/g, '').trim(),
-                responsible_engineer: String(row[11] || '').replace(/<[^>]*>/g, '').trim(),
-                company: String(row[12] || '').replace(/<[^>]*>/g, '').trim(),
-                discipline: String(row[13] || '').replace(/<[^>]*>/g, '').trim(),
-                type_code: String(row[14] || '').replace(/<[^>]*>/g, '').trim(),
-                work_package: String(row[15] || '').replace(/<[^>]*>/g, '').trim(),
-                purchase_order: String(row[16] || '').replace(/<[^>]*>/g, '').trim(),
-                pk_seq_nr: String(row[33] || '').replace(/<[^>]*>/g, '').trim(),
-                entt_seq_nr: String(row[34] || '').replace(/<[^>]*>/g, '').trim(),
-                subclass: altParams.subclass_type
-              }));
-              allDocuments.push(...altDocs);
-            }
+            console.info('Paginated search (alt): sending for', altParams.subclass_type);
+            allDocuments = await paginateSearch(altParams);
           } catch (altErr) {
             console.error('search_assai_documents: alt module search error:', altErr);
           }
@@ -6984,8 +7015,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           filters_applied: { discipline_code, document_type, status_code, company_code },
           status_summary: statusSummary,
           type_summary: typeSummary,
-          documents: allDocuments.slice(0, 50),
-          note: allDocuments.length > 50 ? `Showing first 50 of ${allDocuments.length} results. Refine your search for more specific results.` : undefined
+          documents: allDocuments.slice(0, 100),
+          note: allDocuments.length > 100 ? `Showing first 100 of ${allDocuments.length} results. Full summaries reflect all ${allDocuments.length} documents.` : undefined
         };
       } catch (err: any) {
         console.error('search_assai_documents error:', err);
