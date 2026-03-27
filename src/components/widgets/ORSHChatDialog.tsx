@@ -486,6 +486,16 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
         }
       }
 
+      // Detect stub/incomplete responses (ends with ":" and very short, or no content)
+      const trimmed = assistantMessage.trim();
+      if (!trimmed || (trimmed.endsWith(':') && trimmed.length < 200 && !trimmed.includes('\n'))) {
+        const errorMsg = "I wasn't able to complete that request — please try again.";
+        setMessages([...newMessages, { role: 'assistant', content: errorMsg }]);
+        await saveMessage('assistant', errorMsg);
+        loadConversations();
+        return;
+      }
+
       if (assistantMessage) {
         await saveMessage('assistant', assistantMessage);
         
