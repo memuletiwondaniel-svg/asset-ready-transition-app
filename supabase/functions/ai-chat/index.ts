@@ -3046,7 +3046,7 @@ const tools = [
     type: "function",
     function: {
       name: "search_assai_documents",
-      description: "Search Assai DMS (the external document management system) for documents. Use this when the user asks to search Assai, find vendor documents, check document status in Assai, or asks about documents for a specific PO/purchase order number. Returns a list of matching documents with their type, status, revision, and title. ALWAYS use this instead of get_document_search_by_number when the user wants to search the external Assai system.",
+      description: "Search Assai DMS (the external document management system) for documents. Returns ALL matching documents (up to 500) by automatically paginating through Assai result pages. Use this when the user asks to search Assai, find vendor documents, check document status in Assai, or asks about documents for a specific PO/purchase order number. Returns a list of matching documents with their type, status, revision, and title. ALWAYS use this instead of get_document_search_by_number when the user wants to search the external Assai system.",
       parameters: {
         type: "object",
         properties: {
