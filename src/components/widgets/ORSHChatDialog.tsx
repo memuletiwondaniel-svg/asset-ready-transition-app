@@ -559,8 +559,10 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       }
     } catch (error) {
       console.error('Error calling Bob:', error);
-      toast.error('Failed to get response from Bob. Please try again.');
-      setMessages(newMessages);
+      const userQuery = textToSend?.substring(0, 60).trim() || 'your request';
+      const errorMsg = `I had trouble connecting to process "${userQuery}". This is usually a temporary issue.\n\nYou can:\n• **Try again** in a moment\n• **Start a new chat** if the problem continues\n• **Contact your ORSH administrator** if it persists`;
+      setMessages([...newMessages, { role: 'assistant', content: errorMsg }]);
+      try { await saveMessage('assistant', errorMsg); } catch (_) {}
     } finally {
       setIsLoading(false);
     }
