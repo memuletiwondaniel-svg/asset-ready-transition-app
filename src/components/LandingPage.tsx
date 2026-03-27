@@ -785,6 +785,11 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                         placeholder={placeholderText}
                         value={userInput}
                         onChange={(e) => setUserInput(e.target.value)}
+                        onFocus={() => {
+                          if (!chatOpen) {
+                            setChatOpen(true);
+                          }
+                        }}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && userInput.trim()) {
                             setInitialPrompt(userInput);
