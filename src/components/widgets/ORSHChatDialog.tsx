@@ -777,10 +777,20 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                 </div>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleNewChat} className="gap-2">
-              <Plus className="h-4 w-4" />
-              New chat
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={handleNewChat} className="gap-2">
+                <Plus className="h-4 w-4" />
+                New chat
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => onOpenChange(false)}
+                className="h-8 w-8"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Messages Area */}
