@@ -1020,6 +1020,32 @@ agentName="bob"
             </div>
           </div>
         </div>
+      </div>
+    </>
+  );
+
+  if (!open) return null;
+
+  if (mode === 'inline') {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        {/* Dark backdrop */}
+        <div 
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+          onClick={() => onOpenChange(false)}
+        />
+        {/* Chat panel — slides up from center */}
+        <div className="relative z-10 w-[960px] max-w-[95vw] h-[90vh] flex bg-background border border-border/50 shadow-2xl rounded-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
+          {chatContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-[900px] max-w-[95vw] h-[85vh] flex p-0 gap-0 bg-background border-border/50 shadow-2xl overflow-hidden">
+        {chatContent}
       </DialogContent>
     </Dialog>
   );
