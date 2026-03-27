@@ -145,6 +145,7 @@ async function authenticateAssai(assaiBase: string, username: string, password: 
     }, allCookies);
     allCookies = labelResult.cookies;
     console.log('Session activation: label.aweb status:', labelResult.finalStatus);
+    console.info('label.aweb html length: ' + labelResult.body.length);
 
     // 3b: activateApplet.aweb — must use cookies from label step
     const appletResult = await fetchCaptureCookies(assaiBase + '/activateApplet.aweb', {
@@ -153,6 +154,7 @@ async function authenticateAssai(assaiBase: string, username: string, password: 
     }, allCookies);
     allCookies = appletResult.cookies;
     console.log('Session activation: activateApplet.aweb status:', appletResult.finalStatus);
+    console.info('activateApplet.aweb html length: ' + appletResult.body.length);
 
     // 3c: navbar.aweb — final activation
     try {
@@ -162,6 +164,7 @@ async function authenticateAssai(assaiBase: string, username: string, password: 
       }, allCookies);
       allCookies = navResult.cookies;
       console.log('Session activation: navbar.aweb status:', navResult.finalStatus);
+      console.info('navbar.aweb html length: ' + navResult.body.length);
     } catch (e) {
       console.error('Session activation failed for navbar.aweb', e);
     }
