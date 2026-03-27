@@ -6975,14 +6975,25 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
           
           try {
-            // Establish form context for alt module
-            console.info('forward.aweb GET: sending for alt module', altParams.subclass_type);
+            // Establish form context for alt module via search.aweb
+            const altSearchFormParams = new URLSearchParams({
+              searchBean: 'docs.SearchDocuments',
+              clas_seq_nr: altParams.clas_seq_nr,
+              suty_seq_nr: altParams.suty_seq_nr,
+              proj_seq_nr: projSeqNr,
+              dbName: dbName,
+              projectCabinet: projectCabinet,
+              subclass_type: altParams.subclass_type,
+              entity_code: 'DOCS'
+            });
+            console.info('search.aweb GET: sending for alt module', altParams.subclass_type);
             const altForward = await fetchCaptureCookies(
-              assaiBase + '/forward.aweb?page=root/body&subclass_type=' + altParams.subclass_type,
+              assaiBase + '/search.aweb?' + altSearchFormParams.toString(),
               { method: 'GET', headers: { 'User-Agent': ua } },
               updatedCookies
             );
             updatedCookies = altForward.cookies;
+            console.info('search.aweb GET (alt): status', altForward.finalStatus, ', html length:', altForward.body.length);
 
             // Extract hidden fields from alt forward
             const altHidden: Record<string, string> = {};
