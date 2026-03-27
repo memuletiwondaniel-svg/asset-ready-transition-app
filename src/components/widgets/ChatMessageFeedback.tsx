@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ThumbsUp, ThumbsDown, Send, Volume2, Loader2, VolumeX } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Send, Volume2, Loader2, Square, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -180,16 +180,24 @@ export const ChatMessageFeedback: React.FC<ChatMessageFeedbackProps> = ({
     }
   };
 
+  const handleCopy = () => {
+    if (!messageContent) return;
+    navigator.clipboard.writeText(messageContent).then(() => {
+      toast.success('Copied to clipboard');
+    });
+  };
+
   return (
     <div className="flex flex-col gap-1.5 mt-1">
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
+        {/* Feedback buttons */}
         <button
           onClick={handleThumbsUp}
           className={cn(
-            "p-1 rounded-md transition-colors",
+            "p-1.5 rounded-md transition-colors",
             feedbackGiven === 'positive'
               ? "text-green-600 dark:text-green-400"
-              : "text-muted-foreground/50 hover:text-muted-foreground"
+              : "text-muted-foreground/40 hover:text-muted-foreground"
           )}
           aria-label="Thumbs up"
         >
@@ -198,35 +206,54 @@ export const ChatMessageFeedback: React.FC<ChatMessageFeedbackProps> = ({
         <button
           onClick={handleThumbsDown}
           className={cn(
-            "p-1 rounded-md transition-colors",
+            "p-1.5 rounded-md transition-colors",
             feedbackGiven === 'negative'
               ? "text-red-500 dark:text-red-400"
-              : "text-muted-foreground/50 hover:text-muted-foreground"
+              : "text-muted-foreground/40 hover:text-muted-foreground"
           )}
           aria-label="Thumbs down"
         >
           <ThumbsDown className="h-3.5 w-3.5" />
         </button>
+
+        {/* Separator */}
+        <div className="w-px h-4 bg-border/50 mx-1" />
+
+        {/* TTS Button - always visible */}
         {messageContent && (
           <button
             onClick={handleTTS}
             disabled={ttsState === 'loading'}
             className={cn(
-              "p-1 rounded-md transition-colors",
+              "p-1.5 rounded-md transition-all",
               ttsState === 'playing'
-                ? "text-primary"
-                : "text-muted-foreground/50 hover:text-muted-foreground",
-              ttsState === 'loading' && "opacity-50"
+                ? "text-primary bg-primary/10 animate-pulse"
+                : ttsState === 'loading'
+                  ? "text-muted-foreground/50"
+                  : "text-muted-foreground/60 hover:text-foreground hover:bg-muted/50"
             )}
             aria-label={ttsState === 'playing' ? 'Stop reading' : 'Read aloud'}
+            title={ttsState === 'playing' ? 'Stop reading' : 'Read aloud'}
           >
             {ttsState === 'loading' ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : ttsState === 'playing' ? (
-              <VolumeX className="h-3.5 w-3.5" />
+              <Square className="h-3.5 w-3.5 fill-current" />
             ) : (
               <Volume2 className="h-3.5 w-3.5" />
             )}
+          </button>
+        )}
+
+        {/* Copy Button */}
+        {messageContent && (
+          <button
+            onClick={handleCopy}
+            className="p-1.5 rounded-md text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+            aria-label="Copy message"
+            title="Copy message"
+          >
+            <Copy className="h-3.5 w-3.5" />
           </button>
         )}
       </div>

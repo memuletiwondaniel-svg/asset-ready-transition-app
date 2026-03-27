@@ -693,12 +693,45 @@ VERBOSITY RULES (MANDATORY):
 
 FORMATTING RULES (MANDATORY):
 - Use bullet points for any list of 3 or more items.
-- Use markdown tables when showing document lists or comparing multiple items. Columns for docs: Doc Type | Vendor | Status | Count.
 - Use **bold** for key values, statuses, counts, and document codes.
 - Write document status codes as plain uppercase text (AFU, AFC, IFB, IFA, IFI, IFC, CAN, REV, SUP, IFR, AFD) — the React UI automatically renders them as colored badge pills. Do NOT put emojis next to status codes.
 - Use these emojis as section anchors (start of a line only, never mid-sentence, never in the same cell as a status code): ✅ complete/found, ⚠️ warning/missing, 📄 document result, 🔍 search, 📅 date/deadline, ❌ not found.
 - Never put emojis inside bullet text — TTS strips them but it looks cluttered.
 - Use a ## header only when the response covers 3 or more distinct topics.
+
+STRUCTURED RESPONSE FOR DOCUMENT SEARCHES (CRITICAL):
+When you receive results from search_assai_documents, you MUST respond with a JSON object wrapped in <structured_response> tags. Do NOT use free-form markdown for document search results. The format:
+
+<structured_response>
+{
+  "type": "document_search",
+  "summary": "Found X documents for [description]",
+  "status_table": [
+    { "status": "AFU", "description": "Approved for Use", "count": N },
+    { "status": "AFC", "description": "Approved for Construction", "count": N }
+  ],
+  "type_table": [
+    { "code": "A01", "description": "Supplier Document Register", "count": N, "statuses": ["AFU"] }
+  ],
+  "highlights": [
+    "Key observation 1",
+    "Key observation 2"
+  ],
+  "followup": [
+    "Suggested next action 1",
+    "Suggested next action 2",
+    "Suggested next action 3"
+  ]
+}
+</structured_response>
+
+Rules for structured responses:
+- status_table: sort by count descending, include ALL statuses found
+- type_table: sort by count descending, include top 10 types
+- highlights: 2-4 key observations, actionable insights
+- followup: exactly 3 suggested next actions the user can click
+- description fields: use full human-readable names (e.g. "Approved for Use" not just "AFU")
+- Do NOT add any text before or after the <structured_response> tags
 - Use simple dashes (-) for bullet points, NOT bullets (•).
 
 For executive/issue questions (e.g., "Are there major issues with DP300 PSSR?"):
@@ -6897,33 +6930,92 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return resultHtml;
         };
 
+        // Helper: strip HTML tags from a string
+        const stripHtml = (s: string) => String(s || '').replace(/<[^>]*>/g, '').trim();
+
         // Helper: parse myCells from result HTML and return documents array
+        // Resilient: tries myCells JS variable first, falls back to raw <tr>/<td> parsing
         const parseDocuments = (html: string, subclass: string): any[] => {
-          const match = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function)/);
-          if (!match) return [];
-          try {
-            const myCells = JSON.parse(match[1]);
-            return myCells.map((row: any) => ({
-              document_number: String(row[3] || '').replace(/<[^>]*>/g, '').trim(),
-              revision: String(row[4] || '').replace(/<[^>]*>/g, '').trim(),
-              revision_date: String(row[5] || '').replace(/<[^>]*>/g, '').trim(),
-              status: String(row[6] || '').replace(/<[^>]*>/g, '').trim(),
-              title: String(row[8] || '').replace(/<[^>]*>/g, '').trim(),
-              priority: String(row[9] || '').replace(/<[^>]*>/g, '').trim(),
-              responsible_engineer: String(row[11] || '').replace(/<[^>]*>/g, '').trim(),
-              company: String(row[12] || '').replace(/<[^>]*>/g, '').trim(),
-              discipline: String(row[13] || '').replace(/<[^>]*>/g, '').trim(),
-              type_code: String(row[14] || '').replace(/<[^>]*>/g, '').trim(),
-              work_package: String(row[15] || '').replace(/<[^>]*>/g, '').trim(),
-              purchase_order: String(row[16] || '').replace(/<[^>]*>/g, '').trim(),
-              pk_seq_nr: String(row[33] || '').replace(/<[^>]*>/g, '').trim(),
-              entt_seq_nr: String(row[34] || '').replace(/<[^>]*>/g, '').trim(),
-              subclass,
-            }));
-          } catch (e) {
-            console.error('parseDocuments: myCells parse error:', e);
-            return [];
+          // Strategy 1: parse myCells JavaScript variable (works for page 1 usually)
+          const match = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function|\/\/|$)/m);
+          if (match) {
+            try {
+              const myCells = JSON.parse(match[1]);
+              if (myCells.length > 0) {
+                console.info('parseDocuments: myCells strategy found ' + myCells.length + ' rows');
+                return myCells.map((row: any) => ({
+                  document_number: stripHtml(row[3]),
+                  revision: stripHtml(row[4]),
+                  revision_date: stripHtml(row[5]),
+                  status: stripHtml(row[6]),
+                  title: stripHtml(row[8]),
+                  priority: stripHtml(row[9]),
+                  responsible_engineer: stripHtml(row[11]),
+                  company: stripHtml(row[12]),
+                  discipline: stripHtml(row[13]),
+                  type_code: stripHtml(row[14]),
+                  work_package: stripHtml(row[15]),
+                  purchase_order: stripHtml(row[16]),
+                  pk_seq_nr: stripHtml(row[33]),
+                  entt_seq_nr: stripHtml(row[34]),
+                  subclass,
+                }));
+              }
+            } catch (e) {
+              console.error('parseDocuments: myCells parse error, trying TR fallback:', e);
+            }
           }
+
+          // Strategy 2: parse raw <tr>/<td> elements from HTML table
+          // This handles page 2+ where myCells may not exist or has different wrapper
+          console.info('parseDocuments: myCells not found, using TR/TD fallback. HTML preview: ' + html.substring(0, 500));
+          const docs: any[] = [];
+          // Match all <tr> elements that contain <td> cells
+          const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+          let trMatch;
+          while ((trMatch = trRegex.exec(html)) !== null) {
+            const trContent = trMatch[1];
+            // Extract all <td> cell contents
+            const tdRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+            const cells: string[] = [];
+            let tdMatch;
+            while ((tdMatch = tdRegex.exec(trContent)) !== null) {
+              cells.push(stripHtml(tdMatch[1]));
+            }
+            // Valid document rows have 8+ cells and don't look like headers
+            if (cells.length >= 8) {
+              const headerKeywords = ['document number', 'title', 'revision', 'status', 'date', 'description'];
+              const isHeader = cells.slice(0, 5).some(c => headerKeywords.includes(c.toLowerCase()));
+              if (isHeader) continue;
+              // Skip rows where key fields are empty
+              if (!cells[0] && !cells[1] && !cells[2]) continue;
+              // Map cells - column order in Assai table rows:
+              // Typically: checkbox, icon, seq, docNumber, revision, revDate, status, ?, title, priority, ?, engineer, company, discipline, typeCode, workPkg, PO, ...
+              docs.push({
+                document_number: cells[3] || cells[2] || '',
+                revision: cells[4] || cells[3] || '',
+                revision_date: cells[5] || cells[4] || '',
+                status: cells[6] || cells[5] || '',
+                title: cells[8] || cells[7] || cells[6] || '',
+                priority: cells[9] || '',
+                responsible_engineer: cells[11] || '',
+                company: cells[12] || '',
+                discipline: cells[13] || '',
+                type_code: cells[14] || '',
+                work_package: cells[15] || '',
+                purchase_order: cells[16] || '',
+                pk_seq_nr: cells.length > 33 ? cells[33] : '',
+                entt_seq_nr: cells.length > 34 ? cells[34] : '',
+                subclass,
+              });
+            }
+          }
+          if (docs.length > 0) {
+            console.info('parseDocuments: TR/TD fallback found ' + docs.length + ' rows');
+          } else {
+            console.warn('parseDocuments: no documents found with either strategy');
+          }
+          return docs;
         };
 
         // Helper: try to extract total count from HTML (e.g. "Showing 1-100 of 109")

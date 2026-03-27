@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { renderWithStatusBadges } from '@/components/bob/StatusBadge';
+import { StructuredResponse, parseStructuredResponse } from '@/components/bob/StructuredResponse';
 
 /** Replace known status codes in text children with colored badges */
 function processChildren(children: React.ReactNode): React.ReactNode {
@@ -848,21 +849,39 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                           ? 'bg-muted text-foreground rounded-br-md' 
                           : 'bg-transparent rounded-bl-md'
                       )}>
-                        {message.content && (
-                          <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border/50 [&_th]:px-3 [&_th]:py-1.5 [&_th]:bg-muted/50 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_td]:border [&_td]:border-border/50 [&_td]:px-3 [&_td]:py-1.5 [&_td]:text-xs [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_pre]:bg-background/50 [&_pre]:rounded-lg [&_code]:text-xs">
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm]}
-                              components={{
-                                p: ({ children }) => <p>{processChildren(children)}</p>,
-                                li: ({ children }) => <li>{processChildren(children)}</li>,
-                                td: ({ children }) => <td>{processChildren(children)}</td>,
-                                th: ({ children }) => <th>{processChildren(children)}</th>,
-                              }}
-                            >
-                              {message.content}
-                            </ReactMarkdown>
-                          </div>
-                        )}
+                        {message.content && (() => {
+                          const { before, data: structuredData, after } = parseStructuredResponse(message.content);
+                          if (structuredData) {
+                            return (
+                              <div className="text-sm leading-relaxed">
+                                {before && <p className="mb-2">{before}</p>}
+                                <StructuredResponse 
+                                  data={structuredData} 
+                                  onFollowupClick={(text) => {
+                                    setInput(text);
+                                    setTimeout(() => handleSend(text), 100);
+                                  }}
+                                />
+                                {after && <p className="mt-2">{after}</p>}
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border/50 [&_th]:px-3 [&_th]:py-1.5 [&_th]:bg-muted/50 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_td]:border [&_td]:border-border/50 [&_td]:px-3 [&_td]:py-1.5 [&_td]:text-xs [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm [&_pre]:bg-background/50 [&_pre]:rounded-lg [&_code]:text-xs">
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                  p: ({ children }) => <p>{processChildren(children)}</p>,
+                                  li: ({ children }) => <li>{processChildren(children)}</li>,
+                                  td: ({ children }) => <td>{processChildren(children)}</td>,
+                                  th: ({ children }) => <th>{processChildren(children)}</th>,
+                                }}
+                              >
+                                {message.content}
+                              </ReactMarkdown>
+                            </div>
+                          );
+                        })()}
                         
                         {message.imageUrls && message.imageUrls.length > 0 && (
                           <div className="mt-3 grid grid-cols-2 gap-2">
@@ -895,7 +914,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                         )}
                       </div>
                       {message.role === 'assistant' && !isLoading && (
-                        <div className="ml-12">
+                        <div className="flex flex-col mt-1.5">
                           <ChatMessageFeedback
                             messageIndex={index}
                             conversationId={currentConversationId}
@@ -1045,7 +1064,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        {isTranscribing ? 'Transcribing...' : isListening ? 'Stop recording' : 'Voice input'}
+                        {isTranscribing ? 'Transcribing...' : isListening ? 'Stop recording' : 'Speak to Bob'}
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
