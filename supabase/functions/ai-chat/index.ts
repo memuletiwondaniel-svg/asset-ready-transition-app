@@ -6857,6 +6857,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           .maybeSingle();
         
         if (acronymMatch) {
+          // Increment usage count
+          try {
+            await supabaseClient.rpc('increment_acronym_usage', { acronym_text: cleanQuery });
+          } catch (_) { /* non-critical */ }
+          
           // Fetch the full document type details
           const { data: typeDetails } = await supabaseClient
             .from('dms_document_types')
