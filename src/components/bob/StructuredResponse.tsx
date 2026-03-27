@@ -147,17 +147,28 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
 
 /** Try to extract structured response JSON from a message string */
 export function parseStructuredResponse(content: string): { before: string; data: StructuredResponseData | null; after: string } {
-  const tagMatch = content.match(/<structured_response>\s*([\s\S]*?)\s*<\/structured_response>/);
+  // Robust regex: handles whitespace, newlines, and optional markdown code block wrapping
+  const tagMatch = content.match(/<structured_response>\s*([\s\S]*?)\s*<\/structured_response>/i);
   if (!tagMatch) return { before: content, data: null, after: '' };
 
   const before = content.substring(0, tagMatch.index || 0).trim();
   const after = content.substring((tagMatch.index || 0) + tagMatch[0].length).trim();
   
   try {
-    const data = JSON.parse(tagMatch[1]);
+    // Strip possible markdown code fences around the JSON
+    let jsonStr = tagMatch[1].trim();
+    if (jsonStr.startsWith('```')) {
+      jsonStr = jsonStr.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+    }
+    const data = JSON.parse(jsonStr);
     if (data && data.type) return { before, data, after };
   } catch (e) {
     console.error('Failed to parse structured response JSON:', e);
   }
-  return { before: content, data: null, after: '' };
+  // On parse failure, strip the tags and return cleaned text
+  const cleanedContent = content
+    .replace(/<\/?structured_response>/gi, '')
+    .replace(/```(?:json)?/g, '')
+    .trim();
+  return { before: cleanedContent, data: null, after: '' };
 }
