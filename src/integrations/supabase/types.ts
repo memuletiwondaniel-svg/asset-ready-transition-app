@@ -909,24 +909,36 @@ export type Database = {
           created_at: string | null
           full_name: string
           id: string
+          is_learned: boolean | null
+          learned_from_user_id: string | null
           notes: string | null
           type_code: string
+          updated_at: string | null
+          usage_count: number | null
         }
         Insert: {
           acronym: string
           created_at?: string | null
           full_name: string
           id?: string
+          is_learned?: boolean | null
+          learned_from_user_id?: string | null
           notes?: string | null
           type_code: string
+          updated_at?: string | null
+          usage_count?: number | null
         }
         Update: {
           acronym?: string
           created_at?: string | null
           full_name?: string
           id?: string
+          is_learned?: boolean | null
+          learned_from_user_id?: string | null
           notes?: string | null
           type_code?: string
+          updated_at?: string | null
+          usage_count?: number | null
         }
         Relationships: []
       }
@@ -11874,6 +11886,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_acronym_usage: {
+        Args: { acronym_text: string }
+        Returns: undefined
       }
       initiate_password_reset: { Args: { user_email: string }; Returns: string }
       is_feature_enabled: { Args: { p_feature_key: string }; Returns: boolean }
