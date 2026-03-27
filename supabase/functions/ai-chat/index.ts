@@ -8859,10 +8859,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       }
 
       if (initialResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limits exceeded, please try again later." }), 
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        const rateLimitMsg = "I'm experiencing high demand right now. Please try again in about 30 seconds.";
+        const sseRateLimit = `data: ${JSON.stringify({ choices: [{ delta: { content: rateLimitMsg } }] })}\n\ndata: [DONE]\n\n`;
+        return new Response(sseRateLimit, {
+          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+        });
       }
       
       // Graceful fallback
@@ -8951,19 +8952,18 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         
         // Handle rate limiting gracefully
         if (finalResponse.status === 429) {
-          // Try to use the last tool result as a fallback response
+          // Try to use the last tool result as a fallback response — return as SSE so streaming client can parse
           const lastToolResult = toolResultContents[toolResultContents.length - 1];
+          let fallbackContent: string;
           if (lastToolResult) {
-            const fallbackContent = "I found some results but hit a temporary rate limit formatting the full response. Here's the raw data:\n\n```json\n" + JSON.stringify(lastToolResult, null, 2).substring(0, 3000) + "\n```\n\nPlease try again in a moment for a fully formatted response.";
-            return new Response(
-              JSON.stringify({ role: "assistant", content: fallbackContent }),
-              { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
+            fallbackContent = "I found the results but hit a temporary rate limit formatting the full response. Here's the raw data:\n\n```json\n" + JSON.stringify(lastToolResult, null, 2).substring(0, 3000) + "\n```\n\nPlease try again in a moment for a fully formatted response.";
+          } else {
+            fallbackContent = "I'm experiencing high demand right now. Please try again in about 30 seconds.";
           }
-          return new Response(
-            JSON.stringify({ error: "Selma is temporarily busy — please try again in 30 seconds." }),
-            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+          const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
+          return new Response(sseFallback, {
+            headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+          });
         }
         
         return new Response(

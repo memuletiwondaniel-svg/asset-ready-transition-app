@@ -77,6 +77,7 @@ interface ORSHChatDialogProps {
   onOpenChange: (open: boolean) => void;
   onUnreadCountChange?: (count: number) => void;
   initialMessage?: string;
+  mode?: 'dialog' | 'inline';
 }
 
 
@@ -84,7 +85,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   open, 
   onOpenChange, 
   onUnreadCountChange, 
-  initialMessage 
+  initialMessage,
+  mode = 'dialog'
 }) => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -640,9 +642,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
 
   const isEmptyChat = messages.length === 0;
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[900px] max-w-[95vw] h-[85vh] flex p-0 gap-0 bg-background border-border/50 shadow-2xl overflow-hidden">
+  const chatContent = (
+    <>
         {/* Sidebar */}
         <div className={cn(
           "flex flex-col border-r border-border/50 bg-muted/30 transition-all duration-300",
@@ -776,10 +777,20 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                 </div>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleNewChat} className="gap-2">
-              <Plus className="h-4 w-4" />
-              New chat
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={handleNewChat} className="gap-2">
+                <Plus className="h-4 w-4" />
+                New chat
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => onOpenChange(false)}
+                className="h-8 w-8"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Messages Area */}
@@ -1019,6 +1030,31 @@ agentName="bob"
             </div>
           </div>
         </div>
+    </>
+  );
+
+  if (!open) return null;
+
+  if (mode === 'inline') {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        {/* Dark backdrop */}
+        <div 
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+          onClick={() => onOpenChange(false)}
+        />
+        {/* Chat panel — slides up from center */}
+        <div className="relative z-10 w-[960px] max-w-[95vw] h-[90vh] flex bg-background border border-border/50 shadow-2xl rounded-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
+          {chatContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-[900px] max-w-[95vw] h-[85vh] flex p-0 gap-0 bg-background border-border/50 shadow-2xl overflow-hidden">
+        {chatContent}
       </DialogContent>
     </Dialog>
   );

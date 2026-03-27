@@ -969,7 +969,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
       )}
 
       {/* ORSH Chat Dialog */}
-      <ORSHChatDialog open={chatOpen} onOpenChange={(v) => { setChatOpen(v); if (!v) setInitialPrompt(''); }} initialMessage={initialPrompt} />
+      <ORSHChatDialog open={chatOpen} onOpenChange={(v) => { setChatOpen(v); if (!v) setInitialPrompt(''); }} initialMessage={initialPrompt} mode="inline" />
 
       {/* Tenant Setup Wizard — auto-shows for new tenants */}
       <Suspense fallback={null}>
