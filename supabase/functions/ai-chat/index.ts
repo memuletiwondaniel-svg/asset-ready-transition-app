@@ -6867,10 +6867,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return fields;
         };
 
-        // Helper: perform search.aweb GET + result.aweb POST for a given subclass (probe-proven pattern)
-        // startRow controls pagination (0-based); pass 0 for first page
-        const searchModule = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }, startRow = 0): Promise<string> => {
-          // Step 1: GET search.aweb with redirect:follow (proven working in probe functions)
+        // Helper: initialise a search session — calls search.aweb ONCE, returns hidden fields
+        const initSearch = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }): Promise<{ hiddenFields: Array<{ name: string; type: string; value: string }>; textFields: Array<{ name: string }> }> => {
           const searchUrl = assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
           const searchResp = await fetch(searchUrl, {
             headers: { Cookie: cookieHeader, Accept: 'text/html', 'User-Agent': ua },
@@ -6878,41 +6876,46 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           });
           const searchHtml = await searchResp.text();
           const fields = extractHiddenFields(searchHtml);
-          console.info('search.aweb GET: status ' + searchResp.status + ', html length: ' + searchHtml.length + ', hidden fields: ' + fields.filter(f => f.type === 'hidden').length);
+          const hiddenFields = fields.filter(f => f.type === 'hidden' && f.name && f.value);
+          const textFields = fields.filter(f => f.type === 'text' || f.type === '');
+          console.info('initSearch: search.aweb GET status ' + searchResp.status + ', html length: ' + searchHtml.length + ', hidden fields: ' + hiddenFields.length);
+          return { hiddenFields, textFields };
+        };
 
-          // Step 2: Build form data from hidden fields + search criteria
+        // Helper: fetch a single page of results from result.aweb (does NOT call search.aweb)
+        // startRow is 1-based: page 1 = 1 (or omitted), page 2 = 101, page 3 = 201
+        const fetchResultPage = async (
+          hiddenFields: Array<{ name: string; type: string; value: string }>,
+          textFields: Array<{ name: string }>,
+          params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string },
+          startRow?: number,
+        ): Promise<string> => {
           const formData = new URLSearchParams();
-          for (const f of fields) {
-            if (f.type === 'hidden' && f.name && f.value) {
-              formData.set(f.name, f.value);
-            }
+          // Replay ALL hidden fields from search.aweb (session tokens, form_id, etc.)
+          for (const f of hiddenFields) {
+            formData.set(f.name, f.value);
           }
           // Set text fields empty (as probe does)
-          for (const f of fields) {
-            if (f.type === 'text' || f.type === '') {
-              formData.set(f.name, '');
-            }
+          for (const f of textFields) {
+            formData.set(f.name, '');
           }
           // Override with our search criteria
           formData.set('subclass_type', params.subclass_type);
           if (poDigits) {
             formData.set('purchase_code', poDigits);
-            if (startRow === 0) console.log('search_assai_documents: PO-based search using purchase_code=' + poDigits);
           } else {
             formData.set('number', document_number_pattern);
-            if (startRow === 0) console.log('search_assai_documents: number-based search using number=' + document_number_pattern);
           }
           if (discipline_code) formData.set('discipline_code', discipline_code);
           if (document_type) formData.set('document_type', document_type);
           if (status_code) formData.set('status_code', status_code);
           if (company_code) formData.set('company_code', company_code);
-          // Pagination: set start_row for pages beyond the first
-          if (startRow > 0) {
+          // Pagination: 1-based start_row for pages beyond the first
+          if (startRow && startRow > 1) {
             formData.set('start_row', String(startRow));
-            formData.set('firstRow', String(startRow)); // alternate param name
           }
 
-          // Step 3: POST to result.aweb with redirect:follow (probe-proven pattern)
+          const searchUrl = assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
           const resultResp = await fetch(assaiBase + '/result.aweb', {
             method: 'POST',
             headers: {
@@ -6926,7 +6929,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             redirect: 'follow',
           });
           const resultHtml = await resultResp.text();
-          console.info('result.aweb POST (startRow=' + startRow + '): status ' + resultResp.status + ', html length: ' + resultHtml.length);
+          console.info('result.aweb POST (start_row=' + (startRow ?? 1) + '): status ' + resultResp.status + ', html length: ' + resultHtml.length);
           return resultHtml;
         };
 
@@ -6967,30 +6970,23 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
 
           // Strategy 2: parse raw <tr>/<td> elements from HTML table
-          // This handles page 2+ where myCells may not exist or has different wrapper
-          console.info('parseDocuments: myCells not found, using TR/TD fallback. HTML preview: ' + html.substring(0, 500));
+          console.info('parseDocuments: myCells not found, using TR/TD fallback. HTML preview: ' + html.substring(0, 1000));
           const docs: any[] = [];
-          // Match all <tr> elements that contain <td> cells
           const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
           let trMatch;
           while ((trMatch = trRegex.exec(html)) !== null) {
             const trContent = trMatch[1];
-            // Extract all <td> cell contents
             const tdRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
             const cells: string[] = [];
             let tdMatch;
             while ((tdMatch = tdRegex.exec(trContent)) !== null) {
               cells.push(stripHtml(tdMatch[1]));
             }
-            // Valid document rows have 8+ cells and don't look like headers
             if (cells.length >= 8) {
               const headerKeywords = ['document number', 'title', 'revision', 'status', 'date', 'description'];
               const isHeader = cells.slice(0, 5).some(c => headerKeywords.includes(c.toLowerCase()));
               if (isHeader) continue;
-              // Skip rows where key fields are empty
               if (!cells[0] && !cells[1] && !cells[2]) continue;
-              // Map cells - column order in Assai table rows:
-              // Typically: checkbox, icon, seq, docNumber, revision, revDate, status, ?, title, priority, ?, engineer, company, discipline, typeCode, workPkg, PO, ...
               docs.push({
                 document_number: cells[3] || cells[2] || '',
                 revision: cells[4] || cells[3] || '',
@@ -7029,11 +7025,16 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return null;
         };
 
-        // Helper: paginate through all result pages for a module
+        // Paginate through all result pages — search.aweb called ONCE, result.aweb called per page
         const PAGE_SIZE = 100;
         const MAX_PAGES = 5; // safety cap: 500 docs max
         const paginateSearch = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }): Promise<any[]> => {
-          const firstHtml = await searchModule(params, 0);
+          // Step 1: Initialise search session ONCE
+          const { hiddenFields, textFields } = await initSearch(params);
+          console.info('search_assai_documents: PO=' + (poDigits || 'none') + ', number=' + document_number_pattern);
+
+          // Step 2: Fetch page 1
+          const firstHtml = await fetchResultPage(hiddenFields, textFields, params);
           const firstDocs = parseDocuments(firstHtml, params.subclass_type);
           if (firstDocs.length === 0) return [];
 
@@ -7043,18 +7044,19 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           // If first page returned fewer than PAGE_SIZE, no more pages
           if (firstDocs.length < PAGE_SIZE) return firstDocs;
 
+          // Step 3: Fetch subsequent pages using SAME hidden fields, 1-based start_row
           const allDocs = [...firstDocs];
           let page = 2;
           while (page <= MAX_PAGES) {
-            const startRow = (page - 1) * PAGE_SIZE;
+            const startRow = ((page - 1) * PAGE_SIZE) + 1; // 1-based: 101, 201, 301...
             // If we know total and already have enough, stop
             if (totalFromHtml !== null && allDocs.length >= totalFromHtml) break;
 
             // 300ms delay between page requests
             await new Promise(r => setTimeout(r, 300));
-            console.info('Fetching page ' + page + ' of result.aweb (startRow=' + startRow + ')...');
+            console.info('Fetching page ' + page + ' of result.aweb (start_row=' + startRow + ')...');
 
-            const pageHtml = await searchModule(params, startRow);
+            const pageHtml = await fetchResultPage(hiddenFields, textFields, params, startRow);
             const pageDocs = parseDocuments(pageHtml, params.subclass_type);
             console.info('search_assai_documents: page ' + page + ' returned ' + pageDocs.length + ' docs');
 

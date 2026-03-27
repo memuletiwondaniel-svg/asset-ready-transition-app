@@ -120,7 +120,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
               <button
                 key={i}
                 onClick={() => onFollowupClick?.(f)}
-                className="text-xs px-3 py-1.5 rounded-full border border-border/50 bg-muted/30 hover:bg-muted/60 text-foreground transition-colors cursor-pointer"
+                className="text-xs px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 hover:bg-primary/15 hover:shadow-md hover:border-primary/50 text-foreground transition-all duration-150 cursor-pointer"
               >
                 {f}
               </button>
