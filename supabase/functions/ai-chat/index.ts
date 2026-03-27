@@ -765,7 +765,7 @@ Keep executive summaries SHORT and ACTIONABLE. Focus on:
 
 === STATUS QUERY RESPONSE FORMATTING ===
 
-When answering status questions, use clear formatting WITHOUT markdown bold:
+When answering status questions, bold only the key number (e.g. "there are **5** pending items"):
 
 COUNT QUESTIONS (e.g., "How many items pending for DP300?"):
 Format: "For {PSSR Label}, there are {count} pending items:
