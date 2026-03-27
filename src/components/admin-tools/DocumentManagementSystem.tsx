@@ -25,6 +25,7 @@ import DmsUnitsTab from './dms/DmsUnitsTab';
 import DmsDocumentTypesTab from './dms/DmsDocumentTypesTab';
 import DmsStatusCodesTab from './dms/DmsStatusCodesTab';
 import DmsConfigurationTab from './dms/DmsConfigurationTab';
+import DmsAcronymsTab from './dms/DmsAcronymsTab';
 
 interface DocumentManagementSystemProps {
   onBack: () => void;
@@ -41,6 +42,7 @@ const TAB_CONFIG = [
   { id: 'unit', label: 'Unit', icon: Box, activeColor: 'text-orange-600 dark:text-orange-400' },
   { id: 'status-code', label: 'Status Code', icon: CheckSquare, activeColor: 'text-teal-600 dark:text-teal-400' },
   { id: 'configuration', label: 'Configuration', icon: Settings2, activeColor: 'text-gray-600 dark:text-gray-400' },
+  { id: 'acronyms', label: 'Acronyms', icon: FileText, activeColor: 'text-indigo-600 dark:text-indigo-400' },
 ] as const;
 
 type TabId = typeof TAB_CONFIG[number]['id'];
@@ -360,6 +362,11 @@ const DocumentManagementSystem: React.FC<DocumentManagementSystemProps> = ({ onB
             {/* ─── Configuration Tab ─── */}
             <TabsContent value="configuration" className="mt-0">
               <DmsConfigurationTab />
+            </TabsContent>
+
+            {/* ─── Acronyms Tab ─── */}
+            <TabsContent value="acronyms" className="mt-0">
+              <DmsAcronymsTab />
             </TabsContent>
           </Tabs>
         </div>
