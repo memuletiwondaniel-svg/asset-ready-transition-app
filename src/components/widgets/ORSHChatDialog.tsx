@@ -881,15 +881,20 @@ agentName="bob"
                   ))}
                   
                   {isLoading && (
-                    <div className="flex gap-4">
+                    <div className="flex gap-4 items-start">
                       <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
                         <Bot className="h-4 w-4 text-white" />
                       </div>
-                      <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
-                        <div className="flex gap-1.5">
-                          <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '0ms' }} />
-                          <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '150ms' }} />
-                          <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <div className="space-y-2">
+                        <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex gap-1.5">
+                              <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '0ms' }} />
+                              <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '150ms' }} />
+                              <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '300ms' }} />
+                            </div>
+                            <span className="text-xs text-muted-foreground ml-1">Bob is thinking…</span>
+                          </div>
                         </div>
                       </div>
                     </div>
