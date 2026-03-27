@@ -809,7 +809,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                   </div>
                   <h1 className="text-2xl font-bold mb-2">Hi, I'm Bob</h1>
                   <p className="text-muted-foreground mb-8 max-w-md">
-                    Your ORSH assistant. Ask me anything or let me navigate you around.
+                    Your Co-Pilot. Ask me anything or let me navigate you around.
                   </p>
                   
                 </div>
