@@ -146,50 +146,7 @@ async function authenticateAssai(assaiBase: string, username: string, password: 
     allCookies = labelResult.cookies;
     console.log('Session activation: label.aweb status:', labelResult.finalStatus);
     console.info('label.aweb html length: ' + labelResult.body.length);
-    console.info('label.aweb body snippet: ' + labelResult.body.substring(0, 2000));
-
-    // 3b: activateApplet.aweb — extract URL from label.aweb HTML
-    // Look for activateApplet.aweb URLs with parameters in the label page
-    const activateUrlMatch = labelResult.body.match(/activateApplet\.aweb[^"'\s<>)]*/) ;
-    let activateUrl: string;
-    if (activateUrlMatch) {
-      // Found a parameterized URL in label.aweb — use it directly
-      const matchedPath = activateUrlMatch[0];
-      // If it's a relative path, prepend assaiBase
-      activateUrl = matchedPath.startsWith('http') ? matchedPath : assaiBase + '/' + matchedPath;
-    } else {
-      // Fallback: try extracting individual params from hidden inputs or JS vars
-      const appletSeqMatch = labelResult.body.match(/applet_seq_nr[=:]\s*['"]?(\d+)/i);
-      const formIdMatch = labelResult.body.match(/form_id[=:]\s*['"]?([^"'\s&<>]+)/i);
-      const params = new URLSearchParams();
-      if (appletSeqMatch) params.set('applet_seq_nr', appletSeqMatch[1]);
-      if (formIdMatch) params.set('form_id', formIdMatch[1]);
-      const qs = params.toString();
-      activateUrl = assaiBase + '/activateApplet.aweb' + (qs ? '?' + qs : '');
-      console.info('activateApplet.aweb fallback params — applet_seq_nr:', appletSeqMatch?.[1] || 'not found', 'form_id:', formIdMatch?.[1] || 'not found');
-    }
-    console.info('activateApplet.aweb URL used: ' + activateUrl);
-
-    const appletResult = await fetchCaptureCookies(activateUrl, {
-      method: 'GET',
-      headers: { 'User-Agent': ua }
-    }, allCookies);
-    allCookies = appletResult.cookies;
-    console.log('Session activation: activateApplet.aweb status:', appletResult.finalStatus);
-    console.info('activateApplet.aweb html length: ' + appletResult.body.length);
-
-    // 3c: navbar.aweb — final activation
-    try {
-      const navResult = await fetchCaptureCookies(assaiBase + '/navbar.aweb?subclass_type=null', {
-        method: 'GET',
-        headers: { 'User-Agent': ua }
-      }, allCookies);
-      allCookies = navResult.cookies;
-      console.log('Session activation: navbar.aweb status:', navResult.finalStatus);
-      console.info('navbar.aweb html length: ' + navResult.body.length);
-    } catch (e) {
-      console.error('Session activation failed for navbar.aweb', e);
-    }
+    console.info('label.aweb body snippet: ' + labelResult.body.substring(0, 500));
   }
 
   console.log('Assai cookies final:', allCookies.substring(0, 120));
