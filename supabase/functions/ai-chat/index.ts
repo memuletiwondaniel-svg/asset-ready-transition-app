@@ -6889,35 +6889,59 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           };
         }
         
-        // Step 2: Fuzzy search on document_name and document_description
+        // Step 2: Search document_name ONLY first (avoids false matches from description)
         const { data: nameMatches } = await supabaseClient
           .from('dms_document_types')
           .select('code, document_name, document_description, tier')
-          .or(`document_name.ilike.%${query}%,document_description.ilike.%${query}%,code.ilike.%${query}%`)
+          .ilike('document_name', `%${query}%`)
           .eq('is_active', true)
           .order('document_name')
           .limit(8);
         
-        if (!nameMatches || nameMatches.length === 0) {
+        if (nameMatches && nameMatches.length > 0) {
           return {
-            found: false,
-            message: `No document type found for "${query}". Ask the user to clarify — they may be using a project-specific abbreviation not yet in the system.`
+            found: true,
+            count: nameMatches.length,
+            source: 'name_search',
+            matches: nameMatches.map(d => ({
+              code: d.code,
+              name: d.document_name,
+              description: d.document_description?.substring(0, 150),
+              tier: d.tier
+            })),
+            instruction: nameMatches.length === 1
+              ? `Use code "${nameMatches[0].code}" as document_type in search_assai_documents`
+              : 'Multiple matches — confirm which document type the user means before searching'
+          };
+        }
+        
+        // Step 3: Secondary fallback — search description only if name had 0 results
+        const { data: descMatches } = await supabaseClient
+          .from('dms_document_types')
+          .select('code, document_name, document_description, tier')
+          .ilike('document_description', `%${query}%`)
+          .eq('is_active', true)
+          .order('document_name')
+          .limit(5);
+        
+        if (descMatches && descMatches.length > 0) {
+          return {
+            found: true,
+            count: descMatches.length,
+            source: 'description_search',
+            matches: descMatches.map(d => ({
+              code: d.code,
+              name: d.document_name,
+              description: d.document_description?.substring(0, 150),
+              tier: d.tier
+            })),
+            instruction: `These matched on description text — confirm with the user which document type they mean before searching`
           };
         }
         
         return {
-          found: true,
-          count: nameMatches.length,
-          source: 'name_search',
-          matches: nameMatches.map(d => ({
-            code: d.code,
-            name: d.document_name,
-            description: d.document_description?.substring(0, 150),
-            tier: d.tier
-          })),
-          instruction: nameMatches.length === 1
-            ? `Use code "${nameMatches[0].code}" as document_type in search_assai_documents`
-            : 'Multiple matches — confirm which document type the user means before searching'
+          found: false,
+          message: `No document type found for "${query}". Ask the user to clarify — they may be using a project-specific abbreviation not yet in the system.`
         };
       } catch (err) {
         console.error('resolve_document_type error:', err);
