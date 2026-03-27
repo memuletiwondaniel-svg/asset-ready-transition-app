@@ -715,6 +715,12 @@ When a user asks for a document by type name or abbreviation:
 INDUSTRY ACRONYM AWARENESS:
 You understand industry acronyms used in oil & gas document control. When a user uses any acronym or abbreviation (BfD, FAT, SAT, ITP, C&E, PSM, SIL, IOM, SDR, SLD, GA, GAD, CDB, HYD, PTR, PCOM, COM, HAR, RAR, HAC, etc.), always call resolve_document_type to get the correct code before searching Assai. For ANY acronym or abbreviated document name — always call resolve_document_type FIRST. Never guess the code.
 
+UNKNOWN ACRONYM HANDLING — When resolve_document_type returns found: false for an acronym:
+Step 1 — Ask for clarification with suggestions. Do NOT just say "I don't know this acronym". Instead respond like: "I don't have [ACRONYM] in my knowledge base yet. Could you tell me what it stands for? If it's one of these, just confirm:" then offer 2-3 plausible suggestions based on your oil & gas knowledge and the conversation context.
+Step 2 — When user confirms or explains: First call resolve_document_type with the full name they gave you to find the matching code. Then call learn_acronym to save it permanently. Confirm: "Got it — I've saved [ACRONYM] as [full name] to my knowledge base. I'll remember this from now on." Then immediately proceed to answer their original question.
+Step 3 — If user corrects a wrong assumption: Call learn_acronym to update the record and acknowledge: "Thank you for the correction — I've updated my records."
+IMPORTANT: Never ask the user for the document type code — resolve that yourself by calling resolve_document_type with the full name. The user should only provide the human-readable meaning.
+
 PLANT/UNIT CODE MAPPING (use when user mentions DP numbers or plant areas):
 DP300 = U40300, DP200 = U40200, DP100 = U40100, DP400 = U40400, DP500 = U40500.
 When the user mentions a DP number, map it to the unit code and include it in the document_number_pattern for precision.
@@ -3132,6 +3138,26 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
           }
         },
         required: ["query"]
+      }
+    }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LEARN ACRONYM TOOL - Save new acronym mappings from user conversations
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "learn_acronym",
+      description: "Saves a new acronym or abbreviation mapping to the ORSH knowledge base. Call this when a user explains what an acronym means that was not previously known. This allows the system to remember it permanently for all future conversations. Always confirm with the user before saving.",
+      parameters: {
+        type: "object",
+        properties: {
+          acronym: { type: "string", description: "The acronym or abbreviation in uppercase (e.g. PCN, PES, HEMP)" },
+          full_name: { type: "string", description: "The full expanded name (e.g. Project Change Notice)" },
+          type_code: { type: "string", description: "The Assai document type code if known, otherwise empty string" },
+          notes: { type: "string", description: "Any additional context about this acronym" }
+        },
+        required: ["acronym", "full_name"]
       }
     }
   },
@@ -6837,6 +6863,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           .maybeSingle();
         
         if (acronymMatch) {
+          // Increment usage count
+          try {
+            await supabaseClient.rpc('increment_acronym_usage', { acronym_text: cleanQuery });
+          } catch (_) { /* non-critical */ }
+          
           // Fetch the full document type details
           const { data: typeDetails } = await supabaseClient
             .from('dms_document_types')
@@ -6891,6 +6922,67 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       } catch (err) {
         console.error('resolve_document_type error:', err);
         return { error: String(err) };
+      }
+    }
+
+    case "learn_acronym": {
+      try {
+        const acronym = (args.acronym || '').trim().toUpperCase().replace(/[^A-Z0-9&]/g, '');
+        const full_name = args.full_name || '';
+        const type_code = args.type_code || '';
+        const notes = args.notes || '';
+        
+        if (!acronym || !full_name) {
+          return { success: false, message: 'Both acronym and full_name are required.' };
+        }
+        
+        // Check if it already exists
+        const { data: existing } = await supabaseClient
+          .from('dms_document_type_acronyms')
+          .select('acronym, full_name, type_code')
+          .eq('acronym', acronym)
+          .maybeSingle();
+        
+        if (existing) {
+          await supabaseClient
+            .from('dms_document_type_acronyms')
+            .update({
+              full_name,
+              type_code: type_code || existing.type_code,
+              notes: notes || null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('acronym', acronym);
+          
+          return {
+            success: true,
+            action: 'updated',
+            message: `Updated "${acronym}". Previously "${existing.full_name}", now "${full_name}".`
+          };
+        }
+        
+        const { error } = await supabaseClient
+          .from('dms_document_type_acronyms')
+          .insert({
+            acronym,
+            full_name,
+            type_code: type_code || null,
+            notes: notes || null,
+            is_learned: true
+          });
+        
+        if (error) {
+          return { success: false, message: `Failed to save: ${error.message}` };
+        }
+        
+        return {
+          success: true,
+          action: 'created',
+          message: `Saved "${acronym}" as "${full_name}" to the knowledge base. This will be remembered in all future conversations.`
+        };
+      } catch (err) {
+        console.error('learn_acronym error:', err);
+        return { success: false, error: String(err) };
       }
     }
 
