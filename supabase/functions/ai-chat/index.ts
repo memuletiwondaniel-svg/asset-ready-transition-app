@@ -8927,6 +8927,12 @@ CRITICAL TOOL ROUTING:
 When the user asks to search Assai, find documents in Assai, check vendor documents, search by PO number, or any external DMS query — ALWAYS use search_assai_documents first, NOT get_document_search_by_number (which only searches the ORSH internal database).
 Use get_document_search_by_number ONLY for ORSH internal document register queries.
 
+CRITICAL SEARCH PATTERN RULES:
+- ALWAYS include the company/originator code in the document_number_pattern when the user mentions a specific company. Example: user says "ABB documents" → use "6529-ABBE-%" NOT "6529-%"
+- NEVER use "6529-%" alone — this is too broad and returns thousands of results across all companies
+- The pattern should be as specific as possible: include project code + originator at minimum
+- Company code mapping: ABB/ABB Shanghai = ABBE, Wood Group = WGEL, Exterran = EXTR, KenTech = KENT, BGC = BGC, AWI = AWI
+
 DOCUMENT CONTENT READING:
 Use the read_assai_document tool when users ask to:
 - "Read this document: [doc number]"
