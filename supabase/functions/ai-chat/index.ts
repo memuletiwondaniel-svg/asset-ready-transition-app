@@ -6797,7 +6797,6 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         console.log('search_assai_documents: authenticated OK');
         
         const ua = ASSAI_UA;
-        const cookieHeader = authResult.cookies;
 
         // Determine module: ZV discipline or PO-based searches target SUP_DOC; otherwise DES_DOC first
         const isPOSearch = document_number_pattern.match(/%-?(\d{5})-?%?$/) || document_number_pattern.match(/^(\d{5})$/);
