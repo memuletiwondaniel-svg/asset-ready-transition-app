@@ -7185,13 +7185,13 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         }
 
         // Build summaries and add download URLs
-        const assaiBase = (creds?.base_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/+$/, '');
+        const assaiBaseForUrls = (creds?.base_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/+$/, '');
         const statusSummary: Record<string, number> = {};
         const typeSummary: Record<string, { count: number; statuses: string[] }> = {};
         allDocuments.forEach((d: any) => {
           // Add download URL to each document
           if (d.pk_seq_nr && d.entt_seq_nr) {
-            d.download_url = assaiBase + '/download.aweb?pk_seq_nr=' + d.pk_seq_nr + '&entt_seq_nr=' + d.entt_seq_nr;
+            d.download_url = assaiBaseForUrls + '/download.aweb?pk_seq_nr=' + d.pk_seq_nr + '&entt_seq_nr=' + d.entt_seq_nr;
           }
           statusSummary[d.status] = (statusSummary[d.status] || 0) + 1;
           if (!typeSummary[d.type_code]) typeSummary[d.type_code] = { count: 0, statuses: [] };
