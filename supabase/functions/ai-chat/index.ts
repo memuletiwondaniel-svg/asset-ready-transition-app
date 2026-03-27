@@ -6845,17 +6845,14 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           matches: data.map(d => ({
             code: d.code,
             name: d.document_name,
-            description: d.document_description,
+            description: d.document_description?.substring(0, 200),
             tier: d.tier,
             discipline_code: d.discipline_code,
-            discipline_name: d.discipline_name,
-            is_vendor_document: d.is_vendor_document === true || d.rlmu === 'Vendor' || d.discipline_code === 'ZV'
+            discipline_name: d.discipline_name
           })),
-          note: data.length > 1 
-            ? 'Multiple matches found — confirm with user which one they mean before searching Assai.' 
-            : (data[0].is_vendor_document === true || data[0].rlmu === 'Vendor' || data[0].discipline_code === 'ZV')
-              ? 'This is a vendor document — you can search Assai with this code.'
-              : 'This is an engineering/owner document — it is NOT in the Assai vendor register. It would be in the project EDMS.'
+          instruction: data.length === 1
+            ? `Use code "${data[0].code}" as the document_type filter in search_assai_documents`
+            : 'Multiple matches found — confirm with the user which document type they mean before searching Assai'
         };
       } catch (err) {
         console.error('resolve_document_type error:', err);
