@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { renderWithStatusBadges } from '@/components/bob/StatusBadge';
-import { StructuredResponse, parseStructuredResponse, renderInlineMarkdown } from '@/components/bob/StructuredResponse';
+import { StructuredResponse, parseStructuredResponse, renderInlineMarkdown, DocumentNumberLink } from '@/components/bob/StructuredResponse';
+import { ASSAI_DOC_NUMBER_REGEX } from '@/lib/assaiLinks';
 
 /** Replace known status codes in text children with colored badges */
 function processChildren(children: React.ReactNode): React.ReactNode {

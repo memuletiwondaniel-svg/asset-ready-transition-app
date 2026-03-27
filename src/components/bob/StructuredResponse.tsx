@@ -371,38 +371,24 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                 <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Title</th>
                 <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Rev</th>
                 <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Status</th>
-                <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-center font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {data.documents.slice(0, 10).map((doc, i) => (
                 <tr key={doc.document_number} className={i % 2 === 1 ? 'bg-muted/20' : ''} style={{ borderBottom: '1px solid hsl(var(--border) / 0.3)' }}>
-                  <td className="py-2 px-3 text-xs font-mono text-foreground">{doc.document_number}</td>
+                  <td className="py-2 px-3 text-xs">
+                    <DocumentNumberLink docNumber={doc.document_number} />
+                    <button
+                      onClick={() => onFollowupClick?.(`Read and summarise ${doc.document_number}`)}
+                      title="Read & summarise"
+                      className="ml-1 p-0.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors cursor-pointer inline-flex align-middle"
+                    >
+                      <Search className="h-3 w-3" />
+                    </button>
+                  </td>
                   <td className="py-2 px-3 text-xs text-foreground max-w-[200px] truncate">{doc.title}</td>
                   <td className="py-2 px-3 text-xs text-muted-foreground">{doc.revision}</td>
                   <td className="py-2 px-3"><StatusBadge code={doc.status} /></td>
-                  <td className="py-2 px-3">
-                    <div className="flex items-center justify-center gap-1.5">
-                      {doc.download_url && (
-                        <a
-                          href={doc.download_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Download document"
-                          className="p-1 rounded hover:bg-muted/60 text-blue-500 hover:text-blue-600 transition-colors"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                        </a>
-                      )}
-                      <button
-                        onClick={() => onFollowupClick?.(`Read and summarise ${doc.document_number}`)}
-                        title="Read & summarise"
-                        className="p-1 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                      >
-                        <Search className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>
