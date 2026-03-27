@@ -544,9 +544,23 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     if (isListening) {
       stopListening();
     } else {
-      startListening((transcript) => {
-        setInput((prev) => prev + (prev ? ' ' : '') + transcript);
-      });
+      startListening(
+        (transcript) => {
+          setInput(transcript);
+        },
+        () => {
+          // Auto-submit after transcription
+          setTimeout(() => {
+            const textarea = textareaRef.current;
+            if (textarea) {
+              const event = new KeyboardEvent('keydown', { key: 'Enter' });
+              textarea.dispatchEvent(event);
+            }
+            // Fallback: directly call handleSend if the input has content
+            handleSend();
+          }, 200);
+        }
+      );
     }
   };
 
