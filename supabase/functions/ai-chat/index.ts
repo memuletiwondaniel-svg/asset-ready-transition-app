@@ -703,7 +703,7 @@ DOCUMENT TYPE RESOLUTION (CRITICAL):
 ALL documents — engineering, vendor, planning — reside in Assai. The dms_document_types table in ORSH is the master reference for Assai document type codes.
 
 When a user asks for a document by type name or abbreviation:
-1. ALWAYS call resolve_document_type first with the name/abbreviation they used
+1. ALWAYS call resolve_document_type first with the EXACT text the user used — do NOT expand abbreviations yourself. If the user says "BfD", pass "BfD" as the query, NOT "Basis for Design". The tool handles acronym resolution internally.
 2. If exactly one match: use its code as the document_type parameter in search_assai_documents
 3. If multiple matches: show the user the options and ask which one they mean before searching
 4. If no match: tell the user the document type was not found in the register and ask them to clarify
@@ -712,8 +712,13 @@ When a user asks for a document by type name or abbreviation:
 7. Never expose internal search patterns, wildcards, or codes to the user — only show human-readable results
 8. If no specific filter is available, ask the user: "To search Assai, I need at least one of: the vendor name, the PO number, or the document type. Which can you provide?"
 
+CRITICAL — resolve_document_type input rules:
+- If user says an acronym like "BfD", "ITP", "FAT", "SDR" → pass the acronym AS-IS (e.g. query: "BfD")
+- If user says a full name like "Basis for Design" → pass the full name AS-IS (e.g. query: "Basis for Design")
+- NEVER expand an acronym yourself before calling the tool — the tool does this internally using the acronym database
+
 INDUSTRY ACRONYM AWARENESS:
-You understand industry acronyms used in oil & gas document control. When a user uses any acronym or abbreviation (BfD, FAT, SAT, ITP, C&E, PSM, SIL, IOM, SDR, SLD, GA, GAD, CDB, HYD, PTR, PCOM, COM, HAR, RAR, HAC, etc.), always call resolve_document_type to get the correct code before searching Assai. For ANY acronym or abbreviated document name — always call resolve_document_type FIRST. Never guess the code.
+You understand industry acronyms used in oil & gas document control. When a user uses any acronym or abbreviation (BfD, FAT, SAT, ITP, C&E, PSM, SIL, IOM, SDR, SLD, GA, GAD, CDB, HYD, PTR, PCOM, COM, HAR, RAR, HAC, etc.), always call resolve_document_type with the EXACT acronym to get the correct code before searching Assai. For ANY acronym or abbreviated document name — always call resolve_document_type FIRST. Never guess the code.
 
 UNKNOWN ACRONYM HANDLING — When resolve_document_type returns found: false for an acronym:
 Step 1 — Ask for clarification with suggestions. Do NOT just say "I don't know this acronym". Instead respond like: "I don't have [ACRONYM] in my knowledge base yet. Could you tell me what it stands for? If it's one of these, just confirm:" then offer 2-3 plausible suggestions based on your oil & gas knowledge and the conversation context.
@@ -733,6 +738,16 @@ ERROR HANDLING FOR TOOL RESULTS (CRITICAL):
 - If search_assai_documents fails AFTER resolve_document_type returned a code, respond: "I found a document type matching your query (code: [code], name: [name]) but couldn't retrieve results from Assai. This may mean the document type doesn't exist in this project's Assai cabinet, or there are no documents of this type yet. Would you like me to try a different search?"
 - NEVER say generic "I wasn't able to complete that request". Always include what you searched for and what went wrong.
 - NEVER show raw error messages, stack traces, or wildcard patterns to the user.
+
+ERROR RECOVERY — When you cannot complete a request, NEVER say "I wasn't able to complete that request". Instead, always respond with:
+1. ONE sentence acknowledging what you were trying to do
+2. The most likely reason it didn't work (without technical jargon)
+3. TWO or THREE specific suggested next steps
+
+If document type not found: "I couldn't find a document type matching '[X]' in the ORSH register. This might be a project-specific term I haven't learned yet. I can: search by vendor name instead, search by PO number, or you can tell me what '[X]' stands for and I'll add it to my knowledge base."
+If Assai search returns no results: "I searched Assai for [type] documents but found none. They may not have been submitted yet, or may be filed under a different code. I can: search with a broader filter, check a different project code, or search by document title keywords."
+If Assai connection fails: "I had trouble connecting to Assai right now. I can: try your search again shortly, check documents already synced to ORSH, or you can contact your administrator if this persists."
+Always end with specific follow-up suggestions so the user can take immediate action.
 
 DOCUMENT SEARCH RESPONSE FORMAT (CRITICAL):
 When you receive results from search_assai_documents, do NOT produce tables, status summaries, or structured JSON. The system builds those automatically from the raw tool data.
@@ -6856,21 +6871,26 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         if (!query) return { found: false, message: 'Please provide a document type name or abbreviation to look up.' };
         
         const cleanQuery = query.trim().toUpperCase().replace(/[^A-Z0-9&]/g, '');
+        console.log('resolve_document_type: raw query:', query, '→ cleanQuery:', cleanQuery);
         
-        // Step 1: Check acronym table first (exact match)
-        const { data: acronymMatch } = await supabaseClient
+        // Step 1a: Exact acronym match on dms_document_type_acronyms
+        const { data: acronymMatch, error: acronymError } = await supabaseClient
           .from('dms_document_type_acronyms')
-          .select('acronym, type_code, full_name, notes')
+          .select('acronym, type_code, full_name, notes, usage_count')
           .eq('acronym', cleanQuery)
           .maybeSingle();
         
-        if (acronymMatch) {
-          // Increment usage count
-          try {
-            await supabaseClient.rpc('increment_acronym_usage', { acronym_text: cleanQuery });
-          } catch (_) { /* non-critical */ }
+        console.log('resolve_document_type: acronym lookup result:', acronymMatch ? `FOUND ${acronymMatch.acronym}→${acronymMatch.type_code}` : 'no match', 'error:', acronymError);
+        
+        if (acronymMatch && !acronymError) {
+          // Increment usage count (fire-and-forget)
+          supabaseClient
+            .from('dms_document_type_acronyms')
+            .update({ usage_count: (acronymMatch.usage_count || 0) + 1, updated_at: new Date().toISOString() })
+            .eq('acronym', cleanQuery)
+            .then(() => {});
           
-          // Fetch the full document type details
+          // Fetch full document type details
           const { data: typeDetails } = await supabaseClient
             .from('dms_document_types')
             .select('code, document_name, document_description, tier')
@@ -6888,6 +6908,59 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               tier: typeDetails?.tier ?? null
             }],
             instruction: `Use code "${acronymMatch.type_code}" as the document_type filter in search_assai_documents`
+          };
+        }
+        
+        // Step 1b: Check if query matches a full_name in the acronym table (e.g. "Basis for Design" → BFD)
+        const { data: fullNameMatch } = await supabaseClient
+          .from('dms_document_type_acronyms')
+          .select('acronym, type_code, full_name, notes, usage_count')
+          .ilike('full_name', `%${query}%`)
+          .limit(3);
+        
+        console.log('resolve_document_type: full_name lookup found:', fullNameMatch?.length ?? 0);
+        
+        if (fullNameMatch && fullNameMatch.length > 0) {
+          // Increment usage for first match
+          supabaseClient
+            .from('dms_document_type_acronyms')
+            .update({ usage_count: (fullNameMatch[0].usage_count || 0) + 1, updated_at: new Date().toISOString() })
+            .eq('acronym', fullNameMatch[0].acronym)
+            .then(() => {});
+          
+          if (fullNameMatch.length === 1) {
+            const match = fullNameMatch[0];
+            const { data: typeDetails } = await supabaseClient
+              .from('dms_document_types')
+              .select('code, document_name, document_description, tier')
+              .eq('code', match.type_code)
+              .maybeSingle();
+            
+            return {
+              found: true,
+              count: 1,
+              source: 'acronym_fullname_lookup',
+              matches: [{
+                code: match.type_code,
+                name: match.full_name,
+                description: typeDetails?.document_description?.substring(0, 200) ?? match.notes,
+                tier: typeDetails?.tier ?? null
+              }],
+              instruction: `Use code "${match.type_code}" as the document_type filter in search_assai_documents`
+            };
+          }
+          
+          return {
+            found: true,
+            count: fullNameMatch.length,
+            source: 'acronym_fullname_lookup',
+            matches: fullNameMatch.map(m => ({
+              code: m.type_code,
+              name: m.full_name,
+              description: m.notes,
+              tier: null
+            })),
+            instruction: 'Multiple acronym matches — confirm with user which document type they mean'
           };
         }
         
@@ -9373,8 +9446,9 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         });
       }
       
-      // Graceful fallback
-      const fallbackContent = "I'm experiencing a temporary issue connecting to my AI backend. Please try again in a moment. If this persists, contact your ORSH administrator.";
+      // Graceful fallback — contextual based on what the user asked
+      const lastUserMsg = messages?.filter((m: any) => m.role === 'user').pop()?.content || '';
+      const fallbackContent = `I wasn't able to process your request about "${lastUserMsg.substring(0, 60).trim()}..." due to a temporary backend issue.\n\nWhat you can try:\n• Rephrase your question with more specific details\n• Try again in a moment — this is usually a brief interruption\n• Contact your ORSH administrator if this keeps happening`;
       const sseData = `data: ${JSON.stringify({
         choices: [{ delta: { content: fallbackContent } }]
       })}\n\ndata: [DONE]\n\n`;
@@ -9498,9 +9572,10 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           const lastTR = toolResultContents[toolResultContents.length - 1];
           let fallbackContent: string;
           if (lastTR) {
-            fallbackContent = "I found the results but hit a temporary rate limit formatting the full response. Here's the raw data:\n\n```json\n" + JSON.stringify(lastTR, null, 2).substring(0, 3000) + "\n```\n\nPlease try again in a moment for a fully formatted response.";
+            fallbackContent = "I found some results but hit a temporary rate limit while formatting the response. The data is ready — please try your question again in about 30 seconds and I'll format it properly.";
           } else {
-            fallbackContent = "I'm experiencing high demand right now. Please try again in about 30 seconds.";
+            const lastUserMsg = messages?.filter((m: any) => m.role === 'user').pop()?.content || '';
+            fallbackContent = `I was working on your request about "${lastUserMsg.substring(0, 60).trim()}" but hit a temporary rate limit.\n\nPlease try again in about 30 seconds — your request was valid and should work on the next attempt.`;
           }
           const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
           return new Response(sseFallback, {
@@ -9753,7 +9828,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             });
           }
         } else {
-          finalContent = "I retrieved the data but couldn't format it. Please try a more specific question.";
+          finalContent = "I retrieved some data but couldn't determine the right format to display it. Could you rephrase your question with more specific details? For example, specify the document type, vendor name, or PO number you're looking for.";
         }
       }
       
