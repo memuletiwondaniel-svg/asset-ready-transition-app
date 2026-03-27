@@ -914,7 +914,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                         )}
                       </div>
                       {message.role === 'assistant' && !isLoading && (
-                        <div className="ml-12">
+                        <div className="flex flex-col mt-1.5">
                           <ChatMessageFeedback
                             messageIndex={index}
                             conversationId={currentConversationId}
