@@ -69,42 +69,42 @@ function mergeCookies(existing: string, newer: string): string {
   return [...map.values()].join('; ');
 }
 
+// Module-level User-Agent constant for Assai requests
+const ASSAI_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+
+// Module-level helper: fetch with redirect:'manual', capture cookies from every hop (302s included)
+async function fetchCaptureCookies(url: string, init: RequestInit, currentCookies: string): Promise<{ cookies: string; finalStatus: number; body: string }> {
+  let cookies = currentCookies;
+  let attempts = 0;
+  let currentUrl = url;
+  let lastStatus = 0;
+  let body = '';
+
+  while (attempts < 8) {
+    attempts++;
+    const mergedInit = { ...init, redirect: 'manual' as RequestRedirect, headers: { ...init.headers as Record<string,string>, 'Cookie': cookies } };
+    const res = await fetch(currentUrl, mergedInit);
+    cookies = mergeCookies(cookies, extractCookies(res.headers));
+    lastStatus = res.status;
+
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get('location');
+      await res.text();
+      if (!location) break;
+      currentUrl = location.startsWith('http') ? location : new URL(location, currentUrl).href;
+      init = { method: 'GET', headers: { 'User-Agent': ASSAI_UA } };
+      continue;
+    }
+
+    body = await res.text();
+    break;
+  }
+  return { cookies, finalStatus: lastStatus, body };
+}
+
 // Shared Assai authentication helper — simple form-based login
 async function authenticateAssai(assaiBase: string, username: string, password: string): Promise<{ cookies: string; success: boolean; statusCode: number }> {
-  const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
-
-  // Helper: fetch with redirect:'manual', capture cookies from every hop (302s included)
-  async function fetchCaptureCookies(url: string, init: RequestInit, currentCookies: string): Promise<{ cookies: string; finalStatus: number; body: string }> {
-    let cookies = currentCookies;
-    let attempts = 0;
-    let currentUrl = url;
-    let lastStatus = 0;
-    let body = '';
-
-    while (attempts < 8) {
-      attempts++;
-      const mergedInit = { ...init, redirect: 'manual' as RequestRedirect, headers: { ...init.headers as Record<string,string>, 'Cookie': cookies } };
-      const res = await fetch(currentUrl, mergedInit);
-      // Capture Set-Cookie from this response (including 302s!)
-      cookies = mergeCookies(cookies, extractCookies(res.headers));
-      lastStatus = res.status;
-
-      if (res.status >= 300 && res.status < 400) {
-        const location = res.headers.get('location');
-        await res.text(); // consume body
-        if (!location) break;
-        // Resolve relative redirects
-        currentUrl = location.startsWith('http') ? location : new URL(location, currentUrl).href;
-        // After redirect, switch to GET and drop body
-        init = { method: 'GET', headers: { 'User-Agent': ua } };
-        continue;
-      }
-
-      body = await res.text();
-      break;
-    }
-    return { cookies, finalStatus: lastStatus, body };
-  }
+  const ua = ASSAI_UA;
 
   // Step 1: GET login page — capture initial session cookies (including from redirects)
   let allCookies = '';
