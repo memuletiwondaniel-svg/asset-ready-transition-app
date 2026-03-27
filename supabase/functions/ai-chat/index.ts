@@ -8859,10 +8859,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       }
 
       if (initialResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limits exceeded, please try again later." }), 
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        const rateLimitMsg = "I'm experiencing high demand right now. Please try again in about 30 seconds.";
+        const sseRateLimit = `data: ${JSON.stringify({ choices: [{ delta: { content: rateLimitMsg } }] })}\n\ndata: [DONE]\n\n`;
+        return new Response(sseRateLimit, {
+          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+        });
       }
       
       // Graceful fallback
