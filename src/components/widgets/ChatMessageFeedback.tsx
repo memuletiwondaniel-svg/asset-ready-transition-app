@@ -1,8 +1,31 @@
 import React, { useState } from 'react';
-import { ThumbsUp, ThumbsDown, Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ThumbsUp, ThumbsDown, Send, Volume2, Loader2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+/** Strip markdown/emojis for clean TTS text */
+function stripMarkdownForTTS(text: string): string {
+  return text
+    // Remove markdown headers
+    .replace(/^#{1,6}\s+/gm, '')
+    // Remove bold/italic
+    .replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1')
+    // Remove table pipes and formatting
+    .replace(/\|/g, ' ')
+    .replace(/^[\s-:]+$/gm, '')
+    // Remove leading bullet dashes
+    .replace(/^\s*[-•]\s+/gm, '')
+    // Remove emojis (common unicode ranges)
+    .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{27BF}]|[\u{FE00}-\u{FE0F}]|[\u{1F000}-\u{1F02F}]|[✅⚠️📄🔍📅❌🟢🟡🔴]/gu, '')
+    // Remove code blocks
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    // Clean up multiple spaces/newlines
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/  +/g, ' ')
+    .trim();
+}
 
 interface ChatMessageFeedbackProps {
   messageIndex: number;
@@ -10,6 +33,7 @@ interface ChatMessageFeedbackProps {
   agentName?: string;
   feedbackGiven?: 'positive' | 'negative' | null;
   onFeedbackChange: (index: number, rating: 'positive' | 'negative') => void;
+  messageContent?: string;
 }
 
 export const ChatMessageFeedback: React.FC<ChatMessageFeedbackProps> = ({
@@ -18,10 +42,13 @@ export const ChatMessageFeedback: React.FC<ChatMessageFeedbackProps> = ({
   agentName = 'bob',
   feedbackGiven,
   onFeedbackChange,
+  messageContent,
 }) => {
   const [showTextInput, setShowTextInput] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [ttsState, setTtsState] = useState<'idle' | 'loading' | 'playing'>('idle');
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
 
   const submitFeedback = async (rating: 'positive' | 'negative', text?: string) => {
     try {
@@ -62,7 +89,6 @@ export const ChatMessageFeedback: React.FC<ChatMessageFeedbackProps> = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Update existing feedback with text
       await (supabase.from('ai_feedback' as any)
         .update({ feedback_text: feedbackText.trim() })
         .eq('user_id', user.id)
@@ -74,6 +100,84 @@ export const ChatMessageFeedback: React.FC<ChatMessageFeedbackProps> = ({
     setShowTextInput(false);
     setFeedbackText('');
     setSubmitting(false);
+  };
+
+  const handleTTS = async () => {
+    // If currently playing, stop
+    if (ttsState === 'playing' && currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setTtsState('idle');
+      setCurrentAudio(null);
+      return;
+    }
+
+    if (!messageContent || ttsState === 'loading') return;
+
+    const cleanText = stripMarkdownForTTS(messageContent);
+    if (!cleanText) {
+      toast.error('No text to read aloud');
+      return;
+    }
+
+    setTtsState('loading');
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ text: cleanText }),
+        }
+      );
+
+      if (!response.ok) throw new Error(`TTS failed: ${response.status}`);
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+
+      audio.onended = () => {
+        setTtsState('idle');
+        setCurrentAudio(null);
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      audio.onerror = () => {
+        setTtsState('idle');
+        setCurrentAudio(null);
+        URL.revokeObjectURL(audioUrl);
+        toast.error('Audio playback failed');
+      };
+
+      setCurrentAudio(audio);
+      await audio.play();
+      setTtsState('playing');
+    } catch (err) {
+      console.error('ElevenLabs TTS error, falling back to browser:', err);
+      // Fallback to browser speechSynthesis
+      try {
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          utterance.rate = 1.0;
+          utterance.onend = () => setTtsState('idle');
+          utterance.onerror = () => setTtsState('idle');
+          window.speechSynthesis.speak(utterance);
+          setTtsState('playing');
+        } else {
+          toast.error('Text-to-speech unavailable');
+          setTtsState('idle');
+        }
+      } catch {
+        toast.error('Text-to-speech failed');
+        setTtsState('idle');
+      }
+    }
   };
 
   return (
@@ -103,6 +207,28 @@ export const ChatMessageFeedback: React.FC<ChatMessageFeedbackProps> = ({
         >
           <ThumbsDown className="h-3.5 w-3.5" />
         </button>
+        {messageContent && (
+          <button
+            onClick={handleTTS}
+            disabled={ttsState === 'loading'}
+            className={cn(
+              "p-1 rounded-md transition-colors",
+              ttsState === 'playing'
+                ? "text-primary"
+                : "text-muted-foreground/50 hover:text-muted-foreground",
+              ttsState === 'loading' && "opacity-50"
+            )}
+            aria-label={ttsState === 'playing' ? 'Stop reading' : 'Read aloud'}
+          >
+            {ttsState === 'loading' ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : ttsState === 'playing' ? (
+              <VolumeX className="h-3.5 w-3.5" />
+            ) : (
+              <Volume2 className="h-3.5 w-3.5" />
+            )}
+          </button>
+        )}
       </div>
 
       {showTextInput && feedbackGiven === 'negative' && (

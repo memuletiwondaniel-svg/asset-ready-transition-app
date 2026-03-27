@@ -97,7 +97,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { isListening, startListening, stopListening, isSupported } = useVoiceInput();
+  const { isListening, isTranscribing, startListening, stopListening, isSupported } = useVoiceInput();
   const { data: roleData } = useCurrentUserRole();
   const welcomeSentRef = useRef(false);
   const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
@@ -544,9 +544,23 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     if (isListening) {
       stopListening();
     } else {
-      startListening((transcript) => {
-        setInput((prev) => prev + (prev ? ' ' : '') + transcript);
-      });
+      startListening(
+        (transcript) => {
+          setInput(transcript);
+        },
+        () => {
+          // Auto-submit after transcription
+          setTimeout(() => {
+            const textarea = textareaRef.current;
+            if (textarea) {
+              const event = new KeyboardEvent('keydown', { key: 'Enter' });
+              textarea.dispatchEvent(event);
+            }
+            // Fallback: directly call handleSend if the input has content
+            handleSend();
+          }, 200);
+        }
+      );
     }
   };
 
@@ -868,9 +882,10 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                           <ChatMessageFeedback
                             messageIndex={index}
                             conversationId={currentConversationId}
-agentName="bob"
+                            agentName="bob"
                             feedbackGiven={message.feedbackGiven}
                             onFeedbackChange={handleFeedbackChange}
+                            messageContent={message.content}
                           />
                         </div>
                       )}
@@ -996,16 +1011,25 @@ agentName="bob"
                           variant="ghost"
                           size="icon"
                           onClick={handleVoiceInput}
-                          disabled={isLoading || uploadingFiles}
+                          disabled={isLoading || uploadingFiles || isTranscribing}
                           className={cn(
                             "h-9 w-9 rounded-xl hover:bg-background",
-                            isListening && "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                            isListening && "bg-destructive/10 text-destructive hover:bg-destructive/20 animate-pulse",
+                            isTranscribing && "opacity-70"
                           )}
                         >
-                          {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5 text-muted-foreground" />}
+                          {isTranscribing ? (
+                            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                          ) : isListening ? (
+                            <MicOff className="h-5 w-5" />
+                          ) : (
+                            <Mic className="h-5 w-5 text-muted-foreground" />
+                          )}
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{isListening ? 'Stop recording' : 'Voice input'}</TooltipContent>
+                      <TooltipContent>
+                        {isTranscribing ? 'Transcribing...' : isListening ? 'Stop recording' : 'Voice input'}
+                      </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )}
