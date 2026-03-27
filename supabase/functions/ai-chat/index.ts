@@ -9218,7 +9218,6 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
       // Helper: build user-friendly search summary from tool result filters
       const TYPE_DESCS_SUMMARY: Record<string, string> = dynamicTypeDescs;
-      };
       const buildSearchSummary = (toolResult: any): string => {
         const total = toolResult.total_found || 0;
         const filters = toolResult.filters_applied || {};
