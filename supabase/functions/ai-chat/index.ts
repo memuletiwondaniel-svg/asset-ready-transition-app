@@ -7178,15 +7178,24 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         let allDocuments = await paginateSearch(moduleParams);
         console.log('search_assai_documents: primary search returned ' + allDocuments.length + ' docs total');
         
-        // Also try the other module if no results yet
-        if (allDocuments.length === 0) {
+        // If searchBothModules (document_type provided without explicit discipline), proactively search the other module too
+        if (searchBothModules || allDocuments.length === 0) {
           const altParams = useSupDoc
             ? { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' }
             : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
           
           try {
-            console.info('Paginated search (alt): sending for', altParams.subclass_type);
-            allDocuments = await paginateSearch(altParams);
+            console.info('Paginated search (alt): sending for', altParams.subclass_type, searchBothModules ? '(proactive dual-module)' : '(fallback)');
+            const altDocs = await paginateSearch(altParams);
+            // Merge results, dedup by document_number
+            const seen = new Set(allDocuments.map((d: any) => d.document_number));
+            for (const doc of altDocs) {
+              if (doc.document_number && !seen.has(doc.document_number)) {
+                seen.add(doc.document_number);
+                allDocuments.push(doc);
+              }
+            }
+            console.log('search_assai_documents: after alt module merge, total docs:', allDocuments.length);
           } catch (altErr) {
             console.error('search_assai_documents: alt module search error:', altErr);
           }
