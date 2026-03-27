@@ -3106,7 +3106,7 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
           },
           document_type: {
             type: "string",
-            description: 'Filter by ZV document type code, e.g. "A01" for SDR, "J01" for IOM manual, "H02" for ITP'
+            description: 'Filter by document type code. Works for ALL documents, not just vendor. Examples: A02 (Basis for Design/BfD), C02 (Specification), B01 (GA Drawing), H02 (ITP), A01 (SDR), H08 (FAT), J01 (IOM). ALWAYS pass this when the user mentions a document type by name or abbreviation.'
           },
           status_code: {
             type: "string",
