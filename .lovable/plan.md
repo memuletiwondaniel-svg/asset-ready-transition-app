@@ -1,95 +1,62 @@
 
 
-## Fix: Analytical Intent Detection in Deterministic Fallback
+## Fix: Analytical Intent Not Firing in Deterministic Fallback (Non-429 Path)
 
-### Problem
+### Root Cause (Confirmed)
 
-The screenshot shows "How many vendor documents are pending review in DP300?" — an analytical query. Bob responded: "I didn't find a specific document for **MANY**, but found 75 documents. Showing the closest 10:" with a raw table. Two bugs:
+Three bugs combine to produce "I didn't find a specific document for **MANY**":
 
-1. **"MANY" treated as subject keyword**: `STOP_WORDS_SHARED` (line 9578) doesn't include common analytical words like `MANY`, `PENDING`, `REVIEW`, `STATUS`, `VENDOR`, `COUNT`, `TOTAL`, `NUMBER`. So "MANY" passes through the filter and becomes the `p1SubjectLabel`, producing the nonsensical message.
+1. **Duplicate STOP_WORDS without analytical terms** (line 9820): The non-429 deterministic fallback defines its own `STOP_WORDS` set that is missing all the analytical words (`MANY`, `PENDING`, `REVIEW`, `STATUS`, `VENDOR`, etc.) that were added to `STOP_WORDS_SHARED` at line 9578. So "MANY" passes the filter and becomes `subjectLabel`.
 
-2. **No analytical intent handling in deterministic fallback**: The intent classification (RETRIEVAL vs ANALYTICAL vs CONTENT) exists only in the LLM prompt (line 9454-9463). When the LLM fails (429 rate limit) and the deterministic fallback runs, it always produces a raw document table — it has no concept of analytical queries. For "how many pending review", the correct response is a status summary grouped by status, not a table of documents.
+2. **No analytical intent check in non-429 fallback** (line 9691): The query matches `isDocQuery` because `DOC_KEYWORDS` includes `'VENDOR'` and `'DOCUMENT'`. It then enters the document search path and always builds a raw `document_list`. The analytical detection added at line 10034 only runs in the 429 fallback path — the non-429 fallback at line 9677 has no equivalent check.
 
-### Solution
+3. **Bob's prompt lacks document intent classification**: Bob's `BOB_SYSTEM_PROMPT` has DATA vs NAVIGATION intent classification but does NOT have the RETRIEVAL/ANALYTICAL/CONTENT classification for document queries. That exists only in `DOCUMENT_AGENT_PROMPT` (line 9454). When `detectAgentDomain` routes to Selma (which it does for this query since it contains "document"), Selma's prompt has it — but if the LLM never fires (API error), it's irrelevant.
+
+### Changes
 
 **File**: `supabase/functions/ai-chat/index.ts`
 
-#### Change 1: Expand stop words (line 9578)
+#### Change 1: Replace duplicate STOP_WORDS with STOP_WORDS_SHARED (line 9820)
 
-Add analytical/quantitative words that should never be treated as document subject keywords:
+Replace the local `STOP_WORDS` constant at line 9820 with a reference to `STOP_WORDS_SHARED` (defined at line 9578), which already includes all analytical terms.
 
-```
-MANY, PENDING, REVIEW, STATUS, VENDOR, COUNT, TOTAL, NUMBER, SUBMITTED, 
-APPROVED, REJECTED, BEHIND, AHEAD, PROGRESS, OVERDUE, OUTSTANDING, LATE
-```
+#### Change 2: Add analytical intent detection at top of non-429 fallback (line ~9691)
 
-#### Change 2: Add analytical intent detection in deterministic fallback (~line 10020)
-
-Before the `isSpecificQuery` fork, detect analytical intent from the user message:
+Before entering the document search logic, check for analytical intent using the same patterns from line 10034:
 
 ```typescript
-// Detect analytical intent
+// Check for analytical intent BEFORE document search
 const analyticalPatterns = [
-  /how many/i, /what('s| is) the status/i, /status of/i, 
-  /pending review/i, /pending approval/i, /are (pending|outstanding|overdue)/i,
-  /which (contractors?|vendors?|companies?) are/i, /breakdown/i, /summary of/i,
-  /distribution/i, /count of/i, /total (number|count)/i
+  /how many/i, /what(?:'s| is) the status/i, /status of/i,
+  /pending review/i, /pending approval/i, /are (?:pending|outstanding|overdue)/i,
+  /which (?:contractors?|vendors?|companies?) are/i, /breakdown/i, /summary of/i,
+  /distribution/i, /count of/i, /total (?:number|count)/i
 ];
-const isAnalytical = analyticalPatterns.some(p => p.test(lastUserMessage?.content || ''));
+const isFallbackAnalytical = analyticalPatterns.some(p => p.test(lastUserMsg));
 ```
 
-#### Change 3: Build analytical response when `isAnalytical` is true (~line 10132)
+#### Change 3: Build analytical response when `isFallbackAnalytical` is true
 
-When `isAnalytical` is true, instead of building a `document_list`, build a `document_search` response with a synthesized summary:
+After the search succeeds (line 9785), if `isFallbackAnalytical` is true, build a synthesized summary response (same logic as the 429 analytical path at line 10154) instead of the raw document table. This includes:
+- Status counts (pending, approved, cancelled)
+- Vendor grouping when the query mentions vendors
+- `document_search` type with `status_table` instead of `document_list`
 
-```typescript
-if (isAnalytical) {
-  // Group by status for "pending review" type queries
-  const statusSummary = effectiveSearchResult.status_summary || {};
-  const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
-  const pendingCount = pendingStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
-  const approvedCount = ['AFU', 'AFC', 'AFD'].reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
-  
-  // Build concise analytical summary
-  let analyticalSummary = `Found **${totalFound}** documents for this project.`;
-  if (pendingCount > 0) analyticalSummary += ` **${pendingCount}** are pending review.`;
-  if (approvedCount > 0) analyticalSummary += ` **${approvedCount}** are approved.`;
-  
-  // Use document_search type with status_table for the breakdown
-  const structured = {
-    type: "document_search",
-    summary: analyticalSummary,
-    status_table: statusTable,
-    type_table: typeTable.slice(0, 5),
-    documents: filteredDocList.slice(0, 5), // Show only top 5 as supporting evidence
-    highlights: smartInsights,
-    follow_ups: ["Show all pending review documents", "Break down by discipline", "Show vendor submission timeline"]
-  };
-}
+#### Change 4: Add ANALYTICAL classification to Bob's system prompt
+
+Add a brief document intent classification block to `BOB_SYSTEM_PROMPT` (around line 860, after the DATA/NAVIGATION section) so Bob also recognises analytical document queries when the LLM does fire:
+
 ```
-
-This produces a summary answer ("75 documents, 42 pending review, 20 approved") with a status breakdown table instead of a raw document dump.
-
-#### Change 4: Vendor grouping for vendor-specific analytical queries
-
-When the query mentions "vendor" and is analytical, group documents by `company_code` (originator segment) and present a ranked summary:
-
-```typescript
-if (isAnalytical && /vendor|contractor|supplier|company/i.test(userMsg)) {
-  const byCompany: Record<string, { count: number; statuses: Record<string, number> }> = {};
-  for (const doc of docList) {
-    const company = doc.company_code || 'Unknown';
-    if (!byCompany[company]) byCompany[company] = { count: 0, statuses: {} };
-    byCompany[company].count++;
-    byCompany[company].statuses[doc.status] = (byCompany[company].statuses[doc.status] || 0) + 1;
-  }
-  // Include vendor_table in structured response
-}
+When handling DOCUMENT queries, classify intent:
+- ANALYTICAL ("how many", "status of", "pending", "breakdown") → search broadly, synthesise counts/summaries
+- RETRIEVAL ("find the IOM", "show me the P&ID") → search and return document table
+- CONTENT ("what does it say", "summarise") → search, read, answer from content
 ```
 
 ### Technical Details
 
 - Single file: `supabase/functions/ai-chat/index.ts`
-- 4 changes: stop words expansion, analytical detection, analytical response builder, vendor grouping
-- The `document_search` structured response type already renders status tables in the UI — no frontend changes needed
+- 4 changes, all in the deterministic fallback and Bob's prompt
+- Reuses existing analytical response builder logic from line 10154
+- No frontend changes needed
 
