@@ -9992,8 +9992,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                     ...(relevantDocs.length > 0 && otherDocs.length > 0 ? [`${relevantDocs.length} documents matched "${subjectLabel}" — shown first`] : []),
                     ...(relevantDocs.length === 0 && subjectLabel ? [`No exact title match for "${subjectLabel}" — showing all ${resolvedName} documents`] : [])
                   ],
-                  followup: dynamicFollowups.slice(0, 4),
-                  follow_ups: dynamicFollowups.slice(0, 3)
+                  followup: dynamicFollowups.slice(0, 4)
                 };
                 const fallbackContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
                 const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;

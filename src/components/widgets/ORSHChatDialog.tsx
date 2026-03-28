@@ -928,7 +928,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                   }}
                                 />
                                 {cleanAfter && <p className="mt-2">{renderInlineMarkdown(cleanAfter)}</p>}
-                                {followUps && followUps.length > 0 && (
+                                {followUps && followUps.length > 0 && !(structuredData?.followup?.length > 0) && (
                                   <div className="mt-2.5 pt-2 border-t border-border/60">
                                     <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Suggested actions</p>
                                     <div className="flex flex-wrap gap-1.5">

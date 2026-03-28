@@ -333,7 +333,12 @@
     font-variation-settings: "wght" 700;
   }
   .bob-chat-prose h2 {
-    font-variation-settings: "wght" 800;
+    font-variation-settings: "wght" 800 !important;
+    font-weight: 800 !important;
+  }
+  .bob-chat-prose h3 {
+    font-variation-settings: "wght" 700 !important;
+    font-weight: 700 !important;
   }
 
   /* Modern Design Components */
