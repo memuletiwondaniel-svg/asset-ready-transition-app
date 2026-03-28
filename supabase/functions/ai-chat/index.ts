@@ -3232,6 +3232,26 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
     }
   },
   // ═══════════════════════════════════════════════════════════════════════════
+  // RESOLVE PROJECT CODE TOOL - Resolve DP numbers to Assai project codes
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "resolve_project_code",
+      description: "Resolves a DP project identifier (e.g. DP223, DP-300) to the Assai project code (e.g. 6523, 6529) used in document number patterns. ALWAYS call this BEFORE search_assai_documents when the user mentions a DP number. Returns the project code and name.",
+      parameters: {
+        type: "object",
+        properties: {
+          dp_number: {
+            type: "string",
+            description: "The DP project number, e.g. 'DP223', 'DP-300', 'DP 114'"
+          }
+        },
+        required: ["dp_number"]
+      }
+    }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
   // EXECUTIVE SUMMARY TOOL - For high-level status assessments
   // ═══════════════════════════════════════════════════════════════════════════
   {
