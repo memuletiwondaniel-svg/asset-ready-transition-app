@@ -209,6 +209,8 @@ interface StructuredResponseData {
     status: string;
     type_code?: string;
     download_url?: string;
+    originator?: string;
+    unit?: string;
   };
   overview?: string;
   key_summary?: string[];
