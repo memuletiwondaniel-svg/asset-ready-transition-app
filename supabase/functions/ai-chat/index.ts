@@ -9616,6 +9616,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // ═══════════════════════════════════════════════════════════════════════
     // PART 1: Deterministic structured_response for document searches
     // Always build from raw tool data, never from AI text
+    // Uses "document_list" type for specific/filtered queries (≤30 results)
+    // Uses "document_search" type for broad queries (>30 results)
     // ═══════════════════════════════════════════════════════════════════════
     if (lastToolName === 'search_assai_documents' && lastToolResult && lastToolResult.found && lastToolResult.total_found > 0) {
       const STATUS_DESCS: Record<string, string> = {
@@ -9625,53 +9627,18 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         IFC: "Issued for Construction", CAN: "Cancelled",
         REV: "Under Revision", SUP: "Superseded",
         IFR: "Issued for Review", AFD: "Approved for Design",
-        IFD: "Issued for Design", IFU: "Issued for Use"
+        IFD: "Issued for Design", IFU: "Issued for Use", PLN: "Planned"
       };
       const TYPE_DESCS: Record<string, string> = dynamicTypeDescs;
 
-      const highlights: string[] = [];
-      const hlMatch = finalTextContent.match(/\d+\.\s+(.+)/g);
-      if (hlMatch) {
-        for (const line of hlMatch.slice(0, 5)) {
-          highlights.push(line.replace(/^\d+\.\s+/, '').trim());
-        }
-      }
-      if (highlights.length === 0) {
-        const topStatus = Object.entries(lastToolResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]);
-        if (topStatus.length > 0) highlights.push(`${topStatus[0][1]} documents are ${STATUS_DESCS[topStatus[0][0]] || topStatus[0][0]}`);
-        const typeCount = Object.keys(lastToolResult.type_summary || {}).length;
-        highlights.push(`Documents span ${typeCount} different document types`);
-      }
+      const filters = lastToolResult.filters_applied || {};
+      const totalFound = lastToolResult.total_found || 0;
+      const hasSpecificFilter = !!(filters.document_type || filters.discipline_code || filters.status_code);
+      const isSpecificQuery = hasSpecificFilter || totalFound <= 30;
 
-      const followup: string[] = [];
-      const fuMatch = finalTextContent.match(/[-•]\s+(.+)/g);
-      if (fuMatch) {
-        for (const line of fuMatch.slice(-3)) {
-          followup.push(line.replace(/^[-•]\s+/, '').replace(/\*\*/g, '').trim());
-        }
-      }
-      if (followup.length === 0) {
-        followup.push("Show me only the pending documents");
-        followup.push("Break down by discipline");
-        followup.push("Which documents are overdue?");
-      }
-
-      const statusTable = Object.entries(lastToolResult.status_summary || {})
-        .sort((a: any, b: any) => b[1] - a[1])
-        .map(([status, count]) => ({
-          status, count,
-          description: STATUS_DESCS[status] ?? status
-        }));
-
-      const typeTable = Object.entries(lastToolResult.type_summary || {})
-        .sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count)
-        .slice(0, 10)
-        .map(([code, data]: any) => ({
-          code, count: data.count, statuses: data.statuses,
-          description: TYPE_DESCS[code] ?? code
-        }));
-
-      const docList = (lastToolResult.documents || []).slice(0, 10).map((d: any) => ({
+      // Build full document list (up to 30 for specific, 10 for broad)
+      const maxDocs = isSpecificQuery ? 30 : 10;
+      const docList = (lastToolResult.documents || []).slice(0, maxDocs).map((d: any) => ({
         document_number: d.document_number,
         title: d.title,
         revision: d.revision,
@@ -9682,18 +9649,81 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         entt_seq_nr: d.entt_seq_nr
       }));
 
-      const structured = {
-        type: "document_search",
-        summary: buildSearchSummary(lastToolResult),
-        status_table: statusTable,
-        type_table: typeTable,
-        documents: docList,
-        highlights,
-        followup
-      };
+      // Extract AI highlights and follow-ups from accumulated text
+      const highlights: string[] = [];
+      const hlMatch = finalTextContent.match(/\d+\.\s+(.+)/g);
+      if (hlMatch) {
+        for (const line of hlMatch.slice(0, 5)) {
+          highlights.push(line.replace(/^\d+\.\s+/, '').trim());
+        }
+      }
 
-      finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
-      console.log('search_assai_documents: deterministic structured_response built server-side');
+      const followup: string[] = [];
+      const fuMatch = finalTextContent.match(/[-•]\s+(.+)/g);
+      if (fuMatch) {
+        for (const line of fuMatch.slice(-3)) {
+          followup.push(line.replace(/^[-•]\s+/, '').replace(/\*\*/g, '').trim());
+        }
+      }
+
+      if (isSpecificQuery) {
+        // SPECIFIC QUERY: Show documents table prominently, skip status/type summaries
+        if (highlights.length === 0) {
+          const statusList = Object.entries(lastToolResult.status_summary || {}).map(([s, c]) => `${c} ${STATUS_DESCS[s] || s}`).join(', ');
+          if (statusList) highlights.push(statusList);
+        }
+        if (followup.length === 0) {
+          if (docList.length > 0) followup.push(`Read and summarise ${docList[0].document_number}`);
+          followup.push("Show me related documents");
+          followup.push("Which of these are approved?");
+        }
+
+        const structured = {
+          type: "document_list",
+          summary: buildSearchSummary(lastToolResult),
+          documents: docList,
+          highlights,
+          followup
+        };
+
+        finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+        console.log(`search_assai_documents: document_list response (${totalFound} docs, specific query)`);
+      } else {
+        // BROAD QUERY: Show status/type summaries with document list below
+        if (highlights.length === 0) {
+          const topStatus = Object.entries(lastToolResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]);
+          if (topStatus.length > 0) highlights.push(`${topStatus[0][1]} documents are ${STATUS_DESCS[topStatus[0][0]] || topStatus[0][0]}`);
+          const typeCount = Object.keys(lastToolResult.type_summary || {}).length;
+          highlights.push(`Documents span ${typeCount} different document types`);
+        }
+        if (followup.length === 0) {
+          followup.push("Show me only the pending documents");
+          followup.push("Break down by discipline");
+          followup.push("Which documents are overdue?");
+        }
+
+        const statusTable = Object.entries(lastToolResult.status_summary || {})
+          .sort((a: any, b: any) => b[1] - a[1])
+          .map(([status, count]) => ({ status, count, description: STATUS_DESCS[status] ?? status }));
+
+        const typeTable = Object.entries(lastToolResult.type_summary || {})
+          .sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count)
+          .slice(0, 10)
+          .map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
+
+        const structured = {
+          type: "document_search",
+          summary: buildSearchSummary(lastToolResult),
+          status_table: statusTable,
+          type_table: typeTable,
+          documents: docList,
+          highlights,
+          followup
+        };
+
+        finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+        console.log(`search_assai_documents: document_search response (${totalFound} docs, broad query)`);
+      }
     }
 
     // PART 1b: Deterministic structured_response for document reading/analysis

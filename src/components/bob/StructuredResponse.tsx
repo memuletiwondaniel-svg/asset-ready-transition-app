@@ -290,7 +290,89 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
     );
   }
 
-  // Document Search type (default)
+  // Document List type — for specific/filtered queries showing documents prominently
+  if (data.type === 'document_list') {
+    return (
+      <div className="space-y-1">
+        {/* Summary */}
+        <p className="text-sm text-foreground leading-relaxed">
+          {renderInlineMarkdownWithLinks(data.summary)}
+        </p>
+
+        {/* Documents Table — Primary Display */}
+        {data.documents && data.documents.length > 0 && (
+          <div>
+            <table className="w-full mt-2" style={{ borderCollapse: 'collapse' }}>
+              <thead>
+                <tr className="bg-muted/50">
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Document Number</th>
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Title</th>
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Rev</th>
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.documents.map((doc, i) => (
+                  <tr key={doc.document_number} className={i % 2 === 1 ? 'bg-muted/20' : ''} style={{ borderBottom: '1px solid hsl(var(--border) / 0.3)' }}>
+                    <td className="py-2 px-3 text-xs">
+                      <DocumentNumberLink docNumber={doc.document_number} />
+                      <button
+                        onClick={() => onFollowupClick?.(`Read and summarise ${doc.document_number}`)}
+                        title="Read & summarise"
+                        className="ml-1 p-0.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors cursor-pointer inline-flex align-middle"
+                      >
+                        <Search className="h-3 w-3" />
+                      </button>
+                    </td>
+                    <td className="py-2 px-3 text-xs text-foreground max-w-[200px] truncate">{doc.title}</td>
+                    <td className="py-2 px-3 text-xs text-muted-foreground">{doc.revision}</td>
+                    <td className="py-2 px-3"><StatusBadge code={doc.status} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Highlights */}
+        {data.highlights && data.highlights.length > 0 && (
+          <div>
+            <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 mt-4">
+              Key Highlights
+            </h4>
+            <ol className="list-decimal list-inside space-y-1.5">
+              {data.highlights.map((h, i) => (
+                <li key={i} className="text-xs text-foreground leading-relaxed">{renderInlineMarkdownWithLinks(h)}</li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {/* Follow-up Actions */}
+        {data.followup && data.followup.length > 0 && (
+          <div>
+            <hr className="border-border/30 my-3" />
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+              What would you like me to do next?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {data.followup.map((f, i) => (
+                <button
+                  key={i}
+                  onClick={() => onFollowupClick?.(f)}
+                  className="text-xs px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 hover:bg-primary/15 hover:shadow-md hover:border-primary/50 text-foreground transition-all duration-150 cursor-pointer"
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Document Search type (broad queries — default)
   return (
     <div className="space-y-1">
       {/* Summary */}
@@ -358,7 +440,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
         </div>
       )}
 
-      {/* Document List (first 5 with download/read actions) */}
+      {/* Document List */}
       {data.documents && data.documents.length > 0 && (
         <div>
           <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 mt-4">
