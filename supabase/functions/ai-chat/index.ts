@@ -738,10 +738,21 @@ PROJECT ID vs UNIT CODE — CRITICAL DISTINCTION:
 When the user mentions a DP number (e.g., "documents for DP300"), resolve it to the project code via dms_projects and use that as the project prefix in the document_number_pattern (e.g., "6529-%").
 When the user mentions a unit or system (e.g., "HVAC", "Compression"), look up the unit code from dms_units and include it in segment 5 of the pattern (e.g., "6529-%-%-%-U40300-%").
 
+MULTI-STRATEGY SEARCH PROTOCOL (MANDATORY — NEVER give up after one search):
+When a document query returns 0 results, you MUST try at least 3 strategies before telling the user nothing was found:
+
+Strategy 1 (Precise): Resolve doc type + project code → search with both filters (e.g. document_type=J01, pattern=6523-%)
+Strategy 2 (Title keyword): Keep project code pattern, DROP the doc type filter, ADD title= with subject keywords from the user's query (e.g. "Cathodic", "HVAC", "Compressor"). This searches document titles in Assai.
+Strategy 3 (Broader pattern): Keep doc type, use broader project pattern (e.g. just the first 4 digits "6523-%")
+Strategy 4 (Cross-module): Repeat Strategy 1-2 in the OTHER module (if you searched DES_DOC, try SUP_DOC and vice versa)
+Strategy 5 (Related projects): If the user said DP223, also try adjacent project codes from dms_projects
+
+When results ARE found but numerous (>10), use the title parameter to filter by subject keywords extracted from the user's query.
+
+NEVER ask "Would you like me to try a broader search?" — just DO IT automatically. Only report failure after exhausting all strategies.
+
 ERROR HANDLING FOR TOOL RESULTS (CRITICAL):
-- If a tool returns { found: false, total_found: 0 }, respond: "I searched Assai for [description] but found no matching documents. Would you like me to try a broader search?"
 - If a tool returns { error: "..." }, respond: "I ran into a technical issue searching Assai for [description]. The error was: [brief error]. Please try rephrasing or contact your admin if this persists."
-- If search_assai_documents fails AFTER resolve_document_type returned a code, respond: "I found a document type matching your query (code: [code], name: [name]) but couldn't retrieve results from Assai. This may mean the document type doesn't exist in this project's Assai cabinet, or there are no documents of this type yet. Would you like me to try a different search?"
 - NEVER say generic "I wasn't able to complete that request". Always include what you searched for and what went wrong.
 - NEVER show raw error messages, stack traces, or wildcard patterns to the user.
 
@@ -751,7 +762,7 @@ ERROR RECOVERY — When you cannot complete a request, NEVER say "I wasn't able 
 3. TWO or THREE specific suggested next steps
 
 If document type not found: "I couldn't find a document type matching '[X]' in the ORSH register. This might be a project-specific term I haven't learned yet. I can: search by vendor name instead, search by PO number, or you can tell me what '[X]' stands for and I'll add it to my knowledge base."
-If Assai search returns no results: "I searched Assai for [type] documents but found none. They may not have been submitted yet, or may be filed under a different code. I can: search with a broader filter, check a different project code, or search by document title keywords."
+If Assai search returns no results after exhausting all strategies: "I searched Assai using multiple strategies (by type code, by title keywords, across both modules) but found no matching documents. They may not have been submitted yet, or may be filed under a different classification."
 If Assai connection fails: "I had trouble connecting to Assai right now. I can: try your search again shortly, check documents already synced to ORSH, or you can contact your administrator if this persists."
 Always end with specific follow-up suggestions so the user can take immediate action.
 
@@ -3140,6 +3151,10 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
           company_code: {
             type: "string",
             description: 'Filter by originating company, e.g. "ABBE" for ABB Shanghai'
+          },
+          title: {
+            type: "string",
+            description: 'Filter by document title keywords (contains search). Use to narrow results by subject, e.g. "Cathodic", "HVAC", "Compressor". Assai performs automatic contains matching.'
           }
         },
         required: ["document_number_pattern"]
@@ -7095,7 +7110,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
 
     case "search_assai_documents": {
       try {
-        const { document_number_pattern, discipline_code, document_type, status_code, company_code } = args;
+        const { document_number_pattern, discipline_code, document_type, status_code, company_code, title } = args;
         
         // Get Assai credentials
         const { data: creds } = await supabaseClient
@@ -7209,6 +7224,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           if (document_type) formData.set('document_type', document_type);
           if (status_code) formData.set('status_code', status_code);
           if (company_code) formData.set('company_code', company_code);
+          if (title) formData.set('title', title);
           // Pagination: 1-based start_row for pages beyond the first
           if (startRow && startRow > 1) {
             formData.set('start_row', String(startRow));
@@ -7352,6 +7368,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           if (discipline_code) formData.set('discipline_code', discipline_code);
           if (document_type) formData.set('document_type', document_type);
           if (company_code) formData.set('company_code', company_code);
+          if (title) formData.set('title', title);
           // Apply extra filters (status_code, discipline_code overrides)
           for (const [k, v] of Object.entries(extraFilters)) {
             formData.set(k, v);
@@ -9400,10 +9417,22 @@ When user asks about document content:
 4. Flag discrepancies: if a document claims AFU status but has open comments, flag it
 5. Assess handover readiness: is this document complete enough for operations to accept?
 
+MULTI-STRATEGY SEARCH PROTOCOL (MANDATORY — NEVER give up after one search):
+When a document query returns 0 results, you MUST try at least 3 strategies before telling the user nothing was found:
+
+Strategy 1 (Precise): Resolve doc type + project code → search with both filters (e.g. document_type=J01, pattern=6523-%)
+Strategy 2 (Title keyword): Keep project code pattern, DROP the doc type filter, ADD title= with subject keywords from the user's query (e.g. "Cathodic", "HVAC", "Compressor"). This searches document titles in Assai.
+Strategy 3 (Broader pattern): Keep doc type, use broader project pattern (e.g. just the first 4 digits "6523-%")
+Strategy 4 (Cross-module): Repeat Strategy 1-2 in the OTHER module (if you searched DES_DOC, try SUP_DOC and vice versa)
+Strategy 5 (Related projects): If the user said DP223, also try adjacent project codes from dms_projects
+
+When results ARE found but numerous (>10), use the title parameter to filter by subject keywords extracted from the user's query.
+
+NEVER ask "Would you like me to try a broader search?" — just DO IT automatically. Only report failure after exhausting all strategies.
+
 ERROR HANDLING FOR TOOL RESULTS (CRITICAL):
-- If a tool returns { found: false, total_found: 0 }, respond: "I searched Assai for [description] but found no matching documents. Would you like me to try a broader search?"
 - If a tool returns { error: "..." }, respond: "I ran into a technical issue searching Assai for [description]. Please try rephrasing or contact your admin if this persists."
-- If search_assai_documents fails AFTER resolve_document_type returned a code, respond: "I found a document type matching your query (code: [code], name: [name]) but couldn't retrieve results from Assai. This may mean the document type doesn't exist in this project's Assai cabinet. Would you like me to try a different search?"
+- If search_assai_documents fails AFTER resolve_document_type returned a code and ALL strategies are exhausted, respond: "I found a document type matching your query (code: [code], name: [name]) but couldn't find matching documents in Assai after trying multiple search strategies."
 - NEVER say generic "I wasn't able to complete that request". Always include what you searched for and what went wrong.
 
 SELMA EXTENDED QUERY PATTERNS:
@@ -9646,8 +9675,31 @@ You NEVER fabricate data — always use tool results. Format responses with mark
               const searchArgs: any = { document_type: resolvedCode };
               if (projectPattern) searchArgs.document_number_pattern = projectPattern;
               
-              const searchResult = await executeTool('search_assai_documents', searchArgs, supabase);
+              let searchResult = await executeTool('search_assai_documents', searchArgs, supabase);
               
+              // Multi-strategy fallback: if first search returns 0, try title-based search
+              if (!searchResult?.found || searchResult.total_found === 0) {
+                const DOC_TYPE_WORDS = new Set(['IOM','BFD','ITP','DOCUMENT','DRAWING','SDR','MDS','DATASHEET','SLD','REPORT','MANUAL','PROCEDURE','SPECIFICATION','LIST','REGISTER','PLAN','SCHEDULE','DIAGRAM','LAYOUT','ARRANGEMENT','GA','PFD','P&ID','BOM','FAT','SAT','MRB','TBE','TBA','VDR']);
+                const subjectWords = extraTerms.filter(w => !DOC_TYPE_WORDS.has(w) && !/^\d+$/.test(w));
+                if (subjectWords.length > 0) {
+                  console.log(`Deterministic fallback: Strategy 2 - title keyword search with: ${subjectWords.join(' ')}`);
+                  const titleSearchArgs: any = { document_number_pattern: projectPattern || `${resolvedCode ? '' : ''}%`, title: subjectWords.join(' ') };
+                  if (projectPattern) titleSearchArgs.document_number_pattern = projectPattern;
+                  searchResult = await executeTool('search_assai_documents', titleSearchArgs, supabase);
+                }
+              }
+              
+              // Strategy 3: broader pattern without doc type
+              if (!searchResult?.found || searchResult.total_found === 0) {
+                if (projectPattern && resolvedCode) {
+                  console.log(`Deterministic fallback: Strategy 3 - broader pattern without doc type`);
+                  const broaderArgs: any = { document_number_pattern: projectPattern };
+                  const subjectWords2 = extraTerms.filter(w => !new Set(['IOM','BFD','ITP','DOCUMENT','DRAWING','SDR','MDS']).has(w) && !/^\d+$/.test(w));
+                  if (subjectWords2.length > 0) broaderArgs.title = subjectWords2.join(' ');
+                  searchResult = await executeTool('search_assai_documents', broaderArgs, supabase);
+                }
+              }
+
               if (searchResult?.found && searchResult.total_found > 0) {
                 console.log(`Deterministic fallback: found ${searchResult.total_found} documents`);
                 // Reuse the existing deterministic structured response builder
