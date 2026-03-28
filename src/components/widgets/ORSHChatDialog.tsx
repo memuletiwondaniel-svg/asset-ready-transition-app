@@ -895,23 +895,56 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                             );
                           }
                           // Pre-process: normalize plain-text section headers to ## markdown headers
-                          const headerPatterns = [
-                            'Critical Observations', 'Expected Content', 'Handover Readiness Impact',
-                            'What I recommend', 'What I can tell you', 'Document Overview',
-                            'Key Observations', 'Summary', 'Analysis', 'Recommendations',
-                            'Document Details', 'Status Overview', 'Next Steps', 'Key Findings',
-                            'Document Metadata', 'Revision History', 'Action Items',
-                            'Option \\d+', 'Would you like me to',
-                          ];
-                          const headerRegex = new RegExp(
-                            `^(${headerPatterns.join('|')}):?\\s*$`, 'gim'
-                          );
+                          // Icon map for known section headers
+                          const sectionIcons: Record<string, string> = {
+                            'Critical Observations': '⚠️',
+                            'Critical Observation': '⚠️',
+                            'Expected Content': '📋',
+                            'Handover Readiness Impact': '🎯',
+                            'What I recommend': '💡',
+                            'What I can tell you from the metadata': '📄',
+                            'What I can tell you': '📄',
+                            'Document Overview': '📄',
+                            'Key Observations': '🔍',
+                            'Summary': '📝',
+                            'Analysis': '🔬',
+                            'Recommendations': '💡',
+                            'Document Details': '📄',
+                            'Status Overview': '📊',
+                            'Next Steps': '➡️',
+                            'Key Findings': '🔍',
+                            'Document Metadata': '📄',
+                            'Revision History': '📅',
+                            'Action Items': '✅',
+                            'The pattern I\'m seeing': '🔍',
+                            'Would you like me to': '💬',
+                          };
+
+                          // Broad regex: match lines that look like section headers
+                          // Catches: "Header:", "Header", "**Header:**", "**Header**"
                           let processed = message.content
-                            .replace(headerRegex, (_match, g1) => `## ${g1.replace(/:$/, '')}`)
-                            .replace(/^\*\*([^*]+)\*\*:?\s*$/gm, '## $1');
+                            // Bold-wrapped headers: **Some Header:** or **Some Header**
+                            .replace(/^\*\*([^*]+?)\*\*:?\s*$/gm, (_m, g1) => {
+                              const clean = g1.replace(/:$/, '').trim();
+                              const icon = sectionIcons[clean] || '📌';
+                              return `## ${icon} ${clean}`;
+                            })
+                            // Plain text headers ending with colon on own line
+                            .replace(/^([A-Z][A-Za-z\s''"]+(?:from the metadata)?):?\s*$/gm, (_m, g1) => {
+                              const clean = g1.replace(/:$/, '').trim();
+                              // Only convert if it's a known header or looks like one (3+ words, title case)
+                              if (sectionIcons[clean]) {
+                                return `## ${sectionIcons[clean]} ${clean}`;
+                              }
+                              // Check if it looks like a title-case header (starts with capital, mostly alpha)
+                              if (/^[A-Z][a-z]/.test(clean) && clean.length > 8 && clean.length < 60) {
+                                return `## 📌 ${clean}`;
+                              }
+                              return _m; // Leave unchanged
+                            });
 
                           // Extract follow-up suggestions (bullet items after "Would you like me to")
-                          const followUpRegex = /## Would you like me to[\s\S]*?(?=\n## |\n---|\s*$)/i;
+                          const followUpRegex = /## [💬📌⚠️💡🔍📄📋🎯📝🔬📊➡️📅✅]+ Would you like me to[\s\S]*?(?=\n## |\n---|\s*$)/i;
                           const followUpMatch = processed.match(followUpRegex);
                           let followUpItems: string[] = [];
                           if (followUpMatch) {
