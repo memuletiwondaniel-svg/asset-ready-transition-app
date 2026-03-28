@@ -9591,7 +9591,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           'HYD', 'PTR', 'PCOM', 'COM', 'HAR', 'RAR', 'HAC', 'MDR', 'BOD', 'BDEP', 'MTO', 'SDS', 'HAZOP', 'SIL',
           'DOCUMENT', 'DRAWING', 'REPORT', 'MANUAL', 'DATASHEET', 'SPECIFICATION', 'PROCEDURE', 'VENDOR',
           'HVAC', 'ELECTRICAL', 'MECHANICAL', 'PIPING', 'INSTRUMENT', 'CIVIL', 'STRUCTURAL'];
-        const DP_MAP: Record<string, string> = { 'DP100': 'U40100', 'DP200': 'U40200', 'DP300': 'U40300', 'DP400': 'U40400', 'DP500': 'U40500' };
+        // DP numbers are PROJECT IDs — resolve to project codes via dms_projects, NOT unit codes
         
         const isDocQuery = DOC_KEYWORDS.some(kw => msgUpper.includes(kw));
 
