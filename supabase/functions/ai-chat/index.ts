@@ -9487,6 +9487,21 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     let navigationAction: { action: string; path: string } | null = null;
     let finalTextContent = '';
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // SHARED: Subject keyword map for relevance filtering (used in both 
+    // deterministic fallback AND PART 1 success path)
+    // ═══════════════════════════════════════════════════════════════════════
+    const SUBJECT_KEYWORDS: Record<string, string[]> = {
+      'HVAC': ['HVAC', 'AIR CONDITIONING', 'AIR HANDLING', 'AHU', 'COOLING', 'HEATING', 'VENTILATION', 'CHILLER', 'FAN COIL', 'DUCT', 'AIR COOLER'],
+      'ELECTRICAL': ['ELECTRICAL', 'SWITCHGEAR', 'TRANSFORMER', 'MCC', 'MOTOR CONTROL', 'CABLE', 'PANEL', 'BREAKER'],
+      'INSTRUMENTATION': ['INSTRUMENT', 'DCS', 'PLC', 'CONTROL VALVE', 'TRANSMITTER', 'ANALYZER'],
+      'MECHANICAL': ['PUMP', 'COMPRESSOR', 'TURBINE', 'HEAT EXCHANGER', 'VESSEL', 'TANK', 'PIPING'],
+      'GENERATOR': ['GENERATOR', 'EDG', 'GENSET', 'ALTERNATOR'],
+      'FIRE': ['FIRE', 'DELUGE', 'SPRINKLER', 'FOAM', 'FIRE FIGHTING', 'F&G'],
+    };
+
+    const STOP_WORDS_SHARED = new Set(['THE', 'OF', 'IN', 'FOR', 'A', 'AN', 'AND', 'OR', 'CAN', 'YOU', 'PROVIDE', 'ME', 'WITH', 'SHOW', 'FIND', 'GET', 'ALL', 'WHAT', 'IS', 'ARE', 'PLEASE', 'COULD', 'WOULD', 'LIKE', 'WANT', 'NEED', 'DO', 'HOW', 'WHERE', 'WHICH', 'THAT', 'THIS', 'FROM', 'TO', 'BY', 'IT', 'MY', 'I', 'IOM', 'DOCUMENT', 'DOCUMENTS', 'LIST', 'SEARCH']);
+
     while (iteration < MAX_ITERATIONS) {
       iteration++;
       console.log(`Agent loop iteration ${iteration}/${MAX_ITERATIONS}`);
