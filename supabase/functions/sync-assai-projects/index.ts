@@ -147,37 +147,95 @@ Deno.serve(async (req) => {
         textFields.length
     );
 
-    // 5) POST wildcard search to result.aweb
-    const formData = new URLSearchParams();
-    for (const f of hiddenFields) {
-      formData.set(f.name, f.value);
-    }
-    for (const f of textFields) {
-      formData.set(f.name, "");
-    }
-    formData.set("subclass_type", "DES_DOC");
-    formData.set("number", "%");
+    // 5) POST wildcard search to result.aweb — search across ALL projects
+    const buildFormData = (startRow?: number) => {
+      const formData = new URLSearchParams();
+      for (const f of hiddenFields) {
+        formData.set(f.name, f.value);
+      }
+      for (const f of textFields) {
+        formData.set(f.name, "");
+      }
+      formData.set("subclass_type", "DES_DOC");
+      formData.set("number", "%");
+      // Clear project scoping to search across ALL projects
+      formData.set("proj_seq_nr", "");
+      formData.set("selected_project_codes", "");
+      if (startRow && startRow > 1) {
+        formData.set("start_row", String(startRow));
+      }
+      return formData;
+    };
 
-    const resultResp = await fetch(assaiBase + "/result.aweb", {
-      method: "POST",
-      headers: {
-        Cookie: cookieHeader,
-        "Content-Type": "application/x-www-form-urlencoded",
-        Accept: "text/html",
-        Referer: searchUrl,
-        "User-Agent": ASSAI_UA,
-      },
-      body: formData.toString(),
-      redirect: "follow",
-    });
+    // Paginate to get all results (100 per page)
+    let allMyCells: any[] = [];
+    let page = 1;
+    const MAX_PAGES = 20; // safety limit: 2000 rows max
 
-    const resultHtml = await resultResp.text();
-    console.log(
-      "sync-assai-projects: result.aweb status=" +
-        resultResp.status +
-        ", html=" +
-        resultHtml.length
-    );
+    while (page <= MAX_PAGES) {
+      const startRow = (page - 1) * 100 + 1;
+      const formData = buildFormData(startRow > 1 ? startRow : undefined);
+      
+      const resultResp = await fetch(assaiBase + "/result.aweb", {
+        method: "POST",
+        headers: {
+          Cookie: cookieHeader,
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "text/html",
+          Referer: searchUrl,
+          "User-Agent": ASSAI_UA,
+        },
+        body: formData.toString(),
+        redirect: "follow",
+      });
+
+      const resultHtml = await resultResp.text();
+      console.log(
+        "sync-assai-projects: result.aweb page=" + page +
+          " status=" + resultResp.status +
+          ", html=" + resultHtml.length
+      );
+
+      const myCellsMatch = resultHtml.match(
+        /var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function|\/\/|$)/m
+      );
+      if (!myCellsMatch) {
+        if (page === 1) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: "No search results returned from Assai (myCells not found). Session may have expired.",
+            }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        break; // No more pages
+      }
+
+      let pageCells: any[];
+      try {
+        pageCells = JSON.parse(myCellsMatch[1]);
+      } catch (parseErr) {
+        if (page === 1) {
+          return new Response(
+            JSON.stringify({ success: false, error: "Failed to parse Assai search results" }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        break;
+      }
+
+      console.log("sync-assai-projects: page " + page + " returned " + pageCells.length + " rows");
+      allMyCells = allMyCells.concat(pageCells);
+
+      if (pageCells.length < 100) break; // Last page
+      page++;
+      
+      // Re-init search session for next page
+      if (page <= MAX_PAGES) {
+        await new Promise(r => setTimeout(r, 300));
+      }
+    }
 
     // 6) Parse myCells to extract project tuples
     const myCellsMatch = resultHtml.match(
