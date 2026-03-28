@@ -4,43 +4,35 @@ import { Download, ChevronDown, ChevronRight, FileText, AlertTriangle, BookOpen,
 import { assaiDetailsUrl, assaiDownloadUrl, ASSAI_DOC_NUMBER_REGEX } from '@/lib/assaiLinks';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-/** Render document number as a clickable details link + download icon */
-export function DocumentNumberLink({ docNumber }: { docNumber: string }) {
+/** Truncate long doc numbers for table display: show first & last segments */
+function truncateDocNumber(docNumber: string, maxLen = 28): string {
+  if (docNumber.length <= maxLen) return docNumber;
+  const segs = docNumber.split('-');
+  if (segs.length <= 4) return docNumber.slice(0, maxLen - 3) + '…';
+  // Show first 2 and last 2 segments
+  return `${segs[0]}-${segs[1]}-…-${segs[segs.length - 2]}-${segs[segs.length - 1]}`;
+}
+
+/** Render document number as a clickable details link */
+export function DocumentNumberLink({ docNumber, truncate = false }: { docNumber: string; truncate?: boolean }) {
   const detailsUrl = assaiDetailsUrl(docNumber);
-  const downloadUrl = assaiDownloadUrl(docNumber);
+  const display = truncate ? truncateDocNumber(docNumber) : docNumber;
   return (
-    <span className="inline-flex items-center gap-1">
-      <TooltipProvider delayDuration={300}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <a
-              href={detailsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-primary underline underline-offset-2 decoration-primary/40 hover:decoration-primary hover:text-primary/80 transition-colors"
-            >
-              {docNumber}
-            </a>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="text-[10px] max-w-xs break-all">{detailsUrl}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <TooltipProvider delayDuration={300}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <a
-              href={downloadUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
-            >
-              <Download className="h-3 w-3" />
-            </a>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="text-[10px]">Download document</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </span>
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <a
+            href={detailsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-[11px] text-primary underline underline-offset-2 decoration-primary/40 hover:decoration-primary hover:text-primary/80 transition-colors whitespace-nowrap"
+          >
+            {display}
+          </a>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-[10px] max-w-xs font-mono">{docNumber}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -297,7 +289,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
   // Document List type — for specific/filtered queries showing documents prominently
   if (data.type === 'document_list') {
     return (
-      <div className="space-y-1">
+      <div className="space-y-3">
         {/* Summary */}
         <p className="text-sm text-foreground leading-relaxed">
           {renderInlineMarkdownWithLinks(data.summary)}
@@ -305,28 +297,28 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
 
         {/* Documents Table — Primary Display */}
         {data.documents && data.documents.length > 0 && (
-          <div>
-            <table className="w-full mt-2" style={{ borderCollapse: 'collapse' }}>
+          <div className="rounded-lg border border-border/40 overflow-hidden">
+            <table className="w-full" style={{ borderCollapse: 'collapse' }}>
               <thead>
-                <tr className="bg-muted/50">
-                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Document Number</th>
-                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Title</th>
-                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Rev</th>
-                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Status</th>
-                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-center font-semibold">Actions</th>
+                <tr className="bg-muted/60">
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-left font-semibold w-[160px]">Document No.</th>
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-left font-semibold">Title</th>
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-center font-semibold w-[50px]">Rev</th>
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-center font-semibold w-[60px]">Status</th>
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-center font-semibold w-[100px]">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {data.documents.map((doc, i) => (
-                  <tr key={doc.document_number} className={`group ${i % 2 === 1 ? 'bg-muted/20' : ''} hover:bg-primary/5 transition-colors`} style={{ borderBottom: '1px solid hsl(var(--border) / 0.3)' }}>
-                    <td className="py-2 px-3 text-xs">
-                      <DocumentNumberLink docNumber={doc.document_number} />
+                  <tr key={doc.document_number} className={`group ${i % 2 === 1 ? 'bg-muted/15' : ''} hover:bg-primary/5 transition-colors`} style={{ borderBottom: '1px solid hsl(var(--border) / 0.2)' }}>
+                    <td className="py-2.5 px-3 align-top">
+                      <DocumentNumberLink docNumber={doc.document_number} truncate />
                     </td>
-                    <td className="py-2 px-3 text-xs text-foreground max-w-[200px] truncate">{doc.title}</td>
-                    <td className="py-2 px-3 text-xs text-muted-foreground">{doc.revision}</td>
-                    <td className="py-2 px-3"><StatusBadge code={doc.status} /></td>
-                    <td className="py-2 px-3">
-                      <div className="flex items-center justify-center gap-1">
+                    <td className="py-2.5 px-3 text-xs text-foreground leading-snug">{doc.title}</td>
+                    <td className="py-2.5 px-3 text-xs text-muted-foreground text-center align-top">{doc.revision}</td>
+                    <td className="py-2.5 px-3 text-center align-top"><StatusBadge code={doc.status} /></td>
+                    <td className="py-2.5 px-3 align-top">
+                      <div className="flex items-center justify-center gap-1.5">
                         <TooltipProvider delayDuration={200}>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -335,7 +327,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                                 className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-primary bg-primary/8 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 hover:shadow-sm transition-all duration-150 cursor-pointer"
                               >
                                 <BookOpen className="h-3 w-3" />
-                                <span className="hidden sm:inline">Read</span>
+                                <span>Read</span>
                               </button>
                             </TooltipTrigger>
                             <TooltipContent side="top" className="text-[10px]">AI read & summarise this document</TooltipContent>
@@ -348,7 +340,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                                 href={assaiDownloadUrl(doc.document_number)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted border border-border/40 hover:border-border hover:shadow-sm transition-all duration-150 cursor-pointer"
+                                className="inline-flex items-center justify-center w-6 h-6 rounded-md text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted border border-border/40 hover:border-border hover:shadow-sm transition-all duration-150 cursor-pointer"
                               >
                                 <Download className="h-3 w-3" />
                               </a>
@@ -365,7 +357,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
           </div>
         )}
 
-        {/* Highlights */}
+        {/* Insights — only if genuinely useful */}
         {data.highlights && data.highlights.length > 0 && (
           <div className="bg-muted/20 rounded-lg p-3 border border-border/20">
             <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
@@ -483,67 +475,67 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
           </h4>
           <table className="w-full" style={{ borderCollapse: 'collapse' }}>
             <thead>
-              <tr className="bg-muted/50">
-                <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Document Number</th>
-                <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Title</th>
-                <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Rev</th>
-                <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Status</th>
-                <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-center font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.documents.slice(0, 10).map((doc, i) => (
-                <tr key={doc.document_number} className={`group ${i % 2 === 1 ? 'bg-muted/20' : ''} hover:bg-primary/5 transition-colors`} style={{ borderBottom: '1px solid hsl(var(--border) / 0.3)' }}>
-                  <td className="py-2 px-3 text-xs">
-                    <DocumentNumberLink docNumber={doc.document_number} />
-                  </td>
-                  <td className="py-2 px-3 text-xs text-foreground max-w-[200px] truncate">{doc.title}</td>
-                  <td className="py-2 px-3 text-xs text-muted-foreground">{doc.revision}</td>
-                  <td className="py-2 px-3"><StatusBadge code={doc.status} /></td>
-                  <td className="py-2 px-3">
-                    <div className="flex items-center justify-center gap-1">
-                      <TooltipProvider delayDuration={200}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => onFollowupClick?.(`Read and summarise ${doc.document_number}`)}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-primary bg-primary/8 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 hover:shadow-sm transition-all duration-150 cursor-pointer"
-                            >
-                              <BookOpen className="h-3 w-3" />
-                              <span className="hidden sm:inline">Read</span>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="text-[10px]">AI read & summarise this document</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <TooltipProvider delayDuration={200}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <a
-                              href={assaiDownloadUrl(doc.document_number)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted border border-border/40 hover:border-border hover:shadow-sm transition-all duration-150 cursor-pointer"
-                            >
-                              <Download className="h-3 w-3" />
-                            </a>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="text-[10px]">Download from Assai</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </td>
+              <tr className="bg-muted/60">
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-left font-semibold w-[160px]">Document No.</th>
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-left font-semibold">Title</th>
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-center font-semibold w-[50px]">Rev</th>
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-center font-semibold w-[60px]">Status</th>
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-center font-semibold w-[100px]">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {data.documents.length > 10 && (
-            <p className="text-[10px] text-muted-foreground mt-1.5 px-3">
-              Showing first 10 of {data.documents.length} documents
-            </p>
-          )}
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {data.documents.slice(0, 10).map((doc, i) => (
+                  <tr key={doc.document_number} className={`group ${i % 2 === 1 ? 'bg-muted/15' : ''} hover:bg-primary/5 transition-colors`} style={{ borderBottom: '1px solid hsl(var(--border) / 0.2)' }}>
+                    <td className="py-2.5 px-3 align-top">
+                      <DocumentNumberLink docNumber={doc.document_number} truncate />
+                    </td>
+                    <td className="py-2.5 px-3 text-xs text-foreground leading-snug">{doc.title}</td>
+                    <td className="py-2.5 px-3 text-xs text-muted-foreground text-center align-top">{doc.revision}</td>
+                    <td className="py-2.5 px-3 text-center align-top"><StatusBadge code={doc.status} /></td>
+                    <td className="py-2.5 px-3 align-top">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => onFollowupClick?.(`Read and summarise ${doc.document_number}`)}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-primary bg-primary/8 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 hover:shadow-sm transition-all duration-150 cursor-pointer"
+                              >
+                                <BookOpen className="h-3 w-3" />
+                                <span>Read</span>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-[10px]">AI read & summarise this document</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <a
+                                href={assaiDownloadUrl(doc.document_number)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center w-6 h-6 rounded-md text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted border border-border/40 hover:border-border hover:shadow-sm transition-all duration-150 cursor-pointer"
+                              >
+                                <Download className="h-3 w-3" />
+                              </a>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-[10px]">Download from Assai</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {data.documents.length > 10 && (
+              <p className="text-[10px] text-muted-foreground mt-1.5 px-3">
+                Showing first 10 of {data.documents.length} documents
+              </p>
+            )}
+          </div>
+        )}
 
       {/* Insights */}
       {data.highlights && data.highlights.length > 0 && (
