@@ -9638,14 +9638,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                 const summaryText = `Found **${searchResult.total_found}** ${resolvedCode} (${resolvedName}) documents${dpLabel}`;
                 
                 // Extract subject keywords from user message for relevance filtering
-                const SUBJECT_KEYWORDS: Record<string, string[]> = {
-                  'HVAC': ['HVAC', 'AIR CONDITIONING', 'AIR HANDLING', 'AHU', 'COOLING', 'HEATING', 'VENTILATION', 'CHILLER', 'FAN COIL', 'DUCT', 'AIR COOLER'],
-                  'ELECTRICAL': ['ELECTRICAL', 'SWITCHGEAR', 'TRANSFORMER', 'MCC', 'MOTOR CONTROL', 'CABLE', 'PANEL', 'BREAKER'],
-                  'INSTRUMENTATION': ['INSTRUMENT', 'DCS', 'PLC', 'CONTROL VALVE', 'TRANSMITTER', 'ANALYZER'],
-                  'MECHANICAL': ['PUMP', 'COMPRESSOR', 'TURBINE', 'HEAT EXCHANGER', 'VESSEL', 'TANK', 'PIPING'],
-                  'GENERATOR': ['GENERATOR', 'EDG', 'GENSET', 'ALTERNATOR'],
-                  'FIRE': ['FIRE', 'DELUGE', 'SPRINKLER', 'FOAM', 'FIRE FIGHTING', 'F&G'],
-                };
+                // (uses shared SUBJECT_KEYWORDS constant defined below)
                 
                 const msgUpper = lastUserMsg.toUpperCase();
                 let subjectLabel = '';
