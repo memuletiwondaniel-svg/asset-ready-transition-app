@@ -9975,7 +9975,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                 }
                 
                 const dynamicFollowups: string[] = [];
-                if (relevantDocs.length > 0) dynamicFollowups.push(`Read and summarise the most relevant ${subjectLabel} document`);
+                if (relevantDocs.length > 0) dynamicFollowups.push(`Read and interpret the most relevant ${subjectLabel} document`);
                 if (subjectLabel) dynamicFollowups.push(`Search for ${subjectLabel} drawings or datasheets instead`);
                 if (dpMatch) dynamicFollowups.push(`Show ${resolvedName} documents for other units`);
                 dynamicFollowups.push(`Show only approved ${resolvedCode} documents`);
