@@ -754,7 +754,7 @@ DOCUMENT SEARCH RESPONSE FORMAT (CRITICAL):
 When you receive results from search_assai_documents, do NOT produce tables, status summaries, or structured JSON. The system builds those automatically from the raw tool data.
 
 Your job is ONLY to write:
-1. KEY HIGHLIGHTS: 3-5 numbered observations — each one a specific insight about the documents (e.g. approval gaps, missing types, pending items). Plain text only, no markdown formatting.
+1. INSIGHTS: 2-4 numbered contextual observations the user cannot see from the table alone — e.g. approval gaps ("only 5 of 8 are approved"), revision anomalies ("3 documents still at Rev 0"), status concerns ("2 are still IFR — not yet approved"), discipline coverage gaps, or actionable recommendations. Do NOT repeat document counts or status breakdowns already visible in the table. Plain text only, no markdown formatting.
 2. FOLLOW-UP SUGGESTIONS: Exactly 3 bulleted suggestions — each a specific actionable question the user might ask next. Plain text only.
 
 Keep your entire text under 150 words. Do NOT write status counts, document type tables, or any other summary — the system handles those automatically. Do NOT wrap anything in <structured_response> tags — the system does that for you.
@@ -9666,12 +9666,36 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         }
       }
 
-      if (isSpecificQuery) {
-        // SPECIFIC QUERY: Show documents table prominently, skip status/type summaries
-        if (highlights.length === 0) {
-          const statusList = Object.entries(lastToolResult.status_summary || {}).map(([s, c]) => `${c} ${STATUS_DESCS[s] || s}`).join(', ');
-          if (statusList) highlights.push(statusList);
+      // Generate smart contextual insights (not just status counts)
+      const generateSmartInsights = (toolResult: any, docs: any[]): string[] => {
+        const insights: string[] = [];
+        const statusSummary = toolResult.status_summary || {};
+        const totalDocs = docs.length;
+        const approvedCount = (statusSummary['AFU'] || 0) + (statusSummary['AFC'] || 0) + (statusSummary['AFD'] || 0);
+        if (approvedCount > 0 && approvedCount < totalDocs) {
+          insights.push(`Only ${approvedCount} of ${totalDocs} documents have reached an approved status — ${totalDocs - approvedCount} still require progression`);
+        } else if (approvedCount === totalDocs && totalDocs > 0) {
+          insights.push(`All ${totalDocs} documents are at an approved status — document completion looks healthy`);
         }
+        const rev0Docs = docs.filter((d: any) => d.revision === '0' || d.revision === '00' || d.revision === 'R0');
+        if (rev0Docs.length > 0 && rev0Docs.length < totalDocs) {
+          insights.push(`${rev0Docs.length} document${rev0Docs.length > 1 ? 's are' : ' is'} still at initial revision (Rev 0) — may need review`);
+        }
+        const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT', 'IFC'];
+        const pendingCount = pendingStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
+        if (pendingCount > 0) {
+          const pendingBreakdown = pendingStatuses.filter(s => statusSummary[s]).map(s => `${statusSummary[s]} ${s}`).join(', ');
+          insights.push(`${pendingCount} document${pendingCount > 1 ? 's' : ''} in interim status (${pendingBreakdown}) — not yet fully approved`);
+        }
+        const cancelledCount = (statusSummary['CAN'] || 0) + (statusSummary['SUP'] || 0);
+        if (cancelledCount > 0) {
+          insights.push(`${cancelledCount} document${cancelledCount > 1 ? 's have' : ' has'} been cancelled or superseded — verify replacements exist`);
+        }
+        return insights.slice(0, 4);
+      };
+
+      if (isSpecificQuery) {
+        const smartInsights = highlights.length > 0 ? highlights : generateSmartInsights(lastToolResult, docList);
         if (followup.length === 0) {
           if (docList.length > 0) followup.push(`Read and summarise ${docList[0].document_number}`);
           followup.push("Show me related documents");
@@ -9682,7 +9706,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           type: "document_list",
           summary: buildSearchSummary(lastToolResult),
           documents: docList,
-          highlights,
+          highlights: smartInsights,
           followup
         };
 
@@ -9690,12 +9714,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         console.log(`search_assai_documents: document_list response (${totalFound} docs, specific query)`);
       } else {
         // BROAD QUERY: Show status/type summaries with document list below
-        if (highlights.length === 0) {
-          const topStatus = Object.entries(lastToolResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]);
-          if (topStatus.length > 0) highlights.push(`${topStatus[0][1]} documents are ${STATUS_DESCS[topStatus[0][0]] || topStatus[0][0]}`);
-          const typeCount = Object.keys(lastToolResult.type_summary || {}).length;
-          highlights.push(`Documents span ${typeCount} different document types`);
-        }
+        const broadInsights = highlights.length > 0 ? highlights : generateSmartInsights(lastToolResult, docList);
         if (followup.length === 0) {
           followup.push("Show me only the pending documents");
           followup.push("Break down by discipline");
@@ -9717,7 +9736,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           status_table: statusTable,
           type_table: typeTable,
           documents: docList,
-          highlights,
+          highlights: broadInsights,
           followup
         };
 
