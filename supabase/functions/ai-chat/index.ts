@@ -9491,7 +9491,8 @@ ALL documents — engineering, vendor, planning — reside in Assai. The dms_doc
 When a user asks for a document by type name or abbreviation:
 1. ALWAYS call resolve_document_type first with the EXACT text the user used — do NOT expand abbreviations yourself. If the user says "BfD", pass "BfD" as the query, NOT "Basis for Design". The tool handles acronym resolution internally.
 2. If exactly one match: use its code as the document_type parameter in search_assai_documents
-3. If multiple matches: show the user the options and ask which one they mean before searching
+3. If multiple matches with DIFFERENT disciplines (e.g. PX and ZV): search with ALL matching codes combined using '+' (e.g. document_type='2365+C01'). Do NOT ask the user to choose — the user wants ALL documents of that type regardless of discipline. Only ask for clarification if the matches are genuinely different document types (e.g. "Flow Scheme" vs "Flow Diagram").
+4. IMPORTANT: Many document types exist as both BGC/EPC codes (4-digit numeric like 2365) AND vendor codes (alphanumeric like C01). Always search with BOTH to get complete results.
 4. If no match: tell the user the document type was not found in the register and ask them to clarify
 5. Never guess or hardcode a type code — ALWAYS resolve dynamically via the tool
 6. Never search Assai without a document_type, company_code, or purchase_order filter — a bare project prefix like '6529-%' is NOT acceptable
