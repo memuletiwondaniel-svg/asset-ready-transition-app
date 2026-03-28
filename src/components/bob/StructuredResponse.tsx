@@ -62,7 +62,7 @@ function DocActionButtons({ docNumber, title, onRead }: { docNumber: string; tit
               <BookOpen className="h-3.5 w-3.5" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="top" className="text-[10px] font-medium">Read & summarise</TooltipContent>
+          <TooltipContent side="top" className="text-[10px] font-medium">Read & interpret</TooltipContent>
         </Tooltip>
       </TooltipProvider>
       <TooltipProvider delayDuration={150}>

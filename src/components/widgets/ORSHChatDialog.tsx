@@ -1069,6 +1069,20 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                             }
                           }
 
+                          // Sanity filter: reject metadata lines, doc numbers, prose, and cap at 5
+                          const METADATA_PREFIXES = /^(document number|status|revision|supplier|title|originator|unit|discipline|contractor|type code|doc no)\s*:/i;
+                          const PROSE_PREFIXES = /^(contact|you could|the document|note that|please note|this means|however|unfortunately|it appears|based on)/i;
+                          followUpItems = followUpItems
+                            .filter(item => {
+                              if (METADATA_PREFIXES.test(item)) return false;
+                              if (PROSE_PREFIXES.test(item)) return false;
+                              if (ASSAI_DOC_NUMBER_REGEX.test(item)) return false;
+                              if (item.length > 80) return false;
+                              if (item.length < 5) return false;
+                              return true;
+                            })
+                            .slice(0, 5);
+
                           return (
                             <>
                                <div className="bob-chat-prose text-sm leading-relaxed max-w-none [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border/50 [&_th]:px-3 [&_th]:py-1.5 [&_th]:bg-muted/50 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_td]:border [&_td]:border-border/50 [&_td]:px-3 [&_td]:py-1.5 [&_td]:text-xs [&_p]:my-1.5 [&_p]:leading-relaxed [&_ul]:my-1.5 [&_ul]:space-y-0.5 [&_ol]:my-1.5 [&_ol]:space-y-0.5 [&_li]:my-0 [&_li]:leading-relaxed [&_pre]:bg-background/50 [&_pre]:rounded-lg [&_code]:text-xs [&_strong]:font-semibold [&_strong]:text-foreground/80 [&_hr]:my-3 [&_hr]:border-border/30 [&_blockquote]:border-l-2 [&_blockquote]:border-primary/30 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_em]:text-muted-foreground">
