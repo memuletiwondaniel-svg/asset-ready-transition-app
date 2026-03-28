@@ -918,6 +918,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                             'Action Items': '✅',
                             'The pattern I\'m seeing': '🔍',
                             'Would you like me to': '💬',
+                            "Here's what this likely means": '🔍',
+                            "Here's what I recommend": '💡',
                           };
 
                           // Broad regex: match lines that look like section headers
@@ -930,7 +932,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                               return `## ${icon} ${clean}`;
                             })
                             // Plain text headers ending with colon on own line
-                            .replace(/^([A-Z][A-Za-z\s''"]+(?:from the metadata)?):?\s*$/gm, (_m, g1) => {
+                            .replace(/^([A-Z][A-Za-z\s''''"]+(?:from the metadata)?):?\s*$/gm, (_m, g1) => {
                               const clean = g1.replace(/:$/, '').trim();
                               // Only convert if it's a known header or looks like one (3+ words, title case)
                               if (sectionIcons[clean]) {
@@ -964,10 +966,12 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                 <ReactMarkdown
                                   remarkPlugins={[remarkGfm]}
                                   components={{
-                                    h2: ({ children }) => <h2 className="mt-5 mb-2 border-t border-border/20 pt-2.5 text-base font-bold tracking-tight text-foreground flex items-center gap-2">{children}</h2>,
-                                    h3: ({ children }) => <h3 className="mt-4 mb-1.5 text-[15px] font-bold text-foreground">{children}</h3>,
+                                    h2: ({ children }) => <h2 className="mt-5 mb-2 border-t border-border/40 pt-3 text-base font-extrabold tracking-tight text-foreground flex items-center gap-2" style={{ fontWeight: 800 }}>{children}</h2>,
+                                    h3: ({ children }) => <h3 className="mt-4 mb-1.5 text-[15px] font-bold text-foreground" style={{ fontWeight: 700 }}>{children}</h3>,
                                     p: ({ children }) => <p>{processChildren(children)}</p>,
-                                    li: ({ children }) => <li>{processChildren(children)}</li>,
+                                    ul: ({ children }) => <ul className="my-2 ml-5 list-disc space-y-1 text-sm">{children}</ul>,
+                                    ol: ({ children }) => <ol className="my-2 ml-5 list-decimal space-y-1 text-sm">{children}</ol>,
+                                    li: ({ children }) => <li className="pl-1">{processChildren(children)}</li>,
                                     td: ({ children }) => <td>{processChildren(children)}</td>,
                                     th: ({ children }) => <th>{processChildren(children)}</th>,
                                     em: ({ children }) => <em className="text-muted-foreground italic">{children}</em>,
@@ -978,7 +982,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                 </ReactMarkdown>
                               </div>
                               {followUpItems.length > 0 && (
-                                <div className="mt-2.5 pt-2 border-t border-border/20">
+                                <div className="mt-2.5 pt-2 border-t border-border/40">
                                   <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Suggested actions</p>
                                   <div className="flex flex-wrap gap-1.5">
                                     {followUpItems.map((item, idx) => (
