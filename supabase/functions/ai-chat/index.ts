@@ -7064,10 +7064,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
           pdfBase64 = btoa(binary);
         } catch (fetchErr: any) {
+          console.error('read_assai_document: download error:', fetchErr?.name, fetchErr?.message);
           if (fetchErr?.name === 'AbortError') {
             return { metadata, content_available: false, reason: 'Download timed out (>15s).', question_asked: question };
           }
-          return { metadata, content_available: false, reason: 'Failed to download from Assai.', question_asked: question };
+          return { metadata, content_available: false, reason: 'Failed to download from Assai: ' + (fetchErr?.message || 'Unknown error'), question_asked: question };
         }
         
         // STEP 6 — Pass to Claude for reading
