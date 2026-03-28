@@ -22,7 +22,7 @@ const PSSRDetails: React.FC<PSSRDetailsProps> = ({ pssrId, onBack }) => {
     title: 'DP300 HM Additional Compressors',
     asset: 'NRNGL Plant',
     reason: 'Start-up or Commissioning of a new Asset',
-    projectId: 'BGC-2024-001',
+    projectId: 'PROJ-2024-001',
     projectName: 'Phase 3 Expansion Project',
     status: 'Under Review',
     progress: 75,

@@ -166,7 +166,7 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
         <div className="text-center border-b-2 border-black pb-4 mb-6">
           <img
             src="/images/bgc-logo.png"
-            alt="Basrah Gas Company Logo"
+            alt="Company Logo"
             className="h-12 mx-auto mb-4"
           />
           <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-gray-800 to-transparent mb-2" />

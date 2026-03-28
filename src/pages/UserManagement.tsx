@@ -164,7 +164,7 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
     "P&E Director"
   ];
 
-  const companies = ["BGC", "Kent", "Others"];
+  const companies = ["Asset Owner", "Kent", "Others"];
   const projects = ["Project Alpha", "Project Beta", "Project Gamma"]; // Mock projects
 
 

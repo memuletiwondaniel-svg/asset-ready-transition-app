@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, MapPin, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const BGC_DEFAULTS = [
+const DEFAULT_FIELDS = [
   { name: 'Rumaila' },
   { name: 'Zubair' },
   { name: 'West Qurna' },
@@ -32,12 +32,12 @@ export const FieldsStep: React.FC<FieldsStepProps> = ({ onComplete }) => {
 
   const seedMutation = useMutation({
     mutationFn: async () => {
-      for (const f of BGC_DEFAULTS) {
+      for (const f of DEFAULT_FIELDS) {
         const exists = fields.some(fl => fl.name === f.name);
         if (!exists) await supabase.from('field').insert({ name: f.name, is_active: true });
       }
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['setup-fields'] }); toast.success('BGC default fields added'); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['setup-fields'] }); toast.success('Default fields added'); },
   });
 
   const addMutation = useMutation({
