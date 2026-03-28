@@ -894,20 +894,78 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                               </div>
                             );
                           }
-                          return (
-                            <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border/50 [&_th]:px-3 [&_th]:py-1.5 [&_th]:bg-muted/50 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_td]:border [&_td]:border-border/50 [&_td]:px-3 [&_td]:py-1.5 [&_td]:text-xs [&_p]:my-2.5 [&_p]:leading-relaxed [&_ul]:my-2.5 [&_ul]:space-y-1.5 [&_ol]:my-2.5 [&_ol]:space-y-1.5 [&_li]:my-0 [&_li]:leading-relaxed [&_h1]:text-base [&_h1]:font-bold [&_h1]:text-foreground [&_h1]:mt-5 [&_h1]:mb-2 [&_h2]:text-[13px] [&_h2]:font-bold [&_h2]:text-foreground [&_h2]:mt-4 [&_h2]:mb-1.5 [&_h3]:text-[13px] [&_h3]:font-semibold [&_h3]:text-foreground [&_h3]:mt-3.5 [&_h3]:mb-1 [&_pre]:bg-background/50 [&_pre]:rounded-lg [&_code]:text-xs [&_strong]:font-bold [&_strong]:text-foreground [&_hr]:my-4 [&_hr]:border-border/30 [&_blockquote]:border-l-2 [&_blockquote]:border-primary/30 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_em]:text-muted-foreground">
-                              <ReactMarkdown
-                                remarkPlugins={[remarkGfm]}
-                                components={{
-                                  p: ({ children }) => <p>{processChildren(children)}</p>,
-                                  li: ({ children }) => <li>{processChildren(children)}</li>,
-                                  td: ({ children }) => <td>{processChildren(children)}</td>,
-                                  th: ({ children }) => <th>{processChildren(children)}</th>,
-                                }}
-                              >
-                                {message.content}
-                              </ReactMarkdown>
-                            </div>
+                          {(() => {
+                            // Pre-process: normalize plain-text section headers to ## markdown headers
+                            const headerPatterns = [
+                              'Critical Observations', 'Expected Content', 'Handover Readiness Impact',
+                              'What I recommend', 'What I can tell you', 'Document Overview',
+                              'Key Observations', 'Summary', 'Analysis', 'Recommendations',
+                              'Document Details', 'Status Overview', 'Next Steps', 'Key Findings',
+                              'Document Metadata', 'Revision History', 'Action Items',
+                              'Option \\d+', 'Would you like me to',
+                            ];
+                            const headerRegex = new RegExp(
+                              `^(${headerPatterns.join('|')}):?\\s*$`, 'gim'
+                            );
+                            let processed = message.content
+                              .replace(headerRegex, (match, g1) => `## ${g1.replace(/:$/, '')}`)
+                              // Also catch inline bold headers like "**Critical Observations:**"
+                              .replace(/^\*\*([^*]+)\*\*:?\s*$/gm, '## $1');
+
+                            // Extract follow-up suggestions (bullet items after "Would you like me to")
+                            const followUpRegex = /## Would you like me to[\s\S]*?(?=\n## |\n---|\s*$)/i;
+                            const followUpMatch = processed.match(followUpRegex);
+                            let followUpItems: string[] = [];
+                            if (followUpMatch) {
+                              const bulletRegex = /[-•*]\s+(.+)/g;
+                              let bm: RegExpExecArray | null;
+                              while ((bm = bulletRegex.exec(followUpMatch[0])) !== null) {
+                                followUpItems.push(bm[1].replace(/\?$/, '').trim());
+                              }
+                              // Remove the section from content so we render chips instead
+                              if (followUpItems.length > 0) {
+                                processed = processed.replace(followUpMatch[0], '').trim();
+                              }
+                            }
+
+                            return (
+                              <>
+                                <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border/50 [&_th]:px-3 [&_th]:py-1.5 [&_th]:bg-muted/50 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_td]:border [&_td]:border-border/50 [&_td]:px-3 [&_td]:py-1.5 [&_td]:text-xs [&_p]:my-1.5 [&_p]:leading-relaxed [&_ul]:my-1.5 [&_ul]:space-y-0.5 [&_ol]:my-1.5 [&_ol]:space-y-0.5 [&_li]:my-0 [&_li]:leading-relaxed [&_h1]:text-base [&_h1]:font-bold [&_h1]:text-foreground [&_h1]:mt-4 [&_h1]:mb-1.5 [&_h2]:text-[13px] [&_h2]:font-bold [&_h2]:text-foreground [&_h2]:mt-3 [&_h2]:mb-1 [&_h2]:border-t [&_h2]:border-border/20 [&_h2]:pt-2.5 [&_h3]:text-[13px] [&_h3]:font-semibold [&_h3]:text-foreground [&_h3]:mt-2.5 [&_h3]:mb-0.5 [&_pre]:bg-background/50 [&_pre]:rounded-lg [&_code]:text-xs [&_strong]:font-bold [&_strong]:text-foreground [&_hr]:my-3 [&_hr]:border-border/30 [&_blockquote]:border-l-2 [&_blockquote]:border-primary/30 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_em]:text-muted-foreground">
+                                  <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    components={{
+                                      h2: ({ children }) => <h2 className="mt-3 mb-1 border-t border-border/20 pt-2.5 text-[13px] font-bold tracking-tight text-foreground">{children}</h2>,
+                                      h3: ({ children }) => <h3 className="mt-2.5 mb-0.5 text-[13px] font-semibold text-foreground">{children}</h3>,
+                                      p: ({ children }) => <p>{processChildren(children)}</p>,
+                                      li: ({ children }) => <li>{processChildren(children)}</li>,
+                                      td: ({ children }) => <td>{processChildren(children)}</td>,
+                                      th: ({ children }) => <th>{processChildren(children)}</th>,
+                                      em: ({ children }) => <em className="text-muted-foreground italic">{children}</em>,
+                                      a: ({ href, children }) => <a href={href} className="font-medium text-primary underline underline-offset-2" target="_blank" rel="noreferrer">{children}</a>,
+                                    }}
+                                  >
+                                    {processed}
+                                  </ReactMarkdown>
+                                </div>
+                                {followUpItems.length > 0 && (
+                                  <div className="mt-2.5 pt-2 border-t border-border/20">
+                                    <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Suggested actions</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {followUpItems.map((item, idx) => (
+                                        <button
+                                          key={idx}
+                                          onClick={() => handleSend(item + '?')}
+                                          className="text-xs px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/50 transition-colors cursor-pointer text-left"
+                                        >
+                                          {item}?
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
                           );
                         })()}
                         
