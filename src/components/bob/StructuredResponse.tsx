@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StatusBadge } from './StatusBadge';
-import { Download, Search, ChevronDown, ChevronRight, FileText, AlertTriangle, BookOpen, Link2 } from 'lucide-react';
+import { Download, ChevronDown, ChevronRight, FileText, AlertTriangle, BookOpen, Link2, Sparkles } from 'lucide-react';
 import { assaiDetailsUrl, assaiDownloadUrl, ASSAI_DOC_NUMBER_REGEX } from '@/lib/assaiLinks';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
