@@ -10432,8 +10432,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         if (filteredDocList.length > 0) {
           specificFollowups.push(
             p1SubjectLabel
-              ? `Read and summarise the most relevant ${p1SubjectLabel} document`
-              : `Read & summarise the first document`
+              ? `Read and interpret the most relevant ${p1SubjectLabel} document`
+              : `Read and interpret the first document`
           );
         }
         const statuses = [...new Set(filteredDocList.map((d: any) => d.status).filter(Boolean))];
