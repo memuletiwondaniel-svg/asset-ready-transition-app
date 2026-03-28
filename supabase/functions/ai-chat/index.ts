@@ -7051,17 +7051,47 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             .eq('code', acronymMatch.type_code)
             .maybeSingle();
           
+          // Cross-discipline auto-combine: find ALL codes matching this document type name
+          const crossDisciplineCodes = new Set([acronymMatch.type_code]);
+          const allMatches: Array<{code: string; name: string; description: string | null; tier: string | null}> = [{
+            code: acronymMatch.type_code,
+            name: acronymMatch.full_name,
+            description: typeDetails?.document_description?.substring(0, 200) ?? acronymMatch.notes,
+            tier: typeDetails?.tier ?? null
+          }];
+          
+          if (typeDetails?.document_name) {
+            const { data: crossMatches } = await supabaseClient
+              .from('dms_document_types')
+              .select('code, document_name, document_description, tier')
+              .ilike('document_name', `%${typeDetails.document_name}%`)
+              .eq('is_active', true)
+              .limit(5);
+            
+            if (crossMatches) {
+              for (const m of crossMatches) {
+                if (!crossDisciplineCodes.has(m.code)) {
+                  crossDisciplineCodes.add(m.code);
+                  allMatches.push({
+                    code: m.code,
+                    name: m.document_name,
+                    description: m.document_description?.substring(0, 200) ?? null,
+                    tier: m.tier ?? null
+                  });
+                }
+              }
+            }
+          }
+          
+          const combinedCode = Array.from(crossDisciplineCodes).join('+');
+          console.log(`resolve_document_type: cross-discipline auto-combine: ${acronymMatch.type_code} → ${combinedCode} (${crossDisciplineCodes.size} codes)`);
+          
           return {
             found: true,
-            count: 1,
+            count: allMatches.length,
             source: 'acronym_lookup',
-            matches: [{
-              code: acronymMatch.type_code,
-              name: acronymMatch.full_name,
-              description: typeDetails?.document_description?.substring(0, 200) ?? acronymMatch.notes,
-              tier: typeDetails?.tier ?? null
-            }],
-            instruction: `Use code "${acronymMatch.type_code}" as the document_type filter in search_assai_documents`
+            matches: allMatches,
+            instruction: `Use code "${combinedCode}" as the document_type filter in search_assai_documents`
           };
         }
         
