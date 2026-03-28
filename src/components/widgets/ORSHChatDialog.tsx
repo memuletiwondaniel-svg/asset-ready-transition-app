@@ -919,9 +919,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                             'The pattern I\'m seeing': '🔍',
                             'Would you like me to': '💬',
                             "Here's what this likely means": '🔍',
-                            'Here\'s what this likely means': '🔍',
                             "Here's what I recommend": '💡',
-                            'Here\'s what I recommend': '💡',
                           };
 
                           // Broad regex: match lines that look like section headers
