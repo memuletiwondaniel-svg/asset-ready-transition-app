@@ -1,55 +1,51 @@
 
 
-## Problem 1: Relevance Filtering Not Applied
+## Plan: Add Document Action Buttons to Follow-up Section
 
-The scoring logic runs correctly — documents are split into `relevantDocs` and `otherDocs`. But on line 9704, the code merges them right back together:
+### What's changing
 
-```ts
-docList = [...relevantDocs, ...otherDocs].slice(0, 30);
+The "What would you like me to do next?" section currently shows text-only pill buttons (e.g., "Read and summarise the most relevant HVAC document"). These should be replaced/augmented with the 3 standard document action buttons — **Read & Analyse**, **Download**, **Open in Assai** — when results contain documents. The existing row-level hover actions stay as-is; these new ones appear prominently in the follow-up area so users always see them.
+
+### Implementation
+
+**File: `src/components/bob/StructuredResponse.tsx`**
+
+1. **Add a "Quick Actions" row** above the text follow-ups in all 3 response types (document_analysis, document_list, document_search). When `data.documents` exists and has results, render the top document's 3 action buttons as visible, labeled buttons (not hover-only icons):
+   - `BookOpen` — "Read & Analyse" → triggers `onFollowupClick("Read and summarise [title]")`
+   - `Download` — "Download" → links to `assaiDownloadUrl(docNumber)`
+   - `ExternalLink` — "Open in Assai" → links to `assaiDetailsUrl(docNumber)`
+
+2. If there are multiple relevant documents (e.g., 2-3 HVAC matches), show the actions for the **first/most relevant** document, with a label like "For: [document title]".
+
+3. Keep the existing text pill follow-ups below for contextual suggestions (e.g., "Show IOMs for other units").
+
+4. Style the action buttons as outlined chips with icons — same rounded-full style as follow-up pills but with a left-aligned icon, slightly more prominent (border-primary/40).
+
+**File: `supabase/functions/ai-chat/index.ts`**
+
+No backend changes needed — the document data is already in the structured response. The frontend just needs to read `data.documents[0]` to render the actions.
+
+### Technical detail
+
+Create a reusable `DocumentQuickActions` component:
+
+```tsx
+function DocumentQuickActions({ doc, onRead }: { doc: DocumentRow; onRead?: (q: string) => void }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <button onClick={() => onRead?.(`Read and summarise ${doc.title}`)} className="...chip styles...">
+        <BookOpen className="h-3.5 w-3.5" /> Read & Analyse
+      </button>
+      <a href={assaiDownloadUrl(doc.document_number)} target="_blank" className="...chip styles...">
+        <Download className="h-3.5 w-3.5" /> Download
+      </a>
+      <a href={assaiDetailsUrl(doc.document_number)} target="_blank" className="...chip styles...">
+        <ExternalLink className="h-3.5 w-3.5" /> Open in Assai
+      </a>
+    </div>
+  );
+}
 ```
 
-This means ALL 30 documents still show. The fix: when relevant docs exist, show ONLY those. When none match, show top 10 with explanation.
-
-## Problem 2: Auto-Retry Never Actually Retries
-
-On lines 538-539, the ref is reset to `false` BEFORE `handleSend` is called:
-
-```ts
-retryAttemptRef.current = false;  // ← resets flag
-handleSend(textToSend);           // ← new call sees flag as false, not as "retry"
-```
-
-This means the retry call is treated as a fresh call. If IT also fails, it tries to "retry" again (infinite loop risk), or the timing means the flag state is lost. The fix: keep the flag `true` during the retry call and only reset it on success.
-
-## Changes
-
-### 1. Backend: Show only relevant docs (`supabase/functions/ai-chat/index.ts`)
-
-**Line 9699-9711** — Replace the docList logic:
-
-- If `relevantDocs.length > 0`: set `docList = relevantDocs` (NOT merged with otherDocs). Summary says "Found X documents related to HVAC" and adds a follow-up "Show all Y IOMs including unrelated ones".
-- If `relevantDocs.length === 0` and `subjectLabel` exists: set `docList = allDocs.slice(0, 10)`. Summary says "I didn't find a specific IOM for HVAC, but here are the closest X of Y IOMs. None matched HVAC specifically."
-- If no subject: show all as before.
-
-### 2. Frontend: Fix auto-retry flag logic (`src/components/widgets/ORSHChatDialog.tsx`)
-
-**Lines 532-541 (stub detection)** and **580-588 (fetch error)**:
-
-- Do NOT reset `retryAttemptRef.current = false` before calling `handleSend`. Instead, keep it `true` so the retried call knows it's a retry.
-- Reset to `false` only AFTER a successful response (line 550) or when the retry itself fails (line 542).
-- Pass an `isRetry` parameter or use the ref to skip re-entering the retry branch on the second attempt.
-
-Corrected flow:
-```text
-1st call fails → stub detected → ref = true → show "few more seconds" → handleSend()
-2nd call runs → ref is true → if stub again, skip retry, show error → ref = false
-2nd call succeeds → ref = false on line 550
-```
-
-### Summary
-
-| File | Fix |
-|------|-----|
-| `supabase/functions/ai-chat/index.ts` | `docList = relevantDocs` only (not merged); show top 10 if no matches |
-| `src/components/widgets/ORSHChatDialog.tsx` | Keep `retryAttemptRef = true` during retry; only reset after success or 2nd failure |
+Render it in each follow-up section (lines 323-342, 413-432, 572-591) above the existing text pills, gated by `data.documents?.length > 0`. The reference document is `data.documents[0]`.
 
