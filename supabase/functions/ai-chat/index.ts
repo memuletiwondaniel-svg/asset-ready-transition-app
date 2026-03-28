@@ -6906,27 +6906,76 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           };
         }
         
-        // STEP 5 — Re-authenticate for download (sessions expire after ~3-4 min)
+        // STEP 5 — Download with session that has search context, then retry with fresh session
         let pdfBase64: string | null = null;
         let documentMediaType = 'application/pdf';
         
-        try {
-          // Fresh auth for download — the search step may have consumed minutes
-          const dlAuth = await authenticateAssai(assaiBase, username, password);
-          const dlCookies = dlAuth.success && dlAuth.cookies?.length ? dlAuth.cookies.join('; ') : cookieHeader;
-          
+        const downloadUrl = assaiBase + '/download.aweb?pk_seq_nr=' + pkSeqNr + '&entt_seq_nr=' + enttSeqNr;
+        
+        const attemptDownload = async (cookies: string, label: string) => {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 15000);
-          
-          console.log(`read_assai_document: downloading pk_seq_nr=${pkSeqNr}, entt_seq_nr=${enttSeqNr}`);
-          const docRes = await fetch(assaiBase + '/download.aweb?pk_seq_nr=' + pkSeqNr + '&entt_seq_nr=' + enttSeqNr, {
+          console.log(`read_assai_document: downloading (${label}) pk_seq_nr=${pkSeqNr}, entt_seq_nr=${enttSeqNr}`);
+          const res = await fetch(downloadUrl, {
             headers: {
-              'Cookie': dlCookies,
+              'Cookie': cookies,
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             },
             signal: controller.signal,
             redirect: 'follow'
           });
+          clearTimeout(timeoutId);
+          return res;
+        };
+        
+        try {
+          // Attempt 1: Use the original search-session cookies (server already has search context)
+          let docRes = await attemptDownload(cookieHeader, 'search-session');
+          
+          // If we got HTML back, retry with a completely fresh session that re-does search
+          const ct1 = docRes.headers.get('content-type') || '';
+          if (!docRes.ok || ct1.includes('text/html')) {
+            console.warn(`read_assai_document: attempt1 failed (status=${docRes.status}, ct=${ct1}), retrying with fresh session + search`);
+            // Fresh auth
+            const dlAuth = await authenticateAssai(assaiBase, username, password);
+            const dlCookies = dlAuth.success && dlAuth.cookies?.length ? dlAuth.cookies.join('; ') : cookieHeader;
+            
+            // Re-initialize search context on the new session so download.aweb works
+            try {
+              const initResp2 = await fetch(assaiBase + '/search.aweb?subclass_type=DES_DOC', {
+                headers: { Cookie: dlCookies, Accept: 'text/html', 'User-Agent': ASSAI_UA },
+                redirect: 'follow',
+              });
+              const initHtml2 = await initResp2.text();
+              const fields2 = extractHiddenFieldsRead(initHtml2);
+              const hidden2 = fields2.filter(f => f.type === 'hidden' && f.name && f.value);
+              const text2 = fields2.filter(f => f.type === 'text' || f.type === '');
+              
+              const sp2 = new URLSearchParams();
+              for (const f of hidden2) sp2.set(f.name, f.value);
+              for (const f of text2) sp2.set(f.name, '');
+              sp2.set('subclass_type', 'DES_DOC');
+              sp2.set('number', docNumber);
+              
+              await fetch(assaiBase + '/result.aweb', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  'Cookie': dlCookies,
+                  'User-Agent': ASSAI_UA,
+                  'Referer': assaiBase + '/search.aweb?subclass_type=DES_DOC',
+                },
+                body: sp2.toString(),
+                redirect: 'follow',
+              });
+              console.log('read_assai_document: fresh session search context established');
+            } catch (reInitErr) {
+              console.warn('read_assai_document: failed to re-init search context:', reInitErr);
+            }
+            
+            // Now attempt download on the fresh session
+            docRes = await attemptDownload(dlCookies, 'fresh-session');
+          }
           clearTimeout(timeoutId);
           
           if (!docRes.ok) {
@@ -7015,10 +7064,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
           pdfBase64 = btoa(binary);
         } catch (fetchErr: any) {
+          console.error('read_assai_document: download error:', fetchErr?.name, fetchErr?.message);
           if (fetchErr?.name === 'AbortError') {
             return { metadata, content_available: false, reason: 'Download timed out (>15s).', question_asked: question };
           }
-          return { metadata, content_available: false, reason: 'Failed to download from Assai.', question_asked: question };
+          return { metadata, content_available: false, reason: 'Failed to download from Assai: ' + (fetchErr?.message || 'Unknown error'), question_asked: question };
         }
         
         // STEP 6 — Pass to Claude for reading
