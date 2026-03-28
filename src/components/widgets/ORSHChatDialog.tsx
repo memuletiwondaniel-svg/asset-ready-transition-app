@@ -432,14 +432,64 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     let fileUrls: string[] = [];
     let fileNames: string[] = [];
     let documentTexts: string[] = [];
+    let filePayload: { file_data: string; file_name: string; file_type: string } | undefined;
 
     try {
       if (attachedFiles.length > 0) {
-        const uploadResult = await uploadFilesToStorage(attachedFiles);
-        imageUrls = uploadResult.imageUrls;
-        fileUrls = uploadResult.fileUrls;
-        fileNames = uploadResult.fileNames;
-        documentTexts = uploadResult.documentTexts;
+        const ALLOWED_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        
+        // Check for document files (PDF) to send as base64 directly to Claude
+        const docFile = attachedFiles.find(f => f.type === 'application/pdf');
+        const imageFiles = attachedFiles.filter(f => f.type !== 'application/pdf');
+        
+        if (docFile) {
+          // Validate file type
+          if (!ALLOWED_TYPES.includes(docFile.type)) {
+            toast.error('Unsupported file type — please upload a PDF or image.');
+            setUploadingFiles(false);
+            return;
+          }
+          // Validate file size
+          if (docFile.size > MAX_FILE_SIZE) {
+            toast.error('File too large — maximum 10MB supported.');
+            setUploadingFiles(false);
+            return;
+          }
+          // Read as base64
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve((reader.result as string).split(',')[1]);
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsDataURL(docFile);
+          });
+          filePayload = { file_data: base64, file_name: docFile.name, file_type: docFile.type };
+          fileNames = [docFile.name];
+        }
+        
+        // Upload remaining image files to storage as before
+        if (imageFiles.length > 0) {
+          // Validate image types and sizes
+          for (const imgFile of imageFiles) {
+            if (!ALLOWED_TYPES.includes(imgFile.type)) {
+              toast.error('Unsupported file type — please upload a PDF or image.');
+              setUploadingFiles(false);
+              return;
+            }
+            if (imgFile.size > MAX_FILE_SIZE) {
+              toast.error('File too large — maximum 10MB supported.');
+              setUploadingFiles(false);
+              return;
+            }
+          }
+          const uploadResult = await uploadFilesToStorage(imageFiles);
+          imageUrls = uploadResult.imageUrls;
+          fileUrls = uploadResult.fileUrls;
+          if (!filePayload) fileNames = uploadResult.fileNames;
+          else fileNames = [...fileNames, ...uploadResult.fileNames];
+          documentTexts = uploadResult.documentTexts;
+        }
+        
         setAttachedFiles([]);
       }
     } catch (error) {
@@ -450,12 +500,12 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
 
     setUploadingFiles(false);
     
-    // Use sanitized input
+    // Use sanitized input — never append raw document text for base64 uploads
     let finalContent = securityCheck.sanitizedInput || '';
-    if (documentTexts.length > 0) {
+    if (!filePayload && documentTexts.length > 0) {
       finalContent = finalContent + (finalContent ? '\n\n' : '') + documentTexts.join('\n\n');
     }
-    if (!finalContent) finalContent = 'Please analyze these files.';
+    if (!finalContent) finalContent = filePayload ? 'Please analyze this document.' : 'Please analyze these files.';
     
     const userMessage: Message = { 
       role: 'user', 
@@ -489,7 +539,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
             content: m.content,
             imageUrls: m.imageUrls,
             fileUrls: m.fileUrls
-          }))
+          })),
+          ...(filePayload ? { file_data: filePayload.file_data, file_name: filePayload.file_name, file_type: filePayload.file_type } : {})
         })
       });
 
