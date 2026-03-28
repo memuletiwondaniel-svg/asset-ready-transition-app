@@ -903,8 +903,17 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                           : 'bg-transparent rounded-bl-md'
                       )}>
                         {message.content && (() => {
-                          const { before, data: structuredData, after } = parseStructuredResponse(message.content);
+                          const { before, data: structuredData, after, follow_ups: structuredFollowUps } = parseStructuredResponse(message.content);
                           if (structuredData) {
+                            // Extract follow_ups: prefer structured JSON, then check after text for <follow_ups> tag
+                            let followUps = structuredFollowUps;
+                            if (!followUps && after) {
+                              const tagMatch = after.match(/<follow_ups>\s*(\[[\s\S]*?\])\s*<\/follow_ups>/i);
+                              if (tagMatch) {
+                                try { followUps = JSON.parse(tagMatch[1]); } catch {}
+                              }
+                            }
+                            const cleanAfter = after ? after.replace(/<follow_ups>[\s\S]*?<\/follow_ups>/gi, '').trim() : '';
                             return (
                               <div className="text-sm leading-relaxed">
                                 {before && (
@@ -918,7 +927,23 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                     handleSend(text);
                                   }}
                                 />
-                                {after && <p className="mt-2">{renderInlineMarkdown(after)}</p>}
+                                {cleanAfter && <p className="mt-2">{renderInlineMarkdown(cleanAfter)}</p>}
+                                {followUps && followUps.length > 0 && (
+                                  <div className="mt-2.5 pt-2 border-t border-border/60">
+                                    <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Suggested actions</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {followUps.map((item: string, idx: number) => (
+                                        <button
+                                          key={idx}
+                                          onClick={() => handleSend(item.replace(/\*\*/g, '') + '?')}
+                                          className="text-xs px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/50 transition-colors cursor-pointer text-left"
+                                        >
+                                          {item.replace(/\*\*/g, '')}?
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             );
                           }
