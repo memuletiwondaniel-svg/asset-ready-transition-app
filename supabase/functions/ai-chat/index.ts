@@ -6867,11 +6867,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         }
         
         if (!pkSeqNr || !enttSeqNr || pkSeqNr === '' || enttSeqNr === '') {
-          console.error(`read_assai_document: pk_seq_nr="${pkSeqNr}" entt_seq_nr="${enttSeqNr}" — document not found in Assai. Project code: ${docProjectCode}, cabinet: ${selectedProjectCodes}`);
+          console.error(`read_assai_document: pk_seq_nr="${pkSeqNr}" entt_seq_nr="${enttSeqNr}" — document not found in Assai (All projects scope)`);
           return {
             metadata,
             content_available: false,
-            reason: `Document ${docNumber} was not found in Assai (searched project ${selectedProjectCodes}). The document number may be incorrect or it may belong to a different project cabinet.`,
+            reason: `Document ${docNumber} was not found in Assai (searched across all projects). The document number may be incorrect or the document may not exist in the system.`,
             question_asked: question
           };
         }
