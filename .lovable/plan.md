@@ -1,62 +1,49 @@
 
 
-## Fix: Analytical Intent Not Firing in Deterministic Fallback (Non-429 Path)
+## Fix: Three Regressions — Vendor Misclassification, Duplicate Pills, Chat Header Boldness
 
-### Root Cause (Confirmed)
+### Issue 1: Non-vendor documents shown as "vendor documents"
 
-Three bugs combine to produce "I didn't find a specific document for **MANY**":
+**Root cause**: When the user says "vendor documents", the analytical fallback searches broadly with just `document_number_pattern: projectPattern` (e.g., `6529-%`). This returns ALL project documents — engineering drawings (B01), inspection plans (5733), NCRs (6918), BODs (7704) — not just vendor documents. The code then labels everything as "vendor" because `isFallbackVendorQuery` is true.
 
-1. **Duplicate STOP_WORDS without analytical terms** (line 9820): The non-429 deterministic fallback defines its own `STOP_WORDS` set that is missing all the analytical words (`MANY`, `PENDING`, `REVIEW`, `STATUS`, `VENDOR`, etc.) that were added to `STOP_WORDS_SHARED` at line 9578. So "MANY" passes the filter and becomes `subjectLabel`.
+**Vendor documents are identified by discipline code `ZV`** (segment 6 of the document number), not by the word "vendor" in the user's query. True vendor doc types have 3-character codes (C08, B01, A01, etc.) with ZV discipline.
 
-2. **No analytical intent check in non-429 fallback** (line 9691): The query matches `isDocQuery` because `DOC_KEYWORDS` includes `'VENDOR'` and `'DOCUMENT'`. It then enters the document search path and always builds a raw `document_list`. The analytical detection added at line 10034 only runs in the 429 fallback path — the non-429 fallback at line 9677 has no equivalent check.
+**Fix** (in `supabase/functions/ai-chat/index.ts`):
+- When `isFallbackVendorQuery` is true, add a `discipline_filter: 'ZV'` to the Assai search call, OR post-filter the returned documents to only include those whose document number contains `-ZV-` in the discipline segment.
+- Apply this in both analytical fallback paths (the resolved-type path ~line 9824 and the broad-search path ~line 9986).
+- For the type_table, filter to only show document types that appear in ZV-discipline documents.
 
-3. **Bob's prompt lacks document intent classification**: Bob's `BOB_SYSTEM_PROMPT` has DATA vs NAVIGATION intent classification but does NOT have the RETRIEVAL/ANALYTICAL/CONTENT classification for document queries. That exists only in `DOCUMENT_AGENT_PROMPT` (line 9454). When `detectAgentDomain` routes to Selma (which it does for this query since it contains "document"), Selma's prompt has it — but if the LLM never fires (API error), it's irrelevant.
+### Issue 2: Duplicate follow-up action pills
 
-### Changes
+**Root cause**: The structured JSON contains BOTH `followup` and `follow_ups` arrays (line 10041: `follow_ups: analyticalFollowups, followup: analyticalFollowups`). Two separate renderers consume these:
+1. `StructuredResponse.tsx` reads `data.followup` → renders "What would you like me to do next?" pills
+2. `ORSHChatDialog.tsx` reads `follow_ups` from `parseStructuredResponse()` → renders "Suggested actions" pills
 
-**File**: `supabase/functions/ai-chat/index.ts`
+Same data, rendered twice = duplicate pills.
 
-#### Change 1: Replace duplicate STOP_WORDS with STOP_WORDS_SHARED (line 9820)
+**Fix** (two changes):
+- **Backend** (`index.ts`): Remove the `follow_ups` key from the structured JSON in all analytical fallback paths. Keep only `followup` which is consumed by `StructuredResponse.tsx`.
+- **Frontend** (`ORSHChatDialog.tsx`): When a structured response is rendered and it contains `followup` data, skip the outer "Suggested actions" rendering. Add a guard: if `structuredData?.followup?.length > 0`, don't render the outer `followUps` pills (lines 931-946).
 
-Replace the local `STOP_WORDS` constant at line 9820 with a reference to `STOP_WORDS_SHARED` (defined at line 9578), which already includes all analytical terms.
+### Issue 3: Section headers in Bob's chat lost bold + icons
 
-#### Change 2: Add analytical intent detection at top of non-429 fallback (line ~9691)
+**Root cause**: The `font-variation-settings: "wght" 400` on `body` (line 324 of `index.css`) applies to all descendants including the h2 elements inside Bob's chat. While `.bob-chat-prose h2` sets `"wght" 800`, the specificity may not override when the h2 also has inline styles competing.
 
-Before entering the document search logic, check for analytical intent using the same patterns from line 10034:
+**Fix** (`src/index.css`):
+- Add `!important` to `.bob-chat-prose h2` font-variation-settings to ensure it wins over the body cascade.
+- Also add `.bob-chat-prose h3` with `"wght" 700`.
 
-```typescript
-// Check for analytical intent BEFORE document search
-const analyticalPatterns = [
-  /how many/i, /what(?:'s| is) the status/i, /status of/i,
-  /pending review/i, /pending approval/i, /are (?:pending|outstanding|overdue)/i,
-  /which (?:contractors?|vendors?|companies?) are/i, /breakdown/i, /summary of/i,
-  /distribution/i, /count of/i, /total (?:number|count)/i
-];
-const isFallbackAnalytical = analyticalPatterns.some(p => p.test(lastUserMsg));
-```
+**Verify** (`ORSHChatDialog.tsx`): The h2 component already has `font-extrabold` and `style={{ fontWeight: 800 }}`. The section icon normalization (`sectionIcons` map) is already in place. Confirm these are not being stripped — they appear intact at line 978-996. No code change needed here, just the CSS specificity fix.
 
-#### Change 3: Build analytical response when `isFallbackAnalytical` is true
+### Files Changed
 
-After the search succeeds (line 9785), if `isFallbackAnalytical` is true, build a synthesized summary response (same logic as the 429 analytical path at line 10154) instead of the raw document table. This includes:
-- Status counts (pending, approved, cancelled)
-- Vendor grouping when the query mentions vendors
-- `document_search` type with `status_table` instead of `document_list`
+| File | Changes |
+|------|---------|
+| `supabase/functions/ai-chat/index.ts` | Filter vendor queries by ZV discipline; remove `follow_ups` key from structured JSON |
+| `src/components/widgets/ORSHChatDialog.tsx` | Guard against duplicate pills when structured response has followup data |
+| `src/index.css` | Add `!important` to `.bob-chat-prose h2/h3` font-variation-settings |
 
-#### Change 4: Add ANALYTICAL classification to Bob's system prompt
-
-Add a brief document intent classification block to `BOB_SYSTEM_PROMPT` (around line 860, after the DATA/NAVIGATION section) so Bob also recognises analytical document queries when the LLM does fire:
-
-```
-When handling DOCUMENT queries, classify intent:
-- ANALYTICAL ("how many", "status of", "pending", "breakdown") → search broadly, synthesise counts/summaries
-- RETRIEVAL ("find the IOM", "show me the P&ID") → search and return document table
-- CONTENT ("what does it say", "summarise") → search, read, answer from content
-```
-
-### Technical Details
-
-- Single file: `supabase/functions/ai-chat/index.ts`
-- 4 changes, all in the deterministic fallback and Bob's prompt
-- Reuses existing analytical response builder logic from line 10154
-- No frontend changes needed
+### Scope guarantee
+- All CSS changes are scoped to `.bob-chat-prose` — no impact on ORSH application pages
+- No changes to any page layout, sidebar, or heading styles outside the chat
 
