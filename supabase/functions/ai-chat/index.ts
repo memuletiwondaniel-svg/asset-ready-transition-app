@@ -9236,7 +9236,7 @@ PROJECTS IN BGC_PROJ:
 5529 / DP-300 = New Compression Station at Hammar Mishrif ← PRIMARY
 
 COMPANY CODES:
-AWI=AWI Engineering, BGC=Basrah Gas Company, EXTR=Exterran, GENP=General Pressure, KENT=KenTech/Kentz, WGEL=Wood Group Engineering Ltd, ABBE=ABB Engineering Shanghai Limited, ABB=ABB, AUM=AUM, EEIC=EEIC, EMFZ=EMFZ
+AWI=AWI Engineering, BGC=Asset Owner, EXTR=Exterran, GENP=General Pressure, KENT=KenTech/Kentz, WGEL=Wood Group Engineering Ltd, ABBE=ABB Engineering Shanghai Limited, ABB=ABB, AUM=AUM, EEIC=EEIC, EMFZ=EMFZ
 
 WORK PACKAGES:
 ST/DP300 = New Compression Station at Hammar Mishrif (primary)
