@@ -10046,7 +10046,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           broadFollowups.push("Export this list");
         }
 
-        const statusTable = Object.entries(lastToolResult.status_summary || {})
+        const statusTable = Object.entries(effectiveSearchResult.status_summary || {})
           .sort((a: any, b: any) => b[1] - a[1])
           .map(([status, count]) => ({ status, count, description: STATUS_DESCS[status] ?? status }));
 
