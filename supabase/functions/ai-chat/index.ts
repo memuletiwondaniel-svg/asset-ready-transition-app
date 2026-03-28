@@ -9474,8 +9474,9 @@ CONTENT: User wants to know what a document says ("What does the IOM say about m
 → Search first to find the document, then call read_assai_document, then answer from content.
 
 FOLLOW-UP SUGGESTIONS FORMAT (CRITICAL):
-When suggesting follow-up actions, ALWAYS include them as a "follow_ups" array inside your <structured_response> JSON block.
+When suggesting follow-up actions, ALWAYS include them as a "followup" array inside your <structured_response> JSON block.
 Maximum 3 suggestions. Each must be specific to the documents found and the user's original question.
+When generating follow-up action suggestions, always write them in human-readable terms using the document title, type name, or subject — never the raw document number. A user can understand "Read the HVAC IOM" but not "Read 6529-INTE-C017-ISGP-U40300-ZV-J01-00004-002".
 For plain-text responses, emit a <follow_ups>["action1", "action2"]</follow_ups> tag at the end.
 
 ERROR HANDLING FOR TOOL RESULTS (CRITICAL):
