@@ -4,43 +4,35 @@ import { Download, ChevronDown, ChevronRight, FileText, AlertTriangle, BookOpen,
 import { assaiDetailsUrl, assaiDownloadUrl, ASSAI_DOC_NUMBER_REGEX } from '@/lib/assaiLinks';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-/** Render document number as a clickable details link + download icon */
-export function DocumentNumberLink({ docNumber }: { docNumber: string }) {
+/** Truncate long doc numbers for table display: show first & last segments */
+function truncateDocNumber(docNumber: string, maxLen = 28): string {
+  if (docNumber.length <= maxLen) return docNumber;
+  const segs = docNumber.split('-');
+  if (segs.length <= 4) return docNumber.slice(0, maxLen - 3) + '…';
+  // Show first 2 and last 2 segments
+  return `${segs[0]}-${segs[1]}-…-${segs[segs.length - 2]}-${segs[segs.length - 1]}`;
+}
+
+/** Render document number as a clickable details link */
+export function DocumentNumberLink({ docNumber, truncate = false }: { docNumber: string; truncate?: boolean }) {
   const detailsUrl = assaiDetailsUrl(docNumber);
-  const downloadUrl = assaiDownloadUrl(docNumber);
+  const display = truncate ? truncateDocNumber(docNumber) : docNumber;
   return (
-    <span className="inline-flex items-center gap-1">
-      <TooltipProvider delayDuration={300}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <a
-              href={detailsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-primary underline underline-offset-2 decoration-primary/40 hover:decoration-primary hover:text-primary/80 transition-colors"
-            >
-              {docNumber}
-            </a>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="text-[10px] max-w-xs break-all">{detailsUrl}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <TooltipProvider delayDuration={300}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <a
-              href={downloadUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
-            >
-              <Download className="h-3 w-3" />
-            </a>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="text-[10px]">Download document</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </span>
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <a
+            href={detailsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-[11px] text-primary underline underline-offset-2 decoration-primary/40 hover:decoration-primary hover:text-primary/80 transition-colors whitespace-nowrap"
+          >
+            {display}
+          </a>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-[10px] max-w-xs font-mono">{docNumber}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
