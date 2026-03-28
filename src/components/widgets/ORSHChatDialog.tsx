@@ -590,7 +590,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
         if (!retryAttemptRef.current) {
           retryAttemptRef.current = true;
           console.log('Stub response detected — auto-retrying transparently...');
-          setMessages([...newMessages, { role: 'assistant', content: '⏳ Give me a few more seconds while I pull and analyze the data...' }]);
+          setMessages(prev => { const u = prev.filter(m => m.role !== 'assistant' || m.content); return [...u.slice(0, -1).filter(m => m.role === 'user' ? true : true), ...u.slice(-1).map(() => ({ role: 'assistant' as const, content: '⏳ Give me a few more seconds while I pull and analyze the data...' }))]; });
+
           await new Promise(r => setTimeout(r, 2000));
           handleSend(textToSend);
           return;
