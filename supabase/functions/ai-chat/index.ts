@@ -9575,7 +9575,17 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
     while (iteration < MAX_ITERATIONS) {
       iteration++;
-      console.log(`Agent loop iteration ${iteration}/${MAX_ITERATIONS}`);
+      // Time guard: break if approaching edge function timeout
+      const elapsed = Date.now() - LOOP_START_TIME;
+      if (elapsed > MAX_LOOP_MS) {
+        console.log(`Time guard: ${elapsed}ms elapsed, breaking loop with accumulated results`);
+        // Build partial response from whatever we have
+        if (searchToolResult && searchToolResult.found && searchToolResult.total_found > 0) {
+          finalTextContent = `I found ${searchToolResult.total_found} documents but ran out of processing time. Here are the results from my search.`;
+        }
+        break;
+      }
+      console.log(`Agent loop iteration ${iteration}/${MAX_ITERATIONS} (${elapsed}ms elapsed)`);
 
       // ── Retry-aware API call ──────────────────────────────────────────
       const callAnthropicWithRetry = async (): Promise<Response> => {
