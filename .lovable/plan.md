@@ -1,70 +1,45 @@
 
 
-## Add "Open in Assai" under Download & Modernize Quick Actions Layout
+## Revert Suggested Actions & Add "Open in Assai" to Document Card
 
 ### What's changing
 
-Currently the three actions (Read & Analyse, Download, Open in Assai) are flat, equally-weighted chips. The user wants **Download** and **Open in Assai** grouped together as a secondary pair, with a more modern visual hierarchy.
+1. **Remove `DocumentQuickActions` from all follow-up sections** — the "Read & Analyse / Download / Open in Assai" split-button group clutters the suggested actions area. Revert to the clean, clickable chip-only layout that was working before.
 
-### Design
-
-Reorganize `DocumentQuickActions` into two visual tiers:
-
-1. **Primary action** — "Read & Analyse" as a filled/solid chip (bg-primary, white text) to signal it's the main CTA
-2. **Secondary group** — "Download" and "Open in Assai" stacked or grouped together with a subtle shared container, both as outlined chips. "Open in Assai" sits directly under/beside "Download" with a small `ExternalLink` icon, making them feel like related "get the file" actions.
-
-### Layout concept
-
-```text
-┌─────────────────────────────────────────────────┐
-│ For: Installation Operation Maintenance Manual   │
-│                                                  │
-│ [■ Read & Analyse]   [ ↓ Download  |  ↗ Assai ] │
-└─────────────────────────────────────────────────┘
-```
-
-The Download + Assai pair share a split-button style border (single rounded container with a divider), giving them a modern grouped feel while keeping Read & Analyse prominent.
+2. **Add "Open in Assai" link below the Download link** in the document header card where document details are shown (revision, status, download).
 
 ### Implementation — `src/components/bob/StructuredResponse.tsx`
 
-Replace the `DocumentQuickActions` component (lines 15-34):
+**Remove `DocumentQuickActions` calls** from all 3 follow-up sections:
+- Lines 367-371 (document_analysis)
+- Lines 462-464 (document_list)
+- Lines 624-626 (document_search)
 
-- **Read & Analyse**: Solid primary chip (`bg-primary text-primary-foreground`)
-- **Download | Open in Assai**: Combined split-button with a single outer border, thin divider between them. Both retain their individual click targets (Download → `assaiDownloadUrl`, Assai → `assaiDetailsUrl`). Uses `rounded-l-full` / `rounded-r-full` with a `border-r` divider.
+Delete these blocks so follow-ups are just the clickable chip buttons.
+
+**Add "Open in Assai" to document header card** (line ~282):
+After the status/revision badges row, add two action links — Download and Open in Assai — styled as small inline links with icons, consistent with the existing document card design:
 
 ```tsx
-function DocumentQuickActions({ doc, onRead }) {
-  const primaryClass = "inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium transition-all cursor-pointer shadow-sm";
-  const splitBase = "inline-flex items-center gap-1.5 text-xs px-3 py-1.5 border border-border bg-muted/30 hover:bg-muted/60 text-foreground font-medium transition-all cursor-pointer no-underline";
-
-  return (
-    <div className="mb-2">
-      <p className="text-[10px] text-muted-foreground mb-1.5 truncate">
-        For: <span className="font-medium">{toTitleCase(doc.title)}</span>
-      </p>
-      <div className="flex flex-wrap items-center gap-2">
-        {/* Primary CTA */}
-        <button onClick={...} className={primaryClass}>
-          <BookOpen /> Read & Analyse
-        </button>
-        {/* Split button group */}
-        <div className="inline-flex rounded-full overflow-hidden border border-border shadow-sm">
-          <a href={downloadUrl} className="...rounded-none border-r...">
-            <Download /> Download
-          </a>
-          <a href={assaiUrl} className="...rounded-none...">
-            <ExternalLink /> Open in Assai
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-}
+<div className="flex items-center gap-3 mt-2">
+  <a href={assaiDownloadUrl(data.document.document_number)}
+     target="_blank" rel="noopener noreferrer"
+     className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+    <Download className="h-3 w-3" /> Download Link
+  </a>
+  <a href={assaiDetailsUrl(data.document.document_number)}
+     target="_blank" rel="noopener noreferrer"
+     className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+    <ExternalLink className="h-3 w-3" /> Open in Assai
+  </a>
+</div>
 ```
+
+The `DocumentQuickActions` component itself can stay in the file (or be removed) since it's no longer referenced — but the suggested actions section will return to its original clean, chip-only design.
 
 ### Files to modify
 
 | File | Change |
 |------|--------|
-| `src/components/bob/StructuredResponse.tsx` | Redesign `DocumentQuickActions` with primary CTA + split-button group |
+| `src/components/bob/StructuredResponse.tsx` | Remove `DocumentQuickActions` from 3 follow-up sections; add Download + Open in Assai links to document header card |
 
