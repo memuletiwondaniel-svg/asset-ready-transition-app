@@ -9575,7 +9575,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       'FIRE': ['FIRE', 'DELUGE', 'SPRINKLER', 'FOAM', 'FIRE FIGHTING', 'F&G'],
     };
 
-    const STOP_WORDS_SHARED = new Set(['THE', 'OF', 'IN', 'FOR', 'A', 'AN', 'AND', 'OR', 'CAN', 'YOU', 'PROVIDE', 'ME', 'WITH', 'SHOW', 'FIND', 'GET', 'ALL', 'WHAT', 'IS', 'ARE', 'PLEASE', 'COULD', 'WOULD', 'LIKE', 'WANT', 'NEED', 'DO', 'HOW', 'WHERE', 'WHICH', 'THAT', 'THIS', 'FROM', 'TO', 'BY', 'IT', 'MY', 'I', 'IOM', 'DOCUMENT', 'DOCUMENTS', 'LIST', 'SEARCH']);
+    const STOP_WORDS_SHARED = new Set(['THE', 'OF', 'IN', 'FOR', 'A', 'AN', 'AND', 'OR', 'CAN', 'YOU', 'PROVIDE', 'ME', 'WITH', 'SHOW', 'FIND', 'GET', 'ALL', 'WHAT', 'IS', 'ARE', 'PLEASE', 'COULD', 'WOULD', 'LIKE', 'WANT', 'NEED', 'DO', 'HOW', 'WHERE', 'WHICH', 'THAT', 'THIS', 'FROM', 'TO', 'BY', 'IT', 'MY', 'I', 'IOM', 'DOCUMENT', 'DOCUMENTS', 'LIST', 'SEARCH',
+      'MANY', 'PENDING', 'REVIEW', 'STATUS', 'VENDOR', 'COUNT', 'TOTAL', 'NUMBER',
+      'SUBMITTED', 'APPROVED', 'REJECTED', 'BEHIND', 'AHEAD', 'PROGRESS', 'OVERDUE',
+      'OUTSTANDING', 'LATE', 'SUMMARY', 'BREAKDOWN', 'DISTRIBUTION', 'CONTRACTOR',
+      'SUPPLIER', 'COMPANY', 'COMPANIES', 'VENDORS', 'CONTRACTORS', 'SUPPLIERS']);
 
     while (iteration < MAX_ITERATIONS) {
       iteration++;
