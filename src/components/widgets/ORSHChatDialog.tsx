@@ -533,12 +533,11 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
           retryAttemptRef.current = true;
           console.log('Stub response detected — auto-retrying transparently...');
           setMessages([...newMessages, { role: 'assistant', content: '⏳ Give me a few more seconds while I pull and analyze the data...' }]);
-          // Small delay then retry
           await new Promise(r => setTimeout(r, 2000));
-          retryAttemptRef.current = false;
           handleSend(textToSend);
           return;
         }
+        // Second attempt also failed — show error and reset
         retryAttemptRef.current = false;
         const errorMsg = `I encountered a temporary issue. Please try again in a moment.`;
         setMessages([...newMessages, { role: 'assistant', content: errorMsg }]);
