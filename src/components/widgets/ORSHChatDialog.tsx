@@ -61,7 +61,8 @@ import {
   PanelLeft,
   MoreHorizontal,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -118,6 +119,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
@@ -465,6 +467,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     const newMessages: Message[] = [...messages, userMessage];
     setMessages(newMessages);
     setIsLoading(true);
+    setLastFailedMessage(null);
 
     await saveMessage('user', textToSend);
 
@@ -524,9 +527,9 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       // Detect stub/incomplete responses (ends with ":" and very short, or no content)
       const trimmed = assistantMessage.trim();
       if (!trimmed || (trimmed.endsWith(':') && trimmed.length < 200 && !trimmed.includes('\n'))) {
-        const userQuery = textToSend.substring(0, 60).trim();
-        const errorMsg = `I wasn't able to process your request about "${userQuery}".\n\nThis could be due to a temporary backend issue. Here's what you can try:\n• **Rephrase** your question with more specific details (e.g. vendor name, PO number, or document type)\n• **Try again** in a moment — this is usually a brief interruption\n• **Start a new chat** if the issue persists`;
+        const errorMsg = `Bob encountered a temporary issue but is working on it. Please try again in a moment.`;
         setMessages([...newMessages, { role: 'assistant', content: errorMsg }]);
+        setLastFailedMessage(textToSend);
         await saveMessage('assistant', errorMsg);
         loadConversations();
         return;
@@ -1093,6 +1096,24 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                           </div>
                         </div>
                       </div>
+                    </div>
+                  )}
+                  
+                  {lastFailedMessage && !isLoading && (
+                    <div className="flex justify-center mt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const msg = lastFailedMessage;
+                          setLastFailedMessage(null);
+                          handleSend(msg);
+                        }}
+                        className="text-xs gap-1.5"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        Retry
+                      </Button>
                     </div>
                   )}
                 </div>
