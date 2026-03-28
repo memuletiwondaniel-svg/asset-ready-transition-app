@@ -7061,12 +7061,16 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }];
           
           if (typeDetails?.document_name) {
+            // Stem-based matching: drop last word to catch variants like "Flow Sheets" vs "Flow Scheme"
+            const nameWords = typeDetails.document_name.split(/\s+/);
+            const stem = nameWords.length > 2 ? nameWords.slice(0, -1).join(' ') : typeDetails.document_name;
+            console.log(`resolve_document_type: stem-based cross-discipline query using: "${stem}"`);
             const { data: crossMatches } = await supabaseClient
               .from('dms_document_types')
               .select('code, document_name, document_description, tier')
-              .ilike('document_name', `%${typeDetails.document_name}%`)
+              .ilike('document_name', `%${stem}%`)
               .eq('is_active', true)
-              .limit(5);
+              .limit(10);
             
             if (crossMatches) {
               for (const m of crossMatches) {
