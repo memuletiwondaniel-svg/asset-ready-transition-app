@@ -7532,9 +7532,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           if (document_type) formData.set('document_type', document_type);
           if (company_code) formData.set('company_code', company_code);
           if (title) formData.set('description', title);
-          // Inject dynamic project context
-          formData.set('proj_seq_nr', projSeqNr);
-          formData.set('selected_project_codes', projectCabinet);
+          // "All projects" scope — let initSearch hidden fields pass through as-is
           // Apply extra filters (status_code, discipline_code overrides)
           for (const [k, v] of Object.entries(extraFilters)) {
             formData.set(k, v);
