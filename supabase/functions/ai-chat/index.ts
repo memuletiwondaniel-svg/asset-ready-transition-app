@@ -10037,7 +10037,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           broadFollowups.push(`Read and summarise the most relevant ${p1SubjectLabel} document`);
         }
         const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
-        const hasPending = pendingStatuses.some(s => (lastToolResult.status_summary || {})[s]);
+        const hasPending = pendingStatuses.some(s => (effectiveSearchResult.status_summary || {})[s]);
         if (hasPending) broadFollowups.push("Show only pending documents");
         broadFollowups.push("Filter by discipline");
         if (filterApplied && unfilteredTotal > filteredDocList.length) {
