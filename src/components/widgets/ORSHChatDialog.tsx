@@ -942,9 +942,13 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                             // Plain text headers ending with colon on own line
                             .replace(/^([A-Z][A-Za-z\s''''"]+(?:from the metadata)?):?\s*$/gm, (_m, g1) => {
                               const clean = g1.replace(/:$/, '').trim();
-                              // Only convert if it's a known header or looks like one (3+ words, title case)
+                              // Only convert if it's a known header or looks like one
+                              const partialMatch = Object.keys(sectionIcons).find(k => clean.toLowerCase().startsWith(k.toLowerCase()));
                               if (sectionIcons[clean]) {
                                 return `## ${sectionIcons[clean]} ${clean}`;
+                              }
+                              if (partialMatch) {
+                                return `## ${sectionIcons[partialMatch]} ${clean}`;
                               }
                               // Check if it looks like a title-case header (starts with capital, mostly alpha)
                               if (/^[A-Z][a-z]/.test(clean) && clean.length > 8 && clean.length < 60) {
