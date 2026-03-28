@@ -296,7 +296,7 @@ Deno.serve(async (req) => {
             project_name: proj.project_name,
             cabinet: proj.cabinet,
           },
-          { onConflict: "code" }
+          { onConflict: "code,cabinet" }
         );
 
       if (upsertErr) {
