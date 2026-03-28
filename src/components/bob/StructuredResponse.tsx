@@ -13,22 +13,36 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 /** Prominent document quick-action buttons for follow-up sections */
 function DocumentQuickActions({ doc, onRead }: { doc: { document_number: string; title: string }; onRead?: (query: string) => void }) {
-  const chipClass = "inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 hover:shadow-md hover:border-primary/60 text-foreground font-medium transition-all duration-150 cursor-pointer no-underline";
   return (
     <div className="mb-2">
       <p className="text-[10px] text-muted-foreground mb-1.5 truncate">
         For: <span className="font-medium text-foreground/80">{toTitleCase(doc.title)}</span>
       </p>
-      <div className="flex flex-wrap gap-2">
-        <button onClick={() => onRead?.(`Read and summarise ${doc.title}`)} className={chipClass}>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => onRead?.(`Read and summarise ${doc.title}`)}
+          className="inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium transition-all duration-150 cursor-pointer shadow-sm"
+        >
           <BookOpen className="h-3.5 w-3.5" /> Read &amp; Analyse
         </button>
-        <a href={assaiDownloadUrl(doc.document_number)} target="_blank" rel="noopener noreferrer" className={chipClass}>
-          <Download className="h-3.5 w-3.5" /> Download
-        </a>
-        <a href={assaiDetailsUrl(doc.document_number)} target="_blank" rel="noopener noreferrer" className={chipClass}>
-          <ExternalLink className="h-3.5 w-3.5" /> Open in Assai
-        </a>
+        <div className="inline-flex rounded-full overflow-hidden border border-border shadow-sm">
+          <a
+            href={assaiDownloadUrl(doc.document_number)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-muted/30 hover:bg-muted/60 text-foreground font-medium transition-all duration-150 cursor-pointer no-underline border-r border-border"
+          >
+            <Download className="h-3.5 w-3.5" /> Download
+          </a>
+          <a
+            href={assaiDetailsUrl(doc.document_number)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-muted/30 hover:bg-muted/60 text-foreground font-medium transition-all duration-150 cursor-pointer no-underline"
+          >
+            <ExternalLink className="h-3.5 w-3.5" /> Open in Assai
+          </a>
+        </div>
       </div>
     </div>
   );
