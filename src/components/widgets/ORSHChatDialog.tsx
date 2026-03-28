@@ -131,6 +131,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const retryAttemptRef = useRef(false);
   const { isListening, isTranscribing, startListening, stopListening, isSupported } = useVoiceInput();
   const { data: roleData } = useCurrentUserRole();
   const welcomeSentRef = useRef(false);
@@ -527,13 +528,26 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       // Detect stub/incomplete responses (ends with ":" and very short, or no content)
       const trimmed = assistantMessage.trim();
       if (!trimmed || (trimmed.endsWith(':') && trimmed.length < 200 && !trimmed.includes('\n'))) {
-        const errorMsg = `Bob encountered a temporary issue but is working on it. Please try again in a moment.`;
+        // Auto-retry once transparently before showing error
+        if (!retryAttemptRef.current) {
+          retryAttemptRef.current = true;
+          console.log('Stub response detected — auto-retrying transparently...');
+          setMessages([...newMessages, { role: 'assistant', content: '⏳ Give me a few more seconds while I pull and analyze the data...' }]);
+          // Small delay then retry
+          await new Promise(r => setTimeout(r, 2000));
+          retryAttemptRef.current = false;
+          handleSend(textToSend);
+          return;
+        }
+        retryAttemptRef.current = false;
+        const errorMsg = `I encountered a temporary issue. Please try again in a moment.`;
         setMessages([...newMessages, { role: 'assistant', content: errorMsg }]);
         setLastFailedMessage(textToSend);
         await saveMessage('assistant', errorMsg);
         loadConversations();
         return;
       }
+      retryAttemptRef.current = false;
 
       if (assistantMessage) {
         await saveMessage('assistant', assistantMessage);
@@ -562,9 +576,21 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       }
     } catch (error) {
       console.error('Error calling Bob:', error);
+      // Auto-retry once on fetch error
+      if (!retryAttemptRef.current) {
+        retryAttemptRef.current = true;
+        console.log('Fetch error — auto-retrying transparently...');
+        setMessages([...newMessages, { role: 'assistant', content: '⏳ Give me a few more seconds while I pull and analyze the data...' }]);
+        await new Promise(r => setTimeout(r, 2500));
+        retryAttemptRef.current = false;
+        handleSend(textToSend);
+        return;
+      }
+      retryAttemptRef.current = false;
       const userQuery = textToSend?.substring(0, 60).trim() || 'your request';
-      const errorMsg = `I had trouble connecting to process "${userQuery}". This is usually a temporary issue.\n\nYou can:\n• **Try again** in a moment\n• **Start a new chat** if the problem continues\n• **Contact your ORSH administrator** if it persists`;
+      const errorMsg = `I encountered a temporary issue processing "${userQuery}". Please try again in a moment.`;
       setMessages([...newMessages, { role: 'assistant', content: errorMsg }]);
+      setLastFailedMessage(textToSend);
       try { await saveMessage('assistant', errorMsg); } catch (_) {}
     } finally {
       setIsLoading(false);

@@ -9637,20 +9637,107 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                 const dpLabel = dpMatch ? ` in DP${dpMatch[1]}` : '';
                 const summaryText = `Found **${searchResult.total_found}** ${resolvedCode} (${resolvedName}) documents${dpLabel}`;
                 
-                const docList = (searchResult.documents || []).slice(0, 30).map((d: any) => ({
+                // Extract subject keywords from user message for relevance filtering
+                const SUBJECT_KEYWORDS: Record<string, string[]> = {
+                  'HVAC': ['HVAC', 'AIR CONDITIONING', 'AIR HANDLING', 'AHU', 'COOLING', 'HEATING', 'VENTILATION', 'CHILLER', 'FAN COIL', 'DUCT', 'AIR COOLER'],
+                  'ELECTRICAL': ['ELECTRICAL', 'SWITCHGEAR', 'TRANSFORMER', 'MCC', 'MOTOR CONTROL', 'CABLE', 'PANEL', 'BREAKER'],
+                  'INSTRUMENTATION': ['INSTRUMENT', 'DCS', 'PLC', 'CONTROL VALVE', 'TRANSMITTER', 'ANALYZER'],
+                  'MECHANICAL': ['PUMP', 'COMPRESSOR', 'TURBINE', 'HEAT EXCHANGER', 'VESSEL', 'TANK', 'PIPING'],
+                  'GENERATOR': ['GENERATOR', 'EDG', 'GENSET', 'ALTERNATOR'],
+                  'FIRE': ['FIRE', 'DELUGE', 'SPRINKLER', 'FOAM', 'FIRE FIGHTING', 'F&G'],
+                };
+                
+                const msgUpper = lastUserMsg.toUpperCase();
+                let subjectLabel = '';
+                let subjectKeywords: string[] = [];
+                
+                // Check explicit keywords first
+                for (const [label, keywords] of Object.entries(SUBJECT_KEYWORDS)) {
+                  if (keywords.some(kw => msgUpper.includes(kw))) {
+                    subjectLabel = label;
+                    subjectKeywords = keywords;
+                    break;
+                  }
+                }
+                
+                // Also extract any standalone nouns from the query that aren't stop words
+                const STOP_WORDS = new Set(['THE', 'OF', 'IN', 'FOR', 'A', 'AN', 'AND', 'OR', 'CAN', 'YOU', 'PROVIDE', 'ME', 'WITH', 'SHOW', 'FIND', 'GET', 'ALL', 'WHAT', 'IS', 'ARE', 'PLEASE', 'COULD', 'WOULD', 'LIKE', 'WANT', 'NEED', 'DO', 'HOW', 'WHERE', 'WHICH', 'THAT', 'THIS', 'FROM', 'TO', 'BY', 'IT', 'MY', 'I']);
+                const extraTerms = lastUserMsg.toUpperCase().split(/\s+/).filter(w => w.length > 2 && !STOP_WORDS.has(w) && !allCandidates.map(c => c.toUpperCase()).includes(w) && !/^DP\d+$/i.test(w));
+                if (!subjectLabel && extraTerms.length > 0) {
+                  subjectKeywords = extraTerms;
+                  subjectLabel = extraTerms[0];
+                }
+                
+                const allDocs = (searchResult.documents || []).map((d: any) => ({
                   document_number: d.document_number, title: d.title, revision: d.revision,
                   status: d.status, type_code: d.type_code, download_url: d.download_url || null,
                   pk_seq_nr: d.pk_seq_nr, entt_seq_nr: d.entt_seq_nr
                 }));
                 
+                // Score and sort by relevance
+                let relevantDocs: any[] = [];
+                let otherDocs: any[] = [];
+                
+                if (subjectKeywords.length > 0) {
+                  for (const doc of allDocs) {
+                    const titleUpper = (doc.title || '').toUpperCase();
+                    const isRelevant = subjectKeywords.some(kw => titleUpper.includes(kw));
+                    if (isRelevant) {
+                      relevantDocs.push(doc);
+                    } else {
+                      otherDocs.push(doc);
+                    }
+                  }
+                } else {
+                  relevantDocs = allDocs;
+                }
+                
+                // Build appropriate summary
+                let adjustedSummary: string;
+                let docList: any[];
+                
+                if (relevantDocs.length > 0) {
+                  adjustedSummary = `Found **${relevantDocs.length}** ${resolvedCode} (${resolvedName}) document${relevantDocs.length > 1 ? 's' : ''} related to **${subjectLabel}**${dpLabel}`;
+                  if (otherDocs.length > 0) {
+                    adjustedSummary += ` (plus ${otherDocs.length} other ${resolvedName} documents)`;
+                  }
+                  docList = [...relevantDocs, ...otherDocs].slice(0, 30);
+                } else if (subjectLabel) {
+                  adjustedSummary = `I didn't find a specific ${resolvedName} for **${subjectLabel}**${dpLabel}, but found **${allDocs.length}** other ${resolvedCode} (${resolvedName}) documents. Here are all available:`;
+                  docList = allDocs.slice(0, 30);
+                } else {
+                  adjustedSummary = summaryText;
+                  docList = allDocs.slice(0, 30);
+                }
+                
+                // Generate context-aware follow-ups
+                const dynamicFollowups: string[] = [];
+                if (relevantDocs.length > 0) {
+                  dynamicFollowups.push(`Read and summarise the most relevant ${subjectLabel} document`);
+                }
+                if (subjectLabel) {
+                  dynamicFollowups.push(`Search for ${subjectLabel} drawings or datasheets instead`);
+                }
+                if (dpMatch) {
+                  dynamicFollowups.push(`Show ${resolvedName} documents for other units`);
+                }
+                dynamicFollowups.push(`Show only approved ${resolvedCode} documents`);
+                if (otherDocs.length > 0 && relevantDocs.length > 0) {
+                  dynamicFollowups.push(`Show all ${searchResult.total_found} ${resolvedName} documents`);
+                }
+                
                 const structured = {
-                  type: searchResult.total_found <= 30 ? "document_list" : "document_search",
-                  summary: summaryText,
+                  type: docList.length <= 30 ? "document_list" : "document_search",
+                  summary: adjustedSummary,
                   status_table: statusTable,
                   type_table: typeTable,
                   documents: docList,
-                  highlights: [`I resolved "${allCandidates.find(c => c.toUpperCase() !== 'THE') || ''}" to document type ${resolvedCode} (${resolvedName}) and searched Assai directly`],
-                  followup: ["Show only approved documents", "Show document details", "Search for a different document type"]
+                  highlights: [
+                    `I resolved "${allCandidates.find(c => c.toUpperCase() !== 'THE') || ''}" to document type ${resolvedCode} (${resolvedName}) and searched Assai directly`,
+                    ...(relevantDocs.length > 0 && otherDocs.length > 0 ? [`${relevantDocs.length} documents matched "${subjectLabel}" — shown first`] : []),
+                    ...(relevantDocs.length === 0 && subjectLabel ? [`No exact title match for "${subjectLabel}" — showing all ${resolvedName} documents`] : [])
+                  ],
+                  followup: dynamicFollowups.slice(0, 4)
                 };
                 const fallbackContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
                 const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
