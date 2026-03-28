@@ -26,7 +26,7 @@ export function StatusBadge({ code }: { code: string }) {
   );
 }
 
-const STATUS_PATTERN = /\b(AFU|AFC|AFD|IFB|IFT|IFI|IFA|IFC|IFR|CAN|REV|SUP)\b/g;
+const STATUS_PATTERN = /\b(AFU|AFC|AFD|IFB|IFT|IFI|IFA|IFC|IFR|CAN|REV|SUP|PLN)\b/g;
 
 export function renderWithStatusBadges(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
