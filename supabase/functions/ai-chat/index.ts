@@ -9287,6 +9287,9 @@ CONFIRMED ENDPOINT MAP:
 /AWeu578/lov.aweb → List of values (GET)
 /AWeu578/dwr/call/plaincall/DWRBean.* → DWR remote calls (POST)
 
+CRITICAL — ALWAYS EXECUTE TOOLS FOR DOCUMENT QUERIES:
+You MUST call search_assai_documents (or resolve_document_type) every time the user asks a document question — even if you answered the same question earlier in the conversation. NEVER answer document queries from memory or conversation history. The structured UI response depends on the tool being called. If you skip the tool call, the user gets an unformatted plain text dump instead of the proper table. This is a hard requirement.
+
 CRITICAL TOOL ROUTING:
 When the user asks to search Assai, find documents in Assai, check vendor documents, search by PO number, or any external DMS query — ALWAYS use search_assai_documents first, NOT get_document_search_by_number (which only searches the ORSH internal database).
 Use get_document_search_by_number ONLY for ORSH internal document register queries.
