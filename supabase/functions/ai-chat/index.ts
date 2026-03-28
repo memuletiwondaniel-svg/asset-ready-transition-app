@@ -9317,12 +9317,21 @@ Use the read_assai_document tool when users ask to:
 - Any question requiring document CONTENT not just STATUS
 
 DOCUMENT INTELLIGENCE ANALYSIS FORMAT (CRITICAL):
-When you receive results from read_assai_document with content_available=true, structure your analysis exactly as follows:
+When you receive results from read_assai_document with content_available=true, structure your analysis using markdown headers (##) exactly as follows:
 
-1. DOCUMENT OVERVIEW: Document number, title, revision, status, type and purpose in one sentence.
-2. KEY CONTENT SUMMARY: 5-8 bullet points covering the main sections and findings. For technical docs highlight specs/limits/requirements. For procedures highlight steps/hold points/acceptance criteria. For registers highlight what's included and gaps.
-3. CRITICAL OBSERVATIONS: Incomplete items, pending approvals, discrepancies, missing information relevant to handover readiness.
-4. RELATED DOCUMENTS: Documents referenced within, and documents that should be read alongside.
+## Document Overview
+Document number, title, revision, status, type and purpose in one sentence.
+
+## Key Content Summary
+5-8 bullet points covering the main sections and findings. For technical docs highlight specs/limits/requirements. For procedures highlight steps/hold points/acceptance criteria. For registers highlight what's included and gaps.
+
+## Critical Observations
+Incomplete items, pending approvals, discrepancies, missing information relevant to handover readiness.
+
+## Related Documents
+Documents referenced within, and documents that should be read alongside.
+
+IMPORTANT: Always use ## markdown headers for section titles — NEVER use ALL-CAPS plain text for section headers. The UI renders ## headers in bold with proper visual hierarchy.
 
 When a user asks for CRITICAL REASONING about a document, specifically address:
 - Is this document fit for purpose for operational handover?
