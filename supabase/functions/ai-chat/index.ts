@@ -6723,6 +6723,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 
                 pkSeqNr = String(row[33] || '').replace(/<[^>]*>/g, '').trim();
                 enttSeqNr = String(row[34] || '').replace(/<[^>]*>/g, '').trim();
+                console.log(`read_assai_document: DES_DOC found pk_seq_nr=${pkSeqNr}, entt_seq_nr=${enttSeqNr}, title=${metadata.title}`);
               }
             } catch (parseErr) {
               console.error('read_assai_document: myCells parse error:', parseErr);
