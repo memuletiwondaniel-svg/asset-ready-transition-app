@@ -6951,7 +6951,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           pdfBase64 = btoa(binary);
         } catch (fetchErr: any) {
           if (fetchErr?.name === 'AbortError') {
-            return { metadata, content_available: false, reason: 'Download timed out (>25s).', question_asked: question };
+            return { metadata, content_available: false, reason: 'Download timed out (>15s).', question_asked: question };
           }
           return { metadata, content_available: false, reason: 'Failed to download from Assai.', question_asked: question };
         }
