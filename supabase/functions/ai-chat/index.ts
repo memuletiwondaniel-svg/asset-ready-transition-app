@@ -698,7 +698,7 @@ FORMATTING RULES (MANDATORY):
 - Write document status codes as plain uppercase text (AFU, AFC, IFB, IFA, IFI, IFC, CAN, REV, SUP, IFR, AFD) — the React UI automatically renders them as colored badge pills. Do NOT put emojis next to status codes. Do NOT bold status codes.
 - Use these emojis as section anchors (start of a line only, never mid-sentence, never in the same cell as a status code): ✅ complete/found, ⚠️ warning/missing, 📄 document result, 🔍 search, 📅 date/deadline, ❌ not found.
 - Never put emojis inside bullet text — TTS strips them but it looks cluttered.
-- Use a ## header only when the response covers 3 or more distinct topics.
+- ALWAYS use ## markdown headers for section titles (e.g. ## Critical Observations, ## Expected Content, ## What I Recommend). NEVER use ALL-CAPS plain text as section headers — the UI only renders ## headers in bold with proper hierarchy.
 - Insert a horizontal rule (---) before major section transitions (e.g. before "What I recommend:", before "Option 2:", before "Note:"). This creates visual breathing room.
 - Notes, caveats, and disclaimers MUST be written in italics: *Note: The fact that...* — this visually de-emphasizes secondary information.
 - Keep numbered lists for sequential steps/reasons; use bullet lists for non-sequential items.
