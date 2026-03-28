@@ -9722,11 +9722,13 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       } else {
         // BROAD QUERY: Show status/type summaries with document list below
         const broadInsights = generateSmartInsights(lastToolResult, docList);
-        if (followup.length === 0) {
-          followup.push("Show me only the pending documents");
-          followup.push("Break down by discipline");
-          followup.push("Which documents are overdue?");
-        }
+        
+        const broadFollowups: string[] = [];
+        const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
+        const hasPending = pendingStatuses.some(s => (lastToolResult.status_summary || {})[s]);
+        if (hasPending) broadFollowups.push("Show only pending documents");
+        broadFollowups.push("Filter by discipline");
+        if (docList.length > 5) broadFollowups.push("Export this list");
 
         const statusTable = Object.entries(lastToolResult.status_summary || {})
           .sort((a: any, b: any) => b[1] - a[1])
@@ -9744,7 +9746,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           type_table: typeTable,
           documents: docList,
           highlights: broadInsights,
-          followup
+          followup: broadFollowups.slice(0, 3)
         };
 
         finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
