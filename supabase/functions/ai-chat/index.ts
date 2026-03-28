@@ -7195,6 +7195,52 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           .limit(8);
         
         if (nameMatches && nameMatches.length > 0) {
+          // For single match, auto-combine cross-discipline codes (same stem logic)
+          if (nameMatches.length === 1) {
+            const singleMatch = nameMatches[0];
+            const crossCodes = new Set([singleMatch.code]);
+            const combinedMatches: Array<{code: string; name: string; description: string | null; tier: string | null}> = [{
+              code: singleMatch.code,
+              name: singleMatch.document_name,
+              description: singleMatch.document_description?.substring(0, 150) ?? null,
+              tier: singleMatch.tier ?? null
+            }];
+            
+            const nameWords = singleMatch.document_name.split(/\s+/);
+            const stem = nameWords.length > 2 ? nameWords.slice(0, -1).join(' ') : singleMatch.document_name;
+            console.log(`resolve_document_type: name_search single-result stem query: "${stem}"`);
+            const { data: crossMatches } = await supabaseClient
+              .from('dms_document_types')
+              .select('code, document_name, document_description, tier')
+              .ilike('document_name', `%${stem}%`)
+              .eq('is_active', true)
+              .limit(10);
+            
+            if (crossMatches) {
+              for (const m of crossMatches) {
+                if (!crossCodes.has(m.code)) {
+                  crossCodes.add(m.code);
+                  combinedMatches.push({
+                    code: m.code,
+                    name: m.document_name,
+                    description: m.document_description?.substring(0, 150) ?? null,
+                    tier: m.tier ?? null
+                  });
+                }
+              }
+            }
+            
+            const combinedCode = Array.from(crossCodes).join('+');
+            console.log(`resolve_document_type: name_search auto-combine: ${singleMatch.code} → ${combinedCode}`);
+            return {
+              found: true,
+              count: combinedMatches.length,
+              source: 'name_search',
+              matches: combinedMatches,
+              instruction: `Use code "${combinedCode}" as the document_type filter in search_assai_documents`
+            };
+          }
+          
           return {
             found: true,
             count: nameMatches.length,
@@ -7205,9 +7251,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               description: d.document_description?.substring(0, 150),
               tier: d.tier
             })),
-            instruction: nameMatches.length === 1
-              ? `Use code "${nameMatches[0].code}" as document_type in search_assai_documents`
-              : 'Multiple matches — confirm which document type the user means before searching'
+            instruction: 'Multiple matches — confirm which document type the user means before searching'
           };
         }
         
