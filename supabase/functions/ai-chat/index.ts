@@ -6867,11 +6867,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         }
         
         if (!pkSeqNr || !enttSeqNr || pkSeqNr === '' || enttSeqNr === '') {
-          console.error(`read_assai_document: pk_seq_nr="${pkSeqNr}" entt_seq_nr="${enttSeqNr}" — document not found in Assai. Project code: ${docProjectCode}, cabinet: ${selectedProjectCodes}`);
+          console.error(`read_assai_document: pk_seq_nr="${pkSeqNr}" entt_seq_nr="${enttSeqNr}" — document not found in Assai (All projects scope)`);
           return {
             metadata,
             content_available: false,
-            reason: `Document ${docNumber} was not found in Assai (searched project ${selectedProjectCodes}). The document number may be incorrect or it may belong to a different project cabinet.`,
+            reason: `Document ${docNumber} was not found in Assai (searched across all projects). The document number may be incorrect or the document may not exist in the system.`,
             question_asked: question
           };
         }
@@ -6892,7 +6892,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 25000);
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
           
           console.log(`read_assai_document: downloading pk_seq_nr=${pkSeqNr}, entt_seq_nr=${enttSeqNr}`);
           const docRes = await fetch(assaiBase + '/download.aweb?pk_seq_nr=' + pkSeqNr + '&entt_seq_nr=' + enttSeqNr, {
@@ -6930,6 +6930,20 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             };
           }
           
+          // HTML error page detection — Assai sometimes returns HTML instead of the file
+          if (bytes.length > 0 && bytes[0] === 0x3C) { // starts with '<'
+            const firstChunk = new TextDecoder().decode(bytes.slice(0, 200)).toLowerCase();
+            if (firstChunk.includes('<!doctype') || firstChunk.includes('<html') || firstChunk.includes('<head')) {
+              console.error('read_assai_document: Assai returned an HTML error page instead of the document file');
+              return {
+                metadata,
+                content_available: false,
+                reason: 'Assai returned an error page instead of the document file. The document may be unavailable or the session expired.',
+                question_asked: question
+              };
+            }
+          }
+          
           let binary = '';
           for (let i = 0; i < bytes.length; i++) {
             binary += String.fromCharCode(bytes[i]);
@@ -6937,7 +6951,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           pdfBase64 = btoa(binary);
         } catch (fetchErr: any) {
           if (fetchErr?.name === 'AbortError') {
-            return { metadata, content_available: false, reason: 'Download timed out (>25s).', question_asked: question };
+            return { metadata, content_available: false, reason: 'Download timed out (>15s).', question_asked: question };
           }
           return { metadata, content_available: false, reason: 'Failed to download from Assai.', question_asked: question };
         }
@@ -7037,17 +7051,47 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             .eq('code', acronymMatch.type_code)
             .maybeSingle();
           
+          // Cross-discipline auto-combine: find ALL codes matching this document type name
+          const crossDisciplineCodes = new Set([acronymMatch.type_code]);
+          const allMatches: Array<{code: string; name: string; description: string | null; tier: string | null}> = [{
+            code: acronymMatch.type_code,
+            name: acronymMatch.full_name,
+            description: typeDetails?.document_description?.substring(0, 200) ?? acronymMatch.notes,
+            tier: typeDetails?.tier ?? null
+          }];
+          
+          if (typeDetails?.document_name) {
+            const { data: crossMatches } = await supabaseClient
+              .from('dms_document_types')
+              .select('code, document_name, document_description, tier')
+              .ilike('document_name', `%${typeDetails.document_name}%`)
+              .eq('is_active', true)
+              .limit(5);
+            
+            if (crossMatches) {
+              for (const m of crossMatches) {
+                if (!crossDisciplineCodes.has(m.code)) {
+                  crossDisciplineCodes.add(m.code);
+                  allMatches.push({
+                    code: m.code,
+                    name: m.document_name,
+                    description: m.document_description?.substring(0, 200) ?? null,
+                    tier: m.tier ?? null
+                  });
+                }
+              }
+            }
+          }
+          
+          const combinedCode = Array.from(crossDisciplineCodes).join('+');
+          console.log(`resolve_document_type: cross-discipline auto-combine: ${acronymMatch.type_code} → ${combinedCode} (${crossDisciplineCodes.size} codes)`);
+          
           return {
             found: true,
-            count: 1,
+            count: allMatches.length,
             source: 'acronym_lookup',
-            matches: [{
-              code: acronymMatch.type_code,
-              name: acronymMatch.full_name,
-              description: typeDetails?.document_description?.substring(0, 200) ?? acronymMatch.notes,
-              tier: typeDetails?.tier ?? null
-            }],
-            instruction: `Use code "${acronymMatch.type_code}" as the document_type filter in search_assai_documents`
+            matches: allMatches,
+            instruction: `Use code "${combinedCode}" as the document_type filter in search_assai_documents`
           };
         }
         
@@ -7076,17 +7120,47 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               .eq('code', match.type_code)
               .maybeSingle();
             
+            // Cross-discipline auto-combine: find ALL codes matching this document type name
+            const crossDisciplineCodes = new Set([match.type_code]);
+            const allMatches: Array<{code: string; name: string; description: string | null; tier: string | null}> = [{
+              code: match.type_code,
+              name: match.full_name,
+              description: typeDetails?.document_description?.substring(0, 200) ?? match.notes,
+              tier: typeDetails?.tier ?? null
+            }];
+            
+            if (typeDetails?.document_name) {
+              const { data: crossMatches } = await supabaseClient
+                .from('dms_document_types')
+                .select('code, document_name, document_description, tier')
+                .ilike('document_name', `%${typeDetails.document_name}%`)
+                .eq('is_active', true)
+                .limit(5);
+              
+              if (crossMatches) {
+                for (const m of crossMatches) {
+                  if (!crossDisciplineCodes.has(m.code)) {
+                    crossDisciplineCodes.add(m.code);
+                    allMatches.push({
+                      code: m.code,
+                      name: m.document_name,
+                      description: m.document_description?.substring(0, 200) ?? null,
+                      tier: m.tier ?? null
+                    });
+                  }
+                }
+              }
+            }
+            
+            const combinedCode = Array.from(crossDisciplineCodes).join('+');
+            console.log(`resolve_document_type: cross-discipline auto-combine (fullname): ${match.type_code} → ${combinedCode} (${crossDisciplineCodes.size} codes)`);
+            
             return {
               found: true,
-              count: 1,
+              count: allMatches.length,
               source: 'acronym_fullname_lookup',
-              matches: [{
-                code: match.type_code,
-                name: match.full_name,
-                description: typeDetails?.document_description?.substring(0, 200) ?? match.notes,
-                tier: typeDetails?.tier ?? null
-              }],
-              instruction: `Use code "${match.type_code}" as the document_type filter in search_assai_documents`
+              matches: allMatches,
+              instruction: `Use code "${combinedCode}" as the document_type filter in search_assai_documents`
             };
           }
           
@@ -9047,7 +9121,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, file_data, file_name, file_type } = await req.json();
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -9116,7 +9190,84 @@ serve(async (req) => {
     }
     
     // ═══════════════════════════════════════════════════════════════════════
-    // DETERMINISTIC NAVIGATION: Handle navigation intents before AI processing
+    // DIRECT FILE UPLOAD: Bypass Assai tool loop entirely
+    // When user uploads a file, send it directly to Claude for analysis
+    // ═══════════════════════════════════════════════════════════════════════
+    if (file_data && file_name) {
+      console.log(`📄 Direct file upload detected: ${file_name} (${file_type || 'application/pdf'})`);
+      const mediaType = file_type || 'application/pdf';
+      const userText = messages.filter((m: any) => m.role === 'user').pop()?.content || 'Analyze this document';
+      const analysisPrompt = `A document has been directly uploaded by the user (filename: "${file_name}"). Read its full content carefully. Provide a structured analysis including: (1) Document purpose and scope, (2) Key parameters, specifications or findings, (3) Any critical flags, outstanding items or concerns, (4) Recommendations or next steps if applicable. Be specific and reference actual content from the document.`;
+      
+      try {
+        const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-5-20250929",
+            max_tokens: 4096,
+            system: analysisPrompt,
+            messages: [{
+              role: "user",
+              content: [
+                { type: "document", source: { type: "base64", media_type: mediaType, data: file_data } },
+                { type: "text", text: userText }
+              ]
+            }],
+            stream: true,
+          }),
+        });
+        
+        if (!claudeRes.ok || !claudeRes.body) {
+          const errText = await claudeRes.text();
+          console.error(`File analysis Claude API error: ${claudeRes.status}`, errText);
+          const errorMsg = `I received your file "${file_name}" but encountered an issue analyzing it. Please try again.`;
+          const sseError = `data: ${JSON.stringify({ choices: [{ delta: { content: errorMsg } }] })}\n\ndata: [DONE]\n\n`;
+          return new Response(sseError, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+        }
+        
+        // Stream SSE response — transform Anthropic SSE to OpenAI-compatible format
+        const transformStream = new TransformStream({
+          transform(chunk, controller) {
+            const text = new TextDecoder().decode(chunk);
+            const lines = text.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') {
+                  controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+                  return;
+                }
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+                    const sseChunk = `data: ${JSON.stringify({ choices: [{ delta: { content: parsed.delta.text } }] })}\n\n`;
+                    controller.enqueue(new TextEncoder().encode(sseChunk));
+                  } else if (parsed.type === 'message_stop') {
+                    controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+                  }
+                } catch {}
+              }
+            }
+          }
+        });
+        
+        const streamBody = claudeRes.body.pipeThrough(transformStream);
+        return new Response(streamBody, {
+          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+        });
+      } catch (fileErr) {
+        console.error('File analysis error:', fileErr);
+        const errorMsg = `I received your file "${file_name}" but encountered an error during analysis. Please try again.`;
+        const sseError = `data: ${JSON.stringify({ choices: [{ delta: { content: errorMsg } }] })}\n\ndata: [DONE]\n\n`;
+        return new Response(sseError, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+      }
+    }
+    
     // This ensures navigation ALWAYS happens when Bob claims it will
     // ═══════════════════════════════════════════════════════════════════════
     if (lastUserMessage) {
@@ -9596,6 +9747,14 @@ Rules:
 - If you searched for a project reference and found no results, NEVER present results from a different project. Return zero results and explain clearly.
 
 When results ARE found but numerous (>10), use the title parameter to filter by subject keywords from the user's query.
+
+PARALLEL SEARCH STRATEGY (CRITICAL):
+When searching for a named document (e.g., "Process Safety Design Basis", "Cause & Effect Diagram"):
+1. ALWAYS run a title/keyword search IN PARALLEL with the type-code search
+2. Pass the key phrase (e.g., "Safety Design Basis") in the 'title' parameter of search_assai_documents
+3. The title parameter maps to Assai's 'description' field for keyword matching
+4. Do NOT give up after type-code search alone — the title search often finds documents filed under unexpected type codes
+5. When resolve_document_type returns multiple codes combined with '+' (e.g., "2365+C01"), use the combined code to search BOTH BGC and vendor documents simultaneously
 
 INTENT CLASSIFICATION — Determine the user's intent BEFORE searching:
 
