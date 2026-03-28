@@ -200,6 +200,7 @@ interface StructuredResponseData {
   type_table?: TypeRow[];
   highlights?: string[];
   followup?: string[];
+  follow_ups?: string[];
   documents?: DocumentRow[];
   // Document analysis fields
   document?: {
