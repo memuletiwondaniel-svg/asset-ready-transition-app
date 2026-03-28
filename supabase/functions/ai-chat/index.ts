@@ -9975,7 +9975,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                 }
                 
                 const dynamicFollowups: string[] = [];
-                if (relevantDocs.length > 0) dynamicFollowups.push(`Read and summarise the most relevant ${subjectLabel} document`);
+                if (relevantDocs.length > 0) dynamicFollowups.push(`Read and interpret the most relevant ${subjectLabel} document`);
                 if (subjectLabel) dynamicFollowups.push(`Search for ${subjectLabel} drawings or datasheets instead`);
                 if (dpMatch) dynamicFollowups.push(`Show ${resolvedName} documents for other units`);
                 dynamicFollowups.push(`Show only approved ${resolvedCode} documents`);
@@ -10432,8 +10432,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         if (filteredDocList.length > 0) {
           specificFollowups.push(
             p1SubjectLabel
-              ? `Read and summarise the most relevant ${p1SubjectLabel} document`
-              : `Read & summarise the first document`
+              ? `Read and interpret the most relevant ${p1SubjectLabel} document`
+              : `Read and interpret the first document`
           );
         }
         const statuses = [...new Set(filteredDocList.map((d: any) => d.status).filter(Boolean))];
@@ -10472,7 +10472,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         
         const broadFollowups: string[] = [];
         if (p1SubjectLabel && filteredDocList.length > 0) {
-          broadFollowups.push(`Read and summarise the most relevant ${p1SubjectLabel} document`);
+          broadFollowups.push(`Read and interpret the most relevant ${p1SubjectLabel} document`);
         }
         const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
         const hasPending = pendingStatuses.some(s => (effectiveSearchResult.status_summary || {})[s]);
