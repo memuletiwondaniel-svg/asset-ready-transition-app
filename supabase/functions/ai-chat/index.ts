@@ -3140,6 +3140,10 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
           company_code: {
             type: "string",
             description: 'Filter by originating company, e.g. "ABBE" for ABB Shanghai'
+          },
+          title: {
+            type: "string",
+            description: 'Filter by document title keywords (contains search). Use to narrow results by subject, e.g. "Cathodic", "HVAC", "Compressor". Assai performs automatic contains matching.'
           }
         },
         required: ["document_number_pattern"]
