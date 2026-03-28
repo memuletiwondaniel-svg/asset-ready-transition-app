@@ -9796,6 +9796,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
         lastToolName = toolName;
         lastToolResult = toolResult;
+
+        // Persist search results so PART 1 fires even if AI calls more tools after
+        if (toolName === 'search_assai_documents' && toolResult?.found && toolResult?.total_found > 0) {
+          searchToolResult = toolResult;
+        }
         
         if (toolResult?.action === "navigate" && toolResult?.path) {
           navigationAction = { action: "navigate", path: toolResult.path };
