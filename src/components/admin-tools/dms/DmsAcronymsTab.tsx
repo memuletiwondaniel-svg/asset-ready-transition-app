@@ -184,7 +184,7 @@ const DmsAcronymsTab: React.FC = () => {
             </TableRow>
           ) : items.filter(filterFn).map(row => (
             <TableRow key={row.id} className="cursor-pointer hover:bg-muted/30" onClick={() => openEdit(row)}>
-              <TableCell className="font-mono font-semibold text-primary">{row.acronym}</TableCell>
+              <TableCell className="font-mono font-semibold text-primary uppercase">{row.acronym}</TableCell>
               <TableCell>{row.full_name}</TableCell>
               <TableCell className="font-mono text-muted-foreground">{row.type_code}</TableCell>
               <TableCell className="text-sm text-muted-foreground">{row.notes || '—'}</TableCell>
