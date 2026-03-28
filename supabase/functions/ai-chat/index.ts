@@ -9987,7 +9987,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         : undefined;
 
       if (isSpecificQuery) {
-        const smartInsights = generateSmartInsights(lastToolResult, filteredDocList);
+        const smartInsights = generateSmartInsights(effectiveSearchResult, filteredDocList);
         
         // Context-aware follow-ups based on actual results
         const specificFollowups: string[] = [];
