@@ -3198,7 +3198,7 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
     type: "function",
     function: {
       name: "resolve_document_type",
-      description: "Looks up document type codes and descriptions from the ORSH document management database. Use this BEFORE searching Assai whenever the user mentions a document type by name or abbreviation (e.g. 'BfD', 'ITP', 'datasheet', 'GA drawing'). Returns matching document types with their codes, descriptions, and whether they are vendor documents. If multiple matches are found, ask the user to clarify before proceeding.",
+      description: "Looks up document type codes and descriptions from the ORSH document management database. Use this BEFORE searching Assai whenever the user mentions a document type by name or abbreviation (e.g. 'BfD', 'ITP', 'datasheet', 'GA drawing'). Returns matching document types with their codes, descriptions, and whether they are vendor documents. If multiple matches are found for the SAME document concept (e.g. PEFS exists as both BGC code 2365 and vendor code C01), combine ALL codes with '+' (e.g. '2365+C01') to search across both. Only ask for clarification if matches are genuinely DIFFERENT document types.",
       parameters: {
         type: "object",
         properties: {
