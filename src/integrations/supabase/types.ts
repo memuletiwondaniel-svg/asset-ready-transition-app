@@ -1292,6 +1292,7 @@ export type Database = {
           display_order: number
           id: string
           is_active: boolean
+          proj_seq_nr: string | null
           project_id: string | null
           project_name: string
           updated_at: string
@@ -1303,6 +1304,7 @@ export type Database = {
           display_order?: number
           id?: string
           is_active?: boolean
+          proj_seq_nr?: string | null
           project_id?: string | null
           project_name: string
           updated_at?: string
@@ -1314,6 +1316,7 @@ export type Database = {
           display_order?: number
           id?: string
           is_active?: boolean
+          proj_seq_nr?: string | null
           project_id?: string | null
           project_name?: string
           updated_at?: string
