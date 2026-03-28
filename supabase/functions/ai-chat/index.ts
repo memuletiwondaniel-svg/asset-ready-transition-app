@@ -738,18 +738,32 @@ PROJECT ID vs UNIT CODE — CRITICAL DISTINCTION:
 When the user mentions a DP number (e.g., "documents for DP300"), resolve it to the project code via dms_projects and use that as the project prefix in the document_number_pattern (e.g., "6529-%").
 When the user mentions a unit or system (e.g., "HVAC", "Compression"), look up the unit code from dms_units and include it in segment 5 of the pattern (e.g., "6529-%-%-%-U40300-%").
 
-MULTI-STRATEGY SEARCH PROTOCOL (MANDATORY — NEVER give up after one search):
-When a document query returns 0 results, you MUST try at least 3 strategies before telling the user nothing was found:
+SEARCH ESCALATION PROTOCOL (MANDATORY — NEVER give up after one search):
+When a document query returns 0 results, you MUST try at least 3 of these 6 strategies before telling the user nothing was found:
 
-Strategy 1 (Precise): Resolve doc type + project code → search with both filters (e.g. document_type=J01, pattern=6523-%)
-Strategy 2 (Title keyword): Keep project code pattern, DROP the doc type filter, ADD title= with subject keywords from the user's query (e.g. "Cathodic", "HVAC", "Compressor"). This searches document titles in Assai.
-Strategy 3 (Broader pattern): Keep doc type, use broader project pattern (e.g. just the first 4 digits "6523-%")
-Strategy 4 (Cross-module): Repeat Strategy 1-2 in the OTHER module (if you searched DES_DOC, try SUP_DOC and vice versa)
-Strategy 5 (Related projects): If the user said DP223, also try adjacent project codes from dms_projects
+Strategy 1 (Precise): Search with all known filters combined — project code + document type code + discipline code + title keyword. This is your first attempt.
+Strategy 2 (Relax discipline): Drop the discipline code filter. Search by project code + document type code only. Then scan the returned titles for relevance to the user's keyword.
+Strategy 3 (Title/description keyword): Search by project code + document type code + title= with subject keywords (e.g. "Cathodic", "HVAC", "Compressor"). The title parameter searches the Assai document description field (contains matching).
+Strategy 4 (Broad type + semantic title filter): Search ALL documents of the requested type (e.g. J01 = IOM) for the project code, then filter returned titles for semantic relevance. "Cathodic Protection" is semantically related to: corrosion, CP system, impressed current, sacrificial anode. You must reason about synonyms.
+Strategy 5 (Related type codes): If the specific document type returns nothing, search RELATED types. J01 (IOM) → also try G01 (Operation Manual), G02 (Maintenance Manual). Different contractors use different codes for conceptually similar documents.
+Strategy 6 (Alternative discipline codes): Some subjects are filed under unexpected disciplines. Cathodic Protection may be under Electrical (EA), Corrosion (CO), Instrumentation (IC), or Civil (CV). HVAC may be under Mechanical (MH), Electrical (EA), or Piping (PI). Try alternative discipline codes.
+
+Rules:
+- Always try at least 3 distinct strategies before concluding a document cannot be found.
+- When reporting results after a multi-strategy search, briefly note what strategies were tried and which one found the result — this builds user trust.
+- When you exhaust all strategies and genuinely find nothing, your response must list what was searched and suggest concrete next steps (contact document controller, check if vendor has submitted, try alternative DP number).
+- NEVER ask "Would you like me to try a broader search?" — just DO IT automatically.
 
 When results ARE found but numerous (>10), use the title parameter to filter by subject keywords extracted from the user's query.
 
-NEVER ask "Would you like me to try a broader search?" — just DO IT automatically. Only report failure after exhausting all strategies.
+FOLLOW-UP SUGGESTIONS FORMAT (CRITICAL):
+When suggesting follow-up actions, ALWAYS include them as a "follow_ups" array inside your <structured_response> JSON block.
+Example: { "type": "document_search", ..., "follow_ups": ["Read the maintenance schedule", "Check for newer revisions"] }
+Maximum 3 suggestions. Each must be specific to the documents found and the user's original question.
+For IOM results → "Read and extract the maintenance schedule", "Show startup and shutdown procedures", "Check if a newer revision exists"
+For analytical results → help the user drill deeper into what was returned.
+NEVER use generic suggestions like "Search for another document".
+For plain-text responses (no structured_response), emit a <follow_ups>["action1", "action2"]</follow_ups> tag at the end of your response.
 
 ERROR HANDLING FOR TOOL RESULTS (CRITICAL):
 - If a tool returns { error: "..." }, respond: "I ran into a technical issue searching Assai for [description]. The error was: [brief error]. Please try rephrasing or contact your admin if this persists."
@@ -773,9 +787,10 @@ When you receive results from search_assai_documents, do NOT produce tables, sta
 
 Your job is ONLY to write:
 1. INSIGHTS: 2-4 numbered contextual observations the user cannot see from the table alone — e.g. approval gaps ("only 5 of 8 are approved"), revision anomalies ("3 documents still at Rev 0"), status concerns ("2 are still IFR — not yet approved"), discipline coverage gaps, or actionable recommendations. Do NOT repeat document counts or status breakdowns already visible in the table. Plain text only, no markdown formatting.
-2. FOLLOW-UP SUGGESTIONS: Exactly 3 bulleted suggestions — each a specific actionable question the user might ask next. Plain text only.
+2. FOLLOW-UP SUGGESTIONS: Exactly 3 bulleted suggestions — each a specific actionable question the user might ask next. Plain text only. These MUST be contextually relevant to the documents found and the user's original question. For IOM results → "Read and extract the maintenance schedule", "Show startup/shutdown procedures", "Check for newer revisions". Never generic suggestions like "Search for another document".
 
 Keep your entire text under 150 words. Do NOT write status counts, document type tables, or any other summary — the system handles those automatically. Do NOT wrap anything in <structured_response> tags — the system does that for you.
+For plain-text responses (no structured_response), emit follow-up suggestions as a <follow_ups>["action1", "action2", "action3"]</follow_ups> tag at the end of your response.
 
 For executive/issue questions (e.g., "Are there major issues with DP300 PSSR?"):
 
@@ -6661,6 +6676,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const cookieHeader = sessionCookies.join('; ');
         
         // STEP 4 — Search for document to get pk_seq_nr and entt_seq_nr
+        console.log(`read_assai_document: searching for ${docNumber} in DES_DOC`);
         let pkSeqNr: string | null = null;
         let enttSeqNr: string | null = null;
         
@@ -6708,6 +6724,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 
                 pkSeqNr = String(row[33] || '').replace(/<[^>]*>/g, '').trim();
                 enttSeqNr = String(row[34] || '').replace(/<[^>]*>/g, '').trim();
+                console.log(`read_assai_document: DES_DOC found pk_seq_nr=${pkSeqNr}, entt_seq_nr=${enttSeqNr}, title=${metadata.title}`);
               }
             } catch (parseErr) {
               console.error('read_assai_document: myCells parse error:', parseErr);
@@ -6778,6 +6795,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 25000);
           
+          console.log(`read_assai_document: downloading pk_seq_nr=${pkSeqNr}, entt_seq_nr=${enttSeqNr}`);
           const docRes = await fetch(baseUrl + '/download.aweb?pk_seq_nr=' + pkSeqNr + '&entt_seq_nr=' + enttSeqNr, {
             headers: {
               'Cookie': cookieHeader,
@@ -7224,7 +7242,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           if (document_type) formData.set('document_type', document_type);
           if (status_code) formData.set('status_code', status_code);
           if (company_code) formData.set('company_code', company_code);
-          if (title) formData.set('title', title);
+          if (title) formData.set('description', title);
           // Pagination: 1-based start_row for pages beyond the first
           if (startRow && startRow > 1) {
             formData.set('start_row', String(startRow));
@@ -7368,7 +7386,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           if (discipline_code) formData.set('discipline_code', discipline_code);
           if (document_type) formData.set('document_type', document_type);
           if (company_code) formData.set('company_code', company_code);
-          if (title) formData.set('title', title);
+          if (title) formData.set('description', title);
           // Apply extra filters (status_code, discipline_code overrides)
           for (const [k, v] of Object.entries(extraFilters)) {
             formData.set(k, v);
@@ -9250,14 +9268,10 @@ REVISION NAMING:
 02R = Second revision, for Review
 02A = Second revision, Approved
 
-PROJECTS IN BGC_PROJ:
-0000 = Corporate Company - General
-1001 / DP-148 = Class 1 Metering - Installation of meters
-1002 = Supply & Installation of Siren System (CW13503)
-1307 / DP-368 = West Qurna CS7 to CS6 Transfer Line
-1313 / DP-187 = New WQ Gas Export Pipeline
-1314 / DP-199 = CS2 to NR NGL Pipeline debottlenecking
-5529 / DP-300 = New Compression Station at Hammar Mishrif ← PRIMARY
+PROJECTS IN BGC_PROJ — DYNAMIC RESOLUTION REQUIRED:
+Do NOT rely on this static list. ALWAYS resolve DP numbers to project codes dynamically by querying the dms_projects table (project_id column).
+Common examples for reference only: 5529 / DP-300 = New Compression Station at Hammar Mishrif, 6523 / DP-223, 6529 / DP-300 variants.
+CRITICAL RULE: If you searched for a project reference and found no results, NEVER present results from a different project. Return zero results and explain clearly. Never substitute one project's documents for another.
 
 COMPANY CODES:
 AWI=AWI Engineering, BGC=Asset Owner, EXTR=Exterran, GENP=General Pressure, KENT=KenTech/Kentz, WGEL=Wood Group Engineering Ltd, ABBE=ABB Engineering Shanghai Limited, ABB=ABB, AUM=AUM, EEIC=EEIC, EMFZ=EMFZ
@@ -9267,6 +9281,7 @@ ST/DP300 = New Compression Station at Hammar Mishrif (primary)
 ST/DP000 = General/Admin
 ST/DP114 = Subpackage 114
 ST/DP223 = Subpackage 223
+IMPORTANT: Work package codes (ST/DP223) are NOT the same as project IDs (DP223). A work package is a planning construct within a project. When a user says "DP223", treat it as a project ID and resolve via dms_projects — do NOT assume it is a work package reference.
 
 NAVIGATION STRUCTURE:
 Top menu: Project | Documents | Queries | Assets | Planning | Tools | Log off | Help
@@ -9417,18 +9432,40 @@ When user asks about document content:
 4. Flag discrepancies: if a document claims AFU status but has open comments, flag it
 5. Assess handover readiness: is this document complete enough for operations to accept?
 
-MULTI-STRATEGY SEARCH PROTOCOL (MANDATORY — NEVER give up after one search):
-When a document query returns 0 results, you MUST try at least 3 strategies before telling the user nothing was found:
+SEARCH ESCALATION PROTOCOL (MANDATORY — NEVER give up after one search):
+When a document query returns 0 results, you MUST try at least 3 of these 6 strategies before telling the user nothing was found:
 
-Strategy 1 (Precise): Resolve doc type + project code → search with both filters (e.g. document_type=J01, pattern=6523-%)
-Strategy 2 (Title keyword): Keep project code pattern, DROP the doc type filter, ADD title= with subject keywords from the user's query (e.g. "Cathodic", "HVAC", "Compressor"). This searches document titles in Assai.
-Strategy 3 (Broader pattern): Keep doc type, use broader project pattern (e.g. just the first 4 digits "6523-%")
-Strategy 4 (Cross-module): Repeat Strategy 1-2 in the OTHER module (if you searched DES_DOC, try SUP_DOC and vice versa)
-Strategy 5 (Related projects): If the user said DP223, also try adjacent project codes from dms_projects
+Strategy 1 (Precise): Search with all known filters combined — project code + document type code + discipline code + title keyword.
+Strategy 2 (Relax discipline): Drop the discipline code filter. Search by project code + document type code only. Scan returned titles for relevance.
+Strategy 3 (Title/description keyword): Search by project code + document type code + title= with subject keywords (e.g. "Cathodic", "HVAC"). The title parameter searches the Assai description field (contains matching).
+Strategy 4 (Broad type + semantic title filter): Search ALL documents of the requested type for the project code, filter returned titles for semantic relevance. Reason about synonyms — "Cathodic Protection" relates to: corrosion, CP system, impressed current, sacrificial anode.
+Strategy 5 (Related type codes): If the specific type returns nothing, try related types. J01 (IOM) → G01 (Operation Manual), G02 (Maintenance Manual). Different contractors use different codes.
+Strategy 6 (Alternative discipline codes): Cathodic Protection may be under Electrical (EA), Corrosion (CO), Instrumentation (IC), or Civil (CV). HVAC may be under Mechanical (MH), Electrical (EA), or Piping (PI). Try alternatives.
 
-When results ARE found but numerous (>10), use the title parameter to filter by subject keywords extracted from the user's query.
+Rules:
+- Always try at least 3 strategies before concluding nothing was found.
+- When reporting results, briefly note what strategies were tried and which one found the result.
+- When exhausted, list what was searched and suggest concrete next steps (contact document controller, check vendor submission, try alternative DP number).
+- NEVER ask "Would you like me to try a broader search?" — just DO IT automatically.
+- If you searched for a project reference and found no results, NEVER present results from a different project. Return zero results and explain clearly.
 
-NEVER ask "Would you like me to try a broader search?" — just DO IT automatically. Only report failure after exhausting all strategies.
+When results ARE found but numerous (>10), use the title parameter to filter by subject keywords from the user's query.
+
+INTENT CLASSIFICATION — Determine the user's intent BEFORE searching:
+
+RETRIEVAL: User wants specific documents ("Find the IOM for...", "Show me the P&ID")
+→ Search, return document table (current behavior).
+
+ANALYTICAL: User wants insight ("How many vendor documents are pending?", "What's the status of DP300 documentation?", "Which contractors are behind?")
+→ Search broadly, then SYNTHESISE a concise answer. Group by company_code for vendor queries. Use a compact summary table only when it genuinely aids clarity. Never dump a raw document list for analytical queries.
+
+CONTENT: User wants to know what a document says ("What does the IOM say about maintenance intervals?", "Summarise the BfD")
+→ Search first to find the document, then call read_assai_document, then answer from content.
+
+FOLLOW-UP SUGGESTIONS FORMAT (CRITICAL):
+When suggesting follow-up actions, ALWAYS include them as a "follow_ups" array inside your <structured_response> JSON block.
+Maximum 3 suggestions. Each must be specific to the documents found and the user's original question.
+For plain-text responses, emit a <follow_ups>["action1", "action2"]</follow_ups> tag at the end.
 
 ERROR HANDLING FOR TOOL RESULTS (CRITICAL):
 - If a tool returns { error: "..." }, respond: "I ran into a technical issue searching Assai for [description]. Please try rephrasing or contact your admin if this persists."
@@ -9514,6 +9551,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // Max iterations: 5
     // ═══════════════════════════════════════════════════════════════════════
     const MAX_ITERATIONS = 5;
+    const LOOP_START_TIME = Date.now();
+    const MAX_LOOP_MS = 45000; // 45-second time guard
     let conversationMessages = [...transformedMessages];
     let iteration = 0;
     let lastToolName: string | null = null;
@@ -9540,7 +9579,17 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
     while (iteration < MAX_ITERATIONS) {
       iteration++;
-      console.log(`Agent loop iteration ${iteration}/${MAX_ITERATIONS}`);
+      // Time guard: break if approaching edge function timeout
+      const elapsed = Date.now() - LOOP_START_TIME;
+      if (elapsed > MAX_LOOP_MS) {
+        console.log(`Time guard: ${elapsed}ms elapsed, breaking loop with accumulated results`);
+        // Build partial response from whatever we have
+        if (searchToolResult && searchToolResult.found && searchToolResult.total_found > 0) {
+          finalTextContent = `I found ${searchToolResult.total_found} documents but ran out of processing time. Here are the results from my search.`;
+        }
+        break;
+      }
+      console.log(`Agent loop iteration ${iteration}/${MAX_ITERATIONS} (${elapsed}ms elapsed)`);
 
       // ── Retry-aware API call ──────────────────────────────────────────
       const callAnthropicWithRetry = async (): Promise<Response> => {
@@ -9561,7 +9610,18 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         });
 
         const firstAttempt = await makeCall();
-        if (firstAttempt.ok || firstAttempt.status === 429) return firstAttempt;
+        if (firstAttempt.ok) return firstAttempt;
+
+        if (firstAttempt.status === 429) {
+          // Rate limited — check if we have time for a retry
+          const timeLeft = MAX_LOOP_MS - (Date.now() - LOOP_START_TIME);
+          if (timeLeft > 15000) {
+            console.log(`Anthropic API returned 429, retrying in 10s (${timeLeft}ms remaining)...`);
+            await new Promise(r => setTimeout(r, 10000));
+            return makeCall();
+          }
+          return firstAttempt; // Not enough time to retry
+        }
 
         // Non-429 error (500, 503, etc.) → retry once after 2s
         console.log(`Anthropic API returned ${firstAttempt.status}, retrying in 2s...`);
@@ -9677,26 +9737,44 @@ You NEVER fabricate data — always use tool results. Format responses with mark
               
               let searchResult = await executeTool('search_assai_documents', searchArgs, supabase);
               
-              // Multi-strategy fallback: if first search returns 0, try title-based search
+              // Multi-strategy fallback: if first search returns 0, try escalation strategies
+              const DOC_TYPE_WORDS = new Set(['IOM','BFD','ITP','DOCUMENT','DRAWING','SDR','MDS','DATASHEET','SLD','REPORT','MANUAL','PROCEDURE','SPECIFICATION','LIST','REGISTER','PLAN','SCHEDULE','DIAGRAM','LAYOUT','ARRANGEMENT','GA','PFD','P&ID','BOM','FAT','SAT','MRB','TBE','TBA','VDR']);
+              const subjectWords = extraTerms.filter(w => !DOC_TYPE_WORDS.has(w) && !/^\d+$/.test(w));
+
+              // Strategy 2: title/description keyword search
               if (!searchResult?.found || searchResult.total_found === 0) {
-                const DOC_TYPE_WORDS = new Set(['IOM','BFD','ITP','DOCUMENT','DRAWING','SDR','MDS','DATASHEET','SLD','REPORT','MANUAL','PROCEDURE','SPECIFICATION','LIST','REGISTER','PLAN','SCHEDULE','DIAGRAM','LAYOUT','ARRANGEMENT','GA','PFD','P&ID','BOM','FAT','SAT','MRB','TBE','TBA','VDR']);
-                const subjectWords = extraTerms.filter(w => !DOC_TYPE_WORDS.has(w) && !/^\d+$/.test(w));
                 if (subjectWords.length > 0) {
-                  console.log(`Deterministic fallback: Strategy 2 - title keyword search with: ${subjectWords.join(' ')}`);
-                  const titleSearchArgs: any = { document_number_pattern: projectPattern || `${resolvedCode ? '' : ''}%`, title: subjectWords.join(' ') };
+                  console.log(`Deterministic fallback: Strategy 2 - description keyword search with: ${subjectWords.join(' ')}`);
+                  const titleSearchArgs: any = { document_number_pattern: projectPattern || '%', title: subjectWords.join(' ') };
                   if (projectPattern) titleSearchArgs.document_number_pattern = projectPattern;
                   searchResult = await executeTool('search_assai_documents', titleSearchArgs, supabase);
                 }
               }
               
-              // Strategy 3: broader pattern without doc type
+              // Strategy 3: broader pattern without doc type but with title keyword
               if (!searchResult?.found || searchResult.total_found === 0) {
                 if (projectPattern && resolvedCode) {
                   console.log(`Deterministic fallback: Strategy 3 - broader pattern without doc type`);
                   const broaderArgs: any = { document_number_pattern: projectPattern };
-                  const subjectWords2 = extraTerms.filter(w => !new Set(['IOM','BFD','ITP','DOCUMENT','DRAWING','SDR','MDS']).has(w) && !/^\d+$/.test(w));
-                  if (subjectWords2.length > 0) broaderArgs.title = subjectWords2.join(' ');
+                  if (subjectWords.length > 0) broaderArgs.title = subjectWords.join(' ');
                   searchResult = await executeTool('search_assai_documents', broaderArgs, supabase);
+                }
+              }
+
+              // Strategy 4: related type codes (J01→G01, G02)
+              if (!searchResult?.found || searchResult.total_found === 0) {
+                const RELATED_TYPES: Record<string, string[]> = {
+                  'J01': ['G01', 'G02'], 'G01': ['J01', 'G02'], 'G02': ['J01', 'G01'],
+                  'A01': ['A02', 'A03'], 'B01': ['B02'], 'H01': ['H02'],
+                };
+                const relatedCodes = RELATED_TYPES[resolvedCode] || [];
+                for (const altCode of relatedCodes) {
+                  console.log(`Deterministic fallback: Strategy 4 - trying related type ${altCode}`);
+                  const altArgs: any = { document_type: altCode };
+                  if (projectPattern) altArgs.document_number_pattern = projectPattern;
+                  if (subjectWords.length > 0) altArgs.title = subjectWords.join(' ');
+                  searchResult = await executeTool('search_assai_documents', altArgs, supabase);
+                  if (searchResult?.found && searchResult.total_found > 0) break;
                 }
               }
 
@@ -9812,7 +9890,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                     ...(relevantDocs.length > 0 && otherDocs.length > 0 ? [`${relevantDocs.length} documents matched "${subjectLabel}" — shown first`] : []),
                     ...(relevantDocs.length === 0 && subjectLabel ? [`No exact title match for "${subjectLabel}" — showing all ${resolvedName} documents`] : [])
                   ],
-                  followup: dynamicFollowups.slice(0, 4)
+                  followup: dynamicFollowups.slice(0, 4),
+                  follow_ups: dynamicFollowups.slice(0, 3)
                 };
                 const fallbackContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
                 const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;

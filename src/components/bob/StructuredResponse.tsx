@@ -200,6 +200,7 @@ interface StructuredResponseData {
   type_table?: TypeRow[];
   highlights?: string[];
   followup?: string[];
+  follow_ups?: string[];
   documents?: DocumentRow[];
   // Document analysis fields
   document?: {
@@ -661,7 +662,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
 }
 
 /** Try to extract structured response JSON from a message string */
-export function parseStructuredResponse(content: string): { before: string; data: StructuredResponseData | null; after: string } {
+export function parseStructuredResponse(content: string): { before: string; data: StructuredResponseData | null; after: string; follow_ups?: string[] } {
   // Robust regex: handles whitespace, newlines, and optional markdown code block wrapping
   const tagMatch = content.match(/<structured_response>\s*([\s\S]*?)\s*<\/structured_response>/i);
   if (!tagMatch) return { before: content, data: null, after: '' };
@@ -676,7 +677,11 @@ export function parseStructuredResponse(content: string): { before: string; data
       jsonStr = jsonStr.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
     }
     const data = JSON.parse(jsonStr);
-    if (data && data.type) return { before, data, after };
+    if (data && data.type) {
+      // Extract follow_ups from structured data (JSON-first approach)
+      const follow_ups = data.follow_ups || data.followup || undefined;
+      return { before, data, after, follow_ups };
+    }
   } catch (e) {
     console.error('Failed to parse structured response JSON:', e);
   }

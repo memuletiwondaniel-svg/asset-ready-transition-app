@@ -903,8 +903,17 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                           : 'bg-transparent rounded-bl-md'
                       )}>
                         {message.content && (() => {
-                          const { before, data: structuredData, after } = parseStructuredResponse(message.content);
+                          const { before, data: structuredData, after, follow_ups: structuredFollowUps } = parseStructuredResponse(message.content);
                           if (structuredData) {
+                            // Extract follow_ups: prefer structured JSON, then check after text for <follow_ups> tag
+                            let followUps = structuredFollowUps;
+                            if (!followUps && after) {
+                              const tagMatch = after.match(/<follow_ups>\s*(\[[\s\S]*?\])\s*<\/follow_ups>/i);
+                              if (tagMatch) {
+                                try { followUps = JSON.parse(tagMatch[1]); } catch {}
+                              }
+                            }
+                            const cleanAfter = after ? after.replace(/<follow_ups>[\s\S]*?<\/follow_ups>/gi, '').trim() : '';
                             return (
                               <div className="text-sm leading-relaxed">
                                 {before && (
@@ -918,7 +927,23 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                     handleSend(text);
                                   }}
                                 />
-                                {after && <p className="mt-2">{renderInlineMarkdown(after)}</p>}
+                                {cleanAfter && <p className="mt-2">{renderInlineMarkdown(cleanAfter)}</p>}
+                                {followUps && followUps.length > 0 && (
+                                  <div className="mt-2.5 pt-2 border-t border-border/60">
+                                    <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Suggested actions</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {followUps.map((item: string, idx: number) => (
+                                        <button
+                                          key={idx}
+                                          onClick={() => handleSend(item.replace(/\*\*/g, '') + '?')}
+                                          className="text-xs px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/50 transition-colors cursor-pointer text-left"
+                                        >
+                                          {item.replace(/\*\*/g, '')}?
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             );
                           }
@@ -988,26 +1013,59 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                             });
                           } // end assistant-only header normalization
 
-                          // Extract follow-up suggestions — catch all common header patterns
-                          const followUpRegex = /(?:## [^\n]*(?:would you like|next steps?|quick actions?|suggested actions?|what (?:can |would |I can |i can )|options?|try next|do next)[^\n]*|(?:\*\*[^\n]*(?:would you like|next steps?|quick actions?|suggested actions?|what (?:can |would |I can |i can )|options?|try next|do next)[^\n]*?\*\*))\s*\n([\s\S]*?)(?=\n## |\n---|\n\*\*[A-Z]|\s*$)/i;
-                          const followUpMatch = processed.match(followUpRegex);
+                          // 3-tier follow-up extraction: 1) <follow_ups> JSON tag, 2) Header regex, 3) Colon-header fallback
                           let followUpItems: string[] = [];
-                          if (followUpMatch) {
-                            const bulletRegex = /(?:[-•*]|\d+[.)]\s)\s*(.+)/g;
-                            let bm: RegExpExecArray | null;
-                            while ((bm = bulletRegex.exec(followUpMatch[0])) !== null) {
-                              let label = bm[1].replace(/\?$/, '').trim();
-                              // Strip trailing explanation after dash for long items
-                              if (label.length > 60) {
-                                const dashIdx = label.indexOf(' - ');
-                                if (dashIdx > 10) label = label.substring(0, dashIdx);
+
+                          // Tier 1: Extract <follow_ups>["...","..."]</follow_ups> JSON tag
+                          const followUpTagMatch = processed.match(/<follow_ups>\s*(\[[\s\S]*?\])\s*<\/follow_ups>/i);
+                          if (followUpTagMatch) {
+                            try {
+                              const parsed = JSON.parse(followUpTagMatch[1]);
+                              if (Array.isArray(parsed)) followUpItems = parsed.map((s: string) => s.replace(/\?$/, '').replace(/\*\*/g, '').trim());
+                            } catch {}
+                            processed = processed.replace(followUpTagMatch[0], '').trim();
+                          }
+
+                          // Tier 2: Header regex (broad catch for ## and ** headers)
+                          if (followUpItems.length === 0) {
+                            const followUpRegex = /(?:## [^\n]*(?:would you like|next steps?|quick actions?|suggested actions?|what (?:can |would |I can |i can )|options?|try next|do next)[^\n]*|(?:\*\*[^\n]*(?:would you like|next steps?|quick actions?|suggested actions?|what (?:can |would |I can |i can )|options?|try next|do next)[^\n]*?\*\*))\s*\n([\s\S]*?)(?=\n## |\n---|\n\*\*[A-Z]|\s*$)/i;
+                            const followUpMatch = processed.match(followUpRegex);
+                            if (followUpMatch) {
+                              const bulletRegex = /(?:[-•*]|\d+[.)]\s)\s*(.+)/g;
+                              let bm: RegExpExecArray | null;
+                              while ((bm = bulletRegex.exec(followUpMatch[0])) !== null) {
+                                let label = bm[1].replace(/\?$/, '').trim();
+                                if (label.length > 60) {
+                                  const dashIdx = label.indexOf(' - ');
+                                  if (dashIdx > 10) label = label.substring(0, dashIdx);
+                                }
+                                label = label.replace(/\*\*/g, '');
+                                followUpItems.push(label);
                               }
-                              // Strip markdown bold markers
-                              label = label.replace(/\*\*/g, '');
-                              followUpItems.push(label);
+                              if (followUpItems.length > 0) {
+                                processed = processed.replace(followUpMatch[0], '').trim();
+                              }
                             }
-                            if (followUpItems.length > 0) {
-                              processed = processed.replace(followUpMatch[0], '').trim();
+                          }
+
+                          // Tier 3: Colon-terminated header fallback (catches "Here's what I can try:" pattern)
+                          if (followUpItems.length === 0) {
+                            const colonHeaderRegex = /(?:^|\n)([^\n]*(?:can try|could try|options|steps|actions|here's what)[^\n]*:)\s*\n((?:\s*(?:[-•*]|\d+[.)]\s).+\n?)+)/im;
+                            const colonMatch = processed.match(colonHeaderRegex);
+                            if (colonMatch) {
+                              const bulletRegex2 = /(?:[-•*]|\d+[.)]\s)\s*(.+)/g;
+                              let bm2: RegExpExecArray | null;
+                              while ((bm2 = bulletRegex2.exec(colonMatch[2])) !== null) {
+                                let label = bm2[1].replace(/\?$/, '').replace(/\*\*/g, '').trim();
+                                if (label.length > 60) {
+                                  const dashIdx = label.indexOf(' - ');
+                                  if (dashIdx > 10) label = label.substring(0, dashIdx);
+                                }
+                                followUpItems.push(label);
+                              }
+                              if (followUpItems.length > 0) {
+                                processed = processed.replace(colonMatch[0], '').trim();
+                              }
                             }
                           }
 
