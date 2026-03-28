@@ -9748,6 +9748,14 @@ Rules:
 
 When results ARE found but numerous (>10), use the title parameter to filter by subject keywords from the user's query.
 
+PARALLEL SEARCH STRATEGY (CRITICAL):
+When searching for a named document (e.g., "Process Safety Design Basis", "Cause & Effect Diagram"):
+1. ALWAYS run a title/keyword search IN PARALLEL with the type-code search
+2. Pass the key phrase (e.g., "Safety Design Basis") in the 'title' parameter of search_assai_documents
+3. The title parameter maps to Assai's 'description' field for keyword matching
+4. Do NOT give up after type-code search alone — the title search often finds documents filed under unexpected type codes
+5. When resolve_document_type returns multiple codes combined with '+' (e.g., "2365+C01"), use the combined code to search BOTH BGC and vendor documents simultaneously
+
 INTENT CLASSIFICATION — Determine the user's intent BEFORE searching:
 
 RETRIEVAL: User wants specific documents ("Find the IOM for...", "Show me the P&ID")
