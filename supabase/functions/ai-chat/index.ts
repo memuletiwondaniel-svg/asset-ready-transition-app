@@ -10055,7 +10055,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           .slice(0, 10)
           .map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
 
-        let broadSummary = buildSearchSummary(lastToolResult, summaryOpts);
+        let broadSummary = buildSearchSummary(effectiveSearchResult, summaryOpts);
         if (filterApplied && unfilteredTotal > filteredDocList.length) {
           broadSummary += `. There are also ${unfilteredTotal - filteredDocList.length} other unrelated documents available.`;
         }
