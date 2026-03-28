@@ -966,7 +966,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                 <ReactMarkdown
                                   remarkPlugins={[remarkGfm]}
                                   components={{
-                                    h2: ({ children }) => <h2 className="mt-5 mb-2 border-t border-border/40 pt-3 text-base font-extrabold tracking-tight text-foreground flex items-center gap-2" style={{ fontWeight: 800 }}>{children}</h2>,
+                                    h2: ({ children }) => <h2 className="mt-5 mb-2 border-t border-border/60 pt-3 text-base font-extrabold tracking-tight text-foreground flex items-center gap-2" style={{ fontWeight: 800 }}>{children}</h2>,
                                     h3: ({ children }) => <h3 className="mt-4 mb-1.5 text-[15px] font-bold text-foreground" style={{ fontWeight: 700 }}>{children}</h3>,
                                     p: ({ children }) => <p>{processChildren(children)}</p>,
                                     ul: ({ children }) => <ul className="my-2 ml-5 list-disc space-y-1 text-sm">{children}</ul>,
@@ -982,7 +982,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                 </ReactMarkdown>
                               </div>
                               {followUpItems.length > 0 && (
-                                <div className="mt-2.5 pt-2 border-t border-border/40">
+                                <div className="mt-2.5 pt-2 border-t border-border/60">
                                   <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Suggested actions</p>
                                   <div className="flex flex-wrap gap-1.5">
                                     {followUpItems.map((item, idx) => (
