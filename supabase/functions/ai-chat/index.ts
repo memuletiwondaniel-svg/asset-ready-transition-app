@@ -9491,21 +9491,34 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       iteration++;
       console.log(`Agent loop iteration ${iteration}/${MAX_ITERATIONS}`);
 
-      const apiResponse = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key": ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-5-20250929",
-          system: systemPrompt,
-          messages: conversationMessages,
-          tools: anthropicTools,
-          max_tokens: maxTokens,
-        }),
-      });
+      // ── Retry-aware API call ──────────────────────────────────────────
+      const callAnthropicWithRetry = async (): Promise<Response> => {
+        const makeCall = () => fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-5-20250929",
+            system: systemPrompt,
+            messages: conversationMessages,
+            tools: anthropicTools,
+            max_tokens: maxTokens,
+          }),
+        });
+
+        const firstAttempt = await makeCall();
+        if (firstAttempt.ok || firstAttempt.status === 429) return firstAttempt;
+
+        // Non-429 error (500, 503, etc.) → retry once after 2s
+        console.log(`Anthropic API returned ${firstAttempt.status}, retrying in 2s...`);
+        await new Promise(r => setTimeout(r, 2000));
+        return makeCall();
+      };
+
+      const apiResponse = await callAnthropicWithRetry();
 
       if (!apiResponse.ok) {
         const errorText = await apiResponse.text();
@@ -9546,8 +9559,111 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           return new Response(sseRateLimit, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
         }
         
+        // ── Deterministic document-query fallback for non-429 errors ──────
+        // Extract acronyms / keywords from user message and attempt tool-based resolution
         const lastUserMsg = messages?.filter((m: any) => m.role === 'user').pop()?.content || '';
-        const fallbackContent = `I wasn't able to process your request about "${lastUserMsg.substring(0, 60).trim()}..." due to a temporary backend issue.\n\nWhat you can try:\n• Rephrase your question with more specific details\n• Try again in a moment — this is usually a brief interruption\n• Contact your ORSH administrator if this keeps happening`;
+        const msgUpper = lastUserMsg.toUpperCase();
+
+        // Known doc-related keywords that indicate a document query
+        const DOC_KEYWORDS = ['IOM', 'BFD', 'BFD', 'ITP', 'FAT', 'SAT', 'SDR', 'SLD', 'GA', 'GAD', 'PID', 'PFD', 'CDB',
+          'HYD', 'PTR', 'PCOM', 'COM', 'HAR', 'RAR', 'HAC', 'MDR', 'BOD', 'BDEP', 'MTO', 'SDS', 'HAZOP', 'SIL',
+          'DOCUMENT', 'DRAWING', 'REPORT', 'MANUAL', 'DATASHEET', 'SPECIFICATION', 'PROCEDURE', 'VENDOR',
+          'HVAC', 'ELECTRICAL', 'MECHANICAL', 'PIPING', 'INSTRUMENT', 'CIVIL', 'STRUCTURAL'];
+        const DP_MAP: Record<string, string> = { 'DP100': 'U40100', 'DP200': 'U40200', 'DP300': 'U40300', 'DP400': 'U40400', 'DP500': 'U40500' };
+        
+        const isDocQuery = DOC_KEYWORDS.some(kw => msgUpper.includes(kw));
+
+        if (isDocQuery) {
+          console.log('Deterministic fallback: detected document query, attempting tool-based resolution');
+          try {
+            // Extract potential acronyms (2-6 uppercase letter sequences)
+            const acronymCandidates = lastUserMsg.match(/\b[A-Z][A-Za-z&]{1,8}\b/g) || [];
+            // Also check for known keywords in mixed case
+            const lowerMsg = lastUserMsg.toLowerCase();
+            const additionalAcronyms: string[] = [];
+            if (lowerMsg.includes('iom')) additionalAcronyms.push('IOM');
+            if (lowerMsg.includes('bfd') || lowerMsg.includes('basis for design')) additionalAcronyms.push('BFD');
+            
+            const allCandidates = [...new Set([...acronymCandidates, ...additionalAcronyms])];
+            
+            // Try to resolve each candidate
+            let resolvedCode: string | null = null;
+            let resolvedName: string | null = null;
+            for (const candidate of allCandidates) {
+              if (['THE', 'FOR', 'AND', 'CAN', 'YOU', 'WITH', 'THIS', 'THAT', 'WHAT', 'HOW', 'PROVIDE', 'SHOW', 'FIND', 'GET', 'SEARCH'].includes(candidate.toUpperCase())) continue;
+              const resolveResult = await executeTool('resolve_document_type', { query: candidate }, supabase);
+              if (resolveResult?.found && resolveResult.count === 1) {
+                resolvedCode = resolveResult.matches[0].code;
+                resolvedName = resolveResult.matches[0].name;
+                console.log(`Deterministic fallback: resolved "${candidate}" → ${resolvedCode} (${resolvedName})`);
+                break;
+              }
+            }
+
+            if (resolvedCode) {
+              // Extract DP number → unit code
+              const dpMatch = lastUserMsg.match(/DP\s*(\d{3})/i);
+              let unitPattern: string | undefined;
+              if (dpMatch) {
+                const dpKey = `DP${dpMatch[1]}`;
+                const unitCode = DP_MAP[dpKey];
+                if (unitCode) {
+                  unitPattern = `6529-%-%-%-${unitCode}-%`;
+                  console.log(`Deterministic fallback: mapped ${dpKey} → ${unitCode}`);
+                }
+              }
+
+              // Execute search
+              const searchArgs: any = { document_type: resolvedCode };
+              if (unitPattern) searchArgs.document_number_pattern = unitPattern;
+              
+              const searchResult = await executeTool('search_assai_documents', searchArgs, supabase);
+              
+              if (searchResult?.found && searchResult.total_found > 0) {
+                console.log(`Deterministic fallback: found ${searchResult.total_found} documents`);
+                // Reuse the existing deterministic structured response builder
+                lastToolName = 'search_assai_documents';
+                lastToolResult = searchResult;
+                
+                const STATUS_DESCS: Record<string, string> = {
+                  AFU: "Approved for Use", AFC: "Approved for Construction", IFB: "Issued for Bid", IFT: "Issued for Tender",
+                  IFI: "Issued for Information", IFA: "Issued for Approval", IFC: "Issued for Construction", CAN: "Cancelled",
+                  REV: "Under Revision", SUP: "Superseded", IFR: "Issued for Review", AFD: "Approved for Design"
+                };
+                const TYPE_DESCS: Record<string, string> = dynamicTypeDescs;
+                const statusTable = Object.entries(searchResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS[s] ?? s }));
+                const typeTable = Object.entries(searchResult.type_summary || {}).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 10).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
+                
+                const dpLabel = dpMatch ? ` in DP${dpMatch[1]}` : '';
+                const summaryText = `Found **${searchResult.total_found}** ${resolvedCode} (${resolvedName}) documents${dpLabel}`;
+                
+                const docList = (searchResult.documents || []).slice(0, 30).map((d: any) => ({
+                  document_number: d.document_number, title: d.title, revision: d.revision,
+                  status: d.status, type_code: d.type_code, download_url: d.download_url || null,
+                  pk_seq_nr: d.pk_seq_nr, entt_seq_nr: d.entt_seq_nr
+                }));
+                
+                const structured = {
+                  type: searchResult.total_found <= 30 ? "document_list" : "document_search",
+                  summary: summaryText,
+                  status_table: statusTable,
+                  type_table: typeTable,
+                  documents: docList,
+                  highlights: [`I resolved "${allCandidates.find(c => c.toUpperCase() !== 'THE') || ''}" to document type ${resolvedCode} (${resolvedName}) and searched Assai directly`],
+                  followup: ["Show only approved documents", "Show document details", "Search for a different document type"]
+                };
+                const fallbackContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+                const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
+                return new Response(sseFallback, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+              }
+            }
+          } catch (fallbackErr) {
+            console.error('Deterministic fallback failed:', fallbackErr);
+          }
+        }
+        
+        // Generic fallback — no document query detected or deterministic fallback failed
+        const fallbackContent = `I encountered a temporary issue processing your request. Please try again in a moment — this is usually a brief interruption.`;
         const sseData = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
         return new Response(sseData, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
       }
