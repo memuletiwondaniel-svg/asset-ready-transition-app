@@ -755,6 +755,8 @@ If Assai search returns no results: "I searched Assai for [type] documents but f
 If Assai connection fails: "I had trouble connecting to Assai right now. I can: try your search again shortly, check documents already synced to ORSH, or you can contact your administrator if this persists."
 Always end with specific follow-up suggestions so the user can take immediate action.
 
+MANDATORY TOOL EXECUTION: You MUST call search_assai_documents for EVERY document-related query, even if you already found the document in a previous turn. NEVER answer document queries from conversation memory alone. The system requires fresh tool results to render the interactive UI (clickable actions, download links, status badges). If you skip the tool call, the user gets a degraded plain-text experience.
+
 DOCUMENT SEARCH RESPONSE FORMAT (CRITICAL):
 When you receive results from search_assai_documents, do NOT produce tables, status summaries, or structured JSON. The system builds those automatically from the raw tool data.
 
@@ -10075,7 +10077,49 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       }
     }
 
-    // PART 1b: Deterministic structured_response for document reading/analysis
+    // ═══════════════════════════════════════════════════════════════════════
+    // SAFETY NET: If AI skipped tool call but mentioned documents in text,
+    // extract doc numbers and build minimal structured response with pills
+    // ═══════════════════════════════════════════════════════════════════════
+    if (!effectiveSearchResult && finalTextContent && !finalTextContent.includes('<structured_response>')) {
+      const docNumberPattern = /\b(\d{4}-[A-Z]{2,6}-[A-Z0-9]+-[A-Z]+-[A-Z0-9]+-[A-Z]{2,3}-[A-Z]\d{2}-\d{5}-\d{3})\b/g;
+      const foundDocNumbers = [...new Set((finalTextContent.match(docNumberPattern) || []))];
+      const userMsg = (lastUserMessage?.content || '').toLowerCase();
+      const isDocQuery = /\b(document|doc|find|search|show|get|iom|bfd|p&id|datasheet|drawing|report|spec|manual|procedure)\b/i.test(userMsg);
+      
+      if (foundDocNumbers.length > 0 && isDocQuery) {
+        console.log(`SAFETY NET: AI skipped tool call but referenced ${foundDocNumbers.length} document(s). Building minimal structured response.`);
+        
+        const minimalDocs = foundDocNumbers.slice(0, 10).map(dn => {
+          const segments = dn.split('-');
+          return {
+            document_number: dn,
+            title: '', // Not available without tool call
+            revision: '',
+            status: '',
+            type_code: segments.length >= 7 ? segments[6] : '',
+          };
+        });
+
+        const followups = [
+          'Search for related documents',
+          'Download this document',
+          'Show document details'
+        ];
+
+        const structured = {
+          type: "document_list",
+          summary: `Found reference to **${foundDocNumbers.length}** document${foundDocNumbers.length > 1 ? 's' : ''}`,
+          documents: minimalDocs,
+          highlights: [],
+          followup: followups
+        };
+
+        finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+      }
+    }
+
+
     if (lastToolName === 'read_assai_document' && lastToolResult && lastToolResult.content_available && lastToolResult.document_content_answer) {
       const meta = lastToolResult.metadata || {};
       const answer = lastToolResult.document_content_answer || '';
