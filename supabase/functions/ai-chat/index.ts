@@ -6790,7 +6790,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               'Content-Type': 'application/x-www-form-urlencoded',
               'Cookie': cookieHeader,
               'User-Agent': ASSAI_UA,
-              'Referer': baseUrl + '/search.aweb?subclass_type=DES_DOC',
+              'Referer': assaiBase + '/search.aweb?subclass_type=DES_DOC',
             },
             body: searchParams.toString(),
             redirect: 'follow',
