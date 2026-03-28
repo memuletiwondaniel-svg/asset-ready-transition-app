@@ -9817,8 +9817,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                 }
                 
                 // Also extract any standalone nouns from the query that aren't stop words
-                const STOP_WORDS = new Set(['THE', 'OF', 'IN', 'FOR', 'A', 'AN', 'AND', 'OR', 'CAN', 'YOU', 'PROVIDE', 'ME', 'WITH', 'SHOW', 'FIND', 'GET', 'ALL', 'WHAT', 'IS', 'ARE', 'PLEASE', 'COULD', 'WOULD', 'LIKE', 'WANT', 'NEED', 'DO', 'HOW', 'WHERE', 'WHICH', 'THAT', 'THIS', 'FROM', 'TO', 'BY', 'IT', 'MY', 'I']);
-                const extraTerms = lastUserMsg.toUpperCase().split(/\s+/).filter(w => w.length > 2 && !STOP_WORDS.has(w) && !allCandidates.map(c => c.toUpperCase()).includes(w) && !/^DP\d+$/i.test(w));
+                const extraTerms = lastUserMsg.toUpperCase().split(/\s+/).filter(w => w.length > 2 && !STOP_WORDS_SHARED.has(w) && !allCandidates.map(c => c.toUpperCase()).includes(w) && !/^DP\d+$/i.test(w));
                 if (!subjectLabel && extraTerms.length > 0) {
                   subjectKeywords = extraTerms;
                   subjectLabel = extraTerms[0];
