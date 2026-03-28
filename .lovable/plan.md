@@ -1,86 +1,62 @@
 
 
-## Fix: Multi-Strategy Intelligent Search for Selma
+## Fix: Follow-up Actions Always Render as Clickable Pills
 
 ### Root Cause
 
-Two structural problems prevent Selma from finding the Cathodic Protection IOM:
+Two specific bugs in `ORSHChatDialog.tsx` line 992-999:
 
-1. **No title search capability.** The `search_assai_documents` tool only accepts `document_number_pattern`, `discipline_code`, `document_type`, `status_code`, and `company_code`. There is no `title` parameter. Assai's search form has a `title` text field (line 7421 confirms "title uses contains search automatically"), but the tool never populates it. Selma literally cannot search by document title keywords like "Cathodic".
+1. **Missing header phrase**: The regex doesn't match "What I can try" (the exact header Bob used in the screenshot). It catches "what can I" and "what I can do" but not "what I can try".
 
-2. **Give-up-on-first-failure prompt.** The system prompt (line 9404) tells Selma: "I searched Assai but found no matching documents. Would you like me to try a broader search?" — asking the user instead of autonomously retrying. There is no instruction to try alternative strategies (broader pattern, title search, different project codes, both modules).
+2. **Numbered lists ignored**: The bullet extraction regex on line 996 is `[-•*]\s+(.+)` — it only matches unordered bullets. Bob used a numbered list (`1. Search under...`, `2. Search under...`), which is never extracted.
 
-### The user's expected behavior
+3. **Fragile by design**: Every new AI phrasing breaks the regex. We need a much broader catch-all approach.
 
-For "IOM of the Cathodic Protection System in DP223":
-- Strategy 1: Resolve IOM → J01, resolve DP223 → 6523, search `document_type=J01, pattern=6523-%` → get all IOMs for that project
-- Strategy 2: If too many results, filter by title containing "Cathodic" 
-- Strategy 3: If 0 results, broaden to `6523-%` without type filter, search title "Cathodic"
-- Strategy 4: Try related project codes (6530) or both DES_DOC and SUP_DOC modules
+### Solution
 
-### Implementation — single file: `supabase/functions/ai-chat/index.ts`
+**File**: `src/components/widgets/ORSHChatDialog.tsx`
 
-#### Change 1: Add `title` parameter to `search_assai_documents` tool definition (~line 3143)
+#### Change 1: Broaden the header regex massively
 
-Add a new optional parameter:
+Replace the current regex with one that catches any section header containing action-oriented language:
+
+```regex
+/(?:## [^\n]*(?:would you like|next steps?|quick actions?|suggested actions?|what (?:can |would |I can |i can )|options?|try next|do next)[^\n]*|(?:\*\*[^\n]*(?:would you like|next steps?|quick actions?|suggested actions?|what (?:can |would |I can |i can )|options?|try next|do next)[^\n]*?\*\*))\s*\n([\s\S]*?)(?=\n## |\n---|\n\*\*[A-Z]|\s*$)/i
 ```
-title: {
-  type: "string",
-  description: 'Filter by document title keywords (contains search). Use to narrow results by subject, e.g. "Cathodic", "HVAC", "Compressor". Assai performs automatic contains matching.'
+
+Key additions: `what I can try`, `options`, `try next`, `do next`, and the bold-header branch now mirrors the same broad patterns.
+
+#### Change 2: Extract both bulleted AND numbered list items
+
+Replace the bullet-only regex on line 996:
+
+```typescript
+// Before (only unordered bullets):
+const bulletRegex = /[-•*]\s+(.+)/g;
+
+// After (unordered + numbered):
+const bulletRegex = /(?:[-•*]|\d+[.)]\s)\s*(.+)/g;
+```
+
+This catches `1. item`, `1) item`, `- item`, `• item`, `* item`.
+
+#### Change 3: Strip trailing description after dash
+
+Many items have format `"Search under Electrical (EA) - CP systems are sometimes filed with electrical"`. The pill should show just the action part. Truncate at ` - ` if the text is long:
+
+```typescript
+let label = bm[1].replace(/\?$/, '').trim();
+// If item has "Action text - explanation", keep only the action
+if (label.length > 60) {
+  const dashIdx = label.indexOf(' - ');
+  if (dashIdx > 10) label = label.substring(0, dashIdx);
 }
+followUpItems.push(label);
 ```
 
-#### Change 2: Wire `title` into the form submission (~line 7198-7211)
+### Technical Details
 
-In `fetchResultPage`, extract `title` from args and set it on the form:
-```ts
-const { document_number_pattern, discipline_code, document_type, status_code, company_code, title } = args;
-// ... in fetchResultPage:
-if (title) formData.set('title', title);
-```
-
-#### Change 3: Add Multi-Strategy Search Protocol to both Bob and Selma system prompts
-
-Replace the "give up" error handling (lines 742, 9404) with a mandatory retry protocol:
-
-```
-MULTI-STRATEGY SEARCH PROTOCOL (MANDATORY — NEVER give up after one search):
-When a document query returns 0 results, you MUST try at least 3 strategies before telling the user nothing was found:
-
-Strategy 1 (Precise): Resolve doc type + project code → search with both filters
-Strategy 2 (Title keyword): Keep project code, drop doc type filter, add title= with subject keywords from the query (e.g. "Cathodic", "HVAC", "Compressor")
-Strategy 3 (Broader type): Keep doc type, use broader project pattern (e.g. just the first 4 digits "6523-%") 
-Strategy 4 (Cross-module): Repeat Strategy 1-2 in the OTHER module (if you searched DES_DOC, try SUP_DOC and vice versa)
-Strategy 5 (Related projects): If the user said DP223, also try adjacent project codes from dms_projects
-
-When results ARE found but numerous (>10), use the title parameter to filter by subject keywords extracted from the user's query.
-
-NEVER ask "Would you like me to try a broader search?" — just DO IT automatically. Only report failure after exhausting all strategies.
-```
-
-#### Change 4: Update the deterministic fallback (line 9645-9650) to also try title-based search
-
-After the initial `searchResult` returns 0, add a second attempt using title keywords:
-```ts
-if (!searchResult?.found || searchResult.total_found === 0) {
-  // Extract subject keywords from user message
-  const subjectWords = extraTerms.filter(w => !['IOM','BFD','ITP','DOCUMENT','DRAWING'].includes(w));
-  if (subjectWords.length > 0) {
-    const titleSearchArgs: any = { document_number_pattern: projectPattern || '6523-%', title: subjectWords.join(' ') };
-    searchResult = await executeTool('search_assai_documents', titleSearchArgs, supabase);
-  }
-}
-```
-
-### Summary of changes
-
-| Location | What |
-|----------|------|
-| Tool definition (line 3143) | Add `title` parameter |
-| `fetchResultPage` (line 7198) | Wire `title` into Assai form POST |
-| Bob prompt (line 742) | Replace "ask user" with multi-strategy protocol |
-| Selma prompt (line 9404) | Replace "ask user" with multi-strategy protocol |
-| Deterministic fallback (line 9645) | Add title-keyword retry when first search returns 0 |
-
-All changes in `supabase/functions/ai-chat/index.ts`. After deploy, applies to all users permanently.
+- Single file change: `src/components/widgets/ORSHChatDialog.tsx` (~lines 992-1003)
+- No backend changes needed — this is purely a client-side extraction issue
+- The broader regex prevents future whack-a-mole by catching any "what/would/can/try/next/options" phrasing in both `##` headers and `**bold**` headers
 
