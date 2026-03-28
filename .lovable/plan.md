@@ -1,34 +1,27 @@
 
 
-## Root Cause Found
+## Problems
 
-**`font-variation-settings: "wght" 400`** on line 324 of `src/index.css` forces ALL text in the entire app to weight 400 (normal). This CSS property has higher specificity than `font-weight` and `font-extrabold` — it overrides everything, including inline `style={{ fontWeight: 800 }}`. This is why bold headers have been impossible to achieve.
+1. **Follow-up chip text rendered as bold section header**: When a user clicks a follow-up chip like "Show only approved documents", it becomes a user message. The markdown rendering applies the section header regex to ALL messages (including user messages), matching text that starts with a capital letter and is 8-60 chars — converting it to `## 📌 Show only approved documents` with bold icon formatting.
 
-Additionally, the Google Fonts import in `index.html` only loads Inter weights `300–700`, so weight 800 isn't even available.
+2. **"Read and summarise" uses raw doc number**: The `DocActionButtons` component sends `Read and summarise 6529-CPEC-C017-...` — a meaningless string to users. It should use the document title instead.
 
-## Fix (2 files)
+## Changes
 
-### 1. `src/index.css` — Remove the forced weight override
+### 1. `src/components/widgets/ORSHChatDialog.tsx` — Skip header normalization for user messages
 
-Delete line 324:
-```css
-font-variation-settings: "wght" 400;
+Wrap the section header regex processing (lines 935-958) in a condition: only apply when `message.role === 'assistant'`. User messages should render as plain text without any header/icon transformation.
+
+### 2. `src/components/bob/StructuredResponse.tsx` — Use document title in "Read and summarise"
+
+Update `DocActionButtons` to accept `title` prop alongside `docNumber`. Change the `onRead` call from:
+```
+`Read and summarise ${docNumber}`
+```
+to:
+```
+`Read and summarise ${title || docNumber}`
 ```
 
-This single line is the reason **every bold style in the chat has been ignored**. Removing it lets `font-weight` work normally across the entire app.
-
-### 2. `index.html` — Load Inter with weight 800
-
-Change the Google Fonts URL to include weight 800:
-```
-Inter:wght@300;400;500;600;700;800
-```
-
-### 3. `src/components/widgets/ORSHChatDialog.tsx` — Stronger divider
-
-Change `border-border/40` to `border-border/60` on the `h2` component for a more visible section divider.
-
-## Why This Was So Difficult
-
-`font-variation-settings` is a low-level CSS property that directly controls variable font rendering. It bypasses `font-weight` entirely — Tailwind classes, inline styles, and `!important` all lose to it. This is a known CSS gotcha with variable fonts.
+Update all `DocActionButtons` usages (3 places in the file) to pass the `doc.title` prop from the document row data, which is already available in every render context.
 
