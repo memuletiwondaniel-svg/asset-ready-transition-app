@@ -6726,22 +6726,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           textFieldsRead = allFields.filter(f => f.type === 'text' || f.type === '');
           console.log(`read_assai_document: initSearch OK, hidden=${hiddenFieldsRead.length}, text=${textFieldsRead.length}`);
           
-          // If proj_seq_nr was NULL, try to extract it from hidden fields and cache it
-          if (projSeqNr === '59734' && docProjectCode !== '6529') {
-            const projField = hiddenFieldsRead.find(f => f.name === 'proj_seq_nr');
-            if (projField?.value) {
-              projSeqNr = projField.value;
-              console.log(`read_assai_document: discovered proj_seq_nr=${projSeqNr} from initSearch, caching...`);
-              // Cache back to dms_projects
-              try {
-                await supabaseClient
-                  .from('dms_projects')
-                  .upsert({ code: docProjectCode, cabinet: selectedProjectCodes, proj_seq_nr: projSeqNr, project_name: '' }, { onConflict: 'code,cabinet' });
-              } catch (cacheErr) {
-                console.warn('read_assai_document: failed to cache proj_seq_nr:', cacheErr);
-              }
-            }
-          }
+          // "All projects" scope — hidden fields from initSearch pass through as-is
         } catch (initErr) {
           console.warn('read_assai_document: initSearch warning:', initErr);
         }
