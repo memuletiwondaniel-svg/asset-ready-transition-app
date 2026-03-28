@@ -9098,7 +9098,7 @@ Segments:
 2. Originator/Company (ABBE = ABB Engineering Shanghai Limited)
 3. Plant code (C017 = Zubair Hammar Mishrif)
 4. Site code (ISGP = Iraq South Gas)
-5. Unit code (U40300 = specific unit)
+5. Unit code (U40300 = Compression — from dms_units table. NOT a project ID)
 6. Discipline (ZV = Vendor Documentation)
 7. Document type (A01 = Supplier Document Schedule)
 8. Document number (5 digits, e.g. 00006)
