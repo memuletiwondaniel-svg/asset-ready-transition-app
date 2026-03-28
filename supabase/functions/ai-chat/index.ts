@@ -7357,6 +7357,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           if (discipline_code) formData.set('discipline_code', discipline_code);
           if (document_type) formData.set('document_type', document_type);
           if (company_code) formData.set('company_code', company_code);
+          if (title) formData.set('title', title);
           // Apply extra filters (status_code, discipline_code overrides)
           for (const [k, v] of Object.entries(extraFilters)) {
             formData.set(k, v);
