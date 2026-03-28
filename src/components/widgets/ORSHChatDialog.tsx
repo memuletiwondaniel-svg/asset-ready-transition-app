@@ -930,7 +930,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                               return `## ${icon} ${clean}`;
                             })
                             // Plain text headers ending with colon on own line
-                            .replace(/^([A-Z][A-Za-z\s''"]+(?:from the metadata)?):?\s*$/gm, (_m, g1) => {
+                            .replace(/^([A-Z][A-Za-z\s''''"]+(?:from the metadata)?):?\s*$/gm, (_m, g1) => {
                               const clean = g1.replace(/:$/, '').trim();
                               // Only convert if it's a known header or looks like one (3+ words, title case)
                               if (sectionIcons[clean]) {
