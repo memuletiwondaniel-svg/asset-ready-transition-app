@@ -467,6 +467,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     const newMessages: Message[] = [...messages, userMessage];
     setMessages(newMessages);
     setIsLoading(true);
+    setLastFailedMessage(null);
 
     await saveMessage('user', textToSend);
 
