@@ -512,12 +512,12 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
               <tbody>
                 {data.documents.slice(0, 10).map((doc, i) => (
                   <tr key={doc.document_number} className={`group ${i % 2 === 1 ? 'bg-muted/10' : ''} hover:bg-primary/5 transition-colors`} style={{ borderBottom: '1px solid hsl(var(--border) / 0.15)' }}>
-                    <td className="py-2 px-3 align-top">
+                    <td className="py-2 px-3 align-middle">
                       <DocumentNumberLink docNumber={doc.document_number} truncate />
                     </td>
-                    <td className="py-2 px-3 text-xs text-foreground leading-snug line-clamp-2 align-top">{toTitleCase(doc.title)}</td>
-                    <td className="py-2 px-3 text-center align-top"><StatusBadge code={doc.status} /></td>
-                    <td className="py-1 px-1 align-top">
+                    <td className="py-2 px-3 text-xs text-foreground leading-snug line-clamp-2 align-middle">{toTitleCase(doc.title)}</td>
+                    <td className="py-2 px-3 text-center align-middle"><StatusBadge code={doc.status} /></td>
+                    <td className="py-1 px-1 align-middle">
                       <DocActionButtons docNumber={doc.document_number} onRead={onFollowupClick} />
                     </td>
                   </tr>
