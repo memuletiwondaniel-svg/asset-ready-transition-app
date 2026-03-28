@@ -6879,7 +6879,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cookie': cookieHeader,
                 'User-Agent': ASSAI_UA,
-                'Referer': baseUrl + '/search.aweb?subclass_type=SUP_DOC',
+                'Referer': assaiBase + '/search.aweb?subclass_type=SUP_DOC',
               },
               body: supSearchParams.toString(),
               redirect: 'follow',
