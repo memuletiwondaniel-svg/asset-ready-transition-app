@@ -7393,7 +7393,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         if (!authResult.success) {
           return { error: 'Assai authentication failed (HTTP ' + authResult.statusCode + '). Verify credentials in DMS Settings.' };
         }
-        const cookieHeader = authResult.cookies;
+        let cookieHeader = authResult.cookies;
         console.log('search_assai_documents: authenticated OK');
         
         const ua = ASSAI_UA;
