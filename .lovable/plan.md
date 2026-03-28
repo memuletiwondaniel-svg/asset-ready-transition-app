@@ -1,57 +1,69 @@
 
 
-# Fix Bob's Document Search Intelligence
+# Retrain Bob & Selma — Deep Document Intelligence
 
-## Problems Identified
+## Problem Summary
 
-1. **Bob searches too broadly** — uses `6529-%` instead of passing `document_type: A02` when user asks for "BfD"
-2. **Summary exposes raw wildcard pattern** — users see "Found 25 documents matching 6529-%" which is meaningless
-3. **document_type described as "ZV document type code"** — misleads the AI into thinking type codes are vendor-only
-4. **No plant/area code mapping** — "DP300" means nothing to Bob; it should map to a unit code segment
-5. **Module routing ignores document_type** — A02 (BfD) exists in both DES_DOC and SUP_DOC but routing doesn't consider the type
+Bob and Selma are hallucinating document codes and giving poor document search results because:
+
+1. **Selma's system prompt has its own hardcoded doc type list** (lines 9123-9195) — she looks these up instead of calling `resolve_document_type`
+2. **Selma's prompt explicitly says** "look up the document type name in the DOCUMENT TYPE CODE REFERENCE at the end of this prompt" (line 9327) — bypassing the dynamic tool entirely
+3. **The resolve_document_type and learn_acronym instructions only exist in Bob's prompt** (lines 702-750) — when Selma is activated, she gets DOCUMENT_AGENT_PROMPT which lacks these instructions
+4. **Selma's AGENT_CAPABILITIES tool list** (line 3538) does not include `resolve_document_type` or `learn_acronym`
+5. **No structured reasoning about document content** — the agents don't understand what each document type actually contains or how to combine project context with document type to build the right search
 
 ## Changes
 
-### 1. Fix the search tool description (ai-chat/index.ts ~line 3097-3099)
+### 1. Add resolve_document_type and learn_acronym to Selma's tool list
 
-Change `document_type` parameter description from:
-> "Filter by ZV document type code"
+In AGENT_CAPABILITIES (line 3538), add `'resolve_document_type'` and `'learn_acronym'` to document_agent's tools array.
 
-To:
-> "Filter by document type code. Works for ALL documents, not just vendor. Examples: A02 (Basis for Design), C02 (Specification), B01 (GA Drawing), H02 (ITP). ALWAYS pass this when the user mentions a document type by name."
+### 2. Replace Selma's hardcoded doc type reference with dynamic resolution instructions
 
-### 2. Strengthen the system prompt instructions (ai-chat/index.ts ~line 702-704)
+In DOCUMENT_AGENT_PROMPT (~line 8982), inject the same critical document resolution instructions currently only in Bob's prompt:
 
-Replace the document type lookup section with explicit instructions:
+- The full "DOCUMENT TYPE RESOLUTION (CRITICAL)" block (lines 702-750)
+- The "INDUSTRY ACRONYM AWARENESS" block
+- The "UNKNOWN ACRONYM HANDLING" flow
+- The "CRITICAL — resolve_document_type input rules"
 
-- When the user mentions a document type (BfD, ITP, SDR, etc.), Bob MUST pass the resolved type code as `document_type` parameter — not just use a broad wildcard
-- When the user mentions a plant/unit like "DP300", use it in the document_number_pattern as `6529-%-%-%-U40300-%-%-%-%` or similar partial match
-- Add a plant code reference: DP300 = U40300, and instruct Bob to ask if uncertain
+This ensures Selma always calls the tool instead of looking at a static list.
 
-### 3. Fix the summary line (ai-chat/index.ts ~line 9345)
+### 3. Remove the hardcoded "DOCUMENT TYPE CODES (ZV discipline)" section
 
-Change the deterministic summary from:
-```
-`Found **${total}** documents matching ${lastToolResult.search_pattern}`
-```
-To a user-friendly version that describes what was searched rather than showing the raw pattern:
-```
-`Found **${total}** documents`
-```
-Then append context from `filters_applied` — e.g., if `document_type` was A02, say "Found **25** Basis for Design documents". Build a human-readable description from the filters instead of showing the wildcard.
+Delete or replace the static list at lines 9123-9124 with a note: "Document type codes are resolved dynamically — always call resolve_document_type. Do NOT use any hardcoded code mappings."
 
-### 4. Fix module routing to consider document_type (ai-chat/index.ts ~line 6848-6855)
+### 4. Fix the "FINDING A SPECIFIC DOCUMENT" section
 
-Currently only checks `discipline_code === 'ZV'` or PO digits. Add: when `document_type` is provided and no explicit discipline is set, search BOTH DES_DOC and SUP_DOC (since type codes like A02 can exist in either module). The fallback logic at line 7170 already does this for 0 results, but we should search both proactively when type code is the primary filter.
+Replace lines 9326-9331. Currently says:
+> "Look up the document type name in the DOCUMENT TYPE CODE REFERENCE at the end of this prompt"
 
-### 5. Add DP-to-unit-code mapping to system prompt
+Replace with:
+> "1. Call resolve_document_type with the EXACT text the user used
+> 2. Use the returned code as document_type in search_assai_documents
+> 3. Present results with document number, title, revision, status
+> 4. If user asks to read/summarise, use read_assai_document"
 
-Add a reference table for known plant/unit codes so Bob can construct specific patterns:
-- DP300 → U40300 (unit code segment)
-- Other known DP codes from the project
+### 5. Add "Document Intelligence Reasoning" section to Selma's prompt
 
-Instruct Bob: "When the user mentions a DP number, map it to the unit code and include it in the search pattern for precision."
+Add a new section teaching Selma HOW to think about documents:
+
+**Document Search Strategy:**
+- When user mentions a document type name/acronym + a project/unit → call resolve_document_type first, then search_assai_documents with the code AND the unit pattern
+- When user asks "find the BfD for DP300" → resolve "BfD" → get code 7704 → search with document_type=7704 AND document_number_pattern=6529-%-%-%-U40300-%
+- When user asks about document content → first search to find the document number, then call read_assai_document
+- When combining filters: project + vendor + type = most specific search possible
+
+**Document Content Understanding:**
+- After reading a document with read_assai_document, provide contextual analysis: is this document fit for handover? What's missing? What are the critical specs?
+- Relate document content to the document type: a BfD should contain design basis parameters; an ITP should contain inspection hold points; an IOM should contain operating procedures
+- Flag discrepancies: if a document claims AFU status but has open comments, flag it
+
+### 6. Add the document resolution instructions to Bob's prompt for routing
+
+Bob (copilot) sometimes handles document questions before routing to Selma. Ensure the resolve_document_type instructions in Bob's prompt (already there at lines 702-750) also include a note: "If you detect this is a document query, route to Selma (document_agent) who has the full Assai knowledge base. Pass through the user's exact query."
 
 ### Files Modified
-- `supabase/functions/ai-chat/index.ts` — system prompt, tool description, summary builder, module routing
+- `supabase/functions/ai-chat/index.ts` — AGENT_CAPABILITIES, DOCUMENT_AGENT_PROMPT, hardcoded doc type removal, search strategy instructions
+- Redeploy ai-chat edge function
 
