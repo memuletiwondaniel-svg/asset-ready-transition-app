@@ -6930,6 +6930,20 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             };
           }
           
+          // HTML error page detection — Assai sometimes returns HTML instead of the file
+          if (bytes.length > 0 && bytes[0] === 0x3C) { // starts with '<'
+            const firstChunk = new TextDecoder().decode(bytes.slice(0, 200)).toLowerCase();
+            if (firstChunk.includes('<!doctype') || firstChunk.includes('<html') || firstChunk.includes('<head')) {
+              console.error('read_assai_document: Assai returned an HTML error page instead of the document file');
+              return {
+                metadata,
+                content_available: false,
+                reason: 'Assai returned an error page instead of the document file. The document may be unavailable or the session expired.',
+                question_asked: question
+              };
+            }
+          }
+          
           let binary = '';
           for (let i = 0; i < bytes.length; i++) {
             binary += String.fromCharCode(bytes[i]);
