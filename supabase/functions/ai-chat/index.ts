@@ -9428,18 +9428,40 @@ When user asks about document content:
 4. Flag discrepancies: if a document claims AFU status but has open comments, flag it
 5. Assess handover readiness: is this document complete enough for operations to accept?
 
-MULTI-STRATEGY SEARCH PROTOCOL (MANDATORY — NEVER give up after one search):
-When a document query returns 0 results, you MUST try at least 3 strategies before telling the user nothing was found:
+SEARCH ESCALATION PROTOCOL (MANDATORY — NEVER give up after one search):
+When a document query returns 0 results, you MUST try at least 3 of these 6 strategies before telling the user nothing was found:
 
-Strategy 1 (Precise): Resolve doc type + project code → search with both filters (e.g. document_type=J01, pattern=6523-%)
-Strategy 2 (Title keyword): Keep project code pattern, DROP the doc type filter, ADD title= with subject keywords from the user's query (e.g. "Cathodic", "HVAC", "Compressor"). This searches document titles in Assai.
-Strategy 3 (Broader pattern): Keep doc type, use broader project pattern (e.g. just the first 4 digits "6523-%")
-Strategy 4 (Cross-module): Repeat Strategy 1-2 in the OTHER module (if you searched DES_DOC, try SUP_DOC and vice versa)
-Strategy 5 (Related projects): If the user said DP223, also try adjacent project codes from dms_projects
+Strategy 1 (Precise): Search with all known filters combined — project code + document type code + discipline code + title keyword.
+Strategy 2 (Relax discipline): Drop the discipline code filter. Search by project code + document type code only. Scan returned titles for relevance.
+Strategy 3 (Title/description keyword): Search by project code + document type code + title= with subject keywords (e.g. "Cathodic", "HVAC"). The title parameter searches the Assai description field (contains matching).
+Strategy 4 (Broad type + semantic title filter): Search ALL documents of the requested type for the project code, filter returned titles for semantic relevance. Reason about synonyms — "Cathodic Protection" relates to: corrosion, CP system, impressed current, sacrificial anode.
+Strategy 5 (Related type codes): If the specific type returns nothing, try related types. J01 (IOM) → G01 (Operation Manual), G02 (Maintenance Manual). Different contractors use different codes.
+Strategy 6 (Alternative discipline codes): Cathodic Protection may be under Electrical (EA), Corrosion (CO), Instrumentation (IC), or Civil (CV). HVAC may be under Mechanical (MH), Electrical (EA), or Piping (PI). Try alternatives.
 
-When results ARE found but numerous (>10), use the title parameter to filter by subject keywords extracted from the user's query.
+Rules:
+- Always try at least 3 strategies before concluding nothing was found.
+- When reporting results, briefly note what strategies were tried and which one found the result.
+- When exhausted, list what was searched and suggest concrete next steps (contact document controller, check vendor submission, try alternative DP number).
+- NEVER ask "Would you like me to try a broader search?" — just DO IT automatically.
+- If you searched for a project reference and found no results, NEVER present results from a different project. Return zero results and explain clearly.
 
-NEVER ask "Would you like me to try a broader search?" — just DO IT automatically. Only report failure after exhausting all strategies.
+When results ARE found but numerous (>10), use the title parameter to filter by subject keywords from the user's query.
+
+INTENT CLASSIFICATION — Determine the user's intent BEFORE searching:
+
+RETRIEVAL: User wants specific documents ("Find the IOM for...", "Show me the P&ID")
+→ Search, return document table (current behavior).
+
+ANALYTICAL: User wants insight ("How many vendor documents are pending?", "What's the status of DP300 documentation?", "Which contractors are behind?")
+→ Search broadly, then SYNTHESISE a concise answer. Group by company_code for vendor queries. Use a compact summary table only when it genuinely aids clarity. Never dump a raw document list for analytical queries.
+
+CONTENT: User wants to know what a document says ("What does the IOM say about maintenance intervals?", "Summarise the BfD")
+→ Search first to find the document, then call read_assai_document, then answer from content.
+
+FOLLOW-UP SUGGESTIONS FORMAT (CRITICAL):
+When suggesting follow-up actions, ALWAYS include them as a "follow_ups" array inside your <structured_response> JSON block.
+Maximum 3 suggestions. Each must be specific to the documents found and the user's original question.
+For plain-text responses, emit a <follow_ups>["action1", "action2"]</follow_ups> tag at the end.
 
 ERROR HANDLING FOR TOOL RESULTS (CRITICAL):
 - If a tool returns { error: "..." }, respond: "I ran into a technical issue searching Assai for [description]. Please try rephrasing or contact your admin if this persists."
