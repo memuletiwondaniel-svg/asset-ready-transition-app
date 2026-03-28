@@ -9884,6 +9884,52 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         entt_seq_nr: d.entt_seq_nr
       }));
 
+      // ═══════════════════════════════════════════════════════════════════════
+      // RELEVANCE FILTERING: Apply subject-keyword filtering to docList
+      // Same logic as deterministic fallback — ensures consistent behavior
+      // ═══════════════════════════════════════════════════════════════════════
+      const userMsgForFilter = (lastUserMessage?.content || '').toUpperCase();
+      let p1SubjectLabel = '';
+      let p1SubjectKeywords: string[] = [];
+
+      for (const [label, keywords] of Object.entries(SUBJECT_KEYWORDS)) {
+        if (keywords.some(kw => userMsgForFilter.includes(kw))) {
+          p1SubjectLabel = label;
+          p1SubjectKeywords = keywords;
+          break;
+        }
+      }
+
+      // Fallback: extract meaningful nouns if no known subject matched
+      if (!p1SubjectLabel) {
+        const extraTerms = (lastUserMessage?.content || '').toUpperCase().split(/\s+/).filter(
+          (w: string) => w.length > 2 && !STOP_WORDS_SHARED.has(w) && !/^DP\d+$/i.test(w)
+        );
+        if (extraTerms.length > 0) {
+          p1SubjectKeywords = extraTerms;
+          p1SubjectLabel = extraTerms[0];
+        }
+      }
+
+      let filteredDocList = docList;
+      let unfilteredTotal = docList.length;
+      let filterApplied = false;
+
+      if (p1SubjectKeywords.length > 0) {
+        const relevant = docList.filter((d: any) =>
+          p1SubjectKeywords.some(kw => (d.title || '').toUpperCase().includes(kw))
+        );
+        if (relevant.length > 0) {
+          filteredDocList = relevant;
+          filterApplied = true;
+          console.log(`PART 1 relevance filter: ${relevant.length}/${docList.length} docs match "${p1SubjectLabel}"`);
+        } else {
+          // No title matches — show top 10 with explanatory note
+          filteredDocList = docList.slice(0, 10);
+          console.log(`PART 1 relevance filter: 0 title matches for "${p1SubjectLabel}", showing top ${filteredDocList.length}`);
+        }
+      }
+
       // DETERMINISTIC follow-ups and insights — never extract from AI text (produces garbage)
       // AI text is discarded for structured responses; all UI content comes from tool data
 
@@ -9925,32 +9971,53 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         return insights.slice(0, 2);
       };
 
+      // Build summary with subject awareness
+      const summaryOpts = filterApplied
+        ? { subjectLabel: p1SubjectLabel, filteredCount: filteredDocList.length }
+        : undefined;
+
       if (isSpecificQuery) {
-        const smartInsights = generateSmartInsights(lastToolResult, docList);
+        const smartInsights = generateSmartInsights(lastToolResult, filteredDocList);
         
         // Context-aware follow-ups based on actual results
         const specificFollowups: string[] = [];
-        if (docList.length > 0) {
-          specificFollowups.push(`Read & summarise the first document`);
+        if (filteredDocList.length > 0) {
+          specificFollowups.push(
+            p1SubjectLabel
+              ? `Read and summarise the most relevant ${p1SubjectLabel} document`
+              : `Read & summarise the first document`
+          );
         }
-        const statuses = [...new Set(docList.map((d: any) => d.status).filter(Boolean))];
+        const statuses = [...new Set(filteredDocList.map((d: any) => d.status).filter(Boolean))];
         if (statuses.length > 1) {
           specificFollowups.push("Show only approved documents");
         }
-        if (docList.length > 1) {
+        if (filteredDocList.length > 1) {
           specificFollowups.push("Compare revisions across these");
+        }
+        // Add "Show all" option when filtering was applied
+        if (filterApplied && unfilteredTotal > filteredDocList.length) {
+          specificFollowups.push(`Show all ${totalFound} documents`);
+        }
+
+        // Build summary text
+        let summaryText = buildSearchSummary(lastToolResult, summaryOpts);
+        if (filterApplied && unfilteredTotal > filteredDocList.length) {
+          summaryText += `. There are also ${unfilteredTotal - filteredDocList.length} other unrelated documents available.`;
+        } else if (!filterApplied && p1SubjectLabel && filteredDocList.length < docList.length) {
+          summaryText = `I didn't find a specific document for **${p1SubjectLabel}**, but found **${totalFound}** documents. Showing the closest ${filteredDocList.length}:`;
         }
 
         const structured = {
           type: "document_list",
-          summary: buildSearchSummary(lastToolResult),
-          documents: docList,
+          summary: summaryText,
+          documents: filteredDocList,
           highlights: smartInsights,
-          followup: specificFollowups.slice(0, 3)
+          followup: specificFollowups.slice(0, 4)
         };
 
         finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
-        console.log(`search_assai_documents: document_list response (${totalFound} docs, specific query)`);
+        console.log(`search_assai_documents: document_list response (${filteredDocList.length}/${totalFound} docs, specific query, subject=${p1SubjectLabel || 'none'})`);
       } else {
         // BROAD QUERY: Show status/type summaries with document list below
         const broadInsights = generateSmartInsights(lastToolResult, docList);
