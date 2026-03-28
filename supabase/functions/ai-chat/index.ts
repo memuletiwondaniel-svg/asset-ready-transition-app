@@ -9277,6 +9277,7 @@ ST/DP300 = New Compression Station at Hammar Mishrif (primary)
 ST/DP000 = General/Admin
 ST/DP114 = Subpackage 114
 ST/DP223 = Subpackage 223
+IMPORTANT: Work package codes (ST/DP223) are NOT the same as project IDs (DP223). A work package is a planning construct within a project. When a user says "DP223", treat it as a project ID and resolve via dms_projects — do NOT assume it is a work package reference.
 
 NAVIGATION STRUCTURE:
 Top menu: Project | Documents | Queries | Assets | Planning | Tools | Log off | Help
