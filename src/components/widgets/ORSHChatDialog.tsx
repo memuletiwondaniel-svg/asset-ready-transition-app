@@ -894,7 +894,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                               </div>
                             );
                           }
-                          {(() => {
+                          return (() => {
                             // Pre-process: normalize plain-text section headers to ## markdown headers
                             const headerPatterns = [
                               'Critical Observations', 'Expected Content', 'Handover Readiness Impact',
