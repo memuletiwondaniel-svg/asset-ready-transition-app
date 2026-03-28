@@ -6731,7 +6731,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           console.warn('read_assai_document: initSearch warning:', initErr);
         }
         
-        console.log(`read_assai_document: searching for ${docNumber} in DES_DOC (proj_seq_nr=${projSeqNr}, cabinet=${selectedProjectCodes})`);
+        console.log(`read_assai_document: searching for ${docNumber} in DES_DOC (All projects scope)`);
         let pkSeqNr: string | null = null;
         let enttSeqNr: string | null = null;
         
