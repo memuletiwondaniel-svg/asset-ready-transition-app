@@ -9807,9 +9807,24 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     }
 
     // Helper: build user-friendly search summary from tool result filters
+    // ═══════════════════════════════════════════════════════════════════════
+    // SHARED: Subject keyword map for relevance filtering (used in both 
+    // deterministic fallback AND PART 1 success path)
+    // ═══════════════════════════════════════════════════════════════════════
+    const SUBJECT_KEYWORDS: Record<string, string[]> = {
+      'HVAC': ['HVAC', 'AIR CONDITIONING', 'AIR HANDLING', 'AHU', 'COOLING', 'HEATING', 'VENTILATION', 'CHILLER', 'FAN COIL', 'DUCT', 'AIR COOLER'],
+      'ELECTRICAL': ['ELECTRICAL', 'SWITCHGEAR', 'TRANSFORMER', 'MCC', 'MOTOR CONTROL', 'CABLE', 'PANEL', 'BREAKER'],
+      'INSTRUMENTATION': ['INSTRUMENT', 'DCS', 'PLC', 'CONTROL VALVE', 'TRANSMITTER', 'ANALYZER'],
+      'MECHANICAL': ['PUMP', 'COMPRESSOR', 'TURBINE', 'HEAT EXCHANGER', 'VESSEL', 'TANK', 'PIPING'],
+      'GENERATOR': ['GENERATOR', 'EDG', 'GENSET', 'ALTERNATOR'],
+      'FIRE': ['FIRE', 'DELUGE', 'SPRINKLER', 'FOAM', 'FIRE FIGHTING', 'F&G'],
+    };
+
+    const STOP_WORDS_SHARED = new Set(['THE', 'OF', 'IN', 'FOR', 'A', 'AN', 'AND', 'OR', 'CAN', 'YOU', 'PROVIDE', 'ME', 'WITH', 'SHOW', 'FIND', 'GET', 'ALL', 'WHAT', 'IS', 'ARE', 'PLEASE', 'COULD', 'WOULD', 'LIKE', 'WANT', 'NEED', 'DO', 'HOW', 'WHERE', 'WHICH', 'THAT', 'THIS', 'FROM', 'TO', 'BY', 'IT', 'MY', 'I', 'IOM', 'DOCUMENT', 'DOCUMENTS', 'LIST', 'SEARCH']);
+
     const TYPE_DESCS_SUMMARY: Record<string, string> = dynamicTypeDescs;
-    const buildSearchSummary = (toolResult: any): string => {
-      const total = toolResult.total_found || 0;
+    const buildSearchSummary = (toolResult: any, opts?: { subjectLabel?: string; filteredCount?: number }): string => {
+      const total = opts?.filteredCount ?? toolResult.total_found ?? 0;
       const filters = toolResult.filters_applied || {};
       const parts: string[] = [];
       if (filters.document_type && TYPE_DESCS_SUMMARY[filters.document_type]) {
@@ -9820,10 +9835,17 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       if (filters.discipline_code) parts.push(`discipline ${filters.discipline_code}`);
       if (filters.status_code) parts.push(`status ${filters.status_code}`);
       if (filters.company_code) parts.push(`originator ${filters.company_code}`);
+      
+      let summary = '';
       if (parts.length > 0) {
-        return `Found **${total}** ${parts.join(', ')} documents`;
+        summary = `Found **${total}** ${parts.join(', ')} documents`;
+      } else {
+        summary = `Found **${total}** documents`;
       }
-      return `Found **${total}** documents`;
+      if (opts?.subjectLabel) {
+        summary += ` related to **${opts.subjectLabel}**`;
+      }
+      return summary;
     };
 
     // ═══════════════════════════════════════════════════════════════════════
