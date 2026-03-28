@@ -10050,7 +10050,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           .sort((a: any, b: any) => b[1] - a[1])
           .map(([status, count]) => ({ status, count, description: STATUS_DESCS[status] ?? status }));
 
-        const typeTable = Object.entries(lastToolResult.type_summary || {})
+        const typeTable = Object.entries(effectiveSearchResult.type_summary || {})
           .sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count)
           .slice(0, 10)
           .map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
