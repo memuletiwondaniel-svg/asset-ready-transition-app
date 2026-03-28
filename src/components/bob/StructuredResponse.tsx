@@ -11,6 +11,29 @@ import { Download, ChevronDown, ChevronRight, FileText, AlertTriangle, BookOpen,
 import { assaiDetailsUrl, assaiDownloadUrl, ASSAI_DOC_NUMBER_REGEX } from '@/lib/assaiLinks';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+/** Prominent document quick-action buttons for follow-up sections */
+function DocumentQuickActions({ doc, onRead }: { doc: { document_number: string; title: string }; onRead?: (query: string) => void }) {
+  const chipClass = "inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary/40 bg-primary/10 hover:bg-primary/20 hover:shadow-md hover:border-primary/60 text-foreground font-medium transition-all duration-150 cursor-pointer no-underline";
+  return (
+    <div className="mb-2">
+      <p className="text-[10px] text-muted-foreground mb-1.5 truncate">
+        For: <span className="font-medium text-foreground/80">{toTitleCase(doc.title)}</span>
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button onClick={() => onRead?.(`Read and summarise ${doc.title}`)} className={chipClass}>
+          <BookOpen className="h-3.5 w-3.5" /> Read &amp; Analyse
+        </button>
+        <a href={assaiDownloadUrl(doc.document_number)} target="_blank" rel="noopener noreferrer" className={chipClass}>
+          <Download className="h-3.5 w-3.5" /> Download
+        </a>
+        <a href={assaiDetailsUrl(doc.document_number)} target="_blank" rel="noopener noreferrer" className={chipClass}>
+          <ExternalLink className="h-3.5 w-3.5" /> Open in Assai
+        </a>
+      </div>
+    </div>
+  );
+}
+
 /** Icon-only action buttons — all muted grey, subtle hover */
 function DocActionButtons({ docNumber, title, onRead }: { docNumber: string; title?: string; onRead?: (query: string) => void }) {
   return (
