@@ -2,28 +2,52 @@
 
 ## Problem
 
-Section headers like "Here's what this likely means" and "What I recommend" render at `text-[13px]` -- smaller than the body text (`text-sm` = 14px). The `prose prose-sm` Tailwind typography classes further override custom heading styles, making headers visually indistinguishable from body text.
+Three issues visible in the screenshot:
 
-## Solution
+1. **Headers not bold**: "Here's what this likely means" contains an ASCII apostrophe (`'`) but the regex character class only includes curly/smart quotes (`''"`), so the header is never converted to a `##` markdown header — it renders as plain text.
 
-Replace the current approach of fighting `prose` utility classes with **explicit ReactMarkdown component overrides** that use proper sizing hierarchy:
+2. **List items not indented/bulleted**: The `ul` and `ol` ReactMarkdown components have no explicit overrides — they rely on bracket-notation CSS which may not produce visible bullets and proper indentation.
 
-### Changes to `src/components/widgets/ORSHChatDialog.tsx`
+3. **Section divider too faint**: `border-border/20` (20% opacity) is nearly invisible.
 
-1. **Remove `prose prose-sm dark:prose-invert`** from the container div -- these classes override custom heading styles and are the root cause of the conflict.
+## Changes to `src/components/widgets/ORSHChatDialog.tsx`
 
-2. **Update `h2` component** to render with clear visual dominance:
-   - Size: `text-base` (16px) instead of `text-[13px]`
-   - Weight: `font-bold`
-   - Layout: `flex items-center gap-2` to support emoji icons
-   - Spacing: `mt-5 mb-2` with a subtle top border divider
+### 1. Fix header regex to include ASCII apostrophe
 
-3. **Update `h3` component**:
-   - Size: `text-[15px]` 
-   - Weight: `font-bold`
-   - Spacing: `mt-4 mb-1.5`
+Line 933 — add `'` (ASCII apostrophe) to the character class:
+```
+/^([A-Z][A-Za-z\s'''""]+(?:from the metadata)?):?\s*$/gm
+```
+Also add "Here's what this likely means" and "Here's what this likely means" to the `sectionIcons` map with a suitable icon (e.g., `🔍`).
 
-4. **Keep body text at `text-sm` (14px)** so headers are visibly larger.
+### 2. Force bold on headers with `font-extrabold` + inline style
 
-This ensures a clear typographic hierarchy: `h2 (16px bold) > h3 (15px bold) > body (14px normal)`, which is the standard pattern in enterprise SaaS apps like Notion, Linear, and Slack.
+Replace `font-bold` with `font-extrabold` on both `h2` and `h3` component overrides, and add `style={{ fontWeight: 800 }}` as a failsafe to guarantee boldness regardless of any CSS specificity conflicts:
+
+```tsx
+h2: ({ children }) => (
+  <h2 className="mt-5 mb-2 border-t border-border/40 pt-3 text-base font-extrabold tracking-tight text-foreground flex items-center gap-2" style={{ fontWeight: 800 }}>
+    {children}
+  </h2>
+),
+h3: ({ children }) => (
+  <h3 className="mt-4 mb-1.5 text-[15px] font-bold text-foreground" style={{ fontWeight: 700 }}>
+    {children}
+  </h3>
+),
+```
+
+### 3. Add explicit `ul`, `ol`, `li` component overrides for proper bullets and indentation
+
+```tsx
+ul: ({ children }) => <ul className="my-2 ml-5 list-disc space-y-1 text-sm">{children}</ul>,
+ol: ({ children }) => <ol className="my-2 ml-5 list-decimal space-y-1 text-sm">{children}</ol>,
+li: ({ children }) => <li className="pl-1 marker:text-foreground">{processChildren(children)}</li>,
+```
+
+### 4. Make section divider more visible
+
+Change `border-border/20` → `border-border/40` on the `h2` component (already shown above).
+
+Also update the follow-up section border from `border-border/20` to `border-border/40`.
 
