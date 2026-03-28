@@ -6735,7 +6735,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         let textFieldsRead: Array<{ name: string }> = [];
         
         try {
-          const initUrl = baseUrl + '/search.aweb?subclass_type=DES_DOC';
+          const initUrl = assaiBase + '/search.aweb?subclass_type=DES_DOC';
           const initResp = await fetch(initUrl, {
             headers: { Cookie: cookieHeader, Accept: 'text/html', 'User-Agent': ASSAI_UA },
             redirect: 'follow',
