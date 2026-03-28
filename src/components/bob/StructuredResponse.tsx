@@ -309,24 +309,51 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                   <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Title</th>
                   <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Rev</th>
                   <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-left font-semibold">Status</th>
+                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2 px-3 text-center font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {data.documents.map((doc, i) => (
-                  <tr key={doc.document_number} className={i % 2 === 1 ? 'bg-muted/20' : ''} style={{ borderBottom: '1px solid hsl(var(--border) / 0.3)' }}>
+                  <tr key={doc.document_number} className={`group ${i % 2 === 1 ? 'bg-muted/20' : ''} hover:bg-primary/5 transition-colors`} style={{ borderBottom: '1px solid hsl(var(--border) / 0.3)' }}>
                     <td className="py-2 px-3 text-xs">
                       <DocumentNumberLink docNumber={doc.document_number} />
-                      <button
-                        onClick={() => onFollowupClick?.(`Read and summarise ${doc.document_number}`)}
-                        title="Read & summarise"
-                        className="ml-1 p-0.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors cursor-pointer inline-flex align-middle"
-                      >
-                        <Search className="h-3 w-3" />
-                      </button>
                     </td>
                     <td className="py-2 px-3 text-xs text-foreground max-w-[200px] truncate">{doc.title}</td>
                     <td className="py-2 px-3 text-xs text-muted-foreground">{doc.revision}</td>
                     <td className="py-2 px-3"><StatusBadge code={doc.status} /></td>
+                    <td className="py-2 px-3">
+                      <div className="flex items-center justify-center gap-1">
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => onFollowupClick?.(`Read and summarise ${doc.document_number}`)}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-primary bg-primary/8 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 hover:shadow-sm transition-all duration-150 cursor-pointer"
+                              >
+                                <BookOpen className="h-3 w-3" />
+                                <span className="hidden sm:inline">Read</span>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-[10px]">AI read & summarise this document</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <a
+                                href={assaiDownloadUrl(doc.document_number)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted border border-border/40 hover:border-border hover:shadow-sm transition-all duration-150 cursor-pointer"
+                              >
+                                <Download className="h-3 w-3" />
+                              </a>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-[10px]">Download from Assai</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
