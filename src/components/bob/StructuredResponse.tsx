@@ -280,6 +280,24 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                   <span className="text-[10px] text-muted-foreground">{data.document.type_code}</span>
                 )}
               </div>
+              <div className="flex items-center gap-3 mt-2">
+                <a
+                  href={assaiDownloadUrl(data.document.document_number)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline no-underline"
+                >
+                  <Download className="h-3 w-3" /> Download Link
+                </a>
+                <a
+                  href={assaiDetailsUrl(data.document.document_number)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline no-underline"
+                >
+                  <ExternalLink className="h-3 w-3" /> Open in Assai
+                </a>
+              </div>
             </div>
           </div>
         )}
@@ -364,11 +382,6 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
               What would you like me to do next?
             </p>
-            {data.documents && data.documents.length > 0 ? (
-              <DocumentQuickActions doc={data.documents[0]} onRead={onFollowupClick} />
-            ) : data.document ? (
-              <DocumentQuickActions doc={data.document} onRead={onFollowupClick} />
-            ) : null}
             <div className="flex flex-wrap gap-2">
               {data.followup.map((f, i) => (
                 <button
@@ -459,9 +472,6 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
               What would you like me to do next?
             </p>
-            {data.documents && data.documents.length > 0 && (
-              <DocumentQuickActions doc={data.documents[0]} onRead={onFollowupClick} />
-            )}
             <div className="flex flex-wrap gap-2">
               {data.followup.map((f, i) => (
                 <button
@@ -621,9 +631,6 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
             What would you like me to do next?
           </p>
-          {data.documents && data.documents.length > 0 && (
-            <DocumentQuickActions doc={data.documents[0]} onRead={onFollowupClick} />
-          )}
           <div className="flex flex-wrap gap-2">
             {data.followup.map((f, i) => (
               <button
