@@ -964,10 +964,12 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                 <ReactMarkdown
                                   remarkPlugins={[remarkGfm]}
                                   components={{
-                                    h2: ({ children }) => <h2 className="mt-5 mb-2 border-t border-border/20 pt-2.5 text-base font-bold tracking-tight text-foreground flex items-center gap-2">{children}</h2>,
-                                    h3: ({ children }) => <h3 className="mt-4 mb-1.5 text-[15px] font-bold text-foreground">{children}</h3>,
+                                    h2: ({ children }) => <h2 className="mt-5 mb-2 border-t border-border/40 pt-3 text-base font-extrabold tracking-tight text-foreground flex items-center gap-2" style={{ fontWeight: 800 }}>{children}</h2>,
+                                    h3: ({ children }) => <h3 className="mt-4 mb-1.5 text-[15px] font-bold text-foreground" style={{ fontWeight: 700 }}>{children}</h3>,
                                     p: ({ children }) => <p>{processChildren(children)}</p>,
-                                    li: ({ children }) => <li>{processChildren(children)}</li>,
+                                    ul: ({ children }) => <ul className="my-2 ml-5 list-disc space-y-1 text-sm">{children}</ul>,
+                                    ol: ({ children }) => <ol className="my-2 ml-5 list-decimal space-y-1 text-sm">{children}</ol>,
+                                    li: ({ children }) => <li className="pl-1">{processChildren(children)}</li>,
                                     td: ({ children }) => <td>{processChildren(children)}</td>,
                                     th: ({ children }) => <th>{processChildren(children)}</th>,
                                     em: ({ children }) => <em className="text-muted-foreground italic">{children}</em>,
