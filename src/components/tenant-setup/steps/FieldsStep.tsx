@@ -37,7 +37,7 @@ export const FieldsStep: React.FC<FieldsStepProps> = ({ onComplete }) => {
         if (!exists) await supabase.from('field').insert({ name: f.name, is_active: true });
       }
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['setup-fields'] }); toast.success('BGC default fields added'); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['setup-fields'] }); toast.success('Default fields added'); },
   });
 
   const addMutation = useMutation({
