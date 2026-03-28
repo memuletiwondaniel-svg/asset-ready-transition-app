@@ -10030,7 +10030,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         console.log(`search_assai_documents: document_list response (${filteredDocList.length}/${totalFound} docs, specific query, subject=${p1SubjectLabel || 'none'})`);
       } else {
         // BROAD QUERY: Show status/type summaries with filtered document list
-        const broadInsights = generateSmartInsights(lastToolResult, filteredDocList);
+        const broadInsights = generateSmartInsights(effectiveSearchResult, filteredDocList);
         
         const broadFollowups: string[] = [];
         if (p1SubjectLabel && filteredDocList.length > 0) {
