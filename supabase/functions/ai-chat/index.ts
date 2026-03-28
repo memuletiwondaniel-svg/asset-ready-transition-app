@@ -7735,16 +7735,19 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           const seen = new Set<string>();
           
           for (const typeCode of documentTypeCodes) {
-            // Temporarily set effectiveDocType for this iteration
-            const origDocType = effectiveDocType;
-            // We need to search both modules for each type code
             for (const modParams of [
               { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' },
               { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' },
             ]) {
               try {
-                // Override document_type in fetchResultPage by temporarily patching the closure variable
-                // We need a different approach — use executeFilteredSearch with document_type override
+                // Re-authenticate for each module switch to avoid session conflicts
+                const modAuth = await authenticateAssai(assaiBase, username, password);
+                if (!modAuth.success) {
+                  console.error(`search_assai_documents: re-auth failed for type=${typeCode} module=${modParams.subclass_type}`);
+                  continue;
+                }
+                cookieHeader = modAuth.cookies;
+                
                 const docs = await executeFilteredSearch(modParams, { document_type: typeCode });
                 console.log(`search_assai_documents: type=${typeCode} module=${modParams.subclass_type} returned ${docs.length} docs`);
                 for (const doc of docs) {
