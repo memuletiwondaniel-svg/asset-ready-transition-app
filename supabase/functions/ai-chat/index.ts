@@ -7273,12 +7273,17 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         
         const ua = ASSAI_UA;
 
+        // Handle multi-code document_type (e.g. "2365+C01") by splitting into separate type codes
+        const documentTypeCodes = document_type ? document_type.split('+').map((c: string) => c.trim()).filter(Boolean) : [];
+        const effectiveDocType = documentTypeCodes.length === 1 ? documentTypeCodes[0] : undefined;
+        const isMultiTypeSearch = documentTypeCodes.length > 1;
+        
         // Determine module: ZV discipline or PO-based searches target SUP_DOC; otherwise DES_DOC first
         // When document_type is provided without explicit discipline, search BOTH modules proactively
         const isPOSearch = document_number_pattern.match(/%-?(\d{5})-?%?$/) || document_number_pattern.match(/^(\d{5})$/);
         const poDigits = isPOSearch?.[1];
         const useSupDoc = discipline_code === 'ZV' || !!poDigits;
-        const searchBothModules = !useSupDoc && !!document_type && !discipline_code;
+        const searchBothModules = !useSupDoc && (!!document_type || isMultiTypeSearch) && !discipline_code;
         
         const moduleParams = useSupDoc
           ? { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' }
