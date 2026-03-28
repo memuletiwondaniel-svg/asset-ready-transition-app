@@ -9652,22 +9652,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         entt_seq_nr: d.entt_seq_nr
       }));
 
-      // Extract AI highlights and follow-ups from accumulated text
-      const highlights: string[] = [];
-      const hlMatch = finalTextContent.match(/\d+\.\s+(.+)/g);
-      if (hlMatch) {
-        for (const line of hlMatch.slice(0, 5)) {
-          highlights.push(line.replace(/^\d+\.\s+/, '').trim());
-        }
-      }
-
-      const followup: string[] = [];
-      const fuMatch = finalTextContent.match(/[-•]\s+(.+)/g);
-      if (fuMatch) {
-        for (const line of fuMatch.slice(-3)) {
-          followup.push(line.replace(/^[-•]\s+/, '').replace(/\*\*/g, '').trim());
-        }
-      }
+      // DETERMINISTIC follow-ups and insights — never extract from AI text (produces garbage)
+      // AI text is discarded for structured responses; all UI content comes from tool data
 
       // Generate insights ONLY when there is a genuinely non-obvious, actionable finding.
       // If all the insight would do is restate what the table already shows, return empty (no insights section).
