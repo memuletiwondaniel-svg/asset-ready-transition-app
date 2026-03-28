@@ -321,10 +321,17 @@
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-    
+    font-variation-settings: "wght" 400;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Allow bold weights to work naturally in specific contexts */
+  h1, h2, h3, h4, h5, h6,
+  strong, b,
+  .font-bold, .font-semibold, .font-extrabold, .font-medium {
+    font-variation-settings: "wght" var(--tw-font-weight, inherit);
   }
 
   /* Modern Design Components */
