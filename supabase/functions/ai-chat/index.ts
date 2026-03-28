@@ -6691,31 +6691,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         
         const cookieHeader = sessionCookies.join('; ');
         
-        // STEP 4 — Dynamically resolve proj_seq_nr from the document number's project code
-        const docProjectCode = docNumber.split('-')[0]; // e.g. "6523" from "6523-EXTR-C008-..."
-        let projSeqNr = '59734'; // fallback default (BGC_PROJ / project 6529)
-        let selectedProjectCodes = 'BGC_PROJ';
-        
-        try {
-          const { data: projLookup } = await supabaseClient
-            .from('dms_projects')
-            .select('code, cabinet, proj_seq_nr')
-            .eq('code', docProjectCode)
-            .limit(1);
-          if (projLookup && projLookup.length > 0) {
-            selectedProjectCodes = projLookup[0].cabinet || 'BGC_PROJ';
-            if (projLookup[0].proj_seq_nr) {
-              projSeqNr = projLookup[0].proj_seq_nr;
-              console.log(`read_assai_document: resolved project ${docProjectCode} → cabinet=${selectedProjectCodes}, proj_seq_nr=${projSeqNr}`);
-            } else {
-              console.log(`read_assai_document: project ${docProjectCode} found but proj_seq_nr is NULL — will try initSearch fallback`);
-            }
-          } else {
-            console.log(`read_assai_document: project ${docProjectCode} not found in dms_projects, using default`);
-          }
-        } catch (projErr) {
-          console.error('read_assai_document: project lookup error:', projErr);
-        }
+        // "All projects" scope — no need to resolve proj_seq_nr or cabinet
+        // The document number itself uniquely identifies the document across all cabinets
         
         // STEP 4b — initSearch: call search.aweb to initialize session and extract hidden fields
         // This mirrors the working search_assai_documents pattern
