@@ -6756,7 +6756,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               try {
                 await supabaseClient
                   .from('dms_projects')
-                  .upsert({ code: docProjectCode, proj_seq_nr: projSeqNr }, { onConflict: 'code' });
+                  .upsert({ code: docProjectCode, cabinet: selectedProjectCodes, proj_seq_nr: projSeqNr, project_name: '' }, { onConflict: 'code,cabinet' });
               } catch (cacheErr) {
                 console.warn('read_assai_document: failed to cache proj_seq_nr:', cacheErr);
               }
