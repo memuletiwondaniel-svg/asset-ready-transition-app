@@ -539,8 +539,8 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
       {/* Document Types */}
       {data.type_table && data.type_table.length > 0 && (
         <div>
-          <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 mt-4">
-            Document Types
+          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2 mt-4 flex items-center gap-1.5">
+            <span>📁</span> Document Types
           </h4>
           <table className="w-full" style={{ borderCollapse: 'collapse' }}>
             <thead>
