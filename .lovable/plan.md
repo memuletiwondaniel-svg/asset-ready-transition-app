@@ -1,53 +1,86 @@
 
 
-## Fix: Follow-up Suggestions Rendering as Plain Text Instead of Clickable Pills
+## Fix: Multi-Strategy Intelligent Search for Selma
 
 ### Root Cause
 
-Two issues combine to break the clickable pills:
+Two structural problems prevent Selma from finding the Cathodic Protection IOM:
 
-1. **AI skips tool calls on repeat queries.** When the user asks about the same document again in the same chat, the AI answers from conversation memory (0 tool calls, confirmed in logs). This means `searchToolResult` is never set, PART 1 never fires, and no `<structured_response>` JSON is generated. The AI returns plain markdown with bullet-point follow-ups.
+1. **No title search capability.** The `search_assai_documents` tool only accepts `document_number_pattern`, `discipline_code`, `document_type`, `status_code`, and `company_code`. There is no `title` parameter. Assai's search form has a `title` text field (line 7421 confirms "title uses contains search automatically"), but the tool never populates it. Selma literally cannot search by document title keywords like "Cathodic".
 
-2. **Client-side follow-up extraction is too narrow.** The frontend (ORSHChatDialog.tsx line 992) has a regex that only matches sections headed by "Would you like me to". But the AI uses other headers like "What would you like to do next?", "Quick Actions", "Next Steps" — none of which match, so bullets stay as plain text.
+2. **Give-up-on-first-failure prompt.** The system prompt (line 9404) tells Selma: "I searched Assai but found no matching documents. Would you like me to try a broader search?" — asking the user instead of autonomously retrying. There is no instruction to try alternative strategies (broader pattern, title search, different project codes, both modules).
 
-### Fix 1: Broaden client-side follow-up pill extraction (ORSHChatDialog.tsx)
+### The user's expected behavior
 
-Expand the regex on line 992 to catch all common follow-up section patterns:
+For "IOM of the Cathodic Protection System in DP223":
+- Strategy 1: Resolve IOM → J01, resolve DP223 → 6523, search `document_type=J01, pattern=6523-%` → get all IOMs for that project
+- Strategy 2: If too many results, filter by title containing "Cathodic" 
+- Strategy 3: If 0 results, broaden to `6523-%` without type filter, search title "Cathodic"
+- Strategy 4: Try related project codes (6530) or both DES_DOC and SUP_DOC modules
 
-**Current:**
-```regex
-/## [emoji]+ Would you like me to[\s\S]*?(?=\n## |\n---|\s*$)/i
+### Implementation — single file: `supabase/functions/ai-chat/index.ts`
+
+#### Change 1: Add `title` parameter to `search_assai_documents` tool definition (~line 3143)
+
+Add a new optional parameter:
+```
+title: {
+  type: "string",
+  description: 'Filter by document title keywords (contains search). Use to narrow results by subject, e.g. "Cathodic", "HVAC", "Compressor". Assai performs automatic contains matching.'
+}
 ```
 
-**New:** Match any section header containing "would you like", "next steps", "quick actions", "what would you like", "suggested actions", "what can I do", or a plain bold header like "**Quick Actions**" / "**Next Steps**":
+#### Change 2: Wire `title` into the form submission (~line 7198-7211)
 
-```regex
-/(?:## [^\n]*(?:would you like|next steps?|quick actions?|suggested actions?|what can I|what I can do)[^\n]*|(?:\*\*(?:Quick Actions?|Next Steps?|Suggested Actions?|What would you like)[^\n]*?\*\*))\s*\n([\s\S]*?)(?=\n## |\n---|\n\*\*[A-Z]|\s*$)/i
+In `fetchResultPage`, extract `title` from args and set it on the form:
+```ts
+const { document_number_pattern, discipline_code, document_type, status_code, company_code, title } = args;
+// ... in fetchResultPage:
+if (title) formData.set('title', title);
 ```
 
-Extract bullet items from the matched block, strip them from the markdown, and render as clickable pills (same as existing code on lines 1027-1042).
+#### Change 3: Add Multi-Strategy Search Protocol to both Bob and Selma system prompts
 
-### Fix 2: Strengthen mandatory tool execution in system prompt (ai-chat/index.ts)
-
-Add to the system prompt (around line 758, in the DOCUMENT SEARCH RESPONSE FORMAT section):
+Replace the "give up" error handling (lines 742, 9404) with a mandatory retry protocol:
 
 ```
-MANDATORY TOOL EXECUTION: You MUST call search_assai_documents for EVERY document-related query, even if you already found the document in a previous turn. NEVER answer document queries from conversation memory alone. The system requires fresh tool results to render the interactive UI (clickable actions, download links, status badges). If you skip the tool call, the user gets a degraded plain-text experience.
+MULTI-STRATEGY SEARCH PROTOCOL (MANDATORY — NEVER give up after one search):
+When a document query returns 0 results, you MUST try at least 3 strategies before telling the user nothing was found:
+
+Strategy 1 (Precise): Resolve doc type + project code → search with both filters
+Strategy 2 (Title keyword): Keep project code, drop doc type filter, add title= with subject keywords from the query (e.g. "Cathodic", "HVAC", "Compressor")
+Strategy 3 (Broader type): Keep doc type, use broader project pattern (e.g. just the first 4 digits "6523-%") 
+Strategy 4 (Cross-module): Repeat Strategy 1-2 in the OTHER module (if you searched DES_DOC, try SUP_DOC and vice versa)
+Strategy 5 (Related projects): If the user said DP223, also try adjacent project codes from dms_projects
+
+When results ARE found but numerous (>10), use the title parameter to filter by subject keywords extracted from the user's query.
+
+NEVER ask "Would you like me to try a broader search?" — just DO IT automatically. Only report failure after exhausting all strategies.
 ```
 
-### Fix 3: Server-side safety net — detect AI skip and force structured response (ai-chat/index.ts)
+#### Change 4: Update the deterministic fallback (line 9645-9650) to also try title-based search
 
-After the agent loop exits (line 9826), if:
-- `searchToolResult` is null (no search tool was called this turn)
-- `finalTextContent` contains document numbers matching the Assai pattern (e.g., `6529-`)
-- The user's message mentions document-related keywords
+After the initial `searchResult` returns 0, add a second attempt using title keywords:
+```ts
+if (!searchResult?.found || searchResult.total_found === 0) {
+  // Extract subject keywords from user message
+  const subjectWords = extraTerms.filter(w => !['IOM','BFD','ITP','DOCUMENT','DRAWING'].includes(w));
+  if (subjectWords.length > 0) {
+    const titleSearchArgs: any = { document_number_pattern: projectPattern || '6523-%', title: subjectWords.join(' ') };
+    searchResult = await executeTool('search_assai_documents', titleSearchArgs, supabase);
+  }
+}
+```
 
-Then attempt to extract the document number from the AI's text and build a minimal structured response with the document metadata from conversation context, ensuring follow-ups render as pills.
+### Summary of changes
 
-### Files to modify
+| Location | What |
+|----------|------|
+| Tool definition (line 3143) | Add `title` parameter |
+| `fetchResultPage` (line 7198) | Wire `title` into Assai form POST |
+| Bob prompt (line 742) | Replace "ask user" with multi-strategy protocol |
+| Selma prompt (line 9404) | Replace "ask user" with multi-strategy protocol |
+| Deterministic fallback (line 9645) | Add title-keyword retry when first search returns 0 |
 
-| File | Change |
-|------|--------|
-| `src/components/widgets/ORSHChatDialog.tsx` | Broaden follow-up section detection regex to catch "Quick Actions", "Next Steps", "What would you like to do next", etc. |
-| `supabase/functions/ai-chat/index.ts` | Add mandatory tool execution instruction to system prompt. Add server-side fallback to detect document references in AI text and build structured response. |
+All changes in `supabase/functions/ai-chat/index.ts`. After deploy, applies to all users permanently.
 
