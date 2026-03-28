@@ -7287,31 +7287,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const dbName = creds.db_name || 'eu578';
         const instancePath = '/AW' + dbName;
 
-        // Dynamic project resolution: extract project code from search pattern
-        const patternProjectCode = document_number_pattern.split('-')[0].replace(/%/g, '');
-        let projSeqNr = '59734'; // tier 3 fallback
-        let projectCabinet = 'BGC_PROJ';
-
-        // Tier 1: DB lookup
-        if (patternProjectCode && /^\d{4}$/.test(patternProjectCode)) {
-          try {
-            const { data: projLookup } = await supabaseClient
-              .from('dms_projects')
-              .select('cabinet, proj_seq_nr')
-              .eq('code', patternProjectCode)
-              .not('proj_seq_nr', 'is', null)
-              .limit(1);
-            if (projLookup?.[0]?.proj_seq_nr) {
-              projSeqNr = projLookup[0].proj_seq_nr;
-              projectCabinet = projLookup[0].cabinet || 'BGC_PROJ';
-              console.log(`search_assai_documents: resolved project ${patternProjectCode} → proj_seq_nr=${projSeqNr}, cabinet=${projectCabinet}`);
-            } else {
-              console.log(`search_assai_documents: project ${patternProjectCode} not found or proj_seq_nr NULL, using fallback`);
-            }
-          } catch (e) {
-            console.warn('search_assai_documents: project lookup error:', e);
-          }
-        }
+        // "All projects" scope — Assai searches across BGC_OPS, BGC_PROJ, ISG
+        // Document number pattern (e.g. 6523-%) already scopes results to the correct project
+        // No need to override proj_seq_nr or selected_project_codes — initSearch hidden fields handle it
         let username = creds.username_encrypted || '';
         let password = creds.password_encrypted || '';
         
