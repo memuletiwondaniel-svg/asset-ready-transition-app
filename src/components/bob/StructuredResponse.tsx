@@ -1,4 +1,11 @@
 import React, { useState } from 'react';
+
+/** Convert a string to Title Case, lowering everything first */
+function toTitleCase(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/(?:^|\s|[-/_(])\S/g, (match) => match.toUpperCase());
+}
 import { StatusBadge } from './StatusBadge';
 import { Download, ChevronDown, ChevronRight, FileText, AlertTriangle, BookOpen, Link2, Sparkles, ExternalLink } from 'lucide-react';
 import { assaiDetailsUrl, assaiDownloadUrl, ASSAI_DOC_NUMBER_REGEX } from '@/lib/assaiLinks';
