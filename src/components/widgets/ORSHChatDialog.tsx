@@ -583,6 +583,19 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
         }
       }
 
+      // Helper: update the last assistant message (or append one) using functional state
+      const setAssistantMsg = (content: string) => {
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant') {
+            const updated = [...prev];
+            updated[updated.length - 1] = { ...last, content };
+            return updated;
+          }
+          return [...prev, { role: 'assistant' as const, content }];
+        });
+      };
+
       // Detect stub/incomplete responses (ends with ":" and very short, or no content)
       const trimmed = assistantMessage.trim();
       if (!trimmed || (trimmed.endsWith(':') && trimmed.length < 200 && !trimmed.includes('\n'))) {
@@ -590,8 +603,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
         if (!retryAttemptRef.current) {
           retryAttemptRef.current = true;
           console.log('Stub response detected — auto-retrying transparently...');
-          setMessages(prev => { const u = prev.filter(m => m.role !== 'assistant' || m.content); return [...u.slice(0, -1).filter(m => m.role === 'user' ? true : true), ...u.slice(-1).map(() => ({ role: 'assistant' as const, content: '⏳ Give me a few more seconds while I pull and analyze the data...' }))]; });
-
+          setAssistantMsg('⏳ Give me a few more seconds while I pull and analyze the data...');
           await new Promise(r => setTimeout(r, 2000));
           handleSend(textToSend);
           return;
@@ -599,7 +611,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
         // Second attempt also failed — show error and reset
         retryAttemptRef.current = false;
         const errorMsg = `I encountered a temporary issue. Please try again in a moment.`;
-        setMessages([...newMessages, { role: 'assistant', content: errorMsg }]);
+        setAssistantMsg(errorMsg);
         setLastFailedMessage(textToSend);
         await saveMessage('assistant', errorMsg);
         loadConversations();
@@ -615,7 +627,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
         if (navigationMatch) {
           const path = navigationMatch[1];
           const cleanMessage = assistantMessage.replace(/\{"action"\s*:\s*"navigate"\s*,\s*"path"\s*:\s*"[^"]+?"[^}]*\}/g, '').trim();
-          setMessages([...newMessages, { role: 'assistant', content: cleanMessage }]);
+          setAssistantMsg(cleanMessage);
           
           setTimeout(() => {
             onOpenChange(false);
@@ -638,7 +650,15 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       if (!retryAttemptRef.current) {
         retryAttemptRef.current = true;
         console.log('Fetch error — auto-retrying transparently...');
-        setMessages([...newMessages, { role: 'assistant', content: '⏳ Give me a few more seconds while I pull and analyze the data...' }]);
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant') {
+            const updated = [...prev];
+            updated[updated.length - 1] = { ...last, content: '⏳ Give me a few more seconds while I pull and analyze the data...' };
+            return updated;
+          }
+          return [...prev, { role: 'assistant' as const, content: '⏳ Give me a few more seconds while I pull and analyze the data...' }];
+        });
         await new Promise(r => setTimeout(r, 2500));
         handleSend(textToSend);
         return;
@@ -647,7 +667,15 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       retryAttemptRef.current = false;
       const userQuery = textToSend?.substring(0, 60).trim() || 'your request';
       const errorMsg = `I encountered a temporary issue processing "${userQuery}". Please try again in a moment.`;
-      setMessages([...newMessages, { role: 'assistant', content: errorMsg }]);
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === 'assistant') {
+          const updated = [...prev];
+          updated[updated.length - 1] = { ...last, content: errorMsg };
+          return updated;
+        }
+        return [...prev, { role: 'assistant' as const, content: errorMsg }];
+      });
       setLastFailedMessage(textToSend);
       try { await saveMessage('assistant', errorMsg); } catch (_) {}
     } finally {
