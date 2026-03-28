@@ -83,7 +83,7 @@ export function DocumentNumberLink({ docNumber, truncate = false }: { docNumber:
             href={detailsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-[11px] text-primary underline underline-offset-2 decoration-primary/40 hover:decoration-primary hover:text-primary/80 transition-colors whitespace-nowrap"
+            className="font-mono text-[11px] text-primary no-underline hover:underline hover:underline-offset-2 hover:decoration-primary/60 hover:text-primary/80 transition-colors whitespace-nowrap"
           >
             {display}
           </a>
@@ -368,11 +368,11 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
               <tbody>
                 {data.documents.map((doc, i) => (
                   <tr key={doc.document_number} className={`group ${i % 2 === 1 ? 'bg-muted/10' : ''} hover:bg-primary/5 transition-colors`} style={{ borderBottom: '1px solid hsl(var(--border) / 0.15)' }}>
-                    <td className="py-2 px-3 align-middle">
+                    <td className="py-1.5 px-3 align-middle">
                       <DocumentNumberLink docNumber={doc.document_number} truncate />
                     </td>
-                    <td className="py-2 px-3 align-middle"><div className="text-xs text-foreground leading-normal line-clamp-2">{toTitleCase(doc.title)}</div></td>
-                    <td className="py-2 px-3 text-center align-middle"><StatusBadge code={doc.status} /></td>
+                    <td className="py-1.5 px-3 align-middle"><div className="text-xs text-foreground leading-normal line-clamp-2">{toTitleCase(doc.title)}</div></td>
+                    <td className="py-1.5 px-3 text-center align-middle"><StatusBadge code={doc.status} /></td>
                     <td className="py-1 px-1 align-middle">
                       <DocActionButtons docNumber={doc.document_number} onRead={onFollowupClick} />
                     </td>
@@ -512,11 +512,11 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
               <tbody>
                 {data.documents.slice(0, 10).map((doc, i) => (
                   <tr key={doc.document_number} className={`group ${i % 2 === 1 ? 'bg-muted/10' : ''} hover:bg-primary/5 transition-colors`} style={{ borderBottom: '1px solid hsl(var(--border) / 0.15)' }}>
-                    <td className="py-2 px-3 align-middle">
+                    <td className="py-1.5 px-3 align-middle">
                       <DocumentNumberLink docNumber={doc.document_number} truncate />
                     </td>
-                    <td className="py-2 px-3 align-middle"><div className="text-xs text-foreground leading-normal line-clamp-2">{toTitleCase(doc.title)}</div></td>
-                    <td className="py-2 px-3 text-center align-middle"><StatusBadge code={doc.status} /></td>
+                    <td className="py-1.5 px-3 align-middle"><div className="text-xs text-foreground leading-normal line-clamp-2">{toTitleCase(doc.title)}</div></td>
+                    <td className="py-1.5 px-3 text-center align-middle"><StatusBadge code={doc.status} /></td>
                     <td className="py-1 px-1 align-middle">
                       <DocActionButtons docNumber={doc.document_number} onRead={onFollowupClick} />
                     </td>
