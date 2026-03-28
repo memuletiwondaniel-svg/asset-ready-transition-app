@@ -10019,15 +10019,22 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
         console.log(`search_assai_documents: document_list response (${filteredDocList.length}/${totalFound} docs, specific query, subject=${p1SubjectLabel || 'none'})`);
       } else {
-        // BROAD QUERY: Show status/type summaries with document list below
-        const broadInsights = generateSmartInsights(lastToolResult, docList);
+        // BROAD QUERY: Show status/type summaries with filtered document list
+        const broadInsights = generateSmartInsights(lastToolResult, filteredDocList);
         
         const broadFollowups: string[] = [];
+        if (p1SubjectLabel && filteredDocList.length > 0) {
+          broadFollowups.push(`Read and summarise the most relevant ${p1SubjectLabel} document`);
+        }
         const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
         const hasPending = pendingStatuses.some(s => (lastToolResult.status_summary || {})[s]);
         if (hasPending) broadFollowups.push("Show only pending documents");
         broadFollowups.push("Filter by discipline");
-        if (docList.length > 5) broadFollowups.push("Export this list");
+        if (filterApplied && unfilteredTotal > filteredDocList.length) {
+          broadFollowups.push(`Show all ${totalFound} documents`);
+        } else if (filteredDocList.length > 5) {
+          broadFollowups.push("Export this list");
+        }
 
         const statusTable = Object.entries(lastToolResult.status_summary || {})
           .sort((a: any, b: any) => b[1] - a[1])
@@ -10038,18 +10045,23 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           .slice(0, 10)
           .map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
 
+        let broadSummary = buildSearchSummary(lastToolResult, summaryOpts);
+        if (filterApplied && unfilteredTotal > filteredDocList.length) {
+          broadSummary += `. There are also ${unfilteredTotal - filteredDocList.length} other unrelated documents available.`;
+        }
+
         const structured = {
           type: "document_search",
-          summary: buildSearchSummary(lastToolResult),
+          summary: broadSummary,
           status_table: statusTable,
           type_table: typeTable,
-          documents: docList,
+          documents: filteredDocList,
           highlights: broadInsights,
-          followup: broadFollowups.slice(0, 3)
+          followup: broadFollowups.slice(0, 4)
         };
 
         finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
-        console.log(`search_assai_documents: document_search response (${totalFound} docs, broad query)`);
+        console.log(`search_assai_documents: document_search response (${filteredDocList.length}/${totalFound} docs, broad query, subject=${p1SubjectLabel || 'none'})`);
       }
     }
 
