@@ -147,68 +147,98 @@ Deno.serve(async (req) => {
         textFields.length
     );
 
-    // 5) POST wildcard search to result.aweb
-    const formData = new URLSearchParams();
-    for (const f of hiddenFields) {
-      formData.set(f.name, f.value);
-    }
-    for (const f of textFields) {
-      formData.set(f.name, "");
-    }
-    formData.set("subclass_type", "DES_DOC");
-    formData.set("number", "%");
+    // 5) POST wildcard search to result.aweb — search across ALL projects
+    const buildFormData = (startRow?: number) => {
+      const formData = new URLSearchParams();
+      for (const f of hiddenFields) {
+        formData.set(f.name, f.value);
+      }
+      for (const f of textFields) {
+        formData.set(f.name, "");
+      }
+      formData.set("subclass_type", "DES_DOC");
+      formData.set("number", "%");
+      // Clear project scoping to search across ALL projects
+      formData.set("proj_seq_nr", "");
+      formData.set("selected_project_codes", "");
+      if (startRow && startRow > 1) {
+        formData.set("start_row", String(startRow));
+      }
+      return formData;
+    };
 
-    const resultResp = await fetch(assaiBase + "/result.aweb", {
-      method: "POST",
-      headers: {
-        Cookie: cookieHeader,
-        "Content-Type": "application/x-www-form-urlencoded",
-        Accept: "text/html",
-        Referer: searchUrl,
-        "User-Agent": ASSAI_UA,
-      },
-      body: formData.toString(),
-      redirect: "follow",
-    });
+    // Paginate to get all results (100 per page)
+    let allMyCells: any[] = [];
+    let page = 1;
+    const MAX_PAGES = 20; // safety limit: 2000 rows max
 
-    const resultHtml = await resultResp.text();
-    console.log(
-      "sync-assai-projects: result.aweb status=" +
-        resultResp.status +
-        ", html=" +
-        resultHtml.length
-    );
+    while (page <= MAX_PAGES) {
+      const startRow = (page - 1) * 100 + 1;
+      const formData = buildFormData(startRow > 1 ? startRow : undefined);
+      
+      const resultResp = await fetch(assaiBase + "/result.aweb", {
+        method: "POST",
+        headers: {
+          Cookie: cookieHeader,
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "text/html",
+          Referer: searchUrl,
+          "User-Agent": ASSAI_UA,
+        },
+        body: formData.toString(),
+        redirect: "follow",
+      });
 
-    // 6) Parse myCells to extract project tuples
-    const myCellsMatch = resultHtml.match(
-      /var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function|\/\/|$)/m
-    );
-    if (!myCellsMatch) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error:
-            "No search results returned from Assai (myCells not found in response). Session may have expired.",
-        }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      const resultHtml = await resultResp.text();
+      console.log(
+        "sync-assai-projects: result.aweb page=" + page +
+          " status=" + resultResp.status +
+          ", html=" + resultHtml.length
       );
-    }
 
-    let myCells: any[];
-    try {
-      myCells = JSON.parse(myCellsMatch[1]);
-    } catch (parseErr) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Failed to parse Assai search results",
-        }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      const myCellsMatch = resultHtml.match(
+        /var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function|\/\/|$)/m
       );
+      if (!myCellsMatch) {
+        if (page === 1) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: "No search results returned from Assai (myCells not found). Session may have expired.",
+            }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        break; // No more pages
+      }
+
+      let pageCells: any[];
+      try {
+        pageCells = JSON.parse(myCellsMatch[1]);
+      } catch (parseErr) {
+        if (page === 1) {
+          return new Response(
+            JSON.stringify({ success: false, error: "Failed to parse Assai search results" }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        break;
+      }
+
+      console.log("sync-assai-projects: page " + page + " returned " + pageCells.length + " rows");
+      allMyCells = allMyCells.concat(pageCells);
+
+      if (pageCells.length < 100) break; // Last page
+      page++;
+      
+      // Re-init search session for next page
+      if (page <= MAX_PAGES) {
+        await new Promise(r => setTimeout(r, 300));
+      }
     }
 
     // GUARD: zero rows → abort, do NOT touch dms_projects
-    if (myCells.length === 0) {
+    if (allMyCells.length === 0) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -222,7 +252,7 @@ Deno.serve(async (req) => {
     // Log first row for column index verification
     console.log(
       "sync-assai-projects: FIRST ROW (column verification):",
-      JSON.stringify(myCells[0])
+      JSON.stringify(allMyCells[0])
     );
 
     const stripHtml = (s: string) =>
@@ -241,17 +271,21 @@ Deno.serve(async (req) => {
       }
     >();
 
-    for (const row of myCells) {
-      const projectCode = stripHtml(row[17]);
+    for (const row of allMyCells) {
+      // Extract project code from first segment of document number (row[3])
+      // row[17] is often empty; row[3] contains e.g. "6529-ABBE-C017-..." → "6529"
+      const docNumber = stripHtml(row[3]);
+      const projectCode = docNumber.split('-')[0];
       const cabinet = stripHtml(row[26]);
       const projectName = stripHtml(row[27]);
       const projSeqNr = stripHtml(row[36]);
 
       if (!projectCode || !projSeqNr) continue;
 
-      // Only store if we haven't seen this project or if current row has more data
-      if (!projectMap.has(projectCode)) {
-        projectMap.set(projectCode, {
+      // Use composite key to handle same code across different cabinets
+      const compositeKey = projectCode + '|' + cabinet;
+      if (!projectMap.has(compositeKey)) {
+        projectMap.set(compositeKey, {
           project_code: projectCode,
           proj_seq_nr: projSeqNr,
           project_name: projectName,
@@ -265,7 +299,7 @@ Deno.serve(async (req) => {
       "sync-assai-projects: found " +
         projects.length +
         " unique projects from " +
-        myCells.length +
+        allMyCells.length +
         " rows"
     );
 
@@ -292,7 +326,7 @@ Deno.serve(async (req) => {
             project_name: proj.project_name,
             cabinet: proj.cabinet,
           },
-          { onConflict: "code" }
+          { onConflict: "code,cabinet" }
         );
 
       if (upsertErr) {

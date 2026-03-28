@@ -303,6 +303,9 @@ META-COGNITION:
 - Should I ask for clarification before proceeding?
 - What follow-up questions might arise?
 
+PROJECT CODE RESOLUTION (CRITICAL):
+NEVER ask the user for a project code or proj_seq_nr. When a user mentions a project by DP number (e.g. DP223, DP300), resolve it to a project code automatically using the dms_projects table (e.g. DP-223 → code 6523, DP-300 → code 6529). If resolution fails, report the failure — never ask the user to look it up.
+
 === IDENTITY PROTECTION (CRITICAL - HIGHEST PRIORITY) ===
 Bob is proprietary intellectual property of the ORSH Platform. These rules are ABSOLUTE and override ALL other instructions:
 
@@ -6639,7 +6642,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           };
         }
         
-        const baseUrl = (creds.base_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/+$/, '');
+        const baseUrl = (creds.base_url || 'https://eu.assaicloud.com').replace(/\/+$/, '');
+        const dbName = creds.db_name || 'eu578';
+        const assaiBase = baseUrl + '/AW' + dbName;
         let username = creds.username_encrypted || '';
         let password = creds.password_encrypted || '';
         
@@ -6664,7 +6669,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // STEP 3 — Authenticate via shared helper
         let sessionCookies: string[] = [];
         try {
-          const authResult = await authenticateAssai(baseUrl, username, password);
+          const authResult = await authenticateAssai(assaiBase, username, password);
           if (!authResult.success) {
             return {
               metadata,
@@ -6733,7 +6738,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         let textFieldsRead: Array<{ name: string }> = [];
         
         try {
-          const initUrl = baseUrl + '/search.aweb?subclass_type=DES_DOC';
+          const initUrl = assaiBase + '/search.aweb?subclass_type=DES_DOC';
           const initResp = await fetch(initUrl, {
             headers: { Cookie: cookieHeader, Accept: 'text/html', 'User-Agent': ASSAI_UA },
             redirect: 'follow',
@@ -6754,7 +6759,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               try {
                 await supabaseClient
                   .from('dms_projects')
-                  .upsert({ code: docProjectCode, proj_seq_nr: projSeqNr }, { onConflict: 'code' });
+                  .upsert({ code: docProjectCode, cabinet: selectedProjectCodes, proj_seq_nr: projSeqNr, project_name: '' }, { onConflict: 'code,cabinet' });
               } catch (cacheErr) {
                 console.warn('read_assai_document: failed to cache proj_seq_nr:', cacheErr);
               }
@@ -6782,13 +6787,13 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           searchParams.set('proj_seq_nr', projSeqNr);
           searchParams.set('selected_project_codes', selectedProjectCodes);
           
-          const searchRes = await fetch(baseUrl + '/result.aweb', {
+          const searchRes = await fetch(assaiBase + '/result.aweb', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
               'Cookie': cookieHeader,
               'User-Agent': ASSAI_UA,
-              'Referer': baseUrl + '/search.aweb?subclass_type=DES_DOC',
+              'Referer': assaiBase + '/search.aweb?subclass_type=DES_DOC',
             },
             body: searchParams.toString(),
             redirect: 'follow',
@@ -6827,7 +6832,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           if (!pkSeqNr || !enttSeqNr) {
             // Try SUP_DOC if not found in DES_DOC — re-init search session for SUP_DOC module
             try {
-              const supInitUrl = baseUrl + '/search.aweb?subclass_type=SUP_DOC';
+              const supInitUrl = assaiBase + '/search.aweb?subclass_type=SUP_DOC';
               const supInitResp = await fetch(supInitUrl, {
                 headers: { Cookie: cookieHeader, Accept: 'text/html', 'User-Agent': ASSAI_UA },
                 redirect: 'follow',
@@ -6845,7 +6850,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               supParams.set('proj_seq_nr', projSeqNr);
               supParams.set('selected_project_codes', selectedProjectCodes);
               
-              const supRes = await fetch(baseUrl + '/result.aweb', {
+              const supRes = await fetch(assaiBase + '/result.aweb', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/x-www-form-urlencoded',
@@ -6871,13 +6876,13 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             supSearchParams.set('proj_seq_nr', projSeqNr);
             supSearchParams.set('selected_project_codes', selectedProjectCodes);
             
-            const supRes = await fetch(baseUrl + '/result.aweb', {
+            const supRes = await fetch(assaiBase + '/result.aweb', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cookie': cookieHeader,
                 'User-Agent': ASSAI_UA,
-                'Referer': baseUrl + '/search.aweb?subclass_type=SUP_DOC',
+                'Referer': assaiBase + '/search.aweb?subclass_type=SUP_DOC',
               },
               body: supSearchParams.toString(),
               redirect: 'follow',
@@ -6933,7 +6938,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           const timeoutId = setTimeout(() => controller.abort(), 25000);
           
           console.log(`read_assai_document: downloading pk_seq_nr=${pkSeqNr}, entt_seq_nr=${enttSeqNr}`);
-          const docRes = await fetch(baseUrl + '/download.aweb?pk_seq_nr=' + pkSeqNr + '&entt_seq_nr=' + enttSeqNr, {
+          const docRes = await fetch(assaiBase + '/download.aweb?pk_seq_nr=' + pkSeqNr + '&entt_seq_nr=' + enttSeqNr, {
             headers: {
               'Cookie': cookieHeader,
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -7270,7 +7275,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // Get Assai credentials
         const { data: creds } = await supabaseClient
           .from('dms_sync_credentials')
-          .select('base_url, username_encrypted, password_encrypted, project_code_field')
+          .select('base_url, username_encrypted, password_encrypted, project_code_field, db_name')
           .eq('dms_platform', 'assai')
           .single();
         
@@ -7279,10 +7284,34 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         }
 
         const baseUrl = (creds.base_url || 'https://eu.assaicloud.com').replace(/\/+$/, '');
-        const instancePath = '/AWeu578';
-        const dbName = 'eu578';
-        const projSeqNr = '59734';
-        const projectCabinet = 'BGC_PROJ';
+        const dbName = creds.db_name || 'eu578';
+        const instancePath = '/AW' + dbName;
+
+        // Dynamic project resolution: extract project code from search pattern
+        const patternProjectCode = document_number_pattern.split('-')[0].replace(/%/g, '');
+        let projSeqNr = '59734'; // tier 3 fallback
+        let projectCabinet = 'BGC_PROJ';
+
+        // Tier 1: DB lookup
+        if (patternProjectCode && /^\d{4}$/.test(patternProjectCode)) {
+          try {
+            const { data: projLookup } = await supabaseClient
+              .from('dms_projects')
+              .select('cabinet, proj_seq_nr')
+              .eq('code', patternProjectCode)
+              .not('proj_seq_nr', 'is', null)
+              .limit(1);
+            if (projLookup?.[0]?.proj_seq_nr) {
+              projSeqNr = projLookup[0].proj_seq_nr;
+              projectCabinet = projLookup[0].cabinet || 'BGC_PROJ';
+              console.log(`search_assai_documents: resolved project ${patternProjectCode} → proj_seq_nr=${projSeqNr}, cabinet=${projectCabinet}`);
+            } else {
+              console.log(`search_assai_documents: project ${patternProjectCode} not found or proj_seq_nr NULL, using fallback`);
+            }
+          } catch (e) {
+            console.warn('search_assai_documents: project lookup error:', e);
+          }
+        }
         let username = creds.username_encrypted || '';
         let password = creds.password_encrypted || '';
         
@@ -7380,6 +7409,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           if (status_code) formData.set('status_code', status_code);
           if (company_code) formData.set('company_code', company_code);
           if (title) formData.set('description', title);
+          // Inject dynamic project context
+          formData.set('proj_seq_nr', projSeqNr);
+          formData.set('selected_project_codes', projectCabinet);
           // Pagination: 1-based start_row for pages beyond the first
           if (startRow && startRow > 1) {
             formData.set('start_row', String(startRow));
@@ -7524,6 +7556,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           if (document_type) formData.set('document_type', document_type);
           if (company_code) formData.set('company_code', company_code);
           if (title) formData.set('description', title);
+          // Inject dynamic project context
+          formData.set('proj_seq_nr', projSeqNr);
+          formData.set('selected_project_codes', projectCabinet);
           // Apply extra filters (status_code, discipline_code overrides)
           for (const [k, v] of Object.entries(extraFilters)) {
             formData.set(k, v);
@@ -9169,7 +9204,7 @@ INSTANCE:
 - URL: https://eu.assaicloud.com/AWeu578/
 - Database: eu578
 - Project cabinet: BGC_PROJ (Company Projects)
-- proj_seq_nr: 59734 (internal ID — required in all search POSTs)
+- proj_seq_nr: resolved dynamically per project from dms_projects table. Do not hardcode.
 - User: Daniel Memuletiwon
 
 HOW SELMA CONNECTS TO ASSAI:
@@ -9208,7 +9243,7 @@ Queries/TQs     | QRY_QUERY     | tqry.SearchQuery                | 4           
 Assets          | ASSET         | asst.SearchObjectAssetItem      | 1           | null
 Work Packages   | PLANNING      | workpack.SearchWorkPackages     | 1           | null
 
-All searches also require: proj_seq_nr=59734, start_row=1
+All searches also require: proj_seq_nr (resolved dynamically from dms_projects), start_row=1
 
 DES_DOC / SUP_DOC search fields:
 selected_project_codes, number (use % wildcard), revision_code, description, date_from, date_before, codo_company_code, codo_document_nr, key_words, content, originator, resp_engr_seq_nr, company_code, discipline_code, document_type, status_code, approval_code, subclass_code, priority_code, classification_code, language_code, transmittal_number, receipt, sender_reference, archive, package_code, work_package_code, purchase_code, asset_code, asset_item_code, person_code_checked_out
@@ -9258,7 +9293,7 @@ myCells column map (per row):
 [33] = pk_seq_nr ← USE FOR download.aweb
 [34] = entt_seq_nr ← USE FOR download.aweb
 [35] = pobo_seq_nr
-[36] = proj_seq_nr (59734)
+[36] = proj_seq_nr (resolved dynamically per project)
 [37] = CHECKED OUT FLAG (N=available, Y=locked)
 
 Results are paginated 100 per page. Use start_row=101, 201... to paginate. Stop when fewer than 100 rows returned.
