@@ -9575,7 +9575,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       'FIRE': ['FIRE', 'DELUGE', 'SPRINKLER', 'FOAM', 'FIRE FIGHTING', 'F&G'],
     };
 
-    const STOP_WORDS_SHARED = new Set(['THE', 'OF', 'IN', 'FOR', 'A', 'AN', 'AND', 'OR', 'CAN', 'YOU', 'PROVIDE', 'ME', 'WITH', 'SHOW', 'FIND', 'GET', 'ALL', 'WHAT', 'IS', 'ARE', 'PLEASE', 'COULD', 'WOULD', 'LIKE', 'WANT', 'NEED', 'DO', 'HOW', 'WHERE', 'WHICH', 'THAT', 'THIS', 'FROM', 'TO', 'BY', 'IT', 'MY', 'I', 'IOM', 'DOCUMENT', 'DOCUMENTS', 'LIST', 'SEARCH']);
+    const STOP_WORDS_SHARED = new Set(['THE', 'OF', 'IN', 'FOR', 'A', 'AN', 'AND', 'OR', 'CAN', 'YOU', 'PROVIDE', 'ME', 'WITH', 'SHOW', 'FIND', 'GET', 'ALL', 'WHAT', 'IS', 'ARE', 'PLEASE', 'COULD', 'WOULD', 'LIKE', 'WANT', 'NEED', 'DO', 'HOW', 'WHERE', 'WHICH', 'THAT', 'THIS', 'FROM', 'TO', 'BY', 'IT', 'MY', 'I', 'IOM', 'DOCUMENT', 'DOCUMENTS', 'LIST', 'SEARCH',
+      'MANY', 'PENDING', 'REVIEW', 'STATUS', 'VENDOR', 'COUNT', 'TOTAL', 'NUMBER',
+      'SUBMITTED', 'APPROVED', 'REJECTED', 'BEHIND', 'AHEAD', 'PROGRESS', 'OVERDUE',
+      'OUTSTANDING', 'LATE', 'SUMMARY', 'BREAKDOWN', 'DISTRIBUTION', 'CONTRACTOR',
+      'SUPPLIER', 'COMPANY', 'COMPANIES', 'VENDORS', 'CONTRACTORS', 'SUPPLIERS']);
 
     while (iteration < MAX_ITERATIONS) {
       iteration++;
@@ -10022,7 +10026,22 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       const filters = effectiveSearchResult.filters_applied || {};
       const totalFound = effectiveSearchResult.total_found || 0;
       const hasSpecificFilter = !!(filters.document_type || filters.discipline_code || filters.status_code);
-      const isSpecificQuery = hasSpecificFilter || totalFound <= 30;
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // ANALYTICAL INTENT DETECTION: Detect "how many", "status of", "pending review", etc.
+      // When detected, produce a synthesized summary instead of a raw document table.
+      // ═══════════════════════════════════════════════════════════════════════
+      const analyticalPatterns = [
+        /how many/i, /what(?:'s| is) the status/i, /status of/i,
+        /pending review/i, /pending approval/i, /are (?:pending|outstanding|overdue)/i,
+        /which (?:contractors?|vendors?|companies?) are/i, /breakdown/i, /summary of/i,
+        /distribution/i, /count of/i, /total (?:number|count)/i
+      ];
+      const userMsgForAnalytical = lastUserMessage?.content || '';
+      const isAnalytical = analyticalPatterns.some(p => p.test(userMsgForAnalytical));
+      const isVendorQuery = isAnalytical && /vendor|contractor|supplier|company/i.test(userMsgForAnalytical);
+
+      const isSpecificQuery = !isAnalytical && (hasSpecificFilter || totalFound <= 30);
 
       // Build full document list (up to 30 for specific, 10 for broad)
       const maxDocs = isSpecificQuery ? 30 : 10;
@@ -10129,7 +10148,75 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         ? { subjectLabel: p1SubjectLabel, filteredCount: filteredDocList.length }
         : undefined;
 
-      if (isSpecificQuery) {
+      // ═══════════════════════════════════════════════════════════════════════
+      // ANALYTICAL RESPONSE: Synthesize a summary instead of raw document table
+      // ═══════════════════════════════════════════════════════════════════════
+      if (isAnalytical) {
+        const statusSummary = effectiveSearchResult.status_summary || {};
+        const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
+        const approvedStatuses = ['AFU', 'AFC', 'AFD'];
+        const pendingCount = pendingStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
+        const approvedCount = approvedStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
+        const cancelledCount = (statusSummary['CAN'] || 0) + (statusSummary['SUP'] || 0);
+
+        // Build concise analytical summary
+        let analyticalSummary = `Found **${totalFound}** documents for this project.`;
+        if (pendingCount > 0) analyticalSummary += ` **${pendingCount}** are pending review/approval.`;
+        if (approvedCount > 0) analyticalSummary += ` **${approvedCount}** are approved.`;
+        if (cancelledCount > 0) analyticalSummary += ` **${cancelledCount}** are cancelled/superseded.`;
+
+        const statusTable = Object.entries(statusSummary)
+          .sort((a: any, b: any) => b[1] - a[1])
+          .map(([status, count]) => ({ status, count, description: STATUS_DESCS[status] ?? status }));
+
+        const typeTable = Object.entries(effectiveSearchResult.type_summary || {})
+          .sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count)
+          .slice(0, 5)
+          .map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
+
+        const analyticalFollowups = [
+          "Show all pending review documents",
+          "Break down by discipline",
+          "Show vendor submission timeline"
+        ];
+
+        // Vendor grouping: group by company_code for vendor-specific queries
+        let vendorTable: any[] | undefined;
+        if (isVendorQuery) {
+          const allDocs = effectiveSearchResult.documents || [];
+          const byCompany: Record<string, { count: number; pending: number; approved: number }> = {};
+          for (const doc of allDocs) {
+            const company = doc.company_code || doc.originator || 'Unknown';
+            if (!byCompany[company]) byCompany[company] = { count: 0, pending: 0, approved: 0 };
+            byCompany[company].count++;
+            if (pendingStatuses.includes(doc.status)) byCompany[company].pending++;
+            if (approvedStatuses.includes(doc.status)) byCompany[company].approved++;
+          }
+          vendorTable = Object.entries(byCompany)
+            .sort((a, b) => b[1].count - a[1].count)
+            .slice(0, 10)
+            .map(([company, data]) => ({ company, ...data }));
+          analyticalSummary += ` Documents come from **${Object.keys(byCompany).length}** vendors/contractors.`;
+          analyticalFollowups[2] = "Show documents by specific vendor";
+        }
+
+        const smartInsights = generateSmartInsights(effectiveSearchResult, filteredDocList);
+
+        const structured: any = {
+          type: "document_search",
+          summary: analyticalSummary,
+          status_table: statusTable,
+          type_table: typeTable,
+          documents: filteredDocList.slice(0, 5), // Top 5 as supporting evidence only
+          highlights: smartInsights,
+          follow_ups: analyticalFollowups,
+          followup: analyticalFollowups
+        };
+        if (vendorTable) structured.vendor_table = vendorTable;
+
+        finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+        console.log(`search_assai_documents: ANALYTICAL response (${totalFound} docs, pending=${pendingCount}, approved=${approvedCount}, vendor=${isVendorQuery})`);
+      } else if (isSpecificQuery) {
         const smartInsights = generateSmartInsights(effectiveSearchResult, filteredDocList);
         
         // Context-aware follow-ups based on actual results
