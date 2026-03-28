@@ -6639,7 +6639,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           };
         }
         
-        const baseUrl = (creds.base_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/+$/, '');
+        const baseUrl = (creds.base_url || 'https://eu.assaicloud.com').replace(/\/+$/, '');
+        const dbName = creds.db_name || 'eu578';
+        const assaiBase = baseUrl + '/AW' + dbName;
         let username = creds.username_encrypted || '';
         let password = creds.password_encrypted || '';
         
