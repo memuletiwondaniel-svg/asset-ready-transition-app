@@ -9706,7 +9706,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           type: "document_list",
           summary: buildSearchSummary(lastToolResult),
           documents: docList,
-          highlights,
+          highlights: smartInsights,
           followup
         };
 
