@@ -6666,7 +6666,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // STEP 3 — Authenticate via shared helper
         let sessionCookies: string[] = [];
         try {
-          const authResult = await authenticateAssai(baseUrl, username, password);
+          const authResult = await authenticateAssai(assaiBase, username, password);
           if (!authResult.success) {
             return {
               metadata,
