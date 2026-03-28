@@ -10148,7 +10148,75 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         ? { subjectLabel: p1SubjectLabel, filteredCount: filteredDocList.length }
         : undefined;
 
-      if (isSpecificQuery) {
+      // ═══════════════════════════════════════════════════════════════════════
+      // ANALYTICAL RESPONSE: Synthesize a summary instead of raw document table
+      // ═══════════════════════════════════════════════════════════════════════
+      if (isAnalytical) {
+        const statusSummary = effectiveSearchResult.status_summary || {};
+        const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
+        const approvedStatuses = ['AFU', 'AFC', 'AFD'];
+        const pendingCount = pendingStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
+        const approvedCount = approvedStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
+        const cancelledCount = (statusSummary['CAN'] || 0) + (statusSummary['SUP'] || 0);
+
+        // Build concise analytical summary
+        let analyticalSummary = `Found **${totalFound}** documents for this project.`;
+        if (pendingCount > 0) analyticalSummary += ` **${pendingCount}** are pending review/approval.`;
+        if (approvedCount > 0) analyticalSummary += ` **${approvedCount}** are approved.`;
+        if (cancelledCount > 0) analyticalSummary += ` **${cancelledCount}** are cancelled/superseded.`;
+
+        const statusTable = Object.entries(statusSummary)
+          .sort((a: any, b: any) => b[1] - a[1])
+          .map(([status, count]) => ({ status, count, description: STATUS_DESCS[status] ?? status }));
+
+        const typeTable = Object.entries(effectiveSearchResult.type_summary || {})
+          .sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count)
+          .slice(0, 5)
+          .map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
+
+        const analyticalFollowups = [
+          "Show all pending review documents",
+          "Break down by discipline",
+          "Show vendor submission timeline"
+        ];
+
+        // Vendor grouping: group by company_code for vendor-specific queries
+        let vendorTable: any[] | undefined;
+        if (isVendorQuery) {
+          const allDocs = effectiveSearchResult.documents || [];
+          const byCompany: Record<string, { count: number; pending: number; approved: number }> = {};
+          for (const doc of allDocs) {
+            const company = doc.company_code || doc.originator || 'Unknown';
+            if (!byCompany[company]) byCompany[company] = { count: 0, pending: 0, approved: 0 };
+            byCompany[company].count++;
+            if (pendingStatuses.includes(doc.status)) byCompany[company].pending++;
+            if (approvedStatuses.includes(doc.status)) byCompany[company].approved++;
+          }
+          vendorTable = Object.entries(byCompany)
+            .sort((a, b) => b[1].count - a[1].count)
+            .slice(0, 10)
+            .map(([company, data]) => ({ company, ...data }));
+          analyticalSummary += ` Documents come from **${Object.keys(byCompany).length}** vendors/contractors.`;
+          analyticalFollowups[2] = "Show documents by specific vendor";
+        }
+
+        const smartInsights = generateSmartInsights(effectiveSearchResult, filteredDocList);
+
+        const structured: any = {
+          type: "document_search",
+          summary: analyticalSummary,
+          status_table: statusTable,
+          type_table: typeTable,
+          documents: filteredDocList.slice(0, 5), // Top 5 as supporting evidence only
+          highlights: smartInsights,
+          follow_ups: analyticalFollowups,
+          followup: analyticalFollowups
+        };
+        if (vendorTable) structured.vendor_table = vendorTable;
+
+        finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+        console.log(`search_assai_documents: ANALYTICAL response (${totalFound} docs, pending=${pendingCount}, approved=${approvedCount}, vendor=${isVendorQuery})`);
+      } else if (isSpecificQuery) {
         const smartInsights = generateSmartInsights(effectiveSearchResult, filteredDocList);
         
         // Context-aware follow-ups based on actual results
