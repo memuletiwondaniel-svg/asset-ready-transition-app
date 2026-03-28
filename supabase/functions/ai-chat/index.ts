@@ -9883,7 +9883,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
       // Build full document list (up to 30 for specific, 10 for broad)
       const maxDocs = isSpecificQuery ? 30 : 10;
-      const docList = (lastToolResult.documents || []).slice(0, maxDocs).map((d: any) => ({
+      const docList = (effectiveSearchResult.documents || []).slice(0, maxDocs).map((d: any) => ({
         document_number: d.document_number,
         title: d.title,
         revision: d.revision,
