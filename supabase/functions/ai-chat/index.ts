@@ -9644,7 +9644,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
               // Execute search
               const searchArgs: any = { document_type: resolvedCode };
-              if (unitPattern) searchArgs.document_number_pattern = unitPattern;
+              if (projectPattern) searchArgs.document_number_pattern = projectPattern;
               
               const searchResult = await executeTool('search_assai_documents', searchArgs, supabase);
               
