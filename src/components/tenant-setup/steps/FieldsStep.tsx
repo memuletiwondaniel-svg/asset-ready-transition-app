@@ -32,7 +32,7 @@ export const FieldsStep: React.FC<FieldsStepProps> = ({ onComplete }) => {
 
   const seedMutation = useMutation({
     mutationFn: async () => {
-      for (const f of BGC_DEFAULTS) {
+      for (const f of DEFAULT_FIELDS) {
         const exists = fields.some(fl => fl.name === f.name);
         if (!exists) await supabase.from('field').insert({ name: f.name, is_active: true });
       }
