@@ -9484,6 +9484,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     let lastToolName: string | null = null;
     let lastToolResult: any = null;
     let allToolCallNames: string[] = [];
+    let searchToolResult: any = null; // Persists search_assai_documents result across iterations
     let navigationAction: { action: string; path: string } | null = null;
     let finalTextContent = '';
 
