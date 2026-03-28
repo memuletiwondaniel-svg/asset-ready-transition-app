@@ -9688,6 +9688,20 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         
         const isDocQuery = DOC_KEYWORDS.some(kw => msgUpper.includes(kw));
 
+        // ── Analytical intent detection BEFORE document search ──────────
+        const analyticalPatternsNon429 = [
+          /how many/i, /what(?:'s| is) the status/i, /status of/i,
+          /pending review/i, /pending approval/i, /are (?:pending|outstanding|overdue)/i,
+          /which (?:contractors?|vendors?|companies?) are/i, /breakdown/i, /summary of/i,
+          /distribution/i, /count of/i, /total (?:number|count)/i, /how much/i,
+          /what percentage/i, /give me a summary/i, /are there any outstanding/i
+        ];
+        const isFallbackAnalytical = analyticalPatternsNon429.some(p => p.test(lastUserMsg));
+        const isFallbackVendorQuery = isFallbackAnalytical && /vendor|contractor|supplier|company/i.test(lastUserMsg);
+        if (isFallbackAnalytical) {
+          console.log('Deterministic fallback: ANALYTICAL intent detected, will synthesize summary');
+        }
+
         if (isDocQuery) {
           console.log('Deterministic fallback: detected document query, attempting tool-based resolution');
           try {
