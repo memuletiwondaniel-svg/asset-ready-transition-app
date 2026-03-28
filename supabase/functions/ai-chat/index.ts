@@ -9725,7 +9725,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         console.log(`search_assai_documents: document_list response (${totalFound} docs, specific query)`);
       } else {
         // BROAD QUERY: Show status/type summaries with document list below
-        const broadInsights = highlights.length > 0 ? highlights : generateSmartInsights(lastToolResult, docList);
+        const broadInsights = generateSmartInsights(lastToolResult, docList);
         if (followup.length === 0) {
           followup.push("Show me only the pending documents");
           followup.push("Break down by discipline");
