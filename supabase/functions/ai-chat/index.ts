@@ -9705,7 +9705,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       };
 
       if (isSpecificQuery) {
-        const smartInsights = highlights.length > 0 ? highlights : generateSmartInsights(lastToolResult, docList);
+        // Always use deterministic insights — never use AI-extracted highlights (they just repeat doc numbers)
+        const smartInsights = generateSmartInsights(lastToolResult, docList);
         if (followup.length === 0) {
           if (docList.length > 0) followup.push(`Read and summarise ${docList[0].document_number}`);
           followup.push("Show me related documents");
@@ -9724,7 +9725,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         console.log(`search_assai_documents: document_list response (${totalFound} docs, specific query)`);
       } else {
         // BROAD QUERY: Show status/type summaries with document list below
-        const broadInsights = highlights.length > 0 ? highlights : generateSmartInsights(lastToolResult, docList);
+        const broadInsights = generateSmartInsights(lastToolResult, docList);
         if (followup.length === 0) {
           followup.push("Show me only the pending documents");
           followup.push("Break down by discipline");
