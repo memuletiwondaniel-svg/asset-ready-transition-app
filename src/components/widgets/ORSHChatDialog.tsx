@@ -1131,7 +1131,6 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                       </button>
                                       );
                                     })}
-                                    ))}
                                   </div>
                                 </div>
                               )}
