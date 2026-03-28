@@ -7099,7 +7099,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
 
     case "search_assai_documents": {
       try {
-        const { document_number_pattern, discipline_code, document_type, status_code, company_code } = args;
+        const { document_number_pattern, discipline_code, document_type, status_code, company_code, title } = args;
         
         // Get Assai credentials
         const { data: creds } = await supabaseClient
