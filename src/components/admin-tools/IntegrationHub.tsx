@@ -167,6 +167,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const [testResultInPanel, setTestResultInPanel] = useState<{ success: boolean; message?: string; response_time_ms?: number } | null>(null);
   const [syncingInPanel, setSyncingInPanel] = useState(false);
   const [syncResultInPanel, setSyncResultInPanel] = useState<string | null>(null);
+  const [syncingProjects, setSyncingProjects] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
