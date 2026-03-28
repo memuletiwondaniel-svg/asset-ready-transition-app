@@ -1241,6 +1241,31 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       Sync Now
                     </Button>
                     <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      disabled={!credentialsSaved || syncingProjects}
+                      onClick={async () => {
+                        setSyncingProjects(true);
+                        try {
+                          const { data, error } = await supabase.functions.invoke('sync-assai-projects');
+                          if (error) throw error;
+                          if (data?.success) {
+                            toast.success(`${data.projects_synced} projects synced from Assai`);
+                          } else {
+                            toast.error(data?.error || 'Project sync failed');
+                          }
+                        } catch (err: any) {
+                          toast.error('Project sync failed: ' + (err.message || 'Unknown error'));
+                        } finally {
+                          setSyncingProjects(false);
+                        }
+                      }}
+                    >
+                      {syncingProjects ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                      Sync Projects
+                    </Button>
+                    <Button
                       size="sm"
                       className="text-xs"
                       disabled={!isFormValid || saving || !isDirty}
