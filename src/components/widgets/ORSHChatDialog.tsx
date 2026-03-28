@@ -131,6 +131,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const retryAttemptRef = useRef(false);
   const { isListening, isTranscribing, startListening, stopListening, isSupported } = useVoiceInput();
   const { data: roleData } = useCurrentUserRole();
   const welcomeSentRef = useRef(false);
