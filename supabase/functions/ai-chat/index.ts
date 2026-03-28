@@ -7602,29 +7602,63 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         };
 
         // Execute primary search with pagination
-        let allDocuments = await paginateSearch(moduleParams);
-        console.log('search_assai_documents: primary search returned ' + allDocuments.length + ' docs total');
+        // For multi-type searches (e.g. "2365+C01"), run separate searches per type code and merge
+        let allDocuments: any[] = [];
         
-        // If searchBothModules (document_type provided without explicit discipline), proactively search the other module too
-        if (searchBothModules || allDocuments.length === 0) {
-          const altParams = useSupDoc
-            ? { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' }
-            : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
+        if (isMultiTypeSearch) {
+          console.log('search_assai_documents: multi-type search with codes: ' + documentTypeCodes.join(', '));
+          const seen = new Set<string>();
           
-          try {
-            console.info('Paginated search (alt): sending for', altParams.subclass_type, searchBothModules ? '(proactive dual-module)' : '(fallback)');
-            const altDocs = await paginateSearch(altParams);
-            // Merge results, dedup by document_number
-            const seen = new Set(allDocuments.map((d: any) => d.document_number));
-            for (const doc of altDocs) {
-              if (doc.document_number && !seen.has(doc.document_number)) {
-                seen.add(doc.document_number);
-                allDocuments.push(doc);
+          for (const typeCode of documentTypeCodes) {
+            // Temporarily set effectiveDocType for this iteration
+            const origDocType = effectiveDocType;
+            // We need to search both modules for each type code
+            for (const modParams of [
+              { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' },
+              { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' },
+            ]) {
+              try {
+                // Override document_type in fetchResultPage by temporarily patching the closure variable
+                // We need a different approach — use executeFilteredSearch with document_type override
+                const docs = await executeFilteredSearch(modParams, { document_type: typeCode });
+                console.log(`search_assai_documents: type=${typeCode} module=${modParams.subclass_type} returned ${docs.length} docs`);
+                for (const doc of docs) {
+                  if (doc.document_number && !seen.has(doc.document_number)) {
+                    seen.add(doc.document_number);
+                    allDocuments.push(doc);
+                  }
+                }
+              } catch (err) {
+                console.error(`search_assai_documents: type=${typeCode} module=${modParams.subclass_type} error:`, err);
               }
             }
-            console.log('search_assai_documents: after alt module merge, total docs:', allDocuments.length);
-          } catch (altErr) {
-            console.error('search_assai_documents: alt module search error:', altErr);
+          }
+          console.log('search_assai_documents: multi-type search total unique docs: ' + allDocuments.length);
+        } else {
+          allDocuments = await paginateSearch(moduleParams);
+          console.log('search_assai_documents: primary search returned ' + allDocuments.length + ' docs total');
+          
+          // If searchBothModules (document_type provided without explicit discipline), proactively search the other module too
+          if (searchBothModules || allDocuments.length === 0) {
+            const altParams = useSupDoc
+              ? { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' }
+              : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
+            
+            try {
+              console.info('Paginated search (alt): sending for', altParams.subclass_type, searchBothModules ? '(proactive dual-module)' : '(fallback)');
+              const altDocs = await paginateSearch(altParams);
+              // Merge results, dedup by document_number
+              const seen = new Set(allDocuments.map((d: any) => d.document_number));
+              for (const doc of altDocs) {
+                if (doc.document_number && !seen.has(doc.document_number)) {
+                  seen.add(doc.document_number);
+                  allDocuments.push(doc);
+                }
+              }
+              console.log('search_assai_documents: after alt module merge, total docs:', allDocuments.length);
+            } catch (altErr) {
+              console.error('search_assai_documents: alt module search error:', altErr);
+            }
           }
         }
         
