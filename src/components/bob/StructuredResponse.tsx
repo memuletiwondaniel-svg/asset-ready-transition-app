@@ -56,7 +56,7 @@ function DocActionButtons({ docNumber, title, onRead }: { docNumber: string; tit
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              onClick={() => onRead?.(`Read and summarise ${title || docNumber}`)}
+              onClick={() => onRead?.(`Read and interpret ${toTitleCase((title || docNumber).split('***')[0].trim())}`)}
               className="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-150 cursor-pointer"
             >
               <BookOpen className="h-3.5 w-3.5" />
