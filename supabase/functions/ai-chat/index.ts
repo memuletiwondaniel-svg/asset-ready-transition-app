@@ -9274,7 +9274,7 @@ Planning (Work Packages): Bridge between document control and field execution. p
 
 Transmittals: Formal cover sheets for document issuance. Searchable via transmittal_number in DES_DOC search.
 
-Correspondence: Currently not active in BGC_PROJ (subclass codes: COR_INC_CORE, COR_OUT_CORE)
+Correspondence: Currently not active in this project (subclass codes: COR_INC_CORE, COR_OUT_CORE)
 
 CONFIRMED ENDPOINT MAP:
 /AWeu578/login.aweb?loginMethod=unpw → Login page (GET)
