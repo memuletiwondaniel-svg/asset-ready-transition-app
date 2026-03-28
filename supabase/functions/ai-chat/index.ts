@@ -9227,7 +9227,7 @@ REVISION NAMING:
 02A = Second revision, Approved
 
 PROJECTS IN BGC_PROJ:
-0000 = BGC Corporate Company - General
+0000 = Corporate Company - General
 1001 / DP-148 = Class 1 Metering - Installation of meters
 1002 = Supply & Installation of Siren System (CW13503)
 1307 / DP-368 = West Qurna CS7 to CS6 Transfer Line
