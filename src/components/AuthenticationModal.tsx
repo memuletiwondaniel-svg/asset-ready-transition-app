@@ -34,10 +34,9 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
     console.log(`SSO Login with ${provider}`);
     // Check if user is from BGC or Kent for SSO access
     if (provider === 'BGC' || provider === 'Kent') {
-      // Simulate SSO authentication for BGC/Kent users
       onAuthenticated();
     } else {
-      alert('SSO access is only available for BGC and Kent employees. Please use regular registration.');
+      alert('SSO access is only available for authorized company employees. Please use regular registration.');
     }
   };
 

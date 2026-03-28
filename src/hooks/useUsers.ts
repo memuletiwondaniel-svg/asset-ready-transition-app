@@ -45,7 +45,7 @@ export const useUsers = () => {
           lastName: "One",
           email: "user1@company.com",
           phoneNumbers: [{ countryCode: "+964", number: "770 123 4567" }],
-          company: "BGC",
+          company: "Asset Owner",
           role: "Plant Director",
           privileges: ["Edit or Create New Project", "Edit, Create or Authenticate New User"],
           status: "active",
