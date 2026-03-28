@@ -1,79 +1,136 @@
 
 
-## Plan: Use Assai's Native "All Projects" Search
+## Plan: Fix Document Reading, Cross-Discipline Search Bias, and File Upload
 
-### Key Insight
-
-The `sync-assai-projects` function already uses `selected_project_codes=""` and `proj_seq_nr=""` (empty strings) to search across all cabinets — and it works (returns 300 rows across BGC_OPS, BGC_PROJ, ISG). The same approach should be applied to `search_assai_documents` and `read_assai_document`.
-
-### What Changes
-
-**Simplification**: Remove the dynamic `proj_seq_nr` / `projectCabinet` resolution logic entirely. Instead, let Assai's server-side hidden fields handle project scoping (which defaults to "All projects" when not overridden), or explicitly set both to empty strings.
+### 6 Changes in Order
 
 ---
 
-### Fix 1 — `search_assai_documents`: Use "All projects" default
+### 1. Fix dangling variable crash + download hardening (`read_assai_document`)
 
 **File**: `supabase/functions/ai-chat/index.ts`
 
-**Remove** (lines 7290-7314): The entire dynamic project resolution block (DB lookup, patternProjectCode extraction, projSeqNr/projectCabinet variables).
-
-**Replace** with:
-```typescript
-// Use "All projects" scope — Assai searches across BGC_OPS, BGC_PROJ, ISG
-// Document number pattern (e.g. 6523-%) already scopes results to the correct project
+**Line 6870**: Replace `docProjectCode` and `selectedProjectCodes` with literal strings:
 ```
-
-**Update `fetchResultPage`** (line 7413-7414): Remove the two explicit override lines:
-```typescript
-// REMOVE: formData.set('proj_seq_nr', projSeqNr);
-// REMOVE: formData.set('selected_project_codes', projectCabinet);
+console.error(`read_assai_document: pk_seq_nr="${pkSeqNr}" entt_seq_nr="${enttSeqNr}" — document not found in Assai (All projects scope)`);
 ```
-Instead, do NOT override these fields — let the hidden fields from `initSearch` pass through as-is (server default = "All projects").
+**Line 6874**: Fix reason string similarly.
 
-**Update sub-query helper** (lines 7559-7561): Same removal — stop overriding `proj_seq_nr` and `selected_project_codes`.
+**Line 6895**: Reduce timeout from 25000 to 15000.
 
-### Fix 2 — `read_assai_document`: Use "All projects" default
+**Line 6940**: Update timeout message from "25s" to "15s".
 
-**File**: `supabase/functions/ai-chat/index.ts`
-
-**Remove** (lines 6694-6718): The entire project resolution block (DB lookup for projSeqNr/selectedProjectCodes).
-
-**Remove** (lines 6752-6767): The `initSearch` proj_seq_nr extraction and cache-back logic.
-
-**Update search POST** (lines 6787-6788): Remove the explicit overrides:
-```typescript
-// REMOVE: searchParams.set('proj_seq_nr', projSeqNr);
-// REMOVE: searchParams.set('selected_project_codes', selectedProjectCodes);
-```
-Let hidden fields from `initSearch` pass through (server default = "All projects").
-
-**Same for SUP_DOC fallback searches** (lines 6850-6851, 6876-6877): Remove the overrides there too.
-
-### Fix 3 — System prompt updates
-
-**File**: `supabase/functions/ai-chat/index.ts`
-
-- Line 9246: Change to `All searches use "All projects" scope by default. The document number pattern scopes results to the correct project. Do not set proj_seq_nr or selected_project_codes manually.`
-- Keep the "NEVER ask user for project code" rule already added.
-
-### Fix 4 — No changes needed to `sync-assai-projects`
-
-It already uses `selected_project_codes=""` and `proj_seq_nr=""` — this is the correct "All projects" behavior.
+**Lines 6921-6937**: After reading bytes, add HTML error page detection — check if first bytes start with `<` (0x3C) or match `<!DOCTYPE` or `<html` and return `content_available: false` with "Assai returned an error page instead of the document file" before attempting base64 conversion.
 
 ---
 
-### Files changed
+### 2. Cross-discipline auto-combine in `resolve_document_type`
+
+**File**: `supabase/functions/ai-chat/index.ts`
+
+**Lines 7025-7051** (acronym match single-result branch): After fetching `typeDetails`, add a cross-discipline query to `dms_document_types` using `ilike('document_name', '%<full_name>%')`. Collect all matching codes into a Set, combine with `+`, return combined instruction.
+
+**Lines 7071-7091** (fullNameMatch single-result branch): Same cross-discipline auto-combine logic.
+
+**ZV bias confirmation**: Line 7285 (`discipline_code === 'ZV'`) only triggers when the user explicitly passes `discipline_code='ZV'`. All other ZV references in the file are documentation/examples in prompt strings. No default ZV filter exists — the bias was caused solely by `resolve_document_type` returning a single vendor code.
+
+---
+
+### 3. File upload — frontend (`ORSHChatDialog.tsx`)
+
+**File**: `src/components/widgets/ORSHChatDialog.tsx`
+
+**handleSend (lines 436-458)**: Before `uploadFilesToStorage`, check if the first attached file is a document (PDF/image). If so:
+- Validate size (reject >10MB with toast)
+- Validate type (accept only `application/pdf`, `image/png`, `image/jpeg`, `image/webp`; reject others with toast)
+- Read as base64 via `FileReader`
+- Store as `filePayload: { file_data, file_name, file_type }`
+- Skip `uploadFilesToStorage` for this file
+- Clear `attachedFiles`
+
+**User message (lines 460-466)**: Set `content` to user's text only (no `documentTexts` appended). Add `fileNames` from `filePayload` so the UI shows the attachment chip.
+
+**API call (lines 486-493)**: Add `file_data`, `file_name`, `file_type` to the JSON body.
+
+**Message interface (line 87)**: No change needed — `fileNames` already exists.
+
+**Display (lines 1154-1169)**: Already renders `📄 filename` chip via `FileText` icon — works as-is. The key fix is ensuring `documentTexts` (raw text) is never appended to `content` for document files sent via base64.
+
+---
+
+### 4. File upload — edge function handler
+
+**File**: `supabase/functions/ai-chat/index.ts`
+
+**Line 9050**: Destructure `file_data`, `file_name`, `file_type` from request body.
+
+**After line 9067** (before personalization context loading): Add early-return block:
+```typescript
+if (file_data && file_name) {
+  // Direct file analysis — bypass entire Assai tool loop
+  const mediaType = file_type || 'application/pdf';
+  const userText = messages.filter(m => m.role === 'user').pop()?.content || 'Analyze this document';
+  const analysisPrompt = "A document has been directly uploaded..."; // full prompt from plan
+  
+  // SSE streaming call to Claude with document content block
+  const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-5-20250929",
+      max_tokens: 4096,
+      system: analysisPrompt,
+      messages: [{ role: "user", content: [
+        { type: "document", source: { type: "base64", media_type: mediaType, data: file_data } },
+        { type: "text", text: userText }
+      ]}],
+      stream: true,
+    }),
+  });
+  
+  // Stream SSE response back (same pattern as main loop)
+  // Transform Anthropic SSE to OpenAI-compatible SSE format
+  return new Response(streamBody, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+}
+```
+
+This block is placed BEFORE the agent loop initialization (line 9700), ensuring no tools are initialized.
+
+---
+
+### 5. System prompt updates
+
+**File**: `supabase/functions/ai-chat/index.ts`
+
+Add to DOCUMENT_AGENT_PROMPT (after search escalation protocol):
+```
+PARALLEL SEARCH STRATEGY (CRITICAL):
+When searching for a named document (e.g., "Process Safety Design Basis"):
+1. ALWAYS run a title/keyword search IN PARALLEL with the type-code search
+2. Pass the key phrase in the 'title' parameter of search_assai_documents
+3. Do NOT give up after type-code search alone
+```
+
+---
+
+### 6. Deploy edge function
+
+Deploy `ai-chat` after all changes.
+
+---
+
+### Files Changed
 
 | File | Changes |
 |------|---------|
-| `supabase/functions/ai-chat/index.ts` | Remove dynamic proj_seq_nr resolution from both `read_assai_document` and `search_assai_documents`; stop overriding `proj_seq_nr` and `selected_project_codes` in all POST form data; update system prompts |
+| `supabase/functions/ai-chat/index.ts` | Fix dangling vars; reduce timeout; add HTML guard; cross-discipline auto-combine; file upload handler with SSE streaming; prompt updates |
+| `src/components/widgets/ORSHChatDialog.tsx` | File size/type validation; base64 reading; clean message content; send file_data in API body |
 
-### Implementation order
-1. Remove proj_seq_nr/cabinet resolution from `search_assai_documents`
-2. Remove proj_seq_nr/cabinet overrides from `fetchResultPage` and sub-query helper
-3. Remove proj_seq_nr/cabinet resolution from `read_assai_document`
-4. Remove proj_seq_nr/cabinet overrides from read_assai_document POST calls
-5. Update system prompts
+### Implementation Order
+1. Fix dangling variable crash + download hardening
+2. Cross-discipline auto-combine in `resolve_document_type`
+3. File upload frontend (validation + base64 + clean display)
+4. File upload edge function handler (early return + SSE streaming)
+5. System prompt title-search strategy update
 6. Deploy edge function
 
