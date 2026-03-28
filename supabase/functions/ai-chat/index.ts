@@ -6686,7 +6686,30 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         
         const cookieHeader = sessionCookies.join('; ');
         
-        // STEP 4 — Search for document to get pk_seq_nr and entt_seq_nr
+        // STEP 4 — Dynamically resolve proj_seq_nr from the document number's project code
+        const docProjectCode = docNumber.split('-')[0]; // e.g. "6523" from "6523-EXTR-C008-..."
+        let projSeqNr = '59734'; // fallback default (BGC_PROJ / project 6529)
+        let selectedProjectCodes = 'BGC_PROJ';
+        
+        try {
+          const { data: projLookup } = await supabaseClient
+            .from('dms_projects')
+            .select('code, cabinet')
+            .eq('code', docProjectCode)
+            .limit(1);
+          if (projLookup && projLookup.length > 0) {
+            // The proj_seq_nr in Assai corresponds to the row[36] value from search results.
+            // Since we don't have a direct mapping table, we search with the project cabinet
+            // and let Assai filter by selected_project_codes.
+            selectedProjectCodes = projLookup[0].cabinet || 'BGC_PROJ';
+            console.log(`read_assai_document: resolved project ${docProjectCode} → cabinet ${selectedProjectCodes}`);
+          } else {
+            console.log(`read_assai_document: project ${docProjectCode} not found in dms_projects, using default`);
+          }
+        } catch (projErr) {
+          console.error('read_assai_document: project lookup error:', projErr);
+        }
+        
         console.log(`read_assai_document: searching for ${docNumber} in DES_DOC`);
         let pkSeqNr: string | null = null;
         let enttSeqNr: string | null = null;
@@ -6697,10 +6720,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           searchParams.set('searchBean', 'docs.SearchDocuments');
           searchParams.set('clas_seq_nr', '1');
           searchParams.set('suty_seq_nr', '1');
-          searchParams.set('proj_seq_nr', '59734');
           searchParams.set('start_row', '1');
           searchParams.set('number', docNumber);
-          searchParams.set('selected_project_codes', 'BGC_PROJ');
+          searchParams.set('selected_project_codes', selectedProjectCodes);
           
           const searchRes = await fetch(baseUrl + '/result.aweb', {
             method: 'POST',
