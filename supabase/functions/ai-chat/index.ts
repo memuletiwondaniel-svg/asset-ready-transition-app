@@ -7061,12 +7061,16 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }];
           
           if (typeDetails?.document_name) {
+            // Stem-based matching: drop last word to catch variants like "Flow Sheets" vs "Flow Scheme"
+            const nameWords = typeDetails.document_name.split(/\s+/);
+            const stem = nameWords.length > 2 ? nameWords.slice(0, -1).join(' ') : typeDetails.document_name;
+            console.log(`resolve_document_type: stem-based cross-discipline query using: "${stem}"`);
             const { data: crossMatches } = await supabaseClient
               .from('dms_document_types')
               .select('code, document_name, document_description, tier')
-              .ilike('document_name', `%${typeDetails.document_name}%`)
+              .ilike('document_name', `%${stem}%`)
               .eq('is_active', true)
-              .limit(5);
+              .limit(10);
             
             if (crossMatches) {
               for (const m of crossMatches) {
@@ -7130,12 +7134,15 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             }];
             
             if (typeDetails?.document_name) {
+              const nameWords = typeDetails.document_name.split(/\s+/);
+              const stem = nameWords.length > 2 ? nameWords.slice(0, -1).join(' ') : typeDetails.document_name;
+              console.log(`resolve_document_type: stem-based cross-discipline query (fullname) using: "${stem}"`);
               const { data: crossMatches } = await supabaseClient
                 .from('dms_document_types')
                 .select('code, document_name, document_description, tier')
-                .ilike('document_name', `%${typeDetails.document_name}%`)
+                .ilike('document_name', `%${stem}%`)
                 .eq('is_active', true)
-                .limit(5);
+                .limit(10);
               
               if (crossMatches) {
                 for (const m of crossMatches) {
@@ -7188,6 +7195,52 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           .limit(8);
         
         if (nameMatches && nameMatches.length > 0) {
+          // For single match, auto-combine cross-discipline codes (same stem logic)
+          if (nameMatches.length === 1) {
+            const singleMatch = nameMatches[0];
+            const crossCodes = new Set([singleMatch.code]);
+            const combinedMatches: Array<{code: string; name: string; description: string | null; tier: string | null}> = [{
+              code: singleMatch.code,
+              name: singleMatch.document_name,
+              description: singleMatch.document_description?.substring(0, 150) ?? null,
+              tier: singleMatch.tier ?? null
+            }];
+            
+            const nameWords = singleMatch.document_name.split(/\s+/);
+            const stem = nameWords.length > 2 ? nameWords.slice(0, -1).join(' ') : singleMatch.document_name;
+            console.log(`resolve_document_type: name_search single-result stem query: "${stem}"`);
+            const { data: crossMatches } = await supabaseClient
+              .from('dms_document_types')
+              .select('code, document_name, document_description, tier')
+              .ilike('document_name', `%${stem}%`)
+              .eq('is_active', true)
+              .limit(10);
+            
+            if (crossMatches) {
+              for (const m of crossMatches) {
+                if (!crossCodes.has(m.code)) {
+                  crossCodes.add(m.code);
+                  combinedMatches.push({
+                    code: m.code,
+                    name: m.document_name,
+                    description: m.document_description?.substring(0, 150) ?? null,
+                    tier: m.tier ?? null
+                  });
+                }
+              }
+            }
+            
+            const combinedCode = Array.from(crossCodes).join('+');
+            console.log(`resolve_document_type: name_search auto-combine: ${singleMatch.code} → ${combinedCode}`);
+            return {
+              found: true,
+              count: combinedMatches.length,
+              source: 'name_search',
+              matches: combinedMatches,
+              instruction: `Use code "${combinedCode}" as the document_type filter in search_assai_documents`
+            };
+          }
+          
           return {
             found: true,
             count: nameMatches.length,
@@ -7198,9 +7251,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               description: d.document_description?.substring(0, 150),
               tier: d.tier
             })),
-            instruction: nameMatches.length === 1
-              ? `Use code "${nameMatches[0].code}" as document_type in search_assai_documents`
-              : 'Multiple matches — confirm which document type the user means before searching'
+            instruction: 'Multiple matches — confirm which document type the user means before searching'
           };
         }
         
@@ -7342,7 +7393,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         if (!authResult.success) {
           return { error: 'Assai authentication failed (HTTP ' + authResult.statusCode + '). Verify credentials in DMS Settings.' };
         }
-        const cookieHeader = authResult.cookies;
+        let cookieHeader = authResult.cookies;
         console.log('search_assai_documents: authenticated OK');
         
         const ua = ASSAI_UA;
@@ -7684,16 +7735,19 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           const seen = new Set<string>();
           
           for (const typeCode of documentTypeCodes) {
-            // Temporarily set effectiveDocType for this iteration
-            const origDocType = effectiveDocType;
-            // We need to search both modules for each type code
             for (const modParams of [
               { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' },
               { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' },
             ]) {
               try {
-                // Override document_type in fetchResultPage by temporarily patching the closure variable
-                // We need a different approach — use executeFilteredSearch with document_type override
+                // Re-authenticate for each module switch to avoid session conflicts
+                const modAuth = await authenticateAssai(assaiBase, username, password);
+                if (!modAuth.success) {
+                  console.error(`search_assai_documents: re-auth failed for type=${typeCode} module=${modParams.subclass_type}`);
+                  continue;
+                }
+                cookieHeader = modAuth.cookies;
+                
                 const docs = await executeFilteredSearch(modParams, { document_type: typeCode });
                 console.log(`search_assai_documents: type=${typeCode} module=${modParams.subclass_type} returned ${docs.length} docs`);
                 for (const doc of docs) {
@@ -7719,17 +7773,31 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
             
             try {
-              console.info('Paginated search (alt): sending for', altParams.subclass_type, searchBothModules ? '(proactive dual-module)' : '(fallback)');
-              const altDocs = await paginateSearch(altParams);
-              // Merge results, dedup by document_number
-              const seen = new Set(allDocuments.map((d: any) => d.document_number));
-              for (const doc of altDocs) {
-                if (doc.document_number && !seen.has(doc.document_number)) {
-                  seen.add(doc.document_number);
-                  allDocuments.push(doc);
+              // Re-authenticate for alt module to avoid Assai session conflicts
+              console.info('search_assai_documents: re-authenticating for alt module', altParams.subclass_type);
+              const altAuth = await authenticateAssai(assaiBase, username, password);
+              if (altAuth.success) {
+                // Temporarily override cookieHeader for the alt module search
+                const origCookieHeader = cookieHeader;
+                // @ts-ignore — cookieHeader is let-bound above
+                cookieHeader = altAuth.cookies;
+                
+                const altDocs = await paginateSearch(altParams);
+                // Restore original cookie header
+                cookieHeader = origCookieHeader;
+                
+                // Merge results, dedup by document_number
+                const seen = new Set(allDocuments.map((d: any) => d.document_number));
+                for (const doc of altDocs) {
+                  if (doc.document_number && !seen.has(doc.document_number)) {
+                    seen.add(doc.document_number);
+                    allDocuments.push(doc);
+                  }
                 }
+                console.log('search_assai_documents: after alt module merge, total docs:', allDocuments.length);
+              } else {
+                console.error('search_assai_documents: alt module re-auth failed');
               }
-              console.log('search_assai_documents: after alt module merge, total docs:', allDocuments.length);
             } catch (altErr) {
               console.error('search_assai_documents: alt module search error:', altErr);
             }
