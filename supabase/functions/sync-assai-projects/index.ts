@@ -271,7 +271,7 @@ Deno.serve(async (req) => {
       }
     >();
 
-    for (const row of myCells) {
+    for (const row of allMyCells) {
       // Extract project code from first segment of document number (row[3])
       // row[17] is often empty; row[3] contains e.g. "6529-ABBE-C017-..." → "6529"
       const docNumber = stripHtml(row[3]);
