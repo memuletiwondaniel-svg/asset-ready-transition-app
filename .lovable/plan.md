@@ -1,62 +1,96 @@
 
 
-## Fix: Follow-up Actions Always Render as Clickable Pills
+## Revised Phase 2 Plan — Updated Per Feedback
 
-### Root Cause
+Two revisions incorporated:
 
-Two specific bugs in `ORSHChatDialog.tsx` line 992-999:
+1. **Item 4**: In addition to the regex fallback, the system prompt will instruct the AI to emit follow-up suggestions as a structured JSON block (`"follow_ups": [...]`) within `<structured_response>`. The frontend will extract `follow_ups` from this JSON first; regex is kept only as a last-resort fallback for plain-text responses.
 
-1. **Missing header phrase**: The regex doesn't match "What I can try" (the exact header Bob used in the screenshot). It catches "what can I" and "what I can do" but not "what I can try".
+2. **Item 6**: MAX_ITERATIONS stays at 5. The 45-second time guard is the sole loop limiter.
 
-2. **Numbered lists ignored**: The bullet extraction regex on line 996 is `[-•*]\s+(.+)` — it only matches unordered bullets. Bob used a numbered list (`1. Search under...`, `2. Search under...`), which is never extracted.
+---
 
-3. **Fragile by design**: Every new AI phrasing breaks the regex. We need a much broader catch-all approach.
+### ITEM 1 — Dynamic DP → Project Code Resolution
 
-### Solution
+**File**: `supabase/functions/ai-chat/index.ts`
 
-**File**: `src/components/widgets/ORSHChatDialog.tsx`
+- Replace static `PROJECTS IN BGC_PROJ` block (~line 9253-9261) with instruction to always resolve DP numbers dynamically via `dms_projects` table.
+- Add to WORK PACKAGES section: "Work package codes (ST/DP223) are NOT the same as project IDs (DP223)."
+- Add rule: "If you searched for a project reference and found no results, NEVER present results from a different project. Return zero results and explain clearly."
 
-#### Change 1: Broaden the header regex massively
+### ITEM 2 — 6-Strategy Cascading Search
 
-Replace the current regex with one that catches any section header containing action-oriented language:
+**File**: `supabase/functions/ai-chat/index.ts`
 
-```regex
-/(?:## [^\n]*(?:would you like|next steps?|quick actions?|suggested actions?|what (?:can |would |I can |i can )|options?|try next|do next)[^\n]*|(?:\*\*[^\n]*(?:would you like|next steps?|quick actions?|suggested actions?|what (?:can |would |I can |i can )|options?|try next|do next)[^\n]*?\*\*))\s*\n([\s\S]*?)(?=\n## |\n---|\n\*\*[A-Z]|\s*$)/i
-```
+- **Bug fix**: Change `formData.set('title', title)` → `formData.set('description', title)` in both `fetchResultPage` and `executeFilteredSearch`. The Assai form field for document title in DES_DOC/SUP_DOC is `description`, not `title`.
+- Replace existing multi-strategy protocol in both Bob and Selma prompts with the full 6-strategy escalation:
+  1. Precise (type + project + discipline)
+  2. Relax discipline (drop discipline)
+  3. Title/description keyword (`description="Cathodic"`)
+  4. Broad type + semantic title filtering
+  5. Related type codes (J01→G01, G02)
+  6. Alternative discipline codes (CP→EA, CO, IC, CV)
+- Rules: try ≥3 strategies before reporting failure; note which strategy succeeded; suggest concrete next steps when exhausted.
+- Update deterministic fallback to also try `description` field and related doc types.
 
-Key additions: `what I can try`, `options`, `try next`, `do next`, and the bold-header branch now mirrors the same broad patterns.
+### ITEM 3 — Intent Classification
 
-#### Change 2: Extract both bulleted AND numbered list items
+**File**: `supabase/functions/ai-chat/index.ts`
 
-Replace the bullet-only regex on line 996:
+- Add `INTENT CLASSIFICATION` section to DOCUMENT_AGENT_PROMPT:
+  - **RETRIEVAL** → document table
+  - **ANALYTICAL** → synthesised summary, group by company_code for vendor queries
+  - **CONTENT** → search, then `read_assai_document`, then answer from content
 
-```typescript
-// Before (only unordered bullets):
-const bulletRegex = /[-•*]\s+(.+)/g;
+### ITEM 4 — Structured Follow-up Suggestions (JSON-first, regex fallback)
 
-// After (unordered + numbered):
-const bulletRegex = /(?:[-•*]|\d+[.)]\s)\s*(.+)/g;
-```
+**Two-layer approach**:
 
-This catches `1. item`, `1) item`, `- item`, `• item`, `* item`.
+**Layer 1 — Backend (system prompt + structured response)**:
+- Add to all agent system prompts: "When suggesting follow-up actions, ALWAYS include them as a `follow_ups` array inside your `<structured_response>` JSON block. Example: `{ "type": "document_search", ..., "follow_ups": ["Read the maintenance schedule", "Check for newer revisions"] }`. Maximum 3 suggestions. Each must be specific to what was returned."
+- For plain-text responses (no structured_response), instruct the AI to emit a `<follow_ups>["action1", "action2"]</follow_ups>` tag at the end.
 
-#### Change 3: Strip trailing description after dash
+**Layer 2 — Frontend extraction** (`src/components/widgets/ORSHChatDialog.tsx` + `src/components/bob/StructuredResponse.tsx`):
+- In `parseStructuredResponse`, extract `data.follow_ups` if present and return it.
+- In `ORSHChatDialog.tsx`, check for `follow_ups` from structured response first. If none, try extracting `<follow_ups>[...]</follow_ups>` JSON tag from the raw text. Only fall back to regex as last resort.
+- Add the colon-terminated header fallback regex as the final catch-all.
+- Contextual relevance rules added to prompt: max 3, derived from results, no generic suggestions.
 
-Many items have format `"Search under Electrical (EA) - CP systems are sometimes filed with electrical"`. The pill should show just the action part. Truncate at ` - ` if the text is long:
+**File**: `StructuredResponse.tsx` — add `follow_ups` to type + parser.
+**File**: `ORSHChatDialog.tsx` — 3-tier extraction (structured JSON → `<follow_ups>` tag → regex fallback).
 
-```typescript
-let label = bm[1].replace(/\?$/, '').trim();
-// If item has "Action text - explanation", keep only the action
-if (label.length > 60) {
-  const dashIdx = label.indexOf(' - ');
-  if (dashIdx > 10) label = label.substring(0, dashIdx);
-}
-followUpItems.push(label);
-```
+### ITEM 5 — read_assai_document Debugging
 
-### Technical Details
+**File**: `supabase/functions/ai-chat/index.ts`
 
-- Single file change: `src/components/widgets/ORSHChatDialog.tsx` (~lines 992-1003)
-- No backend changes needed — this is purely a client-side extraction issue
-- The broader regex prevents future whack-a-mole by catching any "what/would/can/try/next/options" phrasing in both `##` headers and `**bold**` headers
+- Add detailed `console.log` at each step: search → pk_seq_nr extraction → download URL → response status → content size → analysis call.
+- Verify column index mapping for pk_seq_nr/entt_seq_nr from myCells.
+- Fix any bugs found in base64 encoding or content type handling.
+
+### ITEM 6 — API Reliability (Revised)
+
+**File**: `supabase/functions/ai-chat/index.ts`
+
+- **Keep MAX_ITERATIONS = 5** (unchanged).
+- Add 45-second time guard: record `Date.now()` at function entry; at top of each iteration, if elapsed > 45s, break loop and return accumulated results.
+- Add single retry with 30s wait for 429 errors (currently skipped).
+- Graceful timeout: if loop exits via time guard, build partial response from accumulated tool results.
+
+---
+
+### Files Summary
+
+| File | Items |
+|------|-------|
+| `supabase/functions/ai-chat/index.ts` | 1, 2, 3, 4 (prompt), 5, 6 |
+| `src/components/widgets/ORSHChatDialog.tsx` | 4 (3-tier extraction) |
+| `src/components/bob/StructuredResponse.tsx` | 4 (follow_ups type + parser) |
+
+### Priority Order
+1. Item 2 — Fix `description` bug + 6-strategy protocol
+2. Item 1 — Dynamic resolution + substitution prohibition
+3. Item 4 — JSON-first follow-ups (backend prompt + frontend extraction)
+4. Item 3 — Intent classification
+5. Item 6 — Time guard (keep MAX_ITERATIONS=5)
+6. Item 5 — read_assai_document logging
 
