@@ -237,36 +237,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 6) Parse myCells to extract project tuples
-    const myCellsMatch = resultHtml.match(
-      /var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function|\/\/|$)/m
-    );
-    if (!myCellsMatch) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error:
-            "No search results returned from Assai (myCells not found in response). Session may have expired.",
-        }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    let myCells: any[];
-    try {
-      myCells = JSON.parse(myCellsMatch[1]);
-    } catch (parseErr) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Failed to parse Assai search results",
-        }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     // GUARD: zero rows → abort, do NOT touch dms_projects
-    if (myCells.length === 0) {
+    if (allMyCells.length === 0) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -280,7 +252,7 @@ Deno.serve(async (req) => {
     // Log first row for column index verification
     console.log(
       "sync-assai-projects: FIRST ROW (column verification):",
-      JSON.stringify(myCells[0])
+      JSON.stringify(allMyCells[0])
     );
 
     const stripHtml = (s: string) =>
