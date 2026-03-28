@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, MapPin, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const BGC_DEFAULTS = [
+const DEFAULT_FIELDS = [
   { name: 'Rumaila' },
   { name: 'Zubair' },
   { name: 'West Qurna' },
