@@ -10041,11 +10041,44 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
                   const analyticalFollowups = ["Show all pending review documents", "Break down by discipline", "Show vendor submission timeline"];
 
+                  // For vendor queries, post-filter to only ZV discipline documents
+                  let effectiveDocsBroad = searchResult.documents || [];
+                  let effectiveTotalBroad = searchResult.total_found;
+                  if (isFallbackVendorQuery) {
+                    effectiveDocsBroad = effectiveDocsBroad.filter((d: any) => {
+                      const docNum = d.document_number || '';
+                      const segments = docNum.split('-');
+                      const discipline = segments.length >= 6 ? segments[5] : '';
+                      return discipline === 'ZV';
+                    });
+                    effectiveTotalBroad = effectiveDocsBroad.length;
+                    // Rebuild status/type summaries from ZV-filtered docs
+                    const zvStatusSummary: Record<string, number> = {};
+                    const zvTypeSummary: Record<string, any> = {};
+                    for (const doc of effectiveDocsBroad) {
+                      if (doc.status) zvStatusSummary[doc.status] = (zvStatusSummary[doc.status] || 0) + 1;
+                      if (doc.type_code) {
+                        if (!zvTypeSummary[doc.type_code]) zvTypeSummary[doc.type_code] = { count: 0, statuses: {} };
+                        zvTypeSummary[doc.type_code].count++;
+                        if (doc.status) zvTypeSummary[doc.type_code].statuses[doc.status] = (zvTypeSummary[doc.type_code].statuses[doc.status] || 0) + 1;
+                      }
+                    }
+                    statusTable = Object.entries(zvStatusSummary).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS_AN[s] ?? s }));
+                    typeTable = Object.entries(zvTypeSummary).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 5).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: dynamicTypeDescs[code] ?? code }));
+                    analyticalSummary = `Found **${effectiveTotalBroad}** vendor documents (ZV discipline)${dpLabel}.`;
+                    const zvPending = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'].reduce((sum, s) => sum + (zvStatusSummary[s] || 0), 0);
+                    const zvApproved = ['AFU', 'AFC', 'AFD'].reduce((sum, s) => sum + (zvStatusSummary[s] || 0), 0);
+                    const zvCancelled = (zvStatusSummary['CAN'] || 0) + (zvStatusSummary['SUP'] || 0);
+                    if (zvPending > 0) analyticalSummary += ` **${zvPending}** are pending review/approval.`;
+                    if (zvApproved > 0) analyticalSummary += ` **${zvApproved}** are approved.`;
+                    if (zvCancelled > 0) analyticalSummary += ` **${zvCancelled}** are cancelled/superseded.`;
+                    console.log(`Broad analytical: Vendor filter applied — ${effectiveTotalBroad} ZV docs from ${searchResult.total_found} total`);
+                  }
+
                   let vendorTable: any[] | undefined;
                   if (isFallbackVendorQuery) {
-                    const allDocs = searchResult.documents || [];
                     const byCompany: Record<string, { count: number; pending: number; approved: number }> = {};
-                    for (const doc of allDocs) {
+                    for (const doc of effectiveDocsBroad) {
                       const company = doc.company_code || doc.originator || 'Unknown';
                       if (!byCompany[company]) byCompany[company] = { count: 0, pending: 0, approved: 0 };
                       byCompany[company].count++;
@@ -10057,7 +10090,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                     analyticalFollowups[2] = "Show documents by specific vendor";
                   }
 
-                  const topDocs = (searchResult.documents || []).slice(0, 5).map((d: any) => ({
+                  const topDocs = effectiveDocsBroad.slice(0, 5).map((d: any) => ({
                     document_number: d.document_number, title: d.title, revision: d.revision,
                     status: d.status, type_code: d.type_code, download_url: d.download_url || null
                   }));
@@ -10068,8 +10101,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                     status_table: statusTable,
                     type_table: typeTable,
                     documents: topDocs,
-                    highlights: [`Broad analytical query — summarising all ${searchResult.total_found} documents${dpLabel}`],
-                    follow_ups: analyticalFollowups,
+                    highlights: [`Broad analytical query — summarising all ${effectiveTotalBroad} documents${dpLabel}`],
                     followup: analyticalFollowups
                   };
                   if (vendorTable) structured.vendor_table = vendorTable;
