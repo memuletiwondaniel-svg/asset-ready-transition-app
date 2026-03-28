@@ -363,15 +363,19 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
 
         {/* Highlights */}
         {data.highlights && data.highlights.length > 0 && (
-          <div>
-            <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 mt-4">
-              Key Highlights
+          <div className="bg-muted/20 rounded-lg p-3 border border-border/20">
+            <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
+              <Sparkles className="h-3 w-3 text-amber-500" />
+              Insights
             </h4>
-            <ol className="list-decimal list-inside space-y-1.5">
+            <ul className="space-y-1.5">
               {data.highlights.map((h, i) => (
-                <li key={i} className="text-xs text-foreground leading-relaxed">{renderInlineMarkdownWithLinks(h)}</li>
+                <li key={i} className="text-xs text-foreground leading-relaxed flex gap-2">
+                  <span className="text-amber-500 mt-0.5 shrink-0">›</span>
+                  <span>{renderInlineMarkdownWithLinks(h)}</span>
+                </li>
               ))}
-            </ol>
+            </ul>
           </div>
         )}
 
