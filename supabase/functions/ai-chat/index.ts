@@ -9623,15 +9623,22 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             }
 
             if (resolvedCode) {
-              // Extract DP number → unit code
-              const dpMatch = lastUserMsg.match(/DP\s*(\d{3})/i);
-              let unitPattern: string | undefined;
+              // Extract DP number → resolve to PROJECT CODE via dms_projects (NOT a unit code)
+              const dpMatch = lastUserMsg.match(/DP[\s-]*(\d{2,4})/i);
+              let projectPattern: string | undefined;
               if (dpMatch) {
-                const dpKey = `DP${dpMatch[1]}`;
-                const unitCode = DP_MAP[dpKey];
-                if (unitCode) {
-                  unitPattern = `6529-%-%-%-${unitCode}-%`;
-                  console.log(`Deterministic fallback: mapped ${dpKey} → ${unitCode}`);
+                const dpId = `DP${dpMatch[1]}`;
+                // Look up project code from dms_projects
+                const { data: projData } = await supabase
+                  .from('dms_projects')
+                  .select('code')
+                  .or(`project_id.ilike.%${dpMatch[1]}%,project_id.ilike.%DP${dpMatch[1]}%,project_id.ilike.%DP-${dpMatch[1]}%`)
+                  .limit(1);
+                if (projData && projData.length > 0) {
+                  projectPattern = `${projData[0].code}-%`;
+                  console.log(`Deterministic fallback: resolved ${dpId} → project code ${projData[0].code}`);
+                } else {
+                  console.log(`Deterministic fallback: could not resolve ${dpId} to a project code`);
                 }
               }
 
