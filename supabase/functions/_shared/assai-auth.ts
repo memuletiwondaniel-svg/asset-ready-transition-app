@@ -275,7 +275,7 @@ export async function loginAssai(
     if (freshMatch2?.[1]) passphrase = freshMatch2[1];
 
     // 3b) Try encrypted login with SHA-256 first, then SHA-1
-    const hashAlgos = ["SHA-256", "SHA-1"];
+    const hashAlgos = ["SHA-1", "SHA-256"];
     
     for (const hashAlgo of hashAlgos) {
       const ivHex = bytesToHex(crypto.getRandomValues(new Uint8Array(16)));

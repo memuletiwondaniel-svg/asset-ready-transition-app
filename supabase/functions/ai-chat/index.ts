@@ -3232,6 +3232,26 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
     }
   },
   // ═══════════════════════════════════════════════════════════════════════════
+  // RESOLVE PROJECT CODE TOOL - Resolve DP numbers to Assai project codes
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "resolve_project_code",
+      description: "Resolves a DP project identifier (e.g. DP223, DP-300) to the Assai project code (e.g. 6523, 6529) used in document number patterns. ALWAYS call this BEFORE search_assai_documents when the user mentions a DP number. Returns the project code and name.",
+      parameters: {
+        type: "object",
+        properties: {
+          dp_number: {
+            type: "string",
+            description: "The DP project number, e.g. 'DP223', 'DP-300', 'DP 114'"
+          }
+        },
+        required: ["dp_number"]
+      }
+    }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
   // EXECUTIVE SUMMARY TOOL - For high-level status assessments
   // ═══════════════════════════════════════════════════════════════════════════
   {
@@ -3588,7 +3608,7 @@ const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; m
     model: 'claude-sonnet-4-5'
   },
   document_agent: {
-    tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink', 'get_document_cross_discipline_comparison', 'get_document_search_by_number', 'get_document_bulk_status', 'get_document_trend_analysis', 'create_task_from_document_gap', 'get_document_quality_score', 'get_document_ora_linkage', 'read_assai_document', 'search_assai_documents', 'resolve_document_type', 'learn_acronym'],
+    tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink', 'get_document_cross_discipline_comparison', 'get_document_search_by_number', 'get_document_bulk_status', 'get_document_trend_analysis', 'create_task_from_document_gap', 'get_document_quality_score', 'get_document_ora_linkage', 'read_assai_document', 'search_assai_documents', 'resolve_document_type', 'learn_acronym', 'resolve_project_code'],
     domains: ['dms', 'document', 'readiness', 'numbering', 'afc', 'ifr', 'rlmu', 'trend', 'velocity', 'comparison', 'quality', 'maturity', 'handover'],
     model: 'claude-sonnet-4-5'
   },
@@ -7350,9 +7370,74 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
 
+    case "resolve_project_code": {
+      try {
+        const dpInput = (args.dp_number || '').trim();
+        const dpMatch = dpInput.match(/DP[- ]?(\d+)/i);
+        if (!dpMatch) {
+          return { found: false, error: 'Could not parse DP number from: ' + dpInput };
+        }
+        const dpNum = dpMatch[1];
+        
+        // Search dms_projects by project_id column
+        const { data: projects } = await supabaseClient
+          .from('dms_projects')
+          .select('code, project_name, cabinet, proj_seq_nr, project_id')
+          .ilike('project_id', `%${dpNum}%`)
+          .limit(5);
+        
+        if (!projects || projects.length === 0) {
+          return { found: false, message: `No project found matching DP-${dpNum} in the DMS. Check the project identifier.` };
+        }
+        
+        console.log(`resolve_project_code: DP-${dpNum} → ${projects.map(p => p.code).join(', ')}`);
+        return {
+          found: true,
+          projects: projects.map(p => ({
+            project_code: p.code,
+            project_name: p.project_name,
+            cabinet: p.cabinet,
+            project_id: p.project_id,
+            document_number_prefix: p.code + '-%'
+          })),
+          instruction: `Use document_number_pattern="${projects[0].code}-%" in search_assai_documents. Do NOT put DP numbers in the pattern.`
+        };
+      } catch (err) {
+        console.error('resolve_project_code error:', err);
+        return { found: false, error: String(err) };
+      }
+    }
+
     case "search_assai_documents": {
       try {
-        const { document_number_pattern, discipline_code, document_type, status_code, company_code, title } = args;
+        let { document_number_pattern, discipline_code, document_type, status_code, company_code, title } = args;
+        
+        // Auto-resolve DP project references in document_number_pattern
+        // If pattern contains "DP" followed by digits (e.g. "6529-%-DP223-%"), strip the DP part
+        // and use only the project code prefix
+        const dpInPattern = document_number_pattern.match(/^(\d{4})-%-?DP-?\d+-?%?$/i);
+        if (dpInPattern) {
+          document_number_pattern = dpInPattern[1] + '-%';
+          console.log('search_assai_documents: stripped DP reference from pattern, using:', document_number_pattern);
+        }
+        
+        // Also handle if the pattern IS a DP number (e.g. "DP223" or "DP-223")
+        const dpOnly = document_number_pattern.match(/^DP-?(\d+)$/i);
+        if (dpOnly) {
+          const dpNum = dpOnly[1];
+          const { data: dpProject } = await supabaseClient
+            .from('dms_projects')
+            .select('code')
+            .ilike('project_id', `%${dpNum}%`)
+            .limit(1)
+            .maybeSingle();
+          if (dpProject) {
+            document_number_pattern = dpProject.code + '-%';
+            console.log('search_assai_documents: resolved DP-' + dpNum + ' to project code:', dpProject.code);
+          } else {
+            console.log('search_assai_documents: could not resolve DP-' + dpNum + ' in dms_projects');
+          }
+        }
         
         // Get Assai credentials
         const { data: creds } = await supabaseClient
@@ -7747,6 +7832,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                   continue;
                 }
                 cookieHeader = modAuth.cookies;
+                // Warmup: hit label.aweb to establish server-side session state
+                await fetch(assaiBase + '/label.aweb', { headers: { Cookie: cookieHeader, 'User-Agent': ua }, redirect: 'follow' }).catch(() => {});
                 
                 const docs = await executeFilteredSearch(modParams, { document_type: typeCode });
                 console.log(`search_assai_documents: type=${typeCode} module=${modParams.subclass_type} returned ${docs.length} docs`);
@@ -7777,10 +7864,10 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               console.info('search_assai_documents: re-authenticating for alt module', altParams.subclass_type);
               const altAuth = await authenticateAssai(assaiBase, username, password);
               if (altAuth.success) {
-                // Temporarily override cookieHeader for the alt module search
                 const origCookieHeader = cookieHeader;
-                // @ts-ignore — cookieHeader is let-bound above
                 cookieHeader = altAuth.cookies;
+                // Warmup: hit label.aweb to establish server-side session state
+                await fetch(assaiBase + '/label.aweb', { headers: { Cookie: cookieHeader, 'User-Agent': ua }, redirect: 'follow' }).catch(() => {});
                 
                 const altDocs = await paginateSearch(altParams);
                 // Restore original cookie header
@@ -9629,13 +9716,22 @@ REVISION NAMING:
 02R = Second revision, for Review
 02A = Second revision, Approved
 
-PROJECTS IN BGC_PROJ — DYNAMIC RESOLUTION REQUIRED:
-Do NOT rely on this static list. ALWAYS resolve DP numbers to project codes dynamically by querying the dms_projects table (project_id column).
-Common examples for reference only: 5529 / DP-300 = New Compression Station at Hammar Mishrif, 6523 / DP-223, 6529 / DP-300 variants.
-CRITICAL RULE: If you searched for a project reference and found no results, NEVER present results from a different project. Return zero results and explain clearly. Never substitute one project's documents for another.
-
 COMPANY CODES:
 AWI=AWI Engineering, BGC=Asset Owner, EXTR=Exterran, GENP=General Pressure, KENT=KenTech/Kentz, WGEL=Wood Group Engineering Ltd, ABBE=ABB Engineering Shanghai Limited, ABB=ABB, AUM=AUM, EEIC=EEIC, EMFZ=EMFZ
+
+CRITICAL RULE: If you searched for a project reference and found no results, NEVER present results from a different project. Return zero results and explain clearly. Never substitute one project's documents for another.
+
+PROJECTS IN BGC_PROJ — DYNAMIC RESOLUTION REQUIRED:
+Do NOT rely on any static list. ALWAYS resolve DP numbers to project codes dynamically by querying the dms_projects table (project_id column).
+Common examples for reference only: 6523 / DP-223 = Basrah Gas Company Projects, 6529 / DP-300 = New Compression Station at Hammar Mishrif.
+
+CRITICAL — DP PROJECT ID RESOLUTION:
+When a user mentions a DP number (e.g. "DP223", "DP-300", "DP 114"):
+1. Query dms_projects table: SELECT code FROM dms_projects WHERE project_id ILIKE '%223%'
+2. Use the returned code (e.g. 6523) as the project prefix in document_number_pattern: "6523-%"
+3. The DP number is ONLY a project identifier — it NEVER appears in the document number itself
+4. NEVER put DP numbers inside document_number_pattern. WRONG: "6529-%-DP223-%" CORRECT: "6523-%"
+5. If you cannot resolve the DP number, tell the user you could not find that project in the DMS
 
 WORK PACKAGES:
 ST/DP300 = New Compression Station at Hammar Mishrif (primary)
