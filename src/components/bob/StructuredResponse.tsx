@@ -274,9 +274,10 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                   <li><span className="font-medium">Revision:</span> {data.document.revision}</li>
                 )}
                 {data.document.status && (
-                  <li className="flex items-center gap-1.5">
-                    <span className="font-medium">Status:</span> <StatusBadge code={data.document.status} />
-                  </li>
+                <li>
+                  <span className="font-medium">Status:</span>{' '}
+                  <StatusBadge code={data.document.status} />
+                </li>
                 )}
                 <li>
                   <span className="font-medium">Download:</span>{' '}
