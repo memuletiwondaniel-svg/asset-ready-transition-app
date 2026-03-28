@@ -6829,7 +6829,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           if (!pkSeqNr || !enttSeqNr) {
             // Try SUP_DOC if not found in DES_DOC — re-init search session for SUP_DOC module
             try {
-              const supInitUrl = baseUrl + '/search.aweb?subclass_type=SUP_DOC';
+              const supInitUrl = assaiBase + '/search.aweb?subclass_type=SUP_DOC';
               const supInitResp = await fetch(supInitUrl, {
                 headers: { Cookie: cookieHeader, Accept: 'text/html', 'User-Agent': ASSAI_UA },
                 redirect: 'follow',
