@@ -9666,32 +9666,53 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         }
       }
 
-      // Generate smart contextual insights (not just status counts)
+      // Generate genuinely intelligent insights — skip if nothing novel beyond what the table shows
       const generateSmartInsights = (toolResult: any, docs: any[]): string[] => {
         const insights: string[] = [];
         const statusSummary = toolResult.status_summary || {};
         const totalDocs = docs.length;
-        const approvedCount = (statusSummary['AFU'] || 0) + (statusSummary['AFC'] || 0) + (statusSummary['AFD'] || 0);
-        if (approvedCount > 0 && approvedCount < totalDocs) {
-          insights.push(`Only ${approvedCount} of ${totalDocs} documents have reached an approved status — ${totalDocs - approvedCount} still require progression`);
-        } else if (approvedCount === totalDocs && totalDocs > 0) {
-          insights.push(`All ${totalDocs} documents are at an approved status — document completion looks healthy`);
-        }
-        const rev0Docs = docs.filter((d: any) => d.revision === '0' || d.revision === '00' || d.revision === 'R0');
-        if (rev0Docs.length > 0 && rev0Docs.length < totalDocs) {
-          insights.push(`${rev0Docs.length} document${rev0Docs.length > 1 ? 's are' : ' is'} still at initial revision (Rev 0) — may need review`);
-        }
-        const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT', 'IFC'];
+        if (totalDocs === 0) return [];
+
+        const approvedStatuses = ['AFU', 'AFC', 'AFD'];
+        const approvedCount = approvedStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
+        const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
         const pendingCount = pendingStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
-        if (pendingCount > 0) {
-          const pendingBreakdown = pendingStatuses.filter(s => statusSummary[s]).map(s => `${statusSummary[s]} ${s}`).join(', ');
-          insights.push(`${pendingCount} document${pendingCount > 1 ? 's' : ''} in interim status (${pendingBreakdown}) — not yet fully approved`);
+
+        // Insight: approval gap (only if mixed — not all approved or all pending)
+        if (approvedCount > 0 && pendingCount > 0) {
+          insights.push(`**${approvedCount} of ${totalDocs}** documents are approved while **${pendingCount}** remain in review — consider prioritising the pending items for progression`);
         }
+
+        // Insight: revision anomalies — docs at Rev 0 alongside later revisions
+        const rev0Docs = docs.filter((d: any) => d.revision === '0' || d.revision === '00' || d.revision === 'R0');
+        const laterRevDocs = docs.filter((d: any) => {
+          const r = String(d.revision || '');
+          return r && r !== '0' && r !== '00' && r !== 'R0';
+        });
+        if (rev0Docs.length > 0 && laterRevDocs.length > 0) {
+          insights.push(`**${rev0Docs.length}** document${rev0Docs.length > 1 ? 's' : ''} still at initial revision while others have progressed — may indicate stalled deliverables`);
+        }
+
+        // Insight: cancelled/superseded (actionable — verify replacements)
         const cancelledCount = (statusSummary['CAN'] || 0) + (statusSummary['SUP'] || 0);
         if (cancelledCount > 0) {
-          insights.push(`${cancelledCount} document${cancelledCount > 1 ? 's have' : ' has'} been cancelled or superseded — verify replacements exist`);
+          insights.push(`**${cancelledCount}** document${cancelledCount > 1 ? 's have' : ' has'} been cancelled or superseded — verify replacement documents are in place`);
         }
-        return insights.slice(0, 4);
+
+        // Insight: all same status (uniform set — noteworthy pattern)
+        const uniqueStatuses = [...new Set(docs.map((d: any) => d.status).filter(Boolean))];
+        if (uniqueStatuses.length === 1 && totalDocs > 2) {
+          insights.push(`All ${totalDocs} documents share the same **${uniqueStatuses[0]}** status — this set is uniform`);
+        }
+
+        // Insight: PLN (planned but not yet issued) 
+        const plnCount = statusSummary['PLN'] || 0;
+        if (plnCount > 0 && plnCount < totalDocs) {
+          insights.push(`**${plnCount}** document${plnCount > 1 ? 's are' : ' is'} still in **Planned** status and not yet issued for review`);
+        }
+
+        // Only return genuinely novel insights — if all we'd say is "X docs found", skip
+        return insights.slice(0, 3);
       };
 
       if (isSpecificQuery) {
