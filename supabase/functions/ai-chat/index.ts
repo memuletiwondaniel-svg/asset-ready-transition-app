@@ -7491,7 +7491,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             formData.set('number', document_number_pattern);
           }
           if (discipline_code) formData.set('discipline_code', discipline_code);
-          if (document_type) formData.set('document_type', document_type);
+          if (effectiveDocType) formData.set('document_type', effectiveDocType);
           if (company_code) formData.set('company_code', company_code);
           if (title) formData.set('description', title);
           // "All projects" scope — let initSearch hidden fields pass through as-is
