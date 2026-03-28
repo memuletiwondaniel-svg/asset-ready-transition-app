@@ -9876,8 +9876,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       };
       const TYPE_DESCS: Record<string, string> = dynamicTypeDescs;
 
-      const filters = lastToolResult.filters_applied || {};
-      const totalFound = lastToolResult.total_found || 0;
+      const filters = effectiveSearchResult.filters_applied || {};
+      const totalFound = effectiveSearchResult.total_found || 0;
       const hasSpecificFilter = !!(filters.document_type || filters.discipline_code || filters.status_code);
       const isSpecificQuery = hasSpecificFilter || totalFound <= 30;
 
