@@ -9173,7 +9173,7 @@ Queries/TQs     | QRY_QUERY     | tqry.SearchQuery                | 4           
 Assets          | ASSET         | asst.SearchObjectAssetItem      | 1           | null
 Work Packages   | PLANNING      | workpack.SearchWorkPackages     | 1           | null
 
-All searches also require: proj_seq_nr (resolved dynamically from dms_projects), start_row=1
+All searches use "All projects" scope by default (BGC_OPS + BGC_PROJ + ISG). The document number pattern scopes results to the correct project. Do not set proj_seq_nr or selected_project_codes manually. start_row=1
 
 DES_DOC / SUP_DOC search fields:
 selected_project_codes, number (use % wildcard), revision_code, description, date_from, date_before, codo_company_code, codo_document_nr, key_words, content, originator, resp_engr_seq_nr, company_code, discipline_code, document_type, status_code, approval_code, subclass_code, priority_code, classification_code, language_code, transmittal_number, receipt, sender_reference, archive, package_code, work_package_code, purchase_code, asset_code, asset_item_code, person_code_checked_out
