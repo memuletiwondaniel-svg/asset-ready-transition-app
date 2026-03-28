@@ -7774,6 +7774,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                   continue;
                 }
                 cookieHeader = modAuth.cookies;
+                // Warmup: hit label.aweb to establish server-side session state
+                await fetch(assaiBase + '/label.aweb', { headers: { Cookie: cookieHeader, 'User-Agent': ua }, redirect: 'follow' }).catch(() => {});
                 
                 const docs = await executeFilteredSearch(modParams, { document_type: typeCode });
                 console.log(`search_assai_documents: type=${typeCode} module=${modParams.subclass_type} returned ${docs.length} docs`);
