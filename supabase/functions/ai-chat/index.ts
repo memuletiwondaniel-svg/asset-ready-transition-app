@@ -9967,6 +9967,86 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                 const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
                 return new Response(sseFallback, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
               }
+            } else if (isFallbackAnalytical) {
+              // No specific doc type resolved, but query is analytical — search broadly by project
+              console.log('Deterministic fallback: ANALYTICAL query without resolved doc type, searching broadly');
+              const dpMatch = lastUserMsg.match(/DP[\s-]*(\d{2,4})/i);
+              let projectPattern: string | undefined;
+              if (dpMatch) {
+                const { data: projData } = await supabase
+                  .from('dms_projects')
+                  .select('code')
+                  .or(`project_id.ilike.%${dpMatch[1]}%,project_id.ilike.%DP${dpMatch[1]}%,project_id.ilike.%DP-${dpMatch[1]}%`)
+                  .limit(1);
+                if (projData && projData.length > 0) {
+                  projectPattern = `${projData[0].code}-%`;
+                }
+              }
+              if (projectPattern) {
+                const searchResult = await executeTool('search_assai_documents', { document_number_pattern: projectPattern }, supabase);
+                if (searchResult?.found && searchResult.total_found > 0) {
+                  const STATUS_DESCS_AN: Record<string, string> = {
+                    AFU: "Approved for Use", AFC: "Approved for Construction", IFB: "Issued for Bid", IFT: "Issued for Tender",
+                    IFI: "Issued for Information", IFA: "Issued for Approval", IFC: "Issued for Construction", CAN: "Cancelled",
+                    REV: "Under Revision", SUP: "Superseded", IFR: "Issued for Review", AFD: "Approved for Design",
+                    IFD: "Issued for Design", IFU: "Issued for Use", PLN: "Planned"
+                  };
+                  const statusSummary = searchResult.status_summary || {};
+                  const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
+                  const approvedStatuses = ['AFU', 'AFC', 'AFD'];
+                  const pendingCount = pendingStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
+                  const approvedCount = approvedStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
+                  const cancelledCount = (statusSummary['CAN'] || 0) + (statusSummary['SUP'] || 0);
+                  const dpLabel = dpMatch ? ` in DP${dpMatch[1]}` : '';
+
+                  let analyticalSummary = `Found **${searchResult.total_found}** documents${dpLabel}.`;
+                  if (pendingCount > 0) analyticalSummary += ` **${pendingCount}** are pending review/approval.`;
+                  if (approvedCount > 0) analyticalSummary += ` **${approvedCount}** are approved.`;
+                  if (cancelledCount > 0) analyticalSummary += ` **${cancelledCount}** are cancelled/superseded.`;
+
+                  const statusTable = Object.entries(statusSummary).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS_AN[s] ?? s }));
+                  const typeTable = Object.entries(searchResult.type_summary || {}).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 5).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: dynamicTypeDescs[code] ?? code }));
+
+                  const analyticalFollowups = ["Show all pending review documents", "Break down by discipline", "Show vendor submission timeline"];
+
+                  let vendorTable: any[] | undefined;
+                  if (isFallbackVendorQuery) {
+                    const allDocs = searchResult.documents || [];
+                    const byCompany: Record<string, { count: number; pending: number; approved: number }> = {};
+                    for (const doc of allDocs) {
+                      const company = doc.company_code || doc.originator || 'Unknown';
+                      if (!byCompany[company]) byCompany[company] = { count: 0, pending: 0, approved: 0 };
+                      byCompany[company].count++;
+                      if (pendingStatuses.includes(doc.status)) byCompany[company].pending++;
+                      if (approvedStatuses.includes(doc.status)) byCompany[company].approved++;
+                    }
+                    vendorTable = Object.entries(byCompany).sort((a, b) => b[1].count - a[1].count).slice(0, 10).map(([company, data]) => ({ company, ...data }));
+                    analyticalSummary += ` Documents come from **${Object.keys(byCompany).length}** vendors/contractors.`;
+                    analyticalFollowups[2] = "Show documents by specific vendor";
+                  }
+
+                  const topDocs = (searchResult.documents || []).slice(0, 5).map((d: any) => ({
+                    document_number: d.document_number, title: d.title, revision: d.revision,
+                    status: d.status, type_code: d.type_code, download_url: d.download_url || null
+                  }));
+
+                  const structured: any = {
+                    type: "document_search",
+                    summary: analyticalSummary,
+                    status_table: statusTable,
+                    type_table: typeTable,
+                    documents: topDocs,
+                    highlights: [`Broad analytical query — summarising all ${searchResult.total_found} documents${dpLabel}`],
+                    follow_ups: analyticalFollowups,
+                    followup: analyticalFollowups
+                  };
+                  if (vendorTable) structured.vendor_table = vendorTable;
+
+                  const fallbackContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+                  const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
+                  return new Response(sseFallback, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+                }
+              }
             }
           } catch (fallbackErr) {
             console.error('Deterministic fallback failed:', fallbackErr);
