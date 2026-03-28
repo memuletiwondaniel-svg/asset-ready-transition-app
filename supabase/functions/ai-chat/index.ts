@@ -9652,22 +9652,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         entt_seq_nr: d.entt_seq_nr
       }));
 
-      // Extract AI highlights and follow-ups from accumulated text
-      const highlights: string[] = [];
-      const hlMatch = finalTextContent.match(/\d+\.\s+(.+)/g);
-      if (hlMatch) {
-        for (const line of hlMatch.slice(0, 5)) {
-          highlights.push(line.replace(/^\d+\.\s+/, '').trim());
-        }
-      }
-
-      const followup: string[] = [];
-      const fuMatch = finalTextContent.match(/[-•]\s+(.+)/g);
-      if (fuMatch) {
-        for (const line of fuMatch.slice(-3)) {
-          followup.push(line.replace(/^[-•]\s+/, '').replace(/\*\*/g, '').trim());
-        }
-      }
+      // DETERMINISTIC follow-ups and insights — never extract from AI text (produces garbage)
+      // AI text is discarded for structured responses; all UI content comes from tool data
 
       // Generate insights ONLY when there is a genuinely non-obvious, actionable finding.
       // If all the insight would do is restate what the table already shows, return empty (no insights section).
@@ -9708,12 +9694,19 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       };
 
       if (isSpecificQuery) {
-        // Always use deterministic insights — never use AI-extracted highlights (they just repeat doc numbers)
         const smartInsights = generateSmartInsights(lastToolResult, docList);
-        if (followup.length === 0) {
-          if (docList.length > 0) followup.push(`Read and summarise ${docList[0].document_number}`);
-          followup.push("Show me related documents");
-          followup.push("Which of these are approved?");
+        
+        // Context-aware follow-ups based on actual results
+        const specificFollowups: string[] = [];
+        if (docList.length > 0) {
+          specificFollowups.push(`Read & summarise the first document`);
+        }
+        const statuses = [...new Set(docList.map((d: any) => d.status).filter(Boolean))];
+        if (statuses.length > 1) {
+          specificFollowups.push("Show only approved documents");
+        }
+        if (docList.length > 1) {
+          specificFollowups.push("Compare revisions across these");
         }
 
         const structured = {
@@ -9721,7 +9714,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           summary: buildSearchSummary(lastToolResult),
           documents: docList,
           highlights: smartInsights,
-          followup
+          followup: specificFollowups.slice(0, 3)
         };
 
         finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
@@ -9729,11 +9722,13 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       } else {
         // BROAD QUERY: Show status/type summaries with document list below
         const broadInsights = generateSmartInsights(lastToolResult, docList);
-        if (followup.length === 0) {
-          followup.push("Show me only the pending documents");
-          followup.push("Break down by discipline");
-          followup.push("Which documents are overdue?");
-        }
+        
+        const broadFollowups: string[] = [];
+        const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
+        const hasPending = pendingStatuses.some(s => (lastToolResult.status_summary || {})[s]);
+        if (hasPending) broadFollowups.push("Show only pending documents");
+        broadFollowups.push("Filter by discipline");
+        if (docList.length > 5) broadFollowups.push("Export this list");
 
         const statusTable = Object.entries(lastToolResult.status_summary || {})
           .sort((a: any, b: any) => b[1] - a[1])
@@ -9751,7 +9746,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           type_table: typeTable,
           documents: docList,
           highlights: broadInsights,
-          followup
+          followup: broadFollowups.slice(0, 3)
         };
 
         finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
