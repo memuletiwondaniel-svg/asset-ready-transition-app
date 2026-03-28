@@ -9710,26 +9710,44 @@ You NEVER fabricate data — always use tool results. Format responses with mark
               
               let searchResult = await executeTool('search_assai_documents', searchArgs, supabase);
               
-              // Multi-strategy fallback: if first search returns 0, try title-based search
+              // Multi-strategy fallback: if first search returns 0, try escalation strategies
+              const DOC_TYPE_WORDS = new Set(['IOM','BFD','ITP','DOCUMENT','DRAWING','SDR','MDS','DATASHEET','SLD','REPORT','MANUAL','PROCEDURE','SPECIFICATION','LIST','REGISTER','PLAN','SCHEDULE','DIAGRAM','LAYOUT','ARRANGEMENT','GA','PFD','P&ID','BOM','FAT','SAT','MRB','TBE','TBA','VDR']);
+              const subjectWords = extraTerms.filter(w => !DOC_TYPE_WORDS.has(w) && !/^\d+$/.test(w));
+
+              // Strategy 2: title/description keyword search
               if (!searchResult?.found || searchResult.total_found === 0) {
-                const DOC_TYPE_WORDS = new Set(['IOM','BFD','ITP','DOCUMENT','DRAWING','SDR','MDS','DATASHEET','SLD','REPORT','MANUAL','PROCEDURE','SPECIFICATION','LIST','REGISTER','PLAN','SCHEDULE','DIAGRAM','LAYOUT','ARRANGEMENT','GA','PFD','P&ID','BOM','FAT','SAT','MRB','TBE','TBA','VDR']);
-                const subjectWords = extraTerms.filter(w => !DOC_TYPE_WORDS.has(w) && !/^\d+$/.test(w));
                 if (subjectWords.length > 0) {
-                  console.log(`Deterministic fallback: Strategy 2 - title keyword search with: ${subjectWords.join(' ')}`);
-                  const titleSearchArgs: any = { document_number_pattern: projectPattern || `${resolvedCode ? '' : ''}%`, title: subjectWords.join(' ') };
+                  console.log(`Deterministic fallback: Strategy 2 - description keyword search with: ${subjectWords.join(' ')}`);
+                  const titleSearchArgs: any = { document_number_pattern: projectPattern || '%', title: subjectWords.join(' ') };
                   if (projectPattern) titleSearchArgs.document_number_pattern = projectPattern;
                   searchResult = await executeTool('search_assai_documents', titleSearchArgs, supabase);
                 }
               }
               
-              // Strategy 3: broader pattern without doc type
+              // Strategy 3: broader pattern without doc type but with title keyword
               if (!searchResult?.found || searchResult.total_found === 0) {
                 if (projectPattern && resolvedCode) {
                   console.log(`Deterministic fallback: Strategy 3 - broader pattern without doc type`);
                   const broaderArgs: any = { document_number_pattern: projectPattern };
-                  const subjectWords2 = extraTerms.filter(w => !new Set(['IOM','BFD','ITP','DOCUMENT','DRAWING','SDR','MDS']).has(w) && !/^\d+$/.test(w));
-                  if (subjectWords2.length > 0) broaderArgs.title = subjectWords2.join(' ');
+                  if (subjectWords.length > 0) broaderArgs.title = subjectWords.join(' ');
                   searchResult = await executeTool('search_assai_documents', broaderArgs, supabase);
+                }
+              }
+
+              // Strategy 4: related type codes (J01→G01, G02)
+              if (!searchResult?.found || searchResult.total_found === 0) {
+                const RELATED_TYPES: Record<string, string[]> = {
+                  'J01': ['G01', 'G02'], 'G01': ['J01', 'G02'], 'G02': ['J01', 'G01'],
+                  'A01': ['A02', 'A03'], 'B01': ['B02'], 'H01': ['H02'],
+                };
+                const relatedCodes = RELATED_TYPES[resolvedCode] || [];
+                for (const altCode of relatedCodes) {
+                  console.log(`Deterministic fallback: Strategy 4 - trying related type ${altCode}`);
+                  const altArgs: any = { document_type: altCode };
+                  if (projectPattern) altArgs.document_number_pattern = projectPattern;
+                  if (subjectWords.length > 0) altArgs.title = subjectWords.join(' ');
+                  searchResult = await executeTool('search_assai_documents', altArgs, supabase);
+                  if (searchResult?.found && searchResult.total_found > 0) break;
                 }
               }
 
