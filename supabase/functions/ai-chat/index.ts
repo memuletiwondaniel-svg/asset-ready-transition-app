@@ -9201,7 +9201,7 @@ INSTANCE:
 - URL: https://eu.assaicloud.com/AWeu578/
 - Database: eu578
 - Project cabinet: BGC_PROJ (Company Projects)
-- proj_seq_nr: 59734 (internal ID — required in all search POSTs)
+- proj_seq_nr: resolved dynamically per project from dms_projects table. Do not hardcode.
 - User: Daniel Memuletiwon
 
 HOW SELMA CONNECTS TO ASSAI:
