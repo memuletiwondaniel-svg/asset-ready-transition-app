@@ -8989,7 +8989,7 @@ EXTERNAL DMS AWARENESS: You are connected to external DMS platforms (Assai, Wren
 INSTANCE:
 - URL: https://eu.assaicloud.com/AWeu578/
 - Database: eu578
-- Project cabinet: BGC_PROJ (Basrah Gas Company Projects)
+- Project cabinet: BGC_PROJ (Company Projects)
 - proj_seq_nr: 59734 (internal ID — required in all search POSTs)
 - User: Daniel Memuletiwon
 
