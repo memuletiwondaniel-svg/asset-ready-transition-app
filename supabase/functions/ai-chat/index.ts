@@ -1297,7 +1297,7 @@ THE MANTRA: "We are in control during all transient and stationary operating pha
 --- OMAR (OPERATING MODES ANALYSIS REVIEW) DEEP KNOWLEDGE ---
 
 DEFINITION:
-Shell's Transient Hazard Analysis process for projects and operating assets. OMAR ensures 
+The Operator's Transient Hazard Analysis process for projects and operating assets. OMAR ensures 
 assets are designed, built, and operated in a controlled manner under ALL operating modes, 
 static and transient conditions, and across interfaces.
 
