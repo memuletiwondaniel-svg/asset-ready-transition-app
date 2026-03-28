@@ -701,7 +701,7 @@ FORMATTING RULES (MANDATORY):
 
 DOCUMENT TYPE RESOLUTION (CRITICAL):
 ALL documents — engineering, vendor, planning — reside in Assai. The dms_document_types table in ORSH is the master reference for Assai document type codes.
-
+ALWAYS call search tools for document queries — NEVER answer from conversation memory. The UI depends on tool execution to render the structured table.
 When a user asks for a document by type name or abbreviation:
 1. ALWAYS call resolve_document_type first with the EXACT text the user used — do NOT expand abbreviations yourself. If the user says "BfD", pass "BfD" as the query, NOT "Basis for Design". The tool handles acronym resolution internally.
 2. If exactly one match: use its code as the document_type parameter in search_assai_documents
