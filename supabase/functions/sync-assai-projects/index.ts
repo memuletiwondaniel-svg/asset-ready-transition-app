@@ -242,16 +242,20 @@ Deno.serve(async (req) => {
     >();
 
     for (const row of myCells) {
-      const projectCode = stripHtml(row[17]);
+      // Extract project code from first segment of document number (row[3])
+      // row[17] is often empty; row[3] contains e.g. "6529-ABBE-C017-..." → "6529"
+      const docNumber = stripHtml(row[3]);
+      const projectCode = docNumber.split('-')[0];
       const cabinet = stripHtml(row[26]);
       const projectName = stripHtml(row[27]);
       const projSeqNr = stripHtml(row[36]);
 
       if (!projectCode || !projSeqNr) continue;
 
-      // Only store if we haven't seen this project or if current row has more data
-      if (!projectMap.has(projectCode)) {
-        projectMap.set(projectCode, {
+      // Use composite key to handle same code across different cabinets
+      const compositeKey = projectCode + '|' + cabinet;
+      if (!projectMap.has(compositeKey)) {
+        projectMap.set(compositeKey, {
           project_code: projectCode,
           proj_seq_nr: projSeqNr,
           project_name: projectName,
