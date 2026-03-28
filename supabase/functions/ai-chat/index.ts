@@ -9697,14 +9697,15 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                 let docList: any[];
                 
                 if (relevantDocs.length > 0) {
-                  adjustedSummary = `Found **${relevantDocs.length}** ${resolvedCode} (${resolvedName}) document${relevantDocs.length > 1 ? 's' : ''} related to **${subjectLabel}**${dpLabel}`;
+                  adjustedSummary = `I found **${relevantDocs.length}** ${resolvedCode} (${resolvedName}) document${relevantDocs.length > 1 ? 's' : ''} related to **${subjectLabel}**${dpLabel}.`;
                   if (otherDocs.length > 0) {
-                    adjustedSummary += ` (plus ${otherDocs.length} other ${resolvedName} documents)`;
+                    adjustedSummary += ` There are also ${otherDocs.length} other unrelated ${resolvedName} documents available.`;
                   }
-                  docList = [...relevantDocs, ...otherDocs].slice(0, 30);
+                  docList = relevantDocs;
                 } else if (subjectLabel) {
-                  adjustedSummary = `I didn't find a specific ${resolvedName} for **${subjectLabel}**${dpLabel}, but found **${allDocs.length}** other ${resolvedCode} (${resolvedName}) documents. Here are all available:`;
-                  docList = allDocs.slice(0, 30);
+                  const showCount = Math.min(allDocs.length, 10);
+                  adjustedSummary = `I didn't find a specific ${resolvedName} for **${subjectLabel}**${dpLabel}, but found **${allDocs.length}** other ${resolvedCode} (${resolvedName}) documents. None matched "${subjectLabel}" specifically — here are the closest ${showCount}:`;
+                  docList = allDocs.slice(0, 10);
                 } else {
                   adjustedSummary = summaryText;
                   docList = allDocs.slice(0, 30);

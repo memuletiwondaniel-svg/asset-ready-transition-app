@@ -581,10 +581,10 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
         console.log('Fetch error — auto-retrying transparently...');
         setMessages([...newMessages, { role: 'assistant', content: '⏳ Give me a few more seconds while I pull and analyze the data...' }]);
         await new Promise(r => setTimeout(r, 2500));
-        retryAttemptRef.current = false;
         handleSend(textToSend);
         return;
       }
+      // Second attempt also failed — show error and reset
       retryAttemptRef.current = false;
       const userQuery = textToSend?.substring(0, 60).trim() || 'your request';
       const errorMsg = `I encountered a temporary issue processing "${userQuery}". Please try again in a moment.`;
