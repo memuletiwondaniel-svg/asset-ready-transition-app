@@ -1,121 +1,86 @@
 
 
-## Plan: Fix Document Reading, Cross-Discipline Search Bias, and File Upload
+## Plan: Fix PEFS Search Bias, Assai Error Pages, and Strengthen Cross-Discipline Logic
 
-### 6 Changes in Order
+### Root Cause Analysis
+
+**Problem 1 — PEFS returns only vendor documents:**
+"PEFS" is NOT in the `dms_document_type_acronyms` table at all. When the agent calls `resolve_document_type("PEFS")`, it finds no acronym match, then falls to Step 2 (name search) with `ilike('%PEFS%')`. Neither "Process Engineering Flow Sheets" (C01) nor "Process Engineering Flow Scheme" (2365) contains the literal string "PEFS", so the function returns "not found." The agent then guesses and picks C01 only.
+
+**Problem 2 — Cross-discipline auto-combine doesn't work:**
+Even when a code IS resolved, the cross-discipline query uses `ilike('%Process Engineering Flow Sheets%')` which does NOT match "Process Engineering Flow Scheme" (code 2365) because the names are different. The `ilike` match is too strict — it needs fuzzy/stem matching.
+
+**Problem 3 — Assai error pages on SUP_DOC module:**
+The `searchBothModules` fallback calls `initSearch` for `SUP_DOC`, but the Assai session may not support rapid context switches between modules. The error page `<!-- applet:error -->` indicates a server-side session conflict.
+
+**Problem 4 — "Process Safety Design Basis" not found:**
+The agent calls `resolve_document_type` which finds nothing, then searches with `6529-%-DP300-%` which also returns nothing because DP300 documents don't have "DP300" literally in their document numbers. The title-based search isn't being used effectively.
 
 ---
 
-### 1. Fix dangling variable crash + download hardening (`read_assai_document`)
+### Fix 1 — Add PEFS acronym to the database
+
+Create a migration to insert "PEFS" into `dms_document_type_acronyms` with `type_code = 'C01'` and `full_name = 'Process Engineering Flow Sheets'`. This is the immediate fix so the acronym lookup works.
+
+Also add common missing acronyms: "PID" / "P&ID", "PSDB" (Process Safety Design Basis) if applicable.
+
+### Fix 2 — Fix cross-discipline auto-combine to use stem matching
 
 **File**: `supabase/functions/ai-chat/index.ts`
 
-**Line 6870**: Replace `docProjectCode` and `selectedProjectCodes` with literal strings:
+The current cross-discipline query uses the full document name:
 ```
-console.error(`read_assai_document: pk_seq_nr="${pkSeqNr}" entt_seq_nr="${enttSeqNr}" — document not found in Assai (All projects scope)`);
+ilike('document_name', '%Process Engineering Flow Sheets%')
 ```
-**Line 6874**: Fix reason string similarly.
+This misses "Process Engineering Flow Scheme" (2365).
 
-**Line 6895**: Reduce timeout from 25000 to 15000.
+**Fix**: Extract the stem (first 3-4 significant words) from the document name and use that for the cross-discipline query. For example, extract "Process Engineering Flow" from "Process Engineering Flow Sheets" and search with `ilike('%Process Engineering Flow%')`.
 
-**Line 6940**: Update timeout message from "25s" to "15s".
-
-**Lines 6921-6937**: After reading bytes, add HTML error page detection — check if first bytes start with `<` (0x3C) or match `<!DOCTYPE` or `<html` and return `content_available: false` with "Assai returned an error page instead of the document file" before attempting base64 conversion.
-
----
-
-### 2. Cross-discipline auto-combine in `resolve_document_type`
-
-**File**: `supabase/functions/ai-chat/index.ts`
-
-**Lines 7025-7051** (acronym match single-result branch): After fetching `typeDetails`, add a cross-discipline query to `dms_document_types` using `ilike('document_name', '%<full_name>%')`. Collect all matching codes into a Set, combine with `+`, return combined instruction.
-
-**Lines 7071-7091** (fullNameMatch single-result branch): Same cross-discipline auto-combine logic.
-
-**ZV bias confirmation**: Line 7285 (`discipline_code === 'ZV'`) only triggers when the user explicitly passes `discipline_code='ZV'`. All other ZV references in the file are documentation/examples in prompt strings. No default ZV filter exists — the bias was caused solely by `resolve_document_type` returning a single vendor code.
-
----
-
-### 3. File upload — frontend (`ORSHChatDialog.tsx`)
-
-**File**: `src/components/widgets/ORSHChatDialog.tsx`
-
-**handleSend (lines 436-458)**: Before `uploadFilesToStorage`, check if the first attached file is a document (PDF/image). If so:
-- Validate size (reject >10MB with toast)
-- Validate type (accept only `application/pdf`, `image/png`, `image/jpeg`, `image/webp`; reject others with toast)
-- Read as base64 via `FileReader`
-- Store as `filePayload: { file_data, file_name, file_type }`
-- Skip `uploadFilesToStorage` for this file
-- Clear `attachedFiles`
-
-**User message (lines 460-466)**: Set `content` to user's text only (no `documentTexts` appended). Add `fileNames` from `filePayload` so the UI shows the attachment chip.
-
-**API call (lines 486-493)**: Add `file_data`, `file_name`, `file_type` to the JSON body.
-
-**Message interface (line 87)**: No change needed — `fileNames` already exists.
-
-**Display (lines 1154-1169)**: Already renders `📄 filename` chip via `FileText` icon — works as-is. The key fix is ensuring `documentTexts` (raw text) is never appended to `content` for document files sent via base64.
-
----
-
-### 4. File upload — edge function handler
-
-**File**: `supabase/functions/ai-chat/index.ts`
-
-**Line 9050**: Destructure `file_data`, `file_name`, `file_type` from request body.
-
-**After line 9067** (before personalization context loading): Add early-return block:
 ```typescript
-if (file_data && file_name) {
-  // Direct file analysis — bypass entire Assai tool loop
-  const mediaType = file_type || 'application/pdf';
-  const userText = messages.filter(m => m.role === 'user').pop()?.content || 'Analyze this document';
-  const analysisPrompt = "A document has been directly uploaded..."; // full prompt from plan
-  
-  // SSE streaming call to Claude with document content block
-  const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-5-20250929",
-      max_tokens: 4096,
-      system: analysisPrompt,
-      messages: [{ role: "user", content: [
-        { type: "document", source: { type: "base64", media_type: mediaType, data: file_data } },
-        { type: "text", text: userText }
-      ]}],
-      stream: true,
-    }),
-  });
-  
-  // Stream SSE response back (same pattern as main loop)
-  // Transform Anthropic SSE to OpenAI-compatible SSE format
-  return new Response(streamBody, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
-}
+// Extract stem: take words up to but not including the last word
+const nameWords = typeDetails.document_name.split(/\s+/);
+const stem = nameWords.length > 2 
+  ? nameWords.slice(0, -1).join(' ')  // "Process Engineering Flow"
+  : typeDetails.document_name;
+const { data: crossMatches } = await supabaseClient
+  .from('dms_document_types')
+  .select('code, document_name, document_description, tier')
+  .ilike('document_name', `%${stem}%`)
+  .eq('is_active', true)
+  .limit(5);
 ```
 
-This block is placed BEFORE the agent loop initialization (line 9700), ensuring no tools are initialized.
+Apply this stem extraction in BOTH the acronym-match branch (line 7067) and the fullNameMatch branch (line 7136).
 
----
+### Fix 3 — Fix name_search (Step 2) to also auto-combine
 
-### 5. System prompt updates
+**File**: `supabase/functions/ai-chat/index.ts`, lines 7190-7205
+
+Currently when `name_search` returns a single match, it returns just that one code WITHOUT cross-discipline auto-combine. Add the same stem-based cross-discipline logic here.
+
+Also: when `name_search` returns 1 result, don't ask the user to confirm — just use it (same as acronym path).
+
+### Fix 4 — Re-authenticate for SUP_DOC alt module search
 
 **File**: `supabase/functions/ai-chat/index.ts`
 
-Add to DOCUMENT_AGENT_PROMPT (after search escalation protocol):
+The `searchBothModules` path reuses the same Assai session for both DES_DOC and SUP_DOC searches. Assai's server-side state is module-specific — switching modules within the same session causes error pages.
+
+**Fix**: In the `searchBothModules` block (line 7716), re-authenticate before the alt module search. Call `authenticateAssai` again to get a fresh session, then use the new cookies for the SUP_DOC `initSearch`/`paginateSearch`.
+
+Similarly fix `executeFilteredSearch` (line 7549) — it already calls its own `initSearch` but shares the same `cookieHeader`. Make it accept an optional cookie override, or re-authenticate per call when switching modules.
+
+### Fix 5 — Add PEFS and related acronyms to the database
+
+SQL migration:
+```sql
+INSERT INTO dms_document_type_acronyms (acronym, type_code, full_name, notes, is_learned)
+VALUES 
+  ('PEFS', 'C01', 'Process Engineering Flow Sheets', 'Also known as P&ID. BGC code 2365 covers the same concept.', false),
+  ('PID', 'C01', 'Piping and Instrument Diagram', 'Vendor P&ID documents', false),
+  ('P&ID', 'C01', 'Piping and Instrument Diagram', 'Vendor P&ID documents', false)
+ON CONFLICT (acronym) DO NOTHING;
 ```
-PARALLEL SEARCH STRATEGY (CRITICAL):
-When searching for a named document (e.g., "Process Safety Design Basis"):
-1. ALWAYS run a title/keyword search IN PARALLEL with the type-code search
-2. Pass the key phrase in the 'title' parameter of search_assai_documents
-3. Do NOT give up after type-code search alone
-```
-
----
-
-### 6. Deploy edge function
-
-Deploy `ai-chat` after all changes.
 
 ---
 
@@ -123,14 +88,13 @@ Deploy `ai-chat` after all changes.
 
 | File | Changes |
 |------|---------|
-| `supabase/functions/ai-chat/index.ts` | Fix dangling vars; reduce timeout; add HTML guard; cross-discipline auto-combine; file upload handler with SSE streaming; prompt updates |
-| `src/components/widgets/ORSHChatDialog.tsx` | File size/type validation; base64 reading; clean message content; send file_data in API body |
+| `supabase/functions/ai-chat/index.ts` | Stem-based cross-discipline matching in resolve_document_type (3 locations); re-authenticate for alt module search; fix name_search single-result auto-combine |
+| Migration SQL | Insert PEFS, PID, P&ID acronyms |
 
 ### Implementation Order
-1. Fix dangling variable crash + download hardening
-2. Cross-discipline auto-combine in `resolve_document_type`
-3. File upload frontend (validation + base64 + clean display)
-4. File upload edge function handler (early return + SSE streaming)
-5. System prompt title-search strategy update
-6. Deploy edge function
+1. Database migration — add PEFS/PID acronyms
+2. Fix cross-discipline stem matching (3 locations in resolve_document_type)
+3. Fix name_search single-result to auto-combine
+4. Re-authenticate for SUP_DOC alt module search
+5. Deploy edge function
 
