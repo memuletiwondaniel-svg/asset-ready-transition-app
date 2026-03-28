@@ -9694,12 +9694,19 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       };
 
       if (isSpecificQuery) {
-        // Always use deterministic insights — never use AI-extracted highlights (they just repeat doc numbers)
         const smartInsights = generateSmartInsights(lastToolResult, docList);
-        if (followup.length === 0) {
-          if (docList.length > 0) followup.push(`Read and summarise ${docList[0].document_number}`);
-          followup.push("Show me related documents");
-          followup.push("Which of these are approved?");
+        
+        // Context-aware follow-ups based on actual results
+        const specificFollowups: string[] = [];
+        if (docList.length > 0) {
+          specificFollowups.push(`Read & summarise the first document`);
+        }
+        const statuses = [...new Set(docList.map((d: any) => d.status).filter(Boolean))];
+        if (statuses.length > 1) {
+          specificFollowups.push("Show only approved documents");
+        }
+        if (docList.length > 1) {
+          specificFollowups.push("Compare revisions across these");
         }
 
         const structured = {
@@ -9707,7 +9714,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           summary: buildSearchSummary(lastToolResult),
           documents: docList,
           highlights: smartInsights,
-          followup
+          followup: specificFollowups.slice(0, 3)
         };
 
         finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
