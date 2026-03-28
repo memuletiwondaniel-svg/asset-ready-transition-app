@@ -1,78 +1,91 @@
 
 
-## Root Cause
+## Fix: Non-Clickable Follow-ups & Unit/Project Confusion
 
-The relevance filtering code exists **only in the deterministic fallback path** (lines 9640-9710) — the code that runs when the AI/Anthropic API **fails**. 
+### Problem 1: Follow-up suggestions render as plain text bullets
 
-When the AI succeeds (the normal, happy path), PART 1 (lines 9836-9972) builds the structured response by taking **all documents raw from the tool result** with no filtering:
+The structured response builder (PART 1, line 9858) correctly generates clickable follow-up pills, but it only triggers when `lastToolName === 'search_assai_documents'`. When the AI calls additional tools after the search (e.g., `resolve_document_type` in a later iteration), `lastToolName` gets overwritten, so PART 1 never fires. The AI then formats its own free-text markdown response with plain bullet suggestions.
 
-```ts
-// Line 9861 — no filtering at all
-const docList = (lastToolResult.documents || []).slice(0, maxDocs).map(...)
-```
+**Fix**: Track `search_assai_documents` results separately so they aren't lost when subsequent tools run.
 
-This means relevance filtering only ever worked when Bob had an API error. Under normal operation, users always get 30 unfiltered documents. This is why the fix keeps "reverting" — it was never applied to the main path.
+### Problem 2: Bob confuses Unit codes with Project IDs
 
-## Fix
+The system prompt (line 734-738) explicitly tells Bob that `DP300 = U40300`, treating the Project ID as a unit code alias. This is incorrect:
+- **DP300** (or DP-300) = Project ID, resolves to project code `6529` via `dms_projects`
+- **U40300** = Unit code for "Compression" — a completely different concept from `dms_units`
 
-Apply the **same** subject-keyword relevance filtering from the fallback path into the **PART 1 success path** (lines 9859-9870). This is the only file that needs changing.
+Bob then displays "Unit: U40300 (DP300)" which conflates two distinct DMS concepts.
 
-### File: `supabase/functions/ai-chat/index.ts`
+---
 
-**After** building `docList` on line 9861, add the relevance filtering block:
+### Implementation — `supabase/functions/ai-chat/index.ts`
 
-1. Extract subject keywords from `lastUserMessage.content` using the same `SUBJECT_KEYWORDS` map (HVAC, Electrical, Generator, Fire, etc.)
-2. Split `docList` into `relevantDocs` (title contains keyword) and `otherDocs`
-3. If `relevantDocs.length > 0`, replace `docList` with only relevant docs and update the summary to say "Found **N** documents related to **HVAC**" instead of "Found 30 documents"
-4. If no matches, show top 10 with an explanatory note
+#### Change 1: Persist search tool results across iterations
 
-**Move `SUBJECT_KEYWORDS` to a shared constant** above both paths so it's defined once and reused in both the fallback and the success path.
-
-**Update `buildSearchSummary`** to accept an optional subject label and count override, so the summary reflects filtered results (e.g., "Found **2** IOM documents related to **HVAC** in DP223") instead of "Found **30** IOM documents".
-
-### Specific changes in PART 1 (lines 9859-9870):
+Around line 9796 where `lastToolName = toolName`, also track the search result separately:
 
 ```ts
-// After building raw docList...
-const msgForFilter = (lastUserMessage?.content || '').toUpperCase();
-let subjectLabel = '';
-let subjectKeywords: string[] = [];
-
-for (const [label, keywords] of Object.entries(SUBJECT_KEYWORDS)) {
-  if (keywords.some(kw => msgForFilter.includes(kw))) {
-    subjectLabel = label;
-    subjectKeywords = keywords;
-    break;
-  }
+// After line 9797
+if (toolName === 'search_assai_documents' && toolResult?.found && toolResult?.total_found > 0) {
+  searchToolResult = toolResult;
 }
-
-let filteredDocs = docList;
-let otherCount = 0;
-if (subjectKeywords.length > 0) {
-  const relevant = docList.filter(d => 
-    subjectKeywords.some(kw => (d.title || '').toUpperCase().includes(kw))
-  );
-  const others = docList.length - relevant.length;
-  if (relevant.length > 0) {
-    filteredDocs = relevant;
-    otherCount = others;
-  }
-}
-// Use filteredDocs instead of docList in the structured response
 ```
 
-**Update the summary** in the structured response to reflect filtered count and subject when applicable.
+Initialize `searchToolResult` alongside other state variables (line ~9484):
+```ts
+let searchToolResult: any = null;
+```
 
-**Update follow-ups** to include "Show all N documents" when filtering was applied.
+Then update the PART 1 condition (line 9858) to use either:
+```ts
+if (searchToolResult && searchToolResult.found && searchToolResult.total_found > 0) {
+  // Use searchToolResult instead of lastToolResult throughout PART 1
+```
 
-### Summary
+This ensures the structured response is always built when a search returned results, even if the AI made additional tool calls afterward.
 
-| Location | Problem | Fix |
-|----------|---------|-----|
-| PART 1 success path (line 9861) | No relevance filtering — shows all 30 raw docs | Add same keyword filtering from fallback |
-| `SUBJECT_KEYWORDS` constant | Duplicated only in fallback | Hoist to shared scope |
-| `buildSearchSummary` | Doesn't reflect filtered results | Add subject/count parameters |
-| Follow-ups | Generic | Add "Show all N documents" when filtered |
+#### Change 2: Fix the DP-to-Unit mapping in the system prompt
 
-Single file change: `supabase/functions/ai-chat/index.ts`. After deploying, this applies to all users permanently — no frontend/session/localStorage dependency.
+Replace lines 734-738:
+
+**Before:**
+```
+PLANT/UNIT CODE MAPPING (use when user mentions DP numbers or plant areas):
+DP300 = U40300, DP200 = U40200, DP100 = U40100, DP400 = U40400, DP500 = U40500.
+When the user mentions a DP number, map it to the unit code and include it in the document_number_pattern for precision.
+Example: "Find the BfD for DP300" → look up BfD code from the reference table, use document_number_pattern="6529-%-%-%-U40300-%"
+If you don't know the DP-to-unit mapping, ask the user to clarify.
+```
+
+**After:**
+```
+PROJECT ID vs UNIT CODE — CRITICAL DISTINCTION:
+- "DP300" (or "DP-300" or "DP 300") is a PROJECT ID. It resolves to a project CODE (e.g., 6529) via the dms_projects table (project_id column). It is NOT a unit code.
+- Unit codes (e.g., U40300 = Compression, U11000 = Acid Gas Removal) are process unit identifiers from the dms_units table. They occupy segment 5 of the document number.
+- These are completely independent concepts. Never equate a DP number to a unit code.
+When the user mentions a DP number (e.g., "documents for DP300"), resolve it to the project code via dms_projects and use that as the project prefix in the document_number_pattern (e.g., "6529-%").
+When the user mentions a unit or system (e.g., "HVAC", "Compression"), look up the unit code from dms_units and include it in segment 5 of the pattern (e.g., "6529-%-%-%-U40300-%").
+```
+
+Also fix line 9100 to be more descriptive:
+```
+5. Unit code (U40300 = Compression — from dms_units table. NOT a project ID)
+```
+
+#### Change 3: Enrich structured response document object with vendor/unit metadata
+
+The `document` object in the structured response only has `document_number`, `title`, `revision`, `status`. When a single document is found, Bob tries to add vendor/unit info via free text. Instead, extract these from the document number segments and include them in the structured response:
+
+In the PART 1 builder, when `filteredDocList.length === 1`, parse the document number to extract originator code and unit code. Add optional `vendor` and `unit` fields to the structured response.
+
+Update `StructuredResponseData` interface in `StructuredResponse.tsx` to include optional `vendor` and `unit` in the `document` object, and render them as bullet points in the document header card.
+
+---
+
+### Files to modify
+
+| File | Change |
+|------|--------|
+| `supabase/functions/ai-chat/index.ts` | (1) Track search results separately so PART 1 always fires. (2) Fix DP/Unit confusion in system prompt. (3) Add vendor/unit to structured response for single-doc results. |
+| `src/components/bob/StructuredResponse.tsx` | Add optional `vendor` and `unit` fields to document header card rendering. |
 
