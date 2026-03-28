@@ -712,7 +712,8 @@ ALWAYS call search tools for document queries — NEVER answer from conversation
 When a user asks for a document by type name or abbreviation:
 1. ALWAYS call resolve_document_type first with the EXACT text the user used — do NOT expand abbreviations yourself. If the user says "BfD", pass "BfD" as the query, NOT "Basis for Design". The tool handles acronym resolution internally.
 2. If exactly one match: use its code as the document_type parameter in search_assai_documents
-3. If multiple matches: show the user the options and ask which one they mean before searching
+3. If multiple matches with DIFFERENT disciplines (e.g. PX and ZV): search with ALL matching codes combined using '+' (e.g. document_type='2365+C01'). Do NOT ask the user to choose — the user wants ALL documents of that type regardless of discipline. Only ask for clarification if the matches are genuinely different document types (e.g. "Flow Scheme" vs "Flow Diagram").
+4. IMPORTANT: Many document types exist as both BGC/EPC codes (4-digit numeric like 2365) AND vendor codes (alphanumeric like C01). Always search with BOTH to get complete results.
 4. If no match: tell the user the document type was not found in the register and ask them to clarify
 5. Never guess or hardcode a type code — ALWAYS resolve dynamically via the tool
 6. Never search Assai without a document_type, company_code, or purchase_order filter — a bare project prefix like '6529-%' is NOT acceptable
@@ -3171,7 +3172,7 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
           },
           document_type: {
             type: "string",
-            description: 'Filter by Assai vendor document type code (e.g. A01, B01, H02, J01). Only use codes confirmed as vendor documents by resolve_document_type. ALWAYS call resolve_document_type FIRST before using this filter.'
+            description: 'Filter by Assai document type code. Supports BOTH vendor codes (e.g. A01, B01, C01) AND BGC/EPC codes (e.g. 2365, 5733). Use "+" to combine multiple codes (e.g. "2365+C01" to find both BGC and vendor PEFS). ALWAYS call resolve_document_type FIRST to get the correct code(s).'
           },
           status_code: {
             type: "string",
@@ -3197,7 +3198,7 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
     type: "function",
     function: {
       name: "resolve_document_type",
-      description: "Looks up document type codes and descriptions from the ORSH document management database. Use this BEFORE searching Assai whenever the user mentions a document type by name or abbreviation (e.g. 'BfD', 'ITP', 'datasheet', 'GA drawing'). Returns matching document types with their codes, descriptions, and whether they are vendor documents. If multiple matches are found, ask the user to clarify before proceeding.",
+      description: "Looks up document type codes and descriptions from the ORSH document management database. Use this BEFORE searching Assai whenever the user mentions a document type by name or abbreviation (e.g. 'BfD', 'ITP', 'datasheet', 'GA drawing'). Returns matching document types with their codes, descriptions, and whether they are vendor documents. If multiple matches are found for the SAME document concept (e.g. PEFS exists as both BGC code 2365 and vendor code C01), combine ALL codes with '+' (e.g. '2365+C01') to search across both. Only ask for clarification if matches are genuinely DIFFERENT document types.",
       parameters: {
         type: "object",
         properties: {
@@ -7272,12 +7273,17 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         
         const ua = ASSAI_UA;
 
+        // Handle multi-code document_type (e.g. "2365+C01") by splitting into separate type codes
+        const documentTypeCodes = document_type ? document_type.split('+').map((c: string) => c.trim()).filter(Boolean) : [];
+        const effectiveDocType = documentTypeCodes.length === 1 ? documentTypeCodes[0] : undefined;
+        const isMultiTypeSearch = documentTypeCodes.length > 1;
+        
         // Determine module: ZV discipline or PO-based searches target SUP_DOC; otherwise DES_DOC first
         // When document_type is provided without explicit discipline, search BOTH modules proactively
         const isPOSearch = document_number_pattern.match(/%-?(\d{5})-?%?$/) || document_number_pattern.match(/^(\d{5})$/);
         const poDigits = isPOSearch?.[1];
         const useSupDoc = discipline_code === 'ZV' || !!poDigits;
-        const searchBothModules = !useSupDoc && !!document_type && !discipline_code;
+        const searchBothModules = !useSupDoc && (!!document_type || isMultiTypeSearch) && !discipline_code;
         
         const moduleParams = useSupDoc
           ? { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' }
@@ -7339,7 +7345,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             formData.set('number', document_number_pattern);
           }
           if (discipline_code) formData.set('discipline_code', discipline_code);
-          if (document_type) formData.set('document_type', document_type);
+          if (effectiveDocType) formData.set('document_type', effectiveDocType);
           if (status_code) formData.set('status_code', status_code);
           if (company_code) formData.set('company_code', company_code);
           if (title) formData.set('description', title);
@@ -7485,7 +7491,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             formData.set('number', document_number_pattern);
           }
           if (discipline_code) formData.set('discipline_code', discipline_code);
-          if (document_type) formData.set('document_type', document_type);
+          if (effectiveDocType) formData.set('document_type', effectiveDocType);
           if (company_code) formData.set('company_code', company_code);
           if (title) formData.set('description', title);
           // "All projects" scope — let initSearch hidden fields pass through as-is
@@ -7596,29 +7602,63 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         };
 
         // Execute primary search with pagination
-        let allDocuments = await paginateSearch(moduleParams);
-        console.log('search_assai_documents: primary search returned ' + allDocuments.length + ' docs total');
+        // For multi-type searches (e.g. "2365+C01"), run separate searches per type code and merge
+        let allDocuments: any[] = [];
         
-        // If searchBothModules (document_type provided without explicit discipline), proactively search the other module too
-        if (searchBothModules || allDocuments.length === 0) {
-          const altParams = useSupDoc
-            ? { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' }
-            : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
+        if (isMultiTypeSearch) {
+          console.log('search_assai_documents: multi-type search with codes: ' + documentTypeCodes.join(', '));
+          const seen = new Set<string>();
           
-          try {
-            console.info('Paginated search (alt): sending for', altParams.subclass_type, searchBothModules ? '(proactive dual-module)' : '(fallback)');
-            const altDocs = await paginateSearch(altParams);
-            // Merge results, dedup by document_number
-            const seen = new Set(allDocuments.map((d: any) => d.document_number));
-            for (const doc of altDocs) {
-              if (doc.document_number && !seen.has(doc.document_number)) {
-                seen.add(doc.document_number);
-                allDocuments.push(doc);
+          for (const typeCode of documentTypeCodes) {
+            // Temporarily set effectiveDocType for this iteration
+            const origDocType = effectiveDocType;
+            // We need to search both modules for each type code
+            for (const modParams of [
+              { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' },
+              { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' },
+            ]) {
+              try {
+                // Override document_type in fetchResultPage by temporarily patching the closure variable
+                // We need a different approach — use executeFilteredSearch with document_type override
+                const docs = await executeFilteredSearch(modParams, { document_type: typeCode });
+                console.log(`search_assai_documents: type=${typeCode} module=${modParams.subclass_type} returned ${docs.length} docs`);
+                for (const doc of docs) {
+                  if (doc.document_number && !seen.has(doc.document_number)) {
+                    seen.add(doc.document_number);
+                    allDocuments.push(doc);
+                  }
+                }
+              } catch (err) {
+                console.error(`search_assai_documents: type=${typeCode} module=${modParams.subclass_type} error:`, err);
               }
             }
-            console.log('search_assai_documents: after alt module merge, total docs:', allDocuments.length);
-          } catch (altErr) {
-            console.error('search_assai_documents: alt module search error:', altErr);
+          }
+          console.log('search_assai_documents: multi-type search total unique docs: ' + allDocuments.length);
+        } else {
+          allDocuments = await paginateSearch(moduleParams);
+          console.log('search_assai_documents: primary search returned ' + allDocuments.length + ' docs total');
+          
+          // If searchBothModules (document_type provided without explicit discipline), proactively search the other module too
+          if (searchBothModules || allDocuments.length === 0) {
+            const altParams = useSupDoc
+              ? { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' }
+              : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
+            
+            try {
+              console.info('Paginated search (alt): sending for', altParams.subclass_type, searchBothModules ? '(proactive dual-module)' : '(fallback)');
+              const altDocs = await paginateSearch(altParams);
+              // Merge results, dedup by document_number
+              const seen = new Set(allDocuments.map((d: any) => d.document_number));
+              for (const doc of altDocs) {
+                if (doc.document_number && !seen.has(doc.document_number)) {
+                  seen.add(doc.document_number);
+                  allDocuments.push(doc);
+                }
+              }
+              console.log('search_assai_documents: after alt module merge, total docs:', allDocuments.length);
+            } catch (altErr) {
+              console.error('search_assai_documents: alt module search error:', altErr);
+            }
           }
         }
         
@@ -9490,7 +9530,8 @@ ALL documents — engineering, vendor, planning — reside in Assai. The dms_doc
 When a user asks for a document by type name or abbreviation:
 1. ALWAYS call resolve_document_type first with the EXACT text the user used — do NOT expand abbreviations yourself. If the user says "BfD", pass "BfD" as the query, NOT "Basis for Design". The tool handles acronym resolution internally.
 2. If exactly one match: use its code as the document_type parameter in search_assai_documents
-3. If multiple matches: show the user the options and ask which one they mean before searching
+3. If multiple matches with DIFFERENT disciplines (e.g. PX and ZV): search with ALL matching codes combined using '+' (e.g. document_type='2365+C01'). Do NOT ask the user to choose — the user wants ALL documents of that type regardless of discipline. Only ask for clarification if the matches are genuinely different document types (e.g. "Flow Scheme" vs "Flow Diagram").
+4. IMPORTANT: Many document types exist as both BGC/EPC codes (4-digit numeric like 2365) AND vendor codes (alphanumeric like C01). Always search with BOTH to get complete results.
 4. If no match: tell the user the document type was not found in the register and ask them to clarify
 5. Never guess or hardcode a type code — ALWAYS resolve dynamically via the tool
 6. Never search Assai without a document_type, company_code, or purchase_order filter — a bare project prefix like '6529-%' is NOT acceptable
@@ -9827,11 +9868,20 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             for (const candidate of allCandidates) {
               if (['THE', 'FOR', 'AND', 'CAN', 'YOU', 'WITH', 'THIS', 'THAT', 'WHAT', 'HOW', 'PROVIDE', 'SHOW', 'FIND', 'GET', 'SEARCH'].includes(candidate.toUpperCase())) continue;
               const resolveResult = await executeTool('resolve_document_type', { query: candidate }, supabase);
-              if (resolveResult?.found && resolveResult.count === 1) {
-                resolvedCode = resolveResult.matches[0].code;
-                resolvedName = resolveResult.matches[0].name;
-                console.log(`Deterministic fallback: resolved "${candidate}" → ${resolvedCode} (${resolvedName})`);
-                break;
+              if (resolveResult?.found) {
+                if (resolveResult.count === 1) {
+                  resolvedCode = resolveResult.matches[0].code;
+                  resolvedName = resolveResult.matches[0].name;
+                  console.log(`Deterministic fallback: resolved "${candidate}" → ${resolvedCode} (${resolvedName})`);
+                  break;
+                } else if (resolveResult.count > 1) {
+                  // Multiple matches — combine all codes with '+' to search across both BGC and vendor types
+                  const allCodes = resolveResult.matches.map((m: any) => m.code);
+                  resolvedCode = allCodes.join('+');
+                  resolvedName = resolveResult.matches.map((m: any) => m.name).join(' / ');
+                  console.log(`Deterministic fallback: resolved "${candidate}" → multiple codes: ${resolvedCode} (${resolvedName})`);
+                  break;
+                }
               }
             }
 
