@@ -6691,31 +6691,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         
         const cookieHeader = sessionCookies.join('; ');
         
-        // STEP 4 — Dynamically resolve proj_seq_nr from the document number's project code
-        const docProjectCode = docNumber.split('-')[0]; // e.g. "6523" from "6523-EXTR-C008-..."
-        let projSeqNr = '59734'; // fallback default (BGC_PROJ / project 6529)
-        let selectedProjectCodes = 'BGC_PROJ';
-        
-        try {
-          const { data: projLookup } = await supabaseClient
-            .from('dms_projects')
-            .select('code, cabinet, proj_seq_nr')
-            .eq('code', docProjectCode)
-            .limit(1);
-          if (projLookup && projLookup.length > 0) {
-            selectedProjectCodes = projLookup[0].cabinet || 'BGC_PROJ';
-            if (projLookup[0].proj_seq_nr) {
-              projSeqNr = projLookup[0].proj_seq_nr;
-              console.log(`read_assai_document: resolved project ${docProjectCode} → cabinet=${selectedProjectCodes}, proj_seq_nr=${projSeqNr}`);
-            } else {
-              console.log(`read_assai_document: project ${docProjectCode} found but proj_seq_nr is NULL — will try initSearch fallback`);
-            }
-          } else {
-            console.log(`read_assai_document: project ${docProjectCode} not found in dms_projects, using default`);
-          }
-        } catch (projErr) {
-          console.error('read_assai_document: project lookup error:', projErr);
-        }
+        // "All projects" scope — no need to resolve proj_seq_nr or cabinet
+        // The document number itself uniquely identifies the document across all cabinets
         
         // STEP 4b — initSearch: call search.aweb to initialize session and extract hidden fields
         // This mirrors the working search_assai_documents pattern
@@ -6749,27 +6726,12 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           textFieldsRead = allFields.filter(f => f.type === 'text' || f.type === '');
           console.log(`read_assai_document: initSearch OK, hidden=${hiddenFieldsRead.length}, text=${textFieldsRead.length}`);
           
-          // If proj_seq_nr was NULL, try to extract it from hidden fields and cache it
-          if (projSeqNr === '59734' && docProjectCode !== '6529') {
-            const projField = hiddenFieldsRead.find(f => f.name === 'proj_seq_nr');
-            if (projField?.value) {
-              projSeqNr = projField.value;
-              console.log(`read_assai_document: discovered proj_seq_nr=${projSeqNr} from initSearch, caching...`);
-              // Cache back to dms_projects
-              try {
-                await supabaseClient
-                  .from('dms_projects')
-                  .upsert({ code: docProjectCode, cabinet: selectedProjectCodes, proj_seq_nr: projSeqNr, project_name: '' }, { onConflict: 'code,cabinet' });
-              } catch (cacheErr) {
-                console.warn('read_assai_document: failed to cache proj_seq_nr:', cacheErr);
-              }
-            }
-          }
+          // "All projects" scope — hidden fields from initSearch pass through as-is
         } catch (initErr) {
           console.warn('read_assai_document: initSearch warning:', initErr);
         }
         
-        console.log(`read_assai_document: searching for ${docNumber} in DES_DOC (proj_seq_nr=${projSeqNr}, cabinet=${selectedProjectCodes})`);
+        console.log(`read_assai_document: searching for ${docNumber} in DES_DOC (All projects scope)`);
         let pkSeqNr: string | null = null;
         let enttSeqNr: string | null = null;
         
@@ -6784,8 +6746,6 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
           searchParams.set('subclass_type', 'DES_DOC');
           searchParams.set('number', docNumber);
-          searchParams.set('proj_seq_nr', projSeqNr);
-          searchParams.set('selected_project_codes', selectedProjectCodes);
           
           const searchRes = await fetch(assaiBase + '/result.aweb', {
             method: 'POST',
@@ -6847,8 +6807,6 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               for (const f of supText) supParams.set(f.name, '');
               supParams.set('subclass_type', 'SUP_DOC');
               supParams.set('number', docNumber);
-              supParams.set('proj_seq_nr', projSeqNr);
-              supParams.set('selected_project_codes', selectedProjectCodes);
               
               const supRes = await fetch(assaiBase + '/result.aweb', {
                 method: 'POST',
@@ -6873,8 +6831,6 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             supSearchParams.set('clas_seq_nr', '2');
             supSearchParams.set('suty_seq_nr', '7');
             supSearchParams.set('number', docNumber);
-            supSearchParams.set('proj_seq_nr', projSeqNr);
-            supSearchParams.set('selected_project_codes', selectedProjectCodes);
             
             const supRes = await fetch(assaiBase + '/result.aweb', {
               method: 'POST',
@@ -7287,31 +7243,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const dbName = creds.db_name || 'eu578';
         const instancePath = '/AW' + dbName;
 
-        // Dynamic project resolution: extract project code from search pattern
-        const patternProjectCode = document_number_pattern.split('-')[0].replace(/%/g, '');
-        let projSeqNr = '59734'; // tier 3 fallback
-        let projectCabinet = 'BGC_PROJ';
-
-        // Tier 1: DB lookup
-        if (patternProjectCode && /^\d{4}$/.test(patternProjectCode)) {
-          try {
-            const { data: projLookup } = await supabaseClient
-              .from('dms_projects')
-              .select('cabinet, proj_seq_nr')
-              .eq('code', patternProjectCode)
-              .not('proj_seq_nr', 'is', null)
-              .limit(1);
-            if (projLookup?.[0]?.proj_seq_nr) {
-              projSeqNr = projLookup[0].proj_seq_nr;
-              projectCabinet = projLookup[0].cabinet || 'BGC_PROJ';
-              console.log(`search_assai_documents: resolved project ${patternProjectCode} → proj_seq_nr=${projSeqNr}, cabinet=${projectCabinet}`);
-            } else {
-              console.log(`search_assai_documents: project ${patternProjectCode} not found or proj_seq_nr NULL, using fallback`);
-            }
-          } catch (e) {
-            console.warn('search_assai_documents: project lookup error:', e);
-          }
-        }
+        // "All projects" scope — Assai searches across BGC_OPS, BGC_PROJ, ISG
+        // Document number pattern (e.g. 6523-%) already scopes results to the correct project
+        // No need to override proj_seq_nr or selected_project_codes — initSearch hidden fields handle it
         let username = creds.username_encrypted || '';
         let password = creds.password_encrypted || '';
         
@@ -7409,9 +7343,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           if (status_code) formData.set('status_code', status_code);
           if (company_code) formData.set('company_code', company_code);
           if (title) formData.set('description', title);
-          // Inject dynamic project context
-          formData.set('proj_seq_nr', projSeqNr);
-          formData.set('selected_project_codes', projectCabinet);
+          // "All projects" scope — let initSearch hidden fields pass through as-is
           // Pagination: 1-based start_row for pages beyond the first
           if (startRow && startRow > 1) {
             formData.set('start_row', String(startRow));
@@ -7556,9 +7488,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           if (document_type) formData.set('document_type', document_type);
           if (company_code) formData.set('company_code', company_code);
           if (title) formData.set('description', title);
-          // Inject dynamic project context
-          formData.set('proj_seq_nr', projSeqNr);
-          formData.set('selected_project_codes', projectCabinet);
+          // "All projects" scope — let initSearch hidden fields pass through as-is
           // Apply extra filters (status_code, discipline_code overrides)
           for (const [k, v] of Object.entries(extraFilters)) {
             formData.set(k, v);
@@ -9243,7 +9173,7 @@ Queries/TQs     | QRY_QUERY     | tqry.SearchQuery                | 4           
 Assets          | ASSET         | asst.SearchObjectAssetItem      | 1           | null
 Work Packages   | PLANNING      | workpack.SearchWorkPackages     | 1           | null
 
-All searches also require: proj_seq_nr (resolved dynamically from dms_projects), start_row=1
+All searches use "All projects" scope by default (BGC_OPS + BGC_PROJ + ISG). The document number pattern scopes results to the correct project. Do not set proj_seq_nr or selected_project_codes manually. start_row=1
 
 DES_DOC / SUP_DOC search fields:
 selected_project_codes, number (use % wildcard), revision_code, description, date_from, date_before, codo_company_code, codo_document_nr, key_words, content, originator, resp_engr_seq_nr, company_code, discipline_code, document_type, status_code, approval_code, subclass_code, priority_code, classification_code, language_code, transmittal_number, receipt, sender_reference, archive, package_code, work_package_code, purchase_code, asset_code, asset_item_code, person_code_checked_out
