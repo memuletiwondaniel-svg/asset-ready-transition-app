@@ -4,16 +4,16 @@ import { Download, ChevronDown, ChevronRight, FileText, AlertTriangle, BookOpen,
 import { assaiDetailsUrl, assaiDownloadUrl, ASSAI_DOC_NUMBER_REGEX } from '@/lib/assaiLinks';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-/** Icon-only action buttons for document rows */
+/** Icon-only action buttons — all muted grey, subtle hover */
 function DocActionButtons({ docNumber, onRead }: { docNumber: string; onRead?: (query: string) => void }) {
   return (
-    <div className="flex items-center justify-center gap-1">
+    <div className="flex items-center justify-end gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
       <TooltipProvider delayDuration={150}>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={() => onRead?.(`Read and summarise ${docNumber}`)}
-              className="inline-flex items-center justify-center w-7 h-7 rounded-md text-primary/70 hover:text-primary hover:bg-primary/10 border border-transparent hover:border-primary/20 transition-all duration-150 cursor-pointer"
+              className="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-150 cursor-pointer"
             >
               <BookOpen className="h-3.5 w-3.5" />
             </button>
@@ -28,7 +28,7 @@ function DocActionButtons({ docNumber, onRead }: { docNumber: string; onRead?: (
               href={assaiDownloadUrl(docNumber)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 border border-transparent hover:border-border/40 transition-all duration-150 cursor-pointer"
+              className="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-150 cursor-pointer"
             >
               <Download className="h-3.5 w-3.5" />
             </a>
@@ -43,7 +43,7 @@ function DocActionButtons({ docNumber, onRead }: { docNumber: string; onRead?: (
               href={assaiDetailsUrl(docNumber)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 border border-transparent hover:border-border/40 transition-all duration-150 cursor-pointer"
+              className="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-150 cursor-pointer"
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
@@ -352,11 +352,10 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
             <table className="w-full" style={{ borderCollapse: 'collapse' }}>
               <thead>
                 <tr className="bg-muted/50 border-b border-border/30">
-                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-left font-semibold" style={{ width: '155px' }}>Document No.</th>
+                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-left font-semibold" style={{ width: '150px' }}>Document No.</th>
                   <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-left font-semibold">Title</th>
-                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-center font-semibold" style={{ width: '44px' }}>Rev</th>
                   <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-center font-semibold" style={{ width: '56px' }}>Status</th>
-                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-center font-semibold" style={{ width: '96px' }}></th>
+                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-right font-semibold" style={{ width: '88px' }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -365,10 +364,9 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                     <td className="py-2 px-3 align-top">
                       <DocumentNumberLink docNumber={doc.document_number} truncate />
                     </td>
-                    <td className="py-2 px-3 text-xs text-foreground leading-snug">{doc.title}</td>
-                    <td className="py-2 px-3 text-xs text-muted-foreground text-center align-top font-medium">{doc.revision}</td>
+                    <td className="py-2 px-3 text-xs text-foreground leading-snug line-clamp-2">{doc.title}</td>
                     <td className="py-2 px-3 text-center align-top"><StatusBadge code={doc.status} /></td>
-                    <td className="py-1 px-2 align-top">
+                    <td className="py-1 px-1 align-top">
                       <DocActionButtons docNumber={doc.document_number} onRead={onFollowupClick} />
                     </td>
                   </tr>
@@ -498,11 +496,10 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
             <table className="w-full" style={{ borderCollapse: 'collapse' }}>
               <thead>
                 <tr className="bg-muted/50 border-b border-border/30">
-                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-left font-semibold" style={{ width: '155px' }}>Document No.</th>
+                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-left font-semibold" style={{ width: '150px' }}>Document No.</th>
                   <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-left font-semibold">Title</th>
-                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-center font-semibold" style={{ width: '44px' }}>Rev</th>
                   <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-center font-semibold" style={{ width: '56px' }}>Status</th>
-                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-center font-semibold" style={{ width: '96px' }}></th>
+                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-right font-semibold" style={{ width: '88px' }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -511,10 +508,9 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                     <td className="py-2 px-3 align-top">
                       <DocumentNumberLink docNumber={doc.document_number} truncate />
                     </td>
-                    <td className="py-2 px-3 text-xs text-foreground leading-snug">{doc.title}</td>
-                    <td className="py-2 px-3 text-xs text-muted-foreground text-center align-top font-medium">{doc.revision}</td>
+                    <td className="py-2 px-3 text-xs text-foreground leading-snug line-clamp-2">{doc.title}</td>
                     <td className="py-2 px-3 text-center align-top"><StatusBadge code={doc.status} /></td>
-                    <td className="py-1 px-2 align-top">
+                    <td className="py-1 px-1 align-top">
                       <DocActionButtons docNumber={doc.document_number} onRead={onFollowupClick} />
                     </td>
                   </tr>
