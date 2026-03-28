@@ -351,55 +351,25 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
           <div className="rounded-lg border border-border/40 overflow-hidden">
             <table className="w-full" style={{ borderCollapse: 'collapse' }}>
               <thead>
-                <tr className="bg-muted/60">
-                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-left font-semibold w-[160px]">Document No.</th>
-                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-left font-semibold">Title</th>
-                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-center font-semibold w-[50px]">Rev</th>
-                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-center font-semibold w-[60px]">Status</th>
-                  <th className="text-[10px] uppercase tracking-wide text-muted-foreground py-2.5 px-3 text-center font-semibold w-[100px]">Actions</th>
+                <tr className="bg-muted/50 border-b border-border/30">
+                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-left font-semibold" style={{ width: '155px' }}>Document No.</th>
+                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-left font-semibold">Title</th>
+                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-center font-semibold" style={{ width: '44px' }}>Rev</th>
+                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-center font-semibold" style={{ width: '56px' }}>Status</th>
+                  <th className="text-[10px] uppercase tracking-wider text-muted-foreground py-2.5 px-3 text-center font-semibold" style={{ width: '96px' }}></th>
                 </tr>
               </thead>
               <tbody>
                 {data.documents.map((doc, i) => (
-                  <tr key={doc.document_number} className={`group ${i % 2 === 1 ? 'bg-muted/15' : ''} hover:bg-primary/5 transition-colors`} style={{ borderBottom: '1px solid hsl(var(--border) / 0.2)' }}>
-                    <td className="py-2.5 px-3 align-top">
+                  <tr key={doc.document_number} className={`group ${i % 2 === 1 ? 'bg-muted/10' : ''} hover:bg-primary/5 transition-colors`} style={{ borderBottom: '1px solid hsl(var(--border) / 0.15)' }}>
+                    <td className="py-2 px-3 align-top">
                       <DocumentNumberLink docNumber={doc.document_number} truncate />
                     </td>
-                    <td className="py-2.5 px-3 text-xs text-foreground leading-snug">{doc.title}</td>
-                    <td className="py-2.5 px-3 text-xs text-muted-foreground text-center align-top">{doc.revision}</td>
-                    <td className="py-2.5 px-3 text-center align-top"><StatusBadge code={doc.status} /></td>
-                    <td className="py-2.5 px-3 align-top">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <TooltipProvider delayDuration={200}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                onClick={() => onFollowupClick?.(`Read and summarise ${doc.document_number}`)}
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-primary bg-primary/8 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 hover:shadow-sm transition-all duration-150 cursor-pointer"
-                              >
-                                <BookOpen className="h-3 w-3" />
-                                <span>Read</span>
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="text-[10px]">AI read & summarise this document</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider delayDuration={200}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <a
-                                href={assaiDownloadUrl(doc.document_number)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center w-6 h-6 rounded-md text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted border border-border/40 hover:border-border hover:shadow-sm transition-all duration-150 cursor-pointer"
-                              >
-                                <Download className="h-3 w-3" />
-                              </a>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="text-[10px]">Download from Assai</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
+                    <td className="py-2 px-3 text-xs text-foreground leading-snug">{doc.title}</td>
+                    <td className="py-2 px-3 text-xs text-muted-foreground text-center align-top font-medium">{doc.revision}</td>
+                    <td className="py-2 px-3 text-center align-top"><StatusBadge code={doc.status} /></td>
+                    <td className="py-1 px-2 align-top">
+                      <DocActionButtons docNumber={doc.document_number} onRead={onFollowupClick} />
                     </td>
                   </tr>
                 ))}
