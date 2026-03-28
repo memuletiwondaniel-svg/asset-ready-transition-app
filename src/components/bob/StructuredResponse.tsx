@@ -281,6 +281,12 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                   <StatusBadge code={data.document.status} />
                 </li>
                 )}
+                {data.document.originator && (
+                  <li><span className="font-medium">Originator:</span> {data.document.originator}</li>
+                )}
+                {data.document.unit && (
+                  <li><span className="font-medium">Unit:</span> {data.document.unit}</li>
+                )}
                 <li>
                   <span className="font-medium">Download:</span>{' '}
                   <a

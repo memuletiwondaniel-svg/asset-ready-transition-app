@@ -10111,16 +10111,26 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       const structured = {
         type: "document_analysis",
         summary: `Analysis of **${meta.document_number || 'document'}** — ${meta.title || 'Untitled'}`,
-        document: {
-          document_number: meta.document_number || '',
-          title: meta.title || 'Untitled',
-          revision: meta.revision || '',
-          status: meta.status || '',
-          type_code: meta.document_type || '',
-          download_url: meta.pk_seq_nr && meta.entt_seq_nr
-            ? `https://eu.assaicloud.com/AWeu578/download.aweb?pk_seq_nr=${meta.pk_seq_nr}&entt_seq_nr=${meta.entt_seq_nr}`
-            : undefined
-        },
+        document: (() => {
+          const docNum = meta.document_number || '';
+          const segments = docNum.split('-');
+          const doc: any = {
+            document_number: docNum,
+            title: meta.title || 'Untitled',
+            revision: meta.revision || '',
+            status: meta.status || '',
+            type_code: meta.document_type || '',
+            download_url: meta.pk_seq_nr && meta.entt_seq_nr
+              ? `https://eu.assaicloud.com/AWeu578/download.aweb?pk_seq_nr=${meta.pk_seq_nr}&entt_seq_nr=${meta.entt_seq_nr}`
+              : undefined
+          };
+          // Extract originator (segment 2) and unit (segment 5) from document number
+          if (segments.length >= 5) {
+            doc.originator = segments[1]; // e.g. "ABBE"
+            doc.unit = segments[4]; // e.g. "U40300"
+          }
+          return doc;
+        })(),
         overview: overview || undefined,
         key_summary: keySummary.length > 0 ? keySummary : undefined,
         critical_observations: criticalObs.length > 0 ? criticalObs : undefined,
