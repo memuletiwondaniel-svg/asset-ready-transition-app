@@ -906,7 +906,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                             'What I can tell you': '📄',
                             'Document Overview': '📄',
                             'Key Observations': '🔍',
-                            'Summary': '📝',
+                            'Summary': '📊',
                             'Analysis': '🔬',
                             'Recommendations': '💡',
                             'Document Details': '📄',
@@ -920,6 +920,14 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                             'Would you like me to': '💬',
                             "Here's what this likely means": '🔍',
                             "Here's what I recommend": '💡',
+                            'What I know from the Assai register': '📋',
+                            'What I know from the metadata': '📄',
+                            'What I found': '📋',
+                            'Comparison': '⚖️',
+                            'Context': '📝',
+                            'Additional context': '📝',
+                            'Key details': '📋',
+                            'Observations': '🔍',
                           };
 
                           // Broad regex: match lines that look like section headers
@@ -934,9 +942,13 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                             // Plain text headers ending with colon on own line
                             .replace(/^([A-Z][A-Za-z\s''''"]+(?:from the metadata)?):?\s*$/gm, (_m, g1) => {
                               const clean = g1.replace(/:$/, '').trim();
-                              // Only convert if it's a known header or looks like one (3+ words, title case)
+                              // Only convert if it's a known header or looks like one
+                              const partialMatch = Object.keys(sectionIcons).find(k => clean.toLowerCase().startsWith(k.toLowerCase()));
                               if (sectionIcons[clean]) {
                                 return `## ${sectionIcons[clean]} ${clean}`;
+                              }
+                              if (partialMatch) {
+                                return `## ${sectionIcons[partialMatch]} ${clean}`;
                               }
                               // Check if it looks like a title-case header (starts with capital, mostly alpha)
                               if (/^[A-Z][a-z]/.test(clean) && clean.length > 8 && clean.length < 60) {
@@ -962,16 +974,16 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
 
                           return (
                             <>
-                               <div className="text-sm leading-relaxed max-w-none [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border/50 [&_th]:px-3 [&_th]:py-1.5 [&_th]:bg-muted/50 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_td]:border [&_td]:border-border/50 [&_td]:px-3 [&_td]:py-1.5 [&_td]:text-xs [&_p]:my-1.5 [&_p]:leading-relaxed [&_ul]:my-1.5 [&_ul]:space-y-0.5 [&_ol]:my-1.5 [&_ol]:space-y-0.5 [&_li]:my-0 [&_li]:leading-relaxed [&_pre]:bg-background/50 [&_pre]:rounded-lg [&_code]:text-xs [&_strong]:font-bold [&_strong]:text-foreground [&_hr]:my-3 [&_hr]:border-border/30 [&_blockquote]:border-l-2 [&_blockquote]:border-primary/30 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_em]:text-muted-foreground">
+                               <div className="text-sm leading-relaxed max-w-none [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border/50 [&_th]:px-3 [&_th]:py-1.5 [&_th]:bg-muted/50 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_td]:border [&_td]:border-border/50 [&_td]:px-3 [&_td]:py-1.5 [&_td]:text-xs [&_p]:my-1.5 [&_p]:leading-relaxed [&_ul]:my-1.5 [&_ul]:space-y-0.5 [&_ol]:my-1.5 [&_ol]:space-y-0.5 [&_li]:my-0 [&_li]:leading-relaxed [&_pre]:bg-background/50 [&_pre]:rounded-lg [&_code]:text-xs [&_strong]:font-semibold [&_strong]:text-foreground/80 [&_hr]:my-3 [&_hr]:border-border/30 [&_blockquote]:border-l-2 [&_blockquote]:border-primary/30 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_em]:text-muted-foreground">
                                 <ReactMarkdown
                                   remarkPlugins={[remarkGfm]}
                                   components={{
                                     h2: ({ children }) => <h2 className="mt-5 mb-2 border-t border-border/60 pt-3 text-base font-extrabold tracking-tight text-foreground flex items-center gap-2" style={{ fontWeight: 800 }}>{children}</h2>,
                                     h3: ({ children }) => <h3 className="mt-4 mb-1.5 text-[15px] font-bold text-foreground" style={{ fontWeight: 700 }}>{children}</h3>,
                                     p: ({ children }) => <p>{processChildren(children)}</p>,
-                                    ul: ({ children }) => <ul className="my-2 ml-5 list-disc space-y-1 text-sm">{children}</ul>,
-                                    ol: ({ children }) => <ol className="my-2 ml-5 list-decimal space-y-1 text-sm">{children}</ol>,
-                                    li: ({ children }) => <li className="pl-1">{processChildren(children)}</li>,
+                                    ul: ({ children }) => <ul className="my-2 ml-6 list-disc space-y-1 text-sm">{children}</ul>,
+                                    ol: ({ children }) => <ol className="my-2 ml-6 list-decimal space-y-1 text-sm">{children}</ol>,
+                                    li: ({ children }) => <li className="pl-1.5">{processChildren(children)}</li>,
                                     td: ({ children }) => <td>{processChildren(children)}</td>,
                                     th: ({ children }) => <th>{processChildren(children)}</th>,
                                     em: ({ children }) => <em className="text-muted-foreground italic">{children}</em>,
