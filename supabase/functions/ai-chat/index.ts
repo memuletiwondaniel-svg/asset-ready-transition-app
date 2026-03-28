@@ -9547,6 +9547,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // Max iterations: 5
     // ═══════════════════════════════════════════════════════════════════════
     const MAX_ITERATIONS = 5;
+    const LOOP_START_TIME = Date.now();
+    const MAX_LOOP_MS = 45000; // 45-second time guard
     let conversationMessages = [...transformedMessages];
     let iteration = 0;
     let lastToolName: string | null = null;
