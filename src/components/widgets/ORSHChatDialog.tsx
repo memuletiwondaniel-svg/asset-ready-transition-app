@@ -1070,13 +1070,23 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                           }
 
                           // Sanity filter: reject metadata lines, doc numbers, prose, and cap at 5
-                          const METADATA_PREFIXES = /^(document number|status|revision|supplier|title|originator|unit|discipline|contractor|type code|doc no)\s*:/i;
-                          const PROSE_PREFIXES = /^(contact|you could|the document|note that|please note|this means|however|unfortunately|it appears|based on)/i;
+                          const METADATA_PREFIXES = /^(document number|status|revision|supplier|title|originator|unit|discipline|contractor|type code|doc no|vendor|company|area|weight|date|drawing)\s*:/i;
+                          const PROSE_PREFIXES = /^(contact|you could|the document|note that|please note|this means|however|unfortunately|it appears|based on|i can|i will|i'll|let me)/i;
+                          const DOC_NUMBER_FRAGMENT = /\d{4}-[A-Z]+-[A-Z0-9]+-/;
+                          const METADATA_QUESTION = /^\w+\s*:/; // Single word followed by colon (e.g. "Status: IFA?")
                           followUpItems = followUpItems
                             .filter(item => {
                               if (METADATA_PREFIXES.test(item)) return false;
                               if (PROSE_PREFIXES.test(item)) return false;
+                              // Reset lastIndex since ASSAI_DOC_NUMBER_REGEX uses global flag
+                              ASSAI_DOC_NUMBER_REGEX.lastIndex = 0;
                               if (ASSAI_DOC_NUMBER_REGEX.test(item)) return false;
+                              if (DOC_NUMBER_FRAGMENT.test(item)) return false;
+                              // Reject metadata-style items ending with ? (e.g. "Status: IFA?")
+                              if (item.endsWith('?') && METADATA_QUESTION.test(item.replace(/\?$/, ''))) {
+                                const colonIdx = item.indexOf(':');
+                                if (colonIdx > 0 && colonIdx < 20) return false;
+                              }
                               if (item.length > 80) return false;
                               if (item.length < 5) return false;
                               return true;
