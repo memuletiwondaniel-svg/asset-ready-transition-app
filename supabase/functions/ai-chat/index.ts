@@ -7370,6 +7370,44 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
 
+    case "resolve_project_code": {
+      try {
+        const dpInput = (args.dp_number || '').trim();
+        const dpMatch = dpInput.match(/DP[- ]?(\d+)/i);
+        if (!dpMatch) {
+          return { found: false, error: 'Could not parse DP number from: ' + dpInput };
+        }
+        const dpNum = dpMatch[1];
+        
+        // Search dms_projects by project_id column
+        const { data: projects } = await supabaseClient
+          .from('dms_projects')
+          .select('code, project_name, cabinet, proj_seq_nr, project_id')
+          .ilike('project_id', `%${dpNum}%`)
+          .limit(5);
+        
+        if (!projects || projects.length === 0) {
+          return { found: false, message: `No project found matching DP-${dpNum} in the DMS. Check the project identifier.` };
+        }
+        
+        console.log(`resolve_project_code: DP-${dpNum} → ${projects.map(p => p.code).join(', ')}`);
+        return {
+          found: true,
+          projects: projects.map(p => ({
+            project_code: p.code,
+            project_name: p.project_name,
+            cabinet: p.cabinet,
+            project_id: p.project_id,
+            document_number_prefix: p.code + '-%'
+          })),
+          instruction: `Use document_number_pattern="${projects[0].code}-%" in search_assai_documents. Do NOT put DP numbers in the pattern.`
+        };
+      } catch (err) {
+        console.error('resolve_project_code error:', err);
+        return { found: false, error: String(err) };
+      }
+    }
+
     case "search_assai_documents": {
       try {
         let { document_number_pattern, discipline_code, document_type, status_code, company_code, title } = args;
