@@ -7352,7 +7352,34 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
 
     case "search_assai_documents": {
       try {
-        const { document_number_pattern, discipline_code, document_type, status_code, company_code, title } = args;
+        let { document_number_pattern, discipline_code, document_type, status_code, company_code, title } = args;
+        
+        // Auto-resolve DP project references in document_number_pattern
+        // If pattern contains "DP" followed by digits (e.g. "6529-%-DP223-%"), strip the DP part
+        // and use only the project code prefix
+        const dpInPattern = document_number_pattern.match(/^(\d{4})-%-?DP-?\d+-?%?$/i);
+        if (dpInPattern) {
+          document_number_pattern = dpInPattern[1] + '-%';
+          console.log('search_assai_documents: stripped DP reference from pattern, using:', document_number_pattern);
+        }
+        
+        // Also handle if the pattern IS a DP number (e.g. "DP223" or "DP-223")
+        const dpOnly = document_number_pattern.match(/^DP-?(\d+)$/i);
+        if (dpOnly) {
+          const dpNum = dpOnly[1];
+          const { data: dpProject } = await supabaseClient
+            .from('dms_projects')
+            .select('code')
+            .ilike('project_id', `%${dpNum}%`)
+            .limit(1)
+            .maybeSingle();
+          if (dpProject) {
+            document_number_pattern = dpProject.code + '-%';
+            console.log('search_assai_documents: resolved DP-' + dpNum + ' to project code:', dpProject.code);
+          } else {
+            console.log('search_assai_documents: could not resolve DP-' + dpNum + ' in dms_projects');
+          }
+        }
         
         // Get Assai credentials
         const { data: creds } = await supabaseClient
