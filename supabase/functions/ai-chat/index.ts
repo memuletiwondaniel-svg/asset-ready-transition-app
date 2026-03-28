@@ -6912,7 +6912,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         
         try {
           // Fresh auth for download — the search step may have consumed minutes
-          const dlAuth = await authenticateAssai(assaiBase, username, password, dbName);
+          const dlAuth = await authenticateAssai(assaiBase, username, password);
           const dlCookies = dlAuth.success && dlAuth.cookies?.length ? dlAuth.cookies.join('; ') : cookieHeader;
           
           const controller = new AbortController();
