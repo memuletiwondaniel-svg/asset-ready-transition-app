@@ -9666,12 +9666,36 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         }
       }
 
-      if (isSpecificQuery) {
-        // SPECIFIC QUERY: Show documents table prominently, skip status/type summaries
-        if (highlights.length === 0) {
-          const statusList = Object.entries(lastToolResult.status_summary || {}).map(([s, c]) => `${c} ${STATUS_DESCS[s] || s}`).join(', ');
-          if (statusList) highlights.push(statusList);
+      // Generate smart contextual insights (not just status counts)
+      const generateSmartInsights = (toolResult: any, docs: any[]): string[] => {
+        const insights: string[] = [];
+        const statusSummary = toolResult.status_summary || {};
+        const totalDocs = docs.length;
+        const approvedCount = (statusSummary['AFU'] || 0) + (statusSummary['AFC'] || 0) + (statusSummary['AFD'] || 0);
+        if (approvedCount > 0 && approvedCount < totalDocs) {
+          insights.push(`Only ${approvedCount} of ${totalDocs} documents have reached an approved status — ${totalDocs - approvedCount} still require progression`);
+        } else if (approvedCount === totalDocs && totalDocs > 0) {
+          insights.push(`All ${totalDocs} documents are at an approved status — document completion looks healthy`);
         }
+        const rev0Docs = docs.filter((d: any) => d.revision === '0' || d.revision === '00' || d.revision === 'R0');
+        if (rev0Docs.length > 0 && rev0Docs.length < totalDocs) {
+          insights.push(`${rev0Docs.length} document${rev0Docs.length > 1 ? 's are' : ' is'} still at initial revision (Rev 0) — may need review`);
+        }
+        const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT', 'IFC'];
+        const pendingCount = pendingStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
+        if (pendingCount > 0) {
+          const pendingBreakdown = pendingStatuses.filter(s => statusSummary[s]).map(s => `${statusSummary[s]} ${s}`).join(', ');
+          insights.push(`${pendingCount} document${pendingCount > 1 ? 's' : ''} in interim status (${pendingBreakdown}) — not yet fully approved`);
+        }
+        const cancelledCount = (statusSummary['CAN'] || 0) + (statusSummary['SUP'] || 0);
+        if (cancelledCount > 0) {
+          insights.push(`${cancelledCount} document${cancelledCount > 1 ? 's have' : ' has'} been cancelled or superseded — verify replacements exist`);
+        }
+        return insights.slice(0, 4);
+      };
+
+      if (isSpecificQuery) {
+        const smartInsights = highlights.length > 0 ? highlights : generateSmartInsights(lastToolResult, docList);
         if (followup.length === 0) {
           if (docList.length > 0) followup.push(`Read and summarise ${docList[0].document_number}`);
           followup.push("Show me related documents");
