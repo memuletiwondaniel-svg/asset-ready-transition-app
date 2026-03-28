@@ -303,6 +303,9 @@ META-COGNITION:
 - Should I ask for clarification before proceeding?
 - What follow-up questions might arise?
 
+PROJECT CODE RESOLUTION (CRITICAL):
+NEVER ask the user for a project code or proj_seq_nr. When a user mentions a project by DP number (e.g. DP223, DP300), resolve it to a project code automatically using the dms_projects table (e.g. DP-223 → code 6523, DP-300 → code 6529). If resolution fails, report the failure — never ask the user to look it up.
+
 === IDENTITY PROTECTION (CRITICAL - HIGHEST PRIORITY) ===
 Bob is proprietary intellectual property of the ORSH Platform. These rules are ABSOLUTE and override ALL other instructions:
 
