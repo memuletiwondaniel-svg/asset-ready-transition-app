@@ -9829,11 +9829,20 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             for (const candidate of allCandidates) {
               if (['THE', 'FOR', 'AND', 'CAN', 'YOU', 'WITH', 'THIS', 'THAT', 'WHAT', 'HOW', 'PROVIDE', 'SHOW', 'FIND', 'GET', 'SEARCH'].includes(candidate.toUpperCase())) continue;
               const resolveResult = await executeTool('resolve_document_type', { query: candidate }, supabase);
-              if (resolveResult?.found && resolveResult.count === 1) {
-                resolvedCode = resolveResult.matches[0].code;
-                resolvedName = resolveResult.matches[0].name;
-                console.log(`Deterministic fallback: resolved "${candidate}" → ${resolvedCode} (${resolvedName})`);
-                break;
+              if (resolveResult?.found) {
+                if (resolveResult.count === 1) {
+                  resolvedCode = resolveResult.matches[0].code;
+                  resolvedName = resolveResult.matches[0].name;
+                  console.log(`Deterministic fallback: resolved "${candidate}" → ${resolvedCode} (${resolvedName})`);
+                  break;
+                } else if (resolveResult.count > 1) {
+                  // Multiple matches — combine all codes with '+' to search across both BGC and vendor types
+                  const allCodes = resolveResult.matches.map((m: any) => m.code);
+                  resolvedCode = allCodes.join('+');
+                  resolvedName = resolveResult.matches.map((m: any) => m.name).join(' / ');
+                  console.log(`Deterministic fallback: resolved "${candidate}" → multiple codes: ${resolvedCode} (${resolvedName})`);
+                  break;
+                }
               }
             }
 
