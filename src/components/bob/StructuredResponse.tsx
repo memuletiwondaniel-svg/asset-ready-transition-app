@@ -527,7 +527,8 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
               </p>
             )}
           </div>
-        )}
+        </div>
+      )}
 
       {/* Insights */}
       {data.highlights && data.highlights.length > 0 && (
