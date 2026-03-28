@@ -9264,14 +9264,10 @@ REVISION NAMING:
 02R = Second revision, for Review
 02A = Second revision, Approved
 
-PROJECTS IN BGC_PROJ:
-0000 = Corporate Company - General
-1001 / DP-148 = Class 1 Metering - Installation of meters
-1002 = Supply & Installation of Siren System (CW13503)
-1307 / DP-368 = West Qurna CS7 to CS6 Transfer Line
-1313 / DP-187 = New WQ Gas Export Pipeline
-1314 / DP-199 = CS2 to NR NGL Pipeline debottlenecking
-5529 / DP-300 = New Compression Station at Hammar Mishrif ← PRIMARY
+PROJECTS IN BGC_PROJ — DYNAMIC RESOLUTION REQUIRED:
+Do NOT rely on this static list. ALWAYS resolve DP numbers to project codes dynamically by querying the dms_projects table (project_id column).
+Common examples for reference only: 5529 / DP-300 = New Compression Station at Hammar Mishrif, 6523 / DP-223, 6529 / DP-300 variants.
+CRITICAL RULE: If you searched for a project reference and found no results, NEVER present results from a different project. Return zero results and explain clearly. Never substitute one project's documents for another.
 
 COMPANY CODES:
 AWI=AWI Engineering, BGC=Asset Owner, EXTR=Exterran, GENP=General Pressure, KENT=KenTech/Kentz, WGEL=Wood Group Engineering Ltd, ABBE=ABB Engineering Shanghai Limited, ABB=ABB, AUM=AUM, EEIC=EEIC, EMFZ=EMFZ
