@@ -9705,7 +9705,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       };
 
       if (isSpecificQuery) {
-        const smartInsights = highlights.length > 0 ? highlights : generateSmartInsights(lastToolResult, docList);
+        // Always use deterministic insights — never use AI-extracted highlights (they just repeat doc numbers)
+        const smartInsights = generateSmartInsights(lastToolResult, docList);
         if (followup.length === 0) {
           if (docList.length > 0) followup.push(`Read and summarise ${docList[0].document_number}`);
           followup.push("Show me related documents");
