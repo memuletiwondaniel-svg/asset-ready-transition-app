@@ -10472,7 +10472,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         
         const broadFollowups: string[] = [];
         if (p1SubjectLabel && filteredDocList.length > 0) {
-          broadFollowups.push(`Read and summarise the most relevant ${p1SubjectLabel} document`);
+          broadFollowups.push(`Read and interpret the most relevant ${p1SubjectLabel} document`);
         }
         const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
         const hasPending = pendingStatuses.some(s => (effectiveSearchResult.status_summary || {})[s]);
