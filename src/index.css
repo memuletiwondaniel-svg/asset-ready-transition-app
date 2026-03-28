@@ -327,11 +327,11 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Allow bold weights to work naturally in specific contexts */
+  /* Allow bold weights to render correctly in headings, bold tags, and Tailwind weight classes */
   h1, h2, h3, h4, h5, h6,
   strong, b,
-  .font-bold, .font-semibold, .font-extrabold, .font-medium {
-    font-variation-settings: "wght" var(--tw-font-weight, inherit);
+  .font-medium, .font-semibold, .font-bold, .font-extrabold, .font-black {
+    font-variation-settings: initial;
   }
 
   /* Modern Design Components */
