@@ -10419,10 +10419,9 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           type_table: typeTable,
           documents: filteredDocList.slice(0, 5), // Top 5 as supporting evidence only
           highlights: smartInsights,
-          follow_ups: analyticalFollowups,
-          followup: analyticalFollowups
-        };
-        if (vendorTable) structured.vendor_table = vendorTable;
+                  followup: analyticalFollowups
+                };
+                if (vendorTable) structured.vendor_table = vendorTable;
 
         finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
         console.log(`search_assai_documents: ANALYTICAL response (${totalFound} docs, pending=${pendingCount}, approved=${approvedCount}, vendor=${isVendorQuery})`);
