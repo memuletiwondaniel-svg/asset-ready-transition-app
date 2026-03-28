@@ -6873,7 +6873,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             supSearchParams.set('proj_seq_nr', projSeqNr);
             supSearchParams.set('selected_project_codes', selectedProjectCodes);
             
-            const supRes = await fetch(baseUrl + '/result.aweb', {
+            const supRes = await fetch(assaiBase + '/result.aweb', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
