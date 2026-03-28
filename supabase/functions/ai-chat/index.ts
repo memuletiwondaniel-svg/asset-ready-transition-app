@@ -10026,7 +10026,22 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       const filters = effectiveSearchResult.filters_applied || {};
       const totalFound = effectiveSearchResult.total_found || 0;
       const hasSpecificFilter = !!(filters.document_type || filters.discipline_code || filters.status_code);
-      const isSpecificQuery = hasSpecificFilter || totalFound <= 30;
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // ANALYTICAL INTENT DETECTION: Detect "how many", "status of", "pending review", etc.
+      // When detected, produce a synthesized summary instead of a raw document table.
+      // ═══════════════════════════════════════════════════════════════════════
+      const analyticalPatterns = [
+        /how many/i, /what(?:'s| is) the status/i, /status of/i,
+        /pending review/i, /pending approval/i, /are (?:pending|outstanding|overdue)/i,
+        /which (?:contractors?|vendors?|companies?) are/i, /breakdown/i, /summary of/i,
+        /distribution/i, /count of/i, /total (?:number|count)/i
+      ];
+      const userMsgForAnalytical = lastUserMessage?.content || '';
+      const isAnalytical = analyticalPatterns.some(p => p.test(userMsgForAnalytical));
+      const isVendorQuery = isAnalytical && /vendor|contractor|supplier|company/i.test(userMsgForAnalytical);
+
+      const isSpecificQuery = !isAnalytical && (hasSpecificFilter || totalFound <= 30);
 
       // Build full document list (up to 30 for specific, 10 for broad)
       const maxDocs = isSpecificQuery ? 30 : 10;
