@@ -1116,16 +1116,21 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                               </div>
                               {followUpItems.length > 0 && (
                                 <div className="mt-2.5 pt-2 border-t border-border/60">
-                                  <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Suggested actions</p>
+                                  <p className="text-[11px] font-bold text-foreground mb-1.5 uppercase tracking-wider">What would you like to do next?</p>
                                   <div className="flex flex-wrap gap-1.5">
-                                    {followUpItems.map((item, idx) => (
+                                    {followUpItems.map((item, idx) => {
+                                      // Strip any residual doc number patterns from the sent text
+                                      const cleanItem = item.replace(/\*\*/g, '').replace(/\d{4}-[A-Z]+-[A-Z0-9]+-[A-Z]+-[A-Z0-9]+-[A-Z]{2}-[A-Z]\d{2}-\d{5}-\d{3}/g, '').trim();
+                                      return (
                                       <button
                                         key={idx}
-                                        onClick={() => handleSend(item.replace(/\*\*/g, '') + '?')}
+                                        onClick={() => handleSend(cleanItem + '?')}
                                         className="text-xs px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/50 transition-colors cursor-pointer text-left"
                                       >
-                                        {item.replace(/\*\*/g, '')}?
+                                        {cleanItem}?
                                       </button>
+                                      );
+                                    })}
                                     ))}
                                   </div>
                                 </div>

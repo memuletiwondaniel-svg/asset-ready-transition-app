@@ -481,8 +481,8 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
         {data.followup && data.followup.length > 0 && (
           <div>
             <hr className="border-border/30 my-3" />
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-              What would you like me to do next?
+            <p className="text-xs font-bold uppercase tracking-widest text-foreground mb-2">
+              What would you like to do next?
             </p>
             <div className="flex flex-wrap gap-2">
               {data.followup.map((f, i) => (
