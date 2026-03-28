@@ -7806,10 +7806,10 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               console.info('search_assai_documents: re-authenticating for alt module', altParams.subclass_type);
               const altAuth = await authenticateAssai(assaiBase, username, password);
               if (altAuth.success) {
-                // Temporarily override cookieHeader for the alt module search
                 const origCookieHeader = cookieHeader;
-                // @ts-ignore — cookieHeader is let-bound above
                 cookieHeader = altAuth.cookies;
+                // Warmup: hit label.aweb to establish server-side session state
+                await fetch(assaiBase + '/label.aweb', { headers: { Cookie: cookieHeader, 'User-Agent': ua }, redirect: 'follow' }).catch(() => {});
                 
                 const altDocs = await paginateSearch(altParams);
                 // Restore original cookie header
