@@ -83,7 +83,7 @@ export function DocumentNumberLink({ docNumber, truncate = false }: { docNumber:
             href={detailsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-[11px] text-primary underline underline-offset-2 decoration-primary/40 hover:decoration-primary hover:text-primary/80 transition-colors whitespace-nowrap"
+            className="font-mono text-[11px] text-primary no-underline hover:underline hover:underline-offset-2 hover:decoration-primary/60 hover:text-primary/80 transition-colors whitespace-nowrap"
           >
             {display}
           </a>
