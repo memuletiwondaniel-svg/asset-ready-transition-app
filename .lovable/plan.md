@@ -1,27 +1,36 @@
 
 
-## Problems
+## Problem
 
-1. **Follow-up chip text rendered as bold section header**: When a user clicks a follow-up chip like "Show only approved documents", it becomes a user message. The markdown rendering applies the section header regex to ALL messages (including user messages), matching text that starts with a capital letter and is 8-60 chars — converting it to `## 📌 Show only approved documents` with bold icon formatting.
+Follow-up chip buttons render their text as raw strings (line 1009: `{item}?`), not through ReactMarkdown. When the AI includes `**bold**` markers in follow-up suggestions, the `**` asterisks display literally in the chips.
 
-2. **"Read and summarise" uses raw doc number**: The `DocActionButtons` component sends `Read and summarise 6529-CPEC-C017-...` — a meaningless string to users. It should use the document title instead.
+## Fix
 
-## Changes
+**File: `src/components/widgets/ORSHChatDialog.tsx`**
 
-### 1. `src/components/widgets/ORSHChatDialog.tsx` — Skip header normalization for user messages
+Strip all `**` markers from chip display text. On line 1009, change:
 
-Wrap the section header regex processing (lines 935-958) in a condition: only apply when `message.role === 'assistant'`. User messages should render as plain text without any header/icon transformation.
-
-### 2. `src/components/bob/StructuredResponse.tsx` — Use document title in "Read and summarise"
-
-Update `DocActionButtons` to accept `title` prop alongside `docNumber`. Change the `onRead` call from:
+```tsx
+{item}?
 ```
-`Read and summarise ${docNumber}`
-```
+
 to:
-```
-`Read and summarise ${title || docNumber}`
+
+```tsx
+{item.replace(/\*\*/g, '')}?
 ```
 
-Update all `DocActionButtons` usages (3 places in the file) to pass the `doc.title` prop from the document row data, which is already available in every render context.
+Also strip from the message sent on click (line 1006), change:
+
+```tsx
+onClick={() => handleSend(item + '?')}
+```
+
+to:
+
+```tsx
+onClick={() => handleSend(item.replace(/\*\*/g, '') + '?')}
+```
+
+This is a permanent fix — it strips markdown bold syntax at the rendering layer so regardless of what the AI returns, chips always display clean text.
 
