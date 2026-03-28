@@ -9427,6 +9427,9 @@ When the user mentions a DP number (e.g., "documents for DP300"), resolve it to 
 When the user mentions a unit or system (e.g., "HVAC", "Compression"), look up the unit code from dms_units and include it in segment 5 of the pattern (e.g., "6529-%-%-%-U40300-%").
 Example: "Find the BfD for DP300" → resolve "BfD" via resolve_document_type → get code → resolve DP300 to project code via dms_projects → search with document_type=[code] AND document_number_pattern="[project_code]-%"
 
+VENDOR DOCUMENT IDENTIFICATION (CRITICAL):
+A vendor/supplier document is identified exclusively by discipline code ZV in segment 6 of the document number (e.g. 6529-WGEL-C034-ISGP-U40300-**ZV**-B01-00001-001). When filtering or counting vendor documents, always filter by discipline_code = "ZV". Never classify a document as a vendor document based on type code alone. Vendor document type codes are 3-character alphanumeric (e.g. B01, C08, D15, J01). 4-digit numeric type codes (e.g. 5733, 6918, 7704) are internal EPC document type codes and are NEVER vendor document types. When grouping vendor documents by contractor, group by company_code (segment 2 of document number) — but only for ZV-discipline documents.
+
 DOCUMENT INTELLIGENCE REASONING:
 When searching for documents, think strategically about combining filters:
 - document type + project/unit = most specific search
