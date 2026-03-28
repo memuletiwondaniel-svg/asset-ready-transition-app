@@ -980,7 +980,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                 </ReactMarkdown>
                               </div>
                               {followUpItems.length > 0 && (
-                                <div className="mt-2.5 pt-2 border-t border-border/20">
+                                <div className="mt-2.5 pt-2 border-t border-border/40">
                                   <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Suggested actions</p>
                                   <div className="flex flex-wrap gap-1.5">
                                     {followUpItems.map((item, idx) => (
