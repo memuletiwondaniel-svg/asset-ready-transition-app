@@ -12,7 +12,7 @@ import { assaiDetailsUrl, assaiDownloadUrl, ASSAI_DOC_NUMBER_REGEX } from '@/lib
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 /** Icon-only action buttons — all muted grey, subtle hover */
-function DocActionButtons({ docNumber, onRead }: { docNumber: string; onRead?: (query: string) => void }) {
+function DocActionButtons({ docNumber, title, onRead }: { docNumber: string; title?: string; onRead?: (query: string) => void }) {
   return (
     <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
       <TooltipProvider delayDuration={150}>
