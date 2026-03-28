@@ -754,7 +754,7 @@ DOCUMENT SEARCH RESPONSE FORMAT (CRITICAL):
 When you receive results from search_assai_documents, do NOT produce tables, status summaries, or structured JSON. The system builds those automatically from the raw tool data.
 
 Your job is ONLY to write:
-1. KEY HIGHLIGHTS: 3-5 numbered observations — each one a specific insight about the documents (e.g. approval gaps, missing types, pending items). Plain text only, no markdown formatting.
+1. INSIGHTS: 2-4 numbered contextual observations the user cannot see from the table alone — e.g. approval gaps ("only 5 of 8 are approved"), revision anomalies ("3 documents still at Rev 0"), status concerns ("2 are still IFR — not yet approved"), discipline coverage gaps, or actionable recommendations. Do NOT repeat document counts or status breakdowns already visible in the table. Plain text only, no markdown formatting.
 2. FOLLOW-UP SUGGESTIONS: Exactly 3 bulleted suggestions — each a specific actionable question the user might ask next. Plain text only.
 
 Keep your entire text under 150 words. Do NOT write status counts, document type tables, or any other summary — the system handles those automatically. Do NOT wrap anything in <structured_response> tags — the system does that for you.
