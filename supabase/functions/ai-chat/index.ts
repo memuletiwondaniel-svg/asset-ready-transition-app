@@ -9487,6 +9487,21 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     let navigationAction: { action: string; path: string } | null = null;
     let finalTextContent = '';
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // SHARED: Subject keyword map for relevance filtering (used in both 
+    // deterministic fallback AND PART 1 success path)
+    // ═══════════════════════════════════════════════════════════════════════
+    const SUBJECT_KEYWORDS: Record<string, string[]> = {
+      'HVAC': ['HVAC', 'AIR CONDITIONING', 'AIR HANDLING', 'AHU', 'COOLING', 'HEATING', 'VENTILATION', 'CHILLER', 'FAN COIL', 'DUCT', 'AIR COOLER'],
+      'ELECTRICAL': ['ELECTRICAL', 'SWITCHGEAR', 'TRANSFORMER', 'MCC', 'MOTOR CONTROL', 'CABLE', 'PANEL', 'BREAKER'],
+      'INSTRUMENTATION': ['INSTRUMENT', 'DCS', 'PLC', 'CONTROL VALVE', 'TRANSMITTER', 'ANALYZER'],
+      'MECHANICAL': ['PUMP', 'COMPRESSOR', 'TURBINE', 'HEAT EXCHANGER', 'VESSEL', 'TANK', 'PIPING'],
+      'GENERATOR': ['GENERATOR', 'EDG', 'GENSET', 'ALTERNATOR'],
+      'FIRE': ['FIRE', 'DELUGE', 'SPRINKLER', 'FOAM', 'FIRE FIGHTING', 'F&G'],
+    };
+
+    const STOP_WORDS_SHARED = new Set(['THE', 'OF', 'IN', 'FOR', 'A', 'AN', 'AND', 'OR', 'CAN', 'YOU', 'PROVIDE', 'ME', 'WITH', 'SHOW', 'FIND', 'GET', 'ALL', 'WHAT', 'IS', 'ARE', 'PLEASE', 'COULD', 'WOULD', 'LIKE', 'WANT', 'NEED', 'DO', 'HOW', 'WHERE', 'WHICH', 'THAT', 'THIS', 'FROM', 'TO', 'BY', 'IT', 'MY', 'I', 'IOM', 'DOCUMENT', 'DOCUMENTS', 'LIST', 'SEARCH']);
+
     while (iteration < MAX_ITERATIONS) {
       iteration++;
       console.log(`Agent loop iteration ${iteration}/${MAX_ITERATIONS}`);
@@ -9638,14 +9653,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                 const summaryText = `Found **${searchResult.total_found}** ${resolvedCode} (${resolvedName}) documents${dpLabel}`;
                 
                 // Extract subject keywords from user message for relevance filtering
-                const SUBJECT_KEYWORDS: Record<string, string[]> = {
-                  'HVAC': ['HVAC', 'AIR CONDITIONING', 'AIR HANDLING', 'AHU', 'COOLING', 'HEATING', 'VENTILATION', 'CHILLER', 'FAN COIL', 'DUCT', 'AIR COOLER'],
-                  'ELECTRICAL': ['ELECTRICAL', 'SWITCHGEAR', 'TRANSFORMER', 'MCC', 'MOTOR CONTROL', 'CABLE', 'PANEL', 'BREAKER'],
-                  'INSTRUMENTATION': ['INSTRUMENT', 'DCS', 'PLC', 'CONTROL VALVE', 'TRANSMITTER', 'ANALYZER'],
-                  'MECHANICAL': ['PUMP', 'COMPRESSOR', 'TURBINE', 'HEAT EXCHANGER', 'VESSEL', 'TANK', 'PIPING'],
-                  'GENERATOR': ['GENERATOR', 'EDG', 'GENSET', 'ALTERNATOR'],
-                  'FIRE': ['FIRE', 'DELUGE', 'SPRINKLER', 'FOAM', 'FIRE FIGHTING', 'F&G'],
-                };
+                // (uses shared SUBJECT_KEYWORDS constant defined below)
                 
                 const msgUpper = lastUserMsg.toUpperCase();
                 let subjectLabel = '';
@@ -9814,9 +9822,10 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     }
 
     // Helper: build user-friendly search summary from tool result filters
+
     const TYPE_DESCS_SUMMARY: Record<string, string> = dynamicTypeDescs;
-    const buildSearchSummary = (toolResult: any): string => {
-      const total = toolResult.total_found || 0;
+    const buildSearchSummary = (toolResult: any, opts?: { subjectLabel?: string; filteredCount?: number }): string => {
+      const total = opts?.filteredCount ?? toolResult.total_found ?? 0;
       const filters = toolResult.filters_applied || {};
       const parts: string[] = [];
       if (filters.document_type && TYPE_DESCS_SUMMARY[filters.document_type]) {
@@ -9827,10 +9836,17 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       if (filters.discipline_code) parts.push(`discipline ${filters.discipline_code}`);
       if (filters.status_code) parts.push(`status ${filters.status_code}`);
       if (filters.company_code) parts.push(`originator ${filters.company_code}`);
+      
+      let summary = '';
       if (parts.length > 0) {
-        return `Found **${total}** ${parts.join(', ')} documents`;
+        summary = `Found **${total}** ${parts.join(', ')} documents`;
+      } else {
+        summary = `Found **${total}** documents`;
       }
-      return `Found **${total}** documents`;
+      if (opts?.subjectLabel) {
+        summary += ` related to **${opts.subjectLabel}**`;
+      }
+      return summary;
     };
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -9868,6 +9884,52 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         pk_seq_nr: d.pk_seq_nr,
         entt_seq_nr: d.entt_seq_nr
       }));
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // RELEVANCE FILTERING: Apply subject-keyword filtering to docList
+      // Same logic as deterministic fallback — ensures consistent behavior
+      // ═══════════════════════════════════════════════════════════════════════
+      const userMsgForFilter = (lastUserMessage?.content || '').toUpperCase();
+      let p1SubjectLabel = '';
+      let p1SubjectKeywords: string[] = [];
+
+      for (const [label, keywords] of Object.entries(SUBJECT_KEYWORDS)) {
+        if (keywords.some(kw => userMsgForFilter.includes(kw))) {
+          p1SubjectLabel = label;
+          p1SubjectKeywords = keywords;
+          break;
+        }
+      }
+
+      // Fallback: extract meaningful nouns if no known subject matched
+      if (!p1SubjectLabel) {
+        const extraTerms = (lastUserMessage?.content || '').toUpperCase().split(/\s+/).filter(
+          (w: string) => w.length > 2 && !STOP_WORDS_SHARED.has(w) && !/^DP\d+$/i.test(w)
+        );
+        if (extraTerms.length > 0) {
+          p1SubjectKeywords = extraTerms;
+          p1SubjectLabel = extraTerms[0];
+        }
+      }
+
+      let filteredDocList = docList;
+      let unfilteredTotal = docList.length;
+      let filterApplied = false;
+
+      if (p1SubjectKeywords.length > 0) {
+        const relevant = docList.filter((d: any) =>
+          p1SubjectKeywords.some(kw => (d.title || '').toUpperCase().includes(kw))
+        );
+        if (relevant.length > 0) {
+          filteredDocList = relevant;
+          filterApplied = true;
+          console.log(`PART 1 relevance filter: ${relevant.length}/${docList.length} docs match "${p1SubjectLabel}"`);
+        } else {
+          // No title matches — show top 10 with explanatory note
+          filteredDocList = docList.slice(0, 10);
+          console.log(`PART 1 relevance filter: 0 title matches for "${p1SubjectLabel}", showing top ${filteredDocList.length}`);
+        }
+      }
 
       // DETERMINISTIC follow-ups and insights — never extract from AI text (produces garbage)
       // AI text is discarded for structured responses; all UI content comes from tool data
@@ -9910,42 +9972,70 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         return insights.slice(0, 2);
       };
 
+      // Build summary with subject awareness
+      const summaryOpts = filterApplied
+        ? { subjectLabel: p1SubjectLabel, filteredCount: filteredDocList.length }
+        : undefined;
+
       if (isSpecificQuery) {
-        const smartInsights = generateSmartInsights(lastToolResult, docList);
+        const smartInsights = generateSmartInsights(lastToolResult, filteredDocList);
         
         // Context-aware follow-ups based on actual results
         const specificFollowups: string[] = [];
-        if (docList.length > 0) {
-          specificFollowups.push(`Read & summarise the first document`);
+        if (filteredDocList.length > 0) {
+          specificFollowups.push(
+            p1SubjectLabel
+              ? `Read and summarise the most relevant ${p1SubjectLabel} document`
+              : `Read & summarise the first document`
+          );
         }
-        const statuses = [...new Set(docList.map((d: any) => d.status).filter(Boolean))];
+        const statuses = [...new Set(filteredDocList.map((d: any) => d.status).filter(Boolean))];
         if (statuses.length > 1) {
           specificFollowups.push("Show only approved documents");
         }
-        if (docList.length > 1) {
+        if (filteredDocList.length > 1) {
           specificFollowups.push("Compare revisions across these");
+        }
+        // Add "Show all" option when filtering was applied
+        if (filterApplied && unfilteredTotal > filteredDocList.length) {
+          specificFollowups.push(`Show all ${totalFound} documents`);
+        }
+
+        // Build summary text
+        let summaryText = buildSearchSummary(lastToolResult, summaryOpts);
+        if (filterApplied && unfilteredTotal > filteredDocList.length) {
+          summaryText += `. There are also ${unfilteredTotal - filteredDocList.length} other unrelated documents available.`;
+        } else if (!filterApplied && p1SubjectLabel && filteredDocList.length < docList.length) {
+          summaryText = `I didn't find a specific document for **${p1SubjectLabel}**, but found **${totalFound}** documents. Showing the closest ${filteredDocList.length}:`;
         }
 
         const structured = {
           type: "document_list",
-          summary: buildSearchSummary(lastToolResult),
-          documents: docList,
+          summary: summaryText,
+          documents: filteredDocList,
           highlights: smartInsights,
-          followup: specificFollowups.slice(0, 3)
+          followup: specificFollowups.slice(0, 4)
         };
 
         finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
-        console.log(`search_assai_documents: document_list response (${totalFound} docs, specific query)`);
+        console.log(`search_assai_documents: document_list response (${filteredDocList.length}/${totalFound} docs, specific query, subject=${p1SubjectLabel || 'none'})`);
       } else {
-        // BROAD QUERY: Show status/type summaries with document list below
-        const broadInsights = generateSmartInsights(lastToolResult, docList);
+        // BROAD QUERY: Show status/type summaries with filtered document list
+        const broadInsights = generateSmartInsights(lastToolResult, filteredDocList);
         
         const broadFollowups: string[] = [];
+        if (p1SubjectLabel && filteredDocList.length > 0) {
+          broadFollowups.push(`Read and summarise the most relevant ${p1SubjectLabel} document`);
+        }
         const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
         const hasPending = pendingStatuses.some(s => (lastToolResult.status_summary || {})[s]);
         if (hasPending) broadFollowups.push("Show only pending documents");
         broadFollowups.push("Filter by discipline");
-        if (docList.length > 5) broadFollowups.push("Export this list");
+        if (filterApplied && unfilteredTotal > filteredDocList.length) {
+          broadFollowups.push(`Show all ${totalFound} documents`);
+        } else if (filteredDocList.length > 5) {
+          broadFollowups.push("Export this list");
+        }
 
         const statusTable = Object.entries(lastToolResult.status_summary || {})
           .sort((a: any, b: any) => b[1] - a[1])
@@ -9956,18 +10046,23 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           .slice(0, 10)
           .map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
 
+        let broadSummary = buildSearchSummary(lastToolResult, summaryOpts);
+        if (filterApplied && unfilteredTotal > filteredDocList.length) {
+          broadSummary += `. There are also ${unfilteredTotal - filteredDocList.length} other unrelated documents available.`;
+        }
+
         const structured = {
           type: "document_search",
-          summary: buildSearchSummary(lastToolResult),
+          summary: broadSummary,
           status_table: statusTable,
           type_table: typeTable,
-          documents: docList,
+          documents: filteredDocList,
           highlights: broadInsights,
-          followup: broadFollowups.slice(0, 3)
+          followup: broadFollowups.slice(0, 4)
         };
 
         finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
-        console.log(`search_assai_documents: document_search response (${totalFound} docs, broad query)`);
+        console.log(`search_assai_documents: document_search response (${filteredDocList.length}/${totalFound} docs, broad query, subject=${p1SubjectLabel || 'none'})`);
       }
     }
 
