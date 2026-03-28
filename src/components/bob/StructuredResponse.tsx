@@ -12,14 +12,14 @@ import { assaiDetailsUrl, assaiDownloadUrl, ASSAI_DOC_NUMBER_REGEX } from '@/lib
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 /** Icon-only action buttons — all muted grey, subtle hover */
-function DocActionButtons({ docNumber, onRead }: { docNumber: string; onRead?: (query: string) => void }) {
+function DocActionButtons({ docNumber, title, onRead }: { docNumber: string; title?: string; onRead?: (query: string) => void }) {
   return (
     <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
       <TooltipProvider delayDuration={150}>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              onClick={() => onRead?.(`Read and summarise ${docNumber}`)}
+              onClick={() => onRead?.(`Read and summarise ${title || docNumber}`)}
               className="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-150 cursor-pointer"
             >
               <BookOpen className="h-3.5 w-3.5" />
@@ -374,7 +374,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                     <td className="py-1.5 px-3 align-middle"><div className="text-xs text-foreground leading-normal line-clamp-2">{toTitleCase(doc.title)}</div></td>
                     <td className="py-1.5 px-3 text-center align-middle"><StatusBadge code={doc.status} /></td>
                     <td className="py-1 px-1 align-middle">
-                      <DocActionButtons docNumber={doc.document_number} onRead={onFollowupClick} />
+                      <DocActionButtons docNumber={doc.document_number} title={doc.title} onRead={onFollowupClick} />
                     </td>
                   </tr>
                 ))}
@@ -518,7 +518,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                     <td className="py-1.5 px-3 align-middle"><div className="text-xs text-foreground leading-normal line-clamp-2">{toTitleCase(doc.title)}</div></td>
                     <td className="py-1.5 px-3 text-center align-middle"><StatusBadge code={doc.status} /></td>
                     <td className="py-1 px-1 align-middle">
-                      <DocActionButtons docNumber={doc.document_number} onRead={onFollowupClick} />
+                      <DocActionButtons docNumber={doc.document_number} title={doc.title} onRead={onFollowupClick} />
                     </td>
                   </tr>
                 ))}

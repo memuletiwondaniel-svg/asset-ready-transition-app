@@ -930,9 +930,11 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                             'Observations': '🔍',
                           };
 
-                          // Broad regex: match lines that look like section headers
-                          // Catches: "Header:", "Header", "**Header:**", "**Header**"
-                          let processed = message.content
+                          let processed = message.content;
+
+                          // Only apply section header normalization to assistant messages
+                          if (message.role === 'assistant') {
+                          processed = processed
                             // Bold-wrapped headers: **Some Header:** or **Some Header**
                             .replace(/^\*\*([^*]+?)\*\*:?\s*$/gm, (_m, g1) => {
                               const clean = g1.replace(/:$/, '').trim();
@@ -956,6 +958,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                               }
                               return _m; // Leave unchanged
                             });
+                          } // end assistant-only header normalization
 
                           // Extract follow-up suggestions (bullet items after "Would you like me to")
                           const followUpRegex = /## [💬📌⚠️💡🔍📄📋🎯📝🔬📊➡️📅✅]+ Would you like me to[\s\S]*?(?=\n## |\n---|\s*$)/i;
