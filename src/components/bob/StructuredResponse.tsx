@@ -269,35 +269,39 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                 <DocumentNumberLink docNumber={data.document.document_number} />
               </div>
               <p className="text-sm font-semibold text-foreground mt-0.5">{data.document.title}</p>
-              <div className="flex items-center gap-2 mt-1.5">
+              <ul className="list-disc list-inside mt-1.5 space-y-0.5 text-sm text-foreground">
                 {data.document.revision && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
-                    Rev {data.document.revision}
-                  </span>
+                  <li><span className="font-medium">Revision:</span> {data.document.revision}</li>
                 )}
-                {data.document.status && <StatusBadge code={data.document.status} />}
-                {data.document.type_code && (
-                  <span className="text-[10px] text-muted-foreground">{data.document.type_code}</span>
+                {data.document.status && (
+                <li>
+                  <span className="font-medium">Status:</span>{' '}
+                  <StatusBadge code={data.document.status} />
+                </li>
                 )}
-              </div>
-              <div className="flex items-center gap-3 mt-2">
-                <a
-                  href={assaiDownloadUrl(data.document.document_number)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline no-underline"
-                >
-                  <Download className="h-3 w-3" /> Download Link
-                </a>
-                <a
-                  href={assaiDetailsUrl(data.document.document_number)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline no-underline"
-                >
-                  <ExternalLink className="h-3 w-3" /> Open in Assai
-                </a>
-              </div>
+                <li>
+                  <span className="font-medium">Download:</span>{' '}
+                  <a
+                    href={assaiDownloadUrl(data.document.document_number)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline no-underline"
+                  >
+                    Click here to download
+                  </a>
+                </li>
+                <li>
+                  <span className="font-medium">Open in Assai:</span>{' '}
+                  <a
+                    href={assaiDetailsUrl(data.document.document_number)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline no-underline"
+                  >
+                    View in Assai
+                  </a>
+                </li>
+              </ul>
             </div>
           </div>
         )}
