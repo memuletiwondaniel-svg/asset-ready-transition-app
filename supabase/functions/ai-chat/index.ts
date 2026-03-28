@@ -6906,18 +6906,22 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           };
         }
         
-        // STEP 5 — Download file
+        // STEP 5 — Re-authenticate for download (sessions expire after ~3-4 min)
         let pdfBase64: string | null = null;
         let documentMediaType = 'application/pdf';
         
         try {
+          // Fresh auth for download — the search step may have consumed minutes
+          const dlAuth = await authenticateAssai(assaiBase, username, password, dbName);
+          const dlCookies = dlAuth.success && dlAuth.cookies?.length ? dlAuth.cookies.join('; ') : cookieHeader;
+          
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 15000);
           
           console.log(`read_assai_document: downloading pk_seq_nr=${pkSeqNr}, entt_seq_nr=${enttSeqNr}`);
           const docRes = await fetch(assaiBase + '/download.aweb?pk_seq_nr=' + pkSeqNr + '&entt_seq_nr=' + enttSeqNr, {
             headers: {
-              'Cookie': cookieHeader,
+              'Cookie': dlCookies,
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             },
             signal: controller.signal,
