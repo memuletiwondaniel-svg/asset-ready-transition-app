@@ -9190,7 +9190,84 @@ serve(async (req) => {
     }
     
     // ═══════════════════════════════════════════════════════════════════════
-    // DETERMINISTIC NAVIGATION: Handle navigation intents before AI processing
+    // DIRECT FILE UPLOAD: Bypass Assai tool loop entirely
+    // When user uploads a file, send it directly to Claude for analysis
+    // ═══════════════════════════════════════════════════════════════════════
+    if (file_data && file_name) {
+      console.log(`📄 Direct file upload detected: ${file_name} (${file_type || 'application/pdf'})`);
+      const mediaType = file_type || 'application/pdf';
+      const userText = messages.filter((m: any) => m.role === 'user').pop()?.content || 'Analyze this document';
+      const analysisPrompt = `A document has been directly uploaded by the user (filename: "${file_name}"). Read its full content carefully. Provide a structured analysis including: (1) Document purpose and scope, (2) Key parameters, specifications or findings, (3) Any critical flags, outstanding items or concerns, (4) Recommendations or next steps if applicable. Be specific and reference actual content from the document.`;
+      
+      try {
+        const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-5-20250929",
+            max_tokens: 4096,
+            system: analysisPrompt,
+            messages: [{
+              role: "user",
+              content: [
+                { type: "document", source: { type: "base64", media_type: mediaType, data: file_data } },
+                { type: "text", text: userText }
+              ]
+            }],
+            stream: true,
+          }),
+        });
+        
+        if (!claudeRes.ok || !claudeRes.body) {
+          const errText = await claudeRes.text();
+          console.error(`File analysis Claude API error: ${claudeRes.status}`, errText);
+          const errorMsg = `I received your file "${file_name}" but encountered an issue analyzing it. Please try again.`;
+          const sseError = `data: ${JSON.stringify({ choices: [{ delta: { content: errorMsg } }] })}\n\ndata: [DONE]\n\n`;
+          return new Response(sseError, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+        }
+        
+        // Stream SSE response — transform Anthropic SSE to OpenAI-compatible format
+        const transformStream = new TransformStream({
+          transform(chunk, controller) {
+            const text = new TextDecoder().decode(chunk);
+            const lines = text.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') {
+                  controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+                  return;
+                }
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+                    const sseChunk = `data: ${JSON.stringify({ choices: [{ delta: { content: parsed.delta.text } }] })}\n\n`;
+                    controller.enqueue(new TextEncoder().encode(sseChunk));
+                  } else if (parsed.type === 'message_stop') {
+                    controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+                  }
+                } catch {}
+              }
+            }
+          }
+        });
+        
+        const streamBody = claudeRes.body.pipeThrough(transformStream);
+        return new Response(streamBody, {
+          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+        });
+      } catch (fileErr) {
+        console.error('File analysis error:', fileErr);
+        const errorMsg = `I received your file "${file_name}" but encountered an error during analysis. Please try again.`;
+        const sseError = `data: ${JSON.stringify({ choices: [{ delta: { content: errorMsg } }] })}\n\ndata: [DONE]\n\n`;
+        return new Response(sseError, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+      }
+    }
+    
     // This ensures navigation ALWAYS happens when Bob claims it will
     // ═══════════════════════════════════════════════════════════════════════
     if (lastUserMessage) {
