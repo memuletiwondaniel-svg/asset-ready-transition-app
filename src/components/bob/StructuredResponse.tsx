@@ -371,7 +371,16 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                     <td className="py-1.5 px-3 align-middle">
                       <DocumentNumberLink docNumber={doc.document_number} truncate />
                     </td>
-                    <td className="py-1.5 px-3 align-middle"><div className="text-xs text-foreground leading-normal line-clamp-2">{toTitleCase(doc.title)}</div></td>
+                    <td className="py-1.5 px-3 align-middle">
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="text-xs text-foreground leading-normal line-clamp-2 cursor-default">{toTitleCase(doc.title)}</div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs text-xs">{doc.title}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </td>
                     <td className="py-1.5 px-3 text-center align-middle"><StatusBadge code={doc.status} /></td>
                     <td className="py-1 px-1 align-middle">
                       <DocActionButtons docNumber={doc.document_number} title={doc.title} onRead={onFollowupClick} />
