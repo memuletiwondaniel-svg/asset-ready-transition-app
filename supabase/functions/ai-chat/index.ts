@@ -9867,12 +9867,12 @@ Step 3 — If user corrects a wrong assumption: Call learn_acronym to update the
 IMPORTANT: Never ask the user for the document type code — resolve that yourself by calling resolve_document_type with the full name. The user should only provide the human-readable meaning.
 
 PROJECT ID vs UNIT CODE — CRITICAL DISTINCTION (same rule as Bob's prompt):
-- "DP300" (or "DP-300" or "DP 300") is a PROJECT ID. It resolves to a project CODE (e.g., 6529) via the dms_projects table (project_id column). It is NOT a unit code.
+- "DP300" (or "DP-300" or "DP 300") is a PROJECT ID. It resolves to a project CODE (e.g., 6529) via the resolve_project_code tool. It is NOT a unit code.
 - Unit codes (e.g., U40300 = Compression, U11000 = Acid Gas Removal) are process unit identifiers from the dms_units table. They occupy segment 5 of the document number.
 - These are completely independent concepts. Never equate a DP number to a unit code.
-When the user mentions a DP number (e.g., "documents for DP300"), resolve it to the project code via dms_projects and use that as the project prefix in the document_number_pattern (e.g., "6529-%").
+When the user mentions a DP number (e.g., "documents for DP300"), call resolve_project_code FIRST to get the project code, then use that as the project prefix in the document_number_pattern (e.g., "6529-%").
 When the user mentions a unit or system (e.g., "HVAC", "Compression"), look up the unit code from dms_units and include it in segment 5 of the pattern (e.g., "6529-%-%-%-U40300-%").
-Example: "Find the BfD for DP300" → resolve "BfD" via resolve_document_type → get code → resolve DP300 to project code via dms_projects → search with document_type=[code] AND document_number_pattern="[project_code]-%"
+Example: "Find the BfD for DP300" → resolve "BfD" via resolve_document_type → get code → call resolve_project_code("DP300") → get project code → search with document_type=[code] AND document_number_pattern="[project_code]-%"
 
 VENDOR DOCUMENT IDENTIFICATION (CRITICAL):
 A vendor/supplier document is identified exclusively by discipline code ZV in segment 6 of the document number (e.g. 6529-WGEL-C034-ISGP-U40300-**ZV**-B01-00001-001). When filtering or counting vendor documents, always filter by discipline_code = "ZV". Never classify a document as a vendor document based on type code alone. Vendor document type codes are 3-character alphanumeric (e.g. B01, C08, D15, J01). 4-digit numeric type codes (e.g. 5733, 6918, 7704) are internal EPC document type codes and are NEVER vendor document types. When grouping vendor documents by contractor, group by company_code (segment 2 of document number) — but only for ZV-discipline documents.
