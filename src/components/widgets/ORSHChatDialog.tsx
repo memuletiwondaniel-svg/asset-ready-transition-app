@@ -860,7 +860,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                 </div>
               ) : (
                 /* Messages */
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {messages.map((message, index) => (
                     <div key={index} className={cn("flex gap-4", message.role === 'user' ? 'justify-end' : 'justify-start')}>
                       {message.role === 'assistant' && (
