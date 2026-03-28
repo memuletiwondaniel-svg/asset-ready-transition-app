@@ -299,7 +299,7 @@ Deno.serve(async (req) => {
       "sync-assai-projects: found " +
         projects.length +
         " unique projects from " +
-        myCells.length +
+        allMyCells.length +
         " rows"
     );
 
