@@ -7345,7 +7345,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             formData.set('number', document_number_pattern);
           }
           if (discipline_code) formData.set('discipline_code', discipline_code);
-          if (document_type) formData.set('document_type', document_type);
+          if (effectiveDocType) formData.set('document_type', effectiveDocType);
           if (status_code) formData.set('status_code', status_code);
           if (company_code) formData.set('company_code', company_code);
           if (title) formData.set('description', title);
