@@ -10077,7 +10077,49 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       }
     }
 
-    // PART 1b: Deterministic structured_response for document reading/analysis
+    // ═══════════════════════════════════════════════════════════════════════
+    // SAFETY NET: If AI skipped tool call but mentioned documents in text,
+    // extract doc numbers and build minimal structured response with pills
+    // ═══════════════════════════════════════════════════════════════════════
+    if (!effectiveSearchResult && finalTextContent && !finalTextContent.includes('<structured_response>')) {
+      const docNumberPattern = /\b(\d{4}-[A-Z]{2,6}-[A-Z0-9]+-[A-Z]+-[A-Z0-9]+-[A-Z]{2,3}-[A-Z]\d{2}-\d{5}-\d{3})\b/g;
+      const foundDocNumbers = [...new Set((finalTextContent.match(docNumberPattern) || []))];
+      const userMsg = (lastUserMessage?.content || '').toLowerCase();
+      const isDocQuery = /\b(document|doc|find|search|show|get|iom|bfd|p&id|datasheet|drawing|report|spec|manual|procedure)\b/i.test(userMsg);
+      
+      if (foundDocNumbers.length > 0 && isDocQuery) {
+        console.log(`SAFETY NET: AI skipped tool call but referenced ${foundDocNumbers.length} document(s). Building minimal structured response.`);
+        
+        const minimalDocs = foundDocNumbers.slice(0, 10).map(dn => {
+          const segments = dn.split('-');
+          return {
+            document_number: dn,
+            title: '', // Not available without tool call
+            revision: '',
+            status: '',
+            type_code: segments.length >= 7 ? segments[6] : '',
+          };
+        });
+
+        const followups = [
+          'Search for related documents',
+          'Download this document',
+          'Show document details'
+        ];
+
+        const structured = {
+          type: "document_list",
+          summary: `Found reference to **${foundDocNumbers.length}** document${foundDocNumbers.length > 1 ? 's' : ''}`,
+          documents: minimalDocs,
+          highlights: [],
+          followup: followups
+        };
+
+        finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+      }
+    }
+
+
     if (lastToolName === 'read_assai_document' && lastToolResult && lastToolResult.content_available && lastToolResult.document_content_answer) {
       const meta = lastToolResult.metadata || {};
       const answer = lastToolResult.document_content_answer || '';
