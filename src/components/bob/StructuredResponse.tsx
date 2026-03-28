@@ -621,10 +621,10 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
       {/* Insights */}
       {data.highlights && data.highlights.length > 0 && (
         <div className="bg-muted/20 rounded-lg p-3 border border-border/20">
-          <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3 text-amber-500" />
-            Insights
-          </h4>
+           <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2 flex items-center gap-1.5">
+              <Sparkles className="h-3 w-3 text-amber-500" />
+              Insights
+            </h4>
           <ul className="space-y-1.5">
             {data.highlights.map((h, i) => (
               <li key={i} className="text-xs text-foreground leading-relaxed flex gap-2">
