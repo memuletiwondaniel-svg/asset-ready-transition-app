@@ -371,7 +371,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                     <td className="py-2 px-3 align-top">
                       <DocumentNumberLink docNumber={doc.document_number} truncate />
                     </td>
-                    <td className="py-2 px-3 text-xs text-foreground leading-snug line-clamp-2">{doc.title}</td>
+                    <td className="py-2 px-3 text-xs text-foreground leading-snug line-clamp-2">{toTitleCase(doc.title)}</td>
                     <td className="py-2 px-3 text-center align-top"><StatusBadge code={doc.status} /></td>
                     <td className="py-1 px-1 align-top">
                       <DocActionButtons docNumber={doc.document_number} onRead={onFollowupClick} />
