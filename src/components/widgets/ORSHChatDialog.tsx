@@ -965,7 +965,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                 )}
                               </>
                             );
-                          })()}
+                          })();
                         
                         {message.imageUrls && message.imageUrls.length > 0 && (
                           <div className="mt-3 grid grid-cols-2 gap-2">
