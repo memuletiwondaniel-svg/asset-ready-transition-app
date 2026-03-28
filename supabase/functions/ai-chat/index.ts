@@ -10011,7 +10011,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         }
 
         // Build summary text
-        let summaryText = buildSearchSummary(lastToolResult, summaryOpts);
+        let summaryText = buildSearchSummary(effectiveSearchResult, summaryOpts);
         if (filterApplied && unfilteredTotal > filteredDocList.length) {
           summaryText += `. There are also ${unfilteredTotal - filteredDocList.length} other unrelated documents available.`;
         } else if (!filterApplied && p1SubjectLabel && filteredDocList.length < docList.length) {
