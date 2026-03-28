@@ -9457,132 +9457,25 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       input_schema: t.function.parameters
     }));
 
-    // First API call - with tools enabled (non-streaming for tool handling)
-    const initialResponse = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-5-20250929",
-        system: systemPrompt,
-        messages: transformedMessages,
-        tools: anthropicTools,
-        max_tokens: maxTokens,
-      }),
-    });
+    // ═══════════════════════════════════════════════════════════════════════
+    // MULTI-ROUND AGENTIC TOOL LOOP
+    // Supports chained tool calls (e.g. resolve_document_type → search_assai_documents)
+    // Max iterations: 5
+    // ═══════════════════════════════════════════════════════════════════════
+    const MAX_ITERATIONS = 5;
+    let conversationMessages = [...transformedMessages];
+    let iteration = 0;
+    let lastToolName: string | null = null;
+    let lastToolResult: any = null;
+    let allToolCallNames: string[] = [];
+    let navigationAction: { action: string; path: string } | null = null;
+    let finalTextContent = '';
 
-    if (!initialResponse.ok) {
-      const errorText = await initialResponse.text();
-      console.error("Anthropic API error:", initialResponse.status, errorText);
-      
-      // Log API error to ai_edge_cases
-      try {
-        await supabase.from('ai_edge_cases').insert({
-          trigger_message: lastUserMessage?.content?.substring(0, 500) || 'unknown',
-          category: 'api_error',
-          severity: initialResponse.status === 429 ? 'medium' : 'high',
-          actual_behavior: `Anthropic API returned ${initialResponse.status}: ${errorText.substring(0, 500)}`,
-          expected_behavior: 'Successful API response',
-          agent_code: detectedAgent
-        });
-      } catch (logErr) {
-        console.error('Failed to log API error:', logErr);
-      }
+    while (iteration < MAX_ITERATIONS) {
+      iteration++;
+      console.log(`Agent loop iteration ${iteration}/${MAX_ITERATIONS}`);
 
-      if (initialResponse.status === 429) {
-        const rateLimitMsg = "I'm experiencing high demand right now. Please try again in about 30 seconds.";
-        const sseRateLimit = `data: ${JSON.stringify({ choices: [{ delta: { content: rateLimitMsg } }] })}\n\ndata: [DONE]\n\n`;
-        return new Response(sseRateLimit, {
-          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-        });
-      }
-      
-      // Graceful fallback — contextual based on what the user asked
-      const lastUserMsg = messages?.filter((m: any) => m.role === 'user').pop()?.content || '';
-      const fallbackContent = `I wasn't able to process your request about "${lastUserMsg.substring(0, 60).trim()}..." due to a temporary backend issue.\n\nWhat you can try:\n• Rephrase your question with more specific details\n• Try again in a moment — this is usually a brief interruption\n• Contact your ORSH administrator if this keeps happening`;
-      const sseData = `data: ${JSON.stringify({
-        choices: [{ delta: { content: fallbackContent } }]
-      })}\n\ndata: [DONE]\n\n`;
-      return new Response(sseData, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-      });
-    }
-
-    const initialResult = await initialResponse.json();
-    console.log("Initial AI response stop_reason:", initialResult.stop_reason);
-
-    // Anthropic response: extract text content and tool_use blocks
-    const contentBlocks = initialResult.content || [];
-    const toolUseBlocks = contentBlocks.filter((b: any) => b.type === 'tool_use');
-    const textBlocks = contentBlocks.filter((b: any) => b.type === 'text');
-    const textContent = textBlocks.map((b: any) => b.text).join('');
-    
-    // Check if AI wants to call tools
-    if (toolUseBlocks.length > 0) {
-      console.log("AI requested tool calls:", toolUseBlocks.length);
-      
-      // Execute all tool calls and track navigation actions
-      const toolResultContents: any[] = [];
-      const toolCallNames: string[] = [];
-      let navigationAction: { action: string; path: string } | null = null;
-      let lastToolName: string | null = null;
-      let lastToolResult: any = null;
-      
-      for (const toolBlock of toolUseBlocks) {
-        const toolName = toolBlock.name;
-        toolCallNames.push(toolName);
-        const toolArgs = toolBlock.input || {};
-        // Inject user_id for user context tools
-        if (['get_user_context', 'save_user_context'].includes(toolName) && currentUserId) {
-          toolArgs._user_id = currentUserId;
-        }
-        
-        console.log(`Executing tool: ${toolName}`, toolArgs);
-        const result = await executeTool(toolName, toolArgs, supabase);
-        console.log(`Tool result for ${toolName}:`, result);
-
-        lastToolName = toolName;
-        lastToolResult = result;
-        
-        // Capture navigation action if present
-        if (result?.action === "navigate" && result?.path) {
-          navigationAction = { action: "navigate", path: result.path };
-        }
-        
-        // Anthropic tool_result format
-        toolResultContents.push({
-          type: "tool_result",
-          tool_use_id: toolBlock.id,
-          content: JSON.stringify(result)
-        });
-      }
-
-      // Helper: build user-friendly search summary from tool result filters
-      const TYPE_DESCS_SUMMARY: Record<string, string> = dynamicTypeDescs;
-      const buildSearchSummary = (toolResult: any): string => {
-        const total = toolResult.total_found || 0;
-        const filters = toolResult.filters_applied || {};
-        const parts: string[] = [];
-        if (filters.document_type && TYPE_DESCS_SUMMARY[filters.document_type]) {
-          parts.push(TYPE_DESCS_SUMMARY[filters.document_type]);
-        } else if (filters.document_type) {
-          parts.push(`type ${filters.document_type}`);
-        }
-        if (filters.discipline_code) parts.push(`discipline ${filters.discipline_code}`);
-        if (filters.status_code) parts.push(`status ${filters.status_code}`);
-        if (filters.company_code) parts.push(`originator ${filters.company_code}`);
-        if (parts.length > 0) {
-          return `Found **${total}** ${parts.join(', ')} documents`;
-        }
-        return `Found **${total}** documents`;
-      };
-
-      // Second API call - send tool results back to AI for final response
-      // Build messages: original conversation + assistant message with tool_use + user message with tool_results
-      const finalResponse = await fetch("https://api.anthropic.com/v1/messages", {
+      const apiResponse = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
           "x-api-key": ANTHROPIC_API_KEY,
@@ -9592,22 +9485,32 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         body: JSON.stringify({
           model: "claude-sonnet-4-5-20250929",
           system: systemPrompt,
-          messages: [
-            ...transformedMessages,
-            { role: "assistant", content: contentBlocks },
-            { role: "user", content: toolResultContents },
-          ],
+          messages: conversationMessages,
+          tools: anthropicTools,
           max_tokens: maxTokens,
         }),
       });
 
-      if (!finalResponse.ok) {
-        const errorText = await finalResponse.text();
-        console.error("Final AI response error:", finalResponse.status, errorText);
+      if (!apiResponse.ok) {
+        const errorText = await apiResponse.text();
+        console.error(`Anthropic API error (iteration ${iteration}):`, apiResponse.status, errorText);
         
-        // Handle rate limiting gracefully
-        if (finalResponse.status === 429) {
-          // For search_assai_documents, build structured response deterministically even on rate limit
+        // Log API error
+        try {
+          await supabase.from('ai_edge_cases').insert({
+            trigger_message: lastUserMessage?.content?.substring(0, 500) || 'unknown',
+            category: 'api_error',
+            severity: apiResponse.status === 429 ? 'medium' : 'high',
+            actual_behavior: `Anthropic API returned ${apiResponse.status}: ${errorText.substring(0, 500)}`,
+            expected_behavior: 'Successful API response',
+            agent_code: detectedAgent
+          });
+        } catch (logErr) {
+          console.error('Failed to log API error:', logErr);
+        }
+
+        if (apiResponse.status === 429) {
+          // If we already have tool results, try to build a useful response from them
           if (lastToolName === 'search_assai_documents' && lastToolResult && lastToolResult.found && lastToolResult.total_found > 0) {
             const STATUS_DESCS: Record<string, string> = {
               AFU: "Approved for Use", AFC: "Approved for Construction", IFB: "Issued for Bid", IFT: "Issued for Tender",
@@ -9622,306 +9525,341 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
             return new Response(sseFallback, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
           }
-          // Generic fallback for other tools
-          const lastTR = toolResultContents[toolResultContents.length - 1];
-          let fallbackContent: string;
-          if (lastTR) {
-            fallbackContent = "I found some results but hit a temporary rate limit while formatting the response. The data is ready — please try your question again in about 30 seconds and I'll format it properly.";
-          } else {
-            const lastUserMsg = messages?.filter((m: any) => m.role === 'user').pop()?.content || '';
-            fallbackContent = `I was working on your request about "${lastUserMsg.substring(0, 60).trim()}" but hit a temporary rate limit.\n\nPlease try again in about 30 seconds — your request was valid and should work on the next attempt.`;
-          }
-          const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
-          return new Response(sseFallback, {
-            headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-          });
+          const rateLimitMsg = "I'm experiencing high demand right now. Please try again in about 30 seconds.";
+          const sseRateLimit = `data: ${JSON.stringify({ choices: [{ delta: { content: rateLimitMsg } }] })}\n\ndata: [DONE]\n\n`;
+          return new Response(sseRateLimit, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
         }
         
-        return new Response(
-          JSON.stringify({ error: "AI error on final response" }), 
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        const lastUserMsg = messages?.filter((m: any) => m.role === 'user').pop()?.content || '';
+        const fallbackContent = `I wasn't able to process your request about "${lastUserMsg.substring(0, 60).trim()}..." due to a temporary backend issue.\n\nWhat you can try:\n• Rephrase your question with more specific details\n• Try again in a moment — this is usually a brief interruption\n• Contact your ORSH administrator if this keeps happening`;
+        const sseData = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
+        return new Response(sseData, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
       }
 
-      const finalResult = await finalResponse.json();
-      console.log("Final AI response stop_reason:", finalResult.stop_reason, "usage:", finalResult.usage);
-      const finalBlocks = finalResult.content || [];
-      let finalContent = finalBlocks.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
+      const result = await apiResponse.json();
+      const contentBlocks = result.content || [];
+      const toolUseBlocks = contentBlocks.filter((b: any) => b.type === 'tool_use');
+      const textBlocks = contentBlocks.filter((b: any) => b.type === 'text');
+      const textContent = textBlocks.map((b: any) => b.text).join('');
+      
+      console.log(`Iteration ${iteration} stop_reason: ${result.stop_reason}, tool_calls: ${toolUseBlocks.length}, text_length: ${textContent.length}`);
 
-      // ═══════════════════════════════════════════════════════════════════════
-      // PART 1: Deterministic structured_response for document searches
-      // Always build from raw tool data, never from AI text
-      // ═══════════════════════════════════════════════════════════════════════
-      if (lastToolName === 'search_assai_documents' && lastToolResult && lastToolResult.found && lastToolResult.total_found > 0) {
-        const STATUS_DESCS: Record<string, string> = {
-          AFU: "Approved for Use", AFC: "Approved for Construction",
-          IFB: "Issued for Bid", IFT: "Issued for Tender",
-          IFI: "Issued for Information", IFA: "Issued for Approval",
-          IFC: "Issued for Construction", CAN: "Cancelled",
-          REV: "Under Revision", SUP: "Superseded",
-          IFR: "Issued for Review", AFD: "Approved for Design",
-          IFD: "Issued for Design", IFU: "Issued for Use"
-        };
-        const TYPE_DESCS: Record<string, string> = dynamicTypeDescs;
+      // If no tool calls or stop_reason is end_turn/max_tokens → we're done
+      if (toolUseBlocks.length === 0 || result.stop_reason !== 'tool_use') {
+        finalTextContent = textContent;
+        break;
+      }
 
-        // Extract highlights from Bob's text (numbered items)
-        const highlights: string[] = [];
-        const hlMatch = finalContent.match(/\d+\.\s+(.+)/g);
-        if (hlMatch) {
-          for (const line of hlMatch.slice(0, 5)) {
-            highlights.push(line.replace(/^\d+\.\s+/, '').trim());
-          }
+      // Execute all tool calls in this round
+      const toolResultContents: any[] = [];
+      
+      for (const toolBlock of toolUseBlocks) {
+        const toolName = toolBlock.name;
+        allToolCallNames.push(toolName);
+        const toolArgs = toolBlock.input || {};
+        if (['get_user_context', 'save_user_context'].includes(toolName) && currentUserId) {
+          toolArgs._user_id = currentUserId;
         }
-        if (highlights.length === 0) {
-          // Fallback: generate basic highlights from data
-          const topStatus = Object.entries(lastToolResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]);
-          if (topStatus.length > 0) highlights.push(`${topStatus[0][1]} documents are ${STATUS_DESCS[topStatus[0][0]] || topStatus[0][0]}`);
-          const typeCount = Object.keys(lastToolResult.type_summary || {}).length;
-          highlights.push(`Documents span ${typeCount} different document types`);
+        
+        console.log(`[Iteration ${iteration}] Executing tool: ${toolName}`, toolArgs);
+        const toolResult = await executeTool(toolName, toolArgs, supabase);
+        console.log(`[Iteration ${iteration}] Tool result for ${toolName}:`, typeof toolResult === 'object' ? JSON.stringify(toolResult).substring(0, 500) : toolResult);
+
+        lastToolName = toolName;
+        lastToolResult = toolResult;
+        
+        if (toolResult?.action === "navigate" && toolResult?.path) {
+          navigationAction = { action: "navigate", path: toolResult.path };
         }
+        
+        toolResultContents.push({
+          type: "tool_result",
+          tool_use_id: toolBlock.id,
+          content: JSON.stringify(toolResult)
+        });
+      }
 
-        // Extract followup from Bob's text (bulleted suggestions)
-        const followup: string[] = [];
-        const fuMatch = finalContent.match(/[-•]\s+(.+)/g);
-        if (fuMatch) {
-          for (const line of fuMatch.slice(-3)) {
-            followup.push(line.replace(/^[-•]\s+/, '').replace(/\*\*/g, '').trim());
-          }
+      // Append assistant message (with tool_use blocks) and tool results to conversation
+      conversationMessages.push({ role: "assistant", content: contentBlocks });
+      conversationMessages.push({ role: "user", content: toolResultContents });
+      
+      // Accumulate any text from this iteration
+      if (textContent) {
+        finalTextContent = textContent;
+      }
+    }
+
+    if (iteration >= MAX_ITERATIONS) {
+      console.warn(`Agent loop hit MAX_ITERATIONS (${MAX_ITERATIONS}). Returning accumulated text.`);
+    }
+
+    // Helper: build user-friendly search summary from tool result filters
+    const TYPE_DESCS_SUMMARY: Record<string, string> = dynamicTypeDescs;
+    const buildSearchSummary = (toolResult: any): string => {
+      const total = toolResult.total_found || 0;
+      const filters = toolResult.filters_applied || {};
+      const parts: string[] = [];
+      if (filters.document_type && TYPE_DESCS_SUMMARY[filters.document_type]) {
+        parts.push(TYPE_DESCS_SUMMARY[filters.document_type]);
+      } else if (filters.document_type) {
+        parts.push(`type ${filters.document_type}`);
+      }
+      if (filters.discipline_code) parts.push(`discipline ${filters.discipline_code}`);
+      if (filters.status_code) parts.push(`status ${filters.status_code}`);
+      if (filters.company_code) parts.push(`originator ${filters.company_code}`);
+      if (parts.length > 0) {
+        return `Found **${total}** ${parts.join(', ')} documents`;
+      }
+      return `Found **${total}** documents`;
+    };
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PART 1: Deterministic structured_response for document searches
+    // Always build from raw tool data, never from AI text
+    // ═══════════════════════════════════════════════════════════════════════
+    if (lastToolName === 'search_assai_documents' && lastToolResult && lastToolResult.found && lastToolResult.total_found > 0) {
+      const STATUS_DESCS: Record<string, string> = {
+        AFU: "Approved for Use", AFC: "Approved for Construction",
+        IFB: "Issued for Bid", IFT: "Issued for Tender",
+        IFI: "Issued for Information", IFA: "Issued for Approval",
+        IFC: "Issued for Construction", CAN: "Cancelled",
+        REV: "Under Revision", SUP: "Superseded",
+        IFR: "Issued for Review", AFD: "Approved for Design",
+        IFD: "Issued for Design", IFU: "Issued for Use"
+      };
+      const TYPE_DESCS: Record<string, string> = dynamicTypeDescs;
+
+      const highlights: string[] = [];
+      const hlMatch = finalTextContent.match(/\d+\.\s+(.+)/g);
+      if (hlMatch) {
+        for (const line of hlMatch.slice(0, 5)) {
+          highlights.push(line.replace(/^\d+\.\s+/, '').trim());
         }
-        if (followup.length === 0) {
-          followup.push("Show me only the pending documents");
-          followup.push("Break down by discipline");
-          followup.push("Which documents are overdue?");
+      }
+      if (highlights.length === 0) {
+        const topStatus = Object.entries(lastToolResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]);
+        if (topStatus.length > 0) highlights.push(`${topStatus[0][1]} documents are ${STATUS_DESCS[topStatus[0][0]] || topStatus[0][0]}`);
+        const typeCount = Object.keys(lastToolResult.type_summary || {}).length;
+        highlights.push(`Documents span ${typeCount} different document types`);
+      }
+
+      const followup: string[] = [];
+      const fuMatch = finalTextContent.match(/[-•]\s+(.+)/g);
+      if (fuMatch) {
+        for (const line of fuMatch.slice(-3)) {
+          followup.push(line.replace(/^[-•]\s+/, '').replace(/\*\*/g, '').trim());
         }
+      }
+      if (followup.length === 0) {
+        followup.push("Show me only the pending documents");
+        followup.push("Break down by discipline");
+        followup.push("Which documents are overdue?");
+      }
 
-        const statusTable = Object.entries(lastToolResult.status_summary || {})
-          .sort((a: any, b: any) => b[1] - a[1])
-          .map(([status, count]) => ({
-            status, count,
-            description: STATUS_DESCS[status] ?? status
-          }));
-
-        const typeTable = Object.entries(lastToolResult.type_summary || {})
-          .sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count)
-          .slice(0, 10)
-          .map(([code, data]: any) => ({
-            code, count: data.count, statuses: data.statuses,
-            description: TYPE_DESCS[code] ?? code
-          }));
-
-        // Include first 10 documents with download URLs for actionable UI
-        const docList = (lastToolResult.documents || []).slice(0, 10).map((d: any) => ({
-          document_number: d.document_number,
-          title: d.title,
-          revision: d.revision,
-          status: d.status,
-          type_code: d.type_code,
-          download_url: d.download_url || null,
-          pk_seq_nr: d.pk_seq_nr,
-          entt_seq_nr: d.entt_seq_nr
+      const statusTable = Object.entries(lastToolResult.status_summary || {})
+        .sort((a: any, b: any) => b[1] - a[1])
+        .map(([status, count]) => ({
+          status, count,
+          description: STATUS_DESCS[status] ?? status
         }));
 
-        const structured = {
-          type: "document_search",
-          summary: buildSearchSummary(lastToolResult),
-          status_table: statusTable,
-          type_table: typeTable,
-          documents: docList,
-          highlights,
-          followup
-        };
+      const typeTable = Object.entries(lastToolResult.type_summary || {})
+        .sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count)
+        .slice(0, 10)
+        .map(([code, data]: any) => ({
+          code, count: data.count, statuses: data.statuses,
+          description: TYPE_DESCS[code] ?? code
+        }));
 
-        finalContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
-        console.log('search_assai_documents: deterministic structured_response built server-side');
+      const docList = (lastToolResult.documents || []).slice(0, 10).map((d: any) => ({
+        document_number: d.document_number,
+        title: d.title,
+        revision: d.revision,
+        status: d.status,
+        type_code: d.type_code,
+        download_url: d.download_url || null,
+        pk_seq_nr: d.pk_seq_nr,
+        entt_seq_nr: d.entt_seq_nr
+      }));
+
+      const structured = {
+        type: "document_search",
+        summary: buildSearchSummary(lastToolResult),
+        status_table: statusTable,
+        type_table: typeTable,
+        documents: docList,
+        highlights,
+        followup
+      };
+
+      finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+      console.log('search_assai_documents: deterministic structured_response built server-side');
+    }
+
+    // PART 1b: Deterministic structured_response for document reading/analysis
+    if (lastToolName === 'read_assai_document' && lastToolResult && lastToolResult.content_available && lastToolResult.document_content_answer) {
+      const meta = lastToolResult.metadata || {};
+      const answer = lastToolResult.document_content_answer || '';
+      
+      const keySummary: string[] = [];
+      const criticalObs: string[] = [];
+      const relatedDocs: string[] = [];
+      let overview = '';
+      
+      const lines = finalTextContent.split('\n').filter((l: string) => l.trim());
+      let currentSection = '';
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.match(/overview|document overview/i)) { currentSection = 'overview'; continue; }
+        if (trimmed.match(/key.*summary|content.*summary/i)) { currentSection = 'summary'; continue; }
+        if (trimmed.match(/critical|observation|warning/i)) { currentSection = 'critical'; continue; }
+        if (trimmed.match(/related.*doc/i)) { currentSection = 'related'; continue; }
+        
+        const bulletContent = trimmed.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '');
+        if (!bulletContent) continue;
+        
+        if (currentSection === 'overview') overview += (overview ? ' ' : '') + bulletContent;
+        else if (currentSection === 'summary') keySummary.push(bulletContent);
+        else if (currentSection === 'critical') criticalObs.push(bulletContent);
+        else if (currentSection === 'related') relatedDocs.push(bulletContent);
+      }
+      
+      if (keySummary.length === 0 && !overview) {
+        overview = answer.substring(0, 500);
       }
 
-      // PART 1b: Deterministic structured_response for document reading/analysis
-      if (lastToolName === 'read_assai_document' && lastToolResult && lastToolResult.content_available && lastToolResult.document_content_answer) {
-        const meta = lastToolResult.metadata || {};
-        const answer = lastToolResult.document_content_answer || '';
-        const assaiBaseUrl = (meta.external_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/[^/]*$/, '');
-        
-        // Parse Bob's analysis text into sections
-        const keySummary: string[] = [];
-        const criticalObs: string[] = [];
-        const relatedDocs: string[] = [];
-        let overview = '';
-        
-        // Extract sections from Bob's response
-        const lines = finalContent.split('\n').filter((l: string) => l.trim());
-        let currentSection = '';
-        
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.match(/overview|document overview/i)) { currentSection = 'overview'; continue; }
-          if (trimmed.match(/key.*summary|content.*summary/i)) { currentSection = 'summary'; continue; }
-          if (trimmed.match(/critical|observation|warning/i)) { currentSection = 'critical'; continue; }
-          if (trimmed.match(/related.*doc/i)) { currentSection = 'related'; continue; }
-          
-          const bulletContent = trimmed.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '');
-          if (!bulletContent) continue;
-          
-          if (currentSection === 'overview') overview += (overview ? ' ' : '') + bulletContent;
-          else if (currentSection === 'summary') keySummary.push(bulletContent);
-          else if (currentSection === 'critical') criticalObs.push(bulletContent);
-          else if (currentSection === 'related') relatedDocs.push(bulletContent);
-        }
-        
-        // If parsing didn't yield sections, use the full AI answer as summary
-        if (keySummary.length === 0 && !overview) {
-          overview = answer.substring(0, 500);
-        }
+      const structured = {
+        type: "document_analysis",
+        summary: `Analysis of **${meta.document_number || 'document'}** — ${meta.title || 'Untitled'}`,
+        document: {
+          document_number: meta.document_number || '',
+          title: meta.title || 'Untitled',
+          revision: meta.revision || '',
+          status: meta.status || '',
+          type_code: meta.document_type || '',
+          download_url: meta.pk_seq_nr && meta.entt_seq_nr
+            ? `https://eu.assaicloud.com/AWeu578/download.aweb?pk_seq_nr=${meta.pk_seq_nr}&entt_seq_nr=${meta.entt_seq_nr}`
+            : undefined
+        },
+        overview: overview || undefined,
+        key_summary: keySummary.length > 0 ? keySummary : undefined,
+        critical_observations: criticalObs.length > 0 ? criticalObs : undefined,
+        related_documents: relatedDocs.length > 0 ? relatedDocs : undefined,
+        followup: [
+          `Show me all ${meta.document_type || ''} documents`,
+          `What is the revision history for ${meta.document_number || 'this document'}?`,
+          `Are there any open comments on ${meta.document_number || 'this document'}?`
+        ]
+      };
 
-        const structured = {
-          type: "document_analysis",
-          summary: `Analysis of **${meta.document_number || 'document'}** — ${meta.title || 'Untitled'}`,
-          document: {
-            document_number: meta.document_number || '',
-            title: meta.title || 'Untitled',
-            revision: meta.revision || '',
-            status: meta.status || '',
-            type_code: meta.document_type || '',
-            download_url: meta.pk_seq_nr && meta.entt_seq_nr
-              ? `https://eu.assaicloud.com/AWeu578/download.aweb?pk_seq_nr=${meta.pk_seq_nr}&entt_seq_nr=${meta.entt_seq_nr}`
-              : undefined
-          },
-          overview: overview || undefined,
-          key_summary: keySummary.length > 0 ? keySummary : undefined,
-          critical_observations: criticalObs.length > 0 ? criticalObs : undefined,
-          related_documents: relatedDocs.length > 0 ? relatedDocs : undefined,
-          followup: [
-            `Show me all ${meta.document_type || ''} documents`,
-            `What is the revision history for ${meta.document_number || 'this document'}?`,
-            `Are there any open comments on ${meta.document_number || 'this document'}?`
-          ]
-        };
+      finalTextContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+      console.log('read_assai_document: deterministic structured_response built server-side');
+    }
 
-        finalContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
-        console.log('read_assai_document: deterministic structured_response built server-side');
-      }
-
-      if (!finalContent || !finalContent.trim()) {
-        if (lastToolResult?.error) {
-          finalContent = `I couldn't find that information: ${lastToolResult.error}`;
-        } else if (lastToolName === 'get_pssr_pending_items' && lastToolResult) {
-          const label = lastToolResult.pssr_label || 'PSSR';
-          const count = lastToolResult.pending_count ?? 0;
-          const byCat = lastToolResult.by_category || {};
-          const breakdown = Object.keys(byCat).length
-            ? Object.entries(byCat).map(([k, v]) => `• ${k}: ${v} items`).join('\n')
-            : '';
-          finalContent = `For **${label}**, there are **${count} pending items**${breakdown ? `:\n${breakdown}` : '.'}`;
-        } else if (lastToolName === 'get_pssr_pending_approvers' && lastToolResult) {
-          const label = lastToolResult.pssr_label || 'PSSR';
-          const pendingFinal = (lastToolResult.final_approvers || []).filter((a: any) => a.status === 'PENDING');
-          if (pendingFinal.length === 0) {
-            finalContent = `**${label}** has no pending final approvers.`;
-          } else {
-            finalContent = `**${label}** is awaiting approvals:\n\n**Final Sign-offs Pending:**\n${pendingFinal.map((a: any, i: number) => `${i + 1}. ${a.name} (${a.role})`).join('\n')}`;
-          }
-        } else if (lastToolName === 'get_executive_summary' && lastToolResult) {
-          const label = lastToolResult.pssr_label || 'PSSR';
-          const health = lastToolResult.health || 'attention_needed';
-          const healthText = health === 'critical' ? 'Critical Issues' : health === 'on_track' ? 'On Track' : 'Attention Needed';
-          const issues = (lastToolResult.issues || []).slice(0, 3);
-          const blockers = (lastToolResult.blockers || []).slice(0, 3);
-          const issueLines = issues.length ? `\n\n**Issues/Concerns:**\n${issues.map((i: any) => `• ${i.severity === 'critical' ? '🔴' : i.severity === 'warning' ? '🟡' : 'ℹ️'} ${i.message}`).join('\n')}` : '';
-          const blockerLines = blockers.length ? `\n\n**Blockers:**\n${blockers.map((b: string) => `• ${b}`).join('\n')}` : '';
-          finalContent = `**${label} - ${healthText}**\nOverall progress: ${lastToolResult.overall_progress ?? 0}%${issueLines}${blockerLines}`;
-        } else if (lastToolName === 'get_pssr_detailed_summary' && lastToolResult) {
-          const p = lastToolResult.pssr || {};
-          const prog = lastToolResult.progress || {};
-          const approverInfo = lastToolResult.approvers || {};
-          const actions = lastToolResult.priority_actions || {};
-          const blockers = lastToolResult.blocking_items || [];
-          
-          finalContent = `## ${p.pssr_id || 'PSSR'} — ${p.title || 'Untitled'}\n\n`;
-          finalContent += `| Field | Value |\n|---|---|\n`;
-          finalContent += `| **Status** | ${p.status || 'Unknown'} |\n`;
-          finalContent += `| **Asset** | ${p.asset || 'N/A'} |\n`;
-          finalContent += `| **Project** | ${p.project_name || 'N/A'} |\n`;
-          finalContent += `| **Overall Progress** | ${prog.overall ?? 0}% |\n`;
-          finalContent += `| **Total Items** | ${prog.total_items ?? 0} |\n`;
-          finalContent += `| **Complete** | ${prog.complete_items ?? 0} |\n`;
-          finalContent += `| **Pending** | ${prog.pending_items ?? 0} |\n`;
-          finalContent += `| **Approvers** | ${approverInfo.approved ?? 0}/${approverInfo.total ?? 0} approved |\n`;
-          finalContent += `| **Priority A Actions** | ${actions.a_open ?? 0} open / ${actions.a_total ?? 0} total |\n`;
-          finalContent += `| **Priority B Actions** | ${actions.b_open ?? 0} open / ${actions.b_total ?? 0} total |\n`;
-          
-          if (prog.by_category && Object.keys(prog.by_category).length > 0) {
-            finalContent += `\n### Progress by Category\n\n| Category | Complete | Pending | Total |\n|---|---|---|---|\n`;
-            for (const [cat, stats] of Object.entries(prog.by_category) as any) {
-              finalContent += `| ${cat} | ${stats.complete} | ${stats.pending} | ${stats.total} |\n`;
-            }
-          }
-          
-          if (blockers.length > 0) {
-            finalContent += `\n### Blockers\n${blockers.map((b: string) => `- ${b}`).join('\n')}`;
-          }
-          
-          finalContent += `\n\n${lastToolResult.can_close ? '✅ Ready to close' : '⚠️ Not ready to close — blockers remain'}`;
-        } else if (lastToolName === 'get_discipline_status' && lastToolResult) {
-          const label = lastToolResult.pssr_label || 'PSSR';
-          const byCat = lastToolResult.by_category || {};
-          finalContent = `## ${label} — Discipline Status\n\n| Discipline | Complete | Pending | Total | Progress |\n|---|---|---|---|---|\n`;
-          for (const [cat, stats] of Object.entries(byCat) as any) {
-            const pct = stats.total > 0 ? Math.round((stats.complete / stats.total) * 100) : 0;
-            finalContent += `| ${cat} | ${stats.complete} | ${stats.pending} | ${stats.total} | ${pct}% |\n`;
-          }
-        } else if (lastToolName === 'get_pssr_stats' && lastToolResult) {
-          const total = lastToolResult.total ?? 0;
-          const breakdown = lastToolResult.breakdown || {};
-          finalContent = `**PSSR Summary — ${total} total records**\n\n| Status | Count |\n|---|---|\n`;
-          for (const [status, count] of Object.entries(breakdown)) {
-            finalContent += `| ${status} | ${count} |\n`;
-          }
-          if (lastToolResult.pssrs?.length > 0) {
-            finalContent += `\n**PSSRs Found:**\n\n| PSSR ID | Title | Status | Progress |\n|---|---|---|---|\n`;
-            lastToolResult.pssrs.forEach((p: any) => {
-              finalContent += `| ${p.pssr_id} | ${p.title} | ${p.status} | ${p.progress ?? 0}% |\n`;
-            });
-          }
+    // Fallback content for empty responses
+    if (!finalTextContent || !finalTextContent.trim()) {
+      if (lastToolResult?.error) {
+        finalTextContent = `I couldn't find that information: ${lastToolResult.error}`;
+      } else if (lastToolName === 'get_pssr_pending_items' && lastToolResult) {
+        const label = lastToolResult.pssr_label || 'PSSR';
+        const count = lastToolResult.pending_count ?? 0;
+        const byCat = lastToolResult.by_category || {};
+        const breakdown = Object.keys(byCat).length
+          ? Object.entries(byCat).map(([k, v]) => `• ${k}: ${v} items`).join('\n')
+          : '';
+        finalTextContent = `For **${label}**, there are **${count} pending items**${breakdown ? `:\n${breakdown}` : '.'}`;
+      } else if (lastToolName === 'get_pssr_pending_approvers' && lastToolResult) {
+        const label = lastToolResult.pssr_label || 'PSSR';
+        const pendingFinal = (lastToolResult.final_approvers || []).filter((a: any) => a.status === 'PENDING');
+        if (pendingFinal.length === 0) {
+          finalTextContent = `**${label}** has no pending final approvers.`;
         } else {
-          finalContent = "I retrieved some data but couldn't determine the right format to display it. Could you rephrase your question with more specific details? For example, specify the document type, vendor name, or PO number you're looking for.";
+          finalTextContent = `**${label}** is awaiting approvals:\n\n**Final Sign-offs Pending:**\n${pendingFinal.map((a: any, i: number) => `${i + 1}. ${a.name} (${a.role})`).join('\n')}`;
         }
+      } else if (lastToolName === 'get_executive_summary' && lastToolResult) {
+        const label = lastToolResult.pssr_label || 'PSSR';
+        const health = lastToolResult.health || 'attention_needed';
+        const healthText = health === 'critical' ? 'Critical Issues' : health === 'on_track' ? 'On Track' : 'Attention Needed';
+        const issues = (lastToolResult.issues || []).slice(0, 3);
+        const blockers = (lastToolResult.blockers || []).slice(0, 3);
+        const issueLines = issues.length ? `\n\n**Issues/Concerns:**\n${issues.map((i: any) => `• ${i.severity === 'critical' ? '🔴' : i.severity === 'warning' ? '🟡' : 'ℹ️'} ${i.message}`).join('\n')}` : '';
+        const blockerLines = blockers.length ? `\n\n**Blockers:**\n${blockers.map((b: string) => `• ${b}`).join('\n')}` : '';
+        finalTextContent = `**${label} - ${healthText}**\nOverall progress: ${lastToolResult.overall_progress ?? 0}%${issueLines}${blockerLines}`;
+      } else if (lastToolName === 'get_pssr_detailed_summary' && lastToolResult) {
+        const p = lastToolResult.pssr || {};
+        const prog = lastToolResult.progress || {};
+        const approverInfo = lastToolResult.approvers || {};
+        const actions = lastToolResult.priority_actions || {};
+        const blockers = lastToolResult.blocking_items || [];
+        
+        finalTextContent = `## ${p.pssr_id || 'PSSR'} — ${p.title || 'Untitled'}\n\n`;
+        finalTextContent += `| Field | Value |\n|---|---|\n`;
+        finalTextContent += `| **Status** | ${p.status || 'Unknown'} |\n`;
+        finalTextContent += `| **Asset** | ${p.asset || 'N/A'} |\n`;
+        finalTextContent += `| **Project** | ${p.project_name || 'N/A'} |\n`;
+        finalTextContent += `| **Overall Progress** | ${prog.overall ?? 0}% |\n`;
+        finalTextContent += `| **Total Items** | ${prog.total_items ?? 0} |\n`;
+        finalTextContent += `| **Complete** | ${prog.complete_items ?? 0} |\n`;
+        finalTextContent += `| **Pending** | ${prog.pending_items ?? 0} |\n`;
+        finalTextContent += `| **Approvers** | ${approverInfo.approved ?? 0}/${approverInfo.total ?? 0} approved |\n`;
+        finalTextContent += `| **Priority A Actions** | ${actions.a_open ?? 0} open / ${actions.a_total ?? 0} total |\n`;
+        finalTextContent += `| **Priority B Actions** | ${actions.b_open ?? 0} open / ${actions.b_total ?? 0} total |\n`;
+        
+        if (prog.by_category && Object.keys(prog.by_category).length > 0) {
+          finalTextContent += `\n### Progress by Category\n\n| Category | Complete | Pending | Total |\n|---|---|---|---|\n`;
+          for (const [cat, stats] of Object.entries(prog.by_category) as any) {
+            finalTextContent += `| ${cat} | ${stats.complete} | ${stats.pending} | ${stats.total} |\n`;
+          }
+        }
+        
+        if (blockers.length > 0) {
+          finalTextContent += `\n### Blockers\n${blockers.map((b: string) => `- ${b}`).join('\n')}`;
+        }
+        
+        finalTextContent += `\n\n${lastToolResult.can_close ? '✅ Ready to close' : '⚠️ Not ready to close — blockers remain'}`;
+      } else if (lastToolName === 'get_discipline_status' && lastToolResult) {
+        const label = lastToolResult.pssr_label || 'PSSR';
+        const byCat = lastToolResult.by_category || {};
+        finalTextContent = `## ${label} — Discipline Status\n\n| Discipline | Complete | Pending | Total | Progress |\n|---|---|---|---|---|\n`;
+        for (const [cat, stats] of Object.entries(byCat) as any) {
+          const pct = stats.total > 0 ? Math.round((stats.complete / stats.total) * 100) : 0;
+          finalTextContent += `| ${cat} | ${stats.complete} | ${stats.pending} | ${stats.total} | ${pct}% |\n`;
+        }
+      } else if (lastToolName === 'get_pssr_stats' && lastToolResult) {
+        const total = lastToolResult.total ?? 0;
+        const breakdown = lastToolResult.breakdown || {};
+        finalTextContent = `**PSSR Summary — ${total} total records**\n\n| Status | Count |\n|---|---|\n`;
+        for (const [status, count] of Object.entries(breakdown)) {
+          finalTextContent += `| ${status} | ${count} |\n`;
+        }
+        if (lastToolResult.pssrs?.length > 0) {
+          finalTextContent += `\n**PSSRs Found:**\n\n| PSSR ID | Title | Status | Progress |\n|---|---|---|---|\n`;
+          lastToolResult.pssrs.forEach((p: any) => {
+            finalTextContent += `| ${p.pssr_id} | ${p.title} | ${p.status} | ${p.progress ?? 0}% |\n`;
+          });
+        }
+      } else {
+        finalTextContent = "I retrieved some data but couldn't determine the right format to display it. Could you rephrase your question with more specific details? For example, specify the document type, vendor name, or PO number you're looking for.";
       }
-      
-      // Append navigation action to response so frontend can detect and execute
-      if (navigationAction) {
-        finalContent += ` ${JSON.stringify(navigationAction)}`;
-      }
-      
-      // Log response and persist memory
-      logResponseFeedback(supabase, null, detectedAgent, toolCallNames, Date.now() - requestStartTime)
-        .catch(e => console.error('Feedback log error:', e));
-      if (currentUserId) {
-        extractAndPersistContext(supabase, currentUserId, messages)
-          .catch(e => console.error('Context persist error:', e));
-      }
-      
-      // Return as SSE format for compatibility with frontend
-      const sseData = `data: ${JSON.stringify({
-        choices: [{ delta: { content: finalContent } }]
-      })}\n\ndata: [DONE]\n\n`;
-      
-      return new Response(sseData, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-      });
     }
     
-    // No tool calls - return direct response as SSE
-    const directContent = textContent || "I'm here to help. What would you like to know?";
+    // Append navigation action
+    if (navigationAction) {
+      finalTextContent += ` ${JSON.stringify(navigationAction)}`;
+    }
     
     // Log response and persist memory
-    logResponseFeedback(supabase, null, detectedAgent, [], Date.now() - requestStartTime)
+    logResponseFeedback(supabase, null, detectedAgent, allToolCallNames, Date.now() - requestStartTime)
       .catch(e => console.error('Feedback log error:', e));
     if (currentUserId) {
       extractAndPersistContext(supabase, currentUserId, messages)
         .catch(e => console.error('Context persist error:', e));
     }
     
+    const finalContent = finalTextContent || "I'm here to help. What would you like to know?";
     const sseData = `data: ${JSON.stringify({
-      choices: [{ delta: { content: directContent } }]
+      choices: [{ delta: { content: finalContent } }]
     })}\n\ndata: [DONE]\n\n`;
     
     return new Response(sseData, {
