@@ -6675,6 +6675,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const cookieHeader = sessionCookies.join('; ');
         
         // STEP 4 — Search for document to get pk_seq_nr and entt_seq_nr
+        console.log(`read_assai_document: searching for ${docNumber} in DES_DOC`);
         let pkSeqNr: string | null = null;
         let enttSeqNr: string | null = null;
         
