@@ -6906,18 +6906,22 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           };
         }
         
-        // STEP 5 — Download file
+        // STEP 5 — Re-authenticate for download (sessions expire after ~3-4 min)
         let pdfBase64: string | null = null;
         let documentMediaType = 'application/pdf';
         
         try {
+          // Fresh auth for download — the search step may have consumed minutes
+          const dlAuth = await authenticateAssai(assaiBase, username, password);
+          const dlCookies = dlAuth.success && dlAuth.cookies?.length ? dlAuth.cookies.join('; ') : cookieHeader;
+          
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 15000);
           
           console.log(`read_assai_document: downloading pk_seq_nr=${pkSeqNr}, entt_seq_nr=${enttSeqNr}`);
           const docRes = await fetch(assaiBase + '/download.aweb?pk_seq_nr=' + pkSeqNr + '&entt_seq_nr=' + enttSeqNr, {
             headers: {
-              'Cookie': cookieHeader,
+              'Cookie': dlCookies,
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             },
             signal: controller.signal,
@@ -6954,8 +6958,20 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             };
           }
           
-          // HTML error page detection — Assai sometimes returns HTML instead of the file
-          if (bytes.length > 0 && bytes[0] === 0x3C) { // starts with '<'
+          // HTML error page detection — check content-type first, then bytes
+          if (contentType.includes('text/html')) {
+            console.error('read_assai_document: Assai returned text/html instead of a file — session may have expired');
+            return {
+              metadata,
+              content_available: false,
+              reason: 'Assai returned an error page instead of the document file. The session may have expired during download.',
+              question_asked: question
+            };
+          }
+          
+          // Also check bytes — strip leading whitespace (CR/LF) before checking for '<'
+          const firstNonWs = bytes.findIndex(b => b !== 0x0D && b !== 0x0A && b !== 0x20 && b !== 0x09);
+          if (firstNonWs >= 0 && bytes[firstNonWs] === 0x3C) { // starts with '<' after whitespace
             const firstChunk = new TextDecoder().decode(bytes.slice(0, 500)).toLowerCase();
             if (firstChunk.includes('<!doctype') || firstChunk.includes('<html') || firstChunk.includes('<head') || firstChunk.includes('applet:error')) {
               console.error('read_assai_document: Assai returned an HTML error page instead of the document file');
