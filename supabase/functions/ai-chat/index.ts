@@ -9822,15 +9822,45 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
                 // ── ANALYTICAL PATH: synthesize summary instead of raw document table ──
                 if (isFallbackAnalytical) {
-                  console.log(`Deterministic fallback: ANALYTICAL response path (${searchResult.total_found} docs, vendor=${isFallbackVendorQuery})`);
-                  const statusSummary = searchResult.status_summary || {};
+                  // For vendor queries, post-filter to only ZV discipline documents
+                  let effectiveDocs = searchResult.documents || [];
+                  let effectiveTotal = searchResult.total_found || 0;
+                  let effectiveStatusSummary = searchResult.status_summary || {};
+                  let effectiveTypeSummary = searchResult.type_summary || {};
+                  
+                  if (isFallbackVendorQuery) {
+                    effectiveDocs = effectiveDocs.filter((d: any) => {
+                      const docNum = d.document_number || '';
+                      const segments = docNum.split('-');
+                      // Discipline code is segment 6 (index 5) in standard numbering
+                      const discipline = segments.length >= 6 ? segments[5] : '';
+                      return discipline === 'ZV';
+                    });
+                    effectiveTotal = effectiveDocs.length;
+                    // Rebuild status and type summaries from filtered docs
+                    effectiveStatusSummary = {};
+                    effectiveTypeSummary = {};
+                    for (const doc of effectiveDocs) {
+                      if (doc.status) effectiveStatusSummary[doc.status] = (effectiveStatusSummary[doc.status] || 0) + 1;
+                      if (doc.type_code) {
+                        if (!effectiveTypeSummary[doc.type_code]) effectiveTypeSummary[doc.type_code] = { count: 0, statuses: {} };
+                        effectiveTypeSummary[doc.type_code].count++;
+                        if (doc.status) effectiveTypeSummary[doc.type_code].statuses[doc.status] = (effectiveTypeSummary[doc.type_code].statuses[doc.status] || 0) + 1;
+                      }
+                    }
+                    console.log(`Deterministic fallback: Vendor filter applied — ${effectiveTotal} ZV docs from ${searchResult.total_found} total`);
+                  }
+                  
+                  console.log(`Deterministic fallback: ANALYTICAL response path (${effectiveTotal} docs, vendor=${isFallbackVendorQuery})`);
                   const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
                   const approvedStatuses = ['AFU', 'AFC', 'AFD'];
-                  const pendingCount = pendingStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
-                  const approvedCount = approvedStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
-                  const cancelledCount = (statusSummary['CAN'] || 0) + (statusSummary['SUP'] || 0);
+                  const pendingCount = pendingStatuses.reduce((sum, s) => sum + (effectiveStatusSummary[s] || 0), 0);
+                  const approvedCount = approvedStatuses.reduce((sum, s) => sum + (effectiveStatusSummary[s] || 0), 0);
+                  const cancelledCount = (effectiveStatusSummary['CAN'] || 0) + (effectiveStatusSummary['SUP'] || 0);
 
-                  let analyticalSummary = `Found **${searchResult.total_found}** documents${dpLabel}.`;
+                  let analyticalSummary = isFallbackVendorQuery 
+                    ? `Found **${effectiveTotal}** vendor documents (ZV discipline)${dpLabel}.`
+                    : `Found **${effectiveTotal}** documents${dpLabel}.`;
                   if (pendingCount > 0) analyticalSummary += ` **${pendingCount}** are pending review/approval.`;
                   if (approvedCount > 0) analyticalSummary += ` **${approvedCount}** are approved.`;
                   if (cancelledCount > 0) analyticalSummary += ` **${cancelledCount}** are cancelled/superseded.`;
@@ -9841,11 +9871,14 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                     "Show vendor submission timeline"
                   ];
 
+                  // Rebuild statusTable and typeTable from effective (possibly filtered) data
+                  const effectiveStatusTable = Object.entries(effectiveStatusSummary).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS_FB[s] ?? s }));
+                  const effectiveTypeTable = Object.entries(effectiveTypeSummary).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 5).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS_FB[code] ?? code }));
+
                   let vendorTable: any[] | undefined;
                   if (isFallbackVendorQuery) {
-                    const allDocs = searchResult.documents || [];
                     const byCompany: Record<string, { count: number; pending: number; approved: number }> = {};
-                    for (const doc of allDocs) {
+                    for (const doc of effectiveDocs) {
                       const company = doc.company_code || doc.originator || 'Unknown';
                       if (!byCompany[company]) byCompany[company] = { count: 0, pending: 0, approved: 0 };
                       byCompany[company].count++;
@@ -9860,7 +9893,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                     analyticalFollowups[2] = "Show documents by specific vendor";
                   }
 
-                  const topDocs = (searchResult.documents || []).slice(0, 5).map((d: any) => ({
+                  const topDocs = effectiveDocs.slice(0, 5).map((d: any) => ({
                     document_number: d.document_number, title: d.title, revision: d.revision,
                     status: d.status, type_code: d.type_code, download_url: d.download_url || null,
                     pk_seq_nr: d.pk_seq_nr, entt_seq_nr: d.entt_seq_nr
@@ -9869,11 +9902,10 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                   const structured: any = {
                     type: "document_search",
                     summary: analyticalSummary,
-                    status_table: statusTable,
-                    type_table: typeTable.slice(0, 5),
+                    status_table: effectiveStatusTable,
+                    type_table: effectiveTypeTable,
                     documents: topDocs,
-                    highlights: [`Analytical query detected — showing summary of ${searchResult.total_found} documents`],
-                    follow_ups: analyticalFollowups,
+                    highlights: [`Analytical query detected — showing summary of ${effectiveTotal} documents`],
                     followup: analyticalFollowups
                   };
                   if (vendorTable) structured.vendor_table = vendorTable;
