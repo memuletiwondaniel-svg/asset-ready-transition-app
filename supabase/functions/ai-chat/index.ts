@@ -6920,7 +6920,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               'Cookie': cookieHeader,
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             },
-            signal: controller.signal
+            signal: controller.signal,
+            redirect: 'follow'
           });
           clearTimeout(timeoutId);
           
@@ -6934,12 +6935,15 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
           
           const contentType = docRes.headers.get('content-type') || '';
+          console.log(`read_assai_document: content-type=${contentType}, url=${docRes.url}`);
           if (contentType.includes('pdf')) documentMediaType = 'application/pdf';
           else if (contentType.includes('image')) documentMediaType = contentType.split(';')[0].trim();
           else documentMediaType = 'application/pdf';
           
           const arrayBuffer = await docRes.arrayBuffer();
           const bytes = new Uint8Array(arrayBuffer);
+          
+          console.log(`read_assai_document: downloaded ${bytes.length} bytes, first4=[${bytes[0]},${bytes[1]},${bytes[2]},${bytes[3]}]`);
           
           if (bytes.length > 10 * 1024 * 1024) {
             return {
@@ -6952,8 +6956,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           
           // HTML error page detection — Assai sometimes returns HTML instead of the file
           if (bytes.length > 0 && bytes[0] === 0x3C) { // starts with '<'
-            const firstChunk = new TextDecoder().decode(bytes.slice(0, 200)).toLowerCase();
-            if (firstChunk.includes('<!doctype') || firstChunk.includes('<html') || firstChunk.includes('<head')) {
+            const firstChunk = new TextDecoder().decode(bytes.slice(0, 500)).toLowerCase();
+            if (firstChunk.includes('<!doctype') || firstChunk.includes('<html') || firstChunk.includes('<head') || firstChunk.includes('applet:error')) {
               console.error('read_assai_document: Assai returned an HTML error page instead of the document file');
               return {
                 metadata,
@@ -6962,6 +6966,31 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 question_asked: question
               };
             }
+          }
+          
+          // PDF magic byte validation — %PDF = [0x25, 0x50, 0x44, 0x46]
+          const isPdf = bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
+          if (!isPdf && documentMediaType === 'application/pdf') {
+            // Not a PDF — check if it's another supported format
+            const magicHex = Array.from(bytes.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+            console.error(`read_assai_document: Expected PDF but got magic bytes: ${magicHex}, content-type: ${contentType}`);
+            // Check for common office formats (DOCX/XLSX = PK zip = 50 4B, XLS = D0 CF)
+            const isZip = bytes[0] === 0x50 && bytes[1] === 0x4B;
+            const isOle = bytes[0] === 0xD0 && bytes[1] === 0xCF;
+            if (isZip || isOle) {
+              return {
+                metadata,
+                content_available: false,
+                reason: 'Document is in Office format (Excel/Word), not PDF. Direct AI reading is only supported for PDF files. Metadata shown below.',
+                question_asked: question
+              };
+            }
+            return {
+              metadata,
+              content_available: false,
+              reason: 'Downloaded file is not a valid PDF (unexpected format). The document may require a different viewer.',
+              question_asked: question
+            };
           }
           
           let binary = '';
