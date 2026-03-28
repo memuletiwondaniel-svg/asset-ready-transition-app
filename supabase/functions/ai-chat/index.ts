@@ -6831,8 +6831,6 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             supSearchParams.set('clas_seq_nr', '2');
             supSearchParams.set('suty_seq_nr', '7');
             supSearchParams.set('number', docNumber);
-            supSearchParams.set('proj_seq_nr', projSeqNr);
-            supSearchParams.set('selected_project_codes', selectedProjectCodes);
             
             const supRes = await fetch(assaiBase + '/result.aweb', {
               method: 'POST',
