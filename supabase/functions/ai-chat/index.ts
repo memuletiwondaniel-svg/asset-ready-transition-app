@@ -6825,19 +6825,62 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
           
           if (!pkSeqNr || !enttSeqNr) {
-            // Try SUP_DOC if not found in DES_DOC
-            searchParams.set('subclass_type', 'SUP_DOC');
-            searchParams.set('clas_seq_nr', '2');
-            searchParams.set('suty_seq_nr', '7');
+            // Try SUP_DOC if not found in DES_DOC — re-init search session for SUP_DOC module
+            try {
+              const supInitUrl = baseUrl + '/search.aweb?subclass_type=SUP_DOC';
+              const supInitResp = await fetch(supInitUrl, {
+                headers: { Cookie: cookieHeader, Accept: 'text/html', 'User-Agent': ASSAI_UA },
+                redirect: 'follow',
+              });
+              const supInitHtml = await supInitResp.text();
+              const supFields = extractHiddenFieldsRead(supInitHtml);
+              const supHidden = supFields.filter(f => f.type === 'hidden' && f.name && f.value);
+              const supText = supFields.filter(f => f.type === 'text' || f.type === '');
+              
+              const supParams = new URLSearchParams();
+              for (const f of supHidden) supParams.set(f.name, f.value);
+              for (const f of supText) supParams.set(f.name, '');
+              supParams.set('subclass_type', 'SUP_DOC');
+              supParams.set('number', docNumber);
+              supParams.set('proj_seq_nr', projSeqNr);
+              supParams.set('selected_project_codes', selectedProjectCodes);
+              
+              const supRes = await fetch(baseUrl + '/result.aweb', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  'Cookie': cookieHeader,
+                  'User-Agent': ASSAI_UA,
+                  'Referer': supInitUrl,
+                },
+                body: supParams.toString(),
+                redirect: 'follow',
+              });
+            } catch (supInitErr) {
+              console.warn('read_assai_document: SUP_DOC initSearch failed:', supInitErr);
+            }
+            
+            // Re-fetch result for SUP_DOC (use the last response)
+            const supSearchParams = new URLSearchParams();
+            for (const f of hiddenFieldsRead) supSearchParams.set(f.name, f.value);
+            for (const f of textFieldsRead) supSearchParams.set(f.name, '');
+            supSearchParams.set('subclass_type', 'SUP_DOC');
+            supSearchParams.set('clas_seq_nr', '2');
+            supSearchParams.set('suty_seq_nr', '7');
+            supSearchParams.set('number', docNumber);
+            supSearchParams.set('proj_seq_nr', projSeqNr);
+            supSearchParams.set('selected_project_codes', selectedProjectCodes);
             
             const supRes = await fetch(baseUrl + '/result.aweb', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cookie': cookieHeader,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': ASSAI_UA,
+                'Referer': baseUrl + '/search.aweb?subclass_type=SUP_DOC',
               },
-              body: searchParams.toString()
+              body: supSearchParams.toString(),
+              redirect: 'follow',
             });
             
             const supHtml = await supRes.text();
