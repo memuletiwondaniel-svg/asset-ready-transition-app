@@ -1,51 +1,70 @@
 
 
-## Plan: Add Document Action Buttons to Follow-up Section
+## Add "Open in Assai" under Download & Modernize Quick Actions Layout
 
 ### What's changing
 
-The "What would you like me to do next?" section currently shows text-only pill buttons (e.g., "Read and summarise the most relevant HVAC document"). These should be replaced/augmented with the 3 standard document action buttons — **Read & Analyse**, **Download**, **Open in Assai** — when results contain documents. The existing row-level hover actions stay as-is; these new ones appear prominently in the follow-up area so users always see them.
+Currently the three actions (Read & Analyse, Download, Open in Assai) are flat, equally-weighted chips. The user wants **Download** and **Open in Assai** grouped together as a secondary pair, with a more modern visual hierarchy.
 
-### Implementation
+### Design
 
-**File: `src/components/bob/StructuredResponse.tsx`**
+Reorganize `DocumentQuickActions` into two visual tiers:
 
-1. **Add a "Quick Actions" row** above the text follow-ups in all 3 response types (document_analysis, document_list, document_search). When `data.documents` exists and has results, render the top document's 3 action buttons as visible, labeled buttons (not hover-only icons):
-   - `BookOpen` — "Read & Analyse" → triggers `onFollowupClick("Read and summarise [title]")`
-   - `Download` — "Download" → links to `assaiDownloadUrl(docNumber)`
-   - `ExternalLink` — "Open in Assai" → links to `assaiDetailsUrl(docNumber)`
+1. **Primary action** — "Read & Analyse" as a filled/solid chip (bg-primary, white text) to signal it's the main CTA
+2. **Secondary group** — "Download" and "Open in Assai" stacked or grouped together with a subtle shared container, both as outlined chips. "Open in Assai" sits directly under/beside "Download" with a small `ExternalLink` icon, making them feel like related "get the file" actions.
 
-2. If there are multiple relevant documents (e.g., 2-3 HVAC matches), show the actions for the **first/most relevant** document, with a label like "For: [document title]".
+### Layout concept
 
-3. Keep the existing text pill follow-ups below for contextual suggestions (e.g., "Show IOMs for other units").
+```text
+┌─────────────────────────────────────────────────┐
+│ For: Installation Operation Maintenance Manual   │
+│                                                  │
+│ [■ Read & Analyse]   [ ↓ Download  |  ↗ Assai ] │
+└─────────────────────────────────────────────────┘
+```
 
-4. Style the action buttons as outlined chips with icons — same rounded-full style as follow-up pills but with a left-aligned icon, slightly more prominent (border-primary/40).
+The Download + Assai pair share a split-button style border (single rounded container with a divider), giving them a modern grouped feel while keeping Read & Analyse prominent.
 
-**File: `supabase/functions/ai-chat/index.ts`**
+### Implementation — `src/components/bob/StructuredResponse.tsx`
 
-No backend changes needed — the document data is already in the structured response. The frontend just needs to read `data.documents[0]` to render the actions.
+Replace the `DocumentQuickActions` component (lines 15-34):
 
-### Technical detail
-
-Create a reusable `DocumentQuickActions` component:
+- **Read & Analyse**: Solid primary chip (`bg-primary text-primary-foreground`)
+- **Download | Open in Assai**: Combined split-button with a single outer border, thin divider between them. Both retain their individual click targets (Download → `assaiDownloadUrl`, Assai → `assaiDetailsUrl`). Uses `rounded-l-full` / `rounded-r-full` with a `border-r` divider.
 
 ```tsx
-function DocumentQuickActions({ doc, onRead }: { doc: DocumentRow; onRead?: (q: string) => void }) {
+function DocumentQuickActions({ doc, onRead }) {
+  const primaryClass = "inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium transition-all cursor-pointer shadow-sm";
+  const splitBase = "inline-flex items-center gap-1.5 text-xs px-3 py-1.5 border border-border bg-muted/30 hover:bg-muted/60 text-foreground font-medium transition-all cursor-pointer no-underline";
+
   return (
-    <div className="flex flex-wrap gap-2">
-      <button onClick={() => onRead?.(`Read and summarise ${doc.title}`)} className="...chip styles...">
-        <BookOpen className="h-3.5 w-3.5" /> Read & Analyse
-      </button>
-      <a href={assaiDownloadUrl(doc.document_number)} target="_blank" className="...chip styles...">
-        <Download className="h-3.5 w-3.5" /> Download
-      </a>
-      <a href={assaiDetailsUrl(doc.document_number)} target="_blank" className="...chip styles...">
-        <ExternalLink className="h-3.5 w-3.5" /> Open in Assai
-      </a>
+    <div className="mb-2">
+      <p className="text-[10px] text-muted-foreground mb-1.5 truncate">
+        For: <span className="font-medium">{toTitleCase(doc.title)}</span>
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Primary CTA */}
+        <button onClick={...} className={primaryClass}>
+          <BookOpen /> Read & Analyse
+        </button>
+        {/* Split button group */}
+        <div className="inline-flex rounded-full overflow-hidden border border-border shadow-sm">
+          <a href={downloadUrl} className="...rounded-none border-r...">
+            <Download /> Download
+          </a>
+          <a href={assaiUrl} className="...rounded-none...">
+            <ExternalLink /> Open in Assai
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
 ```
 
-Render it in each follow-up section (lines 323-342, 413-432, 572-591) above the existing text pills, gated by `data.documents?.length > 0`. The reference document is `data.documents[0]`.
+### Files to modify
+
+| File | Change |
+|------|--------|
+| `src/components/bob/StructuredResponse.tsx` | Redesign `DocumentQuickActions` with primary CTA + split-button group |
 
