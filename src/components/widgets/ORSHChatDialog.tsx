@@ -550,7 +550,9 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       const decoder = new TextDecoder();
       let assistantMessage = '';
 
-      setMessages([...newMessages, { role: 'assistant', content: '' }]);
+      // Use functional update to avoid stale closure — ensures the assistant
+      // placeholder is always appended to the latest state (fixes first-send blank)
+      setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -569,7 +571,12 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) {
                 assistantMessage += content;
-                setMessages([...newMessages, { role: 'assistant', content: assistantMessage }]);
+                const snapshot = assistantMessage;
+                setMessages(prev => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = { ...updated[updated.length - 1], content: snapshot };
+                  return updated;
+                });
               }
             } catch {}
           }
