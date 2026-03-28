@@ -958,6 +958,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                               }
                               return _m; // Leave unchanged
                             });
+                          } // end assistant-only header normalization
 
                           // Extract follow-up suggestions (bullet items after "Would you like me to")
                           const followUpRegex = /## [💬📌⚠️💡🔍📄📋🎯📝🔬📊➡️📅✅]+ Would you like me to[\s\S]*?(?=\n## |\n---|\s*$)/i;
