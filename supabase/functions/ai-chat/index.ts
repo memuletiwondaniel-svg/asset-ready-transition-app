@@ -9736,7 +9736,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           status_table: statusTable,
           type_table: typeTable,
           documents: docList,
-          highlights,
+          highlights: broadInsights,
           followup
         };
 
