@@ -512,8 +512,8 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
       {/* Status Summary */}
       {data.status_table && data.status_table.length > 0 && (
         <div>
-          <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 mt-4">
-            Status Summary
+          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2 mt-4 flex items-center gap-1.5">
+            <span>📊</span> Status Summary
           </h4>
           <table className="w-full" style={{ borderCollapse: 'collapse' }}>
             <thead>
