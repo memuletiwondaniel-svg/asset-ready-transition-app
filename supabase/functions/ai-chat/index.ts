@@ -9798,24 +9798,86 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
               if (searchResult?.found && searchResult.total_found > 0) {
                 console.log(`Deterministic fallback: found ${searchResult.total_found} documents`);
-                // Reuse the existing deterministic structured response builder
                 lastToolName = 'search_assai_documents';
                 lastToolResult = searchResult;
                 
-                const STATUS_DESCS: Record<string, string> = {
+                const STATUS_DESCS_FB: Record<string, string> = {
                   AFU: "Approved for Use", AFC: "Approved for Construction", IFB: "Issued for Bid", IFT: "Issued for Tender",
                   IFI: "Issued for Information", IFA: "Issued for Approval", IFC: "Issued for Construction", CAN: "Cancelled",
-                  REV: "Under Revision", SUP: "Superseded", IFR: "Issued for Review", AFD: "Approved for Design"
+                  REV: "Under Revision", SUP: "Superseded", IFR: "Issued for Review", AFD: "Approved for Design",
+                  IFD: "Issued for Design", IFU: "Issued for Use", PLN: "Planned"
                 };
-                const TYPE_DESCS: Record<string, string> = dynamicTypeDescs;
-                const statusTable = Object.entries(searchResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS[s] ?? s }));
-                const typeTable = Object.entries(searchResult.type_summary || {}).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 10).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
+                const TYPE_DESCS_FB: Record<string, string> = dynamicTypeDescs;
+                const statusTable = Object.entries(searchResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS_FB[s] ?? s }));
+                const typeTable = Object.entries(searchResult.type_summary || {}).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 10).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS_FB[code] ?? code }));
                 
                 const dpLabel = dpMatch ? ` in DP${dpMatch[1]}` : '';
+
+                // ── ANALYTICAL PATH: synthesize summary instead of raw document table ──
+                if (isFallbackAnalytical) {
+                  console.log(`Deterministic fallback: ANALYTICAL response path (${searchResult.total_found} docs, vendor=${isFallbackVendorQuery})`);
+                  const statusSummary = searchResult.status_summary || {};
+                  const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
+                  const approvedStatuses = ['AFU', 'AFC', 'AFD'];
+                  const pendingCount = pendingStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
+                  const approvedCount = approvedStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
+                  const cancelledCount = (statusSummary['CAN'] || 0) + (statusSummary['SUP'] || 0);
+
+                  let analyticalSummary = `Found **${searchResult.total_found}** documents${dpLabel}.`;
+                  if (pendingCount > 0) analyticalSummary += ` **${pendingCount}** are pending review/approval.`;
+                  if (approvedCount > 0) analyticalSummary += ` **${approvedCount}** are approved.`;
+                  if (cancelledCount > 0) analyticalSummary += ` **${cancelledCount}** are cancelled/superseded.`;
+
+                  const analyticalFollowups = [
+                    "Show all pending review documents",
+                    "Break down by discipline",
+                    "Show vendor submission timeline"
+                  ];
+
+                  let vendorTable: any[] | undefined;
+                  if (isFallbackVendorQuery) {
+                    const allDocs = searchResult.documents || [];
+                    const byCompany: Record<string, { count: number; pending: number; approved: number }> = {};
+                    for (const doc of allDocs) {
+                      const company = doc.company_code || doc.originator || 'Unknown';
+                      if (!byCompany[company]) byCompany[company] = { count: 0, pending: 0, approved: 0 };
+                      byCompany[company].count++;
+                      if (pendingStatuses.includes(doc.status)) byCompany[company].pending++;
+                      if (approvedStatuses.includes(doc.status)) byCompany[company].approved++;
+                    }
+                    vendorTable = Object.entries(byCompany)
+                      .sort((a, b) => b[1].count - a[1].count)
+                      .slice(0, 10)
+                      .map(([company, data]) => ({ company, ...data }));
+                    analyticalSummary += ` Documents come from **${Object.keys(byCompany).length}** vendors/contractors.`;
+                    analyticalFollowups[2] = "Show documents by specific vendor";
+                  }
+
+                  const topDocs = (searchResult.documents || []).slice(0, 5).map((d: any) => ({
+                    document_number: d.document_number, title: d.title, revision: d.revision,
+                    status: d.status, type_code: d.type_code, download_url: d.download_url || null,
+                    pk_seq_nr: d.pk_seq_nr, entt_seq_nr: d.entt_seq_nr
+                  }));
+
+                  const structured: any = {
+                    type: "document_search",
+                    summary: analyticalSummary,
+                    status_table: statusTable,
+                    type_table: typeTable.slice(0, 5),
+                    documents: topDocs,
+                    highlights: [`Analytical query detected — showing summary of ${searchResult.total_found} documents`],
+                    follow_ups: analyticalFollowups,
+                    followup: analyticalFollowups
+                  };
+                  if (vendorTable) structured.vendor_table = vendorTable;
+
+                  const fallbackContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
+                  const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
+                  return new Response(sseFallback, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+                }
+
+                // ── RETRIEVAL PATH: raw document table (existing logic) ──
                 const summaryText = `Found **${searchResult.total_found}** ${resolvedCode} (${resolvedName}) documents${dpLabel}`;
-                
-                // Extract subject keywords from user message for relevance filtering
-                // (uses shared SUBJECT_KEYWORDS constant defined below)
                 
                 const msgUpper = lastUserMsg.toUpperCase();
                 let subjectLabel = '';
@@ -9843,7 +9905,6 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                   pk_seq_nr: d.pk_seq_nr, entt_seq_nr: d.entt_seq_nr
                 }));
                 
-                // Score and sort by relevance
                 let relevantDocs: any[] = [];
                 let otherDocs: any[] = [];
                 
@@ -9851,25 +9912,19 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                   for (const doc of allDocs) {
                     const titleUpper = (doc.title || '').toUpperCase();
                     const isRelevant = subjectKeywords.some(kw => titleUpper.includes(kw));
-                    if (isRelevant) {
-                      relevantDocs.push(doc);
-                    } else {
-                      otherDocs.push(doc);
-                    }
+                    if (isRelevant) relevantDocs.push(doc);
+                    else otherDocs.push(doc);
                   }
                 } else {
                   relevantDocs = allDocs;
                 }
                 
-                // Build appropriate summary
                 let adjustedSummary: string;
                 let docList: any[];
                 
                 if (relevantDocs.length > 0) {
                   adjustedSummary = `I found **${relevantDocs.length}** ${resolvedCode} (${resolvedName}) document${relevantDocs.length > 1 ? 's' : ''} related to **${subjectLabel}**${dpLabel}.`;
-                  if (otherDocs.length > 0) {
-                    adjustedSummary += ` There are also ${otherDocs.length} other unrelated ${resolvedName} documents available.`;
-                  }
+                  if (otherDocs.length > 0) adjustedSummary += ` There are also ${otherDocs.length} other unrelated ${resolvedName} documents available.`;
                   docList = relevantDocs;
                 } else if (subjectLabel) {
                   const showCount = Math.min(allDocs.length, 10);
@@ -9880,21 +9935,12 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                   docList = allDocs.slice(0, 30);
                 }
                 
-                // Generate context-aware follow-ups
                 const dynamicFollowups: string[] = [];
-                if (relevantDocs.length > 0) {
-                  dynamicFollowups.push(`Read and summarise the most relevant ${subjectLabel} document`);
-                }
-                if (subjectLabel) {
-                  dynamicFollowups.push(`Search for ${subjectLabel} drawings or datasheets instead`);
-                }
-                if (dpMatch) {
-                  dynamicFollowups.push(`Show ${resolvedName} documents for other units`);
-                }
+                if (relevantDocs.length > 0) dynamicFollowups.push(`Read and summarise the most relevant ${subjectLabel} document`);
+                if (subjectLabel) dynamicFollowups.push(`Search for ${subjectLabel} drawings or datasheets instead`);
+                if (dpMatch) dynamicFollowups.push(`Show ${resolvedName} documents for other units`);
                 dynamicFollowups.push(`Show only approved ${resolvedCode} documents`);
-                if (otherDocs.length > 0 && relevantDocs.length > 0) {
-                  dynamicFollowups.push(`Show all ${searchResult.total_found} ${resolvedName} documents`);
-                }
+                if (otherDocs.length > 0 && relevantDocs.length > 0) dynamicFollowups.push(`Show all ${searchResult.total_found} ${resolvedName} documents`);
                 
                 const structured = {
                   type: docList.length <= 30 ? "document_list" : "document_search",
