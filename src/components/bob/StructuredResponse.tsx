@@ -572,8 +572,8 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
       {/* Document List */}
       {data.documents && data.documents.length > 0 && (
         <div>
-          <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 mt-4">
-            Documents Found
+          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2 mt-4 flex items-center gap-1.5">
+            <span>📄</span> Documents Found
           </h4>
           <div className="rounded-lg border border-border/40 overflow-hidden">
             <table className="w-full" style={{ borderCollapse: 'collapse' }}>
