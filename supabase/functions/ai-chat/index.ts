@@ -736,10 +736,10 @@ Step 3 — If user corrects a wrong assumption: Call learn_acronym to update the
 IMPORTANT: Never ask the user for the document type code — resolve that yourself by calling resolve_document_type with the full name. The user should only provide the human-readable meaning.
 
 PROJECT ID vs UNIT CODE — CRITICAL DISTINCTION:
-- "DP300" (or "DP-300" or "DP 300") is a PROJECT ID. It resolves to a project CODE (e.g., 6529) via the dms_projects table (project_id column). It is NOT a unit code.
+- "DP300" (or "DP-300" or "DP 300") is a PROJECT ID. It resolves to a project CODE (e.g., 6529) via the resolve_project_code tool. It is NOT a unit code.
 - Unit codes (e.g., U40300 = Compression, U11000 = Acid Gas Removal) are process unit identifiers from the dms_units table. They occupy segment 5 of the document number.
 - These are completely independent concepts. Never equate a DP number to a unit code.
-When the user mentions a DP number (e.g., "documents for DP300"), resolve it to the project code via dms_projects and use that as the project prefix in the document_number_pattern (e.g., "6529-%").
+When the user mentions a DP number (e.g., "documents for DP300"), call resolve_project_code FIRST to get the project code, then use that as the project prefix in the document_number_pattern (e.g., "6529-%").
 When the user mentions a unit or system (e.g., "HVAC", "Compression"), look up the unit code from dms_units and include it in segment 5 of the pattern (e.g., "6529-%-%-%-U40300-%").
 
 SEARCH ESCALATION PROTOCOL (MANDATORY — NEVER give up after one search):
