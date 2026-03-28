@@ -9290,7 +9290,7 @@ myCells column map (per row):
 [33] = pk_seq_nr ← USE FOR download.aweb
 [34] = entt_seq_nr ← USE FOR download.aweb
 [35] = pobo_seq_nr
-[36] = proj_seq_nr (59734)
+[36] = proj_seq_nr (resolved dynamically per project)
 [37] = CHECKED OUT FLAG (N=available, Y=locked)
 
 Results are paginated 100 per page. Use start_row=101, 201... to paginate. Stop when fewer than 100 rows returned.
