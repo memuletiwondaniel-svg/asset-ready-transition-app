@@ -731,11 +731,12 @@ Step 2 — When user confirms or explains: First call resolve_document_type with
 Step 3 — If user corrects a wrong assumption: Call learn_acronym to update the record and acknowledge: "Thank you for the correction — I've updated my records."
 IMPORTANT: Never ask the user for the document type code — resolve that yourself by calling resolve_document_type with the full name. The user should only provide the human-readable meaning.
 
-PLANT/UNIT CODE MAPPING (use when user mentions DP numbers or plant areas):
-DP300 = U40300, DP200 = U40200, DP100 = U40100, DP400 = U40400, DP500 = U40500.
-When the user mentions a DP number, map it to the unit code and include it in the document_number_pattern for precision.
-Example: "Find the BfD for DP300" → look up BfD code from the reference table, use document_number_pattern="6529-%-%-%-U40300-%"
-If you don't know the DP-to-unit mapping, ask the user to clarify.
+PROJECT ID vs UNIT CODE — CRITICAL DISTINCTION:
+- "DP300" (or "DP-300" or "DP 300") is a PROJECT ID. It resolves to a project CODE (e.g., 6529) via the dms_projects table (project_id column). It is NOT a unit code.
+- Unit codes (e.g., U40300 = Compression, U11000 = Acid Gas Removal) are process unit identifiers from the dms_units table. They occupy segment 5 of the document number.
+- These are completely independent concepts. Never equate a DP number to a unit code.
+When the user mentions a DP number (e.g., "documents for DP300"), resolve it to the project code via dms_projects and use that as the project prefix in the document_number_pattern (e.g., "6529-%").
+When the user mentions a unit or system (e.g., "HVAC", "Compression"), look up the unit code from dms_units and include it in segment 5 of the pattern (e.g., "6529-%-%-%-U40300-%").
 
 ERROR HANDLING FOR TOOL RESULTS (CRITICAL):
 - If a tool returns { found: false, total_found: 0 }, respond: "I searched Assai for [description] but found no matching documents. Would you like me to try a broader search?"
@@ -9097,7 +9098,7 @@ Segments:
 2. Originator/Company (ABBE = ABB Engineering Shanghai Limited)
 3. Plant code (C017 = Zubair Hammar Mishrif)
 4. Site code (ISGP = Iraq South Gas)
-5. Unit code (U40300 = specific unit)
+5. Unit code (U40300 = Compression — from dms_units table. NOT a project ID)
 6. Discipline (ZV = Vendor Documentation)
 7. Document type (A01 = Supplier Document Schedule)
 8. Document number (5 digits, e.g. 00006)
@@ -9484,6 +9485,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     let lastToolName: string | null = null;
     let lastToolResult: any = null;
     let allToolCallNames: string[] = [];
+    let searchToolResult: any = null; // Persists search_assai_documents result across iterations
     let navigationAction: { action: string; path: string } | null = null;
     let finalTextContent = '';
 
@@ -9795,6 +9797,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
         lastToolName = toolName;
         lastToolResult = toolResult;
+
+        // Persist search results so PART 1 fires even if AI calls more tools after
+        if (toolName === 'search_assai_documents' && toolResult?.found && toolResult?.total_found > 0) {
+          searchToolResult = toolResult;
+        }
         
         if (toolResult?.action === "navigate" && toolResult?.path) {
           navigationAction = { action: "navigate", path: toolResult.path };
@@ -9855,7 +9862,9 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // Uses "document_list" type for specific/filtered queries (≤30 results)
     // Uses "document_search" type for broad queries (>30 results)
     // ═══════════════════════════════════════════════════════════════════════
-    if (lastToolName === 'search_assai_documents' && lastToolResult && lastToolResult.found && lastToolResult.total_found > 0) {
+    // Use persisted searchToolResult so structured response fires even after subsequent tool calls
+    const effectiveSearchResult = searchToolResult || (lastToolName === 'search_assai_documents' ? lastToolResult : null);
+    if (effectiveSearchResult && effectiveSearchResult.found && effectiveSearchResult.total_found > 0) {
       const STATUS_DESCS: Record<string, string> = {
         AFU: "Approved for Use", AFC: "Approved for Construction",
         IFB: "Issued for Bid", IFT: "Issued for Tender",
@@ -9867,14 +9876,14 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       };
       const TYPE_DESCS: Record<string, string> = dynamicTypeDescs;
 
-      const filters = lastToolResult.filters_applied || {};
-      const totalFound = lastToolResult.total_found || 0;
+      const filters = effectiveSearchResult.filters_applied || {};
+      const totalFound = effectiveSearchResult.total_found || 0;
       const hasSpecificFilter = !!(filters.document_type || filters.discipline_code || filters.status_code);
       const isSpecificQuery = hasSpecificFilter || totalFound <= 30;
 
       // Build full document list (up to 30 for specific, 10 for broad)
       const maxDocs = isSpecificQuery ? 30 : 10;
-      const docList = (lastToolResult.documents || []).slice(0, maxDocs).map((d: any) => ({
+      const docList = (effectiveSearchResult.documents || []).slice(0, maxDocs).map((d: any) => ({
         document_number: d.document_number,
         title: d.title,
         revision: d.revision,
@@ -9978,7 +9987,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         : undefined;
 
       if (isSpecificQuery) {
-        const smartInsights = generateSmartInsights(lastToolResult, filteredDocList);
+        const smartInsights = generateSmartInsights(effectiveSearchResult, filteredDocList);
         
         // Context-aware follow-ups based on actual results
         const specificFollowups: string[] = [];
@@ -10002,7 +10011,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         }
 
         // Build summary text
-        let summaryText = buildSearchSummary(lastToolResult, summaryOpts);
+        let summaryText = buildSearchSummary(effectiveSearchResult, summaryOpts);
         if (filterApplied && unfilteredTotal > filteredDocList.length) {
           summaryText += `. There are also ${unfilteredTotal - filteredDocList.length} other unrelated documents available.`;
         } else if (!filterApplied && p1SubjectLabel && filteredDocList.length < docList.length) {
@@ -10021,14 +10030,14 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         console.log(`search_assai_documents: document_list response (${filteredDocList.length}/${totalFound} docs, specific query, subject=${p1SubjectLabel || 'none'})`);
       } else {
         // BROAD QUERY: Show status/type summaries with filtered document list
-        const broadInsights = generateSmartInsights(lastToolResult, filteredDocList);
+        const broadInsights = generateSmartInsights(effectiveSearchResult, filteredDocList);
         
         const broadFollowups: string[] = [];
         if (p1SubjectLabel && filteredDocList.length > 0) {
           broadFollowups.push(`Read and summarise the most relevant ${p1SubjectLabel} document`);
         }
         const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
-        const hasPending = pendingStatuses.some(s => (lastToolResult.status_summary || {})[s]);
+        const hasPending = pendingStatuses.some(s => (effectiveSearchResult.status_summary || {})[s]);
         if (hasPending) broadFollowups.push("Show only pending documents");
         broadFollowups.push("Filter by discipline");
         if (filterApplied && unfilteredTotal > filteredDocList.length) {
@@ -10037,16 +10046,16 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           broadFollowups.push("Export this list");
         }
 
-        const statusTable = Object.entries(lastToolResult.status_summary || {})
+        const statusTable = Object.entries(effectiveSearchResult.status_summary || {})
           .sort((a: any, b: any) => b[1] - a[1])
           .map(([status, count]) => ({ status, count, description: STATUS_DESCS[status] ?? status }));
 
-        const typeTable = Object.entries(lastToolResult.type_summary || {})
+        const typeTable = Object.entries(effectiveSearchResult.type_summary || {})
           .sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count)
           .slice(0, 10)
           .map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
 
-        let broadSummary = buildSearchSummary(lastToolResult, summaryOpts);
+        let broadSummary = buildSearchSummary(effectiveSearchResult, summaryOpts);
         if (filterApplied && unfilteredTotal > filteredDocList.length) {
           broadSummary += `. There are also ${unfilteredTotal - filteredDocList.length} other unrelated documents available.`;
         }
@@ -10102,16 +10111,26 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       const structured = {
         type: "document_analysis",
         summary: `Analysis of **${meta.document_number || 'document'}** — ${meta.title || 'Untitled'}`,
-        document: {
-          document_number: meta.document_number || '',
-          title: meta.title || 'Untitled',
-          revision: meta.revision || '',
-          status: meta.status || '',
-          type_code: meta.document_type || '',
-          download_url: meta.pk_seq_nr && meta.entt_seq_nr
-            ? `https://eu.assaicloud.com/AWeu578/download.aweb?pk_seq_nr=${meta.pk_seq_nr}&entt_seq_nr=${meta.entt_seq_nr}`
-            : undefined
-        },
+        document: (() => {
+          const docNum = meta.document_number || '';
+          const segments = docNum.split('-');
+          const doc: any = {
+            document_number: docNum,
+            title: meta.title || 'Untitled',
+            revision: meta.revision || '',
+            status: meta.status || '',
+            type_code: meta.document_type || '',
+            download_url: meta.pk_seq_nr && meta.entt_seq_nr
+              ? `https://eu.assaicloud.com/AWeu578/download.aweb?pk_seq_nr=${meta.pk_seq_nr}&entt_seq_nr=${meta.entt_seq_nr}`
+              : undefined
+          };
+          // Extract originator (segment 2) and unit (segment 5) from document number
+          if (segments.length >= 5) {
+            doc.originator = segments[1]; // e.g. "ABBE"
+            doc.unit = segments[4]; // e.g. "U40300"
+          }
+          return doc;
+        })(),
         overview: overview || undefined,
         key_summary: keySummary.length > 0 ? keySummary : undefined,
         critical_observations: criticalObs.length > 0 ? criticalObs : undefined,

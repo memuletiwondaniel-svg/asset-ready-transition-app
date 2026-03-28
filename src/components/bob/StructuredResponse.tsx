@@ -209,6 +209,8 @@ interface StructuredResponseData {
     status: string;
     type_code?: string;
     download_url?: string;
+    originator?: string;
+    unit?: string;
   };
   overview?: string;
   key_summary?: string[];
@@ -278,6 +280,12 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                   <span className="font-medium">Status:</span>{' '}
                   <StatusBadge code={data.document.status} />
                 </li>
+                )}
+                {data.document.originator && (
+                  <li><span className="font-medium">Originator:</span> {data.document.originator}</li>
+                )}
+                {data.document.unit && (
+                  <li><span className="font-medium">Unit:</span> {data.document.unit}</li>
                 )}
                 <li>
                   <span className="font-medium">Download:</span>{' '}
