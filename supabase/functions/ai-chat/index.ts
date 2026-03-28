@@ -3172,7 +3172,7 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
           },
           document_type: {
             type: "string",
-            description: 'Filter by Assai vendor document type code (e.g. A01, B01, H02, J01). Only use codes confirmed as vendor documents by resolve_document_type. ALWAYS call resolve_document_type FIRST before using this filter.'
+            description: 'Filter by Assai document type code. Supports BOTH vendor codes (e.g. A01, B01, C01) AND BGC/EPC codes (e.g. 2365, 5733). Use "+" to combine multiple codes (e.g. "2365+C01" to find both BGC and vendor PEFS). ALWAYS call resolve_document_type FIRST to get the correct code(s).'
           },
           status_code: {
             type: "string",
