@@ -887,8 +887,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                 <StructuredResponse 
                                   data={structuredData} 
                                   onFollowupClick={(text) => {
-                                    setInput(text);
-                                    setTimeout(() => handleSend(text), 100);
+                                    handleSend(text);
                                   }}
                                 />
                                 {after && <p className="mt-2">{renderInlineMarkdown(after)}</p>}
