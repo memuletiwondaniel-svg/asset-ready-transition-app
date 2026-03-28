@@ -678,7 +678,10 @@ export function parseStructuredResponse(content: string): { before: string; data
     const data = JSON.parse(jsonStr);
     if (data && data.type) {
       // Extract follow_ups from structured data (JSON-first approach)
+      // Standardize: merge follow_ups into followup
       const follow_ups = data.follow_ups || data.followup || undefined;
+      if (follow_ups) data.followup = follow_ups;
+      delete data.follow_ups;
       return { before, data, after, follow_ups };
     }
   } catch (e) {
