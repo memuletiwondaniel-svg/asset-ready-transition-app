@@ -9675,8 +9675,31 @@ You NEVER fabricate data — always use tool results. Format responses with mark
               const searchArgs: any = { document_type: resolvedCode };
               if (projectPattern) searchArgs.document_number_pattern = projectPattern;
               
-              const searchResult = await executeTool('search_assai_documents', searchArgs, supabase);
+              let searchResult = await executeTool('search_assai_documents', searchArgs, supabase);
               
+              // Multi-strategy fallback: if first search returns 0, try title-based search
+              if (!searchResult?.found || searchResult.total_found === 0) {
+                const DOC_TYPE_WORDS = new Set(['IOM','BFD','ITP','DOCUMENT','DRAWING','SDR','MDS','DATASHEET','SLD','REPORT','MANUAL','PROCEDURE','SPECIFICATION','LIST','REGISTER','PLAN','SCHEDULE','DIAGRAM','LAYOUT','ARRANGEMENT','GA','PFD','P&ID','BOM','FAT','SAT','MRB','TBE','TBA','VDR']);
+                const subjectWords = extraTerms.filter(w => !DOC_TYPE_WORDS.has(w) && !/^\d+$/.test(w));
+                if (subjectWords.length > 0) {
+                  console.log(`Deterministic fallback: Strategy 2 - title keyword search with: ${subjectWords.join(' ')}`);
+                  const titleSearchArgs: any = { document_number_pattern: projectPattern || `${resolvedCode ? '' : ''}%`, title: subjectWords.join(' ') };
+                  if (projectPattern) titleSearchArgs.document_number_pattern = projectPattern;
+                  searchResult = await executeTool('search_assai_documents', titleSearchArgs, supabase);
+                }
+              }
+              
+              // Strategy 3: broader pattern without doc type
+              if (!searchResult?.found || searchResult.total_found === 0) {
+                if (projectPattern && resolvedCode) {
+                  console.log(`Deterministic fallback: Strategy 3 - broader pattern without doc type`);
+                  const broaderArgs: any = { document_number_pattern: projectPattern };
+                  const subjectWords2 = extraTerms.filter(w => !new Set(['IOM','BFD','ITP','DOCUMENT','DRAWING','SDR','MDS']).has(w) && !/^\d+$/.test(w));
+                  if (subjectWords2.length > 0) broaderArgs.title = subjectWords2.join(' ');
+                  searchResult = await executeTool('search_assai_documents', broaderArgs, supabase);
+                }
+              }
+
               if (searchResult?.found && searchResult.total_found > 0) {
                 console.log(`Deterministic fallback: found ${searchResult.total_found} documents`);
                 // Reuse the existing deterministic structured response builder
