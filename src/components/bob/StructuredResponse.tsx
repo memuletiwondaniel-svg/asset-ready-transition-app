@@ -20,7 +20,7 @@ function DocumentQuickActions({ doc, onRead }: { doc: { document_number: string;
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <button
-          onClick={() => onRead?.(`Read and summarise ${doc.title}`)}
+          onClick={() => onRead?.(`Read and interpret ${toTitleCase(doc.title.split('***')[0].trim())}`)}
           className="inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium transition-all duration-150 cursor-pointer shadow-sm"
         >
           <BookOpen className="h-3.5 w-3.5" /> Read &amp; Analyse
