@@ -9861,7 +9861,9 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // Uses "document_list" type for specific/filtered queries (≤30 results)
     // Uses "document_search" type for broad queries (>30 results)
     // ═══════════════════════════════════════════════════════════════════════
-    if (lastToolName === 'search_assai_documents' && lastToolResult && lastToolResult.found && lastToolResult.total_found > 0) {
+    // Use persisted searchToolResult so structured response fires even after subsequent tool calls
+    const effectiveSearchResult = searchToolResult || (lastToolName === 'search_assai_documents' ? lastToolResult : null);
+    if (effectiveSearchResult && effectiveSearchResult.found && effectiveSearchResult.total_found > 0) {
       const STATUS_DESCS: Record<string, string> = {
         AFU: "Approved for Use", AFC: "Approved for Construction",
         IFB: "Issued for Bid", IFT: "Issued for Tender",
