@@ -7224,7 +7224,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           if (document_type) formData.set('document_type', document_type);
           if (status_code) formData.set('status_code', status_code);
           if (company_code) formData.set('company_code', company_code);
-          if (title) formData.set('title', title);
+          if (title) formData.set('description', title);
           // Pagination: 1-based start_row for pages beyond the first
           if (startRow && startRow > 1) {
             formData.set('start_row', String(startRow));
