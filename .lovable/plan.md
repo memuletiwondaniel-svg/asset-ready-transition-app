@@ -1,53 +1,34 @@
 
 
-## Problem
+## Root Cause Found
 
-Three issues visible in the screenshot:
+**`font-variation-settings: "wght" 400`** on line 324 of `src/index.css` forces ALL text in the entire app to weight 400 (normal). This CSS property has higher specificity than `font-weight` and `font-extrabold` — it overrides everything, including inline `style={{ fontWeight: 800 }}`. This is why bold headers have been impossible to achieve.
 
-1. **Headers not bold**: "Here's what this likely means" contains an ASCII apostrophe (`'`) but the regex character class only includes curly/smart quotes (`''"`), so the header is never converted to a `##` markdown header — it renders as plain text.
+Additionally, the Google Fonts import in `index.html` only loads Inter weights `300–700`, so weight 800 isn't even available.
 
-2. **List items not indented/bulleted**: The `ul` and `ol` ReactMarkdown components have no explicit overrides — they rely on bracket-notation CSS which may not produce visible bullets and proper indentation.
+## Fix (2 files)
 
-3. **Section divider too faint**: `border-border/20` (20% opacity) is nearly invisible.
+### 1. `src/index.css` — Remove the forced weight override
 
-## Changes to `src/components/widgets/ORSHChatDialog.tsx`
-
-### 1. Fix header regex to include ASCII apostrophe
-
-Line 933 — add `'` (ASCII apostrophe) to the character class:
-```
-/^([A-Z][A-Za-z\s'''""]+(?:from the metadata)?):?\s*$/gm
-```
-Also add "Here's what this likely means" and "Here's what this likely means" to the `sectionIcons` map with a suitable icon (e.g., `🔍`).
-
-### 2. Force bold on headers with `font-extrabold` + inline style
-
-Replace `font-bold` with `font-extrabold` on both `h2` and `h3` component overrides, and add `style={{ fontWeight: 800 }}` as a failsafe to guarantee boldness regardless of any CSS specificity conflicts:
-
-```tsx
-h2: ({ children }) => (
-  <h2 className="mt-5 mb-2 border-t border-border/40 pt-3 text-base font-extrabold tracking-tight text-foreground flex items-center gap-2" style={{ fontWeight: 800 }}>
-    {children}
-  </h2>
-),
-h3: ({ children }) => (
-  <h3 className="mt-4 mb-1.5 text-[15px] font-bold text-foreground" style={{ fontWeight: 700 }}>
-    {children}
-  </h3>
-),
+Delete line 324:
+```css
+font-variation-settings: "wght" 400;
 ```
 
-### 3. Add explicit `ul`, `ol`, `li` component overrides for proper bullets and indentation
+This single line is the reason **every bold style in the chat has been ignored**. Removing it lets `font-weight` work normally across the entire app.
 
-```tsx
-ul: ({ children }) => <ul className="my-2 ml-5 list-disc space-y-1 text-sm">{children}</ul>,
-ol: ({ children }) => <ol className="my-2 ml-5 list-decimal space-y-1 text-sm">{children}</ol>,
-li: ({ children }) => <li className="pl-1 marker:text-foreground">{processChildren(children)}</li>,
+### 2. `index.html` — Load Inter with weight 800
+
+Change the Google Fonts URL to include weight 800:
+```
+Inter:wght@300;400;500;600;700;800
 ```
 
-### 4. Make section divider more visible
+### 3. `src/components/widgets/ORSHChatDialog.tsx` — Stronger divider
 
-Change `border-border/20` → `border-border/40` on the `h2` component (already shown above).
+Change `border-border/40` to `border-border/60` on the `h2` component for a more visible section divider.
 
-Also update the follow-up section border from `border-border/20` to `border-border/40`.
+## Why This Was So Difficult
+
+`font-variation-settings` is a low-level CSS property that directly controls variable font rendering. It bypasses `font-weight` entirely — Tailwind classes, inline styles, and `!important` all lose to it. This is a known CSS gotcha with variable fonts.
 
