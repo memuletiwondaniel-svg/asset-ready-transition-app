@@ -9121,8 +9121,8 @@ Supplier document statuses: SR (Submitted for Review), RA (Reviewed, Action Requ
 DISCIPLINE CODES:
 AA=Admin/General, BA=Buried/Civil, CS=Civil/Structural, EA=Electrical, FA=Fire & Safety, HX=HVAC, IN=Instrumentation, JA=Piping, KA=Mechanical, MP=Marine/Piping, MS=Mechanical Static, NA=Naval/Offshore, OA=Operations, PX=Process Other, QA=Quality Assurance, RA=Rotating Equip., SA=Structural/Civil, TA=Telecom, VA=Valves, ZH=Vendor HVAC, ZV=Vendor Documentation
 
-DOCUMENT TYPE CODES (ZV discipline, project 6529):
-A01=Supplier Document Schedule/MDR, B01=General Layout Drawing, B04=Foundation/Support Layout Drawing, B06=UCP HMI/Control System Diagram, C02=System & Equipment Specification, C03=Single Line Diagram, C08=Data Sheet, C11=Control Schematic Diagram, C14=Cause & Effect Diagram, C21=Structural Analysis Report, C29=Catalogue/Product List, D04=Nameplate/Tag Plate Drawing, E02=General Arrangement Drawing, E03=Logic Block Diagram, E05=Cable Schedule, E09=Equipment Data Sheet, E11=Lighting Layout Drawing, E12=Earthing Drawing, E23=Cable Tray Routing Drawing
+DOCUMENT TYPE CODES — DYNAMIC RESOLUTION:
+Document type codes are resolved dynamically via the resolve_document_type tool. Do NOT use any hardcoded code mappings. ALWAYS call resolve_document_type with the user's exact text to get the correct code before searching Assai.
 
 ZV VENDOR DOCUMENT INTELLIGENCE:
 
