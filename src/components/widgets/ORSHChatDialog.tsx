@@ -1003,10 +1003,10 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                     {followUpItems.map((item, idx) => (
                                       <button
                                         key={idx}
-                                        onClick={() => handleSend(item + '?')}
+                                        onClick={() => handleSend(item.replace(/\*\*/g, '') + '?')}
                                         className="text-xs px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/50 transition-colors cursor-pointer text-left"
                                       >
-                                        {item}?
+                                        {item.replace(/\*\*/g, '')}?
                                       </button>
                                     ))}
                                   </div>
