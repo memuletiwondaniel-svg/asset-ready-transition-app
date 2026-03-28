@@ -7683,6 +7683,12 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // Helper: parse myCells from result HTML and return documents array
         // Resilient: tries myCells JS variable first, falls back to raw <tr>/<td> parsing
         const parseDocuments = (html: string, subclass: string): any[] => {
+          // Early exit: detect Assai error pages before attempting any parsing
+          if (html.includes('applet:error') || html.includes('error.aweb?message=showErrorInfo')) {
+            console.error('parseDocuments: Assai returned an error page — skipping parse');
+            return [];
+          }
+
           // Strategy 1: parse myCells JavaScript variable (works for page 1 usually)
           const match = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function|\/\/|$)/m);
           if (match) {
