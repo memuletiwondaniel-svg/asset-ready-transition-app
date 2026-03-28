@@ -757,9 +757,10 @@ Rules:
 When results ARE found but numerous (>10), use the title parameter to filter by subject keywords extracted from the user's query.
 
 FOLLOW-UP SUGGESTIONS FORMAT (CRITICAL):
-When suggesting follow-up actions, ALWAYS include them as a "follow_ups" array inside your <structured_response> JSON block.
-Example: { "type": "document_search", ..., "follow_ups": ["Read the maintenance schedule", "Check for newer revisions"] }
+When suggesting follow-up actions, ALWAYS include them as a "followup" array inside your <structured_response> JSON block.
+Example: { "type": "document_search", ..., "followup": ["Read the maintenance schedule", "Check for newer revisions"] }
 Maximum 3 suggestions. Each must be specific to the documents found and the user's original question.
+When generating follow-up action suggestions, always write them in human-readable terms using the document title, type name, or subject — never the raw document number. A user can understand "Read the HVAC IOM" but not "Read 6529-INTE-C017-ISGP-U40300-ZV-J01-00004-002".
 For IOM results → "Read and extract the maintenance schedule", "Show startup and shutdown procedures", "Check if a newer revision exists"
 For analytical results → help the user drill deeper into what was returned.
 NEVER use generic suggestions like "Search for another document".
@@ -883,6 +884,9 @@ When handling queries about DOCUMENTS (vendor docs, drawings, IOMs, etc.), class
 - RETRIEVAL ("find the IOM", "show me the P&ID", "list all datasheets") → Search with specific filters and return a document table.
 - CONTENT ("what does the IOM say", "summarise the report") → Search, read the document content, and answer from the content.
 Words like "many", "pending", "status", "overdue", "vendor", "contractor" are NOT document search terms — they are analytical indicators.
+
+VENDOR DOCUMENT IDENTIFICATION (CRITICAL):
+A vendor/supplier document is identified exclusively by discipline code ZV in segment 6 of the document number (e.g. 6529-WGEL-C034-ISGP-U40300-**ZV**-B01-00001-001). When filtering or counting vendor documents, always filter by discipline_code = "ZV". Never classify a document as a vendor document based on type code alone. Vendor document type codes are 3-character alphanumeric (e.g. B01, C08, D15, J01). 4-digit numeric type codes (e.g. 5733, 6918, 7704) are internal EPC document type codes and are NEVER vendor document types. When grouping vendor documents by contractor, group by company_code (segment 2 of document number) — but only for ZV-discipline documents.
 
 RESPONSE STYLE - Be succinct and friendly:
 - DO: "Sure! Taking you to the DP300 PSSR now."
@@ -6682,7 +6686,30 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         
         const cookieHeader = sessionCookies.join('; ');
         
-        // STEP 4 — Search for document to get pk_seq_nr and entt_seq_nr
+        // STEP 4 — Dynamically resolve proj_seq_nr from the document number's project code
+        const docProjectCode = docNumber.split('-')[0]; // e.g. "6523" from "6523-EXTR-C008-..."
+        let projSeqNr = '59734'; // fallback default (BGC_PROJ / project 6529)
+        let selectedProjectCodes = 'BGC_PROJ';
+        
+        try {
+          const { data: projLookup } = await supabaseClient
+            .from('dms_projects')
+            .select('code, cabinet')
+            .eq('code', docProjectCode)
+            .limit(1);
+          if (projLookup && projLookup.length > 0) {
+            // The proj_seq_nr in Assai corresponds to the row[36] value from search results.
+            // Since we don't have a direct mapping table, we search with the project cabinet
+            // and let Assai filter by selected_project_codes.
+            selectedProjectCodes = projLookup[0].cabinet || 'BGC_PROJ';
+            console.log(`read_assai_document: resolved project ${docProjectCode} → cabinet ${selectedProjectCodes}`);
+          } else {
+            console.log(`read_assai_document: project ${docProjectCode} not found in dms_projects, using default`);
+          }
+        } catch (projErr) {
+          console.error('read_assai_document: project lookup error:', projErr);
+        }
+        
         console.log(`read_assai_document: searching for ${docNumber} in DES_DOC`);
         let pkSeqNr: string | null = null;
         let enttSeqNr: string | null = null;
@@ -6693,10 +6720,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           searchParams.set('searchBean', 'docs.SearchDocuments');
           searchParams.set('clas_seq_nr', '1');
           searchParams.set('suty_seq_nr', '1');
-          searchParams.set('proj_seq_nr', '59734');
           searchParams.set('start_row', '1');
           searchParams.set('number', docNumber);
-          searchParams.set('selected_project_codes', 'BGC_PROJ');
+          searchParams.set('selected_project_codes', selectedProjectCodes);
           
           const searchRes = await fetch(baseUrl + '/result.aweb', {
             method: 'POST',
@@ -6775,11 +6801,12 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           console.error('read_assai_document search error:', searchErr);
         }
         
-        if (!pkSeqNr || !enttSeqNr) {
+        if (!pkSeqNr || !enttSeqNr || pkSeqNr === '' || enttSeqNr === '') {
+          console.error(`read_assai_document: pk_seq_nr="${pkSeqNr}" entt_seq_nr="${enttSeqNr}" — document not found in Assai. Project code: ${docProjectCode}, cabinet: ${selectedProjectCodes}`);
           return {
             metadata,
             content_available: false,
-            reason: 'Document not found in Assai search results. Check the document number is correct.',
+            reason: `Document ${docNumber} was not found in Assai (searched project ${selectedProjectCodes}). The document number may be incorrect or it may belong to a different project cabinet.`,
             question_asked: question
           };
         }
@@ -9423,6 +9450,9 @@ When the user mentions a DP number (e.g., "documents for DP300"), resolve it to 
 When the user mentions a unit or system (e.g., "HVAC", "Compression"), look up the unit code from dms_units and include it in segment 5 of the pattern (e.g., "6529-%-%-%-U40300-%").
 Example: "Find the BfD for DP300" → resolve "BfD" via resolve_document_type → get code → resolve DP300 to project code via dms_projects → search with document_type=[code] AND document_number_pattern="[project_code]-%"
 
+VENDOR DOCUMENT IDENTIFICATION (CRITICAL):
+A vendor/supplier document is identified exclusively by discipline code ZV in segment 6 of the document number (e.g. 6529-WGEL-C034-ISGP-U40300-**ZV**-B01-00001-001). When filtering or counting vendor documents, always filter by discipline_code = "ZV". Never classify a document as a vendor document based on type code alone. Vendor document type codes are 3-character alphanumeric (e.g. B01, C08, D15, J01). 4-digit numeric type codes (e.g. 5733, 6918, 7704) are internal EPC document type codes and are NEVER vendor document types. When grouping vendor documents by contractor, group by company_code (segment 2 of document number) — but only for ZV-discipline documents.
+
 DOCUMENT INTELLIGENCE REASONING:
 When searching for documents, think strategically about combining filters:
 - document type + project/unit = most specific search
@@ -9470,8 +9500,9 @@ CONTENT: User wants to know what a document says ("What does the IOM say about m
 → Search first to find the document, then call read_assai_document, then answer from content.
 
 FOLLOW-UP SUGGESTIONS FORMAT (CRITICAL):
-When suggesting follow-up actions, ALWAYS include them as a "follow_ups" array inside your <structured_response> JSON block.
+When suggesting follow-up actions, ALWAYS include them as a "followup" array inside your <structured_response> JSON block.
 Maximum 3 suggestions. Each must be specific to the documents found and the user's original question.
+When generating follow-up action suggestions, always write them in human-readable terms using the document title, type name, or subject — never the raw document number. A user can understand "Read the HVAC IOM" but not "Read 6529-INTE-C017-ISGP-U40300-ZV-J01-00004-002".
 For plain-text responses, emit a <follow_ups>["action1", "action2"]</follow_ups> tag at the end.
 
 ERROR HANDLING FOR TOOL RESULTS (CRITICAL):

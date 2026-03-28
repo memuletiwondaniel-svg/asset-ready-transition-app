@@ -200,7 +200,6 @@ interface StructuredResponseData {
   type_table?: TypeRow[];
   highlights?: string[];
   followup?: string[];
-  follow_ups?: string[];
   documents?: DocumentRow[];
   // Document analysis fields
   document?: {
@@ -373,7 +372,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
         {/* Insights (fallback for non-analysis structured content) */}
         {data.highlights && data.highlights.length > 0 && (
           <div className="bg-muted/20 rounded-lg p-3 border border-border/20">
-            <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2 flex items-center gap-1.5">
               <Sparkles className="h-3 w-3 text-amber-500" />
               Insights
             </h4>
@@ -392,8 +391,8 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
         {data.followup && data.followup.length > 0 && (
           <div>
             <hr className="border-border/30 my-3" />
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-              What would you like me to do next?
+            <p className="text-xs font-bold uppercase tracking-widest text-foreground mb-2">
+              What would you like to do next?
             </p>
             <div className="flex flex-wrap gap-2">
               {data.followup.map((f, i) => (
@@ -463,7 +462,7 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
         {/* Insights — only if genuinely useful */}
         {data.highlights && data.highlights.length > 0 && (
           <div className="bg-muted/20 rounded-lg p-3 border border-border/20">
-            <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2 flex items-center gap-1.5">
               <Sparkles className="h-3 w-3 text-amber-500" />
               Insights
             </h4>
@@ -482,8 +481,8 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
         {data.followup && data.followup.length > 0 && (
           <div>
             <hr className="border-border/30 my-3" />
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-              What would you like me to do next?
+            <p className="text-xs font-bold uppercase tracking-widest text-foreground mb-2">
+              What would you like to do next?
             </p>
             <div className="flex flex-wrap gap-2">
               {data.followup.map((f, i) => (
@@ -513,8 +512,8 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
       {/* Status Summary */}
       {data.status_table && data.status_table.length > 0 && (
         <div>
-          <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 mt-4">
-            Status Summary
+          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2 mt-4 flex items-center gap-1.5">
+            <span>📊</span> Status Summary
           </h4>
           <table className="w-full" style={{ borderCollapse: 'collapse' }}>
             <thead>
@@ -540,8 +539,8 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
       {/* Document Types */}
       {data.type_table && data.type_table.length > 0 && (
         <div>
-          <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 mt-4">
-            Document Types
+          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2 mt-4 flex items-center gap-1.5">
+            <span>📁</span> Document Types
           </h4>
           <table className="w-full" style={{ borderCollapse: 'collapse' }}>
             <thead>
@@ -573,8 +572,8 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
       {/* Document List */}
       {data.documents && data.documents.length > 0 && (
         <div>
-          <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 mt-4">
-            Documents Found
+          <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2 mt-4 flex items-center gap-1.5">
+            <span>📄</span> Documents Found
           </h4>
           <div className="rounded-lg border border-border/40 overflow-hidden">
             <table className="w-full" style={{ borderCollapse: 'collapse' }}>
@@ -622,10 +621,10 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
       {/* Insights */}
       {data.highlights && data.highlights.length > 0 && (
         <div className="bg-muted/20 rounded-lg p-3 border border-border/20">
-          <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3 text-amber-500" />
-            Insights
-          </h4>
+           <h4 className="text-xs font-bold uppercase tracking-widest text-foreground mb-2 flex items-center gap-1.5">
+              <Sparkles className="h-3 w-3 text-amber-500" />
+              Insights
+            </h4>
           <ul className="space-y-1.5">
             {data.highlights.map((h, i) => (
               <li key={i} className="text-xs text-foreground leading-relaxed flex gap-2">
@@ -641,9 +640,9 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
       {data.followup && data.followup.length > 0 && (
         <div>
           <hr className="border-border/30 my-3" />
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-            What would you like me to do next?
-          </p>
+            <p className="text-xs font-bold uppercase tracking-widest text-foreground mb-2">
+              What would you like to do next?
+            </p>
           <div className="flex flex-wrap gap-2">
             {data.followup.map((f, i) => (
               <button
@@ -679,7 +678,10 @@ export function parseStructuredResponse(content: string): { before: string; data
     const data = JSON.parse(jsonStr);
     if (data && data.type) {
       // Extract follow_ups from structured data (JSON-first approach)
+      // Standardize: merge follow_ups into followup
       const follow_ups = data.follow_ups || data.followup || undefined;
+      if (follow_ups) data.followup = follow_ups;
+      delete data.follow_ups;
       return { before, data, after, follow_ups };
     }
   } catch (e) {

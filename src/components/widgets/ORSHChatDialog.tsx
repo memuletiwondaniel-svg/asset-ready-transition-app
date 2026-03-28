@@ -928,9 +928,9 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                   }}
                                 />
                                 {cleanAfter && <p className="mt-2">{renderInlineMarkdown(cleanAfter)}</p>}
-                                {followUps && followUps.length > 0 && !(structuredData?.followup?.length > 0) && (
-                                  <div className="mt-2.5 pt-2 border-t border-border/60">
-                                    <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Suggested actions</p>
+                                     {followUps && followUps.length > 0 && !(structuredData?.followup?.length > 0) && (
+                                   <div className="mt-2.5 pt-2 border-t border-border/60">
+                                     <p className="text-[11px] font-bold text-foreground mb-1.5 uppercase tracking-wider">What would you like to do next?</p>
                                     <div className="flex flex-wrap gap-1.5">
                                       {followUps.map((item: string, idx: number) => (
                                         <button
@@ -1070,13 +1070,23 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                           }
 
                           // Sanity filter: reject metadata lines, doc numbers, prose, and cap at 5
-                          const METADATA_PREFIXES = /^(document number|status|revision|supplier|title|originator|unit|discipline|contractor|type code|doc no)\s*:/i;
-                          const PROSE_PREFIXES = /^(contact|you could|the document|note that|please note|this means|however|unfortunately|it appears|based on)/i;
+                          const METADATA_PREFIXES = /^(document number|status|revision|supplier|title|originator|unit|discipline|contractor|type code|doc no|vendor|company|area|weight|date|drawing)\s*:/i;
+                          const PROSE_PREFIXES = /^(contact|you could|the document|note that|please note|this means|however|unfortunately|it appears|based on|i can|i will|i'll|let me)/i;
+                          const DOC_NUMBER_FRAGMENT = /\d{4}-[A-Z]+-[A-Z0-9]+-/;
+                          const METADATA_QUESTION = /^\w+\s*:/; // Single word followed by colon (e.g. "Status: IFA?")
                           followUpItems = followUpItems
                             .filter(item => {
                               if (METADATA_PREFIXES.test(item)) return false;
                               if (PROSE_PREFIXES.test(item)) return false;
+                              // Reset lastIndex since ASSAI_DOC_NUMBER_REGEX uses global flag
+                              ASSAI_DOC_NUMBER_REGEX.lastIndex = 0;
                               if (ASSAI_DOC_NUMBER_REGEX.test(item)) return false;
+                              if (DOC_NUMBER_FRAGMENT.test(item)) return false;
+                              // Reject metadata-style items ending with ? (e.g. "Status: IFA?")
+                              if (item.endsWith('?') && METADATA_QUESTION.test(item.replace(/\?$/, ''))) {
+                                const colonIdx = item.indexOf(':');
+                                if (colonIdx > 0 && colonIdx < 20) return false;
+                              }
                               if (item.length > 80) return false;
                               if (item.length < 5) return false;
                               return true;
@@ -1106,17 +1116,21 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                               </div>
                               {followUpItems.length > 0 && (
                                 <div className="mt-2.5 pt-2 border-t border-border/60">
-                                  <p className="text-[11px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Suggested actions</p>
+                                  <p className="text-[11px] font-bold text-foreground mb-1.5 uppercase tracking-wider">What would you like to do next?</p>
                                   <div className="flex flex-wrap gap-1.5">
-                                    {followUpItems.map((item, idx) => (
+                                    {followUpItems.map((item, idx) => {
+                                      // Strip any residual doc number patterns from the sent text
+                                      const cleanItem = item.replace(/\*\*/g, '').replace(/\d{4}-[A-Z]+-[A-Z0-9]+-[A-Z]+-[A-Z0-9]+-[A-Z]{2}-[A-Z]\d{2}-\d{5}-\d{3}/g, '').trim();
+                                      return (
                                       <button
                                         key={idx}
-                                        onClick={() => handleSend(item.replace(/\*\*/g, '') + '?')}
+                                        onClick={() => handleSend(cleanItem + '?')}
                                         className="text-xs px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/50 transition-colors cursor-pointer text-left"
                                       >
-                                        {item.replace(/\*\*/g, '')}?
+                                        {cleanItem}?
                                       </button>
-                                    ))}
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               )}
