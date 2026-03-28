@@ -989,14 +989,22 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                           } // end assistant-only header normalization
 
                           // Extract follow-up suggestions — catch all common header patterns
-                          const followUpRegex = /(?:## [^\n]*(?:would you like|next steps?|quick actions?|suggested actions?|what can I|what I can do|what would you like)[^\n]*|(?:\*\*(?:Quick Actions?|Next Steps?|Suggested Actions?|What would you like|Would you like)[^\n]*?\*\*))\s*\n([\s\S]*?)(?=\n## |\n---|\n\*\*[A-Z]|\s*$)/i;
+                          const followUpRegex = /(?:## [^\n]*(?:would you like|next steps?|quick actions?|suggested actions?|what (?:can |would |I can |i can )|options?|try next|do next)[^\n]*|(?:\*\*[^\n]*(?:would you like|next steps?|quick actions?|suggested actions?|what (?:can |would |I can |i can )|options?|try next|do next)[^\n]*?\*\*))\s*\n([\s\S]*?)(?=\n## |\n---|\n\*\*[A-Z]|\s*$)/i;
                           const followUpMatch = processed.match(followUpRegex);
                           let followUpItems: string[] = [];
                           if (followUpMatch) {
-                            const bulletRegex = /[-•*]\s+(.+)/g;
+                            const bulletRegex = /(?:[-•*]|\d+[.)]\s)\s*(.+)/g;
                             let bm: RegExpExecArray | null;
                             while ((bm = bulletRegex.exec(followUpMatch[0])) !== null) {
-                              followUpItems.push(bm[1].replace(/\?$/, '').trim());
+                              let label = bm[1].replace(/\?$/, '').trim();
+                              // Strip trailing explanation after dash for long items
+                              if (label.length > 60) {
+                                const dashIdx = label.indexOf(' - ');
+                                if (dashIdx > 10) label = label.substring(0, dashIdx);
+                              }
+                              // Strip markdown bold markers
+                              label = label.replace(/\*\*/g, '');
+                              followUpItems.push(label);
                             }
                             if (followUpItems.length > 0) {
                               processed = processed.replace(followUpMatch[0], '').trim();
