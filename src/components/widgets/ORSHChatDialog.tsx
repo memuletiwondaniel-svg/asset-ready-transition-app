@@ -61,7 +61,8 @@ import {
   PanelLeft,
   MoreHorizontal,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
