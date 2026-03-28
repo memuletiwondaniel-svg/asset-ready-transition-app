@@ -6746,8 +6746,6 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
           searchParams.set('subclass_type', 'DES_DOC');
           searchParams.set('number', docNumber);
-          searchParams.set('proj_seq_nr', projSeqNr);
-          searchParams.set('selected_project_codes', selectedProjectCodes);
           
           const searchRes = await fetch(assaiBase + '/result.aweb', {
             method: 'POST',
