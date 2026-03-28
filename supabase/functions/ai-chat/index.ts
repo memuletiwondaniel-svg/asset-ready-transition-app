@@ -6973,10 +6973,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               console.warn('read_assai_document: failed to re-init search context:', reInitErr);
             }
             
-            // Now attempt download on the fresh session
+          // Now attempt download on the fresh session
             docRes = await attemptDownload(dlCookies, 'fresh-session');
           }
-          clearTimeout(timeoutId);
           
           if (!docRes.ok) {
             return {
