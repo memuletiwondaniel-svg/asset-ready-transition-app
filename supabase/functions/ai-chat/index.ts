@@ -9666,53 +9666,42 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         }
       }
 
-      // Generate genuinely intelligent insights — skip if nothing novel beyond what the table shows
+      // Generate insights ONLY when there is a genuinely non-obvious, actionable finding.
+      // If all the insight would do is restate what the table already shows, return empty (no insights section).
       const generateSmartInsights = (toolResult: any, docs: any[]): string[] => {
         const insights: string[] = [];
         const statusSummary = toolResult.status_summary || {};
         const totalDocs = docs.length;
-        if (totalDocs === 0) return [];
+        if (totalDocs <= 1) return []; // Single doc — table is self-explanatory
 
         const approvedStatuses = ['AFU', 'AFC', 'AFD'];
         const approvedCount = approvedStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
-        const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
-        const pendingCount = pendingStatuses.reduce((sum, s) => sum + (statusSummary[s] || 0), 0);
-
-        // Insight: approval gap (only if mixed — not all approved or all pending)
-        if (approvedCount > 0 && pendingCount > 0) {
-          insights.push(`**${approvedCount} of ${totalDocs}** documents are approved while **${pendingCount}** remain in review — consider prioritising the pending items for progression`);
-        }
-
-        // Insight: revision anomalies — docs at Rev 0 alongside later revisions
-        const rev0Docs = docs.filter((d: any) => d.revision === '0' || d.revision === '00' || d.revision === 'R0');
-        const laterRevDocs = docs.filter((d: any) => {
-          const r = String(d.revision || '');
-          return r && r !== '0' && r !== '00' && r !== 'R0';
-        });
-        if (rev0Docs.length > 0 && laterRevDocs.length > 0) {
-          insights.push(`**${rev0Docs.length}** document${rev0Docs.length > 1 ? 's' : ''} still at initial revision while others have progressed — may indicate stalled deliverables`);
-        }
-
-        // Insight: cancelled/superseded (actionable — verify replacements)
         const cancelledCount = (statusSummary['CAN'] || 0) + (statusSummary['SUP'] || 0);
+
+        // Only flag cancelled/superseded — user may not notice and needs to verify replacements
         if (cancelledCount > 0) {
-          insights.push(`**${cancelledCount}** document${cancelledCount > 1 ? 's have' : ' has'} been cancelled or superseded — verify replacement documents are in place`);
+          insights.push(`⚠️ **${cancelledCount}** document${cancelledCount > 1 ? 's' : ''} cancelled or superseded — verify replacement documents exist`);
         }
 
-        // Insight: all same status (uniform set — noteworthy pattern)
-        const uniqueStatuses = [...new Set(docs.map((d: any) => d.status).filter(Boolean))];
-        if (uniqueStatuses.length === 1 && totalDocs > 2) {
-          insights.push(`All ${totalDocs} documents share the same **${uniqueStatuses[0]}** status — this set is uniform`);
+        // Flag if NONE are approved in a set of 3+ docs — that's a progression concern
+        if (totalDocs >= 3 && approvedCount === 0) {
+          insights.push(`None of the **${totalDocs}** documents have reached an approved status yet`);
         }
 
-        // Insight: PLN (planned but not yet issued) 
-        const plnCount = statusSummary['PLN'] || 0;
-        if (plnCount > 0 && plnCount < totalDocs) {
-          insights.push(`**${plnCount}** document${plnCount > 1 ? 's are' : ' is'} still in **Planned** status and not yet issued for review`);
+        // Flag mixed revisions ONLY if some are Rev 0 and others are Rev 2+ (significant gap)
+        const revisions = docs.map((d: any) => {
+          const r = String(d.revision || '0').replace(/^R/i, '').replace(/^0+/, '') || '0';
+          return parseInt(r, 10) || 0;
+        });
+        const maxRev = Math.max(...revisions);
+        const hasRev0 = revisions.includes(0);
+        if (hasRev0 && maxRev >= 2 && totalDocs >= 3) {
+          const stalled = revisions.filter(r => r === 0).length;
+          insights.push(`**${stalled}** document${stalled > 1 ? 's' : ''} at Rev 0 while others are at Rev ${maxRev} — possible stalled deliverables`);
         }
 
-        // Only return genuinely novel insights — if all we'd say is "X docs found", skip
-        return insights.slice(0, 3);
+        // Return max 2 — insights should be rare and high-signal
+        return insights.slice(0, 2);
       };
 
       if (isSpecificQuery) {
