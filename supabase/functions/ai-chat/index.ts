@@ -711,6 +711,7 @@ When a user asks for a document by type name or abbreviation:
 6. Never search Assai without a document_type, company_code, or purchase_order filter — a bare project prefix like '6529-%' is NOT acceptable
 7. Never expose internal search patterns, wildcards, or codes to the user — only show human-readable results
 8. If no specific filter is available, ask the user: "To search Assai, I need at least one of: the vendor name, the PO number, or the document type. Which can you provide?"
+9. If you detect this is a document-focused query that Selma (document_agent) could handle better, route to Selma and pass through the user's exact query text. Selma has the full Assai knowledge base, document content reading, and gap analysis capabilities.
 
 CRITICAL — resolve_document_type input rules:
 - If user says an acronym like "BfD", "ITP", "FAT", "SDR" → pass the acronym AS-IS (e.g. query: "BfD")
