@@ -6694,15 +6694,17 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         try {
           const { data: projLookup } = await supabaseClient
             .from('dms_projects')
-            .select('code, cabinet')
+            .select('code, cabinet, proj_seq_nr')
             .eq('code', docProjectCode)
             .limit(1);
           if (projLookup && projLookup.length > 0) {
-            // The proj_seq_nr in Assai corresponds to the row[36] value from search results.
-            // Since we don't have a direct mapping table, we search with the project cabinet
-            // and let Assai filter by selected_project_codes.
             selectedProjectCodes = projLookup[0].cabinet || 'BGC_PROJ';
-            console.log(`read_assai_document: resolved project ${docProjectCode} → cabinet ${selectedProjectCodes}`);
+            if (projLookup[0].proj_seq_nr) {
+              projSeqNr = projLookup[0].proj_seq_nr;
+              console.log(`read_assai_document: resolved project ${docProjectCode} → cabinet=${selectedProjectCodes}, proj_seq_nr=${projSeqNr}`);
+            } else {
+              console.log(`read_assai_document: project ${docProjectCode} found but proj_seq_nr is NULL — will try initSearch fallback`);
+            }
           } else {
             console.log(`read_assai_document: project ${docProjectCode} not found in dms_projects, using default`);
           }
@@ -6710,18 +6712,74 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           console.error('read_assai_document: project lookup error:', projErr);
         }
         
-        console.log(`read_assai_document: searching for ${docNumber} in DES_DOC`);
+        // STEP 4b — initSearch: call search.aweb to initialize session and extract hidden fields
+        // This mirrors the working search_assai_documents pattern
+        const extractHiddenFieldsRead = (html: string): Array<{ name: string; type: string; value: string }> => {
+          const fields: Array<{ name: string; type: string; value: string }> = [];
+          const inputRegex = /<input[^>]*>/gi;
+          let m;
+          while ((m = inputRegex.exec(html)) !== null) {
+            const tag = m[0];
+            const name = tag.match(/name=["']([^"']+)["']/i)?.[1] ?? '';
+            if (!name) continue;
+            const type = tag.match(/type=["']([^"']+)["']/i)?.[1]?.toLowerCase() ?? 'text';
+            const value = tag.match(/value=["']([^"']*)["']/i)?.[1] ?? '';
+            fields.push({ name, type, value });
+          }
+          return fields;
+        };
+        
+        let hiddenFieldsRead: Array<{ name: string; type: string; value: string }> = [];
+        let textFieldsRead: Array<{ name: string }> = [];
+        
+        try {
+          const initUrl = baseUrl + '/search.aweb?subclass_type=DES_DOC';
+          const initResp = await fetch(initUrl, {
+            headers: { Cookie: cookieHeader, Accept: 'text/html', 'User-Agent': ASSAI_UA },
+            redirect: 'follow',
+          });
+          const initHtml = await initResp.text();
+          const allFields = extractHiddenFieldsRead(initHtml);
+          hiddenFieldsRead = allFields.filter(f => f.type === 'hidden' && f.name && f.value);
+          textFieldsRead = allFields.filter(f => f.type === 'text' || f.type === '');
+          console.log(`read_assai_document: initSearch OK, hidden=${hiddenFieldsRead.length}, text=${textFieldsRead.length}`);
+          
+          // If proj_seq_nr was NULL, try to extract it from hidden fields and cache it
+          if (projSeqNr === '59734' && docProjectCode !== '6529') {
+            const projField = hiddenFieldsRead.find(f => f.name === 'proj_seq_nr');
+            if (projField?.value) {
+              projSeqNr = projField.value;
+              console.log(`read_assai_document: discovered proj_seq_nr=${projSeqNr} from initSearch, caching...`);
+              // Cache back to dms_projects
+              try {
+                await supabaseClient
+                  .from('dms_projects')
+                  .upsert({ code: docProjectCode, proj_seq_nr: projSeqNr }, { onConflict: 'code' });
+              } catch (cacheErr) {
+                console.warn('read_assai_document: failed to cache proj_seq_nr:', cacheErr);
+              }
+            }
+          }
+        } catch (initErr) {
+          console.warn('read_assai_document: initSearch warning:', initErr);
+        }
+        
+        console.log(`read_assai_document: searching for ${docNumber} in DES_DOC (proj_seq_nr=${projSeqNr}, cabinet=${selectedProjectCodes})`);
         let pkSeqNr: string | null = null;
         let enttSeqNr: string | null = null;
         
         try {
+          // Build form data from hidden fields (session tokens) + search criteria
           const searchParams = new URLSearchParams();
+          for (const f of hiddenFieldsRead) {
+            searchParams.set(f.name, f.value);
+          }
+          for (const f of textFieldsRead) {
+            searchParams.set(f.name, '');
+          }
           searchParams.set('subclass_type', 'DES_DOC');
-          searchParams.set('searchBean', 'docs.SearchDocuments');
-          searchParams.set('clas_seq_nr', '1');
-          searchParams.set('suty_seq_nr', '1');
-          searchParams.set('start_row', '1');
           searchParams.set('number', docNumber);
+          searchParams.set('proj_seq_nr', projSeqNr);
           searchParams.set('selected_project_codes', selectedProjectCodes);
           
           const searchRes = await fetch(baseUrl + '/result.aweb', {
@@ -6729,9 +6787,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
               'Cookie': cookieHeader,
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+              'User-Agent': ASSAI_UA,
+              'Referer': baseUrl + '/search.aweb?subclass_type=DES_DOC',
             },
-            body: searchParams.toString()
+            body: searchParams.toString(),
+            redirect: 'follow',
           });
           
           const searchHtml = await searchRes.text();
@@ -6765,19 +6825,62 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
           
           if (!pkSeqNr || !enttSeqNr) {
-            // Try SUP_DOC if not found in DES_DOC
-            searchParams.set('subclass_type', 'SUP_DOC');
-            searchParams.set('clas_seq_nr', '2');
-            searchParams.set('suty_seq_nr', '7');
+            // Try SUP_DOC if not found in DES_DOC — re-init search session for SUP_DOC module
+            try {
+              const supInitUrl = baseUrl + '/search.aweb?subclass_type=SUP_DOC';
+              const supInitResp = await fetch(supInitUrl, {
+                headers: { Cookie: cookieHeader, Accept: 'text/html', 'User-Agent': ASSAI_UA },
+                redirect: 'follow',
+              });
+              const supInitHtml = await supInitResp.text();
+              const supFields = extractHiddenFieldsRead(supInitHtml);
+              const supHidden = supFields.filter(f => f.type === 'hidden' && f.name && f.value);
+              const supText = supFields.filter(f => f.type === 'text' || f.type === '');
+              
+              const supParams = new URLSearchParams();
+              for (const f of supHidden) supParams.set(f.name, f.value);
+              for (const f of supText) supParams.set(f.name, '');
+              supParams.set('subclass_type', 'SUP_DOC');
+              supParams.set('number', docNumber);
+              supParams.set('proj_seq_nr', projSeqNr);
+              supParams.set('selected_project_codes', selectedProjectCodes);
+              
+              const supRes = await fetch(baseUrl + '/result.aweb', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  'Cookie': cookieHeader,
+                  'User-Agent': ASSAI_UA,
+                  'Referer': supInitUrl,
+                },
+                body: supParams.toString(),
+                redirect: 'follow',
+              });
+            } catch (supInitErr) {
+              console.warn('read_assai_document: SUP_DOC initSearch failed:', supInitErr);
+            }
+            
+            // Re-fetch result for SUP_DOC (use the last response)
+            const supSearchParams = new URLSearchParams();
+            for (const f of hiddenFieldsRead) supSearchParams.set(f.name, f.value);
+            for (const f of textFieldsRead) supSearchParams.set(f.name, '');
+            supSearchParams.set('subclass_type', 'SUP_DOC');
+            supSearchParams.set('clas_seq_nr', '2');
+            supSearchParams.set('suty_seq_nr', '7');
+            supSearchParams.set('number', docNumber);
+            supSearchParams.set('proj_seq_nr', projSeqNr);
+            supSearchParams.set('selected_project_codes', selectedProjectCodes);
             
             const supRes = await fetch(baseUrl + '/result.aweb', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cookie': cookieHeader,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': ASSAI_UA,
+                'Referer': baseUrl + '/search.aweb?subclass_type=SUP_DOC',
               },
-              body: searchParams.toString()
+              body: supSearchParams.toString(),
+              redirect: 'follow',
             });
             
             const supHtml = await supRes.text();

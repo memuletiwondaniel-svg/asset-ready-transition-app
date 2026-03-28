@@ -167,6 +167,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const [testResultInPanel, setTestResultInPanel] = useState<{ success: boolean; message?: string; response_time_ms?: number } | null>(null);
   const [syncingInPanel, setSyncingInPanel] = useState(false);
   const [syncResultInPanel, setSyncResultInPanel] = useState<string | null>(null);
+  const [syncingProjects, setSyncingProjects] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -1238,6 +1239,31 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     >
                       {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
                       Sync Now
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      disabled={!credentialsSaved || syncingProjects}
+                      onClick={async () => {
+                        setSyncingProjects(true);
+                        try {
+                          const { data, error } = await supabase.functions.invoke('sync-assai-projects');
+                          if (error) throw error;
+                          if (data?.success) {
+                            toast.success(`${data.projects_synced} projects synced from Assai`);
+                          } else {
+                            toast.error(data?.error || 'Project sync failed');
+                          }
+                        } catch (err: any) {
+                          toast.error('Project sync failed: ' + (err.message || 'Unknown error'));
+                        } finally {
+                          setSyncingProjects(false);
+                        }
+                      }}
+                    >
+                      {syncingProjects ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                      Sync Projects
                     </Button>
                     <Button
                       size="sm"
