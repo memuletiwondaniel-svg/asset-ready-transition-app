@@ -70,7 +70,7 @@ const AuthenticationModal: React.FC<AuthenticationModalProps> = ({
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">Single Sign-On</CardTitle>
                   <CardDescription className="text-sm">
-                    For BGC and Kent employees
+                    For company employees
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
