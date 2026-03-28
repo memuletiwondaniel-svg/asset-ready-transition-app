@@ -1096,6 +1096,24 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                       </div>
                     </div>
                   )}
+                  
+                  {lastFailedMessage && !isLoading && (
+                    <div className="flex justify-center mt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const msg = lastFailedMessage;
+                          setLastFailedMessage(null);
+                          handleSend(msg);
+                        }}
+                        className="text-xs gap-1.5"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        Retry
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
