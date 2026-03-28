@@ -527,13 +527,26 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       // Detect stub/incomplete responses (ends with ":" and very short, or no content)
       const trimmed = assistantMessage.trim();
       if (!trimmed || (trimmed.endsWith(':') && trimmed.length < 200 && !trimmed.includes('\n'))) {
-        const errorMsg = `Bob encountered a temporary issue but is working on it. Please try again in a moment.`;
+        // Auto-retry once transparently before showing error
+        if (!retryAttemptRef.current) {
+          retryAttemptRef.current = true;
+          console.log('Stub response detected — auto-retrying transparently...');
+          setMessages([...newMessages, { role: 'assistant', content: '⏳ Give me a few more seconds while I pull and analyze the data...' }]);
+          // Small delay then retry
+          await new Promise(r => setTimeout(r, 2000));
+          retryAttemptRef.current = false;
+          handleSend(textToSend);
+          return;
+        }
+        retryAttemptRef.current = false;
+        const errorMsg = `I encountered a temporary issue. Please try again in a moment.`;
         setMessages([...newMessages, { role: 'assistant', content: errorMsg }]);
         setLastFailedMessage(textToSend);
         await saveMessage('assistant', errorMsg);
         loadConversations();
         return;
       }
+      retryAttemptRef.current = false;
 
       if (assistantMessage) {
         await saveMessage('assistant', assistantMessage);
