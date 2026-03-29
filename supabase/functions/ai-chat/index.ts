@@ -10997,12 +10997,15 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                   docList = allDocs.slice(0, 30);
                 }
                 
-                const dynamicFollowups: string[] = [];
-                if (relevantDocs.length > 0) dynamicFollowups.push(`Read and interpret the most relevant ${subjectLabel} document`);
-                if (subjectLabel) dynamicFollowups.push(`Search for ${subjectLabel} drawings or datasheets instead`);
-                if (dpMatch) dynamicFollowups.push(`Show ${resolvedName} documents for other units`);
-                dynamicFollowups.push(`Show only approved ${resolvedCode} documents`);
-                if (otherDocs.length > 0 && relevantDocs.length > 0) dynamicFollowups.push(`Show all ${searchResult.total_found} ${resolvedName} documents`);
+                const statuses = [...new Set(allDocs.map((d: any) => d.status).filter(Boolean))];
+                const dynamicFollowups = generateContextualFollowups({
+                  docTypeCode: resolvedCode, docTypeName: resolvedName, subjectLabel,
+                  resultCount: relevantDocs.length || allDocs.length,
+                  hasPending: ['IFR','IFA','IFI','IFB','IFT'].some(s => statuses.includes(s)),
+                  hasMultipleStatuses: statuses.length > 1,
+                  userIntent: 'retrieval', dpLabel
+                });
+                if (otherDocs.length > 0 && relevantDocs.length > 0 && dynamicFollowups.length < 4) dynamicFollowups.push(`Show all ${searchResult.total_found} ${resolvedName} documents`);
                 
                 const structured = {
                   type: docList.length <= 30 ? "document_list" : "document_search",
