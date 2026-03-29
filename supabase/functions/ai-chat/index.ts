@@ -11410,11 +11410,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           .slice(0, 5)
           .map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
 
-        const analyticalFollowups = [
-          "Show all pending review documents",
-          "Break down by discipline",
-          "Show vendor submission timeline"
-        ];
+        const analyticalFollowups = generateContextualFollowups({
+          docTypeCode: '', docTypeName: '',
+          resultCount: totalFound, hasPending: pendingCount > 0,
+          isVendorQuery, userIntent: 'analytical'
+        });
 
         // Vendor grouping: group by company_code for vendor-specific queries
         let vendorTable: any[] | undefined;
