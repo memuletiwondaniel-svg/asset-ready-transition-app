@@ -10118,11 +10118,27 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // ═══════════════════════════════════════════════════════════════════════
     // MULTI-ROUND AGENTIC TOOL LOOP
     // Supports chained tool calls (e.g. resolve_document_type → search_assai_documents)
-    // Max iterations: 5
+    // Max iterations: 15 (extended for 250k+ document searches)
     // ═══════════════════════════════════════════════════════════════════════
-    const MAX_ITERATIONS = 5;
+    const MAX_ITERATIONS = 15;
     const LOOP_START_TIME = Date.now();
-    const MAX_LOOP_MS = 45000; // 45-second time guard
+    const MAX_LOOP_MS = 140000; // 140-second time guard (Pro plan: 150s hard limit)
+
+    // Tool-to-label mapping for dynamic status updates
+    const TOOL_STATUS_LABELS: Record<string, string> = {
+      resolve_document_type: 'Resolving document type...',
+      search_assai_documents: 'Searching Assai portal (250,000+ documents)...',
+      read_assai_document: 'Downloading and reading document...',
+      get_pssr_pending_items: 'Retrieving PSSR data...',
+      get_pssr_pending_approvers: 'Checking PSSR approvers...',
+      get_executive_summary: 'Building executive summary...',
+      get_pssr_detailed_summary: 'Compiling detailed PSSR summary...',
+      get_pssr_stats: 'Gathering PSSR statistics...',
+      get_discipline_status: 'Checking discipline status...',
+      get_user_context: 'Loading your preferences...',
+      save_user_context: 'Saving your preferences...',
+    };
+    const statusEvents: string[] = [];
     let conversationMessages = [...transformedMessages];
     let iteration = 0;
     let lastToolName: string | null = null;
@@ -10165,6 +10181,9 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       }
       console.log(`Agent loop iteration ${iteration}/${MAX_ITERATIONS} (${elapsed}ms elapsed)`);
 
+      // Emit status event for frontend
+      statusEvents.push(iteration === 1 ? 'Analyzing your request...' : 'Refining search, please wait...');
+
       // ── Retry-aware API call ──────────────────────────────────────────
       const callAnthropicWithRetry = async (): Promise<Response> => {
         const makeCall = () => fetch("https://api.anthropic.com/v1/messages", {
@@ -10189,7 +10208,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         if (firstAttempt.status === 429) {
           // Rate limited — check if we have time for a retry
           const timeLeft = MAX_LOOP_MS - (Date.now() - LOOP_START_TIME);
-          if (timeLeft > 15000) {
+          if (timeLeft > 20000) {
             console.log(`Anthropic API returned 429, retrying in 10s (${timeLeft}ms remaining)...`);
             await new Promise(r => setTimeout(r, 10000));
             return makeCall();
@@ -10720,6 +10739,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         }
         
         console.log(`[Iteration ${iteration}] Executing tool: ${toolName}`, toolArgs);
+        statusEvents.push(TOOL_STATUS_LABELS[toolName] || 'Processing...');
         const toolResult = await executeTool(toolName, toolArgs, supabase);
         console.log(`[Iteration ${iteration}] Tool result for ${toolName}:`, typeof toolResult === 'object' ? JSON.stringify(toolResult).substring(0, 500) : toolResult);
 
@@ -11299,7 +11319,13 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     }
     
     const finalContent = finalTextContent || "I'm here to help. What would you like to know?";
-    const sseData = `data: ${JSON.stringify({
+    
+    // Build streaming response with status events followed by final content
+    let sseData = '';
+    for (const status of statusEvents) {
+      sseData += `event: status\ndata: ${JSON.stringify({ status })}\n\n`;
+    }
+    sseData += `data: ${JSON.stringify({
       choices: [{ delta: { content: finalContent } }]
     })}\n\ndata: [DONE]\n\n`;
     

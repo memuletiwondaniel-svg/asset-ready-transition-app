@@ -119,6 +119,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [agentStatus, setAgentStatus] = useState<string>('');
   const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -554,6 +555,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       // placeholder is always appended to the latest state (fixes first-send blank)
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
+      let isStatusEvent = false;
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -562,12 +565,26 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
         const lines = chunk.split('\n');
 
         for (const line of lines) {
+          if (line.startsWith('event: status')) {
+            isStatusEvent = true;
+            continue;
+          }
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
             if (data === '[DONE]') continue;
             
             try {
               const parsed = JSON.parse(data);
+              
+              // Handle status event
+              if (isStatusEvent) {
+                if (parsed.status) {
+                  setAgentStatus(parsed.status);
+                }
+                isStatusEvent = false;
+                continue;
+              }
+              
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) {
                 assistantMessage += content;
@@ -579,6 +596,10 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                 });
               }
             } catch {}
+          } else {
+            // Non-data line resets status flag
+            if (!line.trim()) continue;
+            isStatusEvent = false;
           }
         }
       }
@@ -680,6 +701,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       try { await saveMessage('assistant', errorMsg); } catch (_) {}
     } finally {
       setIsLoading(false);
+      setAgentStatus('');
     }
   };
 
@@ -1298,7 +1320,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                               <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '150ms' }} />
                               <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '300ms' }} />
                             </div>
-                            <span className="text-xs text-muted-foreground ml-1">Bob is thinking…</span>
+                            <span className="text-xs text-muted-foreground ml-1 transition-opacity duration-300">{agentStatus || 'Co-Pilot is thinking…'}</span>
                           </div>
                         </div>
                       </div>
