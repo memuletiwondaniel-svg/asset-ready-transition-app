@@ -1319,7 +1319,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                               <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '150ms' }} />
                               <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '300ms' }} />
                             </div>
-                            <span className="text-xs text-muted-foreground ml-1">Bob is thinking…</span>
+                            <span className="text-xs text-muted-foreground ml-1 transition-opacity duration-300">{agentStatus || 'Co-Pilot is thinking…'}</span>
                           </div>
                         </div>
                       </div>
