@@ -10614,8 +10614,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         streamController = controller;
+        // Heartbeat: send a keep-alive comment every 15s to prevent gateway timeouts
+        const heartbeat = setInterval(() => {
+          try { controller.enqueue(encoder.encode(': heartbeat\n\n')); } catch (_) { clearInterval(heartbeat); }
+        }, 15000);
         try {
-
     while (iteration < MAX_ITERATIONS) {
       iteration++;
       // Time guard: break if approaching edge function timeout
