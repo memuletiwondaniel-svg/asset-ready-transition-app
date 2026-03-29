@@ -10607,6 +10607,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       return unique.slice(0, 4);
     };
 
+    // Create a ReadableStream so we can enqueue status events in real-time
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        streamController = controller;
+        try {
 
     while (iteration < MAX_ITERATIONS) {
       iteration++;
