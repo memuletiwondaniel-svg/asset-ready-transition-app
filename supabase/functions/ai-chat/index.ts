@@ -10685,7 +10685,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             const TYPE_DESCS: Record<string, string> = dynamicTypeDescs;
             const statusTable = Object.entries(lastToolResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS[s] ?? s }));
             const typeTable = Object.entries(lastToolResult.type_summary || {}).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 10).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
-            const structured = { type: "document_search", summary: buildSearchSummary(lastToolResult), status_table: statusTable, type_table: typeTable, highlights: ["Results retrieved successfully despite temporary rate limit"], followup: ["Show me only pending documents", "Break down by discipline", "Which documents are overdue?"] };
+            const rateLimitFollowups = generateContextualFollowups({ resultCount: lastToolResult.total_found, hasPending: true, userIntent: 'analytical' });
+            const structured = { type: "document_search", summary: buildSearchSummary(lastToolResult), status_table: statusTable, type_table: typeTable, highlights: ["Results retrieved successfully despite temporary rate limit"], followup: rateLimitFollowups };
             const fallbackContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
             const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
             return new Response(sseFallback, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
