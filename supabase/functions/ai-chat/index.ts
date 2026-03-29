@@ -11791,9 +11791,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       choices: [{ delta: { content: finalContent } }]
     })}\n\n`));
     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+    clearInterval(heartbeat);
     controller.close();
 
         } catch (streamError) {
+          clearInterval(heartbeat);
           console.error('Stream error:', streamError);
           try {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
