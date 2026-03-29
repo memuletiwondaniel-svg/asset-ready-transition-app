@@ -10205,7 +10205,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         if (firstAttempt.status === 429) {
           // Rate limited — check if we have time for a retry
           const timeLeft = MAX_LOOP_MS - (Date.now() - LOOP_START_TIME);
-          if (timeLeft > 15000) {
+          if (timeLeft > 20000) {
             console.log(`Anthropic API returned 429, retrying in 10s (${timeLeft}ms remaining)...`);
             await new Promise(r => setTimeout(r, 10000));
             return makeCall();
