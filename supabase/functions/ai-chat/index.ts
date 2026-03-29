@@ -10477,6 +10477,128 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       'OUTSTANDING', 'LATE', 'SUMMARY', 'BREAKDOWN', 'DISTRIBUTION', 'CONTRACTOR',
       'SUPPLIER', 'COMPANY', 'COMPANIES', 'VENDORS', 'CONTRACTORS', 'SUPPLIERS']);
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // INTELLIGENT CONTEXT-AWARE FOLLOW-UP GENERATOR
+    // ═══════════════════════════════════════════════════════════════════════
+    const FOLLOWUP_TEMPLATES: Record<string, { category: string; actions: string[] }> = {
+      // Safety documents
+      'HAZOP': { category: 'safety', actions: ['Review safety findings and recommendations', 'Check if HAZOP action items are closed out', 'Show related safety documents for this unit'] },
+      'SIL': { category: 'safety', actions: ['Review SIL assessment results', 'Check SIF verification status', 'Show related HAZOP study'] },
+      'HAC': { category: 'safety', actions: ['Review hazardous area classification zones', 'Check equipment suitability for classified zones', 'Show related area drawings'] },
+      'HEMP': { category: 'safety', actions: ['Review hazard register entries', 'Check barrier effectiveness ratings', 'Show related bow-tie diagrams'] },
+      'HAR': { category: 'safety', actions: ['Review hazard assessment findings', 'Check risk mitigation actions', 'Show related safety studies'] },
+      'RAR': { category: 'safety', actions: ['Review risk assessment matrix', 'Check risk reduction measures', 'Show related safety barriers'] },
+      // Specifications
+      'PES': { category: 'specification', actions: ['Extract key process design parameters', 'Check approval and revision status', 'Compare with vendor datasheet'] },
+      'MDS': { category: 'specification', actions: ['Review material specifications', 'Check applicable standards and codes', 'Show related material requisitions'] },
+      'EDS': { category: 'specification', actions: ['Review equipment design parameters', 'Check operating conditions and limits', 'Show vendor compliance datasheet'] },
+      // Drawings
+      'PID': { category: 'drawing', actions: ['Check revision history and markup status', 'Show related P&IDs for adjacent units', 'Verify instrument and valve tagging'] },
+      'PEFS': { category: 'drawing', actions: ['Check revision history and markup status', 'Show related P&IDs for adjacent units', 'Verify instrument and valve tagging'] },
+      'SLD': { category: 'drawing', actions: ['Check electrical load summary', 'Show related single line diagrams', 'Verify protection coordination'] },
+      'GA': { category: 'drawing', actions: ['Check layout dimensions and clearances', 'Show related equipment arrangement drawings', 'Verify access and egress routes'] },
+      'GAD': { category: 'drawing', actions: ['Check layout dimensions and clearances', 'Show related arrangement drawings', 'Verify access and maintenance space'] },
+      'PFD': { category: 'drawing', actions: ['Review process flow and mass balance', 'Show related P&IDs for this process', 'Check heat and material balance'] },
+      'UFD': { category: 'drawing', actions: ['Review utility flow and tie-in points', 'Show related utility P&IDs', 'Check utility consumption summary'] },
+      // Test reports
+      'FAT': { category: 'testing', actions: ['Review factory test results and pass/fail', 'Check outstanding punch items from FAT', 'Show related SAT report'] },
+      'SAT': { category: 'testing', actions: ['Review site acceptance test results', 'Check outstanding punch items from SAT', 'Show commissioning readiness status'] },
+      'PTR': { category: 'testing', actions: ['Review pressure test results', 'Check test certificate validity', 'Show related piping isometrics'] },
+      // Vendor documents
+      'MR': { category: 'vendor', actions: ['Show vendor submission status for this MR', 'Check which submissions are still pending review', 'List overdue vendor deliverables'] },
+      'VDR': { category: 'vendor', actions: ['Show vendor document register status', 'Check overdue submissions', 'List documents pending client review'] },
+      'TBE': { category: 'vendor', actions: ['Review technical evaluation scores', 'Compare vendor technical proposals', 'Show commercial bid evaluation'] },
+      // IOMs and manuals
+      'J01': { category: 'manual', actions: ['Extract maintenance schedule and intervals', 'Show startup and shutdown procedures', 'Check for newer revision of this manual'] },
+      // Transmittals
+      'TRA': { category: 'transmittal', actions: ['Show all documents in this transmittal', 'Check transmittal acknowledgement status', 'Show related transmittals for this project'] },
+    };
+
+    const CATEGORY_DEFAULTS: Record<string, string[]> = {
+      'safety': ['Review safety findings', 'Check action item closeout status', 'Show related safety documents'],
+      'specification': ['Extract key design parameters', 'Check approval status', 'Show related specifications'],
+      'drawing': ['Check revision history', 'Show related drawings for this unit', 'Verify approval status'],
+      'testing': ['Review test results', 'Check outstanding punch items', 'Show commissioning status'],
+      'vendor': ['Show vendor submission status', 'Check which are still pending review', 'List overdue submissions'],
+      'manual': ['Extract key procedures', 'Check for newer revision', 'Show related equipment documents'],
+      'transmittal': ['Show all documents in this transmittal', 'Check acknowledgement status', 'Show recent transmittals'],
+      'general': ['Show only approved documents', 'Check revision history', 'Search for related documents'],
+    };
+
+    interface FollowupContext {
+      docTypeCode?: string;
+      docTypeName?: string;
+      subjectLabel?: string;
+      resultCount?: number;
+      hasPending?: boolean;
+      hasMultipleRevisions?: boolean;
+      hasMultipleStatuses?: boolean;
+      isVendorQuery?: boolean;
+      userIntent?: 'retrieval' | 'analytical' | 'content';
+      dpLabel?: string;
+    }
+
+    const generateContextualFollowups = (ctx: FollowupContext): string[] => {
+      const pills: string[] = [];
+      const code = (ctx.docTypeCode || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const template = FOLLOWUP_TEMPLATES[code];
+      const subject = ctx.subjectLabel || ctx.docTypeName || '';
+
+      if (ctx.userIntent === 'analytical') {
+        // Analytical queries: focus on drill-down and filtering
+        if (ctx.hasPending) pills.push('Show all documents pending review');
+        if (ctx.isVendorQuery) {
+          pills.push('Show documents by specific vendor');
+          pills.push('List overdue vendor submissions');
+        } else {
+          pills.push('Break down by document type');
+        }
+        if (ctx.resultCount && ctx.resultCount > 10) pills.push('Show only the latest revisions');
+        if (pills.length < 3) pills.push('Export this summary');
+      } else if (ctx.userIntent === 'content') {
+        // Content/reading queries: focus on interpretation
+        if (template) {
+          pills.push(...template.actions.slice(0, 3));
+        } else {
+          pills.push('Summarize key findings');
+          pills.push('Check for newer revision');
+          if (subject) pills.push(`Show related ${subject} documents`);
+        }
+      } else {
+        // Retrieval queries: context-aware actions based on document type
+        if (template) {
+          // Use type-specific actions
+          if (ctx.resultCount === 1) {
+            // Single doc: offer to read it + type-specific actions
+            pills.push(subject ? `Read and summarize the ${subject} ${ctx.docTypeName || 'document'}` : `Read and summarize this ${ctx.docTypeName || 'document'}`);
+            pills.push(...template.actions.slice(1, 3));
+          } else {
+            pills.push(...template.actions.slice(0, 3));
+          }
+        } else {
+          // No specific template — use category defaults or generic
+          const category = template?.category || 'general';
+          const defaults = CATEGORY_DEFAULTS[category] || CATEGORY_DEFAULTS['general'];
+          if (ctx.resultCount === 1 && subject) {
+            pills.push(`Read and summarize the ${subject} document`);
+            pills.push(...defaults.slice(1, 3));
+          } else {
+            pills.push(...defaults.slice(0, 3));
+          }
+        }
+
+        // Add contextual extras based on result stats
+        if (ctx.hasMultipleStatuses && pills.length < 4) pills.push('Show only approved documents');
+        if (ctx.hasPending && pills.length < 4) pills.push('Show documents pending review');
+        if (ctx.dpLabel && pills.length < 4) pills.push(`Show ${ctx.docTypeName || 'documents'} for other units`);
+      }
+
+      // Deduplicate and limit to 4
+      const unique = [...new Set(pills)];
+      return unique.slice(0, 4);
+    };
+
+
     while (iteration < MAX_ITERATIONS) {
       iteration++;
       // Time guard: break if approaching edge function timeout
@@ -10563,7 +10685,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             const TYPE_DESCS: Record<string, string> = dynamicTypeDescs;
             const statusTable = Object.entries(lastToolResult.status_summary || {}).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS[s] ?? s }));
             const typeTable = Object.entries(lastToolResult.type_summary || {}).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 10).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
-            const structured = { type: "document_search", summary: buildSearchSummary(lastToolResult), status_table: statusTable, type_table: typeTable, highlights: ["Results retrieved successfully despite temporary rate limit"], followup: ["Show me only pending documents", "Break down by discipline", "Which documents are overdue?"] };
+            const rateLimitFollowups = generateContextualFollowups({ resultCount: lastToolResult.total_found, hasPending: true, userIntent: 'analytical' });
+            const structured = { type: "document_search", summary: buildSearchSummary(lastToolResult), status_table: statusTable, type_table: typeTable, highlights: ["Results retrieved successfully despite temporary rate limit"], followup: rateLimitFollowups };
             const fallbackContent = `<structured_response>\n${JSON.stringify(structured)}\n</structured_response>`;
             const sseFallback = `data: ${JSON.stringify({ choices: [{ delta: { content: fallbackContent } }] })}\n\ndata: [DONE]\n\n`;
             return new Response(sseFallback, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
@@ -10766,11 +10889,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                   if (approvedCount > 0) analyticalSummary += ` **${approvedCount}** are approved.`;
                   if (cancelledCount > 0) analyticalSummary += ` **${cancelledCount}** are cancelled/superseded.`;
 
-                  const analyticalFollowups = [
-                    "Show all pending review documents",
-                    "Break down by discipline",
-                    "Show vendor submission timeline"
-                  ];
+                  const analyticalFollowups = generateContextualFollowups({
+                    docTypeCode: resolvedCode, docTypeName: resolvedName, subjectLabel,
+                    resultCount: effectiveTotal, hasPending: pendingCount > 0,
+                    isVendorQuery: isFallbackVendorQuery, userIntent: 'analytical', dpLabel
+                  });
 
                   // Rebuild statusTable and typeTable from effective (possibly filtered) data
                   const effectiveStatusTable = Object.entries(effectiveStatusSummary).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS_FB[s] ?? s }));
@@ -10791,7 +10914,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                       .slice(0, 10)
                       .map(([company, data]) => ({ company, ...data }));
                     analyticalSummary += ` Documents come from **${Object.keys(byCompany).length}** vendors/contractors.`;
-                    analyticalFollowups[2] = "Show documents by specific vendor";
+                    // vendor followups already handled by generateContextualFollowups
                   }
 
                   const topDocs = effectiveDocs.slice(0, 5).map((d: any) => ({
@@ -10875,12 +10998,15 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                   docList = allDocs.slice(0, 30);
                 }
                 
-                const dynamicFollowups: string[] = [];
-                if (relevantDocs.length > 0) dynamicFollowups.push(`Read and interpret the most relevant ${subjectLabel} document`);
-                if (subjectLabel) dynamicFollowups.push(`Search for ${subjectLabel} drawings or datasheets instead`);
-                if (dpMatch) dynamicFollowups.push(`Show ${resolvedName} documents for other units`);
-                dynamicFollowups.push(`Show only approved ${resolvedCode} documents`);
-                if (otherDocs.length > 0 && relevantDocs.length > 0) dynamicFollowups.push(`Show all ${searchResult.total_found} ${resolvedName} documents`);
+                const statuses = [...new Set(allDocs.map((d: any) => d.status).filter(Boolean))];
+                const dynamicFollowups = generateContextualFollowups({
+                  docTypeCode: resolvedCode, docTypeName: resolvedName, subjectLabel,
+                  resultCount: relevantDocs.length || allDocs.length,
+                  hasPending: ['IFR','IFA','IFI','IFB','IFT'].some(s => statuses.includes(s)),
+                  hasMultipleStatuses: statuses.length > 1,
+                  userIntent: 'retrieval', dpLabel
+                });
+                if (otherDocs.length > 0 && relevantDocs.length > 0 && dynamicFollowups.length < 4) dynamicFollowups.push(`Show all ${searchResult.total_found} ${resolvedName} documents`);
                 
                 const structured = {
                   type: docList.length <= 30 ? "document_list" : "document_search",
@@ -10939,7 +11065,10 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                   const statusTable = Object.entries(statusSummary).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS_AN[s] ?? s }));
                   const typeTable = Object.entries(searchResult.type_summary || {}).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 5).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: dynamicTypeDescs[code] ?? code }));
 
-                  const analyticalFollowups = ["Show all pending review documents", "Break down by discipline", "Show vendor submission timeline"];
+                  const analyticalFollowups = generateContextualFollowups({
+                    resultCount: searchResult.total_found, hasPending: pendingCount > 0,
+                    isVendorQuery: isFallbackVendorQuery, userIntent: 'analytical', dpLabel
+                  });
 
                   // For vendor queries, post-filter to only ZV discipline documents
                   let effectiveDocsBroad = searchResult.documents || [];
@@ -10987,7 +11116,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                     }
                     vendorTable = Object.entries(byCompany).sort((a, b) => b[1].count - a[1].count).slice(0, 10).map(([company, data]) => ({ company, ...data }));
                     analyticalSummary += ` Documents come from **${Object.keys(byCompany).length}** vendors/contractors.`;
-                    analyticalFollowups[2] = "Show documents by specific vendor";
+                    // vendor followups already handled by generateContextualFollowups
                   }
 
                   const topDocs = effectiveDocsBroad.slice(0, 5).map((d: any) => ({
@@ -11285,11 +11414,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           .slice(0, 5)
           .map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: TYPE_DESCS[code] ?? code }));
 
-        const analyticalFollowups = [
-          "Show all pending review documents",
-          "Break down by discipline",
-          "Show vendor submission timeline"
-        ];
+        const analyticalFollowups = generateContextualFollowups({
+          docTypeCode: '', docTypeName: '',
+          resultCount: totalFound, hasPending: pendingCount > 0,
+          isVendorQuery, userIntent: 'analytical'
+        });
 
         // Vendor grouping: group by company_code for vendor-specific queries
         let vendorTable: any[] | undefined;
@@ -11308,7 +11437,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             .slice(0, 10)
             .map(([company, data]) => ({ company, ...data }));
           analyticalSummary += ` Documents come from **${Object.keys(byCompany).length}** vendors/contractors.`;
-          analyticalFollowups[2] = "Show documents by specific vendor";
+          // vendor followups already handled by generateContextualFollowups
         }
 
         const smartInsights = generateSmartInsights(effectiveSearchResult, filteredDocList);
@@ -11330,23 +11459,18 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         const smartInsights = generateSmartInsights(effectiveSearchResult, filteredDocList);
         
         // Context-aware follow-ups based on actual results
-        const specificFollowups: string[] = [];
-        if (filteredDocList.length > 0) {
-          specificFollowups.push(
-            p1SubjectLabel
-              ? `Read and interpret the most relevant ${p1SubjectLabel} document`
-              : `Read and interpret the first document`
-          );
-        }
-        const statuses = [...new Set(filteredDocList.map((d: any) => d.status).filter(Boolean))];
-        if (statuses.length > 1) {
-          specificFollowups.push("Show only approved documents");
-        }
-        if (filteredDocList.length > 1) {
-          specificFollowups.push("Compare revisions across these");
-        }
-        // Add "Show all" option when filtering was applied
-        if (filterApplied && unfilteredTotal > filteredDocList.length) {
+        const p1Statuses = [...new Set(filteredDocList.map((d: any) => d.status).filter(Boolean))];
+        const specificFollowups = generateContextualFollowups({
+          docTypeCode: effectiveSearchResult.document_type_code || '',
+          docTypeName: effectiveSearchResult.document_type_name || '',
+          subjectLabel: p1SubjectLabel,
+          resultCount: filteredDocList.length,
+          hasPending: ['IFR','IFA','IFI','IFB','IFT'].some(s => p1Statuses.includes(s)),
+          hasMultipleStatuses: p1Statuses.length > 1,
+          hasMultipleRevisions: filteredDocList.length > 1,
+          userIntent: 'retrieval'
+        });
+        if (filterApplied && unfilteredTotal > filteredDocList.length && specificFollowups.length < 4) {
           specificFollowups.push(`Show all ${totalFound} documents`);
         }
 
@@ -11372,18 +11496,19 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         // BROAD QUERY: Show status/type summaries with filtered document list
         const broadInsights = generateSmartInsights(effectiveSearchResult, filteredDocList);
         
-        const broadFollowups: string[] = [];
-        if (p1SubjectLabel && filteredDocList.length > 0) {
-          broadFollowups.push(`Read and interpret the most relevant ${p1SubjectLabel} document`);
-        }
-        const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
-        const hasPending = pendingStatuses.some(s => (effectiveSearchResult.status_summary || {})[s]);
-        if (hasPending) broadFollowups.push("Show only pending documents");
-        broadFollowups.push("Filter by discipline");
-        if (filterApplied && unfilteredTotal > filteredDocList.length) {
+        const broadPendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
+        const broadHasPending = broadPendingStatuses.some(s => (effectiveSearchResult.status_summary || {})[s]);
+        const broadFollowups = generateContextualFollowups({
+          docTypeCode: effectiveSearchResult.document_type_code || '',
+          docTypeName: effectiveSearchResult.document_type_name || '',
+          subjectLabel: p1SubjectLabel,
+          resultCount: filteredDocList.length,
+          hasPending: broadHasPending,
+          hasMultipleStatuses: Object.keys(effectiveSearchResult.status_summary || {}).length > 1,
+          userIntent: 'retrieval'
+        });
+        if (filterApplied && unfilteredTotal > filteredDocList.length && broadFollowups.length < 4) {
           broadFollowups.push(`Show all ${totalFound} documents`);
-        } else if (filteredDocList.length > 5) {
-          broadFollowups.push("Export this list");
         }
 
         const statusTable = Object.entries(effectiveSearchResult.status_summary || {})
