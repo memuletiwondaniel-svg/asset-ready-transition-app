@@ -555,6 +555,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       // placeholder is always appended to the latest state (fixes first-send blank)
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
+      let isStatusEvent = false;
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -563,12 +565,26 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
         const lines = chunk.split('\n');
 
         for (const line of lines) {
+          if (line.startsWith('event: status')) {
+            isStatusEvent = true;
+            continue;
+          }
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
             if (data === '[DONE]') continue;
             
             try {
               const parsed = JSON.parse(data);
+              
+              // Handle status event
+              if (isStatusEvent) {
+                if (parsed.status) {
+                  setAgentStatus(parsed.status);
+                }
+                isStatusEvent = false;
+                continue;
+              }
+              
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) {
                 assistantMessage += content;
@@ -580,6 +596,10 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                 });
               }
             } catch {}
+          } else {
+            // Non-data line resets status flag
+            if (!line.trim()) continue;
+            isStatusEvent = false;
           }
         }
       }
