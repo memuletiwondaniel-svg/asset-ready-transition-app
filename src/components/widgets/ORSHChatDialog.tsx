@@ -701,6 +701,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       try { await saveMessage('assistant', errorMsg); } catch (_) {}
     } finally {
       setIsLoading(false);
+      setAgentStatus('');
     }
   };
 
