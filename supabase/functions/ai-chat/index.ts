@@ -10888,11 +10888,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                   if (approvedCount > 0) analyticalSummary += ` **${approvedCount}** are approved.`;
                   if (cancelledCount > 0) analyticalSummary += ` **${cancelledCount}** are cancelled/superseded.`;
 
-                  const analyticalFollowups = [
-                    "Show all pending review documents",
-                    "Break down by discipline",
-                    "Show vendor submission timeline"
-                  ];
+                  const analyticalFollowups = generateContextualFollowups({
+                    docTypeCode: resolvedCode, docTypeName: resolvedName, subjectLabel,
+                    resultCount: effectiveTotal, hasPending: pendingCount > 0,
+                    isVendorQuery: isFallbackVendorQuery, userIntent: 'analytical', dpLabel
+                  });
 
                   // Rebuild statusTable and typeTable from effective (possibly filtered) data
                   const effectiveStatusTable = Object.entries(effectiveStatusSummary).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS_FB[s] ?? s }));
