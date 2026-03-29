@@ -10622,8 +10622,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       }
       console.log(`Agent loop iteration ${iteration}/${MAX_ITERATIONS} (${elapsed}ms elapsed)`);
 
-      // Emit status event for frontend
-      statusEvents.push(iteration === 1 ? 'Analyzing your request...' : 'Refining search, please wait...');
+      // Emit status event for frontend (streamed in real-time)
+      emitStatus(iteration === 1 ? 'Analyzing your request...' : 'Refining search, please wait...');
 
       // ── Retry-aware API call ──────────────────────────────────────────
       const callAnthropicWithRetry = async (): Promise<Response> => {
