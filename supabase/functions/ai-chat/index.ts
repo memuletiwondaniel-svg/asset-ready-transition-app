@@ -7415,9 +7415,82 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           };
         }
         
+        // Step 4: Fuzzy matching — Levenshtein-style similarity against acronym table
+        const { data: allAcronyms } = await supabaseClient
+          .from('dms_document_type_acronyms')
+          .select('acronym, type_code, full_name, notes');
+        
+        if (allAcronyms && allAcronyms.length > 0) {
+          // Simple Levenshtein distance
+          const levenshtein = (a: string, b: string): number => {
+            const m = a.length, n = b.length;
+            const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+            for (let i = 0; i <= m; i++) dp[i][0] = i;
+            for (let j = 0; j <= n; j++) dp[0][j] = j;
+            for (let i = 1; i <= m; i++) {
+              for (let j = 1; j <= n; j++) {
+                dp[i][j] = Math.min(
+                  dp[i-1][j] + 1,
+                  dp[i][j-1] + 1,
+                  dp[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1)
+                );
+              }
+            }
+            return dp[m][n];
+          };
+          
+          const scored = allAcronyms.map(a => ({
+            ...a,
+            distance: levenshtein(cleanQuery, a.acronym),
+            similarity: 1 - (levenshtein(cleanQuery, a.acronym) / Math.max(cleanQuery.length, a.acronym.length))
+          })).filter(a => a.similarity >= 0.6).sort((a, b) => b.similarity - a.similarity);
+          
+          if (scored.length > 0 && scored[0].similarity >= 0.75) {
+            const best = scored[0];
+            console.log(`resolve_document_type: fuzzy match "${cleanQuery}" → "${best.acronym}" (similarity=${best.similarity.toFixed(2)})`);
+            
+            // Auto-use if very high confidence
+            if (best.similarity >= 0.85) {
+              const { data: typeDetails } = await supabaseClient
+                .from('dms_document_types')
+                .select('code, document_name, document_description, tier')
+                .eq('code', best.type_code)
+                .maybeSingle();
+              
+              return {
+                found: true,
+                count: 1,
+                source: 'fuzzy_match',
+                fuzzy_confidence: best.similarity,
+                original_query: query,
+                matched_acronym: best.acronym,
+                matches: [{
+                  code: best.type_code,
+                  name: best.full_name,
+                  description: typeDetails?.document_description?.substring(0, 200) ?? best.notes,
+                  tier: typeDetails?.tier ?? null
+                }],
+                instruction: `Fuzzy matched "${query}" to "${best.acronym}" (${best.full_name}) with ${Math.round(best.similarity * 100)}% confidence. Use code "${best.type_code}" as the document_type filter.`
+              };
+            }
+            
+            // Suggest close matches
+            return {
+              found: false,
+              suggestions: scored.slice(0, 3).map(s => ({
+                acronym: s.acronym,
+                full_name: s.full_name,
+                type_code: s.type_code,
+                similarity: Math.round(s.similarity * 100) + '%'
+              })),
+              message: `No exact match for "${query}". Did you mean one of these? ${scored.slice(0, 3).map(s => `${s.acronym} (${s.full_name})`).join(', ')}. Ask the user to confirm.`
+            };
+          }
+        }
+        
         return {
           found: false,
-          message: `No document type found for "${query}". Ask the user to clarify — they may be using a project-specific abbreviation not yet in the system.`
+          message: `No document type found for "${query}". Ask the user to clarify — they may be using a project-specific abbreviation not yet in the system. Suggest 2-3 plausible expansions based on your oil & gas knowledge.`
         };
       } catch (err) {
         console.error('resolve_document_type error:', err);
