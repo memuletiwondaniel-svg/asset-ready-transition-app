@@ -7469,32 +7469,83 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const dpInput = (args.dp_number || '').trim();
         const dpMatch = dpInput.match(/DP[- ]?(\d+)/i);
         if (!dpMatch) {
-          return { found: false, error: 'Could not parse DP number from: ' + dpInput };
+          // Try matching by project name if not a DP number
+          const { data: nameProjects } = await supabaseClient
+            .from('dms_projects')
+            .select('code, project_name, cabinet, proj_seq_nr, project_id')
+            .ilike('project_name', `%${dpInput}%`)
+            .eq('is_active', true)
+            .limit(10);
+          
+          if (nameProjects && nameProjects.length > 0) {
+            console.log(`resolve_project_code: name search "${dpInput}" → ${nameProjects.length} matches`);
+            return {
+              found: true,
+              projects: nameProjects.map(p => ({
+                project_code: p.code,
+                project_name: p.project_name,
+                cabinet: p.cabinet,
+                project_id: p.project_id,
+                document_number_prefix: p.code + '-%'
+              })),
+              instruction: nameProjects.length > 1
+                ? `Multiple projects match "${dpInput}". Ask the user which project they mean. Projects span cabinets: ${[...new Set(nameProjects.map(p => p.cabinet))].join(', ')}.`
+                : `Use document_number_pattern="${nameProjects[0].code}-%" in search_assai_documents.`
+            };
+          }
+          return { found: false, error: 'Could not parse DP number from: ' + dpInput + '. Try using the full project name.' };
         }
         const dpNum = dpMatch[1];
+        const paddedDp = dpNum.padStart(3, '0'); // DP25 → 025
         
-        // Search dms_projects by project_id column
-        const { data: projects } = await supabaseClient
-          .from('dms_projects')
-          .select('code, project_name, cabinet, proj_seq_nr, project_id')
-          .ilike('project_id', `%${dpNum}%`)
-          .limit(5);
+        // Step 1: Try exact match first (DP-025, DP-300)
+        const exactPatterns = [`DP-${paddedDp}`, `DP-${dpNum}`, `DP${dpNum}`];
+        let projects: any[] = [];
         
-        if (!projects || projects.length === 0) {
-          return { found: false, message: `No project found matching DP-${dpNum} in the DMS. Check the project identifier.` };
+        for (const pattern of exactPatterns) {
+          const { data } = await supabaseClient
+            .from('dms_projects')
+            .select('code, project_name, cabinet, proj_seq_nr, project_id')
+            .eq('project_id', pattern)
+            .eq('is_active', true);
+          if (data && data.length > 0) {
+            projects = data;
+            break;
+          }
         }
         
-        console.log(`resolve_project_code: DP-${dpNum} → ${projects.map(p => p.code).join(', ')}`);
+        // Step 2: Fallback to partial match only if exact match failed
+        if (projects.length === 0) {
+          const { data } = await supabaseClient
+            .from('dms_projects')
+            .select('code, project_name, cabinet, proj_seq_nr, project_id')
+            .ilike('project_id', `%${dpNum}%`)
+            .eq('is_active', true)
+            .limit(10);
+          projects = data || [];
+        }
+        
+        if (projects.length === 0) {
+          return { found: false, message: `No project found matching DP-${dpNum} in the DMS. Check the project identifier and try the full project name.` };
+        }
+        
+        // Step 3: Cabinet-aware disambiguation
+        const cabinets = [...new Set(projects.map((p: any) => p.cabinet))];
+        const needsDisambiguation = projects.length > 1;
+        
+        console.log(`resolve_project_code: DP-${dpNum} → ${projects.map((p: any) => `${p.code}(${p.cabinet})`).join(', ')}`);
         return {
           found: true,
-          projects: projects.map(p => ({
+          projects: projects.map((p: any) => ({
             project_code: p.code,
             project_name: p.project_name,
             cabinet: p.cabinet,
             project_id: p.project_id,
             document_number_prefix: p.code + '-%'
           })),
-          instruction: `Use document_number_pattern="${projects[0].code}-%" in search_assai_documents. Do NOT put DP numbers in the pattern.`
+          instruction: needsDisambiguation
+            ? `Multiple projects match DP-${dpNum} across cabinets (${cabinets.join(', ')}). Present ALL matches to the user and ask which one they mean. Include cabinet info (BGC_PROJ vs ISG) to help them choose.`
+            : `Use document_number_pattern="${projects[0].code}-%" in search_assai_documents. Do NOT put DP numbers in the pattern.`
         };
       } catch (err) {
         console.error('resolve_project_code error:', err);
