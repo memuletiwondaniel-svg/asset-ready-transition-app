@@ -6844,10 +6844,32 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               console.warn('read_assai_document: SUP_DOC initSearch failed:', supInitErr);
             }
             
-            // Re-fetch result for SUP_DOC (use the last response)
+            // Re-authenticate and re-init SUP_DOC with fresh session to avoid stale DES_DOC tokens
+            try {
+              const supAuth = await authenticateAssai(assaiBase, username, password);
+              if (supAuth.success) {
+                cookieHeader = supAuth.cookies;
+                // Warmup: label.aweb to establish session
+                await fetch(assaiBase + '/label.aweb', { headers: { Cookie: cookieHeader, 'User-Agent': ASSAI_UA }, redirect: 'follow' }).catch(() => {});
+              }
+            } catch (supReauthErr) {
+              console.warn('read_assai_document: SUP_DOC re-auth failed:', supReauthErr);
+            }
+            
+            // Init fresh SUP_DOC search session and use ITS hidden fields
+            const supInitUrl2 = assaiBase + '/search.aweb?subclass_type=SUP_DOC';
+            const supInitResp2 = await fetch(supInitUrl2, {
+              headers: { Cookie: cookieHeader, Accept: 'text/html', 'User-Agent': ASSAI_UA },
+              redirect: 'follow',
+            });
+            const supInitHtml2 = await supInitResp2.text();
+            const supFields2 = extractHiddenFieldsRead(supInitHtml2);
+            const supHidden2 = supFields2.filter(f => f.type === 'hidden' && f.name && f.value);
+            const supText2 = supFields2.filter(f => f.type === 'text' || f.type === '');
+            
             const supSearchParams = new URLSearchParams();
-            for (const f of hiddenFieldsRead) supSearchParams.set(f.name, f.value);
-            for (const f of textFieldsRead) supSearchParams.set(f.name, '');
+            for (const f of supHidden2) supSearchParams.set(f.name, f.value);
+            for (const f of supText2) supSearchParams.set(f.name, '');
             supSearchParams.set('subclass_type', 'SUP_DOC');
             supSearchParams.set('clas_seq_nr', '2');
             supSearchParams.set('suty_seq_nr', '7');
@@ -6859,7 +6881,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cookie': cookieHeader,
                 'User-Agent': ASSAI_UA,
-                'Referer': assaiBase + '/search.aweb?subclass_type=SUP_DOC',
+                'Referer': supInitUrl2,
               },
               body: supSearchParams.toString(),
               redirect: 'follow',
