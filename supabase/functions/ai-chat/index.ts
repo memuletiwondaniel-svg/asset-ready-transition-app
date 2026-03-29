@@ -10170,7 +10170,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // Select system prompt based on detected agent
     let systemPrompt = BOB_SYSTEM_PROMPT + userContextPrompt;
     if (detectedAgent === 'document_agent') {
-      systemPrompt = DOCUMENT_AGENT_PROMPT + userContextPrompt;
+      systemPrompt = DOCUMENT_AGENT_PROMPT + dmsConfigSnapshot + userContextPrompt;
     } else if (detectedAgent === 'pssr_ora_agent') {
       systemPrompt = PSSR_ORA_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'hannah') {
