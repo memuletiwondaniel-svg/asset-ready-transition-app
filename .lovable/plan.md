@@ -1,51 +1,49 @@
 
 
-# Extend Selma Processing Time & Dynamic Status Updates
+# Improving Selma's Document Intelligence Quality — IMPLEMENTED
 
-## Context
+## Changes Made
 
-Supabase Edge Functions have a **hard timeout of 150 seconds** (Pro plan) or **60 seconds** (Free plan). The current code uses a conservative 45-second time guard with only 5 iterations. Given 250,000+ documents in Assai, searches and downloads genuinely need more time.
+### 1. Live DMS Configuration Injection ✅
+- At request time, loads all 261 projects, 45 disciplines, 94 units, 15 status codes, and top 50 originators from live DB tables
+- Injects compact snapshot into `DOCUMENT_AGENT_PROMPT` so Selma has ground-truth knowledge of every project, discipline, unit, and status code
+- Replaces reliance on hardcoded static lists
 
-## Plan
+### 2. Fixed Project Resolution ✅
+- Exact-match-first logic with zero-padded DP numbers (DP25 → DP-025)
+- Falls back to partial match only when exact match fails
+- Cabinet-aware disambiguation (BGC_PROJ vs ISG) when multiple projects match
+- Added project name search fallback when input is not a DP number
 
-### 1. Increase time guard and iterations
+### 3. Guaranteed Response Builder ✅
+- If `finalTextContent` is empty but `searchToolResult` has data → synthesizes response from tool results
+- If `finalTextContent` is empty but `lastToolResult` exists → builds generic tool data response
+- If everything is empty → lists all tools tried and asks user to rephrase
+- Never returns an empty SSE stream
 
-**File**: `supabase/functions/ai-chat/index.ts`
+### 4. Fixed SUP_DOC Fallback in read_assai_document ✅
+- Re-authenticates before SUP_DOC search (fresh session)
+- Performs `label.aweb` warmup to establish server-side session
+- Uses fresh SUP_DOC-specific hidden fields from its own `search.aweb` call
+- No longer reuses stale DES_DOC session tokens
 
-- Change `MAX_LOOP_MS` from `45000` to `140000` (140s — leaves 10s buffer before the 150s hard limit)
-- Change `MAX_ITERATIONS` from `5` to `15` (more retry cycles for complex multi-step workflows)
-- Adjust the rate-limit retry threshold from `15000` to `20000` (needs 20s remaining to attempt a retry)
+### 5. Auto-Escalation in search_assai_documents ✅
+- When 0 results returned, automatically tries 3 escalation strategies:
+  1. Retry without `discipline_code`
+  2. Title/description keyword search using document type name
+  3. Alternate module (DES_DOC ↔ SUP_DOC)
+- Returns `strategies_tried` array so LLM knows what was attempted
+- Deterministic execution — no reliance on LLM choosing to retry
 
-> **Note**: This requires the Supabase project to be on the **Pro plan**. If on the Free plan, the hard limit is 60 seconds and we'd cap at `50000` instead. We should confirm the plan.
+### 6. Pre-seeded Acronyms + Fuzzy Matching ✅
+- Inserted 50 common O&G acronyms (MDS, VDR, HAZOP, FAT, SAT, etc.)
+- Added Levenshtein distance fuzzy matching in `resolve_document_type`
+- Auto-uses match at ≥85% confidence, suggests options at ≥75%
+- Prevents hard "not found" for minor typos (e.g., PSBD → PSDB)
 
-### 2. Stream dynamic status updates to the frontend
+## Files Modified
 
-**Backend** (`index.ts`): Emit `event: status` SSE events at key points in the agent loop:
-- Before each Anthropic API call: `"Analyzing your request..."`
-- On each tool call, map tool name to a friendly label:
-  - `resolve_document_type` → `"Resolving document type..."`
-  - `search_assai_documents` → `"Searching Assai portal (250,000+ documents)..."`
-  - `read_assai_document` → `"Downloading and reading document..."`
-  - `get_pssr_*` → `"Retrieving PSSR data..."`
-  - On retry/next iteration: `"Refining search, please wait..."`
-- Format: `event: status\ndata: {"status":"..."}\n\n`
-
-**Frontend** (`ORSHChatDialog.tsx`):
-- Add `agentStatus` state variable
-- Parse `event: status` lines from the SSE stream and update the state
-- Replace static "Co-Pilot is thinking..." with the dynamic `agentStatus` text
-- Keep it on a single line — no new chat bubbles, just the label swapping
-- Add `transition-opacity duration-300` for smooth text changes
-- Clear status when streaming completes
-
-### 3. Confirm Supabase plan
-
-If the project is on the Free plan, the 60-second hard limit cannot be bypassed. We need to confirm the project is on Pro to unlock the full 150-second window.
-
-## Files modified
-
-| File | Change |
-|------|--------|
-| `supabase/functions/ai-chat/index.ts` | Increase `MAX_LOOP_MS` to 140s, `MAX_ITERATIONS` to 15, emit SSE status events during agent loop |
-| `src/components/widgets/ORSHChatDialog.tsx` | Parse status events, display dynamic status label with smooth transitions |
-
+| File | Changes |
+|------|---------|
+| `supabase/functions/ai-chat/index.ts` | All 6 fixes |
+| DB migration | 50 new acronyms seeded |
