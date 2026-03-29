@@ -11492,18 +11492,19 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         // BROAD QUERY: Show status/type summaries with filtered document list
         const broadInsights = generateSmartInsights(effectiveSearchResult, filteredDocList);
         
-        const broadFollowups: string[] = [];
-        if (p1SubjectLabel && filteredDocList.length > 0) {
-          broadFollowups.push(`Read and interpret the most relevant ${p1SubjectLabel} document`);
-        }
-        const pendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
-        const hasPending = pendingStatuses.some(s => (effectiveSearchResult.status_summary || {})[s]);
-        if (hasPending) broadFollowups.push("Show only pending documents");
-        broadFollowups.push("Filter by discipline");
-        if (filterApplied && unfilteredTotal > filteredDocList.length) {
+        const broadPendingStatuses = ['IFR', 'IFA', 'IFI', 'IFB', 'IFT'];
+        const broadHasPending = broadPendingStatuses.some(s => (effectiveSearchResult.status_summary || {})[s]);
+        const broadFollowups = generateContextualFollowups({
+          docTypeCode: effectiveSearchResult.document_type_code || '',
+          docTypeName: effectiveSearchResult.document_type_name || '',
+          subjectLabel: p1SubjectLabel,
+          resultCount: filteredDocList.length,
+          hasPending: broadHasPending,
+          hasMultipleStatuses: Object.keys(effectiveSearchResult.status_summary || {}).length > 1,
+          userIntent: 'retrieval'
+        });
+        if (filterApplied && unfilteredTotal > filteredDocList.length && broadFollowups.length < 4) {
           broadFollowups.push(`Show all ${totalFound} documents`);
-        } else if (filteredDocList.length > 5) {
-          broadFollowups.push("Export this list");
         }
 
         const statusTable = Object.entries(effectiveSearchResult.status_summary || {})
