@@ -11455,23 +11455,18 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         const smartInsights = generateSmartInsights(effectiveSearchResult, filteredDocList);
         
         // Context-aware follow-ups based on actual results
-        const specificFollowups: string[] = [];
-        if (filteredDocList.length > 0) {
-          specificFollowups.push(
-            p1SubjectLabel
-              ? `Read and interpret the most relevant ${p1SubjectLabel} document`
-              : `Read and interpret the first document`
-          );
-        }
-        const statuses = [...new Set(filteredDocList.map((d: any) => d.status).filter(Boolean))];
-        if (statuses.length > 1) {
-          specificFollowups.push("Show only approved documents");
-        }
-        if (filteredDocList.length > 1) {
-          specificFollowups.push("Compare revisions across these");
-        }
-        // Add "Show all" option when filtering was applied
-        if (filterApplied && unfilteredTotal > filteredDocList.length) {
+        const p1Statuses = [...new Set(filteredDocList.map((d: any) => d.status).filter(Boolean))];
+        const specificFollowups = generateContextualFollowups({
+          docTypeCode: effectiveSearchResult.document_type_code || '',
+          docTypeName: effectiveSearchResult.document_type_name || '',
+          subjectLabel: p1SubjectLabel,
+          resultCount: filteredDocList.length,
+          hasPending: ['IFR','IFA','IFI','IFB','IFT'].some(s => p1Statuses.includes(s)),
+          hasMultipleStatuses: p1Statuses.length > 1,
+          hasMultipleRevisions: filteredDocList.length > 1,
+          userIntent: 'retrieval'
+        });
+        if (filterApplied && unfilteredTotal > filteredDocList.length && specificFollowups.length < 4) {
           specificFollowups.push(`Show all ${totalFound} documents`);
         }
 
