@@ -10437,6 +10437,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // Tool-to-label mapping for dynamic status updates
     const TOOL_STATUS_LABELS: Record<string, string> = {
       resolve_document_type: 'Resolving document type...',
+      resolve_project_code: 'Looking up project details...',
       search_assai_documents: 'Searching Assai portal (250,000+ documents)...',
       read_assai_document: 'Downloading and reading document...',
       get_pssr_pending_items: 'Retrieving PSSR data...',
@@ -10447,6 +10448,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       get_discipline_status: 'Checking discipline status...',
       get_user_context: 'Loading your preferences...',
       save_user_context: 'Saving your preferences...',
+      learn_acronym: 'Learning new acronym...',
+      get_all_projects: 'Fetching project list...',
     };
     // Real-time streaming controller — set inside ReadableStream start()
     let streamController: ReadableStreamDefaultController<Uint8Array> | null = null;
