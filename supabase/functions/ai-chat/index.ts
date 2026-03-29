@@ -10739,6 +10739,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         }
         
         console.log(`[Iteration ${iteration}] Executing tool: ${toolName}`, toolArgs);
+        statusEvents.push(TOOL_STATUS_LABELS[toolName] || 'Processing...');
         const toolResult = await executeTool(toolName, toolArgs, supabase);
         console.log(`[Iteration ${iteration}] Tool result for ${toolName}:`, typeof toolResult === 'object' ? JSON.stringify(toolResult).substring(0, 500) : toolResult);
 
