@@ -1178,26 +1178,52 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                             }
                           }
 
-                          // Sanity filter: reject metadata lines, doc numbers, prose, and cap at 5
+                          // Sanity filter: reject metadata lines, doc numbers, prose, echoes, bare acronyms, and near-duplicates
                           const METADATA_PREFIXES = /^(document number|status|revision|supplier|title|originator|unit|discipline|contractor|type code|doc no|vendor|company|area|weight|date|drawing)\s*:/i;
                           const PROSE_PREFIXES = /^(contact|you could|the document|note that|please note|this means|however|unfortunately|it appears|based on|i can|i will|i'll|let me)/i;
                           const DOC_NUMBER_FRAGMENT = /\d{4}-[A-Z]+-[A-Z0-9]+-/;
-                          const METADATA_QUESTION = /^\w+\s*:/; // Single word followed by colon (e.g. "Status: IFA?")
+                          const METADATA_QUESTION = /^\w+\s*:/;
+                          // Bare acronym pattern: pill is ONLY a 2-5 letter uppercase acronym with no context
+                          const BARE_ACRONYM = /^[A-Z]{2,5}$/;
+
+                          // Get the last user message for echo detection
+                          const lastUserMsg = messages.filter(m => m.role === 'user').pop()?.content?.toLowerCase() || '';
+
+                          // Simple similarity check for near-duplicates
+                          const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+                          const isSimilar = (a: string, b: string): boolean => {
+                            const na = normalize(a), nb = normalize(b);
+                            if (na === nb) return true;
+                            // Check if one contains the other (>80% overlap)
+                            if (na.length > 0 && nb.length > 0) {
+                              const shorter = na.length < nb.length ? na : nb;
+                              const longer = na.length < nb.length ? nb : na;
+                              if (longer.includes(shorter) && shorter.length / longer.length > 0.7) return true;
+                            }
+                            return false;
+                          };
+
+                          const seen: string[] = [];
                           followUpItems = followUpItems
                             .filter(item => {
                               if (METADATA_PREFIXES.test(item)) return false;
                               if (PROSE_PREFIXES.test(item)) return false;
-                              // Reset lastIndex since ASSAI_DOC_NUMBER_REGEX uses global flag
                               ASSAI_DOC_NUMBER_REGEX.lastIndex = 0;
                               if (ASSAI_DOC_NUMBER_REGEX.test(item)) return false;
                               if (DOC_NUMBER_FRAGMENT.test(item)) return false;
-                              // Reject metadata-style items ending with ? (e.g. "Status: IFA?")
                               if (item.endsWith('?') && METADATA_QUESTION.test(item.replace(/\?$/, ''))) {
                                 const colonIdx = item.indexOf(':');
                                 if (colonIdx > 0 && colonIdx < 20) return false;
                               }
                               if (item.length > 80) return false;
                               if (item.length < 5) return false;
+                              // Reject bare acronyms without context (e.g., just "PES" or "MDS")
+                              if (BARE_ACRONYM.test(item.trim())) return false;
+                              // Reject pills that echo the user's query
+                              if (lastUserMsg && isSimilar(item, lastUserMsg)) return false;
+                              // Reject near-duplicates of already-accepted pills
+                              if (seen.some(s => isSimilar(s, item))) return false;
+                              seen.push(item);
                               return true;
                             })
                             .slice(0, 5);
