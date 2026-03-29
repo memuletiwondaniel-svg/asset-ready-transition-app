@@ -119,6 +119,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [agentStatus, setAgentStatus] = useState<string>('');
   const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
