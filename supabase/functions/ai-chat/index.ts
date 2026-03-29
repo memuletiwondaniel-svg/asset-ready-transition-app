@@ -10448,7 +10448,16 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       get_user_context: 'Loading your preferences...',
       save_user_context: 'Saving your preferences...',
     };
-    const statusEvents: string[] = [];
+    // Real-time streaming controller — set inside ReadableStream start()
+    let streamController: ReadableStreamDefaultController<Uint8Array> | null = null;
+    const encoder = new TextEncoder();
+    const emitStatus = (status: string) => {
+      if (streamController) {
+        try {
+          streamController.enqueue(encoder.encode(`event: status\ndata: ${JSON.stringify({ status })}\n\n`));
+        } catch (_) { /* stream may be closed */ }
+      }
+    };
     let conversationMessages = [...transformedMessages];
     let iteration = 0;
     let lastToolName: string | null = null;
