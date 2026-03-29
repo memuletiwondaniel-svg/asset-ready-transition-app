@@ -11434,7 +11434,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             .slice(0, 10)
             .map(([company, data]) => ({ company, ...data }));
           analyticalSummary += ` Documents come from **${Object.keys(byCompany).length}** vendors/contractors.`;
-          analyticalFollowups[2] = "Show documents by specific vendor";
+          // vendor followups already handled by generateContextualFollowups
         }
 
         const smartInsights = generateSmartInsights(effectiveSearchResult, filteredDocList);
