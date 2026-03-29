@@ -550,57 +550,60 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let assistantMessage = '';
+      let sseBuffer = '';
 
       // Use functional update to avoid stale closure — ensures the assistant
       // placeholder is always appended to the latest state (fixes first-send blank)
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
-      let isStatusEvent = false;
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        sseBuffer += decoder.decode(value, { stream: true });
+        
+        // SSE frames are separated by double newlines
+        const frames = sseBuffer.split('\n\n');
+        // Last element may be incomplete — keep it in the buffer
+        sseBuffer = frames.pop() ?? '';
 
-        for (const line of lines) {
-          if (line.startsWith('event: status')) {
-            isStatusEvent = true;
-            continue;
+        for (const frame of frames) {
+          if (!frame.trim()) continue;
+
+          let eventType = 'message';
+          let dataStr = '';
+
+          for (const line of frame.split('\n')) {
+            if (line.startsWith('event:')) {
+              eventType = line.slice(6).trim();
+            } else if (line.startsWith('data:')) {
+              dataStr += line.slice(5).trim();
+            }
+            // Ignore comments (: heartbeat) and other lines
           }
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-            
-            try {
-              const parsed = JSON.parse(data);
-              
-              // Handle status event
-              if (isStatusEvent) {
-                if (parsed.status) {
-                  setAgentStatus(parsed.status);
-                }
-                isStatusEvent = false;
-                continue;
-              }
-              
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                assistantMessage += content;
-                const snapshot = assistantMessage;
-                setMessages(prev => {
-                  const updated = [...prev];
-                  updated[updated.length - 1] = { ...updated[updated.length - 1], content: snapshot };
-                  return updated;
-                });
-              }
-            } catch {}
-          } else {
-            // Non-data line resets status flag
-            if (!line.trim()) continue;
-            isStatusEvent = false;
-          }
+
+          if (!dataStr) continue;
+          if (dataStr === '[DONE]') continue;
+
+          try {
+            const parsed = JSON.parse(dataStr);
+
+            if (eventType === 'status' && parsed.status) {
+              setAgentStatus(parsed.status);
+              continue;
+            }
+
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              assistantMessage += content;
+              const snapshot = assistantMessage;
+              setMessages(prev => {
+                const updated = [...prev];
+                updated[updated.length - 1] = { ...updated[updated.length - 1], content: snapshot };
+                return updated;
+              });
+            }
+          } catch {}
         }
       }
 

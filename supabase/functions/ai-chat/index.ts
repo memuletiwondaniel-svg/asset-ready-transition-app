@@ -10437,6 +10437,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // Tool-to-label mapping for dynamic status updates
     const TOOL_STATUS_LABELS: Record<string, string> = {
       resolve_document_type: 'Resolving document type...',
+      resolve_project_code: 'Looking up project details...',
       search_assai_documents: 'Searching Assai portal (250,000+ documents)...',
       read_assai_document: 'Downloading and reading document...',
       get_pssr_pending_items: 'Retrieving PSSR data...',
@@ -10447,8 +10448,19 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       get_discipline_status: 'Checking discipline status...',
       get_user_context: 'Loading your preferences...',
       save_user_context: 'Saving your preferences...',
+      learn_acronym: 'Learning new acronym...',
+      get_all_projects: 'Fetching project list...',
     };
-    const statusEvents: string[] = [];
+    // Real-time streaming controller — set inside ReadableStream start()
+    let streamController: ReadableStreamDefaultController<Uint8Array> | null = null;
+    const encoder = new TextEncoder();
+    const emitStatus = (status: string) => {
+      if (streamController) {
+        try {
+          streamController.enqueue(encoder.encode(`event: status\ndata: ${JSON.stringify({ status })}\n\n`));
+        } catch (_) { /* stream may be closed */ }
+      }
+    };
     let conversationMessages = [...transformedMessages];
     let iteration = 0;
     let lastToolName: string | null = null;
@@ -10598,7 +10610,15 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       return unique.slice(0, 4);
     };
 
-
+    // Create a ReadableStream so we can enqueue status events in real-time
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        streamController = controller;
+        // Heartbeat: send a keep-alive comment every 15s to prevent gateway timeouts
+        const heartbeat = setInterval(() => {
+          try { controller.enqueue(encoder.encode(': heartbeat\n\n')); } catch (_) { clearInterval(heartbeat); }
+        }, 15000);
+        try {
     while (iteration < MAX_ITERATIONS) {
       iteration++;
       // Time guard: break if approaching edge function timeout
@@ -10613,8 +10633,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       }
       console.log(`Agent loop iteration ${iteration}/${MAX_ITERATIONS} (${elapsed}ms elapsed)`);
 
-      // Emit status event for frontend
-      statusEvents.push(iteration === 1 ? 'Analyzing your request...' : 'Refining search, please wait...');
+      // Emit status event for frontend (streamed in real-time)
+      emitStatus(iteration === 1 ? 'Analyzing your request...' : 'Refining search, please wait...');
 
       // ── Retry-aware API call ──────────────────────────────────────────
       const callAnthropicWithRetry = async (): Promise<Response> => {
@@ -11178,7 +11198,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         }
         
         console.log(`[Iteration ${iteration}] Executing tool: ${toolName}`, toolArgs);
-        statusEvents.push(TOOL_STATUS_LABELS[toolName] || 'Processing...');
+        emitStatus(TOOL_STATUS_LABELS[toolName] || 'Processing...');
         const toolResult = await executeTool(toolName, toolArgs, supabase);
         console.log(`[Iteration ${iteration}] Tool result for ${toolName}:`, typeof toolResult === 'object' ? JSON.stringify(toolResult).substring(0, 500) : toolResult);
 
@@ -11766,17 +11786,30 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     
     const finalContent = finalTextContent || "I'm here to help. What would you like to know?";
     
-    // Build streaming response with status events followed by final content
-    let sseData = '';
-    for (const status of statusEvents) {
-      sseData += `event: status\ndata: ${JSON.stringify({ status })}\n\n`;
-    }
-    sseData += `data: ${JSON.stringify({
+    // Emit final content and close the stream
+    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
       choices: [{ delta: { content: finalContent } }]
-    })}\n\ndata: [DONE]\n\n`;
+    })}\n\n`));
+    controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+    clearInterval(heartbeat);
+    controller.close();
+
+        } catch (streamError) {
+          clearInterval(heartbeat);
+          console.error('Stream error:', streamError);
+          try {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              choices: [{ delta: { content: "An error occurred while processing your request. Please try again." } }]
+            })}\n\n`));
+            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+            controller.close();
+          } catch (_) { controller.close(); }
+        }
+      }
+    });
     
-    return new Response(sseData, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    return new Response(stream, {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive" },
     });
 
   } catch (error) {
