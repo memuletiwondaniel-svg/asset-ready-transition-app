@@ -11319,7 +11319,13 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     }
     
     const finalContent = finalTextContent || "I'm here to help. What would you like to know?";
-    const sseData = `data: ${JSON.stringify({
+    
+    // Build streaming response with status events followed by final content
+    let sseData = '';
+    for (const status of statusEvents) {
+      sseData += `event: status\ndata: ${JSON.stringify({ status })}\n\n`;
+    }
+    sseData += `data: ${JSON.stringify({
       choices: [{ delta: { content: finalContent } }]
     })}\n\ndata: [DONE]\n\n`;
     
