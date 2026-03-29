@@ -8064,8 +8064,98 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
         }
         
+        // ═══════════════════════════════════════════════════════════════════════
+        // AUTO-ESCALATION: If 0 results, automatically try relaxed searches
+        // ═══════════════════════════════════════════════════════════════════════
+        const strategiesTried: string[] = ['initial_search'];
+        
+        if (allDocuments.length === 0 && totalQueryCount < MAX_TOTAL_QUERIES - 3) {
+          console.log('search_assai_documents: 0 results — starting auto-escalation');
+          
+          // Strategy 1: Retry without discipline_code (if it was specified)
+          if (discipline_code && document_number_pattern) {
+            try {
+              console.log('search_assai_documents: escalation — retry without discipline_code');
+              strategiesTried.push('without_discipline');
+              const escAuth1 = await authenticateAssai(assaiBase, username, password);
+              if (escAuth1.success) {
+                cookieHeader = escAuth1.cookies;
+                await fetch(assaiBase + '/label.aweb', { headers: { Cookie: cookieHeader, 'User-Agent': ua }, redirect: 'follow' }).catch(() => {});
+                const savedDiscipline = discipline_code;
+                discipline_code = undefined;
+                const escDocs1 = await paginateSearch(moduleParams);
+                discipline_code = savedDiscipline; // restore
+                if (escDocs1.length > 0) {
+                  allDocuments = escDocs1;
+                  console.log('search_assai_documents: escalation without discipline found ' + escDocs1.length + ' docs');
+                }
+              }
+            } catch (esc1Err) {
+              console.error('search_assai_documents: escalation strategy 1 error:', esc1Err);
+            }
+          }
+          
+          // Strategy 2: Try title/description keyword search (if document_type was specified)
+          if (allDocuments.length === 0 && document_type && document_number_pattern) {
+            try {
+              // Look up the document type name to use as title keyword
+              const { data: typeInfo } = await supabaseClient
+                .from('dms_document_types')
+                .select('document_name')
+                .eq('code', document_type.split('+')[0])
+                .maybeSingle();
+              
+              if (typeInfo?.document_name) {
+                console.log('search_assai_documents: escalation — title keyword search: ' + typeInfo.document_name);
+                strategiesTried.push('title_keyword:' + typeInfo.document_name);
+                const escAuth2 = await authenticateAssai(assaiBase, username, password);
+                if (escAuth2.success) {
+                  cookieHeader = escAuth2.cookies;
+                  await fetch(assaiBase + '/label.aweb', { headers: { Cookie: cookieHeader, 'User-Agent': ua }, redirect: 'follow' }).catch(() => {});
+                  const savedTitle = title;
+                  const savedDocType = document_type;
+                  title = typeInfo.document_name;
+                  document_type = undefined as any;
+                  const escDocs2 = await paginateSearch(moduleParams);
+                  title = savedTitle;
+                  document_type = savedDocType;
+                  if (escDocs2.length > 0) {
+                    allDocuments = escDocs2;
+                    console.log('search_assai_documents: escalation title keyword found ' + escDocs2.length + ' docs');
+                  }
+                }
+              }
+            } catch (esc2Err) {
+              console.error('search_assai_documents: escalation strategy 2 error:', esc2Err);
+            }
+          }
+          
+          // Strategy 3: Try the alternate module (DES_DOC ↔ SUP_DOC)
+          if (allDocuments.length === 0 && !searchBothModules && !isMultiTypeSearch) {
+            try {
+              console.log('search_assai_documents: escalation — try alternate module');
+              strategiesTried.push('alternate_module');
+              const altModParams = useSupDoc
+                ? { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' }
+                : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
+              const escAuth3 = await authenticateAssai(assaiBase, username, password);
+              if (escAuth3.success) {
+                cookieHeader = escAuth3.cookies;
+                await fetch(assaiBase + '/label.aweb', { headers: { Cookie: cookieHeader, 'User-Agent': ua }, redirect: 'follow' }).catch(() => {});
+                const escDocs3 = await paginateSearch(altModParams);
+                if (escDocs3.length > 0) {
+                  allDocuments = escDocs3;
+                  console.log('search_assai_documents: escalation alt module found ' + escDocs3.length + ' docs');
+                }
+              }
+            } catch (esc3Err) {
+              console.error('search_assai_documents: escalation strategy 3 error:', esc3Err);
+            }
+          }
+        }
+        
         if (allDocuments.length === 0) {
-          return { found: false, total_found: 0, message: 'No documents found matching the search criteria in Assai.', search_pattern: document_number_pattern };
+          return { found: false, total_found: 0, message: 'No documents found matching the search criteria in Assai. Strategies tried: ' + strategiesTried.join(', ') + '.', search_pattern: document_number_pattern, strategies_tried: strategiesTried };
         }
 
         // Build summaries and add download URLs
