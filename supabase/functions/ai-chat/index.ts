@@ -11610,8 +11610,19 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             finalTextContent += `| ${p.pssr_id} | ${p.title} | ${p.status} | ${p.progress ?? 0}% |\n`;
           });
         }
+      } else if (searchToolResult && searchToolResult.found && searchToolResult.total_found > 0) {
+        // Guaranteed response from search results — never return empty when we have data
+        finalTextContent = `I found **${searchToolResult.total_found}** documents matching your search. Here are the results from my Assai query.`;
+        console.log('Guaranteed response builder: synthesized response from searchToolResult (' + searchToolResult.total_found + ' docs)');
+      } else if (lastToolResult && !lastToolResult.error) {
+        // Build a generic response from whatever tool data we have
+        const toolDataStr = JSON.stringify(lastToolResult).substring(0, 500);
+        finalTextContent = `I completed the operation using the **${lastToolName}** tool. Here's what I found:\n\n${toolDataStr.length > 400 ? 'The result contains detailed data. Let me know what specific aspect you\'d like me to focus on.' : toolDataStr}`;
+        console.log('Guaranteed response builder: synthesized from lastToolResult (' + lastToolName + ')');
       } else {
-        finalTextContent = "I retrieved some data but couldn't determine the right format to display it. Could you rephrase your question with more specific details? For example, specify the document type, vendor name, or PO number you're looking for.";
+        finalTextContent = "I wasn't able to complete this request within the processing window. Here's what I tried:\n\n" +
+          (allToolCallNames.length > 0 ? allToolCallNames.map((t: string) => `• ${t}`).join('\n') : '• No tools were called') +
+          "\n\nCould you rephrase your question with more specific details? For example, specify the document type, project DP number, or vendor name.";
       }
     }
     
