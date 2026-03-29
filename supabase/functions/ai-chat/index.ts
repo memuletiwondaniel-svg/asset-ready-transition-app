@@ -11065,7 +11065,10 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                   const statusTable = Object.entries(statusSummary).sort((a: any, b: any) => b[1] - a[1]).map(([s, c]) => ({ status: s, count: c, description: STATUS_DESCS_AN[s] ?? s }));
                   const typeTable = Object.entries(searchResult.type_summary || {}).sort((a: any, b: any) => (b[1] as any).count - (a[1] as any).count).slice(0, 5).map(([code, data]: any) => ({ code, count: data.count, statuses: data.statuses, description: dynamicTypeDescs[code] ?? code }));
 
-                  const analyticalFollowups = ["Show all pending review documents", "Break down by discipline", "Show vendor submission timeline"];
+                  const analyticalFollowups = generateContextualFollowups({
+                    resultCount: searchResult.total_found, hasPending: pendingCount > 0,
+                    isVendorQuery: isFallbackVendorQuery, userIntent: 'analytical', dpLabel
+                  });
 
                   // For vendor queries, post-filter to only ZV discipline documents
                   let effectiveDocsBroad = searchResult.documents || [];
