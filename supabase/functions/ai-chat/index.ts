@@ -11113,7 +11113,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
                     }
                     vendorTable = Object.entries(byCompany).sort((a, b) => b[1].count - a[1].count).slice(0, 10).map(([company, data]) => ({ company, ...data }));
                     analyticalSummary += ` Documents come from **${Object.keys(byCompany).length}** vendors/contractors.`;
-                    analyticalFollowups[2] = "Show documents by specific vendor";
+                    // vendor followups already handled by generateContextualFollowups
                   }
 
                   const topDocs = effectiveDocsBroad.slice(0, 5).map((d: any) => ({
