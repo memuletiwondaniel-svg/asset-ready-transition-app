@@ -6844,10 +6844,32 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               console.warn('read_assai_document: SUP_DOC initSearch failed:', supInitErr);
             }
             
-            // Re-fetch result for SUP_DOC (use the last response)
+            // Re-authenticate and re-init SUP_DOC with fresh session to avoid stale DES_DOC tokens
+            try {
+              const supAuth = await authenticateAssai(assaiBase, username, password);
+              if (supAuth.success) {
+                cookieHeader = supAuth.cookies;
+                // Warmup: label.aweb to establish session
+                await fetch(assaiBase + '/label.aweb', { headers: { Cookie: cookieHeader, 'User-Agent': ASSAI_UA }, redirect: 'follow' }).catch(() => {});
+              }
+            } catch (supReauthErr) {
+              console.warn('read_assai_document: SUP_DOC re-auth failed:', supReauthErr);
+            }
+            
+            // Init fresh SUP_DOC search session and use ITS hidden fields
+            const supInitUrl2 = assaiBase + '/search.aweb?subclass_type=SUP_DOC';
+            const supInitResp2 = await fetch(supInitUrl2, {
+              headers: { Cookie: cookieHeader, Accept: 'text/html', 'User-Agent': ASSAI_UA },
+              redirect: 'follow',
+            });
+            const supInitHtml2 = await supInitResp2.text();
+            const supFields2 = extractHiddenFieldsRead(supInitHtml2);
+            const supHidden2 = supFields2.filter(f => f.type === 'hidden' && f.name && f.value);
+            const supText2 = supFields2.filter(f => f.type === 'text' || f.type === '');
+            
             const supSearchParams = new URLSearchParams();
-            for (const f of hiddenFieldsRead) supSearchParams.set(f.name, f.value);
-            for (const f of textFieldsRead) supSearchParams.set(f.name, '');
+            for (const f of supHidden2) supSearchParams.set(f.name, f.value);
+            for (const f of supText2) supSearchParams.set(f.name, '');
             supSearchParams.set('subclass_type', 'SUP_DOC');
             supSearchParams.set('clas_seq_nr', '2');
             supSearchParams.set('suty_seq_nr', '7');
@@ -6859,7 +6881,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Cookie': cookieHeader,
                 'User-Agent': ASSAI_UA,
-                'Referer': assaiBase + '/search.aweb?subclass_type=SUP_DOC',
+                'Referer': supInitUrl2,
               },
               body: supSearchParams.toString(),
               redirect: 'follow',
@@ -7393,9 +7415,82 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           };
         }
         
+        // Step 4: Fuzzy matching — Levenshtein-style similarity against acronym table
+        const { data: allAcronyms } = await supabaseClient
+          .from('dms_document_type_acronyms')
+          .select('acronym, type_code, full_name, notes');
+        
+        if (allAcronyms && allAcronyms.length > 0) {
+          // Simple Levenshtein distance
+          const levenshtein = (a: string, b: string): number => {
+            const m = a.length, n = b.length;
+            const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+            for (let i = 0; i <= m; i++) dp[i][0] = i;
+            for (let j = 0; j <= n; j++) dp[0][j] = j;
+            for (let i = 1; i <= m; i++) {
+              for (let j = 1; j <= n; j++) {
+                dp[i][j] = Math.min(
+                  dp[i-1][j] + 1,
+                  dp[i][j-1] + 1,
+                  dp[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1)
+                );
+              }
+            }
+            return dp[m][n];
+          };
+          
+          const scored = allAcronyms.map(a => ({
+            ...a,
+            distance: levenshtein(cleanQuery, a.acronym),
+            similarity: 1 - (levenshtein(cleanQuery, a.acronym) / Math.max(cleanQuery.length, a.acronym.length))
+          })).filter(a => a.similarity >= 0.6).sort((a, b) => b.similarity - a.similarity);
+          
+          if (scored.length > 0 && scored[0].similarity >= 0.75) {
+            const best = scored[0];
+            console.log(`resolve_document_type: fuzzy match "${cleanQuery}" → "${best.acronym}" (similarity=${best.similarity.toFixed(2)})`);
+            
+            // Auto-use if very high confidence
+            if (best.similarity >= 0.85) {
+              const { data: typeDetails } = await supabaseClient
+                .from('dms_document_types')
+                .select('code, document_name, document_description, tier')
+                .eq('code', best.type_code)
+                .maybeSingle();
+              
+              return {
+                found: true,
+                count: 1,
+                source: 'fuzzy_match',
+                fuzzy_confidence: best.similarity,
+                original_query: query,
+                matched_acronym: best.acronym,
+                matches: [{
+                  code: best.type_code,
+                  name: best.full_name,
+                  description: typeDetails?.document_description?.substring(0, 200) ?? best.notes,
+                  tier: typeDetails?.tier ?? null
+                }],
+                instruction: `Fuzzy matched "${query}" to "${best.acronym}" (${best.full_name}) with ${Math.round(best.similarity * 100)}% confidence. Use code "${best.type_code}" as the document_type filter.`
+              };
+            }
+            
+            // Suggest close matches
+            return {
+              found: false,
+              suggestions: scored.slice(0, 3).map(s => ({
+                acronym: s.acronym,
+                full_name: s.full_name,
+                type_code: s.type_code,
+                similarity: Math.round(s.similarity * 100) + '%'
+              })),
+              message: `No exact match for "${query}". Did you mean one of these? ${scored.slice(0, 3).map(s => `${s.acronym} (${s.full_name})`).join(', ')}. Ask the user to confirm.`
+            };
+          }
+        }
+        
         return {
           found: false,
-          message: `No document type found for "${query}". Ask the user to clarify — they may be using a project-specific abbreviation not yet in the system.`
+          message: `No document type found for "${query}". Ask the user to clarify — they may be using a project-specific abbreviation not yet in the system. Suggest 2-3 plausible expansions based on your oil & gas knowledge.`
         };
       } catch (err) {
         console.error('resolve_document_type error:', err);
@@ -7469,32 +7564,83 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const dpInput = (args.dp_number || '').trim();
         const dpMatch = dpInput.match(/DP[- ]?(\d+)/i);
         if (!dpMatch) {
-          return { found: false, error: 'Could not parse DP number from: ' + dpInput };
+          // Try matching by project name if not a DP number
+          const { data: nameProjects } = await supabaseClient
+            .from('dms_projects')
+            .select('code, project_name, cabinet, proj_seq_nr, project_id')
+            .ilike('project_name', `%${dpInput}%`)
+            .eq('is_active', true)
+            .limit(10);
+          
+          if (nameProjects && nameProjects.length > 0) {
+            console.log(`resolve_project_code: name search "${dpInput}" → ${nameProjects.length} matches`);
+            return {
+              found: true,
+              projects: nameProjects.map(p => ({
+                project_code: p.code,
+                project_name: p.project_name,
+                cabinet: p.cabinet,
+                project_id: p.project_id,
+                document_number_prefix: p.code + '-%'
+              })),
+              instruction: nameProjects.length > 1
+                ? `Multiple projects match "${dpInput}". Ask the user which project they mean. Projects span cabinets: ${[...new Set(nameProjects.map(p => p.cabinet))].join(', ')}.`
+                : `Use document_number_pattern="${nameProjects[0].code}-%" in search_assai_documents.`
+            };
+          }
+          return { found: false, error: 'Could not parse DP number from: ' + dpInput + '. Try using the full project name.' };
         }
         const dpNum = dpMatch[1];
+        const paddedDp = dpNum.padStart(3, '0'); // DP25 → 025
         
-        // Search dms_projects by project_id column
-        const { data: projects } = await supabaseClient
-          .from('dms_projects')
-          .select('code, project_name, cabinet, proj_seq_nr, project_id')
-          .ilike('project_id', `%${dpNum}%`)
-          .limit(5);
+        // Step 1: Try exact match first (DP-025, DP-300)
+        const exactPatterns = [`DP-${paddedDp}`, `DP-${dpNum}`, `DP${dpNum}`];
+        let projects: any[] = [];
         
-        if (!projects || projects.length === 0) {
-          return { found: false, message: `No project found matching DP-${dpNum} in the DMS. Check the project identifier.` };
+        for (const pattern of exactPatterns) {
+          const { data } = await supabaseClient
+            .from('dms_projects')
+            .select('code, project_name, cabinet, proj_seq_nr, project_id')
+            .eq('project_id', pattern)
+            .eq('is_active', true);
+          if (data && data.length > 0) {
+            projects = data;
+            break;
+          }
         }
         
-        console.log(`resolve_project_code: DP-${dpNum} → ${projects.map(p => p.code).join(', ')}`);
+        // Step 2: Fallback to partial match only if exact match failed
+        if (projects.length === 0) {
+          const { data } = await supabaseClient
+            .from('dms_projects')
+            .select('code, project_name, cabinet, proj_seq_nr, project_id')
+            .ilike('project_id', `%${dpNum}%`)
+            .eq('is_active', true)
+            .limit(10);
+          projects = data || [];
+        }
+        
+        if (projects.length === 0) {
+          return { found: false, message: `No project found matching DP-${dpNum} in the DMS. Check the project identifier and try the full project name.` };
+        }
+        
+        // Step 3: Cabinet-aware disambiguation
+        const cabinets = [...new Set(projects.map((p: any) => p.cabinet))];
+        const needsDisambiguation = projects.length > 1;
+        
+        console.log(`resolve_project_code: DP-${dpNum} → ${projects.map((p: any) => `${p.code}(${p.cabinet})`).join(', ')}`);
         return {
           found: true,
-          projects: projects.map(p => ({
+          projects: projects.map((p: any) => ({
             project_code: p.code,
             project_name: p.project_name,
             cabinet: p.cabinet,
             project_id: p.project_id,
             document_number_prefix: p.code + '-%'
           })),
-          instruction: `Use document_number_pattern="${projects[0].code}-%" in search_assai_documents. Do NOT put DP numbers in the pattern.`
+          instruction: needsDisambiguation
+            ? `Multiple projects match DP-${dpNum} across cabinets (${cabinets.join(', ')}). Present ALL matches to the user and ask which one they mean. Include cabinet info (BGC_PROJ vs ISG) to help them choose.`
+            : `Use document_number_pattern="${projects[0].code}-%" in search_assai_documents. Do NOT put DP numbers in the pattern.`
         };
       } catch (err) {
         console.error('resolve_project_code error:', err);
@@ -7991,8 +8137,98 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
         }
         
+        // ═══════════════════════════════════════════════════════════════════════
+        // AUTO-ESCALATION: If 0 results, automatically try relaxed searches
+        // ═══════════════════════════════════════════════════════════════════════
+        const strategiesTried: string[] = ['initial_search'];
+        
+        if (allDocuments.length === 0 && totalQueryCount < MAX_TOTAL_QUERIES - 3) {
+          console.log('search_assai_documents: 0 results — starting auto-escalation');
+          
+          // Strategy 1: Retry without discipline_code (if it was specified)
+          if (discipline_code && document_number_pattern) {
+            try {
+              console.log('search_assai_documents: escalation — retry without discipline_code');
+              strategiesTried.push('without_discipline');
+              const escAuth1 = await authenticateAssai(assaiBase, username, password);
+              if (escAuth1.success) {
+                cookieHeader = escAuth1.cookies;
+                await fetch(assaiBase + '/label.aweb', { headers: { Cookie: cookieHeader, 'User-Agent': ua }, redirect: 'follow' }).catch(() => {});
+                const savedDiscipline = discipline_code;
+                discipline_code = undefined;
+                const escDocs1 = await paginateSearch(moduleParams);
+                discipline_code = savedDiscipline; // restore
+                if (escDocs1.length > 0) {
+                  allDocuments = escDocs1;
+                  console.log('search_assai_documents: escalation without discipline found ' + escDocs1.length + ' docs');
+                }
+              }
+            } catch (esc1Err) {
+              console.error('search_assai_documents: escalation strategy 1 error:', esc1Err);
+            }
+          }
+          
+          // Strategy 2: Try title/description keyword search (if document_type was specified)
+          if (allDocuments.length === 0 && document_type && document_number_pattern) {
+            try {
+              // Look up the document type name to use as title keyword
+              const { data: typeInfo } = await supabaseClient
+                .from('dms_document_types')
+                .select('document_name')
+                .eq('code', document_type.split('+')[0])
+                .maybeSingle();
+              
+              if (typeInfo?.document_name) {
+                console.log('search_assai_documents: escalation — title keyword search: ' + typeInfo.document_name);
+                strategiesTried.push('title_keyword:' + typeInfo.document_name);
+                const escAuth2 = await authenticateAssai(assaiBase, username, password);
+                if (escAuth2.success) {
+                  cookieHeader = escAuth2.cookies;
+                  await fetch(assaiBase + '/label.aweb', { headers: { Cookie: cookieHeader, 'User-Agent': ua }, redirect: 'follow' }).catch(() => {});
+                  const savedTitle = title;
+                  const savedDocType = document_type;
+                  title = typeInfo.document_name;
+                  document_type = undefined as any;
+                  const escDocs2 = await paginateSearch(moduleParams);
+                  title = savedTitle;
+                  document_type = savedDocType;
+                  if (escDocs2.length > 0) {
+                    allDocuments = escDocs2;
+                    console.log('search_assai_documents: escalation title keyword found ' + escDocs2.length + ' docs');
+                  }
+                }
+              }
+            } catch (esc2Err) {
+              console.error('search_assai_documents: escalation strategy 2 error:', esc2Err);
+            }
+          }
+          
+          // Strategy 3: Try the alternate module (DES_DOC ↔ SUP_DOC)
+          if (allDocuments.length === 0 && !searchBothModules && !isMultiTypeSearch) {
+            try {
+              console.log('search_assai_documents: escalation — try alternate module');
+              strategiesTried.push('alternate_module');
+              const altModParams = useSupDoc
+                ? { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' }
+                : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
+              const escAuth3 = await authenticateAssai(assaiBase, username, password);
+              if (escAuth3.success) {
+                cookieHeader = escAuth3.cookies;
+                await fetch(assaiBase + '/label.aweb', { headers: { Cookie: cookieHeader, 'User-Agent': ua }, redirect: 'follow' }).catch(() => {});
+                const escDocs3 = await paginateSearch(altModParams);
+                if (escDocs3.length > 0) {
+                  allDocuments = escDocs3;
+                  console.log('search_assai_documents: escalation alt module found ' + escDocs3.length + ' docs');
+                }
+              }
+            } catch (esc3Err) {
+              console.error('search_assai_documents: escalation strategy 3 error:', esc3Err);
+            }
+          }
+        }
+        
         if (allDocuments.length === 0) {
-          return { found: false, total_found: 0, message: 'No documents found matching the search criteria in Assai.', search_pattern: document_number_pattern };
+          return { found: false, total_found: 0, message: 'No documents found matching the search criteria in Assai. Strategies tried: ' + strategiesTried.join(', ') + '.', search_pattern: document_number_pattern, strategies_tried: strategiesTried };
         }
 
         // Build summaries and add download URLs
@@ -9429,6 +9665,80 @@ serve(async (req) => {
     } catch (err) {
       console.error('Failed to load document type codes:', err);
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 1: Load live DMS configuration for system prompt injection
+    // ═══════════════════════════════════════════════════════════════════════
+    let dmsConfigSnapshot = '';
+    try {
+      // Load projects (compact: code, DP number, name, cabinet)
+      const { data: projRows } = await supabase
+        .from('dms_projects')
+        .select('code, project_id, project_name, cabinet')
+        .eq('is_active', true)
+        .order('code');
+      
+      // Load disciplines
+      const { data: discRows } = await supabase
+        .from('dms_disciplines')
+        .select('code, name')
+        .eq('is_active', true)
+        .order('code');
+      
+      // Load units
+      const { data: unitRows } = await supabase
+        .from('dms_units')
+        .select('code, unit_name')
+        .eq('is_active', true)
+        .order('code');
+      
+      // Load status codes
+      const { data: statusRows } = await supabase
+        .from('dms_status_codes')
+        .select('code, description, rev_suffix')
+        .eq('is_active', true)
+        .order('display_order');
+      
+      // Load originators (top 50 by display_order)
+      const { data: origRows } = await supabase
+        .from('dms_originators')
+        .select('code, description')
+        .eq('is_active', true)
+        .order('display_order')
+        .limit(50);
+
+      const parts: string[] = [];
+      
+      if (projRows && projRows.length > 0) {
+        const projLines = projRows.map((p: any) => `${p.code}|${p.project_id || ''}|${p.project_name}|${p.cabinet || ''}`);
+        parts.push(`\n\n=== LIVE DMS CONFIGURATION (${projRows.length} projects) ===\nPROJECTS (code|DP|name|cabinet):\n${projLines.join('\n')}`);
+      }
+      
+      if (discRows && discRows.length > 0) {
+        const discLines = discRows.map((d: any) => `${d.code}=${d.name}`);
+        parts.push(`\nDISCIPLINES: ${discLines.join(', ')}`);
+      }
+      
+      if (unitRows && unitRows.length > 0) {
+        const unitLines = unitRows.map((u: any) => `${u.code}=${u.unit_name}`);
+        parts.push(`\nUNITS: ${unitLines.join(', ')}`);
+      }
+      
+      if (statusRows && statusRows.length > 0) {
+        const statusLines = statusRows.map((s: any) => `${s.code}=${s.description}${s.rev_suffix ? ' (rev suffix: ' + s.rev_suffix + ')' : ''}`);
+        parts.push(`\nSTATUS CODES: ${statusLines.join(', ')}`);
+      }
+      
+      if (origRows && origRows.length > 0) {
+        const origLines = origRows.map((o: any) => `${o.code}=${o.description}`);
+        parts.push(`\nORIGINATORS (top ${origRows.length}): ${origLines.join(', ')}`);
+      }
+      
+      dmsConfigSnapshot = parts.join('');
+      console.log('DMS config snapshot built: ' + dmsConfigSnapshot.length + ' chars');
+    } catch (err) {
+      console.error('Failed to load DMS config snapshot:', err);
+    }
     const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop();
     if (lastUserMessage && detectInjectionAttempt(lastUserMessage.content)) {
       console.log("🛡️ SECURITY: Blocking injection attempt and returning protective response");
@@ -10096,7 +10406,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // Select system prompt based on detected agent
     let systemPrompt = BOB_SYSTEM_PROMPT + userContextPrompt;
     if (detectedAgent === 'document_agent') {
-      systemPrompt = DOCUMENT_AGENT_PROMPT + userContextPrompt;
+      systemPrompt = DOCUMENT_AGENT_PROMPT + dmsConfigSnapshot + userContextPrompt;
     } else if (detectedAgent === 'pssr_ora_agent') {
       systemPrompt = PSSR_ORA_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'hannah') {
@@ -11300,8 +11610,19 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             finalTextContent += `| ${p.pssr_id} | ${p.title} | ${p.status} | ${p.progress ?? 0}% |\n`;
           });
         }
+      } else if (searchToolResult && searchToolResult.found && searchToolResult.total_found > 0) {
+        // Guaranteed response from search results — never return empty when we have data
+        finalTextContent = `I found **${searchToolResult.total_found}** documents matching your search. Here are the results from my Assai query.`;
+        console.log('Guaranteed response builder: synthesized response from searchToolResult (' + searchToolResult.total_found + ' docs)');
+      } else if (lastToolResult && !lastToolResult.error) {
+        // Build a generic response from whatever tool data we have
+        const toolDataStr = JSON.stringify(lastToolResult).substring(0, 500);
+        finalTextContent = `I completed the operation using the **${lastToolName}** tool. Here's what I found:\n\n${toolDataStr.length > 400 ? 'The result contains detailed data. Let me know what specific aspect you\'d like me to focus on.' : toolDataStr}`;
+        console.log('Guaranteed response builder: synthesized from lastToolResult (' + lastToolName + ')');
       } else {
-        finalTextContent = "I retrieved some data but couldn't determine the right format to display it. Could you rephrase your question with more specific details? For example, specify the document type, vendor name, or PO number you're looking for.";
+        finalTextContent = "I wasn't able to complete this request within the processing window. Here's what I tried:\n\n" +
+          (allToolCallNames.length > 0 ? allToolCallNames.map((t: string) => `• ${t}`).join('\n') : '• No tools were called') +
+          "\n\nCould you rephrase your question with more specific details? For example, specify the document type, project DP number, or vendor name.";
       }
     }
     
