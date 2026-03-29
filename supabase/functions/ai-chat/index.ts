@@ -9429,6 +9429,80 @@ serve(async (req) => {
     } catch (err) {
       console.error('Failed to load document type codes:', err);
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 1: Load live DMS configuration for system prompt injection
+    // ═══════════════════════════════════════════════════════════════════════
+    let dmsConfigSnapshot = '';
+    try {
+      // Load projects (compact: code, DP number, name, cabinet)
+      const { data: projRows } = await supabase
+        .from('dms_projects')
+        .select('code, project_id, project_name, cabinet')
+        .eq('is_active', true)
+        .order('code');
+      
+      // Load disciplines
+      const { data: discRows } = await supabase
+        .from('dms_disciplines')
+        .select('code, name')
+        .eq('is_active', true)
+        .order('code');
+      
+      // Load units
+      const { data: unitRows } = await supabase
+        .from('dms_units')
+        .select('code, unit_name')
+        .eq('is_active', true)
+        .order('code');
+      
+      // Load status codes
+      const { data: statusRows } = await supabase
+        .from('dms_status_codes')
+        .select('code, description, rev_suffix')
+        .eq('is_active', true)
+        .order('display_order');
+      
+      // Load originators (top 50 by display_order)
+      const { data: origRows } = await supabase
+        .from('dms_originators')
+        .select('code, description')
+        .eq('is_active', true)
+        .order('display_order')
+        .limit(50);
+
+      const parts: string[] = [];
+      
+      if (projRows && projRows.length > 0) {
+        const projLines = projRows.map((p: any) => `${p.code}|${p.project_id || ''}|${p.project_name}|${p.cabinet || ''}`);
+        parts.push(`\n\n=== LIVE DMS CONFIGURATION (${projRows.length} projects) ===\nPROJECTS (code|DP|name|cabinet):\n${projLines.join('\n')}`);
+      }
+      
+      if (discRows && discRows.length > 0) {
+        const discLines = discRows.map((d: any) => `${d.code}=${d.name}`);
+        parts.push(`\nDISCIPLINES: ${discLines.join(', ')}`);
+      }
+      
+      if (unitRows && unitRows.length > 0) {
+        const unitLines = unitRows.map((u: any) => `${u.code}=${u.unit_name}`);
+        parts.push(`\nUNITS: ${unitLines.join(', ')}`);
+      }
+      
+      if (statusRows && statusRows.length > 0) {
+        const statusLines = statusRows.map((s: any) => `${s.code}=${s.description}${s.rev_suffix ? ' (rev suffix: ' + s.rev_suffix + ')' : ''}`);
+        parts.push(`\nSTATUS CODES: ${statusLines.join(', ')}`);
+      }
+      
+      if (origRows && origRows.length > 0) {
+        const origLines = origRows.map((o: any) => `${o.code}=${o.description}`);
+        parts.push(`\nORIGINATORS (top ${origRows.length}): ${origLines.join(', ')}`);
+      }
+      
+      dmsConfigSnapshot = parts.join('');
+      console.log('DMS config snapshot built: ' + dmsConfigSnapshot.length + ' chars');
+    } catch (err) {
+      console.error('Failed to load DMS config snapshot:', err);
+    }
     const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop();
     if (lastUserMessage && detectInjectionAttempt(lastUserMessage.content)) {
       console.log("🛡️ SECURITY: Blocking injection attempt and returning protective response");
