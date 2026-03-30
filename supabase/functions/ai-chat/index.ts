@@ -10847,6 +10847,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       save_user_context: 'Saving your preferences...',
       learn_acronym: 'Learning new acronym...',
       get_all_projects: 'Fetching project list...',
+      discover_project_vendors: 'Scanning Assai for vendor packages...',
+      parse_sdr_document: 'Parsing Supplier Document Register...',
+      check_sdr_completeness: 'Checking vendor document completeness...',
+      parse_mdr_document: 'Parsing Master Document Register...',
+      check_mdr_completeness: 'Checking MDR completeness...',
     };
     // Real-time streaming controller — set inside ReadableStream start()
     let streamController: ReadableStreamDefaultController<Uint8Array> | null = null;
@@ -11016,6 +11021,106 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           try { controller.enqueue(encoder.encode(': heartbeat\n\n')); } catch (_) { clearInterval(heartbeat); }
         }, 15000);
         try {
+    // ═══════════════════════════════════════════════════════════════════════
+    // PRE-LOOP VENDOR DISCOVERY INTERCEPT
+    // Detects vendor discovery intent and executes discover_project_vendors
+    // BEFORE the LLM loop, injecting the result as context so the LLM
+    // formats the response instead of choosing a wrong tool.
+    // ═══════════════════════════════════════════════════════════════════════
+    const lastUserText = lastUserMessage?.content?.toLowerCase() || '';
+    const isVendorDiscoveryIntent = /\b(discover\s*vendor|vendor\s*discover|scan\s*vendor|what\s*vendors|who\s*(?:are\s*)?(?:the\s*)?suppliers?|who\s*(?:are\s*)?(?:the\s*)?vendors?|list\s*(?:the\s*)?vendors?|list\s*(?:the\s*)?suppliers?|vendor\s*packages?|suppliers?\s*(?:for|on)\s|vendors?\s*(?:for|on)\s)/i.test(lastUserText);
+    
+    if (isVendorDiscoveryIntent && detectedAgent === 'document_agent') {
+      console.log('VENDOR DISCOVERY INTERCEPT: Detected vendor discovery intent, executing discover_project_vendors directly');
+      emitStatus('Scanning Assai for vendor packages...');
+      
+      // Extract project code from user message
+      const projectMatch = lastUserText.match(/(?:dp[- ]?(\d+))|(?:project\s+(\d{4}))|(?:for\s+(\d{4}))|(?:on\s+(\d{4}))/i);
+      const rawProjectCode = projectMatch ? (projectMatch[1] || projectMatch[2] || projectMatch[3] || projectMatch[4]) : null;
+      
+      if (rawProjectCode) {
+        // Resolve DP number to Assai project code
+        let resolvedProjectCode = rawProjectCode;
+        let resolvedProjectId: string | null = null;
+        
+        const dpMatch = rawProjectCode.match(/^(\d+)$/);
+        if (dpMatch) {
+          // Check if this is a DP number or direct project code
+          const { data: dmsProj } = await supabaseClient
+            .from('dms_projects')
+            .select('code, project_id')
+            .or(`code.ilike.%${rawProjectCode}%`)
+            .eq('is_active', true)
+            .limit(1)
+            .maybeSingle();
+          if (dmsProj) {
+            resolvedProjectCode = dmsProj.code;
+            resolvedProjectId = dmsProj.project_id;
+          }
+          
+          if (!resolvedProjectId) {
+            const { data: proj } = await supabaseClient
+              .from('projects')
+              .select('id')
+              .or(`project_code.ilike.%${rawProjectCode}%`)
+              .limit(1)
+              .maybeSingle();
+            resolvedProjectId = proj?.id || null;
+          }
+        }
+        
+        // Call discover-vendors edge function directly
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        
+        try {
+          const discoverRes = await fetch(`${supabaseUrl}/functions/v1/discover-vendors`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${serviceKey}`,
+            },
+            body: JSON.stringify({
+              project_code: resolvedProjectCode,
+              project_id: resolvedProjectId,
+              tenant_id: tenantId,
+            }),
+          });
+          
+          const discoverData = await discoverRes.json();
+          
+          if (discoverRes.ok && discoverData.success) {
+            console.log(`VENDOR DISCOVERY INTERCEPT: Found ${discoverData.total_vendor_packages} vendor packages`);
+            
+            // Inject the result into conversation as a pre-executed tool result
+            conversationMessages.push({
+              role: 'assistant',
+              content: [
+                { type: 'text', text: 'I\'ll scan the Assai SUP_DOC module to discover all vendors and their packages for this project.' },
+                { type: 'tool_use', id: 'vendor_discovery_intercept', name: 'discover_project_vendors', input: { project_code: resolvedProjectCode } }
+              ]
+            });
+            conversationMessages.push({
+              role: 'user',
+              content: [
+                { type: 'tool_result', tool_use_id: 'vendor_discovery_intercept', content: JSON.stringify(discoverData) }
+              ]
+            });
+            
+            allToolCallNames.push('discover_project_vendors');
+            lastToolName = 'discover_project_vendors';
+            lastToolResult = discoverData;
+            
+            // Add to TOOL_STATUS_LABELS
+            emitStatus('Compiling vendor summary...');
+          } else {
+            console.error('VENDOR DISCOVERY INTERCEPT: discover-vendors failed:', discoverData.error);
+          }
+        } catch (discoverErr) {
+          console.error('VENDOR DISCOVERY INTERCEPT: fetch error:', discoverErr);
+        }
+      }
+    }
     while (iteration < MAX_ITERATIONS) {
       iteration++;
       // Time guard: break if approaching edge function timeout
