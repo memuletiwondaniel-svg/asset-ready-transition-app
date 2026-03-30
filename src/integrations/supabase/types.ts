@@ -1622,6 +1622,94 @@ export type Database = {
         }
         Relationships: []
       }
+      dms_vendor_packages: {
+        Row: {
+          created_at: string | null
+          discovered_from_doc: string | null
+          discovery_method: string | null
+          discovery_source: string | null
+          document_type_codes: string[] | null
+          first_discovered_at: string | null
+          id: string
+          last_scanned_at: string | null
+          latest_status: string | null
+          package_scope: string | null
+          package_tag: string | null
+          po_number: string | null
+          project_code: string | null
+          project_id: string | null
+          tenant_id: string | null
+          total_documents_found: number | null
+          updated_at: string | null
+          vendor_code: string
+          vendor_name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          discovered_from_doc?: string | null
+          discovery_method?: string | null
+          discovery_source?: string | null
+          document_type_codes?: string[] | null
+          first_discovered_at?: string | null
+          id?: string
+          last_scanned_at?: string | null
+          latest_status?: string | null
+          package_scope?: string | null
+          package_tag?: string | null
+          po_number?: string | null
+          project_code?: string | null
+          project_id?: string | null
+          tenant_id?: string | null
+          total_documents_found?: number | null
+          updated_at?: string | null
+          vendor_code: string
+          vendor_name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          discovered_from_doc?: string | null
+          discovery_method?: string | null
+          discovery_source?: string | null
+          document_type_codes?: string[] | null
+          first_discovered_at?: string | null
+          id?: string
+          last_scanned_at?: string | null
+          latest_status?: string | null
+          package_scope?: string | null
+          package_tag?: string | null
+          po_number?: string | null
+          project_code?: string | null
+          project_id?: string | null
+          tenant_id?: string | null
+          total_documents_found?: number | null
+          updated_at?: string | null
+          vendor_code?: string
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dms_vendor_packages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dms_vendor_packages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dms_vendor_packages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_ingest_queue: {
         Row: {
           created_at: string | null

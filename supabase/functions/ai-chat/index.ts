@@ -3672,6 +3672,23 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
         required: ["project_code"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "discover_project_vendors",
+      description: "Discover vendors, PO numbers, and package scopes for a project by scanning Assai's SUP_DOC module. Auto-identifies vendor originators, groups documents by PO/sequence segment, and infers package scope from document titles. Use when user asks 'what vendors are on DP300', 'discover vendors', 'scan for vendor packages', 'who are the suppliers'.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_code: {
+            type: "string",
+            description: "DP number (e.g. 'DP300') or Assai project code (e.g. '6529')"
+          }
+        },
+        required: ["project_code"]
+      }
+    }
   }
 ];
 
@@ -3704,7 +3721,7 @@ const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; m
     model: 'claude-sonnet-4-5'
   },
   document_agent: {
-    tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink', 'get_document_cross_discipline_comparison', 'get_document_search_by_number', 'get_document_bulk_status', 'get_document_trend_analysis', 'create_task_from_document_gap', 'get_document_quality_score', 'get_document_ora_linkage', 'read_assai_document', 'search_assai_documents', 'resolve_document_type', 'learn_acronym', 'resolve_project_code', 'parse_mdr_document', 'check_mdr_completeness', 'parse_sdr_document', 'check_sdr_completeness'],
+    tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink', 'get_document_cross_discipline_comparison', 'get_document_search_by_number', 'get_document_bulk_status', 'get_document_trend_analysis', 'create_task_from_document_gap', 'get_document_quality_score', 'get_document_ora_linkage', 'read_assai_document', 'search_assai_documents', 'resolve_document_type', 'learn_acronym', 'resolve_project_code', 'parse_mdr_document', 'check_mdr_completeness', 'parse_sdr_document', 'check_sdr_completeness', 'discover_project_vendors'],
     domains: ['dms', 'document', 'readiness', 'numbering', 'afc', 'ifr', 'rlmu', 'trend', 'velocity', 'comparison', 'quality', 'maturity', 'handover', 'mdr', 'completeness', 'sdr', 'vendor', 'supplier'],
     model: 'claude-sonnet-4-5'
   },
@@ -7952,6 +7969,75 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         return checkData;
       } catch (err) {
         console.error('check_sdr_completeness error:', err);
+        return { error: String(err) };
+      }
+    }
+
+    case "discover_project_vendors": {
+      try {
+        const { project_code } = args;
+        if (!project_code) {
+          return { error: 'project_code is required (e.g. DP300 or 6529).' };
+        }
+
+        // Resolve project code to Assai code and project_id
+        let resolvedProjectCode = project_code;
+        let resolvedProjectId: string | null = null;
+
+        const dpMatch = project_code.match(/DP[- ]?(\d+)/i);
+        if (dpMatch) {
+          const dpNum = dpMatch[1];
+          const { data: dmsProj } = await supabaseClient
+            .from('dms_projects')
+            .select('code, project_id')
+            .ilike('code', `%${dpNum}%`)
+            .eq('is_active', true)
+            .limit(1)
+            .maybeSingle();
+          if (dmsProj) {
+            resolvedProjectCode = dmsProj.code;
+          }
+          const { data: proj } = await supabaseClient
+            .from('projects')
+            .select('id')
+            .ilike('project_code', `%${dpNum}%`)
+            .limit(1)
+            .maybeSingle();
+          resolvedProjectId = proj?.id || null;
+        }
+
+        if (!resolvedProjectId) {
+          const { data: proj } = await supabaseClient
+            .from('projects')
+            .select('id')
+            .or(`id.eq.${project_code},project_code.ilike.%${project_code}%`)
+            .limit(1)
+            .maybeSingle();
+          resolvedProjectId = proj?.id || null;
+        }
+
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const discoverRes = await fetch(`${supabaseUrl}/functions/v1/discover-vendors`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({
+            project_code: resolvedProjectCode,
+            project_id: resolvedProjectId,
+            tenant_id: tenantId,
+          }),
+        });
+
+        const discoverData = await discoverRes.json();
+        if (!discoverRes.ok) {
+          return { error: discoverData.error || 'Failed to discover vendors', status: discoverRes.status };
+        }
+        return discoverData;
+      } catch (err) {
+        console.error('discover_project_vendors error:', err);
         return { error: String(err) };
       }
     }
