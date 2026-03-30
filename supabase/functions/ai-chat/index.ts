@@ -11039,8 +11039,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       console.log('VENDOR DISCOVERY INTERCEPT: Detected vendor discovery intent, executing discover_project_vendors directly');
       emitStatus('Scanning Assai for vendor packages...');
       
-      // Extract project code from user message
-      const projectMatch = lastUserText.match(/(?:dp[- ]?(\d+))|(?:project\s+(\d{4}))|(?:for\s+(\d{4}))|(?:on\s+(\d{4}))/i);
+      // Extract project code from user message — handle DP numbers, project codes, and bare numbers
+      const projectMatch = lastUserText.match(/(?:dp[- ]?(\d+))|(?:project\s+(\w+))|(?:for\s+(\d{4,}))|(?:on\s+(\d{4,}))/i);
       const rawProjectCode = projectMatch ? (projectMatch[1] || projectMatch[2] || projectMatch[3] || projectMatch[4]) : null;
       
       if (rawProjectCode) {
