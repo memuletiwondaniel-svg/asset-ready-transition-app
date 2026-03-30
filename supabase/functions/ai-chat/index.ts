@@ -11750,6 +11750,9 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
     if (iteration >= MAX_ITERATIONS) {
       console.warn(`Agent loop hit MAX_ITERATIONS (${MAX_ITERATIONS}). Returning accumulated text.`);
+      if (!finalTextContent) {
+        finalTextContent = `⏱️ This request took longer than expected and couldn't be completed in time. Please try again — if the issue persists, the external system (Assai) may be temporarily slow or unavailable.`;
+      }
     }
 
     // Helper: build user-friendly search summary from tool result filters
