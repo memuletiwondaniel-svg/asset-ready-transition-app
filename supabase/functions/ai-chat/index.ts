@@ -10847,6 +10847,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       save_user_context: 'Saving your preferences...',
       learn_acronym: 'Learning new acronym...',
       get_all_projects: 'Fetching project list...',
+      discover_project_vendors: 'Scanning Assai for vendor packages...',
+      parse_sdr_document: 'Parsing Supplier Document Register...',
+      check_sdr_completeness: 'Checking vendor document completeness...',
+      parse_mdr_document: 'Parsing Master Document Register...',
+      check_mdr_completeness: 'Checking MDR completeness...',
     };
     // Real-time streaming controller — set inside ReadableStream start()
     let streamController: ReadableStreamDefaultController<Uint8Array> | null = null;
