@@ -3672,6 +3672,23 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
         required: ["project_code"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "discover_project_vendors",
+      description: "Discover vendors, PO numbers, and package scopes for a project by scanning Assai's SUP_DOC module. Auto-identifies vendor originators, groups documents by PO/sequence segment, and infers package scope from document titles. Use when user asks 'what vendors are on DP300', 'discover vendors', 'scan for vendor packages', 'who are the suppliers'.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_code: {
+            type: "string",
+            description: "DP number (e.g. 'DP300') or Assai project code (e.g. '6529')"
+          }
+        },
+        required: ["project_code"]
+      }
+    }
   }
 ];
 
