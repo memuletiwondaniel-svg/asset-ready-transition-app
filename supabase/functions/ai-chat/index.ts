@@ -3704,8 +3704,8 @@ const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; m
     model: 'claude-sonnet-4-5'
   },
   document_agent: {
-    tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink', 'get_document_cross_discipline_comparison', 'get_document_search_by_number', 'get_document_bulk_status', 'get_document_trend_analysis', 'create_task_from_document_gap', 'get_document_quality_score', 'get_document_ora_linkage', 'read_assai_document', 'search_assai_documents', 'resolve_document_type', 'learn_acronym', 'resolve_project_code', 'parse_mdr_document', 'check_mdr_completeness'],
-    domains: ['dms', 'document', 'readiness', 'numbering', 'afc', 'ifr', 'rlmu', 'trend', 'velocity', 'comparison', 'quality', 'maturity', 'handover', 'mdr', 'completeness'],
+    tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink', 'get_document_cross_discipline_comparison', 'get_document_search_by_number', 'get_document_bulk_status', 'get_document_trend_analysis', 'create_task_from_document_gap', 'get_document_quality_score', 'get_document_ora_linkage', 'read_assai_document', 'search_assai_documents', 'resolve_document_type', 'learn_acronym', 'resolve_project_code', 'parse_mdr_document', 'check_mdr_completeness', 'parse_sdr_document', 'check_sdr_completeness'],
+    domains: ['dms', 'document', 'readiness', 'numbering', 'afc', 'ifr', 'rlmu', 'trend', 'velocity', 'comparison', 'quality', 'maturity', 'handover', 'mdr', 'completeness', 'sdr', 'vendor', 'supplier'],
     model: 'claude-sonnet-4-5'
   },
   pssr_ora_agent: {
