@@ -3626,6 +3626,52 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
         required: ["project_code"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "parse_sdr_document",
+      description: "Parse and ingest a Supplier Document Register (A01) from Assai into the completeness tracking system. Downloads the SDR document from the SUP_DOC module, extracts expected vendor deliverables, and stores them in the sdr_register table. Use when user asks to 'parse the SDR', 'ingest SDR', 'load vendor documents for PO 01463'.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_number: {
+            type: "string",
+            description: "Full Assai document number of the A01 SDR document in SUP_DOC module"
+          },
+          project_id: {
+            type: "string",
+            description: "UUID of the project this SDR belongs to"
+          }
+        },
+        required: ["document_number", "project_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "check_sdr_completeness",
+      description: "Check vendor document completeness against a Supplier Document Register (SDR). Compares expected vendor deliverables from parsed SDR against live Assai SUP_DOC data. Returns gap analysis with missing vendor documents, overdue submissions, and per-vendor/PO status breakdown. Use for 'vendor document status', 'SDR completeness', 'supplier documents missing', 'overdue vendor submissions'.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_code: {
+            type: "string",
+            description: "DP number (e.g. 'DP300') or Assai project code (e.g. '6529'). Will be resolved to project_id internally."
+          },
+          vendor_code: {
+            type: "string",
+            description: "Optional vendor/supplier code to filter completeness for a specific vendor"
+          },
+          po_number: {
+            type: "string",
+            description: "Optional PO number to filter completeness for a specific purchase order"
+          }
+        },
+        required: ["project_code"]
+      }
+    }
   }
 ];
 
