@@ -11035,7 +11035,12 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     const lastUserText = lastUserMessage?.content?.toLowerCase() || '';
     const isVendorDiscoveryIntent = /\b(discover\s*vendor|vendor\s*discover|scan\s*vendor|what\s*vendors|who\s*(?:are\s*)?(?:the\s*)?suppliers?|who\s*(?:are\s*)?(?:the\s*)?vendors?|list\s*(?:the\s*)?vendors?|list\s*(?:the\s*)?suppliers?|vendor\s*packages?|suppliers?\s*(?:for|on)\s|vendors?\s*(?:for|on)\s)/i.test(lastUserText);
     
-    if (isVendorDiscoveryIntent && detectedAgent === 'document_agent') {
+    if (isVendorDiscoveryIntent) {
+      // Force agent to document_agent if not already
+      if (detectedAgent !== 'document_agent') {
+        console.log(`VENDOR DISCOVERY INTERCEPT: Overriding detected agent from '${detectedAgent}' to 'document_agent'`);
+        systemPrompt = DOCUMENT_AGENT_PROMPT + dmsConfigSnapshot + userContextPrompt;
+      }
       console.log('VENDOR DISCOVERY INTERCEPT: Detected vendor discovery intent, executing discover_project_vendors directly');
       emitStatus('Scanning Assai for vendor packages...');
       
