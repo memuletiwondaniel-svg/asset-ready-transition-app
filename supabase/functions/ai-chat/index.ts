@@ -3833,7 +3833,12 @@ function detectAgentDomain(message: string): string {
   }
   
   // Selma (Document Intelligence Assistant) triggers
-  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|doc.*p2a|read.*document|summarise.*\d{4}|summarize.*\d{4}|open comments|review.*crs|extract.*from.*doc|what does.*say|sdr\b|vendor doc|supplier doc|vendor completeness|supplier completeness|vendor submission|supplier submission|discover.*vendor|vendor.*discover|scan.*vendor|what vendors|who.*supplier|vendor.*project|supplier.*project|vendor packages|vendor.*po\b|po.*vendor)\b/i.test(lower)) {
+  // Part 1: Simple word-boundary keywords
+  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|sdr|mdr)\b/i.test(lower)) {
+    return 'document_agent';
+  }
+  // Part 2: Multi-word / wildcard patterns (no \b wrapping — these use .* which crosses word boundaries)
+  if (/(?:document\s*(?:status|gap|type|trend|velocity|search|number|quality|comparison)|documentation\s*(?:gap|maturity)|discipline\s*code|cross.?discipline|bulk\s*status|dms\s*health|doc.*p2a|read.*document|summarise.*\d{4}|summarize.*\d{4}|open\s*comments|review.*crs|extract.*from.*doc|what\s*does.*say|vendor\s*doc|supplier\s*doc|vendor\s*completeness|supplier\s*completeness|vendor\s*submission|supplier\s*submission|discover.*vendor|vendor.*discover|scan.*vendor|what\s*vendors|who.*supplier|who.*vendor|list.*vendor|list.*supplier|vendor.*project|supplier.*project|vendor\s*packages?|vendors?\s*(?:for|on)\b|suppliers?\s*(?:for|on)\b|vendor.*po\b|po.*vendor|main\s*vendors?|main\s*suppliers?)/i.test(lower)) {
     return 'document_agent';
   }
   
