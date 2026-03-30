@@ -3816,7 +3816,7 @@ function detectAgentDomain(message: string): string {
   }
   
   // Selma (Document Intelligence Assistant) triggers
-  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|doc.*p2a|read.*document|summarise.*\d{4}|summarize.*\d{4}|open comments|review.*crs|extract.*from.*doc|what does.*say)\b/i.test(lower)) {
+  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|doc.*p2a|read.*document|summarise.*\d{4}|summarize.*\d{4}|open comments|review.*crs|extract.*from.*doc|what does.*say|sdr\b|vendor doc|supplier doc|vendor completeness|supplier completeness|vendor submission|supplier submission)\b/i.test(lower)) {
     return 'document_agent';
   }
   
