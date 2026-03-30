@@ -9801,6 +9801,167 @@ export type Database = {
           },
         ]
       }
+      sdr_completeness_snapshots: {
+        Row: {
+          created_at: string | null
+          gap_summary: Json | null
+          id: string
+          overdue_count: number | null
+          po_number: string | null
+          project_id: string
+          snapshot_date: string
+          tenant_id: string | null
+          total_at_required_status: number | null
+          total_expected: number | null
+          total_found: number | null
+          vendor_code: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          gap_summary?: Json | null
+          id?: string
+          overdue_count?: number | null
+          po_number?: string | null
+          project_id: string
+          snapshot_date?: string
+          tenant_id?: string | null
+          total_at_required_status?: number | null
+          total_expected?: number | null
+          total_found?: number | null
+          vendor_code?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          gap_summary?: Json | null
+          id?: string
+          overdue_count?: number | null
+          po_number?: string | null
+          project_id?: string
+          snapshot_date?: string
+          tenant_id?: string | null
+          total_at_required_status?: number | null
+          total_expected?: number | null
+          total_found?: number | null
+          vendor_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sdr_completeness_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sdr_completeness_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sdr_completeness_snapshots_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sdr_register: {
+        Row: {
+          created_at: string | null
+          current_revision: string | null
+          current_status: string | null
+          discipline_code: string | null
+          document_number: string
+          document_type_code: string | null
+          id: string
+          is_found_in_dms: boolean | null
+          last_checked_at: string | null
+          originator_code: string | null
+          planned_submission_date: string | null
+          po_number: string | null
+          project_id: string
+          sdr_source_doc: string | null
+          sdrl_code: string | null
+          supplier_document_number: string | null
+          tenant_id: string | null
+          title: string | null
+          unit_code: string | null
+          updated_at: string | null
+          vendor_code: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_revision?: string | null
+          current_status?: string | null
+          discipline_code?: string | null
+          document_number: string
+          document_type_code?: string | null
+          id?: string
+          is_found_in_dms?: boolean | null
+          last_checked_at?: string | null
+          originator_code?: string | null
+          planned_submission_date?: string | null
+          po_number?: string | null
+          project_id: string
+          sdr_source_doc?: string | null
+          sdrl_code?: string | null
+          supplier_document_number?: string | null
+          tenant_id?: string | null
+          title?: string | null
+          unit_code?: string | null
+          updated_at?: string | null
+          vendor_code?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_revision?: string | null
+          current_status?: string | null
+          discipline_code?: string | null
+          document_number?: string
+          document_type_code?: string | null
+          id?: string
+          is_found_in_dms?: boolean | null
+          last_checked_at?: string | null
+          originator_code?: string | null
+          planned_submission_date?: string | null
+          po_number?: string | null
+          project_id?: string
+          sdr_source_doc?: string | null
+          sdrl_code?: string | null
+          supplier_document_number?: string | null
+          tenant_id?: string | null
+          title?: string | null
+          unit_code?: string | null
+          updated_at?: string | null
+          vendor_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sdr_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sdr_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sdr_register_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       selma_config_snapshot: {
         Row: {
           config_data: Json
