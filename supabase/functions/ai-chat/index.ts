@@ -3576,6 +3576,56 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
       description: "Generate a formal HAZOP report from findings. Structured with Node, Deviation, Cause, Consequence, Safeguards, Recommendations, Risk Ranking. Use for 'HAZOP report', 'generate HAZOP', 'format HAZOP findings'.",
       parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, system_name: { type: "string", description: "System name" }, findings: { type: "array", items: { type: "object" }, description: "Array of HAZOP findings" } }, required: ["project_id", "system_name"] }
     }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MDR COMPLETENESS ENGINE TOOLS
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "parse_mdr_document",
+      description: "Parse and ingest a Master Document Register (6611) from Assai into the completeness tracking system. Downloads the MDR document, extracts all expected document rows, and stores them in the mdr_register table. Use when user asks to 'parse the MDR', 'ingest MDR', 'load the MDR for DP300'.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_number: {
+            type: "string",
+            description: "Full Assai document number of the 6611 MDR document, e.g. '6529-WGEL-C033-ISGP-G00000-JA-6611-20501-001'"
+          },
+          project_id: {
+            type: "string",
+            description: "UUID of the project this MDR belongs to"
+          }
+        },
+        required: ["document_number", "project_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "check_mdr_completeness",
+      description: "Check document completeness for a project against its Master Document Register (MDR). Compares expected documents from the parsed MDR against live Assai data, returning gap analysis with missing documents, maturity shortfalls, and Tier 1/2 handover impact. Use for 'document completeness for DP300', 'MDR gap analysis', 'what documents are missing', 'completeness check'.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_code: {
+            type: "string",
+            description: "DP number (e.g. 'DP300') or Assai project code (e.g. '6529'). Will be resolved to project_id internally."
+          },
+          discipline_filter: {
+            type: "string",
+            description: "Optional discipline code filter e.g. 'JA', 'EL', 'IN' to check completeness for a specific discipline only"
+          },
+          tier_filter: {
+            type: "string",
+            enum: ["tier1", "tier2", "all"],
+            description: "Filter by tier criticality. Default 'all'"
+          }
+        },
+        required: ["project_code"]
+      }
+    }
   }
 ];
 
