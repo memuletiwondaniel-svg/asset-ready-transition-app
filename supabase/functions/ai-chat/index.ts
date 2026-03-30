@@ -10827,9 +10827,9 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // Supports chained tool calls (e.g. resolve_document_type → search_assai_documents)
     // Max iterations: 15 (extended for 250k+ document searches)
     // ═══════════════════════════════════════════════════════════════════════
-    const MAX_ITERATIONS = 15;
+    const MAX_ITERATIONS = 25;
     const LOOP_START_TIME = Date.now();
-    const MAX_LOOP_MS = 140000; // 140-second time guard (Pro plan: 150s hard limit)
+    const MAX_LOOP_MS = 148000; // 148-second time guard (Pro plan: 150s hard limit, leaving 2s buffer)
 
     // Tool-to-label mapping for dynamic status updates
     const TOOL_STATUS_LABELS: Record<string, string> = {
