@@ -11033,7 +11033,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // formats the response instead of choosing a wrong tool.
     // ═══════════════════════════════════════════════════════════════════════
     const lastUserText = lastUserMessage?.content?.toLowerCase() || '';
-    const isVendorDiscoveryIntent = /\b(discover\s*vendor|vendor\s*discover|scan\s*vendor|what\s*vendors|who\s*(?:are\s*)?(?:the\s*)?suppliers?|who\s*(?:are\s*)?(?:the\s*)?vendors?|list\s*(?:the\s*)?vendors?|list\s*(?:the\s*)?suppliers?|vendor\s*packages?|suppliers?\s*(?:for|on)\s|vendors?\s*(?:for|on)\s)/i.test(lastUserText);
+    // Broad vendor/supplier intent detection — ANY mention of vendor/supplier in a project context
+    const hasVendorWord = /\b(vendors?|suppliers?|contractors?|subcontractors?)\b/i.test(lastUserText);
+    const hasProjectContext = /\b(project|contract|bbk|dp\s*\d|po\s|purchase|package|scope\s*of\s*supply|\d{4,})\b/i.test(lastUserText);
+    const hasDiscoveryVerb = /\b(who|what|which|list|find|show|discover|scan|identify|tell)\b/i.test(lastUserText);
+    const isVendorDiscoveryIntent = hasVendorWord && (hasProjectContext || hasDiscoveryVerb);
     
     if (isVendorDiscoveryIntent) {
       // Force agent to document_agent if not already
@@ -11044,9 +11048,9 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       console.log('VENDOR DISCOVERY INTERCEPT: Detected vendor discovery intent, executing discover_project_vendors directly');
       emitStatus('Scanning Assai for vendor packages...');
       
-      // Extract project code from user message — handle DP numbers, project codes, and bare numbers
-      const projectMatch = lastUserText.match(/(?:dp[- ]?(\d+))|(?:project\s+(\w+))|(?:for\s+(\d{4,}))|(?:on\s+(\d{4,}))/i);
-      const rawProjectCode = projectMatch ? (projectMatch[1] || projectMatch[2] || projectMatch[3] || projectMatch[4]) : null;
+      // Extract project code from user message — handle DP numbers, project codes, contract names, and bare numbers
+      const projectMatch = lastUserText.match(/(?:dp[- ]?(\d+))|(?:project\s+(\w+))|(?:(?:for|in|on)\s+(?:the\s+)?(\w{2,10})\s+(?:contract|project))|(?:\b(bbk|igp|igs)\b)|(?:(?:for|on|in)\s+(\d{4,}))/i);
+      const rawProjectCode = projectMatch ? (projectMatch[1] || projectMatch[2] || projectMatch[3] || projectMatch[4] || projectMatch[5]) : null;
       
       if (rawProjectCode) {
         // Resolve DP number to Assai project code
