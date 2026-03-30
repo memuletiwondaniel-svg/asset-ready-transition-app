@@ -10827,9 +10827,9 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // Supports chained tool calls (e.g. resolve_document_type → search_assai_documents)
     // Max iterations: 15 (extended for 250k+ document searches)
     // ═══════════════════════════════════════════════════════════════════════
-    const MAX_ITERATIONS = 15;
+    const MAX_ITERATIONS = 25;
     const LOOP_START_TIME = Date.now();
-    const MAX_LOOP_MS = 140000; // 140-second time guard (Pro plan: 150s hard limit)
+    const MAX_LOOP_MS = 148000; // 148-second time guard (Pro plan: 150s hard limit, leaving 2s buffer)
 
     // Tool-to-label mapping for dynamic status updates
     const TOOL_STATUS_LABELS: Record<string, string> = {
@@ -11126,10 +11126,21 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       // Time guard: break if approaching edge function timeout
       const elapsed = Date.now() - LOOP_START_TIME;
       if (elapsed > MAX_LOOP_MS) {
-        console.log(`Time guard: ${elapsed}ms elapsed, breaking loop with accumulated results`);
-        // Build partial response from whatever we have
-        if (searchToolResult && searchToolResult.found && searchToolResult.total_found > 0) {
-          finalTextContent = `I found ${searchToolResult.total_found} documents but ran out of processing time. Here are the results from my search.`;
+        console.log(`Time guard: ${elapsed}ms elapsed, using accumulated results`);
+        // Build a proper structured response from whatever tool results we have
+        if (lastToolResult && lastToolName) {
+          // If we have vendor discovery data, format it properly
+          if (lastToolName === 'discover_project_vendors' && lastToolResult.success) {
+            const vd = lastToolResult;
+            const vendorLines = (vd.packages || []).map((p: any) => `| ${p.vendor_code} | ${p.vendor_name || 'Unknown'} | ${p.po_number || '-'} | ${p.package_scope || '-'} | ${p.total_documents} |`).join('\n');
+            finalTextContent = `## Vendor Discovery Results\n\nFound **${vd.total_vendor_packages}** vendor packages from **${vd.total_unique_vendors}** vendors across **${vd.total_vendor_documents}** documents.\n\n| Vendor Code | Vendor Name | PO Number | Package Scope | Documents |\n|---|---|---|---|---|\n${vendorLines}`;
+          } else if (searchToolResult && searchToolResult.found && searchToolResult.total_found > 0) {
+            finalTextContent = `I found ${searchToolResult.total_found} documents. Here are the results from my search.`;
+          } else {
+            finalTextContent = `I completed the analysis but needed more time to fully format the response. Here's what I found:\n\n${JSON.stringify(lastToolResult).substring(0, 2000)}`;
+          }
+        } else if (searchToolResult && searchToolResult.found && searchToolResult.total_found > 0) {
+          finalTextContent = `I found ${searchToolResult.total_found} documents. Here are the results from my search.`;
         }
         break;
       }
