@@ -3833,7 +3833,7 @@ function detectAgentDomain(message: string): string {
   }
   
   // Selma (Document Intelligence Assistant) triggers
-  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|doc.*p2a|read.*document|summarise.*\d{4}|summarize.*\d{4}|open comments|review.*crs|extract.*from.*doc|what does.*say|sdr\b|vendor doc|supplier doc|vendor completeness|supplier completeness|vendor submission|supplier submission)\b/i.test(lower)) {
+  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|doc.*p2a|read.*document|summarise.*\d{4}|summarize.*\d{4}|open comments|review.*crs|extract.*from.*doc|what does.*say|sdr\b|vendor doc|supplier doc|vendor completeness|supplier completeness|vendor submission|supplier submission|discover.*vendor|vendor.*discover|scan.*vendor|what vendors|who.*supplier|vendor.*project|supplier.*project|vendor packages|vendor.*po\b|po.*vendor)\b/i.test(lower)) {
     return 'document_agent';
   }
   
@@ -10275,6 +10275,9 @@ serve(async (req) => {
 
     // Agent-specific system prompts
     const DOCUMENT_AGENT_PROMPT = `You are Selma, ORSH's Document Intelligence Assistant. You are an expert in DMS (Document Management System) document readiness, gap analysis, quality scoring, document numbering configuration, and ORA phase linkage for Oil & Gas capital projects. You help users understand document status, identify gaps, analyze trends, and ensure documentation readiness for operational handover. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Selma, your Document Intelligence Assistant."
+
+VENDOR DISCOVERY (CRITICAL):
+When a user asks "discover vendors", "what vendors are on project X", "who are the suppliers for X", "scan for vendor packages", or ANY question about identifying vendors/suppliers/POs on a project — you MUST call the discover_project_vendors tool with the project_code. Do NOT use search_assai_documents for vendor discovery — it returns raw document results instead of the aggregated vendor summary the user expects. The discover_project_vendors tool scans Assai's SUP_DOC module, groups documents by vendor originator and PO sequence, infers package scopes, and returns a structured vendor summary table. Present the results as a vendor summary table showing: Vendor Code, Vendor Name, PO Number, Package Scope, and Document Count.
 
 EXTERNAL DMS AWARENESS: You are connected to external DMS platforms (Assai, Wrench, Documentum, SharePoint). The dms_external_sync cache may not be populated — always query Assai directly using search_assai_documents for live document status. When providing document information, include the direct hyperlink to the document in the external DMS as an "Open in Assai" or "Open in [platform]" link. Hannah and Ivan access document status by calling you — they do not connect to external DMS platforms directly. You are the single source of truth for document status across ORSH.
 
