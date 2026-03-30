@@ -1,68 +1,122 @@
 
 
-# Intelligent Context-Aware Follow-Up Pills
+# MDR Completeness Engine
 
-## Problem
+## What It Does
 
-The follow-up pills are generated using generic templates like `"Read and interpret the most relevant ${subjectLabel} document"` — which produces awkward suggestions like "Read and interpret the most relevant PES document" even when the user may not know what PES means, or when reading isn't the logical next step for that document type.
+Selma will be able to parse a Master Document Register (6611), store the expected documents, compare them against live Assai data, and produce gap analysis reports — answering "What's missing? What's late? What's the impact on handover?"
 
-The root cause: follow-ups are built from `subjectLabel` and simple conditionals without understanding **what kind of document was found** and **what actions make sense for that type**.
+This is the **Check** phase of the PDCA cycle: Plan (MDR) → Do (upload docs) → **Check (Selma identifies gaps)** → Act (team closes gaps).
 
-## Solution
+## Architecture
 
-Create a **document-type-aware follow-up generator** that maps document categories to meaningful, contextual actions a user would actually want to take.
-
-### Step 1: Build a follow-up intelligence map
-
-**File**: `supabase/functions/ai-chat/index.ts`
-
-Create a `FOLLOWUP_TEMPLATES` lookup keyed by document type category that returns contextually relevant suggestions:
-
-```
-Safety docs (HAZOP, SIL, HAC, HEMP) → "Review safety findings", "Check if actions are closed out", "Compare with previous revision"
-Specifications (PES, MDS, EDS) → "Extract key design parameters", "Check approval status", "Compare with vendor datasheet"
-Drawings (P&ID, SLD, GA, PFD, UFD) → "Check revision history", "Show related drawings for this unit", "Verify approval status"
-Test reports (FAT, SAT, PTR) → "Review test results and pass/fail", "Check outstanding punch items", "Show commissioning status"
-Vendor docs (MR, VDR, TBE) → "Show vendor submission status", "Check which are still pending review", "List overdue submissions"
-IOMs / Manuals (J01) → "Extract maintenance schedule", "Show startup/shutdown procedures", "Check for newer revision"
-Transmittals → "Show all documents in this transmittal", "Check acknowledgement status"
+```text
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  MDR Document   │     │  mdr_register     │     │  Assai Live     │
+│  (6611 in Assai)│────▶│  (parsed rows)    │◀───▶│  Documents      │
+│  PDF/Excel      │     │  expected docs    │     │  (actual state)  │
+└─────────────────┘     └──────────────────┘     └─────────────────┘
+                              │
+                              ▼
+                        ┌──────────────────┐
+                        │ mdr_completeness │
+                        │ _snapshots       │
+                        │ (gap analysis)   │
+                        └──────────────────┘
 ```
 
-### Step 2: Replace hardcoded follow-up generation in all 4 code paths
+## Step 1: Database — `mdr_register` Table
 
-Update the follow-up generation in these locations:
-1. **Specific query path** (~line 11332): Replace `"Read and interpret the most relevant ${p1SubjectLabel} document"` with type-aware suggestions
-2. **Broad query path** (~line 11375): Replace generic "Filter by discipline" with contextual actions
-3. **Deterministic fallback path** (~line 10878): Replace `"Read and interpret the most relevant ${subjectLabel} document"` with intelligent suggestions
-4. **Analytical path** (~line 10769 & 11288): Replace static "Show all pending review documents" with query-relevant options
+Stores parsed MDR rows (expected documents for a project):
 
-### Step 3: Add a `generateContextualFollowups()` function
+| Column | Type | Purpose |
+|--------|------|---------|
+| id | UUID PK | Row ID |
+| project_id | UUID FK → projects | Which project |
+| document_number | VARCHAR | Expected document number |
+| title | VARCHAR | Document title from MDR |
+| discipline_code | VARCHAR | e.g., JA, EL, IN |
+| document_type_code | VARCHAR | e.g., 2365, 0401 |
+| unit_code | VARCHAR | e.g., G00000, U41100 |
+| originator_code | VARCHAR | e.g., WGEL, ABBE |
+| final_rev_requirement | VARCHAR | Expected final status (e.g., IFI, AFU) |
+| current_status | VARCHAR | Last known status from Assai (updated by sync) |
+| current_revision | VARCHAR | Last known revision from Assai |
+| is_found_in_dms | BOOLEAN | Whether document exists in Assai |
+| is_tier1 | BOOLEAN | Handover-critical Tier 1 |
+| is_tier2 | BOOLEAN | Handover-critical Tier 2 |
+| last_checked_at | TIMESTAMPTZ | When last compared against Assai |
+| mdr_source_doc | VARCHAR | The 6611 document number this came from |
+| tenant_id | UUID | Tenant isolation |
 
-A single function that takes:
-- `docTypeCode` (e.g., "J01", "G01", "A90")
-- `docTypeName` (e.g., "IOM", "P&ID", "HAZOP Report")
-- `subjectLabel` (e.g., "HVAC", "Compression")
-- `resultStats` (count, statuses found, has multiple revisions, has pending)
-- `userIntent` (retrieval / analytical / content)
+## Step 2: Database — `mdr_completeness_snapshots` Table
 
-Returns 3-4 specific, actionable pills. Examples:
-- For 5 P&IDs found with mixed statuses → `["Show only approved P&IDs", "Read the latest revision P&ID", "Show related equipment datasheets"]`
-- For vendor documents query → `["Show overdue vendor submissions", "Group by vendor/contractor", "Show only documents pending review"]`
-- For a single HAZOP found → `["Read and summarize key findings", "Check if action items are closed", "Show related safety documents"]`
+Point-in-time completeness reports:
 
-### Step 4: Improve the sanity filter on the frontend
+| Column | Type | Purpose |
+|--------|------|---------|
+| id | UUID PK | Snapshot ID |
+| project_id | UUID FK | Project |
+| snapshot_date | DATE | When snapshot was taken |
+| total_expected | INT | Total MDR rows |
+| total_found | INT | Documents found in Assai |
+| total_at_final_status | INT | Documents meeting their `final_rev_requirement` |
+| tier1_expected / tier1_complete | INT | Tier 1 progress |
+| tier2_expected / tier2_complete | INT | Tier 2 progress |
+| gap_summary | JSONB | Breakdown by discipline, type, status |
+| tenant_id | UUID | Tenant isolation |
 
-**File**: `src/components/widgets/ORSHChatDialog.tsx`
+## Step 3: Edge Function — `parse-mdr`
 
-Add additional filters to reject:
-- Pills that repeat the exact query the user just asked
-- Pills containing unexpanded acronyms without context (e.g., bare "PES" without explanation)
-- Duplicate/near-duplicate pills (Levenshtein similarity > 0.8)
+A new edge function that:
+1. Accepts a 6611 document number
+2. Uses `read_assai_document` logic to download the PDF/Excel from Assai
+3. Parses the tabular content (extracting document number, title, discipline, type, unit, originator, final rev requirement columns)
+4. Upserts rows into `mdr_register`
+5. Returns a summary (row count, disciplines found, etc.)
+
+## Step 4: Edge Function — `check-mdr-completeness`
+
+A new edge function that:
+1. Takes a project_id
+2. Reads all `mdr_register` rows for that project
+3. For each expected document, queries Assai (via `search_assai_documents` pattern) to check if it exists and its current status/revision
+4. Updates `mdr_register` with `is_found_in_dms`, `current_status`, `current_revision`
+5. Compares `current_status` against `final_rev_requirement` to determine maturity
+6. Flags Tier 1/2 gaps with impact analysis
+7. Creates a snapshot in `mdr_completeness_snapshots`
+8. Returns structured gap report
+
+## Step 5: Selma Tool — `check_mdr_completeness`
+
+Add a new tool to Selma's document agent toolset:
+- **Name**: `check_mdr_completeness`
+- **Description**: "Check document completeness for a project against its Master Document Register (MDR). Returns gap analysis showing missing documents, maturity shortfalls, and Tier 1/2 handover impact."
+- **Parameters**: `project_code` (DP number or project code)
+- Calls the `check-mdr-completeness` edge function
+- Returns structured data for Selma to narrate intelligently
+
+## Step 6: Selma Tool — `parse_mdr_document`
+
+Add a tool for ingesting MDR documents:
+- **Name**: `parse_mdr_document`
+- **Description**: "Parse and ingest a Master Document Register (6611) from Assai into the completeness tracking system."
+- **Parameters**: `document_number` (the 6611 document number)
+- Calls the `parse-mdr` edge function
 
 ## Files Modified
 
-| File | Changes |
+| File | Change |
 |------|--------|
-| `supabase/functions/ai-chat/index.ts` | Add `generateContextualFollowups()` function with document-type templates; replace all 4 hardcoded follow-up generation blocks |
-| `src/components/widgets/ORSHChatDialog.tsx` | Enhanced sanity filter for near-duplicates and echo detection |
+| New migration | Create `mdr_register` and `mdr_completeness_snapshots` tables with RLS |
+| `supabase/functions/parse-mdr/index.ts` | New edge function — download and parse 6611 documents |
+| `supabase/functions/check-mdr-completeness/index.ts` | New edge function — compare MDR vs Assai, produce gap report |
+| `supabase/functions/ai-chat/index.ts` | Add `check_mdr_completeness` and `parse_mdr_document` tools to Selma's document agent |
+
+## What Selma Can Do After This
+
+- "What's the document completeness for DP300?" → Gap report with percentages, missing docs, Tier 1/2 impact
+- "Parse the MDR for DP300" → Ingests the 6611 and populates the register
+- "Show me all missing Tier 1 documents for DP300" → Filtered gap analysis
+- "How has completeness changed over the last month?" → Snapshot comparison
 
