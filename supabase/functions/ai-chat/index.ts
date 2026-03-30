@@ -3626,6 +3626,52 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
         required: ["project_code"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "parse_sdr_document",
+      description: "Parse and ingest a Supplier Document Register (A01) from Assai into the completeness tracking system. Downloads the SDR document from the SUP_DOC module, extracts expected vendor deliverables, and stores them in the sdr_register table. Use when user asks to 'parse the SDR', 'ingest SDR', 'load vendor documents for PO 01463'.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_number: {
+            type: "string",
+            description: "Full Assai document number of the A01 SDR document in SUP_DOC module"
+          },
+          project_id: {
+            type: "string",
+            description: "UUID of the project this SDR belongs to"
+          }
+        },
+        required: ["document_number", "project_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "check_sdr_completeness",
+      description: "Check vendor document completeness against a Supplier Document Register (SDR). Compares expected vendor deliverables from parsed SDR against live Assai SUP_DOC data. Returns gap analysis with missing vendor documents, overdue submissions, and per-vendor/PO status breakdown. Use for 'vendor document status', 'SDR completeness', 'supplier documents missing', 'overdue vendor submissions'.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_code: {
+            type: "string",
+            description: "DP number (e.g. 'DP300') or Assai project code (e.g. '6529'). Will be resolved to project_id internally."
+          },
+          vendor_code: {
+            type: "string",
+            description: "Optional vendor/supplier code to filter completeness for a specific vendor"
+          },
+          po_number: {
+            type: "string",
+            description: "Optional PO number to filter completeness for a specific purchase order"
+          }
+        },
+        required: ["project_code"]
+      }
+    }
   }
 ];
 
@@ -3658,8 +3704,8 @@ const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; m
     model: 'claude-sonnet-4-5'
   },
   document_agent: {
-    tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink', 'get_document_cross_discipline_comparison', 'get_document_search_by_number', 'get_document_bulk_status', 'get_document_trend_analysis', 'create_task_from_document_gap', 'get_document_quality_score', 'get_document_ora_linkage', 'read_assai_document', 'search_assai_documents', 'resolve_document_type', 'learn_acronym', 'resolve_project_code', 'parse_mdr_document', 'check_mdr_completeness'],
-    domains: ['dms', 'document', 'readiness', 'numbering', 'afc', 'ifr', 'rlmu', 'trend', 'velocity', 'comparison', 'quality', 'maturity', 'handover', 'mdr', 'completeness'],
+    tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink', 'get_document_cross_discipline_comparison', 'get_document_search_by_number', 'get_document_bulk_status', 'get_document_trend_analysis', 'create_task_from_document_gap', 'get_document_quality_score', 'get_document_ora_linkage', 'read_assai_document', 'search_assai_documents', 'resolve_document_type', 'learn_acronym', 'resolve_project_code', 'parse_mdr_document', 'check_mdr_completeness', 'parse_sdr_document', 'check_sdr_completeness'],
+    domains: ['dms', 'document', 'readiness', 'numbering', 'afc', 'ifr', 'rlmu', 'trend', 'velocity', 'comparison', 'quality', 'maturity', 'handover', 'mdr', 'completeness', 'sdr', 'vendor', 'supplier'],
     model: 'claude-sonnet-4-5'
   },
   pssr_ora_agent: {
@@ -3770,7 +3816,7 @@ function detectAgentDomain(message: string): string {
   }
   
   // Selma (Document Intelligence Assistant) triggers
-  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|doc.*p2a|read.*document|summarise.*\d{4}|summarize.*\d{4}|open comments|review.*crs|extract.*from.*doc|what does.*say)\b/i.test(lower)) {
+  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|document status|documentation gap|document type|discipline code|document trend|document velocity|cross.?discipline|bulk status|document comparison|lagging discipline|document search|document number|document quality|dms health|documentation maturity|document.*ora|doc.*p2a|read.*document|summarise.*\d{4}|summarize.*\d{4}|open comments|review.*crs|extract.*from.*doc|what does.*say|sdr\b|vendor doc|supplier doc|vendor completeness|supplier completeness|vendor submission|supplier submission)\b/i.test(lower)) {
     return 'document_agent';
   }
   
@@ -7802,6 +7848,110 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         return checkData;
       } catch (err) {
         console.error('check_mdr_completeness error:', err);
+        return { error: String(err) };
+      }
+    }
+
+    case "parse_sdr_document": {
+      try {
+        const { document_number, project_id } = args;
+        if (!document_number || !project_id) {
+          return { error: 'Both document_number and project_id are required.' };
+        }
+
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const parseSdrRes = await fetch(`${supabaseUrl}/functions/v1/parse-sdr`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({ document_number, project_id, tenant_id: tenantId }),
+        });
+
+        const parseSdrData = await parseSdrRes.json();
+        if (!parseSdrRes.ok) {
+          return { error: parseSdrData.error || 'Failed to parse SDR document', status: parseSdrRes.status };
+        }
+        return parseSdrData;
+      } catch (err) {
+        console.error('parse_sdr_document error:', err);
+        return { error: String(err) };
+      }
+    }
+
+    case "check_sdr_completeness": {
+      try {
+        const { project_code, vendor_code: vendorFilter, po_number: poFilter } = args;
+        if (!project_code) {
+          return { error: 'project_code is required (e.g. DP300 or 6529).' };
+        }
+
+        // Resolve project code to project_id (same logic as MDR)
+        let resolvedProjectId: string | null = null;
+        const dpMatch = project_code.match(/DP[- ]?(\d+)/i);
+        if (dpMatch) {
+          const dpNum = dpMatch[1];
+          const exactPatterns = [`DP-${dpNum.padStart(3, '0')}`, `DP-${dpNum}`, `DP${dpNum}`];
+          for (const pattern of exactPatterns) {
+            const { data } = await supabaseClient
+              .from('dms_projects')
+              .select('project_id')
+              .eq('project_id', pattern)
+              .eq('is_active', true)
+              .limit(1)
+              .maybeSingle();
+            if (data?.project_id) {
+              const { data: proj } = await supabaseClient
+                .from('projects')
+                .select('id')
+                .ilike('project_code', `%${dpNum}%`)
+                .limit(1)
+                .maybeSingle();
+              resolvedProjectId = proj?.id || null;
+              break;
+            }
+          }
+        }
+        
+        if (!resolvedProjectId) {
+          const { data: proj } = await supabaseClient
+            .from('projects')
+            .select('id')
+            .or(`id.eq.${project_code},project_code.ilike.%${project_code}%`)
+            .limit(1)
+            .maybeSingle();
+          resolvedProjectId = proj?.id || null;
+        }
+
+        if (!resolvedProjectId) {
+          return { error: `Could not resolve project "${project_code}" to a project ID. Ensure the SDR has been parsed first.` };
+        }
+
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const checkRes = await fetch(`${supabaseUrl}/functions/v1/check-sdr-completeness`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({
+            project_id: resolvedProjectId,
+            vendor_code: vendorFilter || null,
+            po_number: poFilter || null,
+            tenant_id: tenantId,
+          }),
+        });
+
+        const checkData = await checkRes.json();
+        if (!checkRes.ok) {
+          return { error: checkData.error || 'Failed to check SDR completeness', status: checkRes.status };
+        }
+        return checkData;
+      } catch (err) {
+        console.error('check_sdr_completeness error:', err);
         return { error: String(err) };
       }
     }
