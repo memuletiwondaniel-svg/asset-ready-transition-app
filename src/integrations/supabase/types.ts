@@ -1940,6 +1940,164 @@ export type Database = {
         }
         Relationships: []
       }
+      mdr_completeness_snapshots: {
+        Row: {
+          created_at: string | null
+          gap_summary: Json | null
+          id: string
+          project_id: string
+          snapshot_date: string
+          tenant_id: string | null
+          tier1_complete: number | null
+          tier1_expected: number | null
+          tier2_complete: number | null
+          tier2_expected: number | null
+          total_at_final_status: number | null
+          total_expected: number | null
+          total_found: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          gap_summary?: Json | null
+          id?: string
+          project_id: string
+          snapshot_date?: string
+          tenant_id?: string | null
+          tier1_complete?: number | null
+          tier1_expected?: number | null
+          tier2_complete?: number | null
+          tier2_expected?: number | null
+          total_at_final_status?: number | null
+          total_expected?: number | null
+          total_found?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          gap_summary?: Json | null
+          id?: string
+          project_id?: string
+          snapshot_date?: string
+          tenant_id?: string | null
+          tier1_complete?: number | null
+          tier1_expected?: number | null
+          tier2_complete?: number | null
+          tier2_expected?: number | null
+          total_at_final_status?: number | null
+          total_expected?: number | null
+          total_found?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mdr_completeness_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mdr_completeness_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mdr_completeness_snapshots_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mdr_register: {
+        Row: {
+          created_at: string | null
+          current_revision: string | null
+          current_status: string | null
+          discipline_code: string | null
+          document_number: string
+          document_type_code: string | null
+          final_rev_requirement: string | null
+          id: string
+          is_found_in_dms: boolean | null
+          is_tier1: boolean | null
+          is_tier2: boolean | null
+          last_checked_at: string | null
+          mdr_source_doc: string | null
+          originator_code: string | null
+          project_id: string
+          tenant_id: string | null
+          title: string | null
+          unit_code: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_revision?: string | null
+          current_status?: string | null
+          discipline_code?: string | null
+          document_number: string
+          document_type_code?: string | null
+          final_rev_requirement?: string | null
+          id?: string
+          is_found_in_dms?: boolean | null
+          is_tier1?: boolean | null
+          is_tier2?: boolean | null
+          last_checked_at?: string | null
+          mdr_source_doc?: string | null
+          originator_code?: string | null
+          project_id: string
+          tenant_id?: string | null
+          title?: string | null
+          unit_code?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_revision?: string | null
+          current_status?: string | null
+          discipline_code?: string | null
+          document_number?: string
+          document_type_code?: string | null
+          final_rev_requirement?: string | null
+          id?: string
+          is_found_in_dms?: boolean | null
+          is_tier1?: boolean | null
+          is_tier2?: boolean | null
+          last_checked_at?: string | null
+          mdr_source_doc?: string | null
+          originator_code?: string | null
+          project_id?: string
+          tenant_id?: string | null
+          title?: string | null
+          unit_code?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mdr_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mdr_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mdr_register_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       microsoft_oauth_tokens: {
         Row: {
           access_token: string
