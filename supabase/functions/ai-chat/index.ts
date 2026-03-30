@@ -3576,6 +3576,56 @@ The Assai document number format is: [Project]-[Originator]-[Plant]-[Area]-[Unit
       description: "Generate a formal HAZOP report from findings. Structured with Node, Deviation, Cause, Consequence, Safeguards, Recommendations, Risk Ranking. Use for 'HAZOP report', 'generate HAZOP', 'format HAZOP findings'.",
       parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, system_name: { type: "string", description: "System name" }, findings: { type: "array", items: { type: "object" }, description: "Array of HAZOP findings" } }, required: ["project_id", "system_name"] }
     }
+  },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MDR COMPLETENESS ENGINE TOOLS
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "parse_mdr_document",
+      description: "Parse and ingest a Master Document Register (6611) from Assai into the completeness tracking system. Downloads the MDR document, extracts all expected document rows, and stores them in the mdr_register table. Use when user asks to 'parse the MDR', 'ingest MDR', 'load the MDR for DP300'.",
+      parameters: {
+        type: "object",
+        properties: {
+          document_number: {
+            type: "string",
+            description: "Full Assai document number of the 6611 MDR document, e.g. '6529-WGEL-C033-ISGP-G00000-JA-6611-20501-001'"
+          },
+          project_id: {
+            type: "string",
+            description: "UUID of the project this MDR belongs to"
+          }
+        },
+        required: ["document_number", "project_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "check_mdr_completeness",
+      description: "Check document completeness for a project against its Master Document Register (MDR). Compares expected documents from the parsed MDR against live Assai data, returning gap analysis with missing documents, maturity shortfalls, and Tier 1/2 handover impact. Use for 'document completeness for DP300', 'MDR gap analysis', 'what documents are missing', 'completeness check'.",
+      parameters: {
+        type: "object",
+        properties: {
+          project_code: {
+            type: "string",
+            description: "DP number (e.g. 'DP300') or Assai project code (e.g. '6529'). Will be resolved to project_id internally."
+          },
+          discipline_filter: {
+            type: "string",
+            description: "Optional discipline code filter e.g. 'JA', 'EL', 'IN' to check completeness for a specific discipline only"
+          },
+          tier_filter: {
+            type: "string",
+            enum: ["tier1", "tier2", "all"],
+            description: "Filter by tier criticality. Default 'all'"
+          }
+        },
+        required: ["project_code"]
+      }
+    }
   }
 ];
 
@@ -3608,8 +3658,8 @@ const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; m
     model: 'claude-sonnet-4-5'
   },
   document_agent: {
-    tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink', 'get_document_cross_discipline_comparison', 'get_document_search_by_number', 'get_document_bulk_status', 'get_document_trend_analysis', 'create_task_from_document_gap', 'get_document_quality_score', 'get_document_ora_linkage', 'read_assai_document', 'search_assai_documents', 'resolve_document_type', 'learn_acronym', 'resolve_project_code'],
-    domains: ['dms', 'document', 'readiness', 'numbering', 'afc', 'ifr', 'rlmu', 'trend', 'velocity', 'comparison', 'quality', 'maturity', 'handover'],
+    tools: ['get_document_readiness_summary', 'get_document_status_breakdown', 'get_document_numbering_config', 'get_document_gaps_analysis', 'get_dms_table_info', 'get_dms_hyperlink', 'get_document_cross_discipline_comparison', 'get_document_search_by_number', 'get_document_bulk_status', 'get_document_trend_analysis', 'create_task_from_document_gap', 'get_document_quality_score', 'get_document_ora_linkage', 'read_assai_document', 'search_assai_documents', 'resolve_document_type', 'learn_acronym', 'resolve_project_code', 'parse_mdr_document', 'check_mdr_completeness'],
+    domains: ['dms', 'document', 'readiness', 'numbering', 'afc', 'ifr', 'rlmu', 'trend', 'velocity', 'comparison', 'quality', 'maturity', 'handover', 'mdr', 'completeness'],
     model: 'claude-sonnet-4-5'
   },
   pssr_ora_agent: {
@@ -7645,6 +7695,114 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       } catch (err) {
         console.error('resolve_project_code error:', err);
         return { found: false, error: String(err) };
+      }
+    }
+
+    case "parse_mdr_document": {
+      try {
+        const { document_number, project_id } = args;
+        if (!document_number || !project_id) {
+          return { error: 'Both document_number and project_id are required.' };
+        }
+
+        // Call the parse-mdr edge function
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const parseMdrRes = await fetch(`${supabaseUrl}/functions/v1/parse-mdr`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({ document_number, project_id, tenant_id: tenantId }),
+        });
+
+        const parseMdrData = await parseMdrRes.json();
+        if (!parseMdrRes.ok) {
+          return { error: parseMdrData.error || 'Failed to parse MDR document', status: parseMdrRes.status };
+        }
+        return parseMdrData;
+      } catch (err) {
+        console.error('parse_mdr_document error:', err);
+        return { error: String(err) };
+      }
+    }
+
+    case "check_mdr_completeness": {
+      try {
+        const { project_code, discipline_filter, tier_filter } = args;
+        if (!project_code) {
+          return { error: 'project_code is required (e.g. DP300 or 6529).' };
+        }
+
+        // Resolve project code to project_id
+        let resolvedProjectId: string | null = null;
+        const dpMatch = project_code.match(/DP[- ]?(\d+)/i);
+        if (dpMatch) {
+          const dpNum = dpMatch[1];
+          const exactPatterns = [`DP-${dpNum.padStart(3, '0')}`, `DP-${dpNum}`, `DP${dpNum}`];
+          for (const pattern of exactPatterns) {
+            const { data } = await supabaseClient
+              .from('dms_projects')
+              .select('project_id')
+              .eq('project_id', pattern)
+              .eq('is_active', true)
+              .limit(1)
+              .maybeSingle();
+            if (data?.project_id) {
+              // Get the UUID project ID from projects table
+              const { data: proj } = await supabaseClient
+                .from('projects')
+                .select('id')
+                .ilike('project_code', `%${dpNum}%`)
+                .limit(1)
+                .maybeSingle();
+              resolvedProjectId = proj?.id || null;
+              break;
+            }
+          }
+        }
+        
+        if (!resolvedProjectId) {
+          // Try direct UUID or project code lookup
+          const { data: proj } = await supabaseClient
+            .from('projects')
+            .select('id')
+            .or(`id.eq.${project_code},project_code.ilike.%${project_code}%`)
+            .limit(1)
+            .maybeSingle();
+          resolvedProjectId = proj?.id || null;
+        }
+
+        if (!resolvedProjectId) {
+          return { error: `Could not resolve project "${project_code}" to a project ID. Ensure the MDR has been parsed first.` };
+        }
+
+        // Call the check-mdr-completeness edge function
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const checkRes = await fetch(`${supabaseUrl}/functions/v1/check-mdr-completeness`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({
+            project_id: resolvedProjectId,
+            discipline_filter: discipline_filter || null,
+            tier_filter: tier_filter || 'all',
+            tenant_id: tenantId,
+          }),
+        });
+
+        const checkData = await checkRes.json();
+        if (!checkRes.ok) {
+          return { error: checkData.error || 'Failed to check MDR completeness', status: checkRes.status };
+        }
+        return checkData;
+      } catch (err) {
+        console.error('check_mdr_completeness error:', err);
+        return { error: String(err) };
       }
     }
 
