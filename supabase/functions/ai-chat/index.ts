@@ -7698,6 +7698,114 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
 
+    case "parse_mdr_document": {
+      try {
+        const { document_number, project_id } = args;
+        if (!document_number || !project_id) {
+          return { error: 'Both document_number and project_id are required.' };
+        }
+
+        // Call the parse-mdr edge function
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const parseMdrRes = await fetch(`${supabaseUrl}/functions/v1/parse-mdr`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({ document_number, project_id, tenant_id: tenantId }),
+        });
+
+        const parseMdrData = await parseMdrRes.json();
+        if (!parseMdrRes.ok) {
+          return { error: parseMdrData.error || 'Failed to parse MDR document', status: parseMdrRes.status };
+        }
+        return parseMdrData;
+      } catch (err) {
+        console.error('parse_mdr_document error:', err);
+        return { error: String(err) };
+      }
+    }
+
+    case "check_mdr_completeness": {
+      try {
+        const { project_code, discipline_filter, tier_filter } = args;
+        if (!project_code) {
+          return { error: 'project_code is required (e.g. DP300 or 6529).' };
+        }
+
+        // Resolve project code to project_id
+        let resolvedProjectId: string | null = null;
+        const dpMatch = project_code.match(/DP[- ]?(\d+)/i);
+        if (dpMatch) {
+          const dpNum = dpMatch[1];
+          const exactPatterns = [`DP-${dpNum.padStart(3, '0')}`, `DP-${dpNum}`, `DP${dpNum}`];
+          for (const pattern of exactPatterns) {
+            const { data } = await supabaseClient
+              .from('dms_projects')
+              .select('project_id')
+              .eq('project_id', pattern)
+              .eq('is_active', true)
+              .limit(1)
+              .maybeSingle();
+            if (data?.project_id) {
+              // Get the UUID project ID from projects table
+              const { data: proj } = await supabaseClient
+                .from('projects')
+                .select('id')
+                .ilike('project_code', `%${dpNum}%`)
+                .limit(1)
+                .maybeSingle();
+              resolvedProjectId = proj?.id || null;
+              break;
+            }
+          }
+        }
+        
+        if (!resolvedProjectId) {
+          // Try direct UUID or project code lookup
+          const { data: proj } = await supabaseClient
+            .from('projects')
+            .select('id')
+            .or(`id.eq.${project_code},project_code.ilike.%${project_code}%`)
+            .limit(1)
+            .maybeSingle();
+          resolvedProjectId = proj?.id || null;
+        }
+
+        if (!resolvedProjectId) {
+          return { error: `Could not resolve project "${project_code}" to a project ID. Ensure the MDR has been parsed first.` };
+        }
+
+        // Call the check-mdr-completeness edge function
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const checkRes = await fetch(`${supabaseUrl}/functions/v1/check-mdr-completeness`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({
+            project_id: resolvedProjectId,
+            discipline_filter: discipline_filter || null,
+            tier_filter: tier_filter || 'all',
+            tenant_id: tenantId,
+          }),
+        });
+
+        const checkData = await checkRes.json();
+        if (!checkRes.ok) {
+          return { error: checkData.error || 'Failed to check MDR completeness', status: checkRes.status };
+        }
+        return checkData;
+      } catch (err) {
+        console.error('check_mdr_completeness error:', err);
+        return { error: String(err) };
+      }
+    }
+
     case "search_assai_documents": {
       try {
         let { document_number_pattern, discipline_code, document_type, status_code, company_code, title } = args;
