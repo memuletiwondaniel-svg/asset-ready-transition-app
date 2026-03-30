@@ -7973,6 +7973,75 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
 
+    case "discover_project_vendors": {
+      try {
+        const { project_code } = args;
+        if (!project_code) {
+          return { error: 'project_code is required (e.g. DP300 or 6529).' };
+        }
+
+        // Resolve project code to Assai code and project_id
+        let resolvedProjectCode = project_code;
+        let resolvedProjectId: string | null = null;
+
+        const dpMatch = project_code.match(/DP[- ]?(\d+)/i);
+        if (dpMatch) {
+          const dpNum = dpMatch[1];
+          const { data: dmsProj } = await supabaseClient
+            .from('dms_projects')
+            .select('code, project_id')
+            .ilike('code', `%${dpNum}%`)
+            .eq('is_active', true)
+            .limit(1)
+            .maybeSingle();
+          if (dmsProj) {
+            resolvedProjectCode = dmsProj.code;
+          }
+          const { data: proj } = await supabaseClient
+            .from('projects')
+            .select('id')
+            .ilike('project_code', `%${dpNum}%`)
+            .limit(1)
+            .maybeSingle();
+          resolvedProjectId = proj?.id || null;
+        }
+
+        if (!resolvedProjectId) {
+          const { data: proj } = await supabaseClient
+            .from('projects')
+            .select('id')
+            .or(`id.eq.${project_code},project_code.ilike.%${project_code}%`)
+            .limit(1)
+            .maybeSingle();
+          resolvedProjectId = proj?.id || null;
+        }
+
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const discoverRes = await fetch(`${supabaseUrl}/functions/v1/discover-vendors`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({
+            project_code: resolvedProjectCode,
+            project_id: resolvedProjectId,
+            tenant_id: tenantId,
+          }),
+        });
+
+        const discoverData = await discoverRes.json();
+        if (!discoverRes.ok) {
+          return { error: discoverData.error || 'Failed to discover vendors', status: discoverRes.status };
+        }
+        return discoverData;
+      } catch (err) {
+        console.error('discover_project_vendors error:', err);
+        return { error: String(err) };
+      }
+    }
+
     case "search_assai_documents": {
       try {
         let { document_number_pattern, discipline_code, document_type, status_code, company_code, title } = args;
