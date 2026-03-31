@@ -92,6 +92,7 @@ interface Message {
   fileNames?: string[];
   messageId?: string;
   feedbackGiven?: 'positive' | 'negative' | null;
+  agentName?: string;
 }
 
 interface Conversation {
