@@ -11178,7 +11178,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // disambiguation questions and wrong tool selections.
     // ═══════════════════════════════════════════════════════════════════════
     const specificDocMatch = lastUserText.match(
-      /\b(bfd|basis for design|itp|inspection test plan|iom|fat|sat|sdr|mdr|sld|ga|gad|pfd|p&id|pid|bom|mds|datasheet|report|manual|procedure|specification|ifc|ifr|afc)\b.*?\b(dp[\s-]?\d+[a-z]?)\b|\b(dp[\s-]?\d+[a-z]?)\b.*?\b(bfd|basis for design|itp|inspection test plan|iom|fat|sat|sdr|mdr|sld|ga|gad|pfd|p&id|pid|bom|mds|datasheet|report|manual|procedure|specification|ifc|ifr|afc)\b/i
+      /\b(bfd|basis for design|basis of design|design basis|itp|inspection test plan|iom|fat|sat|sdr|mdr|sld|ga|gad|pfd|p&id|pid|bom|mds|datasheet|report|manual|procedure|specification|ifc|ifr|afc)\b.*?\b(dp[\s-]?\d+[a-z]?)\b|\b(dp[\s-]?\d+[a-z]?)\b.*?\b(bfd|basis for design|basis of design|design basis|itp|inspection test plan|iom|fat|sat|sdr|mdr|sld|ga|gad|pfd|p&id|pid|bom|mds|datasheet|report|manual|procedure|specification|ifc|ifr|afc)\b/i
     );
     
     if (specificDocMatch && !isVendorDiscoveryIntent) {
