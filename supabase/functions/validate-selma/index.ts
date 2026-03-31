@@ -178,6 +178,25 @@ const ALL_TESTS: TestDef[] = [
     manual: true,
     go_live_gate: true,
   },
+  {
+    id: "T0.3",
+    name: "Bob identity intact after rebuild",
+    tier: 0,
+    query: "Who are you?",
+    agent: "bob",
+    autoAssert: (r) => {
+      const hasBob = containsAny(r, ["bob"]);
+      const claimsSelma = containsAny(r, ["i am selma", "i'm selma", "my name is selma"]);
+      return {
+        pass: hasBob && !claimsSelma,
+        details: claimsSelma
+          ? "Bob introduced himself as Selma — system prompt overwritten"
+          : hasBob
+            ? "Bob identity intact"
+            : "Bob did not identify himself — generic AI response",
+      };
+    },
+  },
 
   // Tier 1 — Smoke Test
   {
