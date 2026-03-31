@@ -292,24 +292,25 @@ NEVER ask the user for a project code or proj_seq_nr. When a user mentions a pro
 
 HARD ROUTING RULES — these override everything else (second-line defence when the classifier misroutes):
 
+IMPORTANT: If a hard routing rule fires, it means the classifier failed. You must NEVER tell the user to
+"contact Selma" or "ask Hannah" or "try rephrasing". Instead, you must answer as if you ARE the specialist.
+Modern AI agents route silently — the user should never see routing machinery.
+
 1. Any query about finding, retrieving, or searching for documents, drawings,
    specifications, datasheets, vendor documents, or anything in a DMS,
    OR any request to learn, save, define, or teach a document type acronym or abbreviation →
-   respond: "That's a question for Selma, our Document Intelligence Assistant. Try rephrasing your question and I'll route it to her."
-   Include <follow_ups>["Search for [document type] in Assai", "Find documents for [project]"]</follow_ups>
-   Then STOP. Do NOT attempt to answer. Do NOT provide document details from your own knowledge.
+   Use your document search tools (search_assai_documents, resolve_project_code, etc.) to answer directly.
+   If you genuinely lack the tools in this session, say: "Let me search that for you" and use whatever tools are available.
+   Do NOT say "ask Selma" or "that's a question for Selma". The user doesn't care about internal routing.
 
-2. Punchlist items, ITRs, outstanding punch items → redirect to Hannah:
-   "That's a question for Hannah, our Handover Intelligence Assistant. Try asking again."
-   Include <follow_ups>["Check punch items for [project]", "Show handover status"]</follow_ups>
+2. Punchlist items, ITRs, outstanding punch items → use handover tools to answer directly.
+   Do NOT say "ask Hannah".
 
-3. PSSR or pre-startup safety reviews → redirect to Fred:
-   "That's a question for Fred, our PSSR & Safety Agent. Try asking again."
-   Include <follow_ups>["Show PSSR status", "Check safety readiness"]</follow_ups>
+3. PSSR or pre-startup safety reviews → use PSSR tools to answer directly.
+   Do NOT say "ask Fred".
 
-4. HAZOP, process safety, MOC, cumulative risk → redirect to Ivan:
-   "That's a question for Ivan, our Process Technical Authority. Try asking again."
-   Include <follow_ups>["Review HAZOP status", "Check process safety items"]</follow_ups>
+4. HAZOP, process safety, MOC, cumulative risk → use process safety tools to answer directly.
+   Do NOT say "ask Ivan".
 
 5. If genuinely unsure which agent handles a query → ask the user ONE clarifying question. Do not guess. Do not answer directly.
 
@@ -3422,13 +3423,40 @@ Intents:
   }
 };
 
+// Detect if the user message is a short continuation/confirmation that lacks domain keywords.
+// In that case, inherit the agent from the prior conversation context.
+const CONTINUATION_PATTERN = /^(yes|yeah|yep|yea|sure|ok|okay|go ahead|do it|please|proceed|confirm|confirmed|absolutely|definitely|let's do it|go for it|that one|the first one|the second|option \d|sounds good|perfect|great|thanks|thank you|no[.,!]?\s*$|nope|not yet|cancel|stop|never\s*mind)[\s.!?]*$/i;
+
+function detectAgentFromHistory(messages: Array<{ role: string; content: string }>): string | null {
+  // Walk backward through conversation to find the last user message that routed to a specialist
+  for (let i = messages.length - 2; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg.role === 'user') {
+      const domain = detectAgentDomainRegex(msg.content);
+      if (domain !== 'copilot') return domain;
+    }
+  }
+  return null;
+}
+
 // Tiered routing: regex first (0ms), LLM fallback only for ambiguous queries
-const routeAgent = async (message: string): Promise<string> => {
+// Now accepts conversation history for context-aware continuation routing
+const routeAgent = async (message: string, conversationHistory?: Array<{ role: string; content: string }>): Promise<string> => {
   const regexResult = detectAgentDomainRegex(message);
   if (regexResult !== 'copilot') {
     console.log(`routeAgent: regex matched "${regexResult}" — skipping LLM classifier`);
     return regexResult; // fast path, 0ms
   }
+  
+  // Context-aware continuation: short confirmations inherit the previous agent
+  if (CONTINUATION_PATTERN.test(message.trim()) && conversationHistory && conversationHistory.length > 1) {
+    const inheritedAgent = detectAgentFromHistory(conversationHistory);
+    if (inheritedAgent) {
+      console.log(`routeAgent: continuation detected ("${message.trim()}") — inheriting agent "${inheritedAgent}" from conversation history`);
+      return inheritedAgent;
+    }
+  }
+  
   console.log('routeAgent: regex returned copilot — invoking Haiku classifier');
   return await classifyIntent(message); // only for ambiguous natural language
 };
@@ -6972,8 +7000,8 @@ serve(async (req) => {
       return { role: msg.role, content: msg.content };
     });
 
-    // Detect which agent domain this query belongs to
-    const detectedAgent = lastUserMessage ? await routeAgent(lastUserMessage.content) : 'copilot';
+    // Detect which agent domain this query belongs to (with conversation context for continuations)
+    const detectedAgent = lastUserMessage ? await routeAgent(lastUserMessage.content, messages) : 'copilot';
     const requestStartTime = Date.now();
     console.log(`Bob processing request with ${transformedMessages.length} messages (detected agent: ${detectedAgent})`);
 
