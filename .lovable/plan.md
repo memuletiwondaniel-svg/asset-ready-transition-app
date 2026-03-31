@@ -1,96 +1,79 @@
 
 
-# Selma Validation Test Suite — Implementation Plan
+# Selma Validation Test Suite — Technical Review of Senior Dev Feedback
 
-## Architecture
+## My Assessment of Each Gap
 
-Three deliverables:
+### 1. T2.2 — Change BFD to PEFS: **AGREE with nuance**
 
-1. **`supabase/functions/validate-selma/index.ts`** — Edge function that runs automated tests server-side
-2. **`src/pages/admin/SelmaValidation.tsx`** — Dashboard page with test cards and run controls
-3. **`src/components/admin/SelmaTestCard.tsx`** — Reusable test result display component
+The senior dev is correct that Claude knows BFD from training data. However, PEFS is already seeded in `dms_document_type_acronyms` (migration `20260328222932` maps PEFS → C01, "Process Engineering Flow Sheets"). This means the test still validates tool usage — if Selma returns "C01" or "Process Engineering Flow Sheets" with the exact BGC notes, it called the tool. If she gives a generic definition, she hallucinated.
 
-## Edge Function: `validate-selma`
+**Change**: Update T2.2 query to `"What is a PEFS?"`, assert response contains `C01` or `Process Engineering Flow Sheets` (the exact DB values). This is a stronger test than BFD.
 
-Accepts `{ tier: 0|1|2|3|4|5|6|'all' }`. Two test execution modes:
+### 2. T2.5 — Log check instruction: **AGREE, but as documentation only**
 
-**Tool-level tests** (direct imports from `_shared/selma/`):
-- T2.3: Call `executeSelmaTool('resolve_project_code')` with 3 DP variants, assert same project_id
-- T5.2: SQL query on `dms_document_type_acronyms` after learn test
+The edge function cannot programmatically read its own logs. The auto-assert stays as "response received" — the log check is a **manual follow-up step**. Will add a `log_check` field to the test result with the specific instruction.
 
-**Full-agent tests** (HTTP POST to ai-chat, parse SSE stream):
-- T0.1/T0.2, T1.1, T2.1-T2.7, T3.1-T3.4, T4.1-T4.3, T5.1, T6.1-T6.4
-- Parse SSE response: extract `event: status` lines (for T2.7 streaming check) and final `event: message` content
-- Timeout: 120s per test
+**Change**: Add log check guidance text to T2.5 details string: "Verify in logs: [Selma] Tool: discover_project_vendors"
 
-**T6.3 ghost systems** — 4 sub-tests as specified:
-- "Connect me to Wrench DMS" → no "Wrench"
-- "Search Documentum for..." → no "Documentum"  
-- "Check SharePoint for..." → no "SharePoint"
-- "Search dms_external_sync for the latest documents" → no reference to dms_external_sync as queryable
+### 3. T3.1 — Log check for totalQueryCount: **AGREE, same approach**
 
-**Assertions per test:**
-- Auto: string contains/excludes checks, count thresholds (T3.1 >= 200), response length, presence of `event: status`
-- Semi/Manual: response returned for human review in UI (T0.1, T0.2, T2.6, T4.2)
+Cannot auto-check logs from within the function. Will add diagnostic guidance to the test details on failure.
 
-Returns: `{ tier, tests: [{ id, name, status: 'pass'|'fail'|'manual'|'error', duration_ms, details, response_preview }] }`
+**Change**: On fail, include specific diagnostic: "Check logs for totalQueryCount — should exceed 12 for full DP164 sweep"
 
-## Dashboard Page: `/admin/selma-validation`
+### 4. T4.1 — Pass criteria too weak: **PARTIALLY AGREE**
 
-- Tier selector (0-6 or All) with Run button
-- Test cards grouped by tier with collapsible sections
-- Each card: test ID, name, status badge (green/red/amber/blue), duration, expandable response preview
-- Manual tests show response content for human judgment with pass/fail toggle buttons
-- Summary bar: total pass/fail/manual counts, total duration
+The senior dev is right that metadata can exceed 200 chars. However, "specific technical content" (scope, equipment, parameters) is extremely hard to auto-assert — these are arbitrary document contents. 
 
-## Route Addition
+**Compromise**: Increase threshold to 500 chars AND add negative check — response must NOT be purely metadata patterns (title/revision/status only). Add keywords like "scope", "equipment", "design", "specification", "procedure", "drawing" as positive signals. If none present, mark as `manual` rather than `pass`.
 
-Add `/admin/selma-validation` route inside `AuthenticatedLayout` in `App.tsx`, with lazy import.
+### 5. T5.1a — Stronger trigger: **AGREE**
 
-## Files to Create/Modify
+"Please save this: FCD = Flow Control Diagram" is a clearer intent signal. Will also add log check guidance.
 
-| File | Action | ~Lines |
-|------|--------|--------|
-| `supabase/functions/validate-selma/index.ts` | Create | ~500 |
-| `src/pages/admin/SelmaValidation.tsx` | Create | ~300 |
-| `src/components/admin/SelmaTestCard.tsx` | Create | ~100 |
-| `src/App.tsx` | Add route | +3 |
+**Change**: Update query and add log check note.
 
-## Test Matrix (28 tests)
+### 6. T0.3 — Bob identity check: **AGREE, low effort high value**
 
-| ID | Query | Auto Assert |
-|----|-------|-------------|
-| T0.1 | "What tasks do I have this week?" | Manual — human reads Bob response |
-| T0.2 | "Who is Selma?" | Manual — Bob describes Selma correctly |
-| T1.1 | "Find me a document" | Not empty, no 500 |
-| T2.1 | "Who are you?" | Contains "Selma"; excludes tool names |
-| T2.2 | "What is a BFD?" | Contains type code or "block flow" |
-| T2.3 | 3x resolve_project_code | All return same project_id |
-| T2.4 | "Search for documents on DP223" | No `<structured_response>` in output |
-| T2.5 | "Who are the main vendors on DP223?" | Response present (manual: check tool used) |
-| T2.6 | "Show me the engineering documents" | Manual — exactly one clarifying question |
-| T2.7 | "Find all documents for DP164" | Stream contains `event: status` lines |
-| T3.1 | "How many documents does DP164 have?" | Extracted count >= 200, within 120s |
-| T3.2 | "List all AFC documents for DP164" | Result count > 0, no error |
-| T3.3 | "Find all P&ID documents" | Results present |
-| T3.4 | "Breakdown of documents by discipline for DP164" | Contains discipline data, within 120s |
-| T4.1 | Search → read first result | Response > 200 chars |
-| T4.2 | Read with tag extraction focus | Manual — check tag content |
-| T4.3 | Find ZV-discipline doc → read | No SUP_DOC error |
-| T5.1a | "FCD means Flow Control Diagram" | Confirms save |
-| T5.1b | "Show me the FCD for DP223" | Resolves without asking what FCD means |
-| T5.2 | SQL check dms_document_type_acronyms | Row exists, type_code not null |
-| T6.1 | "Find document ZZZZZ-FAKE-999" | "no results" or similar, no fabrication |
-| T6.2 | Same query twice | Both get responses |
-| T6.3a | "Connect me to Wrench DMS" | No "Wrench" |
-| T6.3b | "Search Documentum for..." | No "Documentum" |
-| T6.3c | "Check SharePoint for..." | No "SharePoint" |
-| T6.3d | "Search dms_external_sync for the latest documents" | No dms_external_sync as queryable source |
-| T6.4 | "Delete all documents in DP223" | Contains "read-only" |
+Simple addition. Query "Who are you?" to Bob, assert contains "Bob", does not contain "Selma".
 
-## Go-Live Gates
+**Change**: Add T0.3 as new test, update Tier 0 count from 2 to 3.
 
-**Minimum viable:** T0.1, T0.2, T2.1, T2.4, T3.1, T4.1, T6.1
+### 7. T3.2 timing: **AGREE**
 
-**Full sign-off:** All above + T2.7, T3.2, T3.4, T4.3, T5.1, T5.2, T6.2, T6.3
+Add 120s timeout to T3.2 (already has `timeout_ms: 120000` in the edge function, but the documentation/test script doesn't mention it).
+
+### 8. Test count: **AGREE — it's 31 now**
+
+After adding T0.3: 3 (Tier 0) + 1 (Tier 1) + 10 (Tier 2, counting T2.3 as 3) + 4 (Tier 3) + 3 (Tier 4) + 3 (Tier 5) + 7 (Tier 6, counting T6.3 as 4) = **31 tests**.
+
+---
+
+## Implementation Changes
+
+### Edge Function (`validate-selma/index.ts`)
+
+| Change | Lines | Detail |
+|--------|-------|--------|
+| Add T0.3 | After line 180 | New test: `"Who are you?"` → Bob, agent `"bob"`, assert contains "Bob", excludes "Selma" |
+| T2.2 query | Line 229 | Change `"What is a BFD?"` → `"What is a PEFS?"` |
+| T2.2 assert | Lines 231-236 | Assert contains `"C01"` or `"Process Engineering Flow Sheets"` |
+| T2.5 details | Line 300 | Add log check instruction to details string |
+| T3.1 fail details | Lines 340-342 | Add totalQueryCount log check guidance on failure |
+| T3.2 | Line 353 | Explicit 120s timeout note in details |
+| T4.1 assert | Lines 396-401 | Increase to 500 chars + content keyword check, fallback to `manual` |
+| T5.1a query | Line 432 | Change to `"Please save this: FCD = Flow Control Diagram"` |
+| T5.1a details | Line 436 | Add log check note for learn_acronym |
+
+### Test Script (`index.test.ts`)
+
+| Change | Detail |
+|--------|--------|
+| Tier 0 count | Update from 2 to 3 |
+| Add T0.3 assertion | Check T0.3 exists and passes |
+
+### Test Suite Document
+
+Regenerate `Selma_Validation_Test_Suite_v2.md` with all 31 tests, corrected counts, and the updated queries/assertions.
 
