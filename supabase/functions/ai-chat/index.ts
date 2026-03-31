@@ -8449,12 +8449,47 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
 
         // Helper: try to extract total count from HTML (e.g. "Showing 1-100 of 109")
         const parseTotalCount = (html: string): number | null => {
+          // DIAGNOSTIC: Extract all text near pagination markers to discover actual format
+          const paginationDiag = html.match(/(?:showing|result|record|total|row|item|found|display)[^<]{0,80}/gi);
+          if (paginationDiag) {
+            console.info('parseTotalCount DIAGNOSTIC — pagination-related text found:', JSON.stringify(paginationDiag.slice(0, 10)));
+          } else {
+            console.warn('parseTotalCount DIAGNOSTIC — NO pagination text found in HTML');
+          }
+          // Also check for myCells array length as a signal
+          const myCellsLenMatch = html.match(/var\s+myCells\s*=\s*\[/);
+          if (myCellsLenMatch) {
+            // Count rows by counting ],[  patterns
+            const rowMatches = html.match(/\],\s*\[/g);
+            const estimatedRows = rowMatches ? rowMatches.length + 1 : 1;
+            console.info('parseTotalCount DIAGNOSTIC — myCells estimated rows:', estimatedRows);
+          }
+          // Also look for any number patterns near "of" keyword
+          const ofPatterns = html.match(/\d+\s+of\s+\d+/gi);
+          if (ofPatterns) {
+            console.info('parseTotalCount DIAGNOSTIC — "X of Y" patterns:', JSON.stringify(ofPatterns));
+          }
+
+          // Pattern 1: "Showing 1-100 of 109" or "Showing 1 to 50 of 255"
           const m = html.match(/(?:showing|results?)\s+\d+\s*(?:[-–]|to)\s+\d+\s+of\s+(\d+)/i);
-          if (m) return parseInt(m[1], 10);
+          if (m) { console.info('parseTotalCount: matched pattern 1, total=' + m[1]); return parseInt(m[1], 10); }
+          // Pattern 2: "X of Y" anywhere (e.g. "50 of 255")
+          const m1b = html.match(/(\d+)\s+of\s+(\d+)\s*(?:record|result|row|item|document|entr)/i);
+          if (m1b) { console.info('parseTotalCount: matched pattern 1b, total=' + m1b[2]); return parseInt(m1b[2], 10); }
+          // Pattern 3: "total: 255" or "Total 255"
           const m2 = html.match(/total[:\s]+(\d+)/i);
-          if (m2) return parseInt(m2[1], 10);
+          if (m2) { console.info('parseTotalCount: matched pattern 2, total=' + m2[1]); return parseInt(m2[1], 10); }
+          // Pattern 4: resultCount element
           const m3 = html.match(/resultCount[^>]*>(\d+)/i);
-          if (m3) return parseInt(m3[1], 10);
+          if (m3) { console.info('parseTotalCount: matched pattern 3, total=' + m3[1]); return parseInt(m3[1], 10); }
+          // Pattern 5: Assai-specific "rowCount" or similar JS variable
+          const m4 = html.match(/(?:rowCount|totalRows|totalCount|recordCount|maxRows)\s*[=:]\s*['"]?(\d+)/i);
+          if (m4) { console.info('parseTotalCount: matched pattern 4 (JS var), total=' + m4[1]); return parseInt(m4[1], 10); }
+          // Pattern 6: Assai DWR-style total in navigation controls 
+          const m5 = html.match(/(?:nav|pag)\w*[^>]*?(\d+)\s*(?:of|\/)\s*(\d+)/i);
+          if (m5) { console.info('parseTotalCount: matched pattern 5 (nav), total=' + m5[2]); return parseInt(m5[2], 10); }
+          
+          console.warn('parseTotalCount: NO pattern matched — total is null');
           return null;
         };
 
