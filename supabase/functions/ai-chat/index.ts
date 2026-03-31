@@ -8462,7 +8462,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const MAX_TOTAL_QUERIES = 80;
         const SWEEP_TIME_GUARD_MS = 70000; // 70s max for entire search operation — leaves ~78s for LLM
         let sweepStartTime = 0; // set when search actually executes
-        console.log('[SEARCH_V7]', { MAX_TOTAL_QUERIES: 80, SWEEP_TIME_GUARD_MS: 70000, strategy: 'status-split-with-startrow-pagination' });
+        console.log('[SEARCH_V8]', { MAX_TOTAL_QUERIES: 80, SWEEP_TIME_GUARD_MS: 70000, strategy: 'status-split-then-type-split' });
         let totalQueryCount = 0;
         let paginationTotalAssaiCount: number | null = null;
 
@@ -8609,9 +8609,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 const docsForThisStatus = result.docs.length; // at least PAGE_CAP
                 // Check if we got significantly more than the initial cap
                 if (allDocs.filter(d => d.status === sc).length <= PAGE_CAP) {
-                  console.info('paginateByStatusSplit: start_row didn\'t yield more for status=' + sc + ', trying discipline split');
+                  console.info('paginateByStatusSplit: start_row didn\'t yield more for status=' + sc + ', trying type-code split');
                   const disciplines = [...new Set(result.docs.map((d: any) => d.discipline).filter(Boolean))];
+                  
                   if (disciplines.length > 1) {
+                    // Split by discipline
                     for (const disc of disciplines) {
                       if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) break;
                       try {
@@ -8621,6 +8623,36 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                         console.error('paginateByStatusSplit: discipline sub-search failed:', discErr);
                       }
                     }
+                  }
+                  
+                  // If still capped, split by type codes from the sample
+                  if (allDocs.filter(d => d.status === sc).length <= PAGE_CAP) {
+                    const typeCodes = [...new Set(result.docs.map((d: any) => d.type_code).filter(Boolean))];
+                    console.info('paginateByStatusSplit: splitting status=' + sc + ' by ' + typeCodes.length + ' type codes from sample');
+                    
+                    for (const tc of typeCodes) {
+                      if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) break;
+                      try {
+                        const typeResult = await executeFilteredSearch(params, { status_code: sc, document_type: tc });
+                        const newCount = typeResult.docs.filter((d: any) => d.document_number && !seen.has(d.document_number)).length;
+                        if (newCount > 0 || typeResult.docs.length > 0) {
+                          console.info('paginateByStatusSplit: type=' + tc + ' returned ' + typeResult.docs.length + ' docs (' + newCount + ' new)');
+                        }
+                        for (const doc of typeResult.docs) {
+                          if (doc.document_number && !seen.has(doc.document_number)) {
+                            seen.add(doc.document_number);
+                            allDocs.push(doc);
+                          }
+                        }
+                        // If this type itself hit the cap, try paginating within it
+                        if (typeResult.docs.length >= PAGE_CAP) {
+                          await paginateFilteredSearch(params, { status_code: sc, document_type: tc }, typeResult, seen, allDocs);
+                        }
+                      } catch (typeErr) {
+                        console.error('paginateByStatusSplit: type sub-search failed for ' + tc + ':', typeErr);
+                      }
+                    }
+                    console.info('paginateByStatusSplit: after type-code split for status=' + sc + ', total docs: ' + allDocs.length);
                   }
                 }
               } else {
