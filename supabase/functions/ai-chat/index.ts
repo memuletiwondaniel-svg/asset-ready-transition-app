@@ -8661,10 +8661,19 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               ]);
               const newDocs = pageDocs.filter((d: any) => d.document_number && !existingNums.has(d.document_number));
 
-              if (newDocs.length === 0 && startRow === detectedPageSize + 1) {
+               if (newDocs.length === 0 && startRow === detectedPageSize + 1) {
                 // start_row not supported — fall back to status split
                 console.warn('paginateSearch: start_row pagination unsupported (page 2 all duplicates) — falling back to paginateByStatusSplit');
                 return paginateByStatusSplit(params, firstDocs);
+              }
+              // If we get here on page 2, start_row works! Update paginationTotalAssaiCount even if parseTotalCount failed
+              if (startRow === detectedPageSize + 1 && !totalFromHtml) {
+                // Try to parse total from page 2 as well
+                const page2Total = parseTotalCount(pageHtml);
+                if (page2Total) {
+                  paginationTotalAssaiCount = page2Total;
+                  console.info('paginateSearch: got total from page 2: ' + page2Total);
+                }
               }
 
               if (newDocs.length === 0) break; // No new docs on subsequent pages = done
