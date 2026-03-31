@@ -7685,7 +7685,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
     case "resolve_project_code": {
       try {
         const dpInput = (args.dp_number || '').trim();
-        const dpMatch = dpInput.match(/DP[- ]?(\d+)/i);
+        const dpMatch = dpInput.match(/DP[- ]?(\d+[A-Za-z]?)/i);
         if (!dpMatch) {
           // Try matching by project name if not a DP number
           const { data: nameProjects } = await supabaseClient
@@ -7713,18 +7713,26 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
           return { found: false, error: 'Could not parse DP number from: ' + dpInput + '. Try using the full project name.' };
         }
-        const dpNum = dpMatch[1];
-        const paddedDp = dpNum.padStart(3, '0'); // DP25 → 025
+        const dpNum = dpMatch[1]; // Now includes alpha suffix (e.g. "33A", "300")
+        const hasAlphaSuffix = /[A-Za-z]$/.test(dpNum);
         
-        // Step 1: Try exact match first (DP-025, DP-300)
-        const exactPatterns = [`DP-${paddedDp}`, `DP-${dpNum}`, `DP${dpNum}`];
+        // Build exact patterns — preserve alpha suffix for precision
+        const paddedDigits = dpNum.replace(/[A-Za-z]$/, '').padStart(3, '0');
+        const alphaSuffix = hasAlphaSuffix ? dpNum.slice(-1).toUpperCase() : '';
+        const exactPatterns = [
+          `DP-${paddedDigits}${alphaSuffix}`,
+          `DP-${dpNum}`,
+          `DP${dpNum}`
+        ];
+        
         let projects: any[] = [];
         
+        // Step 1: Try exact match first
         for (const pattern of exactPatterns) {
           const { data } = await supabaseClient
             .from('dms_projects')
             .select('code, project_name, cabinet, proj_seq_nr, project_id')
-            .eq('project_id', pattern)
+            .ilike('project_id', pattern)
             .eq('is_active', true);
           if (data && data.length > 0) {
             projects = data;
@@ -7732,12 +7740,13 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
         }
         
-        // Step 2: Fallback to partial match only if exact match failed
+        // Step 2: Fallback — if alpha suffix present, only match WITH that suffix to prevent DP-33A matching DP-33B
         if (projects.length === 0) {
+          const searchPattern = hasAlphaSuffix ? `%${paddedDigits}${alphaSuffix}%` : `%${dpNum}%`;
           const { data } = await supabaseClient
             .from('dms_projects')
             .select('code, project_name, cabinet, proj_seq_nr, project_id')
-            .ilike('project_id', `%${dpNum}%`)
+            .ilike('project_id', searchPattern)
             .eq('is_active', true)
             .limit(10);
           projects = data || [];
