@@ -56,12 +56,10 @@ async function sendChatAndParse(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
+        apikey: SUPABASE_ANON_KEY,
       },
       body: JSON.stringify({
-        message: query,
-        agentName: "bob",
-        conversationId: null,
-        conversationHistory: [],
+        messages: [{ role: "user", content: query }],
       }),
       signal: controller.signal,
     });
