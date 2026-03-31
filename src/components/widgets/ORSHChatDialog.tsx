@@ -92,6 +92,7 @@ interface Message {
   fileNames?: string[];
   messageId?: string;
   feedbackGiven?: 'positive' | 'negative' | null;
+  agentName?: string;
 }
 
 interface Conversation {
@@ -120,6 +121,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [agentStatus, setAgentStatus] = useState<string>('');
+  const [activeAgent, setActiveAgent] = useState<string>('copilot');
   const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -589,6 +591,19 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
             const parsed = JSON.parse(dataStr);
 
             if (eventType === 'status' && parsed.status) {
+              if (parsed.status.startsWith('agent:')) {
+                const agent = parsed.status.replace('agent:', '');
+                setActiveAgent(agent);
+                setMessages(prev => {
+                  const updated = [...prev];
+                  const lastIdx = updated.length - 1;
+                  if (lastIdx >= 0 && updated[lastIdx].role === 'assistant') {
+                    updated[lastIdx] = { ...updated[lastIdx], agentName: agent };
+                  }
+                  return updated;
+                });
+                continue;
+              }
               setAgentStatus(parsed.status);
               continue;
             }
@@ -705,6 +720,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     } finally {
       setIsLoading(false);
       setAgentStatus('');
+      setActiveAgent('copilot');
     }
   };
 
@@ -1001,11 +1017,24 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
               ) : (
                 /* Messages */
                 <div className="space-y-4">
-                  {messages.map((message, index) => (
+                  {messages.map((message, index) => {
+                    if (isLoading && index === messages.length - 1 && message.role === 'assistant' && !message.content) {
+                      return null;
+                    }
+                    const agentIcon = (() => {
+                      switch (message.agentName) {
+                        case 'document_agent': return { letter: 'S', gradient: 'from-blue-500 to-blue-700' };
+                        case 'pssr_ora_agent': return { letter: 'F', gradient: 'from-green-500 to-green-700' };
+                        case 'hannah': return { letter: 'H', gradient: 'from-purple-500 to-purple-700' };
+                        case 'ivan': return { letter: 'I', gradient: 'from-red-500 to-red-700' };
+                        default: return { letter: 'B', gradient: 'from-amber-500 to-orange-600' };
+                      }
+                    })();
+                    return (
                     <div key={index} className={cn("flex gap-4", message.role === 'user' ? 'justify-end' : 'justify-start')}>
                       {message.role === 'assistant' && (
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
-                          <span className="text-sm font-bold text-white">B</span>
+                        <div className={`h-8 w-8 rounded-full bg-gradient-to-br ${agentIcon.gradient} flex items-center justify-center flex-shrink-0`}>
+                          <span className="text-sm font-bold text-white">{agentIcon.letter}</span>
                         </div>
                       )}
                       <div className={cn(
@@ -1334,25 +1363,45 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                         </div>
                       )}
                     </div>
-                  ))}
+                    );
+                  })}
                   
-                  {isLoading && (
-                    <div className="flex gap-4 items-start">
-                      <div className="h-8 w-8 flex-shrink-0" />
-                      <div className="space-y-2">
-                        <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="flex gap-1.5">
-                              <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '0ms' }} />
-                              <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '150ms' }} />
-                              <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  {isLoading && (() => {
+                    const icon = (() => {
+                      switch (activeAgent) {
+                        case 'document_agent': return { letter: 'S', gradient: 'from-blue-500 to-blue-700' };
+                        case 'pssr_ora_agent': return { letter: 'F', gradient: 'from-green-500 to-green-700' };
+                        case 'hannah': return { letter: 'H', gradient: 'from-purple-500 to-purple-700' };
+                        case 'ivan': return { letter: 'I', gradient: 'from-red-500 to-red-700' };
+                        default: return { letter: 'B', gradient: 'from-amber-500 to-orange-600' };
+                      }
+                    })();
+                    const agentLabel = activeAgent === 'document_agent' ? 'Selma'
+                      : activeAgent === 'pssr_ora_agent' ? 'Fred'
+                      : activeAgent === 'hannah' ? 'Hannah'
+                      : activeAgent === 'ivan' ? 'Ivan' : 'Co-Pilot';
+                    return (
+                      <div className="flex gap-4 items-start">
+                        <div className={`h-8 w-8 rounded-full bg-gradient-to-br ${icon.gradient} flex items-center justify-center flex-shrink-0`}>
+                          <span className="text-sm font-bold text-white">{icon.letter}</span>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="flex gap-1.5">
+                                <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <div className="w-2 h-2 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '300ms' }} />
+                              </div>
+                              <span className="text-xs text-muted-foreground ml-1 transition-opacity duration-300">
+                                {agentStatus || `${agentLabel} is thinking…`}
+                              </span>
                             </div>
-                            <span className="text-xs text-muted-foreground ml-1 transition-opacity duration-300">{agentStatus || 'Co-Pilot is thinking…'}</span>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                   
                   {lastFailedMessage && !isLoading && (
                     <div className="flex justify-center mt-2">
