@@ -8463,6 +8463,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const PAGE_CAP = 100;
         const MAX_TOTAL_QUERIES = 30; // safety: max total Assai requests
         let totalQueryCount = 0;
+        let paginationTotalAssaiCount: number | null = null;
 
         // Helper: execute a single filtered search with its own session
         const executeFilteredSearch = async (
