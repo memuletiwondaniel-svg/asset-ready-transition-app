@@ -11194,7 +11194,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       }
       
       // Step 1: Resolve document type
-      const docTypeResult = await executeTool('resolve_document_type', { query: docTypeText }, supabaseClient);
+      const docTypeResult = await executeTool('resolve_document_type', { query: docTypeText }, supabase);
       let resolvedDocCode: string | null = null;
       let resolvedDocName: string | null = null;
       
@@ -11212,7 +11212,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       
       // Step 2: Resolve project code
       emitStatus('Resolving project...');
-      const projectResult = await executeTool('resolve_project_code', { dp_number: projectText }, supabaseClient);
+      const projectResult = await executeTool('resolve_project_code', { dp_number: projectText }, supabase);
       let resolvedProjectCode: string | null = null;
       let resolvedProjectName: string | null = null;
       
@@ -11228,7 +11228,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
               const result = await executeTool('search_assai_documents', {
                 document_type: resolvedDocCode,
                 document_number_pattern: `${proj.project_code}-%`
-              }, supabaseClient);
+              }, supabase);
               if (result?.found && result.total_found > 0) {
                 allResults.push({ project: proj, result });
               }
@@ -11297,7 +11297,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           document_type: resolvedDocCode,
           document_number_pattern: `${resolvedProjectCode}-%`
         };
-        const searchResult = await executeTool('search_assai_documents', searchArgs, supabaseClient);
+        const searchResult = await executeTool('search_assai_documents', searchArgs, supabase);
         
         if (searchResult) {
           console.log(`SPECIFIC DOC INTERCEPT: Search returned ${searchResult.total_found || 0} results`);
