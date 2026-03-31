@@ -11596,7 +11596,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             const lowerMsg = lastUserMsg.toLowerCase();
             const additionalAcronyms: string[] = [];
             if (lowerMsg.includes('iom')) additionalAcronyms.push('IOM');
-            if (lowerMsg.includes('bfd') || lowerMsg.includes('basis for design')) additionalAcronyms.push('BFD');
+            if (lowerMsg.includes('bfd') || lowerMsg.includes('basis for design') || lowerMsg.includes('basis of design') || lowerMsg.includes('design basis')) additionalAcronyms.push('BFD');
             
             const allCandidates = [...new Set([...acronymCandidates, ...additionalAcronyms])];
             
