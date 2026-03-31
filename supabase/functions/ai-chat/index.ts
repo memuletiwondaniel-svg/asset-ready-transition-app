@@ -3839,7 +3839,7 @@ function detectAgentDomain(message: string): string {
   
   // Selma (Document Intelligence Assistant) triggers
   // Part 1: Simple word-boundary keywords
-  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|sdr|mdr|bfd|basis for design|iom|itp|fat|sat|datasheet|mds|sld|gad|pfd|p&id)\b/i.test(lower)) {
+  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|sdr|mdr|bfd|basis for design|basis of design|design basis|iom|itp|fat|sat|datasheet|mds|sld|gad|pfd|p&id)\b/i.test(lower)) {
     return 'document_agent';
   }
   // Part 2: Multi-word / wildcard patterns (no \b wrapping — these use .* which crosses word boundaries)
@@ -7363,11 +7363,44 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         }
         
         // Step 1b: Check if query matches a full_name in the acronym table (e.g. "Basis for Design" → BFD)
-        const { data: fullNameMatch } = await supabaseClient
-          .from('dms_document_type_acronyms')
-          .select('acronym, type_code, full_name, notes, usage_count')
-          .ilike('full_name', `%${query}%`)
-          .limit(3);
+        // Use keyword-based matching: strip prepositions and match significant words independently
+        const STOP_WORDS = new Set(['of', 'for', 'the', 'a', 'an', 'and', 'in', 'on', 'to', 'is', 'by']);
+        const queryKeywords = query.split(/\s+/).filter(w => !STOP_WORDS.has(w.toLowerCase()) && w.length > 1);
+        console.log('resolve_document_type: keyword extraction:', queryKeywords);
+        
+        let fullNameMatch: any[] | null = null;
+        if (queryKeywords.length >= 2) {
+          // Query with first keyword, then filter client-side for remaining keywords
+          const { data: broadMatch } = await supabaseClient
+            .from('dms_document_type_acronyms')
+            .select('acronym, type_code, full_name, notes, usage_count')
+            .ilike('full_name', `%${queryKeywords[0]}%`)
+            .limit(20);
+          
+          if (broadMatch && broadMatch.length > 0) {
+            fullNameMatch = broadMatch.filter(row => {
+              const nameLower = row.full_name.toLowerCase();
+              return queryKeywords.slice(1).every(kw => nameLower.includes(kw.toLowerCase()));
+            });
+            if (fullNameMatch.length === 0) fullNameMatch = null;
+          }
+        } else if (queryKeywords.length === 1) {
+          // Single keyword — use original ilike
+          const { data: singleMatch } = await supabaseClient
+            .from('dms_document_type_acronyms')
+            .select('acronym, type_code, full_name, notes, usage_count')
+            .ilike('full_name', `%${queryKeywords[0]}%`)
+            .limit(3);
+          fullNameMatch = singleMatch;
+        } else {
+          // Fallback: use original query as-is
+          const { data: fallbackMatch } = await supabaseClient
+            .from('dms_document_type_acronyms')
+            .select('acronym, type_code, full_name, notes, usage_count')
+            .ilike('full_name', `%${query}%`)
+            .limit(3);
+          fullNameMatch = fallbackMatch;
+        }
         
         console.log('resolve_document_type: full_name lookup found:', fullNameMatch?.length ?? 0);
         
@@ -11178,7 +11211,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // disambiguation questions and wrong tool selections.
     // ═══════════════════════════════════════════════════════════════════════
     const specificDocMatch = lastUserText.match(
-      /\b(bfd|basis for design|itp|inspection test plan|iom|fat|sat|sdr|mdr|sld|ga|gad|pfd|p&id|pid|bom|mds|datasheet|report|manual|procedure|specification|ifc|ifr|afc)\b.*?\b(dp[\s-]?\d+[a-z]?)\b|\b(dp[\s-]?\d+[a-z]?)\b.*?\b(bfd|basis for design|itp|inspection test plan|iom|fat|sat|sdr|mdr|sld|ga|gad|pfd|p&id|pid|bom|mds|datasheet|report|manual|procedure|specification|ifc|ifr|afc)\b/i
+      /\b(bfd|basis for design|basis of design|design basis|itp|inspection test plan|iom|fat|sat|sdr|mdr|sld|ga|gad|pfd|p&id|pid|bom|mds|datasheet|report|manual|procedure|specification|ifc|ifr|afc)\b.*?\b(dp[\s-]?\d+[a-z]?)\b|\b(dp[\s-]?\d+[a-z]?)\b.*?\b(bfd|basis for design|basis of design|design basis|itp|inspection test plan|iom|fat|sat|sdr|mdr|sld|ga|gad|pfd|p&id|pid|bom|mds|datasheet|report|manual|procedure|specification|ifc|ifr|afc)\b/i
     );
     
     if (specificDocMatch && !isVendorDiscoveryIntent) {
@@ -11270,7 +11303,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             });
             conversationMessages.push({
               role: 'user',
-              content: `[SYSTEM INSTRUCTION: The document search is COMPLETE. Project "${projectText}" resolved to ${resolvedProjectCode} (${resolvedProjectName}). Document type "${docTypeText}" resolved to code ${resolvedDocCode} (${resolvedDocName}). ${bestResult.total_found || 0} documents found. Your ONLY job is to present these results clearly. Do NOT call resolve_project_code or search_assai_documents again. Do NOT ask the user to clarify the project — it has been resolved. If results were found, present them as a concise list with document number, title, revision, status, and Assai link. If no results, say so clearly.]`
+              content: `[SYSTEM INSTRUCTION: The document search is COMPLETE. Project "${projectText}" resolved to ${resolvedProjectCode} (${resolvedProjectName}). Document type "${docTypeText}" resolved to code ${resolvedDocCode} (${resolvedDocName}). ${bestResult.total_found || 0} documents found. Your ONLY job is to present these results clearly. Do NOT call resolve_project_code or search_assai_documents again. Do NOT ask the user to clarify the project — it has been resolved. If results were found, present them as a concise list with document number, title, revision, status, and Assai link. If no results were found, respond with exactly this structure:\n- Opening: "I searched for ${resolvedDocName} (${resolvedDocCode}) for ${resolvedProjectName} in Assai but found no documents."\n- **What I searched**: project code ${resolvedProjectCode}, document type ${resolvedDocName} (code ${resolvedDocCode}), search pattern ${resolvedProjectCode}-% \n- **Why no results**: At least one sentence explaining the specific reason (e.g. "No documents with type code ${resolvedDocCode} exist under project ${resolvedProjectCode} in Assai."). NEVER leave this section empty or as a bare header.\n- **This could mean**: 3-4 bullet points of possible reasons (document not yet uploaded, different naming convention, stored under a different project code, etc.)\n- Suggest 2-3 follow-up actions using <follow_ups>["action1","action2"]</follow_ups> tags.]`
             });
             
             allToolCallNames.push('resolve_document_type', 'resolve_project_code', 'search_assai_documents');
@@ -11329,7 +11362,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           // Guardrail: tell LLM the work is done
           conversationMessages.push({
             role: 'user',
-            content: `[SYSTEM INSTRUCTION: The document search is COMPLETE. Project "${projectText}" resolved to ${resolvedProjectCode} (${resolvedProjectName}). Document type "${docTypeText}" resolved to code ${resolvedDocCode} (${resolvedDocName}). ${searchResult.total_found || 0} documents found. Your ONLY job is to present these results clearly. Do NOT call resolve_project_code or search_assai_documents again. Do NOT ask the user to clarify the project — it has been resolved. If results were found, present them as a concise list with document number, title, revision, status, and Assai link. If no results, say so clearly.]`
+            content: `[SYSTEM INSTRUCTION: The document search is COMPLETE. Project "${projectText}" resolved to ${resolvedProjectCode} (${resolvedProjectName}). Document type "${docTypeText}" resolved to code ${resolvedDocCode} (${resolvedDocName}). ${searchResult.total_found || 0} documents found. Your ONLY job is to present these results clearly. Do NOT call resolve_project_code or search_assai_documents again. Do NOT ask the user to clarify the project — it has been resolved. If results were found, present them as a concise list with document number, title, revision, status, and Assai link. If no results were found, respond with exactly this structure:\n- Opening: "I searched for ${resolvedDocName} (${resolvedDocCode}) for ${resolvedProjectName} in Assai but found no documents."\n- **What I searched**: project code ${resolvedProjectCode}, document type ${resolvedDocName} (code ${resolvedDocCode}), search pattern ${resolvedProjectCode}-% \n- **Why no results**: At least one sentence explaining the specific reason (e.g. "No documents with type code ${resolvedDocCode} exist under project ${resolvedProjectCode} in Assai."). NEVER leave this section empty or as a bare header.\n- **This could mean**: 3-4 bullet points of possible reasons (document not yet uploaded, different naming convention, stored under a different project code, etc.)\n- Suggest 2-3 follow-up actions using <follow_ups>["action1","action2"]</follow_ups> tags.]`
           });
           
           allToolCallNames.push('resolve_document_type', 'resolve_project_code', 'search_assai_documents');
