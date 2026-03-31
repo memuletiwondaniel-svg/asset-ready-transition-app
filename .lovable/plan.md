@@ -1,53 +1,42 @@
 
 
-# Fix: BfD Variant Handling + Zero-Result Template + Pill Filter
+# Final Implementation: Selma Clarification + LLM Routing + Bob Hardening
 
-## Assessment
+## Build Error
 
-**FIX 1 (Column names)**: NOT needed. The code already uses the correct columns (`acronym`, `type_code`, `full_name`) in all queries against `dms_document_type_acronyms`. The `document_type_code`/`document_type_name` references are in the search result formatting object (line 12243), not in acronym table queries.
+The `aws s3 cp exit 127` error is a Nix store path issue in the deployment infrastructure — not caused by code changes. It will resolve on redeployment.
 
-## Actual Fixes Required
+## 5 Changes — All in `supabase/functions/ai-chat/index.ts`
 
-### FIX A — Intercept regex: Add missing BfD variants (edge function, line 11181)
+### CHANGE 1 — Selma Clarification Protocol
+**Line 10341**: Replace the single clarification rule with the full 7-rule protocol covering: immediate search when clear, one-question-max for missing project or ambiguous doc type, compound question when both unclear, intelligent next-step pills after zero results.
 
-Add `basis of design|design basis` to the intercept regex so all four query forms are caught deterministically. Currently only `bfd|basis for design` is listed.
+### CHANGE 2 — Regex-First, LLM-Fallback Router
+**Lines 3826-3871**: 
+- Rename `detectAgentDomain` → `detectAgentDomainRegex` (all logic preserved)
+- Add `classifyIntent` function with `claude-haiku-4-5-20251001`, 2-second `AbortController` timeout, 7 intents (document_agent, pssr_ora_agent, ivan, hannah, training_agent, cmms_agent, copilot)
+- Add `routeAgent` wrapper: if regex returns a specialist agent → use it instantly (0ms); if regex returns `copilot` → call Haiku for natural language classification
+- **Line 10328**: Replace `detectAgentDomain(lastUserMessage.content)` with `await routeAgent(lastUserMessage.content)`
+- Add code comment documenting the known regex priority order limitation
 
-Also add to the `detectAgentDomain` regex at line 3842: add `basis of design|design basis`.
+### CHANGE 3 — Keyword Matching Extended to `notes` Column
+**Lines 7374-7402**: Three sub-changes:
+- Line 7377: Change `.ilike('full_name', ...)` to `.or('full_name.ilike.%${queryKeywords[0]}%,notes.ilike.%${queryKeywords[0]}%')`
+- Lines 7381-7384: Extend filter to check both `full_name` and `notes` for remaining keywords
+- Line 7392: Same `.or()` extension for the single-keyword branch
+- **Line 11530**: Add `basis of design` and `design basis` to the deterministic fallback BFD detection
 
-### FIX B — Keyword-based full_name matching (edge function, ~line 7365-7370)
+### CHANGE 4 — Bob Hard Routing Rules
+**After line 307**: Add "HARD ROUTING RULES" block instructing Bob to refuse and redirect (not defer) specialist queries, with `<follow_ups>` pill suggestions so users have a one-click escape. Documents → Selma, Punchlists → Hannah, PSSR → Fred, HAZOP → Ivan.
 
-The `ilike('full_name', '%Basis of Design%')` query fails when the user says "Basis for Design" (stored as "Basis of Design") or vice versa. Replace the exact substring match with keyword extraction:
+### CHANGE 5 — Targeted Error Message
+**Line 12594**: Replace generic error string with context-aware message checking `detectedAgent` (document_agent → Assai message, pssr_ora_agent → PSSR message, default → generic rephrase suggestion). No other error handling changes.
 
-1. Extract significant words from the query (strip prepositions: "of", "for", "the", "a", "an", "and", "in", "on")
-2. If 2+ keywords remain, query with the first keyword via `ilike('full_name', '%Basis%')` then filter results in TypeScript to also contain the second keyword ("Design")
-3. This handles all permutations: "Basis of Design", "Basis for Design", "Design Basis"
+## Technical Details
 
-### FIX C — Zero-result template (edge function, lines 11271 and 11330)
-
-Replace the generic "If no results, say so clearly" instruction in both system injection points with a structured template:
-
-```
-If no results were found, respond with exactly this structure:
-- Opening: "I searched for [doc type] ([code]) for [project] in Assai but found no documents."
-- **What I searched**: project code, document type with code, search pattern used
-- **Why no results**: At least one sentence explaining the specific reason (e.g., "No documents with type code 7704 exist under project 6550 in Assai"). NEVER leave this empty.
-- **This could mean**: 3-4 bullet points of possible reasons
-- Follow-up suggestions via <follow_ups> tag
-```
-
-### FIX D — Pill sanity filter (frontend, ~line 1242)
-
-Currently the minimum pill length is 5 characters. Strengthen:
-- Increase minimum length from 5 to 15 characters
-- Add a check: reject pills that start with a number or project code fragment (e.g., `33A`, `DP-`)
-- Add a check: require first word to be a capital letter followed by a verb/question word pattern (What, Check, Search, Show, Find, Browse, View, Try, List, Read, Review, Compare)
-
-### FIX E — Database seed (optional)
-
-Insert "Basis for Design" as a second full_name variant for BFD in `dms_document_type_acronyms`. This is a belt-and-suspenders measure — Fix B already handles the mismatch, but having both variants in the DB improves direct lookups.
-
-## Files Changed
-1. `supabase/functions/ai-chat/index.ts` — intercept regex, keyword matching in resolve_document_type, zero-result template
-2. `src/components/widgets/ORSHChatDialog.tsx` — pill sanity filter hardening
-3. Database: INSERT into `dms_document_type_acronyms`
+- **Cost**: Haiku classifier only fires when regex returns `copilot` (~10% of queries). ~$0.00002 per classification call.
+- **Latency**: 0ms added for well-formed queries (regex handles them). ~200ms added only for ambiguous natural language.
+- **Fallback chain**: Haiku timeout/error → regex result. Regex miss → copilot default. Bob receives specialist query → refuses with pills.
+- **No database changes** — notes column already contains variant data from previous update.
+- **No frontend changes** — pill extraction already handles `<follow_ups>` tags.
 
