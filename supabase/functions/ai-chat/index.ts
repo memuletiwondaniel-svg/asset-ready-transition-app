@@ -3839,7 +3839,7 @@ function detectAgentDomain(message: string): string {
   
   // Selma (Document Intelligence Assistant) triggers
   // Part 1: Simple word-boundary keywords
-  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|sdr|mdr)\b/i.test(lower)) {
+  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|sdr|mdr|bfd|basis for design|iom|itp|fat|sat|datasheet|mds|sld|gad|pfd|p&id)\b/i.test(lower)) {
     return 'document_agent';
   }
   // Part 2: Multi-word / wildcard patterns (no \b wrapping — these use .* which crosses word boundaries)
@@ -7685,7 +7685,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
     case "resolve_project_code": {
       try {
         const dpInput = (args.dp_number || '').trim();
-        const dpMatch = dpInput.match(/DP[- ]?(\d+)/i);
+        const dpMatch = dpInput.match(/DP[- ]?(\d+[A-Za-z]?)/i);
         if (!dpMatch) {
           // Try matching by project name if not a DP number
           const { data: nameProjects } = await supabaseClient
@@ -7713,18 +7713,26 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
           return { found: false, error: 'Could not parse DP number from: ' + dpInput + '. Try using the full project name.' };
         }
-        const dpNum = dpMatch[1];
-        const paddedDp = dpNum.padStart(3, '0'); // DP25 → 025
+        const dpNum = dpMatch[1]; // Now includes alpha suffix (e.g. "33A", "300")
+        const hasAlphaSuffix = /[A-Za-z]$/.test(dpNum);
         
-        // Step 1: Try exact match first (DP-025, DP-300)
-        const exactPatterns = [`DP-${paddedDp}`, `DP-${dpNum}`, `DP${dpNum}`];
+        // Build exact patterns — preserve alpha suffix for precision
+        const paddedDigits = dpNum.replace(/[A-Za-z]$/, '').padStart(3, '0');
+        const alphaSuffix = hasAlphaSuffix ? dpNum.slice(-1).toUpperCase() : '';
+        const exactPatterns = [
+          `DP-${paddedDigits}${alphaSuffix}`,
+          `DP-${dpNum}`,
+          `DP${dpNum}`
+        ];
+        
         let projects: any[] = [];
         
+        // Step 1: Try exact match first
         for (const pattern of exactPatterns) {
           const { data } = await supabaseClient
             .from('dms_projects')
             .select('code, project_name, cabinet, proj_seq_nr, project_id')
-            .eq('project_id', pattern)
+            .ilike('project_id', pattern)
             .eq('is_active', true);
           if (data && data.length > 0) {
             projects = data;
@@ -7732,12 +7740,13 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
         }
         
-        // Step 2: Fallback to partial match only if exact match failed
+        // Step 2: Fallback — if alpha suffix present, only match WITH that suffix to prevent DP-33A matching DP-33B
         if (projects.length === 0) {
+          const searchPattern = hasAlphaSuffix ? `%${paddedDigits}${alphaSuffix}%` : `%${dpNum}%`;
           const { data } = await supabaseClient
             .from('dms_projects')
             .select('code, project_name, cabinet, proj_seq_nr, project_id')
-            .ilike('project_id', `%${dpNum}%`)
+            .ilike('project_id', searchPattern)
             .eq('is_active', true)
             .limit(10);
           projects = data || [];
@@ -11200,8 +11209,108 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             return makeCall();
           }
           return firstAttempt; // Not enough time to retry
-        }
+    }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // PRE-LOOP SPECIFIC DOCUMENT INTERCEPT
+    // Detects "{doc_type} for {project}" patterns and resolves both
+    // deterministically BEFORE the LLM loop, preventing unnecessary
+    // disambiguation questions and wrong tool selections.
+    // ═══════════════════════════════════════════════════════════════════════
+    const specificDocMatch = lastUserText.match(
+      /\b(bfd|basis for design|itp|inspection test plan|iom|fat|sat|sdr|mdr|sld|ga|gad|pfd|p&id|pid|bom|mds|datasheet|report|manual|procedure|specification|ifc|ifr|afc)\b.*?\b(dp[\s-]?\d+[a-z]?)\b|\b(dp[\s-]?\d+[a-z]?)\b.*?\b(bfd|basis for design|itp|inspection test plan|iom|fat|sat|sdr|mdr|sld|ga|gad|pfd|p&id|pid|bom|mds|datasheet|report|manual|procedure|specification|ifc|ifr|afc)\b/i
+    );
+    
+    if (specificDocMatch && !isVendorDiscoveryIntent) {
+      const docTypeText = (specificDocMatch[1] || specificDocMatch[4] || '').trim();
+      const projectText = (specificDocMatch[2] || specificDocMatch[3] || '').trim();
+      
+      console.log(`SPECIFIC DOC INTERCEPT: Detected doc="${docTypeText}" project="${projectText}"`);
+      emitStatus('Resolving document type...');
+      
+      // Force agent to document_agent
+      if (detectedAgent !== 'document_agent') {
+        console.log(`SPECIFIC DOC INTERCEPT: Overriding agent to document_agent`);
+        systemPrompt = DOCUMENT_AGENT_PROMPT + dmsConfigSnapshot + userContextPrompt;
+      }
+      
+      // Step 1: Resolve document type
+      const docTypeResult = await executeTool('resolve_document_type', { query: docTypeText }, supabaseClient);
+      let resolvedDocCode: string | null = null;
+      let resolvedDocName: string | null = null;
+      
+      if (docTypeResult?.found && docTypeResult.matches?.length > 0) {
+        if (docTypeResult.count === 1) {
+          resolvedDocCode = docTypeResult.matches[0].code;
+          resolvedDocName = docTypeResult.matches[0].name;
+        } else {
+          // Multiple matches — combine all codes
+          resolvedDocCode = docTypeResult.matches.map((m: any) => m.code).join('+');
+          resolvedDocName = docTypeResult.matches.map((m: any) => m.name).join(' / ');
+        }
+        console.log(`SPECIFIC DOC INTERCEPT: Resolved doc type "${docTypeText}" → ${resolvedDocCode} (${resolvedDocName})`);
+      }
+      
+      // Step 2: Resolve project code
+      emitStatus('Resolving project...');
+      const projectResult = await executeTool('resolve_project_code', { dp_number: projectText }, supabaseClient);
+      let resolvedProjectCode: string | null = null;
+      let resolvedProjectName: string | null = null;
+      
+      if (projectResult?.found && projectResult.projects?.length > 0) {
+        // Take the first (best) match — the improved regex now handles alpha suffixes
+        resolvedProjectCode = projectResult.projects[0].project_code;
+        resolvedProjectName = projectResult.projects[0].project_name;
+        console.log(`SPECIFIC DOC INTERCEPT: Resolved project "${projectText}" → ${resolvedProjectCode} (${resolvedProjectName})`);
+      }
+      
+      // Step 3: If both resolved, search Assai directly
+      if (resolvedDocCode && resolvedProjectCode) {
+        emitStatus('Searching Assai portal (250,000+ documents)...');
+        const searchArgs: any = {
+          document_type: resolvedDocCode,
+          document_number_pattern: `${resolvedProjectCode}-%`
+        };
+        const searchResult = await executeTool('search_assai_documents', searchArgs, supabaseClient);
+        
+        if (searchResult) {
+          console.log(`SPECIFIC DOC INTERCEPT: Search returned ${searchResult.total_found || 0} results`);
+          
+          // Inject pre-resolved results into conversation so LLM just formats them
+          conversationMessages.push({
+            role: 'assistant',
+            content: [
+              { type: 'text', text: `I'll find the ${resolvedDocName} for project ${resolvedProjectName} (${resolvedProjectCode}).` },
+              { type: 'tool_use', id: 'doc_resolve_intercept_1', name: 'resolve_document_type', input: { query: docTypeText } },
+              { type: 'tool_use', id: 'doc_resolve_intercept_2', name: 'resolve_project_code', input: { dp_number: projectText } },
+              { type: 'tool_use', id: 'doc_search_intercept', name: 'search_assai_documents', input: searchArgs }
+            ]
+          });
+          conversationMessages.push({
+            role: 'user',
+            content: [
+              { type: 'tool_result', tool_use_id: 'doc_resolve_intercept_1', content: JSON.stringify(docTypeResult) },
+              { type: 'tool_result', tool_use_id: 'doc_resolve_intercept_2', content: JSON.stringify(projectResult) },
+              { type: 'tool_result', tool_use_id: 'doc_search_intercept', content: JSON.stringify(searchResult) }
+            ]
+          });
+          // Guardrail: tell LLM the work is done
+          conversationMessages.push({
+            role: 'user',
+            content: `[SYSTEM INSTRUCTION: The document search is COMPLETE. Project "${projectText}" resolved to ${resolvedProjectCode} (${resolvedProjectName}). Document type "${docTypeText}" resolved to code ${resolvedDocCode} (${resolvedDocName}). ${searchResult.total_found || 0} documents found. Your ONLY job is to present these results clearly. Do NOT call resolve_project_code or search_assai_documents again. Do NOT ask the user to clarify the project — it has been resolved. If results were found, present them. If no results, say so clearly.]`
+          });
+          
+          allToolCallNames.push('resolve_document_type', 'resolve_project_code', 'search_assai_documents');
+          lastToolName = 'search_assai_documents';
+          lastToolResult = searchResult;
+          if (searchResult?.found && searchResult?.total_found > 0) {
+            searchToolResult = searchResult;
+          }
+          
+          emitStatus('Compiling results...');
+        }
+      }
+    }
         // Non-429 error (500, 503, etc.) → retry once after 2s
         console.log(`Anthropic API returned ${firstAttempt.status}, retrying in 2s...`);
         await new Promise(r => setTimeout(r, 2000));
@@ -11316,21 +11425,27 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
             if (resolvedCode) {
               // Extract DP number → resolve to PROJECT CODE via dms_projects (NOT a unit code)
-              const dpMatch = lastUserMsg.match(/DP[\s-]*(\d{2,4})/i);
+              const dpMatch = lastUserMsg.match(/DP[\s-]*(\d{2,4}[A-Za-z]?)/i);
               let projectPattern: string | undefined;
               if (dpMatch) {
-                const dpId = `DP${dpMatch[1]}`;
-                // Look up project code from dms_projects
+                const dpId = dpMatch[1]; // e.g. "33A" or "300"
+                const hasAlpha = /[A-Za-z]$/.test(dpId);
+                const paddedDigits = dpId.replace(/[A-Za-z]$/, '').padStart(3, '0');
+                const suffix = hasAlpha ? dpId.slice(-1).toUpperCase() : '';
+                const searchPattern = `%${paddedDigits}${suffix}%`;
+                
+                // Look up project code from dms_projects — precise match
                 const { data: projData } = await supabase
                   .from('dms_projects')
                   .select('code')
-                  .or(`project_id.ilike.%${dpMatch[1]}%,project_id.ilike.%DP${dpMatch[1]}%,project_id.ilike.%DP-${dpMatch[1]}%`)
+                  .ilike('project_id', searchPattern)
+                  .eq('is_active', true)
                   .limit(1);
                 if (projData && projData.length > 0) {
                   projectPattern = `${projData[0].code}-%`;
-                  console.log(`Deterministic fallback: resolved ${dpId} → project code ${projData[0].code}`);
+                  console.log(`Deterministic fallback: resolved DP${dpId} → project code ${projData[0].code}`);
                 } else {
-                  console.log(`Deterministic fallback: could not resolve ${dpId} to a project code`);
+                  console.log(`Deterministic fallback: could not resolve DP${dpId} to a project code`);
                 }
               }
 
