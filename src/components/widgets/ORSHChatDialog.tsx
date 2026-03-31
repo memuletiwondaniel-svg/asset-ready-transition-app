@@ -720,6 +720,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
     } finally {
       setIsLoading(false);
       setAgentStatus('');
+      setActiveAgent('copilot');
     }
   };
 
