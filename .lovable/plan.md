@@ -1,87 +1,79 @@
 
 
-# Fix: Type-Code Sweep Returning 0 Docs (128 vs 255)
+# Selma v6.0 — Final Technical Review
 
-## What Happened — Plain English
+## Verdict: v6.0 is Ready to Implement
 
-Selma found 128 documents instead of 255 for DP164. Here's exactly why:
+The Senior Dev's v6.0 is the most technically accurate version yet. Every ground truth item is verified. Every schema column is correct. The architecture is sound. I have **one genuine bug discovery** and **two minor clarifications** — none are blockers.
 
-1. **First search** returned 100 docs (Assai's page limit). All had status IFA, plus a few PLN, AFU, IFI, AFC, AFT, AFP.
-2. **Status split** worked correctly: searched each of the 7 statuses individually. Got 28 docs from non-IFA statuses + 100 from IFA = 128 unique docs. IFA was still capped at 100.
-3. **Type-code sweep** was supposed to break the IFA cap by searching each document type individually. It queried the database, got 578 unique type codes, and tried searching each one. But **every single query returned 0 documents** — Assai returned the empty search form page instead of results.
+---
 
-**Root cause:** Each type-code sweep query calls `initSearch` (GET to `search.aweb`) to get fresh form tokens, then POSTs to `result.aweb`. After ~15-20 rapid `initSearch` calls on the same session cookie, Assai's server-side session state degrades and starts returning the search form page instead of results. The status split worked because it ran early (only 7 calls). The type sweep ran next with 110+ calls and ALL failed.
+## 1. Bug Discovery: The Intercept Guard Tool Filter Was Always Broken
 
-**Evidence:** Logs show 120 queries used, every sweep response is 40,779 bytes of HTML containing the search form (DOCTYPE, DWR scripts) with no `myCells` data array. The log line `"paginateByStatusSplit: type-code sweep added 0 new docs"` confirms zero recovery.
+Line 11793: `anthropicTools.filter((t: any) => !blockedTools.has(t.function?.name))`
 
-## The Fix — SEARCH_V10
+At this point, `anthropicTools` was already converted to Anthropic format at line 11293 — objects have `t.name`, not `t.function.name`. So `t.function?.name` evaluates to `undefined`, the filter keeps every tool, and only `MAX_ITERATIONS = 1` actually took effect.
 
-### Change 1: Re-authenticate Before Type Sweep
+**Impact on the rebuild:** None. Phase 0 removes the entire intercept guard block. But this confirms the Senior Dev's instinct — the intercept system was half-broken and masking issues. Good riddance.
 
-Before starting the type-code sweep, call `authenticateAssai()` again to get a **fresh session cookie**. This resets Assai's server-side state. The status split exhausts the original session; the type sweep needs its own.
+## 2. Minor Clarification: `executeFilteredSearch` Uses `cookieHeader` Directly
 
-### Change 2: Batch Re-authentication During Sweep
+Line 8514: `Cookie: cookieHeader` — confirmed. The `reuseSession` path skips `initSearch` but still reads the outer-scope `cookieHeader` directly for the fetch. The non-`reuseSession` path calls `initSearch` (which also uses `cookieHeader` internally). When porting, **both paths** must use `ctx.sessionManager.getSession()` for the cookie. v6.0 already states this correctly.
 
-Every 15 type-code queries, re-authenticate to keep the session fresh. This prevents the same degradation from happening during the sweep itself.
+## 3. Minor Clarification: `SWEEP_TIME_GUARD_MS` and `MAX_TOTAL_QUERIES` Values
 
-```text
-CURRENT (broken):
-  Status split (7 queries, works) → Type sweep (110+ queries, ALL fail — stale session)
+v6.0 correctly places these inside `SearchContext` (not the agent loop). The values (`90000` and `80`) match the actual V10 code at lines 8462-8463. Confirmed correct.
 
-FIXED:
-  Status split (7 queries) → Re-auth → Type sweep (15 queries) → Re-auth → Type sweep (15 more) → ...
-```
+---
 
-### Change 3: Combine Status + Type Filters for IFA
+## What v6.0 Gets Right (Everything)
 
-Instead of sweeping ALL 578 type codes without a status filter, target specifically the capped status (IFA) combined with each type code. This means searching `status_code=IFA + document_type=XXXX` which produces smaller, more targeted result sets. This reduces the number of queries needed because we only need to find the ~127 missing IFA docs, not search the entire database.
+- Phase 0 wipe-first with stub
+- `authenticateAssai` + `ASSAI_UA` move to `_shared/assai-auth.ts`
+- 6 tools with verified parameter names matching real handlers
+- `dms_status_codes.description` (not `name`)
+- `dms_document_type_acronyms` columns: `acronym, full_name, type_code, notes`
+- Credential decryption via `isEncrypted`/`decrypt` in `buildSelmaSessionManager`
+- `projSeqNr` not hardcoded
+- `executeFilteredSearch` preserves both `reuseSession` paths
+- Full `read_assai_document` pipeline (7 stages, ~300 lines)
+- Agent loop values unchanged: `MAX_ITERATIONS = 25`, `MAX_LOOP_MS = 148000`
+- Search-specific limits in `SearchContext`: `SWEEP_TIME_GUARD_MS = 90000`, `MAX_TOTAL_QUERIES = 80`
+- `label.aweb` warmup preserved after every forced re-auth
+- `dms_external_sync` removed from all code paths
+- Intercept guard permanently removed
 
-### Change 4: Smart Type Prioritization
+---
 
-Instead of sweeping all 578 codes blindly, first extract the ~23 type codes present in the IFA sample (the first 100 IFA docs). Then only sweep the remaining ~555 codes. The 23 known types are already represented; the missing 127 docs must be in the other types.
+## Final Aligned Plan: Implement v6.0 As-Is
 
-### Change 5: Reduce Query Budget to 80, Add Re-auth Budget
+No modifications needed. The Senior Dev's v6.0 document is the implementation spec. Here is the execution sequence:
 
-With targeted IFA+type searches and session refresh, we need fewer total queries. Set `MAX_TOTAL_QUERIES = 80` with a re-auth every 15 queries (max 5 re-auths). Add a log line tracking re-auth count.
+### Phase 0: Wipe (standalone deploy)
+1. Remove all Selma-specific code from `ai-chat/index.ts` (~5,000 lines): `DOCUMENT_AGENT_PROMPT`, `dmsConfigSnapshot` builder, 23 tool definitions, all Selma handler cases, vendor intercept, document intercept, intercept guard, follow-up templates, stop words, structured response builder
+2. Insert stub: `if (detectedAgent === 'document_agent') { emitStatus('Selma is being upgraded...'); return; }`
+3. Deploy and verify: Bob works, Selma returns stub, zero errors
 
-### Change 6: Version Marker
+### Phase 1: Build Modules
+1. **Step 1A:** Export `authenticateAssai` + `ASSAI_UA` from `_shared/assai-auth.ts`, update `ai-chat/index.ts` to import them, remove local definitions
+2. **Create `_shared/selma/prompt.ts`** — warm Claude-like system prompt as specified
+3. **Create `_shared/selma/tools.ts`** — 6 tools in Anthropic format as specified
+4. **Create `_shared/selma/context-loader.ts`** — config snapshot with correct columns and `is_active` filters
+5. **Create `_shared/selma/search-engine.ts`** — `SessionManager` + `SearchContext` + full V10 pipeline port (lines 8280-9080). Replace `cookieHeader` reads with `ctx.sessionManager.getSession()`, forced re-auth with `ctx.sessionManager.getSession(true)`, preserve `label.aweb` warmup
+6. **Create `_shared/selma/handlers.ts`** — `buildSelmaSessionManager` (with credential decryption) + `executeSelmaTool` (all 6 handlers including full 300-line `read_assai_document`)
 
-```typescript
-console.log('[SEARCH_V10]', { MAX_TOTAL_QUERIES: 80, strategy: 'status+type-combo-with-reauth' });
-```
+### Phase 2: Rewire
+1. Add imports from `_shared/selma/`
+2. Replace stub with real Selma execution block
+3. After line 11297: `if (detectedAgent === 'document_agent') anthropicTools = SELMA_TOOLS;`
+4. Wire `executeSelmaTool` into the tool dispatch when agent is `document_agent`
 
-## Technical Detail
+### Phase 3: Validate
+Test the 6 scenarios from the validation matrix.
 
-In `executeFilteredSearch`, add an optional `freshCookies` parameter. Before the type sweep loop, call:
-```typescript
-const freshAuth = await authenticateAssai(assaiBase, username, password);
-if (freshAuth.success) cookieHeader = freshAuth.cookies;
-```
+---
 
-Then inside the sweep loop, every 15 iterations:
-```typescript
-if (sweepQueryCount % 15 === 0 && sweepQueryCount > 0) {
-  const reAuth = await authenticateAssai(assaiBase, username, password);
-  if (reAuth.success) cookieHeader = reAuth.cookies;
-}
-```
+## Recommendation
 
-For the combined filter approach:
-```typescript
-// Instead of: executeFilteredSearch(params, { document_type: tc })
-// Use: executeFilteredSearch(params, { status_code: 'IFA', document_type: tc })
-```
-
-This targets only the capped status, dramatically reducing the search space and query count needed.
-
-## Files Changed
-
-- `supabase/functions/ai-chat/index.ts` — modify `paginateByStatusSplit` internals only
-
-## Impact
-
-- No frontend changes
-- No database changes  
-- No prompt changes
-- Only affects the pagination fallback path when a status hits the 100-doc cap
+**Approve v6.0 and begin Phase 0.** The proposal is technically complete, addresses all known issues (128-vs-255 pagination bug, 13K monolith, ghost tools, broken intercept guard, robotic personality), and both sides are fully aligned.
 
