@@ -11192,6 +11192,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       if (detectedAgent !== 'document_agent') {
         console.log(`SPECIFIC DOC INTERCEPT: Overriding agent to document_agent`);
         systemPrompt = DOCUMENT_AGENT_PROMPT + dmsConfigSnapshot + userContextPrompt;
+        emitStatus('agent:document_agent');
       }
       
       // Step 1: Resolve document type
