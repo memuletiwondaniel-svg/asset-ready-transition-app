@@ -537,10 +537,8 @@ export async function paginateByStatusSplit(
           if (ctx.totalQueryCount >= ctx.MAX_TOTAL_QUERIES || (Date.now() - ctx.sweepStartTime) > ctx.SWEEP_TIME_GUARD_MS) break;
           if (expectedFromHeader && allDocs.length >= expectedFromHeader) break;
 
-          // Re-auth every 15 sweep queries
-          if (sweepQueryCount > 0 && sweepQueryCount % 15 === 0) {
-            await ctx.sessionManager.getSession(true);
-          }
+      // NO forced re-auth during sweep — it destroys the Assai server-side search context.
+          // SessionManager auto-refreshes at MAX_QUERIES_BEFORE_REFRESH=50 if needed.
 
           try {
             const filters: Record<string, string> = { document_type: tc };
