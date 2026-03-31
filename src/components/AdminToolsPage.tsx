@@ -227,6 +227,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       columns: 3 as const,
       items: [
         { id: 'ai-agent-registry', title: 'Agent Registry', description: 'Bob, Selma, Fred, Hannah & more', icon: Brain, gradient: 'from-violet-500 to-purple-600', badge: '3 live' as const, onClick: () => toast.info('Agent Registry coming soon') },
+        { id: 'selma-validation', title: 'Selma Validation', description: '28 tests across 7 tiers', icon: FlaskConical, gradient: 'from-emerald-500 to-teal-600', badge: 'v6.0' as const, onClick: () => navigate('/admin/selma-validation') },
         { id: 'auto-update-controls', title: 'Auto-Update Controls', description: 'Living doc triggers, update queue', icon: Settings, gradient: 'from-sky-500 to-blue-600', onClick: () => toast.info('Auto-Update Controls coming soon') },
         { id: 'training-feedback', title: 'Training & Feedback', description: 'Agent feedback loop, ratings', icon: HeartPulse, gradient: 'from-pink-500 to-rose-600', onClick: () => toast.info('Training & Feedback coming soon') },
       ],
