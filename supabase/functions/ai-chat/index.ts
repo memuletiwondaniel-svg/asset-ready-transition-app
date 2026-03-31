@@ -8542,7 +8542,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
 
                 if (disciplines.length > 1) {
                   for (const disc of disciplines) {
-                    if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - SWEEP_START_TIME) > SWEEP_TIME_GUARD_MS) break;
+                    if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) break;
                     try {
                       const discDocs = await executeFilteredSearch(params, { status_code: sc, discipline_code: disc });
                       for (const doc of discDocs) {
