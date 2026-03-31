@@ -322,7 +322,7 @@ const ALL_TESTS: TestDef[] = [
     agent: "bob",
     autoAssert: (r, m) => ({
       pass: !m.hasError && r.length > 30,
-      details: "Response received — verify discover_project_vendors was called in logs",
+      details: "Response received — LOG CHECK: verify [Selma] Tool: discover_project_vendors in edge function logs (https://supabase.com/dashboard/project/kgnrjqjbonuvpxxfvfjq/functions/ai-chat/logs). If [Selma] Tool: search_assai_documents appears instead → FAIL.",
     }),
   },
   {
