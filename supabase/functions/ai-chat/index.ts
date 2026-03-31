@@ -11194,7 +11194,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       }
       
       // Step 1: Resolve document type
-      const docTypeResult = await executeTool('resolve_document_type', { query: docTypeText }, supabaseClient);
+      const docTypeResult = await executeTool('resolve_document_type', { query: docTypeText }, supabase);
       let resolvedDocCode: string | null = null;
       let resolvedDocName: string | null = null;
       
