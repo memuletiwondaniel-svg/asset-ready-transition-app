@@ -3343,7 +3343,7 @@ function detectAgentDomainRegex(message: string): string {
   
   // Selma (Document Intelligence Assistant) triggers
   // Part 1: Simple word-boundary keywords
-  if (/\b(documents?|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|sdr|mdr|bfd|basis for design|basis of design|design basis|iom|itp|fat|sat|datasheet|mds|sld|gad|pfd|p&id)\b/i.test(lower)) {
+  if (/\b(documents?|docs|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|sdr|mdr|bfd|basis for design|basis of design|design basis|iom|itp|fat|sat|datasheet|mds|sld|gad|pfd|p&id)\b/i.test(lower)) {
     return 'document_agent';
   }
   // Part 2: Multi-word / wildcard patterns (no \b wrapping — these use .* which crosses word boundaries)
@@ -3411,7 +3411,8 @@ Intents:
     });
     clearTimeout(timeoutId);
     const data = await response.json();
-    const parsed = JSON.parse(data.content[0].text);
+    const rawText = data.content[0].text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const parsed = JSON.parse(rawText);
     console.log(`classifyIntent: Haiku returned intent="${parsed.intent}" confidence=${parsed.confidence}`);
     return parsed.confidence >= 0.7 ? parsed.intent : detectAgentDomainRegex(userMessage);
   } catch (err) {
