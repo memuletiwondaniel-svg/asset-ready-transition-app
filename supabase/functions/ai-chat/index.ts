@@ -11114,6 +11114,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             console.log(`VENDOR DISCOVERY INTERCEPT: Found ${discoverData.total_vendor_packages} vendor packages`);
             
             // Inject the result into conversation as a pre-executed tool result
+            // Also inject a STRONG instruction to prevent the LLM from calling search_assai_documents
             conversationMessages.push({
               role: 'assistant',
               content: [
@@ -11126,6 +11127,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
               content: [
                 { type: 'tool_result', tool_use_id: 'vendor_discovery_intercept', content: JSON.stringify(discoverData) }
               ]
+            });
+            // Inject a system-level guardrail: do NOT search for documents after vendor discovery
+            conversationMessages.push({
+              role: 'user',
+              content: `[SYSTEM INSTRUCTION: The discover_project_vendors tool has already been executed and returned ${discoverData.total_vendor_packages} vendor packages. Your ONLY job now is to format these results into a clear vendor summary table. Do NOT call search_assai_documents — the vendor discovery is COMPLETE. Present the data showing Vendor Code, Vendor Name, PO Number, Package Scope, and Document Count. The user asked about vendors/suppliers — they do NOT want a raw document list.]`
             });
             
             allToolCallNames.push('discover_project_vendors');
