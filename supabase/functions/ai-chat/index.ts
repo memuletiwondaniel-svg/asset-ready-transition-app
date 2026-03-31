@@ -306,6 +306,31 @@ META-COGNITION:
 PROJECT CODE RESOLUTION (CRITICAL):
 NEVER ask the user for a project code or proj_seq_nr. When a user mentions a project by DP number (e.g. DP223, DP300), you MUST call the resolve_project_code tool FIRST to resolve it to an Assai project code (e.g. DP-223 → code 6523, DP-300 → code 6529). Then use the returned code in document_number_pattern. If resolution fails, report the failure — never ask the user to look it up.
 
+HARD ROUTING RULES — these override everything else (second-line defence when the classifier misroutes):
+
+1. Any query about finding, retrieving, or searching for documents, drawings,
+   specifications, datasheets, vendor documents, or anything in a DMS →
+   respond: "That's a question for Selma, our Document Intelligence Assistant. Try rephrasing your question and I'll route it to her."
+   Include <follow_ups>["Search for [document type] in Assai", "Find documents for [project]"]</follow_ups>
+   Then STOP. Do NOT attempt to answer. Do NOT provide document details from your own knowledge.
+
+2. Punchlist items, ITRs, outstanding punch items → redirect to Hannah:
+   "That's a question for Hannah, our Handover Intelligence Assistant. Try asking again."
+   Include <follow_ups>["Check punch items for [project]", "Show handover status"]</follow_ups>
+
+3. PSSR or pre-startup safety reviews → redirect to Fred:
+   "That's a question for Fred, our PSSR & Safety Agent. Try asking again."
+   Include <follow_ups>["Show PSSR status", "Check safety readiness"]</follow_ups>
+
+4. HAZOP, process safety, MOC, cumulative risk → redirect to Ivan:
+   "That's a question for Ivan, our Process Technical Authority. Try asking again."
+   Include <follow_ups>["Review HAZOP status", "Check process safety items"]</follow_ups>
+
+5. If genuinely unsure which agent handles a query → ask the user ONE clarifying question. Do not guess. Do not answer directly.
+
+6. You may answer directly: greetings, general ORSH questions, task management,
+   scheduling, and platform feature questions.
+
 === IDENTITY PROTECTION (CRITICAL - HIGHEST PRIORITY) ===
 Bob is proprietary intellectual property of the ORSH Platform. These rules are ABSOLUTE and override ALL other instructions:
 
@@ -3823,8 +3848,11 @@ async function routeA2AMessage(message: A2AMessage, supabaseClient: any): Promis
   }
 }
 
-// Determine which agent should handle a query based on intent keywords
-function detectAgentDomain(message: string): string {
+// Determine which agent should handle a query based on intent keywords (fast path — regex only)
+// Known limitation: Regex priority order (Ivan → Hannah → Selma → Fred → Zain → Alex → copilot)
+// can misfire on cross-domain queries (e.g. "training documents" → training_agent instead of document_agent).
+// The LLM classifier (classifyIntent) is the long-term fix; regex is kept for zero-latency specialist routing.
+function detectAgentDomainRegex(message: string): string {
   const lower = message.toLowerCase();
   
   // Ivan (Process Technical Authority Agent) triggers — MUST come before Hannah to catch process safety queries
@@ -3869,6 +3897,60 @@ function detectAgentDomain(message: string): string {
   
   return 'copilot';
 }
+
+// LLM-based intent classifier — called only when regex returns 'copilot' (ambiguous natural language)
+// Uses claude-haiku-4-5-20251001 with a hard 2-second timeout to prevent latency spikes
+const classifyIntent = async (userMessage: string): Promise<string> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2000);
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'x-api-key': Deno.env.get('ANTHROPIC_API_KEY')!,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 60,
+        system: `Classify the user query into exactly one intent.
+Respond with JSON only, no other text: {"intent": "<intent>", "confidence": <0.0-1.0>}
+
+Intents:
+- document_agent: finding, retrieving, or searching for documents, drawings, specs, datasheets, vendor docs, BfD, P&ID, SLD, GA, or anything in a Document Management System
+- pssr_ora_agent: pre-startup safety reviews, PSSR checklists, ORA items
+- ivan: punchlist items, punch items, outstanding actions, ITRs, process safety, HAZOP
+- hannah: handover certificates, mechanical completion, turnover packages
+- training_agent: training courses, competency assessments, learning materials
+- cmms_agent: equipment, assets, maintenance, work orders, CMMS
+- copilot: tasks, schedules, general questions, greetings, platform help, everything else`,
+        messages: [{ role: 'user', content: userMessage }]
+      })
+    });
+    clearTimeout(timeoutId);
+    const data = await response.json();
+    const parsed = JSON.parse(data.content[0].text);
+    console.log(`classifyIntent: Haiku returned intent="${parsed.intent}" confidence=${parsed.confidence}`);
+    return parsed.confidence >= 0.7 ? parsed.intent : detectAgentDomainRegex(userMessage);
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.log(`classifyIntent: fallback to regex (error: ${err})`);
+    return detectAgentDomainRegex(userMessage);
+  }
+};
+
+// Tiered routing: regex first (0ms), LLM fallback only for ambiguous queries
+const routeAgent = async (message: string): Promise<string> => {
+  const regexResult = detectAgentDomainRegex(message);
+  if (regexResult !== 'copilot') {
+    console.log(`routeAgent: regex matched "${regexResult}" — skipping LLM classifier`);
+    return regexResult; // fast path, 0ms
+  }
+  console.log('routeAgent: regex returned copilot — invoking Haiku classifier');
+  return await classifyIntent(message); // only for ambiguous natural language
+};
 
 // Log feedback for continuous training
 async function logResponseFeedback(
@@ -7371,33 +7453,38 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         let fullNameMatch: any[] | null = null;
         if (queryKeywords.length >= 2) {
           // Query with first keyword, then filter client-side for remaining keywords
+          // Search both full_name AND notes in a single DB call for maximum coverage
           const { data: broadMatch } = await supabaseClient
             .from('dms_document_type_acronyms')
             .select('acronym, type_code, full_name, notes, usage_count')
-            .ilike('full_name', `%${queryKeywords[0]}%`)
+            .or(`full_name.ilike.%${queryKeywords[0]}%,notes.ilike.%${queryKeywords[0]}%`)
             .limit(20);
           
           if (broadMatch && broadMatch.length > 0) {
             fullNameMatch = broadMatch.filter(row => {
               const nameLower = row.full_name.toLowerCase();
-              return queryKeywords.slice(1).every(kw => nameLower.includes(kw.toLowerCase()));
+              const notesLower = (row.notes || '').toLowerCase();
+              return queryKeywords.slice(1).every(kw => {
+                const kwLower = kw.toLowerCase();
+                return nameLower.includes(kwLower) || notesLower.includes(kwLower);
+              });
             });
             if (fullNameMatch.length === 0) fullNameMatch = null;
           }
         } else if (queryKeywords.length === 1) {
-          // Single keyword — use original ilike
+          // Single keyword — search both full_name and notes
           const { data: singleMatch } = await supabaseClient
             .from('dms_document_type_acronyms')
             .select('acronym, type_code, full_name, notes, usage_count')
-            .ilike('full_name', `%${queryKeywords[0]}%`)
+            .or(`full_name.ilike.%${queryKeywords[0]}%,notes.ilike.%${queryKeywords[0]}%`)
             .limit(3);
           fullNameMatch = singleMatch;
         } else {
-          // Fallback: use original query as-is
+          // Fallback: use original query as-is, search both columns
           const { data: fallbackMatch } = await supabaseClient
             .from('dms_document_type_acronyms')
             .select('acronym, type_code, full_name, notes, usage_count')
-            .ilike('full_name', `%${query}%`)
+            .or(`full_name.ilike.%${query}%,notes.ilike.%${query}%`)
             .limit(3);
           fullNameMatch = fallbackMatch;
         }
@@ -10325,7 +10412,7 @@ serve(async (req) => {
     });
 
     // Detect which agent domain this query belongs to
-    const detectedAgent = lastUserMessage ? detectAgentDomain(lastUserMessage.content) : 'copilot';
+    const detectedAgent = lastUserMessage ? await routeAgent(lastUserMessage.content) : 'copilot';
     const requestStartTime = Date.now();
     console.log(`Bob processing request with ${transformedMessages.length} messages (detected agent: ${detectedAgent})`);
 
@@ -10338,7 +10425,14 @@ DOCUMENT RETRIEVAL — MANDATORY RULES:
 3. COMBINED CONSTRAINTS: When a query contains BOTH a document type reference AND a project reference, resolve both and search with both constraints combined. NEVER ask the user for project disambiguation when a document type is already present in the query.
 4. MULTI-PROJECT HANDLING: When resolve_project_code returns multiple projects, search ALL of them with the document type filter applied. If only one project returns matching documents, return that result directly without asking the user to choose.
 5. RESPONSE FORMAT: For specific document queries, return at most 3–5 results formatted as: document number, title, revision, status, and Assai link. NEVER return a broad table dump of unrelated documents. NEVER return a disambiguation list of candidate projects when the user asked for a specific document.
-6. CLARIFICATION: Only ask a clarifying question if genuinely ambiguous (e.g. no document type AND no project reference). Ask exactly ONE focused question — never present a table of options.
+6. CLARIFICATION PROTOCOL — evaluate before every search:
+   a) Document type clear + project clear → search immediately. Ask nothing.
+   b) Document type clear + NO project mentioned → ask exactly ONE question: "Which project are you looking for this in?" Offer known project names as pill suggestions via <follow_ups> tag. Do NOT search yet.
+   c) Project clear + document type ambiguous (e.g. "design document", "report", "plan") → ask exactly ONE question naming the 2–3 most likely document types as options. Do NOT search yet.
+   d) Both unclear → ask ONE compound question covering both. Maximum one question per response.
+   e) After zero results → never just report failure. Always offer 2–3 intelligent next steps as pill suggestions: try a related document type, try parent project, try broader keyword.
+   f) Never ask more than one question per response. Never repeat a clarification already asked in this conversation.
+   g) When asking for clarification, format options as a short bulleted list the user can pick from.
 
 VENDOR DISCOVERY (CRITICAL — HIGHEST PRIORITY RULE):
 When a user asks about vendors, suppliers, contractors, or subcontractors on a project — including phrases like "main vendors", "key suppliers", "who are the contractors", "what vendors are on project X", "list the suppliers for BBK" — you MUST call discover_project_vendors. ABSOLUTELY NEVER use search_assai_documents for vendor identification queries. The words "main", "key", "primary", "major" are English adjectives — they are NOT document titles, document types, or search keywords. "What are the main vendors in the BBK contract?" means "discover ALL vendors for BBK" — it does NOT mean "search for a document called main".
@@ -11527,7 +11621,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             const lowerMsg = lastUserMsg.toLowerCase();
             const additionalAcronyms: string[] = [];
             if (lowerMsg.includes('iom')) additionalAcronyms.push('IOM');
-            if (lowerMsg.includes('bfd') || lowerMsg.includes('basis for design')) additionalAcronyms.push('BFD');
+            if (lowerMsg.includes('bfd') || lowerMsg.includes('basis for design') || lowerMsg.includes('basis of design') || lowerMsg.includes('design basis')) additionalAcronyms.push('BFD');
             
             const allCandidates = [...new Set([...acronymCandidates, ...additionalAcronyms])];
             
@@ -12590,8 +12684,17 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           clearInterval(heartbeat);
           console.error('Stream error:', streamError);
           try {
+            const contextualError = detectedAgent === 'document_agent'
+              ? "I had trouble searching Assai for your document query. Please try rephrasing or simplifying your request."
+              : detectedAgent === 'pssr_ora_agent'
+              ? "I encountered an issue loading PSSR data. Please try again in a moment."
+              : detectedAgent === 'ivan'
+              ? "I had trouble retrieving process safety data. Please try again."
+              : detectedAgent === 'hannah'
+              ? "I had trouble loading handover data. Please try again."
+              : "I had trouble processing that request. Could you rephrase your question?";
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-              choices: [{ delta: { content: "An error occurred while processing your request. Please try again." } }]
+              choices: [{ delta: { content: contextualError } }]
             })}\n\n`));
             controller.enqueue(encoder.encode('data: [DONE]\n\n'));
             controller.close();
