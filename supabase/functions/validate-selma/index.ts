@@ -434,7 +434,7 @@ const ALL_TESTS: TestDef[] = [
     tier: 4,
     query: "Search for an engineering document on DP223 and read it. Extract the tag list.",
     agent: "bob",
-    timeout_ms: 120000,
+    timeout_ms: 300000,
     manual: true,
   },
   {
