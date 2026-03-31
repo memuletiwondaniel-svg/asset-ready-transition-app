@@ -361,8 +361,8 @@ export async function executeFilteredSearch(
   if (startRow && startRow > 1) formData.set('start_row', String(startRow));
 
   const searchUrl = ctx.assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
-  // Use searchresult.aweb — consistent with fetchResultPage and all working integrations
-  const resp = await fetch(ctx.assaiBase + '/searchresult.aweb', {
+  // Revert to result.aweb — searchresult.aweb returns 404 in form-based search context
+  const resp = await fetch(ctx.assaiBase + '/result.aweb', {
     method: 'POST',
     headers: {
       Cookie: cookieHeader,
