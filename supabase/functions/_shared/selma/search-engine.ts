@@ -378,6 +378,7 @@ export async function executeFilteredSearch(
   for (const f of subHidden) formData.set(f.name, f.value);
   for (const f of subText) formData.set(f.name, '');
   formData.set('subclass_type', params.subclass_type);
+  formData.set('number_of_results', '500'); // Maximize results per page
   if (ctx.poDigits) {
     formData.set('purchase_code', ctx.poDigits);
   } else if (ctx.document_number_pattern) {
