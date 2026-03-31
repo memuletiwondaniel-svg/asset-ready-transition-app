@@ -701,13 +701,34 @@ serve(async (req) => {
   }
 
   try {
-    const { tier, token } = await req.json();
+    const { tier, token: providedToken } = await req.json();
     
+    // If no token provided, self-authenticate using TEST_USER credentials
+    let token = providedToken;
     if (!token) {
-      return new Response(
-        JSON.stringify({ error: "Authorization token required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      const testEmail = Deno.env.get("TEST_USER_EMAIL");
+      const testPassword = Deno.env.get("TEST_USER_PASSWORD");
+      if (!testEmail || !testPassword) {
+        return new Response(
+          JSON.stringify({ error: "No token provided and TEST_USER_EMAIL/TEST_USER_PASSWORD secrets not configured" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      console.log("[validate-selma] No token provided — self-authenticating with TEST_USER credentials");
+      const authResp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
+        body: JSON.stringify({ email: testEmail, password: testPassword }),
+      });
+      const authBody = await authResp.json();
+      if (!authBody.access_token) {
+        return new Response(
+          JSON.stringify({ error: `Self-auth failed: ${JSON.stringify(authBody)}` }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      token = authBody.access_token;
+      console.log("[validate-selma] Self-authentication successful");
     }
 
     // Filter tests by tier
