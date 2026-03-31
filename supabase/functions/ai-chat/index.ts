@@ -8574,14 +8574,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 const disciplines = [...new Set(docs.map((d: any) => d.discipline).filter(Boolean))];
                 console.info('paginateByStatusSplit: status=' + sc + ' hit cap, splitting by ' + disciplines.length + ' disciplines');
 
-                if (disciplines.length <= 1) {
-                  for (const doc of docs) {
-                    if (doc.document_number && !seen.has(doc.document_number)) {
-                      seen.add(doc.document_number);
-                      allDocs.push(doc);
-                    }
-                  }
-                } else {
+                if (disciplines.length > 1) {
                   for (const disc of disciplines) {
                     if (totalQueryCount >= MAX_TOTAL_QUERIES) break;
                     try {
@@ -8594,6 +8587,35 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                       }
                     } catch (discErr) {
                       console.error('paginateByStatusSplit: sub-sub-search failed:', discErr);
+                    }
+                  }
+                } else {
+                  // Single or no discipline — try splitting by document_type instead
+                  const typeCodesInCap = [...new Set(docs.map((d: any) => d.type_code).filter(Boolean))];
+                  console.info('paginateByStatusSplit: single discipline for status=' + sc + ', splitting by ' + typeCodesInCap.length + ' document types');
+                  
+                  if (typeCodesInCap.length > 1) {
+                    for (const tc of typeCodesInCap) {
+                      if (totalQueryCount >= MAX_TOTAL_QUERIES) break;
+                      try {
+                        const typeDocs = await executeFilteredSearch(params, { status_code: sc, document_type: tc });
+                        for (const doc of typeDocs) {
+                          if (doc.document_number && !seen.has(doc.document_number)) {
+                            seen.add(doc.document_number);
+                            allDocs.push(doc);
+                          }
+                        }
+                      } catch (typeErr) {
+                        console.error('paginateByStatusSplit: type sub-search failed:', typeErr);
+                      }
+                    }
+                  } else {
+                    // Last resort: add what we have (capped at 100)
+                    for (const doc of docs) {
+                      if (doc.document_number && !seen.has(doc.document_number)) {
+                        seen.add(doc.document_number);
+                        allDocs.push(doc);
+                      }
                     }
                   }
                 }
