@@ -8456,6 +8456,16 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           } else {
             console.warn('parseTotalCount DIAGNOSTIC — NO pagination text found in HTML');
           }
+          // Diagnostic: capture full getCount call
+          const getCountDiag = html.match(/getCount\s*\(\s*["']?(\d+)["']?\s*\)/i);
+          if (getCountDiag) {
+            console.info('parseTotalCount DIAGNOSTIC — getCount argument: ' + getCountDiag[1]);
+          }
+          // Diagnostic: capture ROWCOUNT context (200 chars around it)
+          const rowCountIdx = html.indexOf('ROWCOUNT');
+          if (rowCountIdx >= 0) {
+            console.info('parseTotalCount DIAGNOSTIC — ROWCOUNT context: ' + html.substring(rowCountIdx, rowCountIdx + 200));
+          }
           // Also check for myCells array length as a signal
           const myCellsLenMatch = html.match(/var\s+myCells\s*=\s*\[/);
           if (myCellsLenMatch) {
@@ -8499,7 +8509,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // Multi-query search: if a search hits the 100-row cap, split into independent
         // sub-searches (by status, then by discipline if needed), each with its own search.aweb session.
         const PAGE_CAP = 100;
-        const MAX_TOTAL_QUERIES = 30; // safety: max total Assai requests
+        const MAX_TOTAL_QUERIES = 50; // safety: max total Assai requests (need ~35 for 7 statuses + 23 type sub-splits)
         let totalQueryCount = 0;
         let paginationTotalAssaiCount: number | null = null;
 
