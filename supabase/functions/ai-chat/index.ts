@@ -8509,7 +8509,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // Multi-query search: if a search hits the 100-row cap, split into independent
         // sub-searches (by status, then by discipline if needed), each with its own search.aweb session.
         const PAGE_CAP = 100;
-        const MAX_TOTAL_QUERIES = 50; // safety: max total Assai requests (need ~35 for 7 statuses + 23 type sub-splits)
+        const MAX_TOTAL_QUERIES = 80; // safety: max total Assai requests (need ~70 for full dms_document_types sweep)
+        console.log('[SEARCH_V3]', { MAX_TOTAL_QUERIES: 80, strategy: 'dms-type-sweep' });
         let totalQueryCount = 0;
         let paginationTotalAssaiCount: number | null = null;
 
