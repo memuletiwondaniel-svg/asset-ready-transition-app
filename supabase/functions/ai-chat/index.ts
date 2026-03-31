@@ -8635,7 +8635,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             // Fetch ALL active document type codes from the database
             let allTypeCodes: string[] = [];
             try {
-              const { data: allTypes } = await supabaseAdmin
+              const { data: allTypes } = await supabase
                 .from('dms_document_types')
                 .select('code')
                 .eq('is_active', true)
