@@ -8482,7 +8482,10 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           // Pattern 4: resultCount element
           const m3 = html.match(/resultCount[^>]*>(\d+)/i);
           if (m3) { console.info('parseTotalCount: matched pattern 3, total=' + m3[1]); return parseInt(m3[1], 10); }
-          // Pattern 5: Assai-specific "rowCount" or similar JS variable
+          // Pattern 5: Assai CORE ROWCOUNT — RowCount.getCount("255") or getCount("1234")
+          const m4a = html.match(/getCount\s*\(\s*["'](\d+)["']\s*\)/i);
+          if (m4a) { console.info('parseTotalCount: matched Assai ROWCOUNT pattern, total=' + m4a[1]); return parseInt(m4a[1], 10); }
+          // Pattern 5b: Assai-specific "rowCount" or similar JS variable
           const m4 = html.match(/(?:rowCount|totalRows|totalCount|recordCount|maxRows)\s*[=:]\s*['"]?(\d+)/i);
           if (m4) { console.info('parseTotalCount: matched pattern 4 (JS var), total=' + m4[1]); return parseInt(m4[1], 10); }
           // Pattern 6: Assai DWR-style total in navigation controls 
