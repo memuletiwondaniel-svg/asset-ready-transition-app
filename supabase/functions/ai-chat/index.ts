@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { loginAssai } from "../_shared/assai-auth.ts";
+import { loginAssai, authenticateAssai, ASSAI_UA } from "../_shared/assai-auth.ts";
+import { SELMA_SYSTEM_PROMPT } from '../_shared/selma/prompt.ts';
+import { SELMA_TOOLS } from '../_shared/selma/tools.ts';
+import { executeSelmaTool, buildSelmaSessionManager } from '../_shared/selma/handlers.ts';
+import { buildDmsConfigSnapshot } from '../_shared/selma/context-loader.ts';
 
 // Smart region inference from project titles
 function inferRegionFromTitle(title: string): 'North' | 'Central' | 'South' | null {
