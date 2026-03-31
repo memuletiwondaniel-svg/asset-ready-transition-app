@@ -8467,15 +8467,26 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         let paginationTotalAssaiCount: number | null = null;
 
         // Helper: execute a single filtered search with its own session
+        // Returns { docs, hiddenFields, textFields } so caller can paginate with start_row
         const executeFilteredSearch = async (
           params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string },
           extraFilters: Record<string, string>,
-        ): Promise<any[]> => {
-          if (totalQueryCount >= MAX_TOTAL_QUERIES) return [];
+          startRow?: number,
+          reuseSession?: { hiddenFields: any[]; textFields: any[] },
+        ): Promise<{ docs: any[]; hiddenFields: any[]; textFields: any[] }> => {
+          if (totalQueryCount >= MAX_TOTAL_QUERIES) return { docs: [], hiddenFields: [], textFields: [] };
           totalQueryCount++;
           await new Promise(r => setTimeout(r, 300));
 
-          const { hiddenFields: subHidden, textFields: subText } = await initSearch(params);
+          let subHidden: any[], subText: any[];
+          if (reuseSession) {
+            subHidden = reuseSession.hiddenFields;
+            subText = reuseSession.textFields;
+          } else {
+            const init = await initSearch(params);
+            subHidden = init.hiddenFields;
+            subText = init.textFields;
+          }
           const formData = new URLSearchParams();
           for (const f of subHidden) formData.set(f.name, f.value);
           for (const f of subText) formData.set(f.name, '');
@@ -8489,10 +8500,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           if (effectiveDocType) formData.set('document_type', effectiveDocType);
           if (company_code) formData.set('company_code', company_code);
           if (title) formData.set('description', title);
-          // "All projects" scope — let initSearch hidden fields pass through as-is
-          // Apply extra filters (status_code, discipline_code overrides)
           for (const [k, v] of Object.entries(extraFilters)) {
             formData.set(k, v);
+          }
+          if (startRow && startRow > 1) {
+            formData.set('start_row', String(startRow));
           }
 
           const searchUrl = assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
@@ -8509,17 +8521,67 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             redirect: 'follow',
           });
           const html = await resp.text();
-          return parseDocuments(html, params.subclass_type);
+          return { docs: parseDocuments(html, params.subclass_type), hiddenFields: subHidden, textFields: subText };
         };
 
-        // Fallback: status-split pagination (extracted verbatim from original paginateSearch)
+        // Helper: paginate a filtered sub-search using start_row (reusing the same session)
+        const paginateFilteredSearch = async (
+          params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string },
+          extraFilters: Record<string, string>,
+          firstResult: { docs: any[]; hiddenFields: any[]; textFields: any[] },
+          seen: Set<string>,
+          allDocs: any[],
+        ): Promise<void> => {
+          // Add first page docs
+          for (const doc of firstResult.docs) {
+            if (doc.document_number && !seen.has(doc.document_number)) {
+              seen.add(doc.document_number);
+              allDocs.push(doc);
+            }
+          }
+          
+          if (firstResult.docs.length < PAGE_CAP) return; // Not capped, done
+          
+          // Try start_row pagination within this filtered search
+          const pageSize = firstResult.docs.length;
+          let startRow = pageSize + 1;
+          let consecutiveEmpty = 0;
+          
+          while (consecutiveEmpty < 2) {
+            if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) break;
+            
+            const pageResult = await executeFilteredSearch(params, extraFilters, startRow, firstResult);
+            const newDocs = pageResult.docs.filter((d: any) => d.document_number && !seen.has(d.document_number));
+            
+            if (newDocs.length === 0) {
+              consecutiveEmpty++;
+              if (startRow === pageSize + 1) {
+                // Page 2 returned no new docs — start_row not supported for filtered searches
+                console.warn('paginateFilteredSearch: start_row unsupported for filter ' + JSON.stringify(extraFilters) + ', falling back to discipline/type split');
+                break;
+              }
+            } else {
+              consecutiveEmpty = 0;
+              for (const doc of newDocs) {
+                seen.add(doc.document_number);
+                allDocs.push(doc);
+              }
+              console.info('paginateFilteredSearch: start_row=' + startRow + ' returned ' + newDocs.length + ' new docs (total: ' + allDocs.length + ')');
+            }
+            
+            startRow += pageSize;
+            if (startRow > 10000) break; // Safety cap
+          }
+        };
+
+        // Fallback: status-split pagination
         const paginateByStatusSplit = async (
           params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string },
           firstDocs: any[],
         ): Promise<any[]> => {
-          sweepStartTime = Date.now(); // set when search actually executes, not when closure is created
+          sweepStartTime = Date.now();
           const statusCodes = [...new Set(firstDocs.map((d: any) => d.status).filter(Boolean))];
-          console.info('paginateByStatusSplit: splitting into ' + statusCodes.length + ' status sub-searches: ' + statusCodes.join(', ') + ' (time guard: ' + SWEEP_TIME_GUARD_MS + 'ms)');
+          console.info('paginateByStatusSplit: splitting into ' + statusCodes.length + ' status sub-searches: ' + statusCodes.join(', '));
 
           if (statusCodes.length <= 1) {
             console.warn('paginateByStatusSplit: single status, cannot split further');
@@ -8534,94 +8596,35 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             console.info('paginateByStatusSplit: sub-search for status=' + sc);
 
             try {
-              const docs = await executeFilteredSearch(params, { status_code: sc });
-              console.info('paginateByStatusSplit: status=' + sc + ' returned ' + docs.length + ' docs');
+              const result = await executeFilteredSearch(params, { status_code: sc });
+              console.info('paginateByStatusSplit: status=' + sc + ' returned ' + result.docs.length + ' docs');
 
-              if (docs.length >= PAGE_CAP) {
-                const disciplines = [...new Set(docs.map((d: any) => d.discipline).filter(Boolean))];
-                console.info('paginateByStatusSplit: status=' + sc + ' hit cap, splitting by ' + disciplines.length + ' disciplines');
-
-                if (disciplines.length > 1) {
-                  for (const disc of disciplines) {
-                    if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) break;
-                    try {
-                      const discDocs = await executeFilteredSearch(params, { status_code: sc, discipline_code: disc });
-                      for (const doc of discDocs) {
-                        if (doc.document_number && !seen.has(doc.document_number)) {
-                          seen.add(doc.document_number);
-                          allDocs.push(doc);
-                        }
+              if (result.docs.length >= PAGE_CAP) {
+                // Hit cap — try start_row pagination within this status filter first
+                console.info('paginateByStatusSplit: status=' + sc + ' hit cap, trying start_row pagination within filtered search');
+                await paginateFilteredSearch(params, { status_code: sc }, result, seen, allDocs);
+                
+                // If start_row didn't help much, fall back to discipline split
+                const countAfterPagination = allDocs.length;
+                const docsForThisStatus = result.docs.length; // at least PAGE_CAP
+                // Check if we got significantly more than the initial cap
+                if (allDocs.filter(d => d.status === sc).length <= PAGE_CAP) {
+                  console.info('paginateByStatusSplit: start_row didn\'t yield more for status=' + sc + ', trying discipline split');
+                  const disciplines = [...new Set(result.docs.map((d: any) => d.discipline).filter(Boolean))];
+                  if (disciplines.length > 1) {
+                    for (const disc of disciplines) {
+                      if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) break;
+                      try {
+                        const discResult = await executeFilteredSearch(params, { status_code: sc, discipline_code: disc });
+                        await paginateFilteredSearch(params, { status_code: sc, discipline_code: disc }, discResult, seen, allDocs);
+                      } catch (discErr) {
+                        console.error('paginateByStatusSplit: discipline sub-search failed:', discErr);
                       }
-                    } catch (discErr) {
-                      console.error('paginateByStatusSplit: sub-sub-search failed:', discErr);
                     }
                   }
-                } else {
-                  // Single or no discipline — sweep ALL known type codes from dms_document_types reference table
-                  // This fixes the bug where only type codes from the first 100 results were searched
-                  console.info('paginateByStatusSplit: single discipline for status=' + sc + ', fetching ALL type codes from dms_document_types');
-                  
-                  // Add the capped docs first (they're valid, just incomplete)
-                  for (const doc of docs) {
-                    if (doc.document_number && !seen.has(doc.document_number)) {
-                      seen.add(doc.document_number);
-                      allDocs.push(doc);
-                    }
-                  }
-                  
-                  // Query ALL active type codes from reference table
-                  let allTypeCodes: string[] = [];
-                  try {
-                    const { data: allTypes } = await supabaseClient
-                      .from('dms_document_types')
-                      .select('code')
-                      .eq('is_active', true);
-                    allTypeCodes = [...new Set((allTypes || []).map((t: any) => t.code))];
-                    console.info('paginateByStatusSplit: loaded ' + allTypeCodes.length + ' unique type codes from dms_document_types');
-                  } catch (dbErr) {
-                    console.error('paginateByStatusSplit: failed to load type codes from DB, falling back to sample:', dbErr);
-                    allTypeCodes = [...new Set(docs.map((d: any) => d.type_code).filter(Boolean))];
-                  }
-                  
-                  // Skip type codes already fully covered in the initial 100
-                  const typesInSample = new Map<string, number>();
-                  for (const doc of docs) {
-                    if (doc.type_code) {
-                      typesInSample.set(doc.type_code, (typesInSample.get(doc.type_code) || 0) + 1);
-                    }
-                  }
-                  // Only sub-search types that either: aren't in sample, or have exactly 100 docs (might be capped themselves)
-                  const typesToSearch = allTypeCodes.filter(tc => {
-                    const count = typesInSample.get(tc) || 0;
-                    return count === 0; // Not in sample — could have docs we haven't seen
-                  });
-                  
-                  console.info('paginateByStatusSplit: searching ' + typesToSearch.length + ' type codes not in initial sample (skipping ' + typesInSample.size + ' already found)');
-                  
-                  for (const tc of typesToSearch) {
-                    if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) {
-                      console.warn('paginateByStatusSplit: hit budget at type ' + tc + ' (queries: ' + totalQueryCount + '/' + MAX_TOTAL_QUERIES + ', elapsed: ' + (Date.now() - sweepStartTime) + 'ms)');
-                      break;
-                    }
-                    try {
-                      const typeDocs = await executeFilteredSearch(params, { status_code: sc, document_type: tc });
-                      if (typeDocs.length > 0) {
-                        console.info('paginateByStatusSplit: type=' + tc + ' returned ' + typeDocs.length + ' NEW docs');
-                      }
-                      for (const doc of typeDocs) {
-                        if (doc.document_number && !seen.has(doc.document_number)) {
-                          seen.add(doc.document_number);
-                          allDocs.push(doc);
-                        }
-                      }
-                    } catch (typeErr) {
-                      console.error('paginateByStatusSplit: type sub-search failed for ' + tc + ':', typeErr);
-                    }
-                  }
-                  console.info('paginateByStatusSplit: after full type sweep for status=' + sc + ', total docs so far: ' + allDocs.length);
                 }
               } else {
-                for (const doc of docs) {
+                for (const doc of result.docs) {
                   if (doc.document_number && !seen.has(doc.document_number)) {
                     seen.add(doc.document_number);
                     allDocs.push(doc);
