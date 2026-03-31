@@ -9,8 +9,8 @@ const corsHeaders = {
 };
 
 /**
- * Diagnostic probe: replays the exact sync-assai-projects pagination pattern
- * against a specific project to verify start_row pagination and re-auth recovery.
+ * Probe v2: Tests whether a fresh search.aweb GET before EACH result.aweb POST
+ * allows filtered and paginated searches to work.
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -26,18 +26,13 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Get credentials (same as sync-assai-projects)
-    const { data: creds, error: credErr } = await supabase
+    const { data: creds } = await supabase
       .from("dms_sync_credentials")
       .select("base_url, username_encrypted, password_encrypted, db_name")
       .eq("dms_platform", "assai")
       .single();
 
-    if (credErr || !creds) {
-      return new Response(JSON.stringify({ error: "No Assai credentials", log }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!creds) return new Response(JSON.stringify({ error: "No creds" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const baseUrl = (creds.base_url || "https://eu.assaicloud.com").replace(/\/+$/, "");
     const dbName = creds.db_name || "eu578";
@@ -49,217 +44,47 @@ Deno.serve(async (req) => {
       const { isEncrypted, decrypt } = await import("../_shared/crypto.ts");
       if (username && isEncrypted(username)) username = await decrypt(username);
       if (password && isEncrypted(password)) password = await decrypt(password);
-    } catch (e) {
-      L("Decryption failed: " + e);
+    } catch (e) { L("Decrypt err: " + e); }
+
+    // Auth
+    const origin = baseUrl.match(/^(https?:\/\/[^/]+)/)?.[1] || baseUrl;
+    const auth = await authenticateAssai(origin, username, password, dbName);
+    if (!auth.success || !auth.cookies) {
+      return new Response(JSON.stringify({ error: "Auth failed", log }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+    const cookieHeader = auth.cookies;
+    L("Auth OK");
 
-    // ========== TEST 1: Authenticate ==========
-    L("=== TEST 1: Initial Authentication ===");
-    const authResult = await authenticateAssai(
-      baseUrl.match(/^(https?:\/\/[^/]+)/)?.[1] || baseUrl,
-      username, password, dbName
-    );
-    if (!authResult.success || !authResult.cookies) {
-      return new Response(JSON.stringify({ error: "Auth failed", detail: authResult.error, log }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    let cookieHeader = authResult.cookies;
-    L("Auth OK, cookie length: " + cookieHeader.length);
-
-    // ========== TEST 2: label.aweb warmup ==========
-    L("=== TEST 2: label.aweb warmup ===");
-    const labelResp = await fetch(assaiBase + "/label.aweb?subclass_type=DES_DOC", {
-      headers: { Cookie: cookieHeader, "User-Agent": ASSAI_UA },
-      redirect: "follow",
-    });
-    await labelResp.text();
-    L("label.aweb status: " + labelResp.status);
-
-    // ========== TEST 3: search.aweb GET (like sync-assai-projects) ==========
-    L("=== TEST 3: search.aweb GET ===");
     const searchUrl = assaiBase + "/search.aweb?subclass_type=DES_DOC";
-    const searchResp = await fetch(searchUrl, {
-      headers: { Cookie: cookieHeader, Accept: "text/html", "User-Agent": ASSAI_UA },
-      redirect: "follow",
-    });
-    const searchHtml = await searchResp.text();
-    const allFields = extractHiddenFields(searchHtml);
-    const hiddenFields = allFields.filter(f => f.type === "hidden" && f.name && f.value);
-    const textFields = allFields.filter(f => f.type === "text" || f.type === "");
-    L("search.aweb: status=" + searchResp.status + ", html=" + searchHtml.length + ", hidden=" + hiddenFields.length + ", text=" + textFields.length);
 
-    // Helper: build form data (replicates sync-assai-projects exactly)
-    const buildForm = (startRow?: number) => {
-      const fd = new URLSearchParams();
-      for (const f of hiddenFields) fd.set(f.name, f.value);
-      for (const f of textFields) fd.set(f.name, "");
-      fd.set("subclass_type", "DES_DOC");
-      fd.set("number", "6529%"); // DP164 project pattern
-      fd.set("proj_seq_nr", "");
-      fd.set("selected_project_codes", "");
-      if (startRow && startRow > 1) fd.set("start_row", String(startRow));
-      return fd;
-    };
-
-    // Helper: POST to result.aweb and count myCells
-    const postResult = async (label: string, startRow?: number) => {
-      const fd = buildForm(startRow);
-      const resp = await fetch(assaiBase + "/result.aweb", {
-        method: "POST",
-        headers: {
-          Cookie: cookieHeader,
-          "Content-Type": "application/x-www-form-urlencoded",
-          Accept: "text/html",
-          Referer: searchUrl,
-          "User-Agent": ASSAI_UA,
-        },
-        body: fd.toString(),
-        redirect: "follow",
-      });
-      const html = await resp.text();
-      const match = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function|\/\/|$)/m);
-      let rowCount = 0;
-      let hasLoginPage = html.includes('type="password"') || html.includes('loginForm');
-      let hasAppFrame = html.includes('applet:') || html.includes('.aweb');
-      let totalMatch = html.match(/(?:showing|results?)\s+\d+\s*(?:[-–]|to)\s+\d+\s+of\s+(\d+)/i);
-      let parsedTotal = totalMatch ? parseInt(totalMatch[1], 10) : null;
-      if (match) {
-        try { rowCount = JSON.parse(match[1]).length; } catch { rowCount = -1; }
-      }
-      L(`${label}: status=${resp.status}, html=${html.length}, myCells=${rowCount}, loginPage=${hasLoginPage}, parsedTotal=${parsedTotal}`);
-      
-      // Log first 500 chars if no myCells found
-      if (rowCount === 0 && !hasLoginPage) {
-        L(`${label} HTML preview: ${html.substring(0, 500).replace(/\n/g, ' ')}`);
-      }
-      
-      return { rowCount, hasLoginPage, parsedTotal, html };
-    };
-
-    // ========== TEST 4: Page 1 (no start_row) ==========
-    L("=== TEST 4: result.aweb Page 1 (sync-assai-projects style) ===");
-    const page1 = await postResult("Page1", undefined);
-
-    // ========== TEST 5: Page 2 (start_row=101) ==========
-    L("=== TEST 5: result.aweb Page 2 (start_row=101) ===");
-    await new Promise(r => setTimeout(r, 300));
-    const page2 = await postResult("Page2", 101);
-
-    // ========== TEST 6: Page 3 (start_row=201) ==========
-    L("=== TEST 6: result.aweb Page 3 (start_row=201) ===");
-    await new Promise(r => setTimeout(r, 300));
-    const page3 = await postResult("Page3", 201);
-
-    // ========== TEST 7: Re-auth then retry ==========
-    L("=== TEST 7: Re-authenticate and retry ===");
-    const authResult2 = await authenticateAssai(
-      baseUrl.match(/^(https?:\/\/[^/]+)/)?.[1] || baseUrl,
-      username, password, dbName
-    );
-    if (authResult2.success && authResult2.cookies) {
-      cookieHeader = authResult2.cookies;
-      L("Re-auth OK");
-
-      // label.aweb warmup
+    // Helper: full cycle = label + search.aweb GET + result.aweb POST
+    const fullCycle = async (label: string, extraFields: Record<string, string>) => {
+      // 1. label.aweb warmup
       await fetch(assaiBase + "/label.aweb?subclass_type=DES_DOC", {
         headers: { Cookie: cookieHeader, "User-Agent": ASSAI_UA },
         redirect: "follow",
       }).then(r => r.text());
-      L("Post-reauth label.aweb done");
 
-      // search.aweb GET (must re-establish search context)
-      const searchResp2 = await fetch(searchUrl, {
+      // 2. search.aweb GET
+      const searchResp = await fetch(searchUrl, {
         headers: { Cookie: cookieHeader, Accept: "text/html", "User-Agent": ASSAI_UA },
         redirect: "follow",
       });
-      const searchHtml2 = await searchResp2.text();
-      const fields2 = extractHiddenFields(searchHtml2);
-      const hidden2 = fields2.filter(f => f.type === "hidden" && f.name && f.value);
-      const text2 = fields2.filter(f => f.type === "text" || f.type === "");
-      L("Post-reauth search.aweb: hidden=" + hidden2.length + ", text=" + text2.length);
+      const searchHtml = await searchResp.text();
+      const fields = extractHiddenFields(searchHtml);
+      const hidden = fields.filter(f => f.type === "hidden" && f.name && f.value);
+      const text = fields.filter(f => f.type === "text" || f.type === "");
 
-      // Update helpers to use new fields
-      const buildForm2 = (startRow?: number) => {
-        const fd = new URLSearchParams();
-        for (const f of hidden2) fd.set(f.name, f.value);
-        for (const f of text2) fd.set(f.name, "");
-        fd.set("subclass_type", "DES_DOC");
-        fd.set("number", "6529%");
-        fd.set("proj_seq_nr", "");
-        fd.set("selected_project_codes", "");
-        if (startRow && startRow > 1) fd.set("start_row", String(startRow));
-        return fd;
-      };
-
-      const postResult2 = async (label: string, startRow?: number) => {
-        const fd = buildForm2(startRow);
-        const resp = await fetch(assaiBase + "/result.aweb", {
-          method: "POST",
-          headers: {
-            Cookie: cookieHeader,
-            "Content-Type": "application/x-www-form-urlencoded",
-            Accept: "text/html",
-            Referer: searchUrl,
-            "User-Agent": ASSAI_UA,
-          },
-          body: fd.toString(),
-          redirect: "follow",
-        });
-        const html = await resp.text();
-        const match = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function|\/\/|$)/m);
-        let rowCount = 0;
-        let hasLoginPage = html.includes('type="password"') || html.includes('loginForm');
-        let totalMatch = html.match(/(?:showing|results?)\s+\d+\s*(?:[-–]|to)\s+\d+\s+of\s+(\d+)/i);
-        let parsedTotal = totalMatch ? parseInt(totalMatch[1], 10) : null;
-        if (match) {
-          try { rowCount = JSON.parse(match[1]).length; } catch { rowCount = -1; }
-        }
-        L(`${label}: status=${resp.status}, html=${html.length}, myCells=${rowCount}, loginPage=${hasLoginPage}, parsedTotal=${parsedTotal}`);
-        if (rowCount === 0 && !hasLoginPage) {
-          L(`${label} HTML preview: ${html.substring(0, 500).replace(/\n/g, ' ')}`);
-        }
-        return { rowCount, hasLoginPage, parsedTotal };
-      };
-
-      L("=== TEST 7a: Post-reauth Page 1 ===");
-      const reauth_page1 = await postResult2("ReauthPage1", undefined);
-
-      L("=== TEST 7b: Post-reauth Page 2 ===");
-      await new Promise(r => setTimeout(r, 300));
-      const reauth_page2 = await postResult2("ReauthPage2", 101);
-    } else {
-      L("Re-auth FAILED: " + authResult2.error);
-    }
-
-    // ========== TEST 8: Filtered search (status_code) ==========
-    L("=== TEST 8: Filtered search by status_code ===");
-    // Re-init for filtered search
-    await fetch(assaiBase + "/label.aweb?subclass_type=DES_DOC", {
-      headers: { Cookie: cookieHeader, "User-Agent": ASSAI_UA },
-      redirect: "follow",
-    }).then(r => r.text());
-    
-    const searchResp3 = await fetch(searchUrl, {
-      headers: { Cookie: cookieHeader, Accept: "text/html", "User-Agent": ASSAI_UA },
-      redirect: "follow",
-    });
-    const searchHtml3 = await searchResp3.text();
-    const fields3 = extractHiddenFields(searchHtml3);
-    const hidden3 = fields3.filter(f => f.type === "hidden" && f.name && f.value);
-    const text3 = fields3.filter(f => f.type === "text" || f.type === "");
-    
-    // Search with status_code filter
-    for (const sc of ["C01", "C02", "C04"]) {
+      // 3. result.aweb POST
       const fd = new URLSearchParams();
-      for (const f of hidden3) fd.set(f.name, f.value);
-      for (const f of text3) fd.set(f.name, "");
+      for (const f of hidden) fd.set(f.name, f.value);
+      for (const f of text) fd.set(f.name, "");
       fd.set("subclass_type", "DES_DOC");
       fd.set("number", "6529%");
-      fd.set("status_code", sc);
       fd.set("proj_seq_nr", "");
       fd.set("selected_project_codes", "");
-      
+      for (const [k, v] of Object.entries(extraFields)) fd.set(k, v);
+
       const resp = await fetch(assaiBase + "/result.aweb", {
         method: "POST",
         headers: {
@@ -275,26 +100,67 @@ Deno.serve(async (req) => {
       const html = await resp.text();
       const match = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function|\/\/|$)/m);
       let rowCount = 0;
-      if (match) { try { rowCount = JSON.parse(match[1]).length; } catch { rowCount = -1; } }
-      L(`Status=${sc}: myCells=${rowCount}, html=${html.length}`);
-      
+      let firstDocNums: string[] = [];
+      if (match) {
+        try {
+          const cells = JSON.parse(match[1]);
+          rowCount = cells.length;
+          firstDocNums = cells.slice(0, 3).map((r: any) => String(r[3] || '').replace(/<[^>]*>/g, '').trim());
+        } catch { rowCount = -1; }
+      }
+      const hasLogin = html.includes('type="password"');
+      L(`${label}: rows=${rowCount}, login=${hasLogin}, samples=${firstDocNums.join(', ')}`);
+      return { rowCount, firstDocNums };
+    };
+
+    // ========== TEST A: Unfiltered (baseline) ==========
+    L("=== TEST A: Unfiltered baseline ===");
+    const baseline = await fullCycle("Baseline", {});
+    await new Promise(r => setTimeout(r, 300));
+
+    // ========== TEST B: Filtered by status (fresh cycle each) ==========
+    const statusResults: Record<string, number> = {};
+    const allDocNums = new Set<string>();
+
+    for (const sc of ["C01", "C02", "C04", "C06", "C07", "C09"]) {
+      L(`=== TEST B: Status=${sc} (fresh cycle) ===`);
+      const result = await fullCycle(`Status_${sc}`, { status_code: sc });
+      statusResults[sc] = result.rowCount;
+      // Collect doc numbers for uniqueness check
+      result.firstDocNums.forEach(n => allDocNums.add(n));
       await new Promise(r => setTimeout(r, 300));
     }
 
+    // ========== TEST C: Filtered by document_type (fresh cycle each) ==========
+    L("=== TEST C: Type-code filter ===");
+    const typeResults: Record<string, number> = {};
+    for (const tc of ["2365", "C017", "C001"]) {
+      const result = await fullCycle(`Type_${tc}`, { document_type: tc });
+      typeResults[tc] = result.rowCount;
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    // ========== TEST D: Combined status + type (fresh cycle) ==========
+    L("=== TEST D: Combined filters ===");
+    const combo = await fullCycle("Combo_C01_2365", { status_code: "C01", document_type: "2365" });
+
     // Summary
     L("=== SUMMARY ===");
-    L("Page1: " + page1.rowCount + " rows, total=" + page1.parsedTotal);
-    L("Page2: " + page2.rowCount + " rows");
-    L("Page3: " + page3.rowCount + " rows");
-    L("Pagination works: " + (page2.rowCount > 0 ? "YES" : "NO"));
+    L("Baseline (unfiltered): " + baseline.rowCount + " rows");
+    const statusTotal = Object.values(statusResults).reduce((a, b) => a + b, 0);
+    L("Status splits: " + JSON.stringify(statusResults) + " = " + statusTotal + " total");
+    L("Type splits: " + JSON.stringify(typeResults));
+    L("Combo (C01+2365): " + combo.rowCount);
+    L("Fresh-cycle-per-query approach works: " + (statusTotal > baseline.rowCount ? "YES — found " + statusTotal + " vs " + baseline.rowCount : "PARTIALLY"));
 
     return new Response(JSON.stringify({
       success: true,
-      pagination_works: page2.rowCount > 0,
-      page1_rows: page1.rowCount,
-      page1_total: page1.parsedTotal,
-      page2_rows: page2.rowCount,
-      page3_rows: page3.rowCount,
+      baseline_rows: baseline.rowCount,
+      status_splits: statusResults,
+      status_total: statusTotal,
+      type_splits: typeResults,
+      combo_rows: combo.rowCount,
+      fresh_cycle_works: statusTotal > 0,
       log,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
