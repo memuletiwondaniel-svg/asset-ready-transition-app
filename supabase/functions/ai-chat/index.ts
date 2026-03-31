@@ -6658,6 +6658,7 @@ serve(async (req) => {
 
     // Create Supabase client for database queries
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabaseClient = supabase; // Alias for functions that reference supabaseClient
 
     // User ID from verified JWT
     const currentUserId: string | null = (_claimsData.claims.sub as string) || null;
