@@ -8554,34 +8554,68 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                     }
                   }
                 } else {
-                  // Single or no discipline — try splitting by document_type instead
-                  const typeCodesInCap = [...new Set(docs.map((d: any) => d.type_code).filter(Boolean))];
-                  console.info('paginateByStatusSplit: single discipline for status=' + sc + ', splitting by ' + typeCodesInCap.length + ' document types');
+                  // Single or no discipline — sweep ALL known type codes from dms_document_types reference table
+                  // This fixes the bug where only type codes from the first 100 results were searched
+                  console.info('paginateByStatusSplit: single discipline for status=' + sc + ', fetching ALL type codes from dms_document_types');
                   
-                  if (typeCodesInCap.length > 1) {
-                    for (const tc of typeCodesInCap) {
-                      if (totalQueryCount >= MAX_TOTAL_QUERIES) break;
-                      try {
-                        const typeDocs = await executeFilteredSearch(params, { status_code: sc, document_type: tc });
-                        for (const doc of typeDocs) {
-                          if (doc.document_number && !seen.has(doc.document_number)) {
-                            seen.add(doc.document_number);
-                            allDocs.push(doc);
-                          }
-                        }
-                      } catch (typeErr) {
-                        console.error('paginateByStatusSplit: type sub-search failed:', typeErr);
-                      }
-                    }
-                  } else {
-                    // Last resort: add what we have (capped at 100)
-                    for (const doc of docs) {
-                      if (doc.document_number && !seen.has(doc.document_number)) {
-                        seen.add(doc.document_number);
-                        allDocs.push(doc);
-                      }
+                  // Add the capped docs first (they're valid, just incomplete)
+                  for (const doc of docs) {
+                    if (doc.document_number && !seen.has(doc.document_number)) {
+                      seen.add(doc.document_number);
+                      allDocs.push(doc);
                     }
                   }
+                  
+                  // Query ALL active type codes from reference table
+                  let allTypeCodes: string[] = [];
+                  try {
+                    const { data: allTypes } = await supabaseClient
+                      .from('dms_document_types')
+                      .select('code')
+                      .eq('is_active', true);
+                    allTypeCodes = [...new Set((allTypes || []).map((t: any) => t.code))];
+                    console.info('paginateByStatusSplit: loaded ' + allTypeCodes.length + ' unique type codes from dms_document_types');
+                  } catch (dbErr) {
+                    console.error('paginateByStatusSplit: failed to load type codes from DB, falling back to sample:', dbErr);
+                    allTypeCodes = [...new Set(docs.map((d: any) => d.type_code).filter(Boolean))];
+                  }
+                  
+                  // Skip type codes already fully covered in the initial 100
+                  const typesInSample = new Map<string, number>();
+                  for (const doc of docs) {
+                    if (doc.type_code) {
+                      typesInSample.set(doc.type_code, (typesInSample.get(doc.type_code) || 0) + 1);
+                    }
+                  }
+                  // Only sub-search types that either: aren't in sample, or have exactly 100 docs (might be capped themselves)
+                  const typesToSearch = allTypeCodes.filter(tc => {
+                    const count = typesInSample.get(tc) || 0;
+                    return count === 0; // Not in sample — could have docs we haven't seen
+                  });
+                  
+                  console.info('paginateByStatusSplit: searching ' + typesToSearch.length + ' type codes not in initial sample (skipping ' + typesInSample.size + ' already found)');
+                  
+                  for (const tc of typesToSearch) {
+                    if (totalQueryCount >= MAX_TOTAL_QUERIES) {
+                      console.warn('paginateByStatusSplit: hit query budget at type ' + tc + ' (' + totalQueryCount + '/' + MAX_TOTAL_QUERIES + ')');
+                      break;
+                    }
+                    try {
+                      const typeDocs = await executeFilteredSearch(params, { status_code: sc, document_type: tc });
+                      if (typeDocs.length > 0) {
+                        console.info('paginateByStatusSplit: type=' + tc + ' returned ' + typeDocs.length + ' NEW docs');
+                      }
+                      for (const doc of typeDocs) {
+                        if (doc.document_number && !seen.has(doc.document_number)) {
+                          seen.add(doc.document_number);
+                          allDocs.push(doc);
+                        }
+                      }
+                    } catch (typeErr) {
+                      console.error('paginateByStatusSplit: type sub-search failed for ' + tc + ':', typeErr);
+                    }
+                  }
+                  console.info('paginateByStatusSplit: after full type sweep for status=' + sc + ', total docs so far: ' + allDocs.length);
                 }
               } else {
                 for (const doc of docs) {
