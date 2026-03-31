@@ -11732,6 +11732,15 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         }
         
         console.log(`[Iteration ${iteration}] Executing tool: ${toolName}`, toolArgs);
+        
+        // GUARD: Block search_assai_documents if vendor discovery already succeeded
+        if (toolName === 'search_assai_documents' && allToolCallNames.includes('discover_project_vendors') && lastToolResult?.success) {
+          console.log(`GUARD: Blocking search_assai_documents — vendor discovery already completed with ${lastToolResult.total_vendor_packages} packages`);
+          const guardResult = { found: false, total_found: 0, message: 'Vendor discovery already completed. Use the discover_project_vendors results instead of searching for documents.' };
+          toolResultContents.push({ type: 'tool_result', tool_use_id: toolBlock.id, content: JSON.stringify(guardResult) });
+          continue;
+        }
+        
         emitStatus(TOOL_STATUS_LABELS[toolName] || 'Processing...');
         const toolResult = await executeTool(toolName, toolArgs, supabase);
         console.log(`[Iteration ${iteration}] Tool result for ${toolName}:`, typeof toolResult === 'object' ? JSON.stringify(toolResult).substring(0, 500) : toolResult);
