@@ -8614,7 +8614,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return allDocs;
         };
 
-        const paginateSearch = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }): Promise<any[]> => {
+         const paginateSearch = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }): Promise<any[]> => {
           const paginationStartTime = Date.now();
           // Step 1: Unfiltered search — gets first page
           const { hiddenFields, textFields } = await initSearch(params);
@@ -8630,14 +8630,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
 
           if (firstDocs.length < PAGE_CAP) return firstDocs;
 
-          // Step 2: Sequential start_row pagination with two-tier approach
-          // Tier 1: first page = full document objects for display
-          // Tier 2: subsequent pages = metadata only (type_code, status, document_number) for accurate breakdown
-          if (!totalFromHtml) {
-            // Total unknown — fall back to status split
-            console.warn('paginateSearch: totalFromHtml is null, falling back to paginateByStatusSplit');
-            return paginateByStatusSplit(params, firstDocs);
-          }
+          // Step 2: Try sequential start_row pagination FIRST (even without totalFromHtml)
+          // This probes page 2 to see if Assai supports start_row offset
+          const estimatedTotal = totalFromHtml || 10000; // If unknown, try up to 10k
 
           const detectedPageSize = firstDocs.length;
           const allDocs = [...firstDocs]; // Tier 1: full docs from page 1
