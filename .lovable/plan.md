@@ -1,81 +1,71 @@
 
 
-# Revised Plan: Full-Accuracy Breakdown Table
+# Fix: IFA Type-Split Missing Documents (137 vs 255)
 
-## The Problem You've Identified
+## Root Cause Analysis
 
-You're right — it IS misleading. If Selma says "DP-XXX has 5,000 documents" but the breakdown table only reflects the 500 she fetched, the type/status counts are **wrong**. They represent a biased sample (whatever Assai's default sort returns first), not the real distribution. A table showing "ZV: 47" when the real number is 312 is worse than no table at all.
+**Who is responding?** Selma. Confirmed — logs show `search_assai_documents` tool calls, not Bob.
 
-## Why This Happens
+**Why 137 instead of 255?** The status-split works correctly for 6 of 7 statuses (PLN=2, AFU=2, IFI=6, AFC=5, AFT=6, AFP=7 = 28 docs). The problem is IFA, which has ~227 docs but the split only recovers 109.
 
-The previous plan capped fetching at 500 documents and built `type_summary`/`status_summary` from only those 500. The `parseTotalCount` gives us the real total (5,000) but we only have metadata from 500 — the breakdown is a partial view presented as if it were complete.
+**The specific bug:** When IFA hits the 100-doc cap, the code extracts type codes from those 100 results and sub-searches each type. But there are only 23 type codes in the first 100 IFA docs. The remaining ~118 IFA docs have type codes that DON'T appear in that 100-doc sample — so they're never searched.
 
-## The Fix: Separate the Metadata Sweep from the Document Display
+**Why parseTotalCount will never work:** The Assai HTML contains `getCount("100", "100", null, true, ...)` — these are pagination display parameters, NOT the total count. The real total is loaded client-side via DWR/AJAX, which server-side HTML scraping cannot access.
 
-**Key insight**: Selma doesn't need 5,000 full document objects to build an accurate breakdown table. She just needs the **type_code** and **status** from each row. The detailed document data (title, revision, discipline, download URL) is only needed for the 100 she actually displays.
+**Why page-2 pagination doesn't work:** Assai's `result.aweb` with `start_row=101` returns HTML without a `myCells` JavaScript array (70KB of HTML but 0 parseable rows). Assai doesn't support simple offset pagination — it relies on DWR session state.
 
-### Time Budget Analysis
+## The Fix
 
-Each page costs ~1s (300ms delay + ~700ms network). The edge function has a 148s time guard.
+### Change 1 — Use DMS Reference Table for Type-Split (not sample data)
 
-| Total Docs | Pages (at 100/page) | Pagination Time | Time Left for LLM |
-|---|---|---|---|
-| 255 | 3 | ~3s | ~145s |
-| 1,000 | 10 | ~10s | ~138s |
-| 5,000 | 50 | ~50s | ~98s |
-| 10,000 | 100 | ~100s | ~48s |
+When a status hits the 100-doc cap and has only 1 discipline, instead of extracting type codes from the 100-doc sample, query `dms_document_types` from Supabase to get ALL known type codes. This guarantees every possible type is searched.
 
-5,000 documents is comfortably feasible. 10,000 is tight but possible. Beyond that, we add a time guard to stop pagination and report partial coverage.
-
-### Revised Change 2 — Two-Tier Pagination
-
-Instead of capping at 500 docs, the rewritten `paginateSearch` will:
-
-1. **Tier 1 — Detailed documents** (first 100): Full document objects with title, revision, discipline, download_url. These go into `documents[]` for display.
-
-2. **Tier 2 — Metadata sweep** (all remaining pages): Continue fetching pages but only extract `type_code`, `status`, and `document_number` from each row. These are lightweight — just three strings per doc. They feed the `type_summary` and `status_summary` builders but are NOT added to the detailed documents array.
-
-3. **Time guard**: Check elapsed time before each page request. If we've used more than 120s of the 148s budget, stop the sweep and mark the breakdown as partial.
+In `paginateByStatusSplit`, replace the current type-split logic:
 
 ```text
-Page 1 ──► full docs (up to 100) + metadata
-Page 2 ──► metadata only (type, status, doc_number)
-Page 3 ──► metadata only
-...
-Page N ──► metadata only (or stop if time guard hit)
+CURRENT (broken):
+  IFA hits 100 cap → extract 23 types from sample → search each → miss types not in sample
 
-Result:
-  documents: [100 full docs for display]
-  type_summary: {built from ALL pages' metadata — accurate}
-  status_summary: {built from ALL pages' metadata — accurate}
-  total_assai_count: 5000 (from parseTotalCount)
-  breakdown_complete: true/false
-  breakdown_coverage: "5000 of 5000" or "3200 of 5000"
+FIXED:
+  IFA hits 100 cap → query dms_document_types for ALL active type codes (~100-200 codes)
+  → filter to codes that COULD exist (skip types already fully retrieved)
+  → search each remaining type code
+  → merge and deduplicate
 ```
 
-### What This Means for the User
+### Change 2 — Increase Query Budget to 80
 
-- "Show me all documents for DP-XXX" with 5,000 docs → Selma says "DP-XXX has 5,000 documents" and the breakdown table shows **accurate** counts for every type and status, because she swept all 50 pages of metadata. She displays the first 100 documents in detail and offers filter pills.
+With ~100+ type codes to try, 50 queries isn't enough. The time budget allows ~100 queries (each ~1s, within 120s guard). Increase `MAX_TOTAL_QUERIES` from 50 to 80 to accommodate a full type sweep while staying within the time guard.
 
-- If the project has 15,000 docs and pagination hits the time guard at page 80 (8,000 docs), Selma says: "DP-XXX has 15,000 documents. I've analyzed 8,000 for the breakdown below — apply a filter for complete results on a specific category."
+### Change 3 — Remove Dead parseTotalCount Diagnostics
 
-### Impact on Previous Changes
+Since Assai's total is provably NOT in the HTML, remove the 30+ lines of diagnostic logging in `parseTotalCount` that fire on every single search. Keep the function but simplify it — if it ever matches a pattern, great; otherwise return null silently. This reduces log noise.
 
-**Zero impact on any previously deployed feature.** This revision only changes the internals of `paginateSearch` (Change 2) and the result object (Change 3). Changes 1 (regex fix) and 4 (prompt update) remain identical. The status-split fallback (`paginateByStatusSplit`) is still preserved. No frontend changes, no database changes.
+### Change 4 — Add Version Marker for Deployment Verification
 
-### Why Selma Couldn't Figure This Out Herself
+Add a console.log at the top of the search handler:
+```typescript
+console.log('[SEARCH_V3]', { MAX_TOTAL_QUERIES: 80, strategy: 'dms-type-sweep' });
+```
+This lets us confirm the deployed version matches the code.
 
-Selma is an LLM — she processes text responses from tools. She has no ability to:
-- Inspect Assai's HTML pagination controls
-- Know that `parseTotalCount` was returning `null`
-- Decide to re-call a tool with different parameters unless explicitly instructed
+## Technical Detail
 
-The fix is entirely in the **tool layer** — give Selma accurate data and she'll report it accurately. After this fix, her prompt (Change 4) will include: *"If breakdown_complete is false, tell the user how many documents were analyzed and suggest filters for complete coverage."*
+The `dms_document_types` table has ~991 active type codes. The query would be:
+```typescript
+const { data: allTypes } = await supabaseClient
+  .from('dms_document_types')
+  .select('code')
+  .eq('is_active', true);
+const allTypeCodes = [...new Set(allTypes.map(t => t.code))];
+```
 
-## Summary of All 4 Changes (Updated)
+Then for the IFA cap-hit case, instead of `typeCodesInCap` (23 codes from sample), iterate `allTypeCodes` minus already-found types. Most will return 0 docs quickly, but the ones with data will be captured.
 
-1. **Change 1** — Fix `parseTotalCount` regex (line 8452) — identical to previous plan
-2. **Change 2** — Rewrite `paginateSearch` with two-tier pagination: full docs for first 100, metadata-only sweep for remaining pages, time guard at 120s, no arbitrary 500-doc cap
-3. **Change 3** — Add `total_assai_count`, `breakdown_complete`, `breakdown_coverage` to tool result; change `typeSummary.statuses` from `string[]` to `Record<string, number>`
-4. **Change 4** — Update `DOCUMENT_AGENT_PROMPT` to use `total_assai_count`, present breakdown table, handle partial coverage messaging
+## Impact
+
+- Only changes `paginateByStatusSplit` internals in `ai-chat/index.ts`
+- No frontend changes
+- No database changes
+- No prompt changes needed
 
