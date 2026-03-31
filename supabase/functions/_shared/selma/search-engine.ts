@@ -37,9 +37,12 @@ export class SessionManager {
       this.cookieHeader = result.cookies;
       this.queryCount = 0;
       this.lastAuthTime = Date.now();
-      // label.aweb warmup after every (re-)auth
+      // label.aweb warmup after every (re-)auth — MUST include subclass_type
+      // All working Assai integrations (discover-vendors, parse-sdr, check-sdr-completeness)
+      // pass subclass_type on label.aweb. Without it, the module context is not initialised
+      // and subsequent result POSTs return the login page instead of search results.
       if (this.assaiBase) {
-        await fetch(this.assaiBase + '/label.aweb', {
+        await fetch(this.assaiBase + '/label.aweb?subclass_type=DES_DOC', {
           headers: { Cookie: this.cookieHeader, 'User-Agent': ASSAI_UA },
           redirect: 'follow',
         }).catch(() => {});
