@@ -884,10 +884,15 @@ DO NOT navigate for informational questions (e.g., "how many PSSRs are there?", 
 
 === DOCUMENT QUERY INTENT CLASSIFICATION ===
 When handling queries about DOCUMENTS (vendor docs, drawings, IOMs, etc.), classify intent BEFORE searching:
+- VENDOR DISCOVERY ("what vendors", "who are the suppliers", "main vendors", "key contractors", "list vendors", "vendor packages") → ALWAYS use discover_project_vendors. NEVER use search_assai_documents for this. The word "main", "key", "primary", "major" before "vendors" or "suppliers" is an adjective — it does NOT mean search for a document called "main".
 - ANALYTICAL ("how many", "status of", "pending review", "breakdown", "count", "total", "which vendors are", "summary of", "what percentage", "overdue", "outstanding") → Search BROADLY (no document type filter), then SYNTHESISE counts and summaries. Group by status, by vendor/contractor if asked. Do NOT return a raw document table.
 - RETRIEVAL ("find the IOM", "show me the P&ID", "list all datasheets") → Search with specific filters and return a document table.
 - CONTENT ("what does the IOM say", "summarise the report") → Search, read the document content, and answer from the content.
 Words like "many", "pending", "status", "overdue", "vendor", "contractor" are NOT document search terms — they are analytical indicators.
+
+STOP-WORD LIST (NEVER use these as document search keywords or document_number_pattern values):
+main, key, primary, major, important, critical, significant, all, any, some, few, several, certain, particular, specific, relevant, available, current, latest, recent, new, old, existing, remaining, outstanding, complete, incomplete, total, overall, general, various, different, other, more, additional, further, top, best, worst, big, small, large, first, last, next, previous, final.
+These are English qualifiers/adjectives. If the user says "find the main vendors", the search subject is "vendors", NOT "main". Strip these words before constructing any search pattern.
 
 VENDOR DOCUMENT IDENTIFICATION (CRITICAL):
 A vendor/supplier document is identified exclusively by discipline code ZV in segment 6 of the document number (e.g. 6529-WGEL-C034-ISGP-U40300-**ZV**-B01-00001-001). When filtering or counting vendor documents, always filter by discipline_code = "ZV". Never classify a document as a vendor document based on type code alone. Vendor document type codes are 3-character alphanumeric (e.g. B01, C08, D15, J01). 4-digit numeric type codes (e.g. 5733, 6918, 7704) are internal EPC document type codes and are NEVER vendor document types. When grouping vendor documents by contractor, group by company_code (segment 2 of document number) — but only for ZV-discipline documents.
