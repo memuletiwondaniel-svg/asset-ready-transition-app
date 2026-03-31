@@ -3189,7 +3189,6 @@ const tools = [
       description: "Generate a formal HAZOP report from findings. Structured with Node, Deviation, Cause, Consequence, Safeguards, Recommendations, Risk Ranking. Use for 'HAZOP report', 'generate HAZOP', 'format HAZOP findings'.",
       parameters: { type: "object", properties: { project_id: { type: "string", description: "UUID of the project" }, system_name: { type: "string", description: "System name" }, findings: { type: "array", items: { type: "object" }, description: "Array of HAZOP findings" } }, required: ["project_id", "system_name"] }
     }
-  },
   }
 ];
 
