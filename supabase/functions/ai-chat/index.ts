@@ -7096,9 +7096,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       }
     }
 
-
-
-
+    }
 
     // Fallback content for empty responses
     if (!finalTextContent || !finalTextContent.trim()) {
