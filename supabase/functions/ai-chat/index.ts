@@ -11212,7 +11212,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       
       // Step 2: Resolve project code
       emitStatus('Resolving project...');
-      const projectResult = await executeTool('resolve_project_code', { dp_number: projectText }, supabaseClient);
+      const projectResult = await executeTool('resolve_project_code', { dp_number: projectText }, supabase);
       let resolvedProjectCode: string | null = null;
       let resolvedProjectName: string | null = null;
       
