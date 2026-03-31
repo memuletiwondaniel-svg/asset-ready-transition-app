@@ -10860,7 +10860,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // Supports chained tool calls (e.g. resolve_document_type → search_assai_documents)
     // Max iterations: 15 (extended for 250k+ document searches)
     // ═══════════════════════════════════════════════════════════════════════
-    const MAX_ITERATIONS = 25;
+    let MAX_ITERATIONS = 25;
     const LOOP_START_TIME = Date.now();
     const MAX_LOOP_MS = 148000; // 148-second time guard (Pro plan: 150s hard limit, leaving 2s buffer)
 
@@ -11336,6 +11336,17 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           emitStatus('Compiling results...');
         }
       }
+    }
+
+    // If the intercept already resolved and searched, strip search tools so the LLM
+    // can only format results — prevents it from re-searching and producing confused output.
+    const interceptCompleted = searchToolResult && allToolCallNames.includes('search_assai_documents');
+    if (interceptCompleted) {
+      const blockedTools = new Set(['search_assai_documents', 'resolve_document_type', 'resolve_project_code', 'discover_project_vendors']);
+      anthropicTools = anthropicTools.filter((t: any) => !blockedTools.has(t.function?.name));
+      // Limit to 1 iteration — the LLM just needs to format
+      MAX_ITERATIONS = 1;
+      console.log('INTERCEPT GUARD: Stripped search tools and limited iterations to 1');
     }
 
     while (iteration < MAX_ITERATIONS) {
