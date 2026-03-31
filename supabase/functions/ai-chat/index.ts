@@ -10896,6 +10896,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         } catch (_) { /* stream may be closed */ }
       }
     };
+    emitStatus(`agent:${detectedAgent}`);
     let conversationMessages = [...transformedMessages];
     let iteration = 0;
     let lastToolName: string | null = null;
