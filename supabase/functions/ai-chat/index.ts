@@ -11228,7 +11228,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
               const result = await executeTool('search_assai_documents', {
                 document_type: resolvedDocCode,
                 document_number_pattern: `${proj.project_code}-%`
-              }, supabaseClient);
+              }, supabase);
               if (result?.found && result.total_found > 0) {
                 allResults.push({ project: proj, result });
               }
