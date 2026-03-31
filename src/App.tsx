@@ -97,6 +97,11 @@ const App = () => (
                       <Route path="/or-maintenance/resources" element={<ORMResourceCapacityDashboard />} />
                       <Route path="/or-maintenance/notifications" element={<ORMNotificationPreferences />} />
                       <Route path="/or-maintenance/:id" element={<ORMDetailsPage />} />
+                      <Route path="/admin/selma-validation" element={
+                        <React.Suspense fallback={<div className="flex items-center justify-center h-screen"><span className="text-muted-foreground">Loading...</span></div>}>
+                          <SelmaValidation />
+                        </React.Suspense>
+                      } />
                     </Route>
                     
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
