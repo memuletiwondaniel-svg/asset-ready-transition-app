@@ -7202,7 +7202,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         const toolName = toolBlock.name;
         allToolCallNames.push(toolName);
         const toolArgs = toolBlock.input || {};
-        if (['get_user_context', 'save_user_context'].includes(toolName) && currentUserId) {
+        if (['get_user_context', 'save_user_context', 'get_user_tasks'].includes(toolName) && currentUserId) {
           toolArgs._user_id = currentUserId;
         }
         
