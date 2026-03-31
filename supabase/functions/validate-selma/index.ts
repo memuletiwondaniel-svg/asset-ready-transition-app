@@ -243,16 +243,22 @@ const ALL_TESTS: TestDef[] = [
   },
   {
     id: "T2.2",
-    name: "BFD acronym resolution",
+    name: "PEFS acronym resolution (anti-hallucination)",
     tier: 2,
-    query: "What is a BFD?",
+    query: "What is a PEFS?",
     agent: "bob",
-    autoAssert: (r) => ({
-      pass: containsAny(r, ["block flow", "BFD", "diagram", "type"]),
-      details: containsAny(r, ["block flow", "diagram"])
-        ? "Resolved BFD correctly"
-        : "Did not resolve BFD via tool",
-    }),
+    autoAssert: (r) => {
+      const hasDbValue = containsAny(r, ["C01", "Process Engineering Flow Sheets", "Process Engineering Flow Scheme"]);
+      const hasGeneric = containsAny(r, ["I'm not sure", "I don't know"]);
+      return {
+        pass: hasDbValue,
+        details: hasDbValue
+          ? "Resolved PEFS via tool — DB values present (C01 / Process Engineering Flow Sheets)"
+          : hasGeneric
+            ? "Selma did not call tool — vague/unknown response (hallucination avoided but tool not used)"
+            : "Did not resolve PEFS correctly — possible hallucination from training data",
+      };
+    },
   },
   {
     id: "T2.3a",
