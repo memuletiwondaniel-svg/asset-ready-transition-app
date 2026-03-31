@@ -699,7 +699,7 @@ serve(async (req) => {
   }
 
   try {
-    const { tier, token: providedToken } = await req.json();
+    const { tier, token: providedToken, test_ids } = await req.json();
     
     // If no token provided, self-authenticate using TEST_USER credentials
     let token = providedToken;
