@@ -14,6 +14,8 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }>
   SUP: { label: 'SUP', bg: 'bg-gray-100 dark:bg-gray-800/40', text: 'text-gray-500 dark:text-gray-400' },
   AFD: { label: 'AFD', bg: 'bg-teal-100 dark:bg-teal-900/30', text: 'text-teal-800 dark:text-teal-300' },
   PLN: { label: 'PLN', bg: 'bg-indigo-100 dark:bg-indigo-900/30', text: 'text-indigo-800 dark:text-indigo-300' },
+  AFP: { label: 'AFP', bg: 'bg-cyan-100 dark:bg-cyan-900/30', text: 'text-cyan-800 dark:text-cyan-300' },
+  AFT: { label: 'AFT', bg: 'bg-violet-100 dark:bg-violet-900/30', text: 'text-violet-800 dark:text-violet-300' },
 };
 
 export function StatusBadge({ code }: { code: string }) {
@@ -26,7 +28,7 @@ export function StatusBadge({ code }: { code: string }) {
   );
 }
 
-const STATUS_PATTERN = /\b(AFU|AFC|AFD|IFB|IFT|IFI|IFA|IFC|IFR|CAN|REV|SUP|PLN)\b/g;
+const STATUS_PATTERN = /\b(AFU|AFC|AFD|AFP|AFT|IFB|IFT|IFI|IFA|IFC|IFR|CAN|REV|SUP|PLN)\b/g;
 
 export function renderWithStatusBadges(text: string): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
