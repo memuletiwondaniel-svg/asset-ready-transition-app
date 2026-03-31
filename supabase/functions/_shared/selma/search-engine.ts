@@ -1,8 +1,9 @@
 // ============================================================
-// Selma Search Engine V11 — ported from V10 ai-chat/index.ts
+// Selma Search Engine V11 — full port from V10 ai-chat/index.ts
 // All outer-scope closure variables replaced with SearchContext
 // All cookieHeader reads → ctx.sessionManager.getSession()
 // All authenticateAssai() re-auth → ctx.sessionManager.getSession(true)
+// label.aweb warmup preserved after every forced re-auth
 // ============================================================
 
 import { authenticateAssai, ASSAI_UA } from '../assai-auth.ts';
@@ -19,7 +20,8 @@ export class SessionManager {
   private readonly MAX_AGE_MS = 90000;
 
   constructor(
-    private loginFn: () => Promise<{ cookies: string }>
+    private loginFn: () => Promise<{ cookies: string }>,
+    private assaiBase: string = ''
   ) {}
 
   async getSession(forceRefresh = false): Promise<string> {
@@ -35,6 +37,13 @@ export class SessionManager {
       this.cookieHeader = result.cookies;
       this.queryCount = 0;
       this.lastAuthTime = Date.now();
+      // label.aweb warmup after every (re-)auth
+      if (this.assaiBase) {
+        await fetch(this.assaiBase + '/label.aweb', {
+          headers: { Cookie: this.cookieHeader, 'User-Agent': ASSAI_UA },
+          redirect: 'follow',
+        }).catch(() => {});
+      }
     }
 
     this.queryCount++;
@@ -57,21 +66,24 @@ export interface SearchContext {
   username: string;
   password: string;
 
+  // Derived constants
   poDigits: string;
-  effectiveDocType: string;
-  moduleParams: Record<string, string>;
+  effectiveDocType: string | undefined;
+  moduleParams: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string };
   searchBothModules: boolean;
   isMultiTypeSearch: boolean;
   documentTypeCodes: string[];
   useSupDoc: boolean;
 
+  // Mutable search params
   document_number_pattern: string;
-  discipline_code: string;
-  document_type: string;
+  discipline_code: string | undefined;
+  document_type: string | undefined;
   status_code: string;
   company_code: string;
   title: string;
 
+  // Mutable state
   totalQueryCount: number;
   paginationTotalAssaiCount: number | null;
   sweepStartTime: number;
@@ -101,6 +113,7 @@ export interface SearchResult {
   pk_seq_nr?: string;
   entt_seq_nr?: string;
   subclass?: string;
+  download_url?: string;
   _metadataOnly?: boolean;
 }
 
@@ -125,7 +138,7 @@ export function extractHiddenFields(html: string): Array<{ name: string; type: s
   return fields;
 }
 
-export function parseDocuments(html: string, subclass: string): SearchResult[] {
+export function parseDocuments(html: string, subclass?: string): SearchResult[] {
   // Early exit: detect Assai error pages
   if (html.includes('applet:error') || html.includes('error.aweb?message=showErrorInfo')) {
     console.error('parseDocuments: Assai returned an error page — skipping parse');
@@ -154,7 +167,7 @@ export function parseDocuments(html: string, subclass: string): SearchResult[] {
           purchase_order: stripHtml(row[16]),
           pk_seq_nr: stripHtml(row[33]),
           entt_seq_nr: stripHtml(row[34]),
-          subclass,
+          subclass: subclass || '',
         }));
       }
     } catch (e) {
@@ -163,7 +176,7 @@ export function parseDocuments(html: string, subclass: string): SearchResult[] {
   }
 
   // Strategy 2: parse raw <tr>/<td> elements
-  console.info('parseDocuments: myCells not found, using TR/TD fallback');
+  console.info('parseDocuments: myCells not found, using TR/TD fallback. HTML preview: ' + html.substring(0, 1000));
   const docs: SearchResult[] = [];
   const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
   let trMatch;
@@ -195,12 +208,14 @@ export function parseDocuments(html: string, subclass: string): SearchResult[] {
         purchase_order: cells[16] || '',
         pk_seq_nr: cells.length > 33 ? cells[33] : '',
         entt_seq_nr: cells.length > 34 ? cells[34] : '',
-        subclass,
+        subclass: subclass || '',
       });
     }
   }
   if (docs.length > 0) {
     console.info('parseDocuments: TR/TD fallback found ' + docs.length + ' rows');
+  } else {
+    console.warn('parseDocuments: no documents found with either strategy');
   }
   return docs;
 }
@@ -214,17 +229,17 @@ export function parseTotalCount(html: string): number | null {
 }
 
 // ============================================================
-// STATEFUL FUNCTIONS
+// STATEFUL FUNCTIONS — ported from V10
 // ============================================================
 
 export async function initSearch(
   ctx: SearchContext,
-  params: Record<string, string>
+  params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }
 ): Promise<{ hiddenFields: Array<{ name: string; type: string; value: string }>; textFields: Array<{ name: string }> }> {
-  const cookie = await ctx.sessionManager.getSession();
+  const cookieHeader = await ctx.sessionManager.getSession();
   const searchUrl = ctx.assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
   const searchResp = await fetch(searchUrl, {
-    headers: { Cookie: cookie, Accept: 'text/html', 'User-Agent': ctx.ua },
+    headers: { Cookie: cookieHeader, Accept: 'text/html', 'User-Agent': ctx.ua },
     redirect: 'follow',
   });
   const searchHtml = await searchResp.text();
@@ -239,10 +254,10 @@ export async function fetchResultPage(
   ctx: SearchContext,
   hiddenFields: Array<{ name: string; type: string; value: string }>,
   textFields: Array<{ name: string }>,
-  params: Record<string, string>,
+  params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string },
   startRow?: number,
 ): Promise<string> {
-  const cookie = await ctx.sessionManager.getSession();
+  const cookieHeader = await ctx.sessionManager.getSession();
   const formData = new URLSearchParams();
   for (const f of hiddenFields) formData.set(f.name, f.value);
   for (const f of textFields) formData.set(f.name, '');
@@ -263,7 +278,7 @@ export async function fetchResultPage(
   const resultResp = await fetch(ctx.assaiBase + '/result.aweb', {
     method: 'POST',
     headers: {
-      Cookie: cookie,
+      Cookie: cookieHeader,
       'Content-Type': 'application/x-www-form-urlencoded',
       Accept: 'text/html',
       Referer: searchUrl,
@@ -279,7 +294,7 @@ export async function fetchResultPage(
 
 export async function executeFilteredSearch(
   ctx: SearchContext,
-  params: Record<string, string>,
+  params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string },
   extraFilters: Record<string, string>,
   startRow?: number,
   reuseSession?: { hiddenFields: any[]; textFields: any[] },
@@ -297,8 +312,9 @@ export async function executeFilteredSearch(
     subHidden = init.hiddenFields;
     subText = init.textFields;
   }
-
-  const cookie = await ctx.sessionManager.getSession();
+  
+  // Build form payload independently (does NOT call fetchResultPage)
+  const cookieHeader = await ctx.sessionManager.getSession();
   const formData = new URLSearchParams();
   for (const f of subHidden) formData.set(f.name, f.value);
   for (const f of subText) formData.set(f.name, '');
@@ -309,9 +325,8 @@ export async function executeFilteredSearch(
     formData.set('number', ctx.document_number_pattern);
   }
   if (ctx.discipline_code) formData.set('discipline_code', ctx.discipline_code);
-  if (ctx.effectiveDocType) formData.set('document_type', ctx.effectiveDocType);
-  if (ctx.company_code) formData.set('company_code', ctx.company_code);
   if (ctx.title) formData.set('description', ctx.title);
+  // Apply extra filters (overrides)
   for (const [k, v] of Object.entries(extraFilters)) {
     formData.set(k, v);
   }
@@ -321,7 +336,7 @@ export async function executeFilteredSearch(
   const resp = await fetch(ctx.assaiBase + '/result.aweb', {
     method: 'POST',
     headers: {
-      Cookie: cookie,
+      Cookie: cookieHeader,
       'Content-Type': 'application/x-www-form-urlencoded',
       Accept: 'text/html',
       Referer: searchUrl,
@@ -331,27 +346,38 @@ export async function executeFilteredSearch(
     redirect: 'follow',
   });
   const html = await resp.text();
-  return { docs: parseDocuments(html, params.subclass_type), hiddenFields: subHidden, textFields: subText };
+  const docs = parseDocuments(html, params.subclass_type);
+  return { docs, hiddenFields: subHidden, textFields: subText };
 }
 
 export async function paginateFilteredSearch(
   ctx: SearchContext,
-  params: Record<string, string>,
+  params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string },
   extraFilters: Record<string, string>,
   firstResult: { docs: SearchResult[]; hiddenFields: any[]; textFields: any[] },
   seen: Set<string>,
-  allDocs: SearchResult[]
+  allDocs: SearchResult[],
 ): Promise<void> {
-  const pageSize = firstResult.docs.length || ctx.PAGE_CAP;
+  // Add first page docs
+  for (const doc of firstResult.docs) {
+    if (doc.document_number && !seen.has(doc.document_number)) {
+      seen.add(doc.document_number);
+      allDocs.push(doc);
+    }
+  }
+  
+  if (firstResult.docs.length < ctx.PAGE_CAP) return;
+  
+  const pageSize = firstResult.docs.length;
   let startRow = pageSize + 1;
   let consecutiveEmpty = 0;
-
+  
   while (consecutiveEmpty < 2) {
     if (ctx.totalQueryCount >= ctx.MAX_TOTAL_QUERIES || (Date.now() - ctx.sweepStartTime) > ctx.SWEEP_TIME_GUARD_MS) break;
-
+    
     const pageResult = await executeFilteredSearch(ctx, params, extraFilters, startRow, firstResult);
     const newDocs = pageResult.docs.filter((d: any) => d.document_number && !seen.has(d.document_number));
-
+    
     if (newDocs.length === 0) {
       consecutiveEmpty++;
       if (startRow === pageSize + 1) break;
@@ -363,7 +389,7 @@ export async function paginateFilteredSearch(
       }
       console.info('paginateFilteredSearch: start_row=' + startRow + ' returned ' + newDocs.length + ' new docs (total: ' + allDocs.length + ')');
     }
-
+    
     startRow += pageSize;
     if (startRow > 10000) break;
   }
@@ -371,11 +397,11 @@ export async function paginateFilteredSearch(
 
 export async function paginateByStatusSplit(
   ctx: SearchContext,
-  params: Record<string, string>,
-  firstDocs: SearchResult[]
+  params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string },
+  firstDocs: SearchResult[],
 ): Promise<SearchResult[]> {
   ctx.sweepStartTime = Date.now();
-
+  
   const allDocs: SearchResult[] = [];
   const seen = new Set<string>();
   for (const doc of firstDocs) {
@@ -385,15 +411,17 @@ export async function paginateByStatusSplit(
     }
   }
 
-  // Strategy 1: Status-split
+  // Strategy 1: status-split
   const statusCodes = [...new Set(firstDocs.map((d: any) => d.status).filter(Boolean))];
-  console.info('paginateByStatusSplit: splitting into ' + statusCodes.length + ' status sub-searches');
+  console.info('paginateByStatusSplit: splitting into ' + statusCodes.length + ' status sub-searches: ' + statusCodes.join(', '));
 
   if (statusCodes.length > 1) {
     for (const sc of statusCodes) {
       if (ctx.totalQueryCount >= ctx.MAX_TOTAL_QUERIES || (Date.now() - ctx.sweepStartTime) > ctx.SWEEP_TIME_GUARD_MS) break;
+      console.info('paginateByStatusSplit: sub-search for status=' + sc);
       try {
         const result = await executeFilteredSearch(ctx, params, { status_code: sc });
+        console.info('paginateByStatusSplit: status=' + sc + ' returned ' + result.docs.length + ' docs');
         for (const doc of result.docs) {
           if (doc.document_number && !seen.has(doc.document_number)) {
             seen.add(doc.document_number);
@@ -407,26 +435,30 @@ export async function paginateByStatusSplit(
         console.error('paginateByStatusSplit: sub-search for status=' + sc + ' failed:', subErr);
       }
     }
+    console.info('paginateByStatusSplit: after status split, total unique docs: ' + allDocs.length);
   }
 
-  // Strategy 2: Type-code sweep if status split incomplete
+  // Strategy 2: type-code sweep from DB if still capped
   const expectedFromHeader = ctx.paginationTotalAssaiCount;
   const needsTypeSweep = expectedFromHeader ? allDocs.length < expectedFromHeader :
-    statusCodes.some(sc => allDocs.filter(d => d.status === sc).length >= ctx.PAGE_CAP);
+    statusCodes.some(sc => {
+      const countForStatus = allDocs.filter(d => d.status === sc).length;
+      return countForStatus >= ctx.PAGE_CAP;
+    });
 
   if (needsTypeSweep && ctx.totalQueryCount < ctx.MAX_TOTAL_QUERIES - 5) {
-    const cappedStatuses = statusCodes.filter(sc =>
-      allDocs.filter(d => d.status === sc).length >= ctx.PAGE_CAP
-    );
-    console.info('paginateByStatusSplit: starting type-code sweep with re-auth');
+    const cappedStatuses = statusCodes.filter(sc => {
+      const countForStatus = allDocs.filter(d => d.status === sc).length;
+      return countForStatus >= ctx.PAGE_CAP;
+    });
+    console.info('paginateByStatusSplit: status split incomplete (' + allDocs.length + ' found' +
+      (expectedFromHeader ? ', expected ~' + expectedFromHeader : '') + '), capped statuses: ' + cappedStatuses.join(', ') +
+      ', starting type-code sweep with re-auth');
 
-    // Re-auth before sweep
+    // RE-AUTH before sweep via SessionManager
     await ctx.sessionManager.getSession(true);
-    // label.aweb warmup
-    const warmupCookie = await ctx.sessionManager.getSession();
-    await fetch(ctx.assaiBase + '/label.aweb', { headers: { Cookie: warmupCookie, 'User-Agent': ctx.ua }, redirect: 'follow' }).catch(() => {});
 
-    // Fetch all active type codes from DB
+    // Fetch ALL active document type codes from DB
     let allTypeCodes: string[] = [];
     try {
       const { data: allTypes } = await ctx.supabase
@@ -434,11 +466,12 @@ export async function paginateByStatusSplit(
         .select('code')
         .eq('is_active', true)
         .order('code');
-      if (allTypes?.length > 0) {
+      if (allTypes && allTypes.length > 0) {
         allTypeCodes = [...new Set(allTypes.map((t: any) => t.code).filter(Boolean))];
+        console.info('paginateByStatusSplit: fetched ' + allTypeCodes.length + ' type codes from dms_document_types');
       }
     } catch (dbErr) {
-      console.warn('paginateByStatusSplit: failed to fetch type codes:', dbErr);
+      console.warn('paginateByStatusSplit: failed to fetch type codes from DB:', dbErr);
     }
 
     if (allTypeCodes.length > 0) {
@@ -449,8 +482,10 @@ export async function paginateByStatusSplit(
       }
 
       const unseenTypes = allTypeCodes.filter(tc => !typeCountInResults[tc]);
-      const cappedTypes = allTypeCodes.filter(tc => typeCountInResults[tc] && typeCountInResults[tc] >= ctx.PAGE_CAP);
+      const cappedTypes = allTypeCodes.filter(tc => typeCountInResults[tc] && typeCountInResults[tc]! >= ctx.PAGE_CAP);
       const typesToSweep = [...cappedTypes, ...unseenTypes];
+
+      console.info('paginateByStatusSplit: sweeping ' + typesToSweep.length + ' types (' + cappedTypes.length + ' capped, ' + unseenTypes.length + ' unseen)');
 
       let sweepQueryCount = 0;
       const statusesToSweep = cappedStatuses.length > 0 ? cappedStatuses : [''];
@@ -460,16 +495,15 @@ export async function paginateByStatusSplit(
           if (ctx.totalQueryCount >= ctx.MAX_TOTAL_QUERIES || (Date.now() - ctx.sweepStartTime) > ctx.SWEEP_TIME_GUARD_MS) break;
           if (expectedFromHeader && allDocs.length >= expectedFromHeader) break;
 
-          // Mid-sweep re-auth every 15 queries
+          // Re-auth every 15 sweep queries
           if (sweepQueryCount > 0 && sweepQueryCount % 15 === 0) {
             await ctx.sessionManager.getSession(true);
-            const midCookie = await ctx.sessionManager.getSession();
-            await fetch(ctx.assaiBase + '/label.aweb', { headers: { Cookie: midCookie, 'User-Agent': ctx.ua }, redirect: 'follow' }).catch(() => {});
           }
 
           try {
             const filters: Record<string, string> = { document_type: tc };
             if (sweepStatus) filters.status_code = sweepStatus;
+
             const typeResult = await executeFilteredSearch(ctx, params, filters);
             sweepQueryCount++;
             for (const doc of typeResult.docs) {
@@ -478,28 +512,25 @@ export async function paginateByStatusSplit(
                 allDocs.push(doc);
               }
             }
-            if (typeResult.docs.length >= ctx.PAGE_CAP) {
-              await paginateFilteredSearch(ctx, params, filters, typeResult, seen, allDocs);
-            }
-          } catch {
-            // Skip silently
+          } catch (sweepErr) {
+            console.error('paginateByStatusSplit: sweep error for type=' + tc + ':', sweepErr);
           }
         }
-        if (ctx.totalQueryCount >= ctx.MAX_TOTAL_QUERIES || (Date.now() - ctx.sweepStartTime) > ctx.SWEEP_TIME_GUARD_MS) break;
       }
+      console.info('paginateByStatusSplit: after type-code sweep, total unique docs: ' + allDocs.length);
     }
   }
 
-  console.info('paginateByStatusSplit: complete. Total unique docs: ' + allDocs.length + ' (queries: ' + ctx.totalQueryCount + ')');
   return allDocs;
 }
 
 export async function paginateSearch(
   ctx: SearchContext,
-  params: Record<string, string>
+  params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string },
 ): Promise<SearchResult[]> {
   const paginationStartTime = Date.now();
   const { hiddenFields, textFields } = await initSearch(ctx, params);
+  console.info('[SEARCH_V11] PO=' + (ctx.poDigits || 'none') + ', number=' + ctx.document_number_pattern);
 
   const firstHtml = await fetchResultPage(ctx, hiddenFields, textFields, params);
   const firstDocs = parseDocuments(firstHtml, params.subclass_type);
@@ -507,7 +538,7 @@ export async function paginateSearch(
 
   const totalFromHtml = parseTotalCount(firstHtml);
   ctx.paginationTotalAssaiCount = totalFromHtml;
-  console.info('paginateSearch: initial search returned ' + firstDocs.length + ' docs, total: ' + (totalFromHtml ?? 'unknown'));
+  console.info('[SEARCH_V11] initial search returned ' + firstDocs.length + ' docs, parsed total: ' + (totalFromHtml ?? 'unknown'));
 
   if (firstDocs.length < ctx.PAGE_CAP) return firstDocs;
 
@@ -521,7 +552,7 @@ export async function paginateSearch(
 
   while (startRow <= estimatedTotal) {
     if (Date.now() - paginationStartTime > TIME_GUARD_MS) {
-      console.warn('paginateSearch: time guard hit at startRow=' + startRow);
+      console.warn('paginateSearch: time guard hit at startRow=' + startRow + ', collected ' + (allDocs.length + metadataOnly.length) + ' of ' + estimatedTotal);
       break;
     }
 
@@ -532,7 +563,7 @@ export async function paginateSearch(
       const pageDocs = parseDocuments(pageHtml, params.subclass_type);
       if (pageDocs.length === 0) {
         if (startRow === detectedPageSize + 1) {
-          console.warn('paginateSearch: page 2 returned 0 docs — falling back to paginateByStatusSplit');
+          console.warn('paginateSearch: page 2 returned 0 parseable docs — falling back to paginateByStatusSplit');
           return paginateByStatusSplit(ctx, params, firstDocs);
         }
         break;
@@ -545,13 +576,14 @@ export async function paginateSearch(
       const newDocs = pageDocs.filter((d: any) => d.document_number && !existingNums.has(d.document_number));
 
       if (newDocs.length === 0 && startRow === detectedPageSize + 1) {
-        console.warn('paginateSearch: start_row unsupported (page 2 all duplicates) — falling back');
+        console.warn('paginateSearch: start_row pagination unsupported (page 2 all duplicates) — falling back to paginateByStatusSplit');
         return paginateByStatusSplit(ctx, params, firstDocs);
       }
       if (startRow === detectedPageSize + 1 && !totalFromHtml) {
         const page2Total = parseTotalCount(pageHtml);
         if (page2Total) {
           ctx.paginationTotalAssaiCount = page2Total;
+          console.info('paginateSearch: got total from page 2: ' + page2Total);
         }
       }
 
@@ -577,13 +609,12 @@ export async function paginateSearch(
       document_number: meta.document_number,
       type_code: meta.type_code,
       status: meta.status,
-      title: '',
-      revision: '',
+      title: '', revision: '',
       _metadataOnly: true,
     });
   }
 
-  console.info('paginateSearch: complete. Full: ' + firstDocs.length + ', metadata: ' + metadataOnly.length + ', total: ' + allDocs.length);
+  console.info('paginateSearch: sequential pagination complete. Full docs: ' + firstDocs.length + ', metadata-only: ' + metadataOnly.length + ', total: ' + allDocs.length + ' of ' + totalFromHtml);
   return allDocs;
 }
 
@@ -601,6 +632,7 @@ export interface SearchOptions {
   maxResults?: number;
   username: string;
   password: string;
+  assaiBase: string;
   emitStatus?: (msg: string) => void;
 }
 
@@ -608,11 +640,13 @@ export async function executeSearch(
   options: SearchOptions,
   sessionManager: SessionManager,
   supabase: any
-): Promise<{ found: boolean; results: SearchResult[]; total_found: number; strategies_tried?: string[]; error?: string }> {
+): Promise<{ found: boolean; results: SearchResult[]; totalFound: number; total_assai_count?: number; status_summary?: Record<string, number>; type_summary?: Record<string, any>; error?: string; strategies_tried?: string[]; [key: string]: any }> {
+  // Handle multi-code document_type (e.g. "2365+C01")
   const documentTypeCodes = options.documentType ? options.documentType.split('+').map((c: string) => c.trim()).filter(Boolean) : [];
-  const effectiveDocType = documentTypeCodes.length === 1 ? documentTypeCodes[0] : '';
+  const effectiveDocType = documentTypeCodes.length === 1 ? documentTypeCodes[0] : undefined;
   const isMultiTypeSearch = documentTypeCodes.length > 1;
 
+  // Determine module
   const isPOSearch = (options.documentNumberPattern || '').match(/%-?(\d{5})-?%?$/) || (options.documentNumberPattern || '').match(/^(\d{5})$/);
   const poDigits = isPOSearch?.[1] || '';
   const useSupDoc = options.disciplineCode === 'ZV' || !!poDigits;
@@ -624,7 +658,7 @@ export async function executeSearch(
 
   const ctx: SearchContext = {
     sessionManager,
-    assaiBase: 'https://eu.assaicloud.com/AWeu578',
+    assaiBase: options.assaiBase,
     ua: ASSAI_UA,
     username: options.username,
     password: options.password,
@@ -636,8 +670,8 @@ export async function executeSearch(
     documentTypeCodes,
     useSupDoc,
     document_number_pattern: options.documentNumberPattern || '',
-    discipline_code: options.disciplineCode || '',
-    document_type: options.documentType || '',
+    discipline_code: options.disciplineCode,
+    document_type: options.documentType,
     status_code: options.statusCode || '',
     company_code: options.companyCode || '',
     title: options.title || '',
@@ -652,13 +686,13 @@ export async function executeSearch(
     maxResults: options.maxResults || 50,
   };
 
-  console.log('[SEARCH_V11]', { MAX_TOTAL_QUERIES: 80, SWEEP_TIME_GUARD_MS: 90000, poDigits, useSupDoc, searchBothModules, isMultiTypeSearch });
+  console.log('[SEARCH_V11]', { MAX_TOTAL_QUERIES: 80, SWEEP_TIME_GUARD_MS: 90000, strategy: 'status+type-combo-with-reauth' });
 
   try {
     let allDocuments: SearchResult[] = [];
 
     if (isMultiTypeSearch) {
-      // Multi-type: separate searches per type code across both modules
+      console.log('[SEARCH_V11] multi-type search with codes: ' + documentTypeCodes.join(', '));
       const seen = new Set<string>();
       for (const typeCode of documentTypeCodes) {
         for (const modParams of [
@@ -667,32 +701,29 @@ export async function executeSearch(
         ]) {
           try {
             await ctx.sessionManager.getSession(true);
-            const warmupCookie = await ctx.sessionManager.getSession();
-            await fetch(ctx.assaiBase + '/label.aweb', { headers: { Cookie: warmupCookie, 'User-Agent': ctx.ua }, redirect: 'follow' }).catch(() => {});
-            const docs = await executeFilteredSearch(ctx, modParams, { document_type: typeCode });
-            for (const doc of docs.docs) {
+            const result = await executeFilteredSearch(ctx, modParams, { document_type: typeCode });
+            console.log(`[SEARCH_V11] type=${typeCode} module=${modParams.subclass_type} returned ${result.docs.length} docs`);
+            for (const doc of result.docs) {
               if (doc.document_number && !seen.has(doc.document_number)) {
                 seen.add(doc.document_number);
                 allDocuments.push(doc);
               }
             }
           } catch (err) {
-            console.error(`search: type=${typeCode} module=${modParams.subclass_type} error:`, err);
+            console.error(`[SEARCH_V11] type=${typeCode} module=${modParams.subclass_type} error:`, err);
           }
         }
       }
     } else {
       allDocuments = await paginateSearch(ctx, moduleParams);
+      console.log('[SEARCH_V11] primary search returned ' + allDocuments.length + ' docs total');
 
-      // Search alt module if searchBothModules or 0 results
       if (searchBothModules || allDocuments.length === 0) {
         const altParams = useSupDoc
           ? { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' }
           : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
         try {
           await ctx.sessionManager.getSession(true);
-          const warmupCookie = await ctx.sessionManager.getSession();
-          await fetch(ctx.assaiBase + '/label.aweb', { headers: { Cookie: warmupCookie, 'User-Agent': ctx.ua }, redirect: 'follow' }).catch(() => {});
           const altDocs = await paginateSearch(ctx, altParams);
           const seen = new Set(allDocuments.map(d => d.document_number));
           for (const doc of altDocs) {
@@ -701,32 +732,34 @@ export async function executeSearch(
               allDocuments.push(doc);
             }
           }
+          console.log('[SEARCH_V11] after alt module merge, total docs:', allDocuments.length);
         } catch (altErr) {
-          console.error('search: alt module error:', altErr);
+          console.error('[SEARCH_V11] alt module search error:', altErr);
         }
       }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // AUTO-ESCALATION: If 0 results, try relaxed searches
-    // ═══════════════════════════════════════════════════════════════
+    // Auto-escalation
     const strategiesTried: string[] = ['initial_search'];
 
     if (allDocuments.length === 0 && ctx.totalQueryCount < ctx.MAX_TOTAL_QUERIES - 3) {
+      console.log('[SEARCH_V11] 0 results — starting auto-escalation');
+
       // Strategy 1: Retry without discipline_code
       if (ctx.discipline_code && ctx.document_number_pattern) {
         try {
           strategiesTried.push('without_discipline');
           await ctx.sessionManager.getSession(true);
-          const wc = await ctx.sessionManager.getSession();
-          await fetch(ctx.assaiBase + '/label.aweb', { headers: { Cookie: wc, 'User-Agent': ctx.ua }, redirect: 'follow' }).catch(() => {});
           const savedDiscipline = ctx.discipline_code;
-          ctx.discipline_code = '';
+          ctx.discipline_code = undefined;
           const escDocs1 = await paginateSearch(ctx, moduleParams);
           ctx.discipline_code = savedDiscipline;
-          if (escDocs1.length > 0) allDocuments = escDocs1;
-        } catch (e) {
-          console.error('escalation strategy 1 error:', e);
+          if (escDocs1.length > 0) {
+            allDocuments = escDocs1;
+            console.log('[SEARCH_V11] escalation without discipline found ' + escDocs1.length + ' docs');
+          }
+        } catch (esc1Err) {
+          console.error('[SEARCH_V11] escalation strategy 1 error:', esc1Err);
         }
       }
 
@@ -736,26 +769,28 @@ export async function executeSearch(
           const { data: typeInfo } = await supabase
             .from('dms_document_types')
             .select('document_name')
-            .eq('code', ctx.document_type.split('+')[0])
+            .eq('code', (ctx.document_type || '').split('+')[0])
             .maybeSingle();
+
           if (typeInfo?.document_name) {
             strategiesTried.push('title_keyword:' + typeInfo.document_name);
             await ctx.sessionManager.getSession(true);
-            const wc = await ctx.sessionManager.getSession();
-            await fetch(ctx.assaiBase + '/label.aweb', { headers: { Cookie: wc, 'User-Agent': ctx.ua }, redirect: 'follow' }).catch(() => {});
             const savedTitle = ctx.title;
             const savedDocType = ctx.document_type;
             ctx.title = typeInfo.document_name;
-            ctx.document_type = '';
-            ctx.effectiveDocType = '';
+            ctx.document_type = undefined;
+            ctx.effectiveDocType = undefined;
             const escDocs2 = await paginateSearch(ctx, moduleParams);
             ctx.title = savedTitle;
             ctx.document_type = savedDocType;
             ctx.effectiveDocType = effectiveDocType;
-            if (escDocs2.length > 0) allDocuments = escDocs2;
+            if (escDocs2.length > 0) {
+              allDocuments = escDocs2;
+              console.log('[SEARCH_V11] escalation title keyword found ' + escDocs2.length + ' docs');
+            }
           }
-        } catch (e) {
-          console.error('escalation strategy 2 error:', e);
+        } catch (esc2Err) {
+          console.error('[SEARCH_V11] escalation strategy 2 error:', esc2Err);
         }
       }
 
@@ -767,44 +802,68 @@ export async function executeSearch(
             ? { subclass_type: 'DES_DOC', clas_seq_nr: '1', suty_seq_nr: '1' }
             : { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' };
           await ctx.sessionManager.getSession(true);
-          const wc = await ctx.sessionManager.getSession();
-          await fetch(ctx.assaiBase + '/label.aweb', { headers: { Cookie: wc, 'User-Agent': ctx.ua }, redirect: 'follow' }).catch(() => {});
           const escDocs3 = await paginateSearch(ctx, altModParams);
-          if (escDocs3.length > 0) allDocuments = escDocs3;
-        } catch (e) {
-          console.error('escalation strategy 3 error:', e);
+          if (escDocs3.length > 0) {
+            allDocuments = escDocs3;
+            console.log('[SEARCH_V11] escalation alt module found ' + escDocs3.length + ' docs');
+          }
+        } catch (esc3Err) {
+          console.error('[SEARCH_V11] escalation strategy 3 error:', esc3Err);
         }
       }
     }
 
     if (allDocuments.length === 0) {
-      return {
-        found: false,
-        total_found: 0,
-        results: [],
-        strategies_tried: strategiesTried,
-        error: 'No documents found. Strategies tried: ' + strategiesTried.join(', '),
-      };
+      return { found: false, results: [], totalFound: 0, total_found: 0, message: 'No documents found matching the search criteria in Assai. Strategies tried: ' + strategiesTried.join(', ') + '.', search_pattern: ctx.document_number_pattern, strategies_tried: strategiesTried };
     }
 
-    // Build summary
-    const fullDocs = allDocuments.filter(d => !d._metadataOnly);
-    const metaDocs = allDocuments.filter(d => d._metadataOnly);
-    const statusBreakdown: Record<string, number> = {};
-    const typeBreakdown: Record<string, number> = {};
-    for (const d of allDocuments) {
-      if (d.status) statusBreakdown[d.status] = (statusBreakdown[d.status] || 0) + 1;
-      if (d.type_code) typeBreakdown[d.type_code] = (typeBreakdown[d.type_code] || 0) + 1;
-    }
+    // Build summaries
+    const statusSummary: Record<string, number> = {};
+    const typeSummary: Record<string, { count: number; statuses: Record<string, number> }> = {};
+    const fullDocuments: SearchResult[] = [];
+    const assaiBaseForUrls = options.assaiBase;
+
+    allDocuments.forEach((d: any) => {
+      if (!d._metadataOnly && d.pk_seq_nr && d.entt_seq_nr) {
+        d.download_url = assaiBaseForUrls + '/download.aweb?pk_seq_nr=' + d.pk_seq_nr + '&entt_seq_nr=' + d.entt_seq_nr;
+      }
+      if (!d._metadataOnly) fullDocuments.push(d);
+      if (d.status) statusSummary[d.status] = (statusSummary[d.status] || 0) + 1;
+      if (d.type_code) {
+        if (!typeSummary[d.type_code]) typeSummary[d.type_code] = { count: 0, statuses: {} };
+        typeSummary[d.type_code].count++;
+        if (d.status) typeSummary[d.type_code].statuses[d.status] = (typeSummary[d.type_code].statuses[d.status] || 0) + 1;
+      }
+    });
+
+    const totalSwept = allDocuments.length;
+    const realTotal = ctx.paginationTotalAssaiCount || totalSwept;
+    const breakdownComplete = !ctx.paginationTotalAssaiCount || totalSwept >= ctx.paginationTotalAssaiCount;
 
     return {
       found: true,
-      total_found: allDocuments.length,
-      results: fullDocs.slice(0, options.maxResults || 50),
+      results: fullDocuments.slice(0, 100),
+      totalFound: fullDocuments.length,
+      total_found: fullDocuments.length,
+      total_assai_count: realTotal,
+      breakdown_complete: breakdownComplete,
+      breakdown_coverage: totalSwept + ' of ' + realTotal,
+      search_pattern: ctx.document_number_pattern,
+      filters_applied: { discipline_code: ctx.discipline_code, document_type: ctx.document_type, status_code: ctx.status_code, company_code: ctx.company_code },
+      status_summary: statusSummary,
+      type_summary: typeSummary,
+      documents: fullDocuments.slice(0, 100),
+      capped: fullDocuments.length > 100,
+      capped_message: fullDocuments.length > 100
+        ? `Showing first 100 of ${fullDocuments.length} detailed documents. Breakdown table reflects all ${totalSwept} documents analyzed.`
+        : null,
+      note: !breakdownComplete
+        ? `Breakdown covers ${totalSwept} of ${realTotal} documents. Apply a type or status filter for complete results on a specific category.`
+        : `Complete breakdown of all ${realTotal} documents.`,
       strategies_tried: strategiesTried,
     };
   } catch (err: any) {
-    console.error('[Selma:SEARCH_V11] executeSearch error:', err);
-    return { found: false, results: [], total_found: 0, error: err.message };
+    console.error('[SEARCH_V11] executeSearch error:', err);
+    return { found: false, results: [], totalFound: 0, error: 'Assai search failed: ' + (err.message || String(err)) };
   }
 }
