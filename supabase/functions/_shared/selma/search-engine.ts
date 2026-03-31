@@ -278,8 +278,10 @@ export async function fetchResultPage(
   if (startRow && startRow > 1) formData.set('start_row', String(startRow));
 
   const searchUrl = ctx.assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
-  // Use searchresult.aweb — matches all working Assai integrations (discover-vendors, parse-sdr, check-sdr-completeness)
-  const resultUrl = ctx.assaiBase + '/searchresult.aweb';
+  // Use result.aweb — searchresult.aweb returns 404 in this context
+  // (searchresult.aweb works in discover-vendors because it passes action:"search" 
+  // and doesn't use hidden fields from search.aweb form)
+  const resultUrl = ctx.assaiBase + '/result.aweb';
   const resultResp = await fetch(resultUrl, {
     method: 'POST',
     headers: {
@@ -293,7 +295,7 @@ export async function fetchResultPage(
     redirect: 'follow',
   });
   let resultHtml = await resultResp.text();
-  console.info('searchresult.aweb POST (start_row=' + (startRow ?? 1) + '): status ' + resultResp.status + ', html length: ' + resultHtml.length);
+  console.info('result.aweb POST (start_row=' + (startRow ?? 1) + '): status ' + resultResp.status + ', html length: ' + resultHtml.length);
 
   // Login-page detection — if Assai returned the login page, force session refresh and retry once
   if (resultHtml.includes('type="password"') || resultHtml.includes('id="password"') || resultHtml.includes('loginForm')) {
