@@ -8449,7 +8449,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
 
         // Helper: try to extract total count from HTML (e.g. "Showing 1-100 of 109")
         const parseTotalCount = (html: string): number | null => {
-          const m = html.match(/(?:showing|results?)\s+\d+\s*[-–]\s*\d+\s+of\s+(\d+)/i);
+          const m = html.match(/(?:showing|results?)\s+\d+\s*(?:[-–]|to)\s+\d+\s+of\s+(\d+)/i);
           if (m) return parseInt(m[1], 10);
           const m2 = html.match(/total[:\s]+(\d+)/i);
           if (m2) return parseInt(m2[1], 10);
@@ -8463,6 +8463,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const PAGE_CAP = 100;
         const MAX_TOTAL_QUERIES = 30; // safety: max total Assai requests
         let totalQueryCount = 0;
+        let paginationTotalAssaiCount: number | null = null;
 
         // Helper: execute a single filtered search with its own session
         const executeFilteredSearch = async (
@@ -8510,26 +8511,16 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return parseDocuments(html, params.subclass_type);
         };
 
-        const paginateSearch = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }): Promise<any[]> => {
-          // Step 1: Unfiltered search — gets first page (up to 100 docs)
-          const { hiddenFields, textFields } = await initSearch(params);
-          console.info('search_assai_documents: PO=' + (poDigits || 'none') + ', number=' + document_number_pattern);
-
-          const firstHtml = await fetchResultPage(hiddenFields, textFields, params);
-          const firstDocs = parseDocuments(firstHtml, params.subclass_type);
-          if (firstDocs.length === 0) return [];
-
-          const totalFromHtml = parseTotalCount(firstHtml);
-          console.info('search_assai_documents: initial search returned ' + firstDocs.length + ' docs, parsed total: ' + (totalFromHtml ?? 'unknown'));
-
-          if (firstDocs.length < PAGE_CAP) return firstDocs;
-
-          // Step 2: Hit 100-row cap. Split by status code.
+        // Fallback: status-split pagination (extracted verbatim from original paginateSearch)
+        const paginateByStatusSplit = async (
+          params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string },
+          firstDocs: any[],
+        ): Promise<any[]> => {
           const statusCodes = [...new Set(firstDocs.map((d: any) => d.status).filter(Boolean))];
-          console.info('search_assai_documents: hit ' + PAGE_CAP + ' cap. Splitting into ' + statusCodes.length + ' status sub-searches: ' + statusCodes.join(', '));
+          console.info('paginateByStatusSplit: splitting into ' + statusCodes.length + ' status sub-searches: ' + statusCodes.join(', '));
 
           if (statusCodes.length <= 1) {
-            console.warn('search_assai_documents: single status, cannot split further');
+            console.warn('paginateByStatusSplit: single status, cannot split further');
             return firstDocs;
           }
 
@@ -8538,33 +8529,28 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
 
           for (const sc of statusCodes) {
             if (totalQueryCount >= MAX_TOTAL_QUERIES) break;
-            console.info('search_assai_documents: sub-search for status=' + sc);
+            console.info('paginateByStatusSplit: sub-search for status=' + sc);
 
             try {
               const docs = await executeFilteredSearch(params, { status_code: sc });
-              console.info('search_assai_documents: status=' + sc + ' returned ' + docs.length + ' docs');
+              console.info('paginateByStatusSplit: status=' + sc + ' returned ' + docs.length + ' docs');
 
               if (docs.length >= PAGE_CAP) {
-                // Step 3: This status ALSO hit the cap — split further by discipline
                 const disciplines = [...new Set(docs.map((d: any) => d.discipline).filter(Boolean))];
-                console.info('search_assai_documents: status=' + sc + ' hit cap, splitting by ' + disciplines.length + ' disciplines: ' + disciplines.join(', '));
+                console.info('paginateByStatusSplit: status=' + sc + ' hit cap, splitting by ' + disciplines.length + ' disciplines');
 
                 if (disciplines.length <= 1) {
-                  // Can't split further, take what we have
                   for (const doc of docs) {
                     if (doc.document_number && !seen.has(doc.document_number)) {
                       seen.add(doc.document_number);
                       allDocs.push(doc);
                     }
                   }
-                  console.warn('search_assai_documents: status=' + sc + ' has single discipline, capped at 100');
                 } else {
                   for (const disc of disciplines) {
                     if (totalQueryCount >= MAX_TOTAL_QUERIES) break;
-                    console.info('search_assai_documents: sub-sub-search status=' + sc + ' discipline=' + disc);
                     try {
                       const discDocs = await executeFilteredSearch(params, { status_code: sc, discipline_code: disc });
-                      console.info('search_assai_documents: status=' + sc + '/discipline=' + disc + ' returned ' + discDocs.length + ' docs');
                       for (const doc of discDocs) {
                         if (doc.document_number && !seen.has(doc.document_number)) {
                           seen.add(doc.document_number);
@@ -8572,12 +8558,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                         }
                       }
                     } catch (discErr) {
-                      console.error('search_assai_documents: sub-sub-search failed:', discErr);
+                      console.error('paginateByStatusSplit: sub-sub-search failed:', discErr);
                     }
                   }
                 }
               } else {
-                // Under the cap — add all docs
                 for (const doc of docs) {
                   if (doc.document_number && !seen.has(doc.document_number)) {
                     seen.add(doc.document_number);
@@ -8586,11 +8571,102 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 }
               }
             } catch (subErr) {
-              console.error('search_assai_documents: sub-search for status=' + sc + ' failed:', subErr);
+              console.error('paginateByStatusSplit: sub-search for status=' + sc + ' failed:', subErr);
             }
           }
 
-          console.info('search_assai_documents: multi-query complete. Total unique docs: ' + allDocs.length + ' (queries used: ' + totalQueryCount + ')');
+          console.info('paginateByStatusSplit: complete. Total unique docs: ' + allDocs.length + ' (queries used: ' + totalQueryCount + ')');
+          return allDocs;
+        };
+
+        const paginateSearch = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }): Promise<any[]> => {
+          const paginationStartTime = Date.now();
+          // Step 1: Unfiltered search — gets first page
+          const { hiddenFields, textFields } = await initSearch(params);
+          console.info('search_assai_documents: PO=' + (poDigits || 'none') + ', number=' + document_number_pattern);
+
+          const firstHtml = await fetchResultPage(hiddenFields, textFields, params);
+          const firstDocs = parseDocuments(firstHtml, params.subclass_type);
+          if (firstDocs.length === 0) return [];
+
+          const totalFromHtml = parseTotalCount(firstHtml);
+          paginationTotalAssaiCount = totalFromHtml;
+          console.info('search_assai_documents: initial search returned ' + firstDocs.length + ' docs, parsed total: ' + (totalFromHtml ?? 'unknown'));
+
+          if (firstDocs.length < PAGE_CAP) return firstDocs;
+
+          // Step 2: Sequential start_row pagination with two-tier approach
+          // Tier 1: first page = full document objects for display
+          // Tier 2: subsequent pages = metadata only (type_code, status, document_number) for accurate breakdown
+          if (!totalFromHtml) {
+            // Total unknown — fall back to status split
+            console.warn('paginateSearch: totalFromHtml is null, falling back to paginateByStatusSplit');
+            return paginateByStatusSplit(params, firstDocs);
+          }
+
+          const detectedPageSize = firstDocs.length;
+          const allDocs = [...firstDocs]; // Tier 1: full docs from page 1
+          const metadataOnly: Array<{ document_number: string; type_code: string; status: string }> = [];
+          let startRow = detectedPageSize + 1;
+          const TIME_GUARD_MS = 120000; // 120s of 148s budget
+
+          while (startRow <= totalFromHtml) {
+            // Time guard: stop if we've used too much time
+            if (Date.now() - paginationStartTime > TIME_GUARD_MS) {
+              console.warn('paginateSearch: time guard hit at startRow=' + startRow + ', collected ' + (allDocs.length + metadataOnly.length) + ' of ' + totalFromHtml);
+              break;
+            }
+
+            await new Promise(r => setTimeout(r, 300));
+
+            try {
+              const pageHtml = await fetchResultPage(hiddenFields, textFields, params, startRow);
+              const pageDocs = parseDocuments(pageHtml, params.subclass_type);
+              if (pageDocs.length === 0) break;
+
+              // Duplicate detection — if page 2 returns all duplicates, start_row unsupported
+              const existingNums = new Set([
+                ...allDocs.map((d: any) => d.document_number),
+                ...metadataOnly.map(d => d.document_number),
+              ]);
+              const newDocs = pageDocs.filter((d: any) => d.document_number && !existingNums.has(d.document_number));
+
+              if (newDocs.length === 0 && startRow === detectedPageSize + 1) {
+                // start_row not supported — fall back to status split
+                console.warn('paginateSearch: start_row pagination unsupported (page 2 all duplicates) — falling back to paginateByStatusSplit');
+                return paginateByStatusSplit(params, firstDocs);
+              }
+
+              if (newDocs.length === 0) break; // No new docs on subsequent pages = done
+
+              // Tier 2: only extract metadata for breakdown accuracy
+              for (const doc of newDocs) {
+                metadataOnly.push({
+                  document_number: doc.document_number,
+                  type_code: doc.type_code || '',
+                  status: doc.status || '',
+                });
+              }
+
+              startRow += detectedPageSize;
+            } catch (pageErr) {
+              console.error('paginateSearch: page fetch error at startRow=' + startRow + ':', pageErr);
+              break;
+            }
+          }
+
+          // Attach metadata sweep results to the allDocs array as lightweight entries
+          // These have a _metadataOnly flag so the result builder knows they're for breakdown only
+          for (const meta of metadataOnly) {
+            allDocs.push({
+              document_number: meta.document_number,
+              type_code: meta.type_code,
+              status: meta.status,
+              _metadataOnly: true,
+            });
+          }
+
+          console.info('paginateSearch: sequential pagination complete. Full docs: ' + firstDocs.length + ', metadata-only: ' + metadataOnly.length + ', total: ' + allDocs.length + ' of ' + totalFromHtml);
           return allDocs;
         };
 
@@ -8771,29 +8847,51 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // Build summaries and add download URLs
         const assaiBaseForUrls = (creds?.base_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/+$/, '');
         const statusSummary: Record<string, number> = {};
-        const typeSummary: Record<string, { count: number; statuses: string[] }> = {};
+        const typeSummary: Record<string, { count: number; statuses: Record<string, number> }> = {};
+        const fullDocuments: any[] = []; // Only non-metadata docs for display
         allDocuments.forEach((d: any) => {
-          // Add download URL to each document
-          if (d.pk_seq_nr && d.entt_seq_nr) {
+          // Add download URL to full documents only
+          if (!d._metadataOnly && d.pk_seq_nr && d.entt_seq_nr) {
             d.download_url = assaiBaseForUrls + '/download.aweb?pk_seq_nr=' + d.pk_seq_nr + '&entt_seq_nr=' + d.entt_seq_nr;
           }
-          statusSummary[d.status] = (statusSummary[d.status] || 0) + 1;
-          if (!typeSummary[d.type_code]) typeSummary[d.type_code] = { count: 0, statuses: [] };
-          typeSummary[d.type_code].count++;
-          if (!typeSummary[d.type_code].statuses.includes(d.status)) {
-            typeSummary[d.type_code].statuses.push(d.status);
+          if (!d._metadataOnly) {
+            fullDocuments.push(d);
+          }
+          // Build summaries from ALL documents (full + metadata-only)
+          if (d.status) {
+            statusSummary[d.status] = (statusSummary[d.status] || 0) + 1;
+          }
+          if (d.type_code) {
+            if (!typeSummary[d.type_code]) typeSummary[d.type_code] = { count: 0, statuses: {} };
+            typeSummary[d.type_code].count++;
+            if (d.status) {
+              typeSummary[d.type_code].statuses[d.status] = (typeSummary[d.type_code].statuses[d.status] || 0) + 1;
+            }
           }
         });
 
+        const totalSwept = allDocuments.length;
+        const realTotal = paginationTotalAssaiCount || totalSwept;
+        const breakdownComplete = !paginationTotalAssaiCount || totalSwept >= paginationTotalAssaiCount;
+
         return {
           found: true,
-          total_found: allDocuments.length,
+          total_found: fullDocuments.length,
+          total_assai_count: realTotal,
+          breakdown_complete: breakdownComplete,
+          breakdown_coverage: totalSwept + ' of ' + realTotal,
           search_pattern: document_number_pattern,
           filters_applied: { discipline_code, document_type, status_code, company_code },
           status_summary: statusSummary,
           type_summary: typeSummary,
-          documents: allDocuments.slice(0, 100),
-          note: allDocuments.length > 100 ? `Showing first 100 of ${allDocuments.length} results. Full summaries reflect all ${allDocuments.length} documents.` : undefined
+          documents: fullDocuments.slice(0, 100),
+          capped: fullDocuments.length > 100,
+          capped_message: fullDocuments.length > 100
+            ? `Showing first 100 of ${fullDocuments.length} detailed documents. Breakdown table reflects all ${totalSwept} documents analyzed.`
+            : null,
+          note: !breakdownComplete
+            ? `Breakdown covers ${totalSwept} of ${realTotal} documents. Apply a type or status filter for complete results on a specific category.`
+            : `Complete breakdown of all ${realTotal} documents.`
         };
       } catch (err: any) {
         console.error('search_assai_documents error:', err);
@@ -10928,7 +11026,42 @@ IMPORTANT ASSAI BEHAVIOURS:
 6. detail.aweb only works as popup from frameset — use download.aweb directly
 7. The download.aweb endpoint requires SAME session cookies as the search
 8. Document files are attached as PDFs, DWGs (AutoCAD), or XLS files
-9. The "Appx" column in Revisions tab = Approval Index tracking review cycles`;
+9. The "Appx" column in Revisions tab = Approval Index tracking review cycles
+
+DOCUMENT COUNT AND BREAKDOWN RULES (CRITICAL — MANDATORY FOR ALL PROJECT QUERIES):
+
+1. ALWAYS use total_assai_count when stating how many documents exist for a project:
+   "DP164 has 255 documents in Assai." NEVER state total_found as the total — total_found is the number of detailed document records loaded, not the real count.
+
+2. For broad project queries (no specific type or status filter, or >100 documents):
+   Present a summary breakdown table using type_summary with status_breakdown counts:
+
+   | Type Code | Description | Total | Status Breakdown |
+   |---|---|---|---|
+   | ZV | Supplier Documents | 47 | IFA(23) AFC(18) AFT(6) |
+   | MP | Piping | 38 | AFC(21) IFI(17) |
+   | ... | ... | ... | ... |
+
+   After the table, ALWAYS offer filter pills so the user can drill down:
+   <follow_ups>["Show ZV documents", "Show IFI documents only", "Show AFC documents only"]</follow_ups>
+
+3. If breakdown_complete is false — state explicitly:
+   "I've analyzed [breakdown_coverage] documents for the breakdown below. Apply a type or status filter for complete results on a specific category."
+
+4. If capped is true — state explicitly:
+   "Showing first 100 of [total_found] detailed documents. The breakdown table above reflects all [breakdown_coverage] documents analyzed."
+
+5. For filtered drill-down queries (specific type or status) — format each document as:
+   **[document_number]** — [title]
+   Status: [status] | Rev: [revision] | Discipline: [discipline_code]
+   [Open in Assai](https://eu.assaicloud.com/AWeu578/get/details/BGC_PROJ/DOCS/[document_number]) | Download | [Read & Analyse]
+
+   "Read & Analyse" means calling read_assai_document with the document number.
+
+6. NEVER list individual documents for unfiltered result sets >100 documents. Show the breakdown table and offer filter pills instead. The user drills down by clicking a pill.
+
+7. When type_summary statuses is a Record<string, number> (e.g. { "IFA": 23, "AFC": 18 }), format as "IFA(23) AFC(18)" in the Status Breakdown column. When it is an array of strings, just list them.`;
+
 
     const PSSR_ORA_AGENT_PROMPT = `You are Fred, ORSH's PSSR & Operational Readiness Assistant. You are an expert in Pre-Startup Safety Reviews (PSSR), ORA (Operational Readiness Activity) planning, PSSR checklist management, and safety readiness for Oil & Gas facilities. You help users track PSSR progress, manage checklist items, identify pending approvals, and ensure safe startup readiness. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Fred, your PSSR & Operational Readiness Assistant."`;
 
