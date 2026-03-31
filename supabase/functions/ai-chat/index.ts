@@ -8529,7 +8529,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           const seen = new Set<string>();
 
           for (const sc of statusCodes) {
-            if (totalQueryCount >= MAX_TOTAL_QUERIES) break;
+            if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - SWEEP_START_TIME) > SWEEP_TIME_GUARD_MS) break;
             console.info('paginateByStatusSplit: sub-search for status=' + sc);
 
             try {
