@@ -4643,6 +4643,10 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
     
     case "get_user_tasks": {
       try {
+        const currentUserId = args._user_id;
+        if (!currentUserId) {
+          return { error: 'User not authenticated', total_tasks: 0 };
+        }
         const statusFilter = args.status_filter || 'pending';
         const categoryFilter = args.category_filter || 'all';
         const results: { category: string; tasks: any[] }[] = [];
@@ -4651,7 +4655,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         let taskQuery = supabaseClient
           .from('user_tasks')
           .select('id, title, description, type, status, priority, due_date, progress_percentage, metadata, created_at')
-          .eq('user_id', userId)
+          .eq('user_id', currentUserId)
           .order('created_at', { ascending: false })
           .limit(50);
 
