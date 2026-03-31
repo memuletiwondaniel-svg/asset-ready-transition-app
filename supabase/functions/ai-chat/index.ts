@@ -3560,8 +3560,31 @@ async function loadUserContext(supabaseClient: any, userId: string): Promise<str
       } catch { /* skip malformed topics */ }
     }
 
+    // Selma-specific memory keys
+    if (contextMap['selma_frequent_projects']) {
+      try {
+        const raw = contextMap['selma_frequent_projects'];
+        const projects = typeof raw === 'object' && Array.isArray(raw?.projects) ? raw.projects : [];
+        if (projects.length > 0) {
+          parts.push(`Selma — frequently searched projects: ${projects.join(', ')} — if user says "the project" or "same project", use the most recent one.`);
+        }
+      } catch { /* skip */ }
+    }
+    if (contextMap['selma_frequent_doc_types']) {
+      try {
+        const raw = contextMap['selma_frequent_doc_types'];
+        const types = typeof raw === 'object' && Array.isArray(raw?.types) ? raw.types : [];
+        if (types.length > 0) {
+          parts.push(`Selma — frequently searched document types: ${types.join(', ')}`);
+        }
+      } catch { /* skip */ }
+    }
+    if (contextMap['selma_last_search']) {
+      parts.push(`Selma — last document search: ${safeVal(contextMap['selma_last_search'])}`);
+    }
+
     // Include any other custom context keys (skip internal ones)
-    const knownKeys = ['last_active_pssr', 'last_active_project', 'user_plant_location', 'user_role', 'recent_topics', 'bob_welcome_sent'];
+    const knownKeys = ['last_active_pssr', 'last_active_project', 'user_plant_location', 'user_role', 'recent_topics', 'bob_welcome_sent', 'selma_frequent_projects', 'selma_frequent_doc_types', 'selma_last_search'];
     for (const [key, val] of Object.entries(contextMap)) {
       if (!knownKeys.includes(key)) {
         parts.push(`${key}: ${safeVal(val)}`);
