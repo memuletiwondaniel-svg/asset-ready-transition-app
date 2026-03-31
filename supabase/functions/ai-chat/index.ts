@@ -3422,13 +3422,40 @@ Intents:
   }
 };
 
+// Detect if the user message is a short continuation/confirmation that lacks domain keywords.
+// In that case, inherit the agent from the prior conversation context.
+const CONTINUATION_PATTERN = /^(yes|yeah|yep|yea|sure|ok|okay|go ahead|do it|please|proceed|confirm|confirmed|absolutely|definitely|let's do it|go for it|that one|the first one|the second|option \d|sounds good|perfect|great|thanks|thank you|no[.,!]?\s*$|nope|not yet|cancel|stop|never\s*mind)[\s.!?]*$/i;
+
+function detectAgentFromHistory(messages: Array<{ role: string; content: string }>): string | null {
+  // Walk backward through conversation to find the last user message that routed to a specialist
+  for (let i = messages.length - 2; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg.role === 'user') {
+      const domain = detectAgentDomainRegex(msg.content);
+      if (domain !== 'copilot') return domain;
+    }
+  }
+  return null;
+}
+
 // Tiered routing: regex first (0ms), LLM fallback only for ambiguous queries
-const routeAgent = async (message: string): Promise<string> => {
+// Now accepts conversation history for context-aware continuation routing
+const routeAgent = async (message: string, conversationHistory?: Array<{ role: string; content: string }>): Promise<string> => {
   const regexResult = detectAgentDomainRegex(message);
   if (regexResult !== 'copilot') {
     console.log(`routeAgent: regex matched "${regexResult}" — skipping LLM classifier`);
     return regexResult; // fast path, 0ms
   }
+  
+  // Context-aware continuation: short confirmations inherit the previous agent
+  if (CONTINUATION_PATTERN.test(message.trim()) && conversationHistory && conversationHistory.length > 1) {
+    const inheritedAgent = detectAgentFromHistory(conversationHistory);
+    if (inheritedAgent) {
+      console.log(`routeAgent: continuation detected ("${message.trim()}") — inheriting agent "${inheritedAgent}" from conversation history`);
+      return inheritedAgent;
+    }
+  }
+  
   console.log('routeAgent: regex returned copilot — invoking Haiku classifier');
   return await classifyIntent(message); // only for ambiguous natural language
 };
