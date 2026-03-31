@@ -3823,8 +3823,11 @@ async function routeA2AMessage(message: A2AMessage, supabaseClient: any): Promis
   }
 }
 
-// Determine which agent should handle a query based on intent keywords
-function detectAgentDomain(message: string): string {
+// Determine which agent should handle a query based on intent keywords (fast path — regex only)
+// Known limitation: Regex priority order (Ivan → Hannah → Selma → Fred → Zain → Alex → copilot)
+// can misfire on cross-domain queries (e.g. "training documents" → training_agent instead of document_agent).
+// The LLM classifier (classifyIntent) is the long-term fix; regex is kept for zero-latency specialist routing.
+function detectAgentDomainRegex(message: string): string {
   const lower = message.toLowerCase();
   
   // Ivan (Process Technical Authority Agent) triggers — MUST come before Hannah to catch process safety queries
@@ -3869,6 +3872,60 @@ function detectAgentDomain(message: string): string {
   
   return 'copilot';
 }
+
+// LLM-based intent classifier — called only when regex returns 'copilot' (ambiguous natural language)
+// Uses claude-haiku-4-5-20251001 with a hard 2-second timeout to prevent latency spikes
+const classifyIntent = async (userMessage: string): Promise<string> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2000);
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'x-api-key': Deno.env.get('ANTHROPIC_API_KEY')!,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 60,
+        system: `Classify the user query into exactly one intent.
+Respond with JSON only, no other text: {"intent": "<intent>", "confidence": <0.0-1.0>}
+
+Intents:
+- document_agent: finding, retrieving, or searching for documents, drawings, specs, datasheets, vendor docs, BfD, P&ID, SLD, GA, or anything in a Document Management System
+- pssr_ora_agent: pre-startup safety reviews, PSSR checklists, ORA items
+- ivan: punchlist items, punch items, outstanding actions, ITRs, process safety, HAZOP
+- hannah: handover certificates, mechanical completion, turnover packages
+- training_agent: training courses, competency assessments, learning materials
+- cmms_agent: equipment, assets, maintenance, work orders, CMMS
+- copilot: tasks, schedules, general questions, greetings, platform help, everything else`,
+        messages: [{ role: 'user', content: userMessage }]
+      })
+    });
+    clearTimeout(timeoutId);
+    const data = await response.json();
+    const parsed = JSON.parse(data.content[0].text);
+    console.log(`classifyIntent: Haiku returned intent="${parsed.intent}" confidence=${parsed.confidence}`);
+    return parsed.confidence >= 0.7 ? parsed.intent : detectAgentDomainRegex(userMessage);
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.log(`classifyIntent: fallback to regex (error: ${err})`);
+    return detectAgentDomainRegex(userMessage);
+  }
+};
+
+// Tiered routing: regex first (0ms), LLM fallback only for ambiguous queries
+const routeAgent = async (message: string): Promise<string> => {
+  const regexResult = detectAgentDomainRegex(message);
+  if (regexResult !== 'copilot') {
+    console.log(`routeAgent: regex matched "${regexResult}" — skipping LLM classifier`);
+    return regexResult; // fast path, 0ms
+  }
+  console.log('routeAgent: regex returned copilot — invoking Haiku classifier');
+  return await classifyIntent(message); // only for ambiguous natural language
+};
 
 // Log feedback for continuous training
 async function logResponseFeedback(
