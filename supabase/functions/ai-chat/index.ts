@@ -8847,29 +8847,51 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // Build summaries and add download URLs
         const assaiBaseForUrls = (creds?.base_url || 'https://eu.assaicloud.com/AWeu578').replace(/\/+$/, '');
         const statusSummary: Record<string, number> = {};
-        const typeSummary: Record<string, { count: number; statuses: string[] }> = {};
+        const typeSummary: Record<string, { count: number; statuses: Record<string, number> }> = {};
+        const fullDocuments: any[] = []; // Only non-metadata docs for display
         allDocuments.forEach((d: any) => {
-          // Add download URL to each document
-          if (d.pk_seq_nr && d.entt_seq_nr) {
+          // Add download URL to full documents only
+          if (!d._metadataOnly && d.pk_seq_nr && d.entt_seq_nr) {
             d.download_url = assaiBaseForUrls + '/download.aweb?pk_seq_nr=' + d.pk_seq_nr + '&entt_seq_nr=' + d.entt_seq_nr;
           }
-          statusSummary[d.status] = (statusSummary[d.status] || 0) + 1;
-          if (!typeSummary[d.type_code]) typeSummary[d.type_code] = { count: 0, statuses: [] };
-          typeSummary[d.type_code].count++;
-          if (!typeSummary[d.type_code].statuses.includes(d.status)) {
-            typeSummary[d.type_code].statuses.push(d.status);
+          if (!d._metadataOnly) {
+            fullDocuments.push(d);
+          }
+          // Build summaries from ALL documents (full + metadata-only)
+          if (d.status) {
+            statusSummary[d.status] = (statusSummary[d.status] || 0) + 1;
+          }
+          if (d.type_code) {
+            if (!typeSummary[d.type_code]) typeSummary[d.type_code] = { count: 0, statuses: {} };
+            typeSummary[d.type_code].count++;
+            if (d.status) {
+              typeSummary[d.type_code].statuses[d.status] = (typeSummary[d.type_code].statuses[d.status] || 0) + 1;
+            }
           }
         });
 
+        const totalSwept = allDocuments.length;
+        const realTotal = paginationTotalAssaiCount || totalSwept;
+        const breakdownComplete = !paginationTotalAssaiCount || totalSwept >= paginationTotalAssaiCount;
+
         return {
           found: true,
-          total_found: allDocuments.length,
+          total_found: fullDocuments.length,
+          total_assai_count: realTotal,
+          breakdown_complete: breakdownComplete,
+          breakdown_coverage: totalSwept + ' of ' + realTotal,
           search_pattern: document_number_pattern,
           filters_applied: { discipline_code, document_type, status_code, company_code },
           status_summary: statusSummary,
           type_summary: typeSummary,
-          documents: allDocuments.slice(0, 100),
-          note: allDocuments.length > 100 ? `Showing first 100 of ${allDocuments.length} results. Full summaries reflect all ${allDocuments.length} documents.` : undefined
+          documents: fullDocuments.slice(0, 100),
+          capped: fullDocuments.length > 100,
+          capped_message: fullDocuments.length > 100
+            ? `Showing first 100 of ${fullDocuments.length} detailed documents. Breakdown table reflects all ${totalSwept} documents analyzed.`
+            : null,
+          note: !breakdownComplete
+            ? `Breakdown covers ${totalSwept} of ${realTotal} documents. Apply a type or status filter for complete results on a specific category.`
+            : `Complete breakdown of all ${realTotal} documents.`
         };
       } catch (err: any) {
         console.error('search_assai_documents error:', err);
