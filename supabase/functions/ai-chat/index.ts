@@ -6887,6 +6887,12 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
     // Tool-to-label mapping for dynamic status updates
     const TOOL_STATUS_LABELS: Record<string, string> = {
+      resolve_document_type: 'Resolving document type...',
+      resolve_project_code: 'Resolving project code...',
+      search_assai_documents: 'Searching Assai DMS...',
+      read_assai_document: 'Reading document content...',
+      discover_project_vendors: 'Discovering vendors...',
+      learn_acronym: 'Learning acronym...',
       get_pssr_pending_items: 'Retrieving PSSR data...',
       get_pssr_pending_approvers: 'Checking PSSR approvers...',
       get_executive_summary: 'Building executive summary...',
