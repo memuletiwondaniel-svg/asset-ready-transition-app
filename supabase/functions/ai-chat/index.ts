@@ -8640,7 +8640,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           let startRow = detectedPageSize + 1;
           const TIME_GUARD_MS = 120000; // 120s of 148s budget
 
-          while (startRow <= totalFromHtml) {
+          while (startRow <= estimatedTotal) {
             // Time guard: stop if we've used too much time
             if (Date.now() - paginationStartTime > TIME_GUARD_MS) {
               console.warn('paginateSearch: time guard hit at startRow=' + startRow + ', collected ' + (allDocs.length + metadataOnly.length) + ' of ' + totalFromHtml);
