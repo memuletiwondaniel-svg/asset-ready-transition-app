@@ -7363,11 +7363,44 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         }
         
         // Step 1b: Check if query matches a full_name in the acronym table (e.g. "Basis for Design" → BFD)
-        const { data: fullNameMatch } = await supabaseClient
-          .from('dms_document_type_acronyms')
-          .select('acronym, type_code, full_name, notes, usage_count')
-          .ilike('full_name', `%${query}%`)
-          .limit(3);
+        // Use keyword-based matching: strip prepositions and match significant words independently
+        const STOP_WORDS = new Set(['of', 'for', 'the', 'a', 'an', 'and', 'in', 'on', 'to', 'is', 'by']);
+        const queryKeywords = query.split(/\s+/).filter(w => !STOP_WORDS.has(w.toLowerCase()) && w.length > 1);
+        console.log('resolve_document_type: keyword extraction:', queryKeywords);
+        
+        let fullNameMatch: any[] | null = null;
+        if (queryKeywords.length >= 2) {
+          // Query with first keyword, then filter client-side for remaining keywords
+          const { data: broadMatch } = await supabaseClient
+            .from('dms_document_type_acronyms')
+            .select('acronym, type_code, full_name, notes, usage_count')
+            .ilike('full_name', `%${queryKeywords[0]}%`)
+            .limit(20);
+          
+          if (broadMatch && broadMatch.length > 0) {
+            fullNameMatch = broadMatch.filter(row => {
+              const nameLower = row.full_name.toLowerCase();
+              return queryKeywords.slice(1).every(kw => nameLower.includes(kw.toLowerCase()));
+            });
+            if (fullNameMatch.length === 0) fullNameMatch = null;
+          }
+        } else if (queryKeywords.length === 1) {
+          // Single keyword — use original ilike
+          const { data: singleMatch } = await supabaseClient
+            .from('dms_document_type_acronyms')
+            .select('acronym, type_code, full_name, notes, usage_count')
+            .ilike('full_name', `%${queryKeywords[0]}%`)
+            .limit(3);
+          fullNameMatch = singleMatch;
+        } else {
+          // Fallback: use original query as-is
+          const { data: fallbackMatch } = await supabaseClient
+            .from('dms_document_type_acronyms')
+            .select('acronym, type_code, full_name, notes, usage_count')
+            .ilike('full_name', `%${query}%`)
+            .limit(3);
+          fullNameMatch = fallbackMatch;
+        }
         
         console.log('resolve_document_type: full_name lookup found:', fullNameMatch?.length ?? 0);
         
