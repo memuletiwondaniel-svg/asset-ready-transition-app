@@ -295,6 +295,7 @@ export async function fetchResultPage(
   for (const f of hiddenFields) formData.set(f.name, f.value);
   for (const f of textFields) formData.set(f.name, '');
   formData.set('subclass_type', params.subclass_type);
+  formData.set('number_of_results', '500'); // Maximize results per page — Assai default is 100
   if (ctx.poDigits) {
     formData.set('purchase_code', ctx.poDigits);
   } else {
