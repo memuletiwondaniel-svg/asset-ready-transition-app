@@ -8459,10 +8459,10 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // Multi-query search: if a search hits the 100-row cap, split into independent
         // sub-searches (by status, then by discipline if needed), each with its own search.aweb session.
         const PAGE_CAP = 100;
-        const MAX_TOTAL_QUERIES = 120; // safety cap — time guard will stop us before this in most cases
-        const SWEEP_START_TIME = Date.now();
-        const SWEEP_TIME_GUARD_MS = 100000; // 100s of 148s budget — leave time for LLM response
-        console.log('[SEARCH_V5]', { MAX_TOTAL_QUERIES: 120, SWEEP_TIME_GUARD_MS: 100000, strategy: 'dms-type-sweep-with-time-guard' });
+        const MAX_TOTAL_QUERIES = 120;
+        const SWEEP_TIME_GUARD_MS = 70000; // 70s max for entire search operation — leaves ~78s for LLM
+        let sweepStartTime = 0; // set when search actually executes
+        console.log('[SEARCH_V6]', { MAX_TOTAL_QUERIES: 120, SWEEP_TIME_GUARD_MS: 70000, strategy: 'dms-type-sweep-with-time-guard' });
         let totalQueryCount = 0;
         let paginationTotalAssaiCount: number | null = null;
 
@@ -8517,8 +8517,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string },
           firstDocs: any[],
         ): Promise<any[]> => {
+          sweepStartTime = Date.now(); // set when search actually executes, not when closure is created
           const statusCodes = [...new Set(firstDocs.map((d: any) => d.status).filter(Boolean))];
-          console.info('paginateByStatusSplit: splitting into ' + statusCodes.length + ' status sub-searches: ' + statusCodes.join(', '));
+          console.info('paginateByStatusSplit: splitting into ' + statusCodes.length + ' status sub-searches: ' + statusCodes.join(', ') + ' (time guard: ' + SWEEP_TIME_GUARD_MS + 'ms)');
 
           if (statusCodes.length <= 1) {
             console.warn('paginateByStatusSplit: single status, cannot split further');
@@ -8529,7 +8530,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           const seen = new Set<string>();
 
           for (const sc of statusCodes) {
-            if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - SWEEP_START_TIME) > SWEEP_TIME_GUARD_MS) break;
+            if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) break;
             console.info('paginateByStatusSplit: sub-search for status=' + sc);
 
             try {
@@ -8542,7 +8543,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
 
                 if (disciplines.length > 1) {
                   for (const disc of disciplines) {
-                    if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - SWEEP_START_TIME) > SWEEP_TIME_GUARD_MS) break;
+                    if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) break;
                     try {
                       const discDocs = await executeFilteredSearch(params, { status_code: sc, discipline_code: disc });
                       for (const doc of discDocs) {
@@ -8598,8 +8599,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                   console.info('paginateByStatusSplit: searching ' + typesToSearch.length + ' type codes not in initial sample (skipping ' + typesInSample.size + ' already found)');
                   
                   for (const tc of typesToSearch) {
-                    if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - SWEEP_START_TIME) > SWEEP_TIME_GUARD_MS) {
-                      console.warn('paginateByStatusSplit: hit budget at type ' + tc + ' (queries: ' + totalQueryCount + '/' + MAX_TOTAL_QUERIES + ', elapsed: ' + (Date.now() - SWEEP_START_TIME) + 'ms)');
+                    if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) {
+                      console.warn('paginateByStatusSplit: hit budget at type ' + tc + ' (queries: ' + totalQueryCount + '/' + MAX_TOTAL_QUERIES + ', elapsed: ' + (Date.now() - sweepStartTime) + 'ms)');
                       break;
                     }
                     try {
