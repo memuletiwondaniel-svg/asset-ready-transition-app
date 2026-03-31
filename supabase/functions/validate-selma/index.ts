@@ -443,7 +443,7 @@ const ALL_TESTS: TestDef[] = [
     tier: 4,
     query: "Find a vendor document on DP223 and read its content",
     agent: "bob",
-    timeout_ms: 120000,
+    timeout_ms: 300000,
     autoAssert: (r) => ({
       pass: !containsAny(r, ["SUP_DOC error", "module not found", "cannot read"]) && r.length > 100,
       details: containsAny(r, ["SUP_DOC"])

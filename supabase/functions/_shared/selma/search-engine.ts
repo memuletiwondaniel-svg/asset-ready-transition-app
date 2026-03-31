@@ -567,6 +567,14 @@ export async function paginateSearch(
   ctx.paginationTotalAssaiCount = totalFromHtml;
   console.info('[SEARCH_V11] initial search returned ' + firstDocs.length + ' docs, parsed total: ' + (totalFromHtml ?? 'unknown'));
 
+  // Fix 1D — diagnostic logging at escalation decision point
+  console.log(
+    `[Selma:SEARCH_V11] paginateSearch — firstDocs: ${firstDocs.length}, ` +
+    `parsedTotal: ${totalFromHtml ?? 'unknown'}, PAGE_CAP: ${ctx.PAGE_CAP}, ` +
+    `escalating to pagination: ${firstDocs.length >= ctx.PAGE_CAP}, ` +
+    `totalQueryCount: ${ctx.totalQueryCount}`
+  );
+
   if (firstDocs.length < ctx.PAGE_CAP) return firstDocs;
 
   // Sequential start_row pagination
