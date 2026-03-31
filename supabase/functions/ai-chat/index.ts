@@ -11297,7 +11297,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           document_type: resolvedDocCode,
           document_number_pattern: `${resolvedProjectCode}-%`
         };
-        const searchResult = await executeTool('search_assai_documents', searchArgs, supabaseClient);
+        const searchResult = await executeTool('search_assai_documents', searchArgs, supabase);
         
         if (searchResult) {
           console.log(`SPECIFIC DOC INTERCEPT: Search returned ${searchResult.total_found || 0} results`);
