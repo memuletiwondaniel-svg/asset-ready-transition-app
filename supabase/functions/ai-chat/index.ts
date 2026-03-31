@@ -8643,7 +8643,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           while (startRow <= estimatedTotal) {
             // Time guard: stop if we've used too much time
             if (Date.now() - paginationStartTime > TIME_GUARD_MS) {
-              console.warn('paginateSearch: time guard hit at startRow=' + startRow + ', collected ' + (allDocs.length + metadataOnly.length) + ' of ' + totalFromHtml);
+              console.warn('paginateSearch: time guard hit at startRow=' + startRow + ', collected ' + (allDocs.length + metadataOnly.length) + ' of ' + estimatedTotal);
               break;
             }
 
