@@ -379,7 +379,7 @@ const ALL_TESTS: TestDef[] = [
       pass: !m.hasError && r.length > 100 && !containsAny(r, ["session error", "session expired"]),
       details: containsAny(r, ["session error", "session expired"])
         ? "Mid-search session error detected"
-        : "AFC search completed",
+        : "AFC search completed. Expected response time: < 120 seconds.",
     }),
   },
   {
