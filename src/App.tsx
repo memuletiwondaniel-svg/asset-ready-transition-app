@@ -35,6 +35,8 @@ import SoFReviewPage from "@/pages/SoFReviewPage";
 import MicrosoftCallback from "@/pages/auth/MicrosoftCallback";
 import BacklogPage from "@/pages/BacklogPage";
 
+const SelmaValidation = React.lazy(() => import("@/pages/admin/SelmaValidation"));
+
 // Create QueryClient outside component to prevent recreation on every render
 const queryClient = new QueryClient({
   defaultOptions: {
