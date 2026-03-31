@@ -8447,69 +8447,20 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return docs;
         };
 
-        // Helper: try to extract total count from HTML (e.g. "Showing 1-100 of 109")
+        // Helper: try to extract total count from HTML — simplified (Assai doesn't expose total in static HTML)
         const parseTotalCount = (html: string): number | null => {
-          // DIAGNOSTIC: Extract all text near pagination markers to discover actual format
-          const paginationDiag = html.match(/(?:showing|result|record|total|row|item|found|display)[^<]{0,80}/gi);
-          if (paginationDiag) {
-            console.info('parseTotalCount DIAGNOSTIC — pagination-related text found:', JSON.stringify(paginationDiag.slice(0, 10)));
-          } else {
-            console.warn('parseTotalCount DIAGNOSTIC — NO pagination text found in HTML');
-          }
-          // Diagnostic: capture full getCount call
-          const getCountDiag = html.match(/getCount\s*\(\s*["']?(\d+)["']?\s*\)/i);
-          if (getCountDiag) {
-            console.info('parseTotalCount DIAGNOSTIC — getCount argument: ' + getCountDiag[1]);
-          }
-          // Diagnostic: capture ROWCOUNT context (200 chars around it)
-          const rowCountIdx = html.indexOf('ROWCOUNT');
-          if (rowCountIdx >= 0) {
-            console.info('parseTotalCount DIAGNOSTIC — ROWCOUNT context: ' + html.substring(rowCountIdx, rowCountIdx + 200));
-          }
-          // Also check for myCells array length as a signal
-          const myCellsLenMatch = html.match(/var\s+myCells\s*=\s*\[/);
-          if (myCellsLenMatch) {
-            // Count rows by counting ],[  patterns
-            const rowMatches = html.match(/\],\s*\[/g);
-            const estimatedRows = rowMatches ? rowMatches.length + 1 : 1;
-            console.info('parseTotalCount DIAGNOSTIC — myCells estimated rows:', estimatedRows);
-          }
-          // Also look for any number patterns near "of" keyword
-          const ofPatterns = html.match(/\d+\s+of\s+\d+/gi);
-          if (ofPatterns) {
-            console.info('parseTotalCount DIAGNOSTIC — "X of Y" patterns:', JSON.stringify(ofPatterns));
-          }
-
-          // Pattern 1: "Showing 1-100 of 109" or "Showing 1 to 50 of 255"
           const m = html.match(/(?:showing|results?)\s+\d+\s*(?:[-–]|to)\s+\d+\s+of\s+(\d+)/i);
-          if (m) { console.info('parseTotalCount: matched pattern 1, total=' + m[1]); return parseInt(m[1], 10); }
-          // Pattern 2: "X of Y" anywhere (e.g. "50 of 255")
-          const m1b = html.match(/(\d+)\s+of\s+(\d+)\s*(?:record|result|row|item|document|entr)/i);
-          if (m1b) { console.info('parseTotalCount: matched pattern 1b, total=' + m1b[2]); return parseInt(m1b[2], 10); }
-          // Pattern 3: "total: 255" or "Total 255"
-          const m2 = html.match(/total[:\s]+(\d+)/i);
-          if (m2) { console.info('parseTotalCount: matched pattern 2, total=' + m2[1]); return parseInt(m2[1], 10); }
-          // Pattern 4: resultCount element
-          const m3 = html.match(/resultCount[^>]*>(\d+)/i);
-          if (m3) { console.info('parseTotalCount: matched pattern 3, total=' + m3[1]); return parseInt(m3[1], 10); }
-          // Pattern 5: Assai CORE ROWCOUNT — RowCount.getCount("255") or getCount("1234")
-          const m4a = html.match(/getCount\s*\(\s*["'](\d+)["']\s*\)/i);
-          if (m4a) { console.info('parseTotalCount: matched Assai ROWCOUNT pattern, total=' + m4a[1]); return parseInt(m4a[1], 10); }
-          // Pattern 5b: Assai-specific "rowCount" or similar JS variable
-          const m4 = html.match(/(?:rowCount|totalRows|totalCount|recordCount|maxRows)\s*[=:]\s*['"]?(\d+)/i);
-          if (m4) { console.info('parseTotalCount: matched pattern 4 (JS var), total=' + m4[1]); return parseInt(m4[1], 10); }
-          // Pattern 6: Assai DWR-style total in navigation controls 
-          const m5 = html.match(/(?:nav|pag)\w*[^>]*?(\d+)\s*(?:of|\/)\s*(\d+)/i);
-          if (m5) { console.info('parseTotalCount: matched pattern 5 (nav), total=' + m5[2]); return parseInt(m5[2], 10); }
-          
-          console.warn('parseTotalCount: NO pattern matched — total is null');
+          if (m) return parseInt(m[1], 10);
+          const m2 = html.match(/(\d+)\s+of\s+(\d+)\s*(?:record|result|row|item|document|entr)/i);
+          if (m2) return parseInt(m2[2], 10);
           return null;
         };
 
         // Multi-query search: if a search hits the 100-row cap, split into independent
         // sub-searches (by status, then by discipline if needed), each with its own search.aweb session.
         const PAGE_CAP = 100;
-        const MAX_TOTAL_QUERIES = 50; // safety: max total Assai requests (need ~35 for 7 statuses + 23 type sub-splits)
+        const MAX_TOTAL_QUERIES = 80; // safety: max total Assai requests (need ~70 for full dms_document_types sweep)
+        console.log('[SEARCH_V3]', { MAX_TOTAL_QUERIES: 80, strategy: 'dms-type-sweep' });
         let totalQueryCount = 0;
         let paginationTotalAssaiCount: number | null = null;
 
@@ -8603,34 +8554,68 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                     }
                   }
                 } else {
-                  // Single or no discipline — try splitting by document_type instead
-                  const typeCodesInCap = [...new Set(docs.map((d: any) => d.type_code).filter(Boolean))];
-                  console.info('paginateByStatusSplit: single discipline for status=' + sc + ', splitting by ' + typeCodesInCap.length + ' document types');
+                  // Single or no discipline — sweep ALL known type codes from dms_document_types reference table
+                  // This fixes the bug where only type codes from the first 100 results were searched
+                  console.info('paginateByStatusSplit: single discipline for status=' + sc + ', fetching ALL type codes from dms_document_types');
                   
-                  if (typeCodesInCap.length > 1) {
-                    for (const tc of typeCodesInCap) {
-                      if (totalQueryCount >= MAX_TOTAL_QUERIES) break;
-                      try {
-                        const typeDocs = await executeFilteredSearch(params, { status_code: sc, document_type: tc });
-                        for (const doc of typeDocs) {
-                          if (doc.document_number && !seen.has(doc.document_number)) {
-                            seen.add(doc.document_number);
-                            allDocs.push(doc);
-                          }
-                        }
-                      } catch (typeErr) {
-                        console.error('paginateByStatusSplit: type sub-search failed:', typeErr);
-                      }
-                    }
-                  } else {
-                    // Last resort: add what we have (capped at 100)
-                    for (const doc of docs) {
-                      if (doc.document_number && !seen.has(doc.document_number)) {
-                        seen.add(doc.document_number);
-                        allDocs.push(doc);
-                      }
+                  // Add the capped docs first (they're valid, just incomplete)
+                  for (const doc of docs) {
+                    if (doc.document_number && !seen.has(doc.document_number)) {
+                      seen.add(doc.document_number);
+                      allDocs.push(doc);
                     }
                   }
+                  
+                  // Query ALL active type codes from reference table
+                  let allTypeCodes: string[] = [];
+                  try {
+                    const { data: allTypes } = await supabaseClient
+                      .from('dms_document_types')
+                      .select('code')
+                      .eq('is_active', true);
+                    allTypeCodes = [...new Set((allTypes || []).map((t: any) => t.code))];
+                    console.info('paginateByStatusSplit: loaded ' + allTypeCodes.length + ' unique type codes from dms_document_types');
+                  } catch (dbErr) {
+                    console.error('paginateByStatusSplit: failed to load type codes from DB, falling back to sample:', dbErr);
+                    allTypeCodes = [...new Set(docs.map((d: any) => d.type_code).filter(Boolean))];
+                  }
+                  
+                  // Skip type codes already fully covered in the initial 100
+                  const typesInSample = new Map<string, number>();
+                  for (const doc of docs) {
+                    if (doc.type_code) {
+                      typesInSample.set(doc.type_code, (typesInSample.get(doc.type_code) || 0) + 1);
+                    }
+                  }
+                  // Only sub-search types that either: aren't in sample, or have exactly 100 docs (might be capped themselves)
+                  const typesToSearch = allTypeCodes.filter(tc => {
+                    const count = typesInSample.get(tc) || 0;
+                    return count === 0; // Not in sample — could have docs we haven't seen
+                  });
+                  
+                  console.info('paginateByStatusSplit: searching ' + typesToSearch.length + ' type codes not in initial sample (skipping ' + typesInSample.size + ' already found)');
+                  
+                  for (const tc of typesToSearch) {
+                    if (totalQueryCount >= MAX_TOTAL_QUERIES) {
+                      console.warn('paginateByStatusSplit: hit query budget at type ' + tc + ' (' + totalQueryCount + '/' + MAX_TOTAL_QUERIES + ')');
+                      break;
+                    }
+                    try {
+                      const typeDocs = await executeFilteredSearch(params, { status_code: sc, document_type: tc });
+                      if (typeDocs.length > 0) {
+                        console.info('paginateByStatusSplit: type=' + tc + ' returned ' + typeDocs.length + ' NEW docs');
+                      }
+                      for (const doc of typeDocs) {
+                        if (doc.document_number && !seen.has(doc.document_number)) {
+                          seen.add(doc.document_number);
+                          allDocs.push(doc);
+                        }
+                      }
+                    } catch (typeErr) {
+                      console.error('paginateByStatusSplit: type sub-search failed for ' + tc + ':', typeErr);
+                    }
+                  }
+                  console.info('paginateByStatusSplit: after full type sweep for status=' + sc + ', total docs so far: ' + allDocs.length);
                 }
               } else {
                 for (const doc of docs) {
