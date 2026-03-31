@@ -8456,6 +8456,16 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           } else {
             console.warn('parseTotalCount DIAGNOSTIC — NO pagination text found in HTML');
           }
+          // Diagnostic: capture full getCount call
+          const getCountDiag = html.match(/getCount\s*\(\s*["']?(\d+)["']?\s*\)/i);
+          if (getCountDiag) {
+            console.info('parseTotalCount DIAGNOSTIC — getCount argument: ' + getCountDiag[1]);
+          }
+          // Diagnostic: capture ROWCOUNT context (200 chars around it)
+          const rowCountIdx = html.indexOf('ROWCOUNT');
+          if (rowCountIdx >= 0) {
+            console.info('parseTotalCount DIAGNOSTIC — ROWCOUNT context: ' + html.substring(rowCountIdx, rowCountIdx + 200));
+          }
           // Also check for myCells array length as a signal
           const myCellsLenMatch = html.match(/var\s+myCells\s*=\s*\[/);
           if (myCellsLenMatch) {
