@@ -8459,10 +8459,10 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // Multi-query search: if a search hits the 100-row cap, split into independent
         // sub-searches (by status, then by discipline if needed), each with its own search.aweb session.
         const PAGE_CAP = 100;
-        const MAX_TOTAL_QUERIES = 120; // safety cap — time guard will stop us before this in most cases
-        const SWEEP_START_TIME = Date.now();
-        const SWEEP_TIME_GUARD_MS = 100000; // 100s of 148s budget — leave time for LLM response
-        console.log('[SEARCH_V5]', { MAX_TOTAL_QUERIES: 120, SWEEP_TIME_GUARD_MS: 100000, strategy: 'dms-type-sweep-with-time-guard' });
+        const MAX_TOTAL_QUERIES = 120;
+        const SWEEP_TIME_GUARD_MS = 70000; // 70s max for entire search operation — leaves ~78s for LLM
+        let sweepStartTime = 0; // set when search actually executes
+        console.log('[SEARCH_V6]', { MAX_TOTAL_QUERIES: 120, SWEEP_TIME_GUARD_MS: 70000, strategy: 'dms-type-sweep-with-time-guard' });
         let totalQueryCount = 0;
         let paginationTotalAssaiCount: number | null = null;
 
