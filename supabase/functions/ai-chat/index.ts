@@ -8459,10 +8459,10 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // Multi-query search: if a search hits the 100-row cap, split into independent
         // sub-searches (by type code from DB, then by status if needed), each with its own search.aweb session.
         const PAGE_CAP = 100;
-        const MAX_TOTAL_QUERIES = 120;
+        const MAX_TOTAL_QUERIES = 80;
         const SWEEP_TIME_GUARD_MS = 90000; // 90s max for entire search operation — leaves ~58s for LLM
         let sweepStartTime = 0; // set when search actually executes
-        console.log('[SEARCH_V9]', { MAX_TOTAL_QUERIES: 120, SWEEP_TIME_GUARD_MS: 90000, strategy: 'type-code-split-from-db' });
+        console.log('[SEARCH_V10]', { MAX_TOTAL_QUERIES: 80, SWEEP_TIME_GUARD_MS: 90000, strategy: 'status+type-combo-with-reauth' });
         let totalQueryCount = 0;
         let paginationTotalAssaiCount: number | null = null;
 
@@ -8629,9 +8629,30 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             });
 
           if (needsTypeSweep && totalQueryCount < MAX_TOTAL_QUERIES - 5) {
+            // Identify which statuses are capped (still have docs we haven't recovered)
+            const cappedStatuses = statusCodes.filter(sc => {
+              const countForStatus = allDocs.filter(d => d.status === sc).length;
+              return countForStatus >= PAGE_CAP;
+            });
             console.info('paginateByStatusSplit: status split incomplete (' + allDocs.length + ' found' + 
-              (expectedFromHeader ? ', expected ~' + expectedFromHeader : '') + '), starting type-code sweep from DB');
+              (expectedFromHeader ? ', expected ~' + expectedFromHeader : '') + '), capped statuses: ' + cappedStatuses.join(', ') +
+              ', starting type-code sweep with re-auth');
             
+            // RE-AUTH before sweep — the status split exhausted the session
+            let reAuthCount = 0;
+            try {
+              const freshAuth = await authenticateAssai(assaiBase, username, password);
+              if (freshAuth.success) {
+                cookieHeader = freshAuth.cookies;
+                reAuthCount++;
+                console.info('paginateByStatusSplit: re-authenticated before sweep (reauth #' + reAuthCount + ')');
+              } else {
+                console.warn('paginateByStatusSplit: re-auth failed before sweep, continuing with stale session');
+              }
+            } catch (reAuthErr) {
+              console.warn('paginateByStatusSplit: re-auth error:', reAuthErr);
+            }
+
             // Fetch ALL active document type codes from the database
             let allTypeCodes: string[] = [];
             try {
@@ -8649,53 +8670,77 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             }
 
             if (allTypeCodes.length > 0) {
-              // Only sweep type codes NOT already fully represented
-              // Group current docs by type_code to know which are fully covered
+              // Group current docs by type_code to know which are already represented
               const typeCountInResults: Record<string, number> = {};
               for (const d of allDocs) {
                 const tc = d.type_code || '';
                 typeCountInResults[tc] = (typeCountInResults[tc] || 0) + 1;
               }
               
-              // Prioritize: first sweep types we haven't seen at all, then types at cap
+              // Only sweep types NOT already in our results (the known types are already captured)
               const unseenTypes = allTypeCodes.filter(tc => !typeCountInResults[tc]);
               const cappedTypes = allTypeCodes.filter(tc => typeCountInResults[tc] && typeCountInResults[tc] >= PAGE_CAP);
-              const typesToSweep = [...cappedTypes, ...unseenTypes]; // capped first, then unseen
+              const typesToSweep = [...cappedTypes, ...unseenTypes];
               
-              console.info('paginateByStatusSplit: sweeping ' + typesToSweep.length + ' types (' + cappedTypes.length + ' capped, ' + unseenTypes.length + ' unseen)');
+              console.info('paginateByStatusSplit: sweeping ' + typesToSweep.length + ' types (' + cappedTypes.length + ' capped, ' + unseenTypes.length + ' unseen) for ' + cappedStatuses.length + ' capped statuses');
               
               let newDocsFromSweep = 0;
-              for (const tc of typesToSweep) {
-                if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) {
-                  console.info('paginateByStatusSplit: budget/time exhausted after sweeping, stopping');
-                  break;
-                }
-                // Skip if we've already found enough
-                if (expectedFromHeader && allDocs.length >= expectedFromHeader) break;
-                
-                try {
-                  const typeResult = await executeFilteredSearch(params, { document_type: tc });
-                  if (typeResult.docs.length > 0) {
-                    const newCount = typeResult.docs.filter((d: any) => d.document_number && !seen.has(d.document_number)).length;
-                    if (newCount > 0) {
-                      console.info('paginateByStatusSplit: type=' + tc + ' returned ' + typeResult.docs.length + ' docs (' + newCount + ' new)');
-                      newDocsFromSweep += newCount;
-                    }
-                    for (const doc of typeResult.docs) {
-                      if (doc.document_number && !seen.has(doc.document_number)) {
-                        seen.add(doc.document_number);
-                        allDocs.push(doc);
+              let sweepQueryCount = 0;
+              
+              // For each capped status, sweep type codes with status+type combo filter
+              const statusesToSweep = cappedStatuses.length > 0 ? cappedStatuses : [''];
+              
+              for (const sweepStatus of statusesToSweep) {
+                for (const tc of typesToSweep) {
+                  if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) {
+                    console.info('paginateByStatusSplit: budget/time exhausted after sweeping, stopping');
+                    break;
+                  }
+                  if (expectedFromHeader && allDocs.length >= expectedFromHeader) break;
+                  
+                  // Re-auth every 15 sweep queries to keep session fresh
+                  if (sweepQueryCount > 0 && sweepQueryCount % 15 === 0) {
+                    try {
+                      const reAuth = await authenticateAssai(assaiBase, username, password);
+                      if (reAuth.success) {
+                        cookieHeader = reAuth.cookies;
+                        reAuthCount++;
+                        console.info('paginateByStatusSplit: mid-sweep re-auth #' + reAuthCount + ' after ' + sweepQueryCount + ' sweep queries');
+                      }
+                    } catch (e) { /* continue with existing session */ }
+                  }
+                  
+                  try {
+                    // Combine status + type filters for targeted search
+                    const filters: Record<string, string> = { document_type: tc };
+                    if (sweepStatus) filters.status_code = sweepStatus;
+                    
+                    const typeResult = await executeFilteredSearch(params, filters);
+                    sweepQueryCount++;
+                    if (typeResult.docs.length > 0) {
+                      const newCount = typeResult.docs.filter((d: any) => d.document_number && !seen.has(d.document_number)).length;
+                      if (newCount > 0) {
+                        console.info('paginateByStatusSplit: status=' + (sweepStatus || '*') + ' type=' + tc + ' returned ' + typeResult.docs.length + ' docs (' + newCount + ' new)');
+                        newDocsFromSweep += newCount;
+                      }
+                      for (const doc of typeResult.docs) {
+                        if (doc.document_number && !seen.has(doc.document_number)) {
+                          seen.add(doc.document_number);
+                          allDocs.push(doc);
+                        }
+                      }
+                      if (typeResult.docs.length >= PAGE_CAP) {
+                        await paginateFilteredSearch(params, filters, typeResult, seen, allDocs);
                       }
                     }
-                    if (typeResult.docs.length >= PAGE_CAP) {
-                      await paginateFilteredSearch(params, { document_type: tc }, typeResult, seen, allDocs);
-                    }
+                  } catch (typeErr) {
+                    // Skip silently — many types will return 0
                   }
-                } catch (typeErr) {
-                  // Skip silently — many types will return 0
                 }
+                if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) break;
+                if (expectedFromHeader && allDocs.length >= expectedFromHeader) break;
               }
-              console.info('paginateByStatusSplit: type-code sweep added ' + newDocsFromSweep + ' new docs, total: ' + allDocs.length);
+              console.info('paginateByStatusSplit: type-code sweep added ' + newDocsFromSweep + ' new docs, total: ' + allDocs.length + ', reauths: ' + reAuthCount);
             }
           }
 
