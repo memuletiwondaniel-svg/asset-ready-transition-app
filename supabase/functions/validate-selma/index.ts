@@ -218,7 +218,7 @@ const ALL_TESTS: TestDef[] = [
     id: "T2.1",
     name: "Selma identity — warm introduction",
     tier: 2,
-    query: "Who are you?",
+    query: "Selma, who are you?",
     agent: "bob",
     go_live_gate: true,
     autoAssert: (r) => {
