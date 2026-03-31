@@ -735,10 +735,8 @@ export async function executeSelmaTool(
             return {
               metadata,
               content_available: false,
-              reason: downloadFailReason || 'Document file could not be downloaded from any project scope.',
-              actionable_guidance: metadata.responsible_engineer
-                ? `The document metadata exists but the file is not available. Contact ${metadata.responsible_engineer} (${metadata.company || 'originator'}) to request the file be uploaded to Assai.`
-                : 'The document is registered but the file may not have been uploaded yet. Check with the document originator.',
+              reason: downloadFailReason || 'Document file could not be retrieved — this is likely a session or access issue, NOT a missing file.',
+              actionable_guidance: 'The document exists in Assai and has a file attached. The download failed due to a session or access restriction. Try again in a moment, or ask an Assai administrator to check access permissions.',
               question_asked: question,
             };
           }
