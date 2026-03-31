@@ -8499,7 +8499,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         // Multi-query search: if a search hits the 100-row cap, split into independent
         // sub-searches (by status, then by discipline if needed), each with its own search.aweb session.
         const PAGE_CAP = 100;
-        const MAX_TOTAL_QUERIES = 30; // safety: max total Assai requests
+        const MAX_TOTAL_QUERIES = 50; // safety: max total Assai requests (need ~35 for 7 statuses + 23 type sub-splits)
         let totalQueryCount = 0;
         let paginationTotalAssaiCount: number | null = null;
 
