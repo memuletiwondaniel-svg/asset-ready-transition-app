@@ -12684,8 +12684,17 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           clearInterval(heartbeat);
           console.error('Stream error:', streamError);
           try {
+            const contextualError = detectedAgent === 'document_agent'
+              ? "I had trouble searching Assai for your document query. Please try rephrasing or simplifying your request."
+              : detectedAgent === 'pssr_ora_agent'
+              ? "I encountered an issue loading PSSR data. Please try again in a moment."
+              : detectedAgent === 'ivan'
+              ? "I had trouble retrieving process safety data. Please try again."
+              : detectedAgent === 'hannah'
+              ? "I had trouble loading handover data. Please try again."
+              : "I had trouble processing that request. Could you rephrase your question?";
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-              choices: [{ delta: { content: "An error occurred while processing your request. Please try again." } }]
+              choices: [{ delta: { content: contextualError } }]
             })}\n\n`));
             controller.enqueue(encoder.encode('data: [DONE]\n\n'));
             controller.close();
