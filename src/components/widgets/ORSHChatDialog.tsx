@@ -1239,9 +1239,15 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                 if (colonIdx > 0 && colonIdx < 20) return false;
                               }
                               if (item.length > 80) return false;
-                              if (item.length < 5) return false;
+                              if (item.length < 15) return false;
                               // Reject bare acronyms without context (e.g., just "PES" or "MDS")
                               if (BARE_ACRONYM.test(item.trim())) return false;
+                              // Reject pills starting with numbers, project codes, or partial fragments
+                              if (/^\d/.test(item.trim())) return false;
+                              if (/^(DP-?|[A-Z]{2,5}-)\d/i.test(item.trim())) return false;
+                              // Require first word to be a verb/question word for actionable pills
+                              const VALID_PILL_STARTERS = /^(What|Check|Search|Show|Find|Browse|View|Try|List|Read|Review|Compare|Look|Explore|Get|Open|Download|Export|See|Verify|Confirm|Ask|Request|Run|Query|Scan|Display|Summarize|Summarise|Fetch|Pull|Retrieve|Navigate)\b/i;
+                              if (!VALID_PILL_STARTERS.test(item.trim())) return false;
                               // Reject pills that echo the user's query
                               if (lastUserMsg && isSimilar(item, lastUserMsg)) return false;
                               // Reject near-duplicates of already-accepted pills
