@@ -360,11 +360,12 @@ const ALL_TESTS: TestDef[] = [
     timeout_ms: 120000,
     autoAssert: (r) => {
       const count = extractNumber(r);
-      if (count === null) return { pass: false, details: "Could not extract a numeric count from response" };
+      const logNote = " — LOG CHECK: search edge function logs for totalQueryCount — should exceed 12 for full DP164 sweep confirming SessionManager refresh. If totalQueryCount stays below 12, the 12-query refresh threshold is not working.";
+      if (count === null) return { pass: false, details: "Could not extract a numeric count from response" + logNote };
       if (count >= 200) return { pass: true, details: `Count: ${count} — pagination working` };
-      if (count === 128) return { pass: false, details: `Count: 128 — session exhaustion (SessionManager not refreshing at 12-query threshold)` };
-      if (count === 100) return { pass: false, details: `Count: 100 — pagination not running (stopping after first page)` };
-      return { pass: false, details: `Count: ${count} — below 200 threshold` };
+      if (count === 128) return { pass: false, details: `Count: 128 — session exhaustion (SessionManager not refreshing at 12-query threshold)` + logNote };
+      if (count === 100) return { pass: false, details: `Count: 100 — pagination not running (stopping after first page)` + logNote };
+      return { pass: false, details: `Count: ${count} — below 200 threshold` + logNote };
     },
   },
   {
