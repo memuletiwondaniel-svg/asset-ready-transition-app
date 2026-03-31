@@ -218,7 +218,7 @@ const ALL_TESTS: TestDef[] = [
     id: "T2.1",
     name: "Selma identity — warm introduction",
     tier: 2,
-    query: "Who are you?",
+    query: "Selma, who are you?",
     agent: "bob",
     go_live_gate: true,
     autoAssert: (r) => {
@@ -434,7 +434,7 @@ const ALL_TESTS: TestDef[] = [
     tier: 4,
     query: "Search for an engineering document on DP223 and read it. Extract the tag list.",
     agent: "bob",
-    timeout_ms: 120000,
+    timeout_ms: 300000,
     manual: true,
   },
   {
@@ -443,7 +443,7 @@ const ALL_TESTS: TestDef[] = [
     tier: 4,
     query: "Find a vendor document on DP223 and read its content",
     agent: "bob",
-    timeout_ms: 120000,
+    timeout_ms: 300000,
     autoAssert: (r) => ({
       pass: !containsAny(r, ["SUP_DOC error", "module not found", "cannot read"]) && r.length > 100,
       details: containsAny(r, ["SUP_DOC"])

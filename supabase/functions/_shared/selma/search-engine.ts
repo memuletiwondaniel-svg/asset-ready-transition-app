@@ -37,9 +37,12 @@ export class SessionManager {
       this.cookieHeader = result.cookies;
       this.queryCount = 0;
       this.lastAuthTime = Date.now();
-      // label.aweb warmup after every (re-)auth
+      // label.aweb warmup after every (re-)auth — MUST include subclass_type
+      // All working Assai integrations (discover-vendors, parse-sdr, check-sdr-completeness)
+      // pass subclass_type on label.aweb. Without it, the module context is not initialised
+      // and subsequent result POSTs return the login page instead of search results.
       if (this.assaiBase) {
-        await fetch(this.assaiBase + '/label.aweb', {
+        await fetch(this.assaiBase + '/label.aweb?subclass_type=DES_DOC', {
           headers: { Cookie: this.cookieHeader, 'User-Agent': ASSAI_UA },
           redirect: 'follow',
         }).catch(() => {});
@@ -237,7 +240,20 @@ export async function initSearch(
   params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }
 ): Promise<{ hiddenFields: Array<{ name: string; type: string; value: string }>; textFields: Array<{ name: string }> }> {
   const cookieHeader = await ctx.sessionManager.getSession();
-  const searchUrl = ctx.assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
+
+  // Module warmup: label.aweb with subclass_type BEFORE search.aweb GET
+  // This matches the pattern used by all working Assai integrations (discover-vendors, parse-sdr, check-sdr-completeness):
+  //   1. label.aweb?subclass_type=X  (warmup)
+  //   2. search.aweb?subclass_type=X (GET form)
+  //   3. result.aweb POST            (get results)
+  // Without this, result.aweb returns the application frame instead of search results.
+  await fetch(ctx.assaiBase + '/label.aweb?subclass_type=' + params.subclass_type, {
+    headers: { Cookie: cookieHeader, 'User-Agent': ctx.ua },
+    redirect: 'follow',
+  }).catch(() => {});
+
+  const searchUrl = ctx.assaiBase + '/search.aweb?subclass_type=' + params.subclass_type + 
+    '&clas_seq_nr=' + params.clas_seq_nr + '&suty_seq_nr=' + params.suty_seq_nr;
   const searchResp = await fetch(searchUrl, {
     headers: { Cookie: cookieHeader, Accept: 'text/html', 'User-Agent': ctx.ua },
     redirect: 'follow',
@@ -246,7 +262,7 @@ export async function initSearch(
   const fields = extractHiddenFields(searchHtml);
   const hiddenFields = fields.filter(f => f.type === 'hidden' && f.name && f.value);
   const textFields = fields.filter(f => f.type === 'text' || f.type === '');
-  console.info('initSearch: search.aweb GET status ' + searchResp.status + ', html length: ' + searchHtml.length + ', hidden fields: ' + hiddenFields.length);
+  console.info('initSearch: label+search.aweb GET status ' + searchResp.status + ', html length: ' + searchHtml.length + ', hidden fields: ' + hiddenFields.length + ', subclass: ' + params.subclass_type);
   return { hiddenFields, textFields };
 }
 
@@ -275,7 +291,11 @@ export async function fetchResultPage(
   if (startRow && startRow > 1) formData.set('start_row', String(startRow));
 
   const searchUrl = ctx.assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
-  const resultResp = await fetch(ctx.assaiBase + '/result.aweb', {
+  // Use result.aweb — searchresult.aweb returns 404 in this context
+  // (searchresult.aweb works in discover-vendors because it passes action:"search" 
+  // and doesn't use hidden fields from search.aweb form)
+  const resultUrl = ctx.assaiBase + '/result.aweb';
+  const resultResp = await fetch(resultUrl, {
     method: 'POST',
     headers: {
       Cookie: cookieHeader,
@@ -287,8 +307,29 @@ export async function fetchResultPage(
     body: formData.toString(),
     redirect: 'follow',
   });
-  const resultHtml = await resultResp.text();
+  let resultHtml = await resultResp.text();
   console.info('result.aweb POST (start_row=' + (startRow ?? 1) + '): status ' + resultResp.status + ', html length: ' + resultHtml.length);
+
+  // Login-page detection — if Assai returned the login page, force session refresh and retry once
+  if (resultHtml.includes('type="password"') || resultHtml.includes('id="password"') || resultHtml.includes('loginForm')) {
+    console.warn('[Selma:SEARCH_V11] fetchResultPage returned login page — forcing session refresh');
+    const freshCookie = await ctx.sessionManager.getSession(true);
+    const retryResp = await fetch(resultUrl, {
+      method: 'POST',
+      headers: {
+        Cookie: freshCookie,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'text/html',
+        Referer: searchUrl,
+        'User-Agent': ctx.ua,
+      },
+      body: formData.toString(),
+      redirect: 'follow',
+    });
+    resultHtml = await retryResp.text();
+    console.info('[Selma:SEARCH_V11] fetchResultPage retry: status ' + retryResp.status + ', html length: ' + resultHtml.length);
+  }
+
   return resultHtml;
 }
 
@@ -333,6 +374,7 @@ export async function executeFilteredSearch(
   if (startRow && startRow > 1) formData.set('start_row', String(startRow));
 
   const searchUrl = ctx.assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
+  // Revert to result.aweb — searchresult.aweb returns 404 in form-based search context
   const resp = await fetch(ctx.assaiBase + '/result.aweb', {
     method: 'POST',
     headers: {
@@ -539,6 +581,14 @@ export async function paginateSearch(
   const totalFromHtml = parseTotalCount(firstHtml);
   ctx.paginationTotalAssaiCount = totalFromHtml;
   console.info('[SEARCH_V11] initial search returned ' + firstDocs.length + ' docs, parsed total: ' + (totalFromHtml ?? 'unknown'));
+
+  // Fix 1D — diagnostic logging at escalation decision point
+  console.log(
+    `[Selma:SEARCH_V11] paginateSearch — firstDocs: ${firstDocs.length}, ` +
+    `parsedTotal: ${totalFromHtml ?? 'unknown'}, PAGE_CAP: ${ctx.PAGE_CAP}, ` +
+    `escalating to pagination: ${firstDocs.length >= ctx.PAGE_CAP}, ` +
+    `totalQueryCount: ${ctx.totalQueryCount}`
+  );
 
   if (firstDocs.length < ctx.PAGE_CAP) return firstDocs;
 
