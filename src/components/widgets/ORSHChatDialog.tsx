@@ -1017,11 +1017,24 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
               ) : (
                 /* Messages */
                 <div className="space-y-4">
-                  {messages.map((message, index) => (
+                  {messages.map((message, index) => {
+                    if (isLoading && index === messages.length - 1 && message.role === 'assistant' && !message.content) {
+                      return null;
+                    }
+                    const agentIcon = (() => {
+                      switch (message.agentName) {
+                        case 'document_agent': return { letter: 'S', gradient: 'from-blue-500 to-blue-700' };
+                        case 'pssr_ora_agent': return { letter: 'F', gradient: 'from-green-500 to-green-700' };
+                        case 'hannah': return { letter: 'H', gradient: 'from-purple-500 to-purple-700' };
+                        case 'ivan': return { letter: 'I', gradient: 'from-red-500 to-red-700' };
+                        default: return { letter: 'B', gradient: 'from-amber-500 to-orange-600' };
+                      }
+                    })();
+                    return (
                     <div key={index} className={cn("flex gap-4", message.role === 'user' ? 'justify-end' : 'justify-start')}>
                       {message.role === 'assistant' && (
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
-                          <span className="text-sm font-bold text-white">B</span>
+                        <div className={`h-8 w-8 rounded-full bg-gradient-to-br ${agentIcon.gradient} flex items-center justify-center flex-shrink-0`}>
+                          <span className="text-sm font-bold text-white">{agentIcon.letter}</span>
                         </div>
                       )}
                       <div className={cn(

@@ -10850,7 +10850,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     const maxTokens = detectedAgent === 'copilot' ? 4096 : 3072;
 
     // Convert OpenAI-style tools to Anthropic format
-    const anthropicTools = tools.map((t: any) => ({
+    let anthropicTools = tools.map((t: any) => ({
       name: t.function.name,
       description: t.function.description,
       input_schema: t.function.parameters
