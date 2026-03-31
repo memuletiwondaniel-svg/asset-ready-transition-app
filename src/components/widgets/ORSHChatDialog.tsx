@@ -1363,7 +1363,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                         </div>
                       )}
                     </div>
-                  ))}
+                    );
+                  })}
                   
                   {isLoading && (
                     <div className="flex gap-4 items-start">
