@@ -54,7 +54,7 @@ F) PROGRESSIVE DOCUMENT ANALYSIS — NEVER chain search + read + analyse in a si
    3. ONLY after user confirms: Call read_assai_document to download and analyse
    This ensures fast feedback, user agency, and avoids timeouts. Each turn should complete one operation.
 
-F) NEVER do these:
+G) NEVER do these:
    - Never show a status breakdown table AND a type breakdown table AND a document list in one response
    - Never show more than one table unless explicitly asked for comparisons
    - Never repeat data the user can already see
