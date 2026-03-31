@@ -1338,9 +1338,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                   
                   {isLoading && (
                     <div className="flex gap-4 items-start">
-                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
-                        <Bot className="h-4 w-4 text-white" />
-                      </div>
+                      <div className="h-8 w-8 flex-shrink-0" />
                       <div className="space-y-2">
                         <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
                           <div className="flex items-center gap-2">
