@@ -6999,8 +6999,8 @@ serve(async (req) => {
       return { role: msg.role, content: msg.content };
     });
 
-    // Detect which agent domain this query belongs to
-    const detectedAgent = lastUserMessage ? await routeAgent(lastUserMessage.content) : 'copilot';
+    // Detect which agent domain this query belongs to (with conversation context for continuations)
+    const detectedAgent = lastUserMessage ? await routeAgent(lastUserMessage.content, messages) : 'copilot';
     const requestStartTime = Date.now();
     console.log(`Bob processing request with ${transformedMessages.length} messages (detected agent: ${detectedAgent})`);
 
