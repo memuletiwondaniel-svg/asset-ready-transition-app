@@ -3867,7 +3867,7 @@ function detectAgentDomainRegex(message: string): string {
   
   // Selma (Document Intelligence Assistant) triggers
   // Part 1: Simple word-boundary keywords
-  if (/\b(document|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|sdr|mdr|bfd|basis for design|basis of design|design basis|iom|itp|fat|sat|datasheet|mds|sld|gad|pfd|p&id)\b/i.test(lower)) {
+  if (/\b(documents?|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|sdr|mdr|bfd|basis for design|basis of design|design basis|iom|itp|fat|sat|datasheet|mds|sld|gad|pfd|p&id)\b/i.test(lower)) {
     return 'document_agent';
   }
   // Part 2: Multi-word / wildcard patterns (no \b wrapping — these use .* which crosses word boundaries)
@@ -3875,7 +3875,7 @@ function detectAgentDomainRegex(message: string): string {
     return 'document_agent';
   }
   // Part 3: Retrieval intent combined with DP number reference
-  if (/(?:what\s+is|find|get|show|where)\s+.*\bdp[\s-]?\d+/i.test(lower)) {
+  if (/(?:what\s+is|find|get|show|where|how\s+many)\s+.*\bdp[\s-]?\d+/i.test(lower)) {
     return 'document_agent';
   }
   
