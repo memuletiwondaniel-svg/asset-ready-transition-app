@@ -578,9 +578,15 @@ export async function executeSelmaTool(
           const res = await fetch(url, {
             headers: { 'Cookie': cookies, 'User-Agent': ASSAI_UA },
             signal: controller.signal,
-            redirect: 'follow',
+            redirect: 'manual', // DON'T follow redirects — 302 means auth failed
           });
           clearTimeout(timeoutId);
+          // If redirected, it means session is invalid for this endpoint
+          if (res.status === 302 || res.status === 301) {
+            const location = res.headers.get('location') || '';
+            console.log(`read_assai_document: ${label} redirected to ${location} — session not valid for REST download`);
+            return null; // signal auth failure
+          }
           return res;
         };
 
