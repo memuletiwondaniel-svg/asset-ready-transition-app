@@ -3328,6 +3328,10 @@ function detectAgentDomainRegex(message: string): string {
   if (/(?:what\s+is|find|get|show|where|how\s+many)\s+.*\bdp[\s-]?\d+/i.test(lower)) {
     return 'document_agent';
   }
+  // Part 4: Acronym-learning intent (routes to Selma for learn_acronym tool)
+  if (/(stands?\s+for|=\s*[A-Z]{2,}|means?\s+[A-Z]|acronym|abbreviation|short\s+for)/i.test(lower)) {
+    return 'document_agent';
+  }
   
   // Fred (PSSR/ORA Safety Agent) triggers
   if (/\b(pssr|pre-?startup safety|safety review|sof\b|statement of fitness|ora checklist|pssr checklist|pssr status|pssr completion|safety readiness|pssr items|pssr action|startup safety|pssr walkdown|safety inspection|pssr findings)\b/i.test(lower)) {
