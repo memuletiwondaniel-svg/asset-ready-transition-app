@@ -16,7 +16,7 @@ export class SessionManager {
   private cookieHeader: string = '';
   private queryCount: number = 0;
   private lastAuthTime: number = 0;
-  private readonly MAX_QUERIES_BEFORE_REFRESH = 12;
+  private readonly MAX_QUERIES_BEFORE_REFRESH = 50;
   private readonly MAX_AGE_MS = 90000;
 
   constructor(
