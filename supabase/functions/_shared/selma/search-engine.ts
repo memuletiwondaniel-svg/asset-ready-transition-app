@@ -240,7 +240,20 @@ export async function initSearch(
   params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }
 ): Promise<{ hiddenFields: Array<{ name: string; type: string; value: string }>; textFields: Array<{ name: string }> }> {
   const cookieHeader = await ctx.sessionManager.getSession();
-  const searchUrl = ctx.assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
+
+  // Module warmup: label.aweb with subclass_type BEFORE search.aweb GET
+  // This matches the pattern used by all working Assai integrations (discover-vendors, parse-sdr, check-sdr-completeness):
+  //   1. label.aweb?subclass_type=X  (warmup)
+  //   2. search.aweb?subclass_type=X (GET form)
+  //   3. result.aweb POST            (get results)
+  // Without this, result.aweb returns the application frame instead of search results.
+  await fetch(ctx.assaiBase + '/label.aweb?subclass_type=' + params.subclass_type, {
+    headers: { Cookie: cookieHeader, 'User-Agent': ctx.ua },
+    redirect: 'follow',
+  }).catch(() => {});
+
+  const searchUrl = ctx.assaiBase + '/search.aweb?subclass_type=' + params.subclass_type + 
+    '&clas_seq_nr=' + params.clas_seq_nr + '&suty_seq_nr=' + params.suty_seq_nr;
   const searchResp = await fetch(searchUrl, {
     headers: { Cookie: cookieHeader, Accept: 'text/html', 'User-Agent': ctx.ua },
     redirect: 'follow',
@@ -249,7 +262,7 @@ export async function initSearch(
   const fields = extractHiddenFields(searchHtml);
   const hiddenFields = fields.filter(f => f.type === 'hidden' && f.name && f.value);
   const textFields = fields.filter(f => f.type === 'text' || f.type === '');
-  console.info('initSearch: search.aweb GET status ' + searchResp.status + ', html length: ' + searchHtml.length + ', hidden fields: ' + hiddenFields.length);
+  console.info('initSearch: label+search.aweb GET status ' + searchResp.status + ', html length: ' + searchHtml.length + ', hidden fields: ' + hiddenFields.length + ', subclass: ' + params.subclass_type);
   return { hiddenFields, textFields };
 }
 
