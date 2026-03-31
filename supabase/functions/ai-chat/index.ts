@@ -11192,6 +11192,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       if (detectedAgent !== 'document_agent') {
         console.log(`SPECIFIC DOC INTERCEPT: Overriding agent to document_agent`);
         systemPrompt = DOCUMENT_AGENT_PROMPT + dmsConfigSnapshot + userContextPrompt;
+        emitStatus('agent:document_agent');
       }
       
       // Step 1: Resolve document type
@@ -11200,11 +11201,15 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       let resolvedDocName: string | null = null;
       
       if (docTypeResult?.found && docTypeResult.matches?.length > 0) {
-        if (docTypeResult.count === 1) {
+        if (docTypeResult.source === 'acronym_lookup' && docTypeResult.matches.length > 0) {
+          // Exact acronym match — use ONLY the primary code, ignore fuzzy stem matches
+          resolvedDocCode = docTypeResult.matches[0].code;
+          resolvedDocName = docTypeResult.matches[0].name;
+        } else if (docTypeResult.count === 1) {
           resolvedDocCode = docTypeResult.matches[0].code;
           resolvedDocName = docTypeResult.matches[0].name;
         } else {
-          // Multiple matches — combine all codes
+          // Multiple matches from non-acronym lookup — combine all codes
           resolvedDocCode = docTypeResult.matches.map((m: any) => m.code).join('+');
           resolvedDocName = docTypeResult.matches.map((m: any) => m.name).join(' / ');
         }
