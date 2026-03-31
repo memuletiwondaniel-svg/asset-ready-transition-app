@@ -6922,9 +6922,6 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     let navigationAction: { action: string; path: string } | null = null;
     let finalTextContent = '';
 
-
-    };
-
     // Create a ReadableStream so we can enqueue status events in real-time
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
