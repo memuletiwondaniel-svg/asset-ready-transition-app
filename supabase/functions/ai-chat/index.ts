@@ -10387,7 +10387,7 @@ serve(async (req) => {
     });
 
     // Detect which agent domain this query belongs to
-    const detectedAgent = lastUserMessage ? detectAgentDomain(lastUserMessage.content) : 'copilot';
+    const detectedAgent = lastUserMessage ? await routeAgent(lastUserMessage.content) : 'copilot';
     const requestStartTime = Date.now();
     console.log(`Bob processing request with ${transformedMessages.length} messages (detected agent: ${detectedAgent})`);
 
