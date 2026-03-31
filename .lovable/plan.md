@@ -1,71 +1,87 @@
 
 
-# Fix: IFA Type-Split Missing Documents (137 vs 255)
+# Fix: Type-Code Sweep Returning 0 Docs (128 vs 255)
 
-## Root Cause Analysis
+## What Happened — Plain English
 
-**Who is responding?** Selma. Confirmed — logs show `search_assai_documents` tool calls, not Bob.
+Selma found 128 documents instead of 255 for DP164. Here's exactly why:
 
-**Why 137 instead of 255?** The status-split works correctly for 6 of 7 statuses (PLN=2, AFU=2, IFI=6, AFC=5, AFT=6, AFP=7 = 28 docs). The problem is IFA, which has ~227 docs but the split only recovers 109.
+1. **First search** returned 100 docs (Assai's page limit). All had status IFA, plus a few PLN, AFU, IFI, AFC, AFT, AFP.
+2. **Status split** worked correctly: searched each of the 7 statuses individually. Got 28 docs from non-IFA statuses + 100 from IFA = 128 unique docs. IFA was still capped at 100.
+3. **Type-code sweep** was supposed to break the IFA cap by searching each document type individually. It queried the database, got 578 unique type codes, and tried searching each one. But **every single query returned 0 documents** — Assai returned the empty search form page instead of results.
 
-**The specific bug:** When IFA hits the 100-doc cap, the code extracts type codes from those 100 results and sub-searches each type. But there are only 23 type codes in the first 100 IFA docs. The remaining ~118 IFA docs have type codes that DON'T appear in that 100-doc sample — so they're never searched.
+**Root cause:** Each type-code sweep query calls `initSearch` (GET to `search.aweb`) to get fresh form tokens, then POSTs to `result.aweb`. After ~15-20 rapid `initSearch` calls on the same session cookie, Assai's server-side session state degrades and starts returning the search form page instead of results. The status split worked because it ran early (only 7 calls). The type sweep ran next with 110+ calls and ALL failed.
 
-**Why parseTotalCount will never work:** The Assai HTML contains `getCount("100", "100", null, true, ...)` — these are pagination display parameters, NOT the total count. The real total is loaded client-side via DWR/AJAX, which server-side HTML scraping cannot access.
+**Evidence:** Logs show 120 queries used, every sweep response is 40,779 bytes of HTML containing the search form (DOCTYPE, DWR scripts) with no `myCells` data array. The log line `"paginateByStatusSplit: type-code sweep added 0 new docs"` confirms zero recovery.
 
-**Why page-2 pagination doesn't work:** Assai's `result.aweb` with `start_row=101` returns HTML without a `myCells` JavaScript array (70KB of HTML but 0 parseable rows). Assai doesn't support simple offset pagination — it relies on DWR session state.
+## The Fix — SEARCH_V10
 
-## The Fix
+### Change 1: Re-authenticate Before Type Sweep
 
-### Change 1 — Use DMS Reference Table for Type-Split (not sample data)
+Before starting the type-code sweep, call `authenticateAssai()` again to get a **fresh session cookie**. This resets Assai's server-side state. The status split exhausts the original session; the type sweep needs its own.
 
-When a status hits the 100-doc cap and has only 1 discipline, instead of extracting type codes from the 100-doc sample, query `dms_document_types` from Supabase to get ALL known type codes. This guarantees every possible type is searched.
+### Change 2: Batch Re-authentication During Sweep
 
-In `paginateByStatusSplit`, replace the current type-split logic:
+Every 15 type-code queries, re-authenticate to keep the session fresh. This prevents the same degradation from happening during the sweep itself.
 
 ```text
 CURRENT (broken):
-  IFA hits 100 cap → extract 23 types from sample → search each → miss types not in sample
+  Status split (7 queries, works) → Type sweep (110+ queries, ALL fail — stale session)
 
 FIXED:
-  IFA hits 100 cap → query dms_document_types for ALL active type codes (~100-200 codes)
-  → filter to codes that COULD exist (skip types already fully retrieved)
-  → search each remaining type code
-  → merge and deduplicate
+  Status split (7 queries) → Re-auth → Type sweep (15 queries) → Re-auth → Type sweep (15 more) → ...
 ```
 
-### Change 2 — Increase Query Budget to 80
+### Change 3: Combine Status + Type Filters for IFA
 
-With ~100+ type codes to try, 50 queries isn't enough. The time budget allows ~100 queries (each ~1s, within 120s guard). Increase `MAX_TOTAL_QUERIES` from 50 to 80 to accommodate a full type sweep while staying within the time guard.
+Instead of sweeping ALL 578 type codes without a status filter, target specifically the capped status (IFA) combined with each type code. This means searching `status_code=IFA + document_type=XXXX` which produces smaller, more targeted result sets. This reduces the number of queries needed because we only need to find the ~127 missing IFA docs, not search the entire database.
 
-### Change 3 — Remove Dead parseTotalCount Diagnostics
+### Change 4: Smart Type Prioritization
 
-Since Assai's total is provably NOT in the HTML, remove the 30+ lines of diagnostic logging in `parseTotalCount` that fire on every single search. Keep the function but simplify it — if it ever matches a pattern, great; otherwise return null silently. This reduces log noise.
+Instead of sweeping all 578 codes blindly, first extract the ~23 type codes present in the IFA sample (the first 100 IFA docs). Then only sweep the remaining ~555 codes. The 23 known types are already represented; the missing 127 docs must be in the other types.
 
-### Change 4 — Add Version Marker for Deployment Verification
+### Change 5: Reduce Query Budget to 80, Add Re-auth Budget
 
-Add a console.log at the top of the search handler:
+With targeted IFA+type searches and session refresh, we need fewer total queries. Set `MAX_TOTAL_QUERIES = 80` with a re-auth every 15 queries (max 5 re-auths). Add a log line tracking re-auth count.
+
+### Change 6: Version Marker
+
 ```typescript
-console.log('[SEARCH_V3]', { MAX_TOTAL_QUERIES: 80, strategy: 'dms-type-sweep' });
+console.log('[SEARCH_V10]', { MAX_TOTAL_QUERIES: 80, strategy: 'status+type-combo-with-reauth' });
 ```
-This lets us confirm the deployed version matches the code.
 
 ## Technical Detail
 
-The `dms_document_types` table has ~991 active type codes. The query would be:
+In `executeFilteredSearch`, add an optional `freshCookies` parameter. Before the type sweep loop, call:
 ```typescript
-const { data: allTypes } = await supabaseClient
-  .from('dms_document_types')
-  .select('code')
-  .eq('is_active', true);
-const allTypeCodes = [...new Set(allTypes.map(t => t.code))];
+const freshAuth = await authenticateAssai(assaiBase, username, password);
+if (freshAuth.success) cookieHeader = freshAuth.cookies;
 ```
 
-Then for the IFA cap-hit case, instead of `typeCodesInCap` (23 codes from sample), iterate `allTypeCodes` minus already-found types. Most will return 0 docs quickly, but the ones with data will be captured.
+Then inside the sweep loop, every 15 iterations:
+```typescript
+if (sweepQueryCount % 15 === 0 && sweepQueryCount > 0) {
+  const reAuth = await authenticateAssai(assaiBase, username, password);
+  if (reAuth.success) cookieHeader = reAuth.cookies;
+}
+```
+
+For the combined filter approach:
+```typescript
+// Instead of: executeFilteredSearch(params, { document_type: tc })
+// Use: executeFilteredSearch(params, { status_code: 'IFA', document_type: tc })
+```
+
+This targets only the capped status, dramatically reducing the search space and query count needed.
+
+## Files Changed
+
+- `supabase/functions/ai-chat/index.ts` — modify `paginateByStatusSplit` internals only
 
 ## Impact
 
-- Only changes `paginateByStatusSplit` internals in `ai-chat/index.ts`
 - No frontend changes
-- No database changes
-- No prompt changes needed
+- No database changes  
+- No prompt changes
+- Only affects the pagination fallback path when a status hits the 100-doc cap
 
