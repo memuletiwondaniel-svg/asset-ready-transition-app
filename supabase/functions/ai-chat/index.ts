@@ -8511,26 +8511,16 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return parseDocuments(html, params.subclass_type);
         };
 
-        const paginateSearch = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }): Promise<any[]> => {
-          // Step 1: Unfiltered search — gets first page (up to 100 docs)
-          const { hiddenFields, textFields } = await initSearch(params);
-          console.info('search_assai_documents: PO=' + (poDigits || 'none') + ', number=' + document_number_pattern);
-
-          const firstHtml = await fetchResultPage(hiddenFields, textFields, params);
-          const firstDocs = parseDocuments(firstHtml, params.subclass_type);
-          if (firstDocs.length === 0) return [];
-
-          const totalFromHtml = parseTotalCount(firstHtml);
-          console.info('search_assai_documents: initial search returned ' + firstDocs.length + ' docs, parsed total: ' + (totalFromHtml ?? 'unknown'));
-
-          if (firstDocs.length < PAGE_CAP) return firstDocs;
-
-          // Step 2: Hit 100-row cap. Split by status code.
+        // Fallback: status-split pagination (extracted verbatim from original paginateSearch)
+        const paginateByStatusSplit = async (
+          params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string },
+          firstDocs: any[],
+        ): Promise<any[]> => {
           const statusCodes = [...new Set(firstDocs.map((d: any) => d.status).filter(Boolean))];
-          console.info('search_assai_documents: hit ' + PAGE_CAP + ' cap. Splitting into ' + statusCodes.length + ' status sub-searches: ' + statusCodes.join(', '));
+          console.info('paginateByStatusSplit: splitting into ' + statusCodes.length + ' status sub-searches: ' + statusCodes.join(', '));
 
           if (statusCodes.length <= 1) {
-            console.warn('search_assai_documents: single status, cannot split further');
+            console.warn('paginateByStatusSplit: single status, cannot split further');
             return firstDocs;
           }
 
@@ -8539,33 +8529,28 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
 
           for (const sc of statusCodes) {
             if (totalQueryCount >= MAX_TOTAL_QUERIES) break;
-            console.info('search_assai_documents: sub-search for status=' + sc);
+            console.info('paginateByStatusSplit: sub-search for status=' + sc);
 
             try {
               const docs = await executeFilteredSearch(params, { status_code: sc });
-              console.info('search_assai_documents: status=' + sc + ' returned ' + docs.length + ' docs');
+              console.info('paginateByStatusSplit: status=' + sc + ' returned ' + docs.length + ' docs');
 
               if (docs.length >= PAGE_CAP) {
-                // Step 3: This status ALSO hit the cap — split further by discipline
                 const disciplines = [...new Set(docs.map((d: any) => d.discipline).filter(Boolean))];
-                console.info('search_assai_documents: status=' + sc + ' hit cap, splitting by ' + disciplines.length + ' disciplines: ' + disciplines.join(', '));
+                console.info('paginateByStatusSplit: status=' + sc + ' hit cap, splitting by ' + disciplines.length + ' disciplines');
 
                 if (disciplines.length <= 1) {
-                  // Can't split further, take what we have
                   for (const doc of docs) {
                     if (doc.document_number && !seen.has(doc.document_number)) {
                       seen.add(doc.document_number);
                       allDocs.push(doc);
                     }
                   }
-                  console.warn('search_assai_documents: status=' + sc + ' has single discipline, capped at 100');
                 } else {
                   for (const disc of disciplines) {
                     if (totalQueryCount >= MAX_TOTAL_QUERIES) break;
-                    console.info('search_assai_documents: sub-sub-search status=' + sc + ' discipline=' + disc);
                     try {
                       const discDocs = await executeFilteredSearch(params, { status_code: sc, discipline_code: disc });
-                      console.info('search_assai_documents: status=' + sc + '/discipline=' + disc + ' returned ' + discDocs.length + ' docs');
                       for (const doc of discDocs) {
                         if (doc.document_number && !seen.has(doc.document_number)) {
                           seen.add(doc.document_number);
@@ -8573,12 +8558,11 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                         }
                       }
                     } catch (discErr) {
-                      console.error('search_assai_documents: sub-sub-search failed:', discErr);
+                      console.error('paginateByStatusSplit: sub-sub-search failed:', discErr);
                     }
                   }
                 }
               } else {
-                // Under the cap — add all docs
                 for (const doc of docs) {
                   if (doc.document_number && !seen.has(doc.document_number)) {
                     seen.add(doc.document_number);
@@ -8587,11 +8571,102 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 }
               }
             } catch (subErr) {
-              console.error('search_assai_documents: sub-search for status=' + sc + ' failed:', subErr);
+              console.error('paginateByStatusSplit: sub-search for status=' + sc + ' failed:', subErr);
             }
           }
 
-          console.info('search_assai_documents: multi-query complete. Total unique docs: ' + allDocs.length + ' (queries used: ' + totalQueryCount + ')');
+          console.info('paginateByStatusSplit: complete. Total unique docs: ' + allDocs.length + ' (queries used: ' + totalQueryCount + ')');
+          return allDocs;
+        };
+
+        const paginateSearch = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }): Promise<any[]> => {
+          const paginationStartTime = Date.now();
+          // Step 1: Unfiltered search — gets first page
+          const { hiddenFields, textFields } = await initSearch(params);
+          console.info('search_assai_documents: PO=' + (poDigits || 'none') + ', number=' + document_number_pattern);
+
+          const firstHtml = await fetchResultPage(hiddenFields, textFields, params);
+          const firstDocs = parseDocuments(firstHtml, params.subclass_type);
+          if (firstDocs.length === 0) return [];
+
+          const totalFromHtml = parseTotalCount(firstHtml);
+          paginationTotalAssaiCount = totalFromHtml;
+          console.info('search_assai_documents: initial search returned ' + firstDocs.length + ' docs, parsed total: ' + (totalFromHtml ?? 'unknown'));
+
+          if (firstDocs.length < PAGE_CAP) return firstDocs;
+
+          // Step 2: Sequential start_row pagination with two-tier approach
+          // Tier 1: first page = full document objects for display
+          // Tier 2: subsequent pages = metadata only (type_code, status, document_number) for accurate breakdown
+          if (!totalFromHtml) {
+            // Total unknown — fall back to status split
+            console.warn('paginateSearch: totalFromHtml is null, falling back to paginateByStatusSplit');
+            return paginateByStatusSplit(params, firstDocs);
+          }
+
+          const detectedPageSize = firstDocs.length;
+          const allDocs = [...firstDocs]; // Tier 1: full docs from page 1
+          const metadataOnly: Array<{ document_number: string; type_code: string; status: string }> = [];
+          let startRow = detectedPageSize + 1;
+          const TIME_GUARD_MS = 120000; // 120s of 148s budget
+
+          while (startRow <= totalFromHtml) {
+            // Time guard: stop if we've used too much time
+            if (Date.now() - paginationStartTime > TIME_GUARD_MS) {
+              console.warn('paginateSearch: time guard hit at startRow=' + startRow + ', collected ' + (allDocs.length + metadataOnly.length) + ' of ' + totalFromHtml);
+              break;
+            }
+
+            await new Promise(r => setTimeout(r, 300));
+
+            try {
+              const pageHtml = await fetchResultPage(hiddenFields, textFields, params, startRow);
+              const pageDocs = parseDocuments(pageHtml, params.subclass_type);
+              if (pageDocs.length === 0) break;
+
+              // Duplicate detection — if page 2 returns all duplicates, start_row unsupported
+              const existingNums = new Set([
+                ...allDocs.map((d: any) => d.document_number),
+                ...metadataOnly.map(d => d.document_number),
+              ]);
+              const newDocs = pageDocs.filter((d: any) => d.document_number && !existingNums.has(d.document_number));
+
+              if (newDocs.length === 0 && startRow === detectedPageSize + 1) {
+                // start_row not supported — fall back to status split
+                console.warn('paginateSearch: start_row pagination unsupported (page 2 all duplicates) — falling back to paginateByStatusSplit');
+                return paginateByStatusSplit(params, firstDocs);
+              }
+
+              if (newDocs.length === 0) break; // No new docs on subsequent pages = done
+
+              // Tier 2: only extract metadata for breakdown accuracy
+              for (const doc of newDocs) {
+                metadataOnly.push({
+                  document_number: doc.document_number,
+                  type_code: doc.type_code || '',
+                  status: doc.status || '',
+                });
+              }
+
+              startRow += detectedPageSize;
+            } catch (pageErr) {
+              console.error('paginateSearch: page fetch error at startRow=' + startRow + ':', pageErr);
+              break;
+            }
+          }
+
+          // Attach metadata sweep results to the allDocs array as lightweight entries
+          // These have a _metadataOnly flag so the result builder knows they're for breakdown only
+          for (const meta of metadataOnly) {
+            allDocs.push({
+              document_number: meta.document_number,
+              type_code: meta.type_code,
+              status: meta.status,
+              _metadataOnly: true,
+            });
+          }
+
+          console.info('paginateSearch: sequential pagination complete. Full docs: ' + firstDocs.length + ', metadata-only: ' + metadataOnly.length + ', total: ' + allDocs.length + ' of ' + totalFromHtml);
           return allDocs;
         };
 
