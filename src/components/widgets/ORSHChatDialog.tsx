@@ -1363,7 +1363,13 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                     );
                   })}
                   
-                  {isLoading && (
+                  {isLoading && (() => {
+                    // Don't show a separate loading indicator if the last message is already
+                    // a streaming assistant message with content — that would cause a duplicate avatar.
+                    const lastMsg = messages[messages.length - 1];
+                    const isStreaming = lastMsg?.role === 'assistant' && !!lastMsg.content;
+                    if (isStreaming) return null;
+                    return (
                     <div className="flex gap-4 items-start">
                       <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
                         <span className="text-sm font-bold text-white">B</span>
@@ -1383,7 +1389,8 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                         </div>
                       </div>
                     </div>
-                  )}
+                    );
+                  })()}
                   
                   {lastFailedMessage && !isLoading && (
                     <div className="flex justify-center mt-2">
