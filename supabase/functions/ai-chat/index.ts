@@ -6849,10 +6849,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // Select system prompt based on detected agent
     let systemPrompt = BOB_SYSTEM_PROMPT + userContextPrompt;
     if (detectedAgent === 'document_agent') {
-      // Selma is being rebuilt — return upgrade stub
-      const upgradeMsg = "Selma is being upgraded with enhanced document intelligence capabilities. Please try again shortly.";
-      const sseStub = `data: ${JSON.stringify({ choices: [{ delta: { content: upgradeMsg } }] })}\n\ndata: [DONE]\n\n`;
-      return new Response(sseStub, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+      const dmsSnapshot = await buildDmsConfigSnapshot(supabaseClient);
+      systemPrompt = SELMA_SYSTEM_PROMPT + dmsSnapshot + userContextPrompt;
     } else if (detectedAgent === 'pssr_ora_agent') {
       systemPrompt = PSSR_ORA_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'hannah') {
