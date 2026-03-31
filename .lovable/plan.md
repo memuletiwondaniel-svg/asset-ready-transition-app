@@ -1,122 +1,116 @@
 
 
-# SDR Completeness Engine
+# Fix: Dead Code Extraction & Multi-Project Search
 
-## What It Does
+## Confirmed Root Cause
 
-Mirrors the MDR Completeness Engine but for **Supplier Document Registers (A01)** — one per vendor per project. Selma will parse SDR documents, store expected vendor deliverables, compare against live Assai data (in the **SUP_DOC** module), and report gaps per vendor/PO.
-
-Key differences from MDR:
-- SDR type code is **A01** (not 6611)
-- SDRs live in the **SUP_DOC** module (not DES_DOC)
-- Multiple SDRs per project (one per vendor/PO)
-- Vendor-specific columns: **Supplier Document Number**, **SDRL Code**, **Planned Submission Date**
-- Document numbers use **ZV** discipline and **3-char alphanumeric** type codes
-- Sequence segment = last 5 digits of the **PO number**
-- Focus on **document status** (not review codes)
-
-## Architecture
+Lines 11214–11313 (the Specific Document Intercept) sit inside `callAnthropicWithRetry` (opens line 11183, closes line 11318). The 429 block closes at line 11212, then the intercept appears as unreachable code before the non-429 retry at line 11314. Additionally, the intercept is inside the `while` loop (starts line 11160) — it should be **before** it, alongside the vendor discovery intercept.
 
 ```text
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  SDR Document   │     │  sdr_register     │     │  Assai Live     │
-│  (A01 in Assai) │────▶│  (parsed rows)    │◀───▶│  SUP_DOC module │
-│  Per vendor/PO  │     │  expected vendor   │     │  (actual state)  │
-└─────────────────┘     │  deliverables     │     └─────────────────┘
-                        └──────────────────┘
-                              │
-                              ▼
-                        ┌──────────────────┐
-                        │ sdr_completeness │
-                        │ _snapshots       │
-                        │ (per-vendor gaps) │
-                        └──────────────────┘
+11159:     }              ← end of vendor discovery intercept
+11160:     while (iteration < MAX_ITERATIONS) {   ← main loop
+...
+11183:       const callAnthropicWithRetry = async () => {
+11200:         const firstAttempt = await makeCall();
+11201:         if (firstAttempt.ok) return firstAttempt;
+11203:         if (firstAttempt.status === 429) { ... }
+11212:     }              ← WRONG INDENTATION — closes 429 but looks like it closes something bigger
+11214–11313:            ═══ DEAD INTERCEPT CODE ═══
+11314:         // Non-429 retry
+11318:       };             ← closes callAnthropicWithRetry
 ```
 
-## Step 1: Database — `sdr_register` Table
+## Changes (all in `supabase/functions/ai-chat/index.ts`)
 
-| Column | Type | Purpose |
-|--------|------|---------|
-| id | UUID PK | Row ID |
-| project_id | UUID FK → projects | Which project |
-| document_number | VARCHAR | Expected Wood/BGC document number |
-| title | VARCHAR | Document title |
-| supplier_document_number | VARCHAR | Vendor's own doc number (e.g., BG-231015-SAD-001) |
-| sdrl_code | VARCHAR | SDRL code (e.g., A01, B01, C05, J01) |
-| discipline_code | VARCHAR | Always ZV for vendor docs |
-| document_type_code | VARCHAR | 3-char alphanumeric (A01, B01, C05, etc.) |
-| unit_code | VARCHAR | e.g., U40300 |
-| originator_code | VARCHAR | e.g., WGEL |
-| vendor_code | VARCHAR | Vendor/supplier identifier |
-| po_number | VARCHAR | Purchase Order number (extracted from seq segment) |
-| planned_submission_date | DATE | When vendor should submit |
-| current_status | VARCHAR | Last known status from Assai |
-| current_revision | VARCHAR | Last known revision from Assai |
-| is_found_in_dms | BOOLEAN | Whether document exists in Assai |
-| last_checked_at | TIMESTAMPTZ | When last compared against Assai |
-| sdr_source_doc | VARCHAR | The A01 document number this came from |
-| tenant_id | UUID | Tenant isolation |
+### Change 1: Extract intercept — move lines 11214–11313
 
-## Step 2: Database — `sdr_completeness_snapshots` Table
+Cut the entire `specificDocMatch` block (lines 11214–11313) and paste it **between line 11159 and line 11160** — after the vendor discovery intercept closes, before the `while` loop opens. All required variables (`lastUserText`, `conversationMessages`, `executeTool`, `supabaseClient`, `emitStatus`, `detectedAgent`, `DOCUMENT_AGENT_PROMPT`, `dmsConfigSnapshot`, `userContextPrompt`, `allToolCallNames`, `lastToolName`, `lastToolResult`, `searchToolResult`, `isVendorDiscoveryIntent`) are already in scope at that point since the vendor discovery intercept uses the same ones.
 
-Same structure as `mdr_completeness_snapshots` but with additional vendor-level breakdown:
+### Change 2: Fix `callAnthropicWithRetry` braces
 
-| Column | Type | Purpose |
-|--------|------|---------|
-| id | UUID PK | Snapshot ID |
-| project_id | UUID FK | Project |
-| vendor_code | VARCHAR | Which vendor this snapshot covers (or NULL for project-wide) |
-| po_number | VARCHAR | PO number (or NULL for project-wide) |
-| snapshot_date | DATE | When taken |
-| total_expected / total_found | INT | Counts |
-| total_at_required_status | INT | Docs meeting their status requirement |
-| overdue_count | INT | Docs past planned_submission_date but not found |
-| gap_summary | JSONB | Breakdown by SDRL code, status |
-| tenant_id | UUID | Tenant isolation |
+After extraction, fix the 429 block closing brace (line 11212 — currently wrong indentation) and remove the gap. The function becomes:
 
-## Step 3: Edge Function — `parse-sdr`
+```typescript
+const callAnthropicWithRetry = async (): Promise<Response> => {
+  const makeCall = () => fetch("https://api.anthropic.com/v1/messages", {
+    // ... existing headers and body unchanged ...
+  });
+  const firstAttempt = await makeCall();
+  if (firstAttempt.ok) return firstAttempt;
+  if (firstAttempt.status === 429) {
+    const timeLeft = MAX_LOOP_MS - (Date.now() - LOOP_START_TIME);
+    if (timeLeft > 20000) {
+      console.log(`Anthropic API returned 429, retrying in 10s (${timeLeft}ms remaining)...`);
+      await new Promise(r => setTimeout(r, 10000));
+      return makeCall();
+    }
+    return firstAttempt;
+  }
+  // Non-429 error — retry once after 2s
+  console.log(`Anthropic API returned ${firstAttempt.status}, retrying in 2s...`);
+  await new Promise(r => setTimeout(r, 2000));
+  return makeCall();
+};
+```
 
-Mirrors `parse-mdr` but:
-1. Searches in **SUP_DOC** module (not DES_DOC) for A01 documents
-2. Extracts vendor document numbers alongside Wood/BGC document numbers
-3. Parses SDRL codes and planned submission dates from the SDR
-4. Extracts PO number from the sequence segment (last 5 digits)
-5. Upserts into `sdr_register`
+Explicit brace count: 1 function open, 1 if-429 open/close, 1 if-timeLeft open/close, 1 function close = balanced.
 
-## Step 4: Edge Function — `check-sdr-completeness`
+### Change 3: Multi-project search in extracted intercept
 
-Mirrors `check-mdr-completeness` but:
-1. Queries `sdr_register` (filterable by vendor_code or po_number)
-2. Searches **SUP_DOC** module in Assai for vendor documents
-3. Compares `current_status` against expected status
-4. Flags **overdue** documents (past `planned_submission_date` but not found/not at required status)
-5. Creates per-vendor snapshots in `sdr_completeness_snapshots`
+Replace lines 11260–11265 (single-project logic taking only `projects[0]`) with a loop over all projects when `resolvedDocCode` is available:
 
-## Step 5: Selma Tools in `ai-chat/index.ts`
+```typescript
+if (projectResult?.found && projectResult.projects?.length > 0) {
+  if (resolvedDocCode && projectResult.projects.length > 1) {
+    // Search ALL matching projects with doc type constraint
+    let allResults = [];
+    for (const proj of projectResult.projects) {
+      const result = await executeTool('search_assai_documents', {
+        document_type: resolvedDocCode,
+        document_number_pattern: `${proj.project_code}-%`
+      }, supabaseClient);
+      if (result?.found && result.total_found > 0) {
+        allResults.push({ project: proj, result });
+      }
+    }
+    if (allResults.length > 0) {
+      // Use first project with results
+      resolvedProjectCode = allResults[0].project.project_code;
+      resolvedProjectName = allResults[0].project.project_name;
+      // Override searchResult downstream
+    }
+  } else {
+    resolvedProjectCode = projectResult.projects[0].project_code;
+    resolvedProjectName = projectResult.projects[0].project_name;
+  }
+}
+```
 
-Add two new tools to the `document_agent`:
+### Change 4: Add retrieval-intent routing to `detectAgentDomain`
 
-- **`parse_sdr_document`** — "Parse and ingest a Supplier Document Register (A01) from Assai. Downloads the SDR, extracts expected vendor deliverables, and stores them in the sdr_register."
-  - Params: `document_number`, `project_id`
+Insert after line 3848 (after Part 2 patterns), before the Fred/PSSR block:
 
-- **`check_sdr_completeness`** — "Check vendor document completeness against a Supplier Document Register. Returns gap analysis with missing vendor documents, overdue submissions, and per-vendor status."
-  - Params: `project_code`, `vendor_code` (optional), `po_number` (optional)
+```typescript
+// Part 3: Retrieval intent combined with DP number reference
+if (/(?:what\s+is|find|get|show|where)\s+.*\bdp[\s-]?\d+/i.test(lower)) {
+  return 'document_agent';
+}
+```
 
-Add `'sdr'`, `'vendor'`, `'supplier'` to the document_agent domains for routing.
+### Change 5: Strengthen `DOCUMENT_AGENT_PROMPT`
 
-## Files Modified
+Add after the existing opening paragraph (around line 10296), before the VENDOR DISCOVERY section:
 
-| File | Change |
-|------|--------|
-| New migration | Create `sdr_register` and `sdr_completeness_snapshots` tables with RLS |
-| `supabase/functions/parse-sdr/index.ts` | New edge function — download A01 from SUP_DOC module, parse vendor deliverables |
-| `supabase/functions/check-sdr-completeness/index.ts` | New edge function — compare SDR vs Assai SUP_DOC, produce vendor gap report |
-| `supabase/functions/ai-chat/index.ts` | Add `parse_sdr_document` and `check_sdr_completeness` tools + handlers |
+- When query has both document type + project reference: resolve both, search with both combined. Never ask for project disambiguation.
+- When `resolve_project_code` returns multiple projects: search all with the document type filter. If one returns results, use it directly.
+- Specific queries: max 3–5 results showing document number, title, revision, status, Assai link. No table dumps.
+- Always resolve acronyms via `dms_document_type_acronyms` first. Always normalise DP numbers before lookup.
 
-## What Selma Can Do After This
+### Deployment
 
-- "Parse the SDR for PO 01463" → Ingests the A01 and populates vendor register
-- "What's the vendor document status for Specialist Services?" → Per-vendor gap report
-- "Show overdue vendor submissions for DP300" → Flags documents past planned date
-- "Compare MDR vs SDR completeness for DP300" → Combined engineering + vendor view
+Redeploy `ai-chat` edge function and test all four validation queries.
+
+## Risk Assessment
+
+The brace fix in Change 2 is the highest-risk edit. If the closing brace of the 429 block at line 11212 has wrong indentation affecting the parser, the function may not compile. Will verify brace balance explicitly after edit.
 
