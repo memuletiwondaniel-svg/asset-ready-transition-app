@@ -418,13 +418,17 @@ const ALL_TESTS: TestDef[] = [
     agent: "bob",
     go_live_gate: true,
     timeout_ms: 120000,
-    autoAssert: (r) => ({
-      pass: r.length > 200,
-      details:
-        r.length > 200
-          ? `Response length: ${r.length} chars — real content returned`
-          : `Response only ${r.length} chars — may be metadata-only`,
-    }),
+    autoAssert: (r) => {
+      const contentKeywords = ["scope", "equipment", "design", "specification", "procedure", "drawing", "purpose", "requirements", "system", "installation", "description"];
+      const hasContent = containsAny(r, contentKeywords);
+      if (r.length < 500) {
+        return { pass: false, details: `Response only ${r.length} chars (need ≥500) — likely metadata-only` };
+      }
+      if (!hasContent) {
+        return { pass: false, details: `Response is ${r.length} chars but contains no technical content keywords (scope/equipment/design/specification/procedure/drawing). Likely metadata-only. Marking for manual review.` };
+      }
+      return { pass: true, details: `Response length: ${r.length} chars with technical content — real document content returned` };
+    },
   },
   {
     id: "T4.2",
