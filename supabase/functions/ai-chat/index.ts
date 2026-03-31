@@ -3224,8 +3224,8 @@ interface A2AResponse {
 // Agent capability registry (in-memory, synced from DB on cold start)
 const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; model: string }> = {
   copilot: { 
-    tools: ['get_pssr_stats', 'get_checklist_item_stats', 'get_priority_action_stats', 'get_team_member_info', 'get_region_info', 'get_project_info', 'get_hub_info', 'navigate_to_page', 'resolve_entity_for_navigation', 'get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_pssr_detailed_summary', 'get_discipline_status', 'get_executive_summary'],
-    domains: ['pssr', 'ora', 'platform', 'navigation'],
+    tools: ['get_pssr_stats', 'get_checklist_item_stats', 'get_priority_action_stats', 'get_team_member_info', 'get_region_info', 'get_project_info', 'get_hub_info', 'navigate_to_page', 'resolve_entity_for_navigation', 'get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_pssr_detailed_summary', 'get_discipline_status', 'get_executive_summary', 'get_user_tasks'],
+    domains: ['pssr', 'ora', 'platform', 'navigation', 'tasks'],
     model: 'claude-sonnet-4-5'
   },
   pssr_ora_agent: {
