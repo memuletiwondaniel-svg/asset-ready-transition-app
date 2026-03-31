@@ -8462,7 +8462,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         const MAX_TOTAL_QUERIES = 80;
         const SWEEP_TIME_GUARD_MS = 70000; // 70s max for entire search operation — leaves ~78s for LLM
         let sweepStartTime = 0; // set when search actually executes
-        console.log('[SEARCH_V7]', { MAX_TOTAL_QUERIES: 80, SWEEP_TIME_GUARD_MS: 70000, strategy: 'status-split-with-startrow-pagination' });
+        console.log('[SEARCH_V8]', { MAX_TOTAL_QUERIES: 80, SWEEP_TIME_GUARD_MS: 70000, strategy: 'status-split-then-type-split' });
         let totalQueryCount = 0;
         let paginationTotalAssaiCount: number | null = null;
 
