@@ -3698,6 +3698,71 @@ async function extractAndPersistContext(supabaseClient: any, userId: string, mes
       }, { onConflict: 'user_id,context_key' });
     }
 
+    // ── Selma-specific memory: DP projects, document types, last search ──
+    const allText = messages.map((m: any) => typeof m.content === 'string' ? m.content : '').join(' ');
+
+    // Extract DP project codes (DP223, DP164, DP-33A, etc.)
+    const dpMatches = allText.match(/\bDP[\s-]?\d{2,4}[A-Z]?\b/gi);
+    if (dpMatches && dpMatches.length > 0) {
+      const normalized = [...new Set(dpMatches.map((d: string) => d.replace(/[\s-]/g, '').toUpperCase()))];
+      const { data: existing } = await supabaseClient
+        .from('ai_user_context')
+        .select('context_value')
+        .eq('user_id', userId)
+        .eq('context_key', 'selma_frequent_projects')
+        .maybeSingle();
+
+      let projects: string[] = existing?.context_value?.projects || [];
+      for (const p of normalized) {
+        projects = projects.filter((x: string) => x !== p);
+        projects.push(p);
+      }
+      if (projects.length > 10) projects = projects.slice(-10);
+
+      await supabaseClient.from('ai_user_context').upsert({
+        user_id: userId,
+        context_key: 'selma_frequent_projects',
+        context_value: { projects, updated: new Date().toISOString() }
+      }, { onConflict: 'user_id,context_key' });
+    }
+
+    // Extract document type keywords (P&ID, BFD, SLD, ITP, GA, PFD, etc.)
+    const docTypePattern = /\b(P&ID|BFD|SLD|ITP|GA|PFD|MTO|AFC|IFA|AFU|IFR|SPC|DWG|ISO|MDR|VDR|TBE|FAT|SAT|HAZ[OP]?|FCD|FEED|EPC)\b/gi;
+    const docTypeMatches = allText.match(docTypePattern);
+    if (docTypeMatches && docTypeMatches.length > 0) {
+      const normalized = [...new Set(docTypeMatches.map((d: string) => d.toUpperCase()))];
+      const { data: existing } = await supabaseClient
+        .from('ai_user_context')
+        .select('context_value')
+        .eq('user_id', userId)
+        .eq('context_key', 'selma_frequent_doc_types')
+        .maybeSingle();
+
+      let types: string[] = existing?.context_value?.types || [];
+      for (const t of normalized) {
+        types = types.filter((x: string) => x !== t);
+        types.push(t);
+      }
+      if (types.length > 15) types = types.slice(-15);
+
+      await supabaseClient.from('ai_user_context').upsert({
+        user_id: userId,
+        context_key: 'selma_frequent_doc_types',
+        context_value: { types, updated: new Date().toISOString() }
+      }, { onConflict: 'user_id,context_key' });
+    }
+
+    // Persist last search query for Selma continuity
+    const selmaSearchPattern = /(?:search|find|show|list|look up|get)\s+(.{10,80}?)(?:\.|$|\?)/i;
+    const searchMatch = selmaSearchPattern.exec(allUserText);
+    if (searchMatch) {
+      await supabaseClient.from('ai_user_context').upsert({
+        user_id: userId,
+        context_key: 'selma_last_search',
+        context_value: { value: searchMatch[1].trim(), updated: new Date().toISOString() }
+      }, { onConflict: 'user_id,context_key' });
+    }
+
     console.log('📝 MEMORY: Context persisted for user', userId);
   } catch (e) {
     console.error('Failed to extract/persist context:', e);
