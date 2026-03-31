@@ -4725,7 +4725,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           const { data: p2aApprovals } = await supabaseClient
             .from('p2a_handover_approvers')
             .select('id, status, approver_role, handover:p2a_handovers!inner(id, handover_number, status, project:projects(project_id_prefix, project_id_number))')
-            .eq('user_id', userId)
+            .eq('user_id', currentUserId)
             .in('status', statusFilter === 'all' ? ['pending', 'approved', 'rejected'] : ['pending'])
             .limit(20);
 
