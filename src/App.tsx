@@ -1,3 +1,4 @@
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,6 +35,8 @@ import PSSRApprovalPage from "@/pages/PSSRApprovalPage";
 import SoFReviewPage from "@/pages/SoFReviewPage";
 import MicrosoftCallback from "@/pages/auth/MicrosoftCallback";
 import BacklogPage from "@/pages/BacklogPage";
+
+const SelmaValidation = React.lazy(() => import("@/pages/admin/SelmaValidation"));
 
 // Create QueryClient outside component to prevent recreation on every render
 const queryClient = new QueryClient({
@@ -94,6 +97,11 @@ const App = () => (
                       <Route path="/or-maintenance/resources" element={<ORMResourceCapacityDashboard />} />
                       <Route path="/or-maintenance/notifications" element={<ORMNotificationPreferences />} />
                       <Route path="/or-maintenance/:id" element={<ORMDetailsPage />} />
+                      <Route path="/admin/selma-validation" element={
+                        <React.Suspense fallback={<div className="flex items-center justify-center h-screen"><span className="text-muted-foreground">Loading...</span></div>}>
+                          <SelmaValidation />
+                        </React.Suspense>
+                      } />
                     </Route>
                     
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
