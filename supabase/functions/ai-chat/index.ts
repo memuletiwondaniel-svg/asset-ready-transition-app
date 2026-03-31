@@ -11325,21 +11325,27 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
             if (resolvedCode) {
               // Extract DP number → resolve to PROJECT CODE via dms_projects (NOT a unit code)
-              const dpMatch = lastUserMsg.match(/DP[\s-]*(\d{2,4})/i);
+              const dpMatch = lastUserMsg.match(/DP[\s-]*(\d{2,4}[A-Za-z]?)/i);
               let projectPattern: string | undefined;
               if (dpMatch) {
-                const dpId = `DP${dpMatch[1]}`;
-                // Look up project code from dms_projects
+                const dpId = dpMatch[1]; // e.g. "33A" or "300"
+                const hasAlpha = /[A-Za-z]$/.test(dpId);
+                const paddedDigits = dpId.replace(/[A-Za-z]$/, '').padStart(3, '0');
+                const suffix = hasAlpha ? dpId.slice(-1).toUpperCase() : '';
+                const searchPattern = `%${paddedDigits}${suffix}%`;
+                
+                // Look up project code from dms_projects — precise match
                 const { data: projData } = await supabase
                   .from('dms_projects')
                   .select('code')
-                  .or(`project_id.ilike.%${dpMatch[1]}%,project_id.ilike.%DP${dpMatch[1]}%,project_id.ilike.%DP-${dpMatch[1]}%`)
+                  .ilike('project_id', searchPattern)
+                  .eq('is_active', true)
                   .limit(1);
                 if (projData && projData.length > 0) {
                   projectPattern = `${projData[0].code}-%`;
-                  console.log(`Deterministic fallback: resolved ${dpId} → project code ${projData[0].code}`);
+                  console.log(`Deterministic fallback: resolved DP${dpId} → project code ${projData[0].code}`);
                 } else {
-                  console.log(`Deterministic fallback: could not resolve ${dpId} to a project code`);
+                  console.log(`Deterministic fallback: could not resolve DP${dpId} to a project code`);
                 }
               }
 
