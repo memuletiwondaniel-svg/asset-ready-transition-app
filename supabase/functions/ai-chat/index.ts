@@ -7428,33 +7428,38 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         let fullNameMatch: any[] | null = null;
         if (queryKeywords.length >= 2) {
           // Query with first keyword, then filter client-side for remaining keywords
+          // Search both full_name AND notes in a single DB call for maximum coverage
           const { data: broadMatch } = await supabaseClient
             .from('dms_document_type_acronyms')
             .select('acronym, type_code, full_name, notes, usage_count')
-            .ilike('full_name', `%${queryKeywords[0]}%`)
+            .or(`full_name.ilike.%${queryKeywords[0]}%,notes.ilike.%${queryKeywords[0]}%`)
             .limit(20);
           
           if (broadMatch && broadMatch.length > 0) {
             fullNameMatch = broadMatch.filter(row => {
               const nameLower = row.full_name.toLowerCase();
-              return queryKeywords.slice(1).every(kw => nameLower.includes(kw.toLowerCase()));
+              const notesLower = (row.notes || '').toLowerCase();
+              return queryKeywords.slice(1).every(kw => {
+                const kwLower = kw.toLowerCase();
+                return nameLower.includes(kwLower) || notesLower.includes(kwLower);
+              });
             });
             if (fullNameMatch.length === 0) fullNameMatch = null;
           }
         } else if (queryKeywords.length === 1) {
-          // Single keyword — use original ilike
+          // Single keyword — search both full_name and notes
           const { data: singleMatch } = await supabaseClient
             .from('dms_document_type_acronyms')
             .select('acronym, type_code, full_name, notes, usage_count')
-            .ilike('full_name', `%${queryKeywords[0]}%`)
+            .or(`full_name.ilike.%${queryKeywords[0]}%,notes.ilike.%${queryKeywords[0]}%`)
             .limit(3);
           fullNameMatch = singleMatch;
         } else {
-          // Fallback: use original query as-is
+          // Fallback: use original query as-is, search both columns
           const { data: fallbackMatch } = await supabaseClient
             .from('dms_document_type_acronyms')
             .select('acronym, type_code, full_name, notes, usage_count')
-            .ilike('full_name', `%${query}%`)
+            .or(`full_name.ilike.%${query}%,notes.ilike.%${query}%`)
             .limit(3);
           fullNameMatch = fallbackMatch;
         }
