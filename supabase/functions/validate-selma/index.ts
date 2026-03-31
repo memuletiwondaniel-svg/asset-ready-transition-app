@@ -178,6 +178,25 @@ const ALL_TESTS: TestDef[] = [
     manual: true,
     go_live_gate: true,
   },
+  {
+    id: "T0.3",
+    name: "Bob identity intact after rebuild",
+    tier: 0,
+    query: "Who are you?",
+    agent: "bob",
+    autoAssert: (r) => {
+      const hasBob = containsAny(r, ["bob"]);
+      const claimsSelma = containsAny(r, ["i am selma", "i'm selma", "my name is selma"]);
+      return {
+        pass: hasBob && !claimsSelma,
+        details: claimsSelma
+          ? "Bob introduced himself as Selma — system prompt overwritten"
+          : hasBob
+            ? "Bob identity intact"
+            : "Bob did not identify himself — generic AI response",
+      };
+    },
+  },
 
   // Tier 1 — Smoke Test
   {
@@ -224,16 +243,22 @@ const ALL_TESTS: TestDef[] = [
   },
   {
     id: "T2.2",
-    name: "BFD acronym resolution",
+    name: "PEFS acronym resolution (anti-hallucination)",
     tier: 2,
-    query: "What is a BFD?",
+    query: "What is a PEFS?",
     agent: "bob",
-    autoAssert: (r) => ({
-      pass: containsAny(r, ["block flow", "BFD", "diagram", "type"]),
-      details: containsAny(r, ["block flow", "diagram"])
-        ? "Resolved BFD correctly"
-        : "Did not resolve BFD via tool",
-    }),
+    autoAssert: (r) => {
+      const hasDbValue = containsAny(r, ["C01", "Process Engineering Flow Sheets", "Process Engineering Flow Scheme"]);
+      const hasGeneric = containsAny(r, ["I'm not sure", "I don't know"]);
+      return {
+        pass: hasDbValue,
+        details: hasDbValue
+          ? "Resolved PEFS via tool — DB values present (C01 / Process Engineering Flow Sheets)"
+          : hasGeneric
+            ? "Selma did not call tool — vague/unknown response (hallucination avoided but tool not used)"
+            : "Did not resolve PEFS correctly — possible hallucination from training data",
+      };
+    },
   },
   {
     id: "T2.3a",
@@ -297,7 +322,7 @@ const ALL_TESTS: TestDef[] = [
     agent: "bob",
     autoAssert: (r, m) => ({
       pass: !m.hasError && r.length > 30,
-      details: "Response received — verify discover_project_vendors was called in logs",
+      details: "Response received — LOG CHECK: verify [Selma] Tool: discover_project_vendors in edge function logs (https://supabase.com/dashboard/project/kgnrjqjbonuvpxxfvfjq/functions/ai-chat/logs). If [Selma] Tool: search_assai_documents appears instead → FAIL.",
     }),
   },
   {
@@ -335,11 +360,12 @@ const ALL_TESTS: TestDef[] = [
     timeout_ms: 120000,
     autoAssert: (r) => {
       const count = extractNumber(r);
-      if (count === null) return { pass: false, details: "Could not extract a numeric count from response" };
+      const logNote = " — LOG CHECK: search edge function logs for totalQueryCount — should exceed 12 for full DP164 sweep confirming SessionManager refresh. If totalQueryCount stays below 12, the 12-query refresh threshold is not working.";
+      if (count === null) return { pass: false, details: "Could not extract a numeric count from response" + logNote };
       if (count >= 200) return { pass: true, details: `Count: ${count} — pagination working` };
-      if (count === 128) return { pass: false, details: `Count: 128 — session exhaustion (SessionManager not refreshing at 12-query threshold)` };
-      if (count === 100) return { pass: false, details: `Count: 100 — pagination not running (stopping after first page)` };
-      return { pass: false, details: `Count: ${count} — below 200 threshold` };
+      if (count === 128) return { pass: false, details: `Count: 128 — session exhaustion (SessionManager not refreshing at 12-query threshold)` + logNote };
+      if (count === 100) return { pass: false, details: `Count: 100 — pagination not running (stopping after first page)` + logNote };
+      return { pass: false, details: `Count: ${count} — below 200 threshold` + logNote };
     },
   },
   {
@@ -353,7 +379,7 @@ const ALL_TESTS: TestDef[] = [
       pass: !m.hasError && r.length > 100 && !containsAny(r, ["session error", "session expired"]),
       details: containsAny(r, ["session error", "session expired"])
         ? "Mid-search session error detected"
-        : "AFC search completed",
+        : "AFC search completed. Expected response time: < 120 seconds.",
     }),
   },
   {
@@ -392,13 +418,17 @@ const ALL_TESTS: TestDef[] = [
     agent: "bob",
     go_live_gate: true,
     timeout_ms: 120000,
-    autoAssert: (r) => ({
-      pass: r.length > 200,
-      details:
-        r.length > 200
-          ? `Response length: ${r.length} chars — real content returned`
-          : `Response only ${r.length} chars — may be metadata-only`,
-    }),
+    autoAssert: (r) => {
+      const contentKeywords = ["scope", "equipment", "design", "specification", "procedure", "drawing", "purpose", "requirements", "system", "installation", "description"];
+      const hasContent = containsAny(r, contentKeywords);
+      if (r.length < 500) {
+        return { pass: false, details: `Response only ${r.length} chars (need ≥500) — likely metadata-only` };
+      }
+      if (!hasContent) {
+        return { pass: false, details: `Response is ${r.length} chars but contains no technical content keywords (scope/equipment/design/specification/procedure/drawing). Likely metadata-only. Marking for manual review.` };
+      }
+      return { pass: true, details: `Response length: ${r.length} chars with technical content — real document content returned` };
+    },
   },
   {
     id: "T4.2",
@@ -427,15 +457,15 @@ const ALL_TESTS: TestDef[] = [
   // Tier 5 — Learning
   {
     id: "T5.1a",
-    name: "Teach FCD acronym",
+    name: "Teach FCD acronym (stronger trigger)",
     tier: 5,
-    query: "FCD means Flow Control Diagram",
+    query: "Please save this: FCD = Flow Control Diagram",
     agent: "bob",
     autoAssert: (r) => ({
       pass: containsAny(r, ["learned", "saved", "noted", "remember", "recorded", "got it", "understood"]),
       details: containsAny(r, ["learned", "saved", "noted", "remember", "recorded"])
-        ? "Acronym learning confirmed"
-        : "No clear confirmation of learning",
+        ? "Acronym learning confirmed — LOG CHECK: verify [Selma] Tool: learn_acronym in edge function logs to confirm tool was actually called, not just acknowledged conversationally."
+        : "No clear confirmation of learning — LOG CHECK: verify [Selma] Tool: learn_acronym in edge function logs.",
     }),
   },
   {

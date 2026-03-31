@@ -44,10 +44,11 @@ async function invokeValidation(tier: number | "all") {
 Deno.test("Tier 0 — Bob regression tests execute without errors", async () => {
   const result = await invokeValidation(0);
   
-  assertEquals(result.summary.total, 2, "Should have 2 Tier 0 tests");
+  assertEquals(result.summary.total, 3, "Should have 3 Tier 0 tests (T0.1, T0.2, T0.3)");
   assertEquals(result.summary.error, 0, "No errors expected");
   
   // T0.1 and T0.2 are manual — they should return 'manual' status
+  // T0.3 is auto — should return 'pass'
   for (const test of result.tests) {
     assert(
       test.status === "manual" || test.status === "pass",
@@ -55,6 +56,11 @@ Deno.test("Tier 0 — Bob regression tests execute without errors", async () => 
     );
     assert(test.response_preview.length > 0, `${test.id}: empty response`);
   }
+  
+  // Specifically check T0.3 (Bob identity)
+  const t03 = result.tests.find((t: any) => t.id === "T0.3");
+  assert(t03, "T0.3 (Bob identity check) missing");
+  assert(t03.status === "pass", `T0.3: ${t03.details}`);
 });
 
 // ─── Tier 1: Smoke Test ─────────────────────────────────────────────
