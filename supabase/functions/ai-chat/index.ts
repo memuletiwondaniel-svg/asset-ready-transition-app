@@ -8449,7 +8449,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
 
         // Helper: try to extract total count from HTML (e.g. "Showing 1-100 of 109")
         const parseTotalCount = (html: string): number | null => {
-          const m = html.match(/(?:showing|results?)\s+\d+\s*[-–]\s*\d+\s+of\s+(\d+)/i);
+          const m = html.match(/(?:showing|results?)\s+\d+\s*(?:[-–]|to)\s+\d+\s+of\s+(\d+)/i);
           if (m) return parseInt(m[1], 10);
           const m2 = html.match(/total[:\s]+(\d+)/i);
           if (m2) return parseInt(m2[1], 10);
