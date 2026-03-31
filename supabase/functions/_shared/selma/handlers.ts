@@ -585,17 +585,23 @@ export async function executeSelmaTool(
         };
 
         // Helper: check if response is a real file (not an HTML error page)
-        const isValidFileResponse = (res: Response, bytes: Uint8Array): { valid: boolean; reason?: string } => {
+        const isValidFileResponse = (res: Response, bytes: Uint8Array): { valid: boolean; reason?: string; isAuthIssue?: boolean } => {
           const ct = res.headers.get('content-type') || '';
           
-          // Small HTML responses (< 500 bytes) are error/redirect pages
-          if (bytes.length < 500 && ct.includes('text/html')) {
-            return { valid: false, reason: 'Document is registered in Assai but the file has not been uploaded yet (no file attached).' };
-          }
-          if (ct.includes('text/html')) {
-            const snippet = new TextDecoder().decode(bytes.slice(0, 500)).toLowerCase();
-            if (snippet.includes('<!doctype') || snippet.includes('<html') || snippet.includes('error')) {
-              return { valid: false, reason: 'Assai returned an error page instead of the document file.' };
+          if (ct.includes('text/html') || bytes.length < 500) {
+            const snippet = new TextDecoder().decode(bytes.slice(0, Math.min(bytes.length, 1000))).toLowerCase();
+            console.log(`read_assai_document: HTML/small response detected (${bytes.length} bytes), snippet: ${snippet.substring(0, 200)}`);
+            
+            // Detect auth/session redirects vs actual errors
+            if (snippet.includes('login') || snippet.includes('session') || snippet.includes('redirect') || snippet.includes('available projects')) {
+              return { valid: false, reason: 'Session expired or project context not set — retrying with fresh auth.', isAuthIssue: true };
+            }
+            if (snippet.includes('<!doctype') || snippet.includes('<html') || snippet.includes('error') || snippet.includes('applet:error')) {
+              return { valid: false, reason: 'Assai returned an HTML page instead of the document file. This may be a session or access issue — not a missing file.', isAuthIssue: true };
+            }
+            // Small non-HTML response could still be valid (e.g., tiny text file)
+            if (ct.includes('text/html') && bytes.length < 500) {
+              return { valid: false, reason: 'Assai returned a small HTML response — likely a session redirect.', isAuthIssue: true };
             }
           }
           if (bytes.length > 10 * 1024 * 1024) {
