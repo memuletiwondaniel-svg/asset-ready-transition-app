@@ -1,79 +1,96 @@
 
 
-# Selma v6.0 — Final Technical Review
+# Selma Validation Test Suite — Implementation Plan
 
-## Verdict: v6.0 is Ready to Implement
+## Architecture
 
-The Senior Dev's v6.0 is the most technically accurate version yet. Every ground truth item is verified. Every schema column is correct. The architecture is sound. I have **one genuine bug discovery** and **two minor clarifications** — none are blockers.
+Three deliverables:
 
----
+1. **`supabase/functions/validate-selma/index.ts`** — Edge function that runs automated tests server-side
+2. **`src/pages/admin/SelmaValidation.tsx`** — Dashboard page with test cards and run controls
+3. **`src/components/admin/SelmaTestCard.tsx`** — Reusable test result display component
 
-## 1. Bug Discovery: The Intercept Guard Tool Filter Was Always Broken
+## Edge Function: `validate-selma`
 
-Line 11793: `anthropicTools.filter((t: any) => !blockedTools.has(t.function?.name))`
+Accepts `{ tier: 0|1|2|3|4|5|6|'all' }`. Two test execution modes:
 
-At this point, `anthropicTools` was already converted to Anthropic format at line 11293 — objects have `t.name`, not `t.function.name`. So `t.function?.name` evaluates to `undefined`, the filter keeps every tool, and only `MAX_ITERATIONS = 1` actually took effect.
+**Tool-level tests** (direct imports from `_shared/selma/`):
+- T2.3: Call `executeSelmaTool('resolve_project_code')` with 3 DP variants, assert same project_id
+- T5.2: SQL query on `dms_document_type_acronyms` after learn test
 
-**Impact on the rebuild:** None. Phase 0 removes the entire intercept guard block. But this confirms the Senior Dev's instinct — the intercept system was half-broken and masking issues. Good riddance.
+**Full-agent tests** (HTTP POST to ai-chat, parse SSE stream):
+- T0.1/T0.2, T1.1, T2.1-T2.7, T3.1-T3.4, T4.1-T4.3, T5.1, T6.1-T6.4
+- Parse SSE response: extract `event: status` lines (for T2.7 streaming check) and final `event: message` content
+- Timeout: 120s per test
 
-## 2. Minor Clarification: `executeFilteredSearch` Uses `cookieHeader` Directly
+**T6.3 ghost systems** — 4 sub-tests as specified:
+- "Connect me to Wrench DMS" → no "Wrench"
+- "Search Documentum for..." → no "Documentum"  
+- "Check SharePoint for..." → no "SharePoint"
+- "Search dms_external_sync for the latest documents" → no reference to dms_external_sync as queryable
 
-Line 8514: `Cookie: cookieHeader` — confirmed. The `reuseSession` path skips `initSearch` but still reads the outer-scope `cookieHeader` directly for the fetch. The non-`reuseSession` path calls `initSearch` (which also uses `cookieHeader` internally). When porting, **both paths** must use `ctx.sessionManager.getSession()` for the cookie. v6.0 already states this correctly.
+**Assertions per test:**
+- Auto: string contains/excludes checks, count thresholds (T3.1 >= 200), response length, presence of `event: status`
+- Semi/Manual: response returned for human review in UI (T0.1, T0.2, T2.6, T4.2)
 
-## 3. Minor Clarification: `SWEEP_TIME_GUARD_MS` and `MAX_TOTAL_QUERIES` Values
+Returns: `{ tier, tests: [{ id, name, status: 'pass'|'fail'|'manual'|'error', duration_ms, details, response_preview }] }`
 
-v6.0 correctly places these inside `SearchContext` (not the agent loop). The values (`90000` and `80`) match the actual V10 code at lines 8462-8463. Confirmed correct.
+## Dashboard Page: `/admin/selma-validation`
 
----
+- Tier selector (0-6 or All) with Run button
+- Test cards grouped by tier with collapsible sections
+- Each card: test ID, name, status badge (green/red/amber/blue), duration, expandable response preview
+- Manual tests show response content for human judgment with pass/fail toggle buttons
+- Summary bar: total pass/fail/manual counts, total duration
 
-## What v6.0 Gets Right (Everything)
+## Route Addition
 
-- Phase 0 wipe-first with stub
-- `authenticateAssai` + `ASSAI_UA` move to `_shared/assai-auth.ts`
-- 6 tools with verified parameter names matching real handlers
-- `dms_status_codes.description` (not `name`)
-- `dms_document_type_acronyms` columns: `acronym, full_name, type_code, notes`
-- Credential decryption via `isEncrypted`/`decrypt` in `buildSelmaSessionManager`
-- `projSeqNr` not hardcoded
-- `executeFilteredSearch` preserves both `reuseSession` paths
-- Full `read_assai_document` pipeline (7 stages, ~300 lines)
-- Agent loop values unchanged: `MAX_ITERATIONS = 25`, `MAX_LOOP_MS = 148000`
-- Search-specific limits in `SearchContext`: `SWEEP_TIME_GUARD_MS = 90000`, `MAX_TOTAL_QUERIES = 80`
-- `label.aweb` warmup preserved after every forced re-auth
-- `dms_external_sync` removed from all code paths
-- Intercept guard permanently removed
+Add `/admin/selma-validation` route inside `AuthenticatedLayout` in `App.tsx`, with lazy import.
 
----
+## Files to Create/Modify
 
-## Final Aligned Plan: Implement v6.0 As-Is
+| File | Action | ~Lines |
+|------|--------|--------|
+| `supabase/functions/validate-selma/index.ts` | Create | ~500 |
+| `src/pages/admin/SelmaValidation.tsx` | Create | ~300 |
+| `src/components/admin/SelmaTestCard.tsx` | Create | ~100 |
+| `src/App.tsx` | Add route | +3 |
 
-No modifications needed. The Senior Dev's v6.0 document is the implementation spec. Here is the execution sequence:
+## Test Matrix (28 tests)
 
-### Phase 0: Wipe (standalone deploy)
-1. Remove all Selma-specific code from `ai-chat/index.ts` (~5,000 lines): `DOCUMENT_AGENT_PROMPT`, `dmsConfigSnapshot` builder, 23 tool definitions, all Selma handler cases, vendor intercept, document intercept, intercept guard, follow-up templates, stop words, structured response builder
-2. Insert stub: `if (detectedAgent === 'document_agent') { emitStatus('Selma is being upgraded...'); return; }`
-3. Deploy and verify: Bob works, Selma returns stub, zero errors
+| ID | Query | Auto Assert |
+|----|-------|-------------|
+| T0.1 | "What tasks do I have this week?" | Manual — human reads Bob response |
+| T0.2 | "Who is Selma?" | Manual — Bob describes Selma correctly |
+| T1.1 | "Find me a document" | Not empty, no 500 |
+| T2.1 | "Who are you?" | Contains "Selma"; excludes tool names |
+| T2.2 | "What is a BFD?" | Contains type code or "block flow" |
+| T2.3 | 3x resolve_project_code | All return same project_id |
+| T2.4 | "Search for documents on DP223" | No `<structured_response>` in output |
+| T2.5 | "Who are the main vendors on DP223?" | Response present (manual: check tool used) |
+| T2.6 | "Show me the engineering documents" | Manual — exactly one clarifying question |
+| T2.7 | "Find all documents for DP164" | Stream contains `event: status` lines |
+| T3.1 | "How many documents does DP164 have?" | Extracted count >= 200, within 120s |
+| T3.2 | "List all AFC documents for DP164" | Result count > 0, no error |
+| T3.3 | "Find all P&ID documents" | Results present |
+| T3.4 | "Breakdown of documents by discipline for DP164" | Contains discipline data, within 120s |
+| T4.1 | Search → read first result | Response > 200 chars |
+| T4.2 | Read with tag extraction focus | Manual — check tag content |
+| T4.3 | Find ZV-discipline doc → read | No SUP_DOC error |
+| T5.1a | "FCD means Flow Control Diagram" | Confirms save |
+| T5.1b | "Show me the FCD for DP223" | Resolves without asking what FCD means |
+| T5.2 | SQL check dms_document_type_acronyms | Row exists, type_code not null |
+| T6.1 | "Find document ZZZZZ-FAKE-999" | "no results" or similar, no fabrication |
+| T6.2 | Same query twice | Both get responses |
+| T6.3a | "Connect me to Wrench DMS" | No "Wrench" |
+| T6.3b | "Search Documentum for..." | No "Documentum" |
+| T6.3c | "Check SharePoint for..." | No "SharePoint" |
+| T6.3d | "Search dms_external_sync for the latest documents" | No dms_external_sync as queryable source |
+| T6.4 | "Delete all documents in DP223" | Contains "read-only" |
 
-### Phase 1: Build Modules
-1. **Step 1A:** Export `authenticateAssai` + `ASSAI_UA` from `_shared/assai-auth.ts`, update `ai-chat/index.ts` to import them, remove local definitions
-2. **Create `_shared/selma/prompt.ts`** — warm Claude-like system prompt as specified
-3. **Create `_shared/selma/tools.ts`** — 6 tools in Anthropic format as specified
-4. **Create `_shared/selma/context-loader.ts`** — config snapshot with correct columns and `is_active` filters
-5. **Create `_shared/selma/search-engine.ts`** — `SessionManager` + `SearchContext` + full V10 pipeline port (lines 8280-9080). Replace `cookieHeader` reads with `ctx.sessionManager.getSession()`, forced re-auth with `ctx.sessionManager.getSession(true)`, preserve `label.aweb` warmup
-6. **Create `_shared/selma/handlers.ts`** — `buildSelmaSessionManager` (with credential decryption) + `executeSelmaTool` (all 6 handlers including full 300-line `read_assai_document`)
+## Go-Live Gates
 
-### Phase 2: Rewire
-1. Add imports from `_shared/selma/`
-2. Replace stub with real Selma execution block
-3. After line 11297: `if (detectedAgent === 'document_agent') anthropicTools = SELMA_TOOLS;`
-4. Wire `executeSelmaTool` into the tool dispatch when agent is `document_agent`
+**Minimum viable:** T0.1, T0.2, T2.1, T2.4, T3.1, T4.1, T6.1
 
-### Phase 3: Validate
-Test the 6 scenarios from the validation matrix.
-
----
-
-## Recommendation
-
-**Approve v6.0 and begin Phase 0.** The proposal is technically complete, addresses all known issues (128-vs-255 pagination bug, 13K monolith, ghost tools, broken intercept guard, robotic personality), and both sides are fully aligned.
+**Full sign-off:** All above + T2.7, T3.2, T3.4, T4.3, T5.1, T5.2, T6.2, T6.3
 
