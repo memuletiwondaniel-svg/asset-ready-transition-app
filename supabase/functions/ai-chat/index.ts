@@ -8457,12 +8457,12 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         };
 
         // Multi-query search: if a search hits the 100-row cap, split into independent
-        // sub-searches (by status, then by discipline if needed), each with its own search.aweb session.
+        // sub-searches (by type code from DB, then by status if needed), each with its own search.aweb session.
         const PAGE_CAP = 100;
-        const MAX_TOTAL_QUERIES = 80;
-        const SWEEP_TIME_GUARD_MS = 70000; // 70s max for entire search operation — leaves ~78s for LLM
+        const MAX_TOTAL_QUERIES = 120;
+        const SWEEP_TIME_GUARD_MS = 90000; // 90s max for entire search operation — leaves ~58s for LLM
         let sweepStartTime = 0; // set when search actually executes
-        console.log('[SEARCH_V8]', { MAX_TOTAL_QUERIES: 80, SWEEP_TIME_GUARD_MS: 70000, strategy: 'status-split-then-type-split' });
+        console.log('[SEARCH_V9]', { MAX_TOTAL_QUERIES: 120, SWEEP_TIME_GUARD_MS: 90000, strategy: 'type-code-split-from-db' });
         let totalQueryCount = 0;
         let paginationTotalAssaiCount: number | null = null;
 
@@ -8574,97 +8574,128 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           }
         };
 
-        // Fallback: status-split pagination
+        // Fallback: type-code split pagination using ALL known types from DB
         const paginateByStatusSplit = async (
           params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string },
           firstDocs: any[],
         ): Promise<any[]> => {
           sweepStartTime = Date.now();
+          
+          const allDocs: any[] = [];
+          const seen = new Set<string>();
+          // Seed with initial docs
+          for (const doc of firstDocs) {
+            if (doc.document_number && !seen.has(doc.document_number)) {
+              seen.add(doc.document_number);
+              allDocs.push(doc);
+            }
+          }
+
+          // Strategy 1: Try status-split first (cheap — usually ~7 status codes)
           const statusCodes = [...new Set(firstDocs.map((d: any) => d.status).filter(Boolean))];
           console.info('paginateByStatusSplit: splitting into ' + statusCodes.length + ' status sub-searches: ' + statusCodes.join(', '));
 
-          if (statusCodes.length <= 1) {
-            console.warn('paginateByStatusSplit: single status, cannot split further');
-            return firstDocs;
-          }
-
-          const allDocs: any[] = [];
-          const seen = new Set<string>();
-
-          for (const sc of statusCodes) {
-            if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) break;
-            console.info('paginateByStatusSplit: sub-search for status=' + sc);
-
-            try {
-              const result = await executeFilteredSearch(params, { status_code: sc });
-              console.info('paginateByStatusSplit: status=' + sc + ' returned ' + result.docs.length + ' docs');
-
-              if (result.docs.length >= PAGE_CAP) {
-                // Hit cap — try start_row pagination within this status filter first
-                console.info('paginateByStatusSplit: status=' + sc + ' hit cap, trying start_row pagination within filtered search');
-                await paginateFilteredSearch(params, { status_code: sc }, result, seen, allDocs);
-                
-                // If start_row didn't help much, fall back to discipline split
-                const countAfterPagination = allDocs.length;
-                const docsForThisStatus = result.docs.length; // at least PAGE_CAP
-                // Check if we got significantly more than the initial cap
-                if (allDocs.filter(d => d.status === sc).length <= PAGE_CAP) {
-                  console.info('paginateByStatusSplit: start_row didn\'t yield more for status=' + sc + ', trying type-code split');
-                  const disciplines = [...new Set(result.docs.map((d: any) => d.discipline).filter(Boolean))];
-                  
-                  if (disciplines.length > 1) {
-                    // Split by discipline
-                    for (const disc of disciplines) {
-                      if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) break;
-                      try {
-                        const discResult = await executeFilteredSearch(params, { status_code: sc, discipline_code: disc });
-                        await paginateFilteredSearch(params, { status_code: sc, discipline_code: disc }, discResult, seen, allDocs);
-                      } catch (discErr) {
-                        console.error('paginateByStatusSplit: discipline sub-search failed:', discErr);
-                      }
-                    }
-                  }
-                  
-                  // If still capped, split by type codes from the sample
-                  if (allDocs.filter(d => d.status === sc).length <= PAGE_CAP) {
-                    const typeCodes = [...new Set(result.docs.map((d: any) => d.type_code).filter(Boolean))];
-                    console.info('paginateByStatusSplit: splitting status=' + sc + ' by ' + typeCodes.length + ' type codes from sample');
-                    
-                    for (const tc of typeCodes) {
-                      if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) break;
-                      try {
-                        const typeResult = await executeFilteredSearch(params, { status_code: sc, document_type: tc });
-                        const newCount = typeResult.docs.filter((d: any) => d.document_number && !seen.has(d.document_number)).length;
-                        if (newCount > 0 || typeResult.docs.length > 0) {
-                          console.info('paginateByStatusSplit: type=' + tc + ' returned ' + typeResult.docs.length + ' docs (' + newCount + ' new)');
-                        }
-                        for (const doc of typeResult.docs) {
-                          if (doc.document_number && !seen.has(doc.document_number)) {
-                            seen.add(doc.document_number);
-                            allDocs.push(doc);
-                          }
-                        }
-                        // If this type itself hit the cap, try paginating within it
-                        if (typeResult.docs.length >= PAGE_CAP) {
-                          await paginateFilteredSearch(params, { status_code: sc, document_type: tc }, typeResult, seen, allDocs);
-                        }
-                      } catch (typeErr) {
-                        console.error('paginateByStatusSplit: type sub-search failed for ' + tc + ':', typeErr);
-                      }
-                    }
-                    console.info('paginateByStatusSplit: after type-code split for status=' + sc + ', total docs: ' + allDocs.length);
-                  }
-                }
-              } else {
+          if (statusCodes.length > 1) {
+            for (const sc of statusCodes) {
+              if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) break;
+              console.info('paginateByStatusSplit: sub-search for status=' + sc);
+              try {
+                const result = await executeFilteredSearch(params, { status_code: sc });
+                console.info('paginateByStatusSplit: status=' + sc + ' returned ' + result.docs.length + ' docs');
                 for (const doc of result.docs) {
                   if (doc.document_number && !seen.has(doc.document_number)) {
                     seen.add(doc.document_number);
                     allDocs.push(doc);
                   }
                 }
+                // If this status hit cap, try paginating within it
+                if (result.docs.length >= PAGE_CAP) {
+                  await paginateFilteredSearch(params, { status_code: sc }, result, seen, allDocs);
+                }
+              } catch (subErr) {
+                console.error('paginateByStatusSplit: sub-search for status=' + sc + ' failed:', subErr);
               }
-            } catch (subErr) {
-              console.error('paginateByStatusSplit: sub-search for status=' + sc + ' failed:', subErr);
+            }
+            console.info('paginateByStatusSplit: after status split, total unique docs: ' + allDocs.length);
+          }
+
+          // Strategy 2: If any status was capped AND we didn't recover all docs,
+          // do a type-code sweep using ALL known types from the database
+          const expectedFromHeader = paginationTotalAssaiCount;
+          const needsTypeSweep = expectedFromHeader ? allDocs.length < expectedFromHeader : 
+            statusCodes.some(sc => {
+              const countForStatus = allDocs.filter(d => d.status === sc).length;
+              return countForStatus >= PAGE_CAP; // still likely capped
+            });
+
+          if (needsTypeSweep && totalQueryCount < MAX_TOTAL_QUERIES - 5) {
+            console.info('paginateByStatusSplit: status split incomplete (' + allDocs.length + ' found' + 
+              (expectedFromHeader ? ', expected ~' + expectedFromHeader : '') + '), starting type-code sweep from DB');
+            
+            // Fetch ALL active document type codes from the database
+            let allTypeCodes: string[] = [];
+            try {
+              const { data: allTypes } = await supabaseAdmin
+                .from('dms_document_types')
+                .select('code')
+                .eq('is_active', true)
+                .order('code');
+              if (allTypes && allTypes.length > 0) {
+                allTypeCodes = [...new Set(allTypes.map((t: any) => t.code).filter(Boolean))];
+                console.info('paginateByStatusSplit: fetched ' + allTypeCodes.length + ' type codes from dms_document_types');
+              }
+            } catch (dbErr) {
+              console.warn('paginateByStatusSplit: failed to fetch type codes from DB:', dbErr);
+            }
+
+            if (allTypeCodes.length > 0) {
+              // Only sweep type codes NOT already fully represented
+              // Group current docs by type_code to know which are fully covered
+              const typeCountInResults: Record<string, number> = {};
+              for (const d of allDocs) {
+                const tc = d.type_code || '';
+                typeCountInResults[tc] = (typeCountInResults[tc] || 0) + 1;
+              }
+              
+              // Prioritize: first sweep types we haven't seen at all, then types at cap
+              const unseenTypes = allTypeCodes.filter(tc => !typeCountInResults[tc]);
+              const cappedTypes = allTypeCodes.filter(tc => typeCountInResults[tc] && typeCountInResults[tc] >= PAGE_CAP);
+              const typesToSweep = [...cappedTypes, ...unseenTypes]; // capped first, then unseen
+              
+              console.info('paginateByStatusSplit: sweeping ' + typesToSweep.length + ' types (' + cappedTypes.length + ' capped, ' + unseenTypes.length + ' unseen)');
+              
+              let newDocsFromSweep = 0;
+              for (const tc of typesToSweep) {
+                if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) {
+                  console.info('paginateByStatusSplit: budget/time exhausted after sweeping, stopping');
+                  break;
+                }
+                // Skip if we've already found enough
+                if (expectedFromHeader && allDocs.length >= expectedFromHeader) break;
+                
+                try {
+                  const typeResult = await executeFilteredSearch(params, { document_type: tc });
+                  if (typeResult.docs.length > 0) {
+                    const newCount = typeResult.docs.filter((d: any) => d.document_number && !seen.has(d.document_number)).length;
+                    if (newCount > 0) {
+                      console.info('paginateByStatusSplit: type=' + tc + ' returned ' + typeResult.docs.length + ' docs (' + newCount + ' new)');
+                      newDocsFromSweep += newCount;
+                    }
+                    for (const doc of typeResult.docs) {
+                      if (doc.document_number && !seen.has(doc.document_number)) {
+                        seen.add(doc.document_number);
+                        allDocs.push(doc);
+                      }
+                    }
+                    if (typeResult.docs.length >= PAGE_CAP) {
+                      await paginateFilteredSearch(params, { document_type: tc }, typeResult, seen, allDocs);
+                    }
+                  }
+                } catch (typeErr) {
+                  // Skip silently — many types will return 0
+                }
+              }
+              console.info('paginateByStatusSplit: type-code sweep added ' + newDocsFromSweep + ' new docs, total: ' + allDocs.length);
             }
           }
 
