@@ -8625,10 +8625,28 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                     }
                   }
                   
-                  // If still capped, split by type codes from the sample
-                  if (allDocs.filter(d => d.status === sc).length <= PAGE_CAP) {
-                    const typeCodes = [...new Set(result.docs.map((d: any) => d.type_code).filter(Boolean))];
-                    console.info('paginateByStatusSplit: splitting status=' + sc + ' by ' + typeCodes.length + ' type codes from sample');
+                   // If still capped, split by ALL known type codes from dms_document_types (not just the sample)
+                   if (allDocs.filter(d => d.status === sc).length <= PAGE_CAP) {
+                     // Fetch all active document type codes from the database
+                     let typeCodes: string[] = [];
+                     try {
+                       const { data: allTypes } = await supabaseAdmin
+                         .from('dms_document_types')
+                         .select('code')
+                         .eq('is_active', true)
+                         .order('code');
+                       if (allTypes && allTypes.length > 0) {
+                         typeCodes = allTypes.map((t: any) => t.code).filter(Boolean);
+                         console.info('paginateByStatusSplit: fetched ' + typeCodes.length + ' type codes from dms_document_types for status=' + sc);
+                       }
+                     } catch (dbErr) {
+                       console.warn('paginateByStatusSplit: failed to fetch type codes from DB, falling back to sample:', dbErr);
+                     }
+                     // Fallback to sample if DB fetch failed
+                     if (typeCodes.length === 0) {
+                       typeCodes = [...new Set(result.docs.map((d: any) => d.type_code).filter(Boolean))];
+                     }
+                     console.info('paginateByStatusSplit: splitting status=' + sc + ' by ' + typeCodes.length + ' type codes');
                     
                     for (const tc of typeCodes) {
                       if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - sweepStartTime) > SWEEP_TIME_GUARD_MS) break;
