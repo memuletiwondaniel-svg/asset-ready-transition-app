@@ -637,6 +637,12 @@ export async function executeSelmaTool(
               try {
                 const docRes = await attemptRestDownload(cookieHeader, project, `attempt${attempt}-${project}`);
 
+                // null means redirect (auth failure) — skip to next project or retry with fresh session
+                if (!docRes) {
+                  downloadFailReason = 'REST endpoint redirected to login — session not authenticated for download.';
+                  continue;
+                }
+
                 if (!docRes.ok) {
                   const errBody = await docRes.text();
                   console.log(`read_assai_document: ${project} HTTP ${docRes.status}, body: ${errBody.substring(0, 150)}`);
