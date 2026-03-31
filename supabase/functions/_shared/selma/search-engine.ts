@@ -149,10 +149,27 @@ export function parseDocuments(html: string, subclass?: string): SearchResult[] 
   }
 
   // Strategy 1: parse myCells JavaScript variable
-  const match = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function|\/\/|$)/m);
-  if (match) {
+  // Use a robust extraction: find "var myCells = [" then bracket-match to find the closing "];"
+  let myCellsJson: string | null = null;
+  const myCellsStart = html.indexOf('var myCells');
+  if (myCellsStart >= 0) {
+    const bracketStart = html.indexOf('[', myCellsStart);
+    if (bracketStart >= 0) {
+      let depth = 0;
+      let end = -1;
+      for (let i = bracketStart; i < html.length; i++) {
+        if (html[i] === '[') depth++;
+        else if (html[i] === ']') { depth--; if (depth === 0) { end = i; break; } }
+      }
+      if (end > bracketStart) {
+        myCellsJson = html.substring(bracketStart, end + 1);
+      }
+    }
+  }
+
+  if (myCellsJson) {
     try {
-      const myCells = JSON.parse(match[1]);
+      const myCells = JSON.parse(myCellsJson);
       if (myCells.length > 0) {
         console.info('parseDocuments: myCells strategy found ' + myCells.length + ' rows');
         return myCells.map((row: any) => ({
@@ -174,7 +191,7 @@ export function parseDocuments(html: string, subclass?: string): SearchResult[] 
         }));
       }
     } catch (e) {
-      console.error('parseDocuments: myCells parse error, trying TR fallback:', e);
+      console.error('parseDocuments: myCells parse error (json length=' + myCellsJson.length + '), trying TR fallback:', e);
     }
   }
 
@@ -278,6 +295,7 @@ export async function fetchResultPage(
   for (const f of hiddenFields) formData.set(f.name, f.value);
   for (const f of textFields) formData.set(f.name, '');
   formData.set('subclass_type', params.subclass_type);
+  formData.set('number_of_results', '500'); // Maximize results per page — Assai default is 100
   if (ctx.poDigits) {
     formData.set('purchase_code', ctx.poDigits);
   } else {
@@ -360,6 +378,7 @@ export async function executeFilteredSearch(
   for (const f of subHidden) formData.set(f.name, f.value);
   for (const f of subText) formData.set(f.name, '');
   formData.set('subclass_type', params.subclass_type);
+  formData.set('number_of_results', '500'); // Maximize results per page
   if (ctx.poDigits) {
     formData.set('purchase_code', ctx.poDigits);
   } else if (ctx.document_number_pattern) {
@@ -537,10 +556,8 @@ export async function paginateByStatusSplit(
           if (ctx.totalQueryCount >= ctx.MAX_TOTAL_QUERIES || (Date.now() - ctx.sweepStartTime) > ctx.SWEEP_TIME_GUARD_MS) break;
           if (expectedFromHeader && allDocs.length >= expectedFromHeader) break;
 
-          // Re-auth every 15 sweep queries
-          if (sweepQueryCount > 0 && sweepQueryCount % 15 === 0) {
-            await ctx.sessionManager.getSession(true);
-          }
+      // NO forced re-auth during sweep — it destroys the Assai server-side search context.
+          // SessionManager auto-refreshes at MAX_QUERIES_BEFORE_REFRESH=50 if needed.
 
           try {
             const filters: Record<string, string> = { document_type: tc };
@@ -730,7 +747,7 @@ export async function executeSearch(
     sweepStartTime: Date.now(),
     SWEEP_TIME_GUARD_MS: 90000,
     MAX_TOTAL_QUERIES: 80,
-    PAGE_CAP: 100,
+    PAGE_CAP: 500,
     emitStatus: options.emitStatus || (() => {}),
     supabase,
     maxResults: options.maxResults || 50,
