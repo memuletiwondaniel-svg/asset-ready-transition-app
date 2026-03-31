@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { loginAssai } from "../_shared/assai-auth.ts";
+import { loginAssai, authenticateAssai, ASSAI_UA } from "../_shared/assai-auth.ts";
+import { SELMA_SYSTEM_PROMPT } from '../_shared/selma/prompt.ts';
+import { SELMA_TOOLS } from '../_shared/selma/tools.ts';
+import { executeSelmaTool, buildSelmaSessionManager } from '../_shared/selma/handlers.ts';
+import { buildDmsConfigSnapshot } from '../_shared/selma/context-loader.ts';
 
 // Smart region inference from project titles
 function inferRegionFromTitle(title: string): 'North' | 'Central' | 'South' | null {
@@ -71,7 +75,7 @@ function mergeCookies(existing: string, newer: string): string {
 }
 
 // Module-level User-Agent constant for Assai requests
-const ASSAI_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+// ASSAI_UA now imported from _shared/assai-auth.ts
 
 // Module-level helper: fetch with redirect:'manual', capture cookies from every hop (302s included)
 async function fetchCaptureCookies(url: string, init: RequestInit, currentCookies: string): Promise<{ cookies: string; finalStatus: number; body: string }> {
@@ -103,27 +107,7 @@ async function fetchCaptureCookies(url: string, init: RequestInit, currentCookie
   return { cookies, finalStatus: lastStatus, body };
 }
 
-// Shared Assai authentication helper — simple form-based login
-async function authenticateAssai(assaiBase: string, username: string, password: string): Promise<{ cookies: string; success: boolean; statusCode: number }> {
-  // Extract origin and dbName from assaiBase (e.g. https://eu.assaicloud.com/AWeu578)
-  const originMatch = assaiBase.match(/^(https?:\/\/[^/]+)/);
-  const origin = originMatch ? originMatch[1] : assaiBase;
-  const dbMatch = assaiBase.match(/\/AW([^/]+?)(?:\/|$)/i);
-  const dbName = dbMatch?.[1]?.toLowerCase() ?? 'eu578';
-
-  console.log('[authenticateAssai] Using loginAssai with origin=' + origin + ', dbName=' + dbName);
-  const result = await loginAssai(origin, username, password, dbName);
-  
-  if (!result.success || !result.cookies?.length) {
-    console.log('[authenticateAssai] loginAssai failed:', result.error);
-    return { cookies: '', success: false, statusCode: 0 };
-  }
-
-  const cookieStr = result.cookies.join('; ');
-  console.log('loginAssai result: success=' + result.success + ', cookie count=' + result.cookies.length);
-  console.log('Assai cookies final:', cookieStr.substring(0, 120));
-  return { cookies: cookieStr, success: true, statusCode: 200 };
-}
+// authenticateAssai now imported from _shared/assai-auth.ts
 
 // ═══════════════════════════════════════════════════════════════════════════
 // BOB AI AGENT - PROPRIETARY & CONFIDENTIAL
@@ -6865,10 +6849,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     // Select system prompt based on detected agent
     let systemPrompt = BOB_SYSTEM_PROMPT + userContextPrompt;
     if (detectedAgent === 'document_agent') {
-      // Selma is being rebuilt — return upgrade stub
-      const upgradeMsg = "Selma is being upgraded with enhanced document intelligence capabilities. Please try again shortly.";
-      const sseStub = `data: ${JSON.stringify({ choices: [{ delta: { content: upgradeMsg } }] })}\n\ndata: [DONE]\n\n`;
-      return new Response(sseStub, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+      const dmsSnapshot = await buildDmsConfigSnapshot(supabaseClient);
+      systemPrompt = SELMA_SYSTEM_PROMPT + dmsSnapshot + userContextPrompt;
     } else if (detectedAgent === 'pssr_ora_agent') {
       systemPrompt = PSSR_ORA_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'hannah') {
@@ -6887,6 +6869,13 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       input_schema: t.function.parameters
     }));
 
+    // Agent-specific tool filtering — Selma sees ONLY her 6 tools
+    let selmaSession: any = null;
+    if (detectedAgent === 'document_agent') {
+      anthropicTools = SELMA_TOOLS;
+      selmaSession = await buildSelmaSessionManager(supabaseClient);
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // MULTI-ROUND AGENTIC TOOL LOOP
     // Supports chained tool calls (e.g. resolve_document_type → search_assai_documents)
@@ -6898,6 +6887,12 @@ You NEVER fabricate data — always use tool results. Format responses with mark
 
     // Tool-to-label mapping for dynamic status updates
     const TOOL_STATUS_LABELS: Record<string, string> = {
+      resolve_document_type: 'Resolving document type...',
+      resolve_project_code: 'Resolving project code...',
+      search_assai_documents: 'Searching Assai DMS...',
+      read_assai_document: 'Reading document content...',
+      discover_project_vendors: 'Discovering vendors...',
+      learn_acronym: 'Learning acronym...',
       get_pssr_pending_items: 'Retrieving PSSR data...',
       get_pssr_pending_approvers: 'Checking PSSR approvers...',
       get_executive_summary: 'Building executive summary...',
@@ -7021,7 +7016,6 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         }
 
         if (apiResponse.status === 429) {
-          }
           const rateLimitMsg = "I'm experiencing high demand right now. Please try again in about 30 seconds.";
           const sseRateLimit = `data: ${JSON.stringify({ choices: [{ delta: { content: rateLimitMsg } }] })}\n\ndata: [DONE]\n\n`;
           return new Response(sseRateLimit, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
@@ -7063,7 +7057,10 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         
         
         emitStatus(TOOL_STATUS_LABELS[toolName] || 'Processing...');
-        const toolResult = await executeTool(toolName, toolArgs, supabase);
+        const isSelmaTool = selmaSession && ['resolve_document_type', 'resolve_project_code', 'search_assai_documents', 'read_assai_document', 'discover_project_vendors', 'learn_acronym'].includes(toolName);
+        const toolResult = isSelmaTool
+          ? await executeSelmaTool(toolName, toolArgs, supabase, selmaSession, emitStatus)
+          : await executeTool(toolName, toolArgs, supabase);
         console.log(`[Iteration ${iteration}] Tool result for ${toolName}:`, typeof toolResult === 'object' ? JSON.stringify(toolResult).substring(0, 500) : toolResult);
 
         lastToolName = toolName;
@@ -7099,7 +7096,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     }
 
 
-    }
+
 
     // Fallback content for empty responses
     if (!finalTextContent || !finalTextContent.trim()) {

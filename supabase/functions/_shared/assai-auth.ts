@@ -389,3 +389,36 @@ export async function loginAssai(
     return { success: false, error: err.message || "Connection failed", response_time_ms: elapsed };
   }
 }
+
+// ============================================================
+// Shared constants and helpers used by Selma and other consumers
+// ============================================================
+
+export const ASSAI_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+
+/**
+ * High-level Assai authentication helper — wraps loginAssai and returns
+ * a flat { cookies, success, statusCode } result.
+ */
+export async function authenticateAssai(
+  assaiBase: string,
+  username: string,
+  password: string,
+): Promise<{ cookies: string; success: boolean; statusCode: number }> {
+  const originMatch = assaiBase.match(/^(https?:\/\/[^/]+)/);
+  const origin = originMatch ? originMatch[1] : assaiBase;
+  const dbMatch = assaiBase.match(/\/AW([^/]+?)(?:\/|$)/i);
+  const dbName = dbMatch?.[1]?.toLowerCase() ?? 'eu578';
+
+  console.log('[authenticateAssai] Using loginAssai with origin=' + origin + ', dbName=' + dbName);
+  const result = await loginAssai(origin, username, password, dbName);
+
+  if (!result.success || !result.cookies?.length) {
+    console.log('[authenticateAssai] loginAssai failed:', result.error);
+    return { cookies: '', success: false, statusCode: 0 };
+  }
+
+  const cookieStr = result.cookies.join('; ');
+  console.log('loginAssai result: success=' + result.success + ', cookie count=' + result.cookies.length);
+  return { cookies: cookieStr, success: true, statusCode: 200 };
+}
