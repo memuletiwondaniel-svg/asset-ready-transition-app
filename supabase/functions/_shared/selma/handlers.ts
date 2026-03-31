@@ -616,55 +616,90 @@ export async function executeSelmaTool(
           let fileBytes: Uint8Array | null = null;
           let fileContentType = '';
 
-          // Try each project scope with current session
-          for (const project of projectCodes) {
-            try {
-              let docRes = await attemptRestDownload(cookieHeader, project, `session-${project}`);
-              
-              // If 401/403 or redirect to login, try fresh session once
-              if (!docRes.ok && (docRes.status === 401 || docRes.status === 403)) {
-                await docRes.text(); // consume body
-                cookieHeader = await sessionManager.getSession(true);
-                docRes = await attemptRestDownload(cookieHeader, project, `fresh-${project}`);
-              }
+          // Try each project scope with current session, then fresh session
+          let triedFreshSession = false;
+          for (let attempt = 0; attempt < 2; attempt++) {
+            if (attempt === 1) {
+              if (triedFreshSession) break;
+              // Second pass: get completely fresh session
+              console.log('read_assai_document: all projects failed on first pass, retrying with fresh auth');
+              cookieHeader = await sessionManager.getSession(true);
+              triedFreshSession = true;
+            }
 
-              if (!docRes.ok) {
-                await docRes.text(); // consume body
-                console.log(`read_assai_document: ${project} returned HTTP ${docRes.status}, trying next`);
-                continue;
-              }
+            for (const project of projectCodes) {
+              try {
+                const docRes = await attemptRestDownload(cookieHeader, project, `attempt${attempt}-${project}`);
 
-              const bytes = new Uint8Array(await docRes.arrayBuffer());
-              console.log(`read_assai_document: ${project} returned ${bytes.length} bytes, ct=${docRes.headers.get('content-type')}`);
-              
-              const validation = isValidFileResponse(docRes, bytes);
-              if (!validation.valid) {
-                downloadFailReason = validation.reason || 'Invalid file response';
-                console.log(`read_assai_document: ${project} invalid: ${downloadFailReason}`);
-                continue; // try next project scope
-              }
+                if (!docRes.ok) {
+                  const errBody = await docRes.text();
+                  console.log(`read_assai_document: ${project} HTTP ${docRes.status}, body: ${errBody.substring(0, 150)}`);
+                  continue;
+                }
 
-              // Valid file!
-              fileBytes = bytes;
-              fileContentType = docRes.headers.get('content-type') || '';
-              downloadSuccess = true;
-              console.log(`read_assai_document: SUCCESS via ${project}, ${bytes.length} bytes`);
-              break;
-            } catch (projErr: any) {
-              if (projErr?.name === 'AbortError') {
-                downloadFailReason = 'Download timed out (>15s).';
-              } else {
-                console.warn(`read_assai_document: ${project} error:`, projErr?.message);
-                downloadFailReason = projErr?.message || 'Download failed';
+                const bytes = new Uint8Array(await docRes.arrayBuffer());
+                console.log(`read_assai_document: ${project} returned ${bytes.length} bytes, ct=${docRes.headers.get('content-type')}`);
+                
+                const validation = isValidFileResponse(docRes, bytes);
+                if (!validation.valid) {
+                  downloadFailReason = validation.reason || 'Invalid file response';
+                  console.log(`read_assai_document: ${project} invalid: ${downloadFailReason}`);
+                  if (validation.isAuthIssue && !triedFreshSession) {
+                    // Auth issue detected — break inner loop to trigger fresh session retry
+                    break;
+                  }
+                  continue; // try next project scope
+                }
+
+                // Valid file!
+                fileBytes = bytes;
+                fileContentType = docRes.headers.get('content-type') || '';
+                downloadSuccess = true;
+                console.log(`read_assai_document: SUCCESS via REST ${project}, ${bytes.length} bytes`);
+                break;
+              } catch (projErr: any) {
+                if (projErr?.name === 'AbortError') {
+                  downloadFailReason = 'Download timed out (>15s).';
+                } else {
+                  console.warn(`read_assai_document: ${project} error:`, projErr?.message);
+                  downloadFailReason = projErr?.message || 'Download failed';
+                }
               }
             }
+            if (downloadSuccess) break;
           }
 
-          // If REST endpoint failed, fall back to legacy download.aweb as last resort
+          // If REST endpoint failed, fall back to legacy download.aweb with search context
           if (!downloadSuccess && pkSeqNr && enttSeqNr) {
-            console.log('read_assai_document: REST endpoints exhausted, trying legacy download.aweb');
+            console.log('read_assai_document: REST endpoints exhausted, trying legacy download.aweb with search context');
             try {
               cookieHeader = await sessionManager.getSession(true);
+              
+              // Re-establish search context (required for download.aweb)
+              const subclassType = metadata.subclass || 'DES_DOC';
+              try {
+                const initResp = await fetch(assaiBase + '/search.aweb?subclass_type=' + subclassType, {
+                  headers: { Cookie: cookieHeader, Accept: 'text/html', 'User-Agent': ASSAI_UA },
+                  redirect: 'follow',
+                });
+                const initHtml = await initResp.text();
+                const fields = extractHiddenFields(initHtml);
+                const sp = new URLSearchParams();
+                for (const f of fields.filter((f: any) => f.type === 'hidden' && f.name && f.value)) sp.set(f.name, f.value);
+                for (const f of fields.filter((f: any) => f.type === 'text' || f.type === '')) sp.set(f.name, '');
+                sp.set('subclass_type', subclassType);
+                sp.set('number', docNumber);
+                await fetch(assaiBase + '/result.aweb', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': cookieHeader, 'User-Agent': ASSAI_UA },
+                  body: sp.toString(),
+                  redirect: 'follow',
+                });
+                console.log('read_assai_document: legacy search context established');
+              } catch (ctxErr) {
+                console.warn('read_assai_document: failed to establish search context:', ctxErr);
+              }
+
               const legacyUrl = assaiBase + '/download.aweb?pk_seq_nr=' + pkSeqNr + '&entt_seq_nr=' + enttSeqNr;
               const controller = new AbortController();
               const tid = setTimeout(() => controller.abort(), 15000);
@@ -676,6 +711,7 @@ export async function executeSelmaTool(
               clearTimeout(tid);
               if (legRes.ok) {
                 const bytes = new Uint8Array(await legRes.arrayBuffer());
+                console.log(`read_assai_document: legacy returned ${bytes.length} bytes, ct=${legRes.headers.get('content-type')}`);
                 const validation = isValidFileResponse(legRes, bytes);
                 if (validation.valid) {
                   fileBytes = bytes;
@@ -685,6 +721,9 @@ export async function executeSelmaTool(
                 } else {
                   downloadFailReason = validation.reason || downloadFailReason;
                 }
+              } else {
+                console.log(`read_assai_document: legacy download.aweb HTTP ${legRes.status}`);
+                await legRes.text();
               }
             } catch (legErr: any) {
               console.warn('read_assai_document: legacy fallback error:', legErr?.message);
