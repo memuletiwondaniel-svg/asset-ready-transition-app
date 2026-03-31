@@ -10295,6 +10295,7 @@ serve(async (req) => {
     const detectedAgent = lastUserMessage ? detectAgentDomain(lastUserMessage.content) : 'copilot';
     const requestStartTime = Date.now();
     console.log(`Bob processing request with ${transformedMessages.length} messages (detected agent: ${detectedAgent})`);
+    emitStatus(`agent:${detectedAgent}`);
 
     // Agent-specific system prompts
     const DOCUMENT_AGENT_PROMPT = `You are Selma, ORSH's Document Intelligence Assistant. You are an expert in DMS (Document Management System) document readiness, gap analysis, quality scoring, document numbering configuration, and ORA phase linkage for Oil & Gas capital projects. You help users understand document status, identify gaps, analyze trends, and ensure documentation readiness for operational handover. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Selma, your Document Intelligence Assistant."
