@@ -3411,7 +3411,8 @@ Intents:
     });
     clearTimeout(timeoutId);
     const data = await response.json();
-    const parsed = JSON.parse(data.content[0].text);
+    const rawText = data.content[0].text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const parsed = JSON.parse(rawText);
     console.log(`classifyIntent: Haiku returned intent="${parsed.intent}" confidence=${parsed.confidence}`);
     return parsed.confidence >= 0.7 ? parsed.intent : detectAgentDomainRegex(userMessage);
   } catch (err) {
