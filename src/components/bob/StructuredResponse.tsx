@@ -559,7 +559,17 @@ export function StructuredResponse({ data, onFollowupClick }: StructuredResponse
                   <td className="py-2 px-3 text-xs text-foreground font-semibold text-right">{row.count}</td>
                   <td className="py-2 px-3">
                     <div className="flex flex-wrap gap-1">
-                      {row.statuses.map(s => <StatusBadge key={s} code={s} />)}
+                      {Array.isArray(row.statuses)
+                        ? row.statuses.map(s => <StatusBadge key={s} code={s} />)
+                        : typeof row.statuses === 'object' && row.statuses
+                          ? Object.entries(row.statuses).map(([s, count]) => (
+                              <span key={s} className="inline-flex items-center gap-0.5">
+                                <StatusBadge code={s} />
+                                <span className="text-[10px] text-muted-foreground">({String(count)})</span>
+                              </span>
+                            ))
+                          : null
+                      }
                     </div>
                   </td>
                 </tr>
