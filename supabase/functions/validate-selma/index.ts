@@ -457,15 +457,15 @@ const ALL_TESTS: TestDef[] = [
   // Tier 5 — Learning
   {
     id: "T5.1a",
-    name: "Teach FCD acronym",
+    name: "Teach FCD acronym (stronger trigger)",
     tier: 5,
-    query: "FCD means Flow Control Diagram",
+    query: "Please save this: FCD = Flow Control Diagram",
     agent: "bob",
     autoAssert: (r) => ({
       pass: containsAny(r, ["learned", "saved", "noted", "remember", "recorded", "got it", "understood"]),
       details: containsAny(r, ["learned", "saved", "noted", "remember", "recorded"])
-        ? "Acronym learning confirmed"
-        : "No clear confirmation of learning",
+        ? "Acronym learning confirmed — LOG CHECK: verify [Selma] Tool: learn_acronym in edge function logs to confirm tool was actually called, not just acknowledged conversationally."
+        : "No clear confirmation of learning — LOG CHECK: verify [Selma] Tool: learn_acronym in edge function logs.",
     }),
   },
   {
