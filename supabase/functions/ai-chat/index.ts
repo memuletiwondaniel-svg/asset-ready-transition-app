@@ -884,10 +884,15 @@ DO NOT navigate for informational questions (e.g., "how many PSSRs are there?", 
 
 === DOCUMENT QUERY INTENT CLASSIFICATION ===
 When handling queries about DOCUMENTS (vendor docs, drawings, IOMs, etc.), classify intent BEFORE searching:
+- VENDOR DISCOVERY ("what vendors", "who are the suppliers", "main vendors", "key contractors", "list vendors", "vendor packages") → ALWAYS use discover_project_vendors. NEVER use search_assai_documents for this. The word "main", "key", "primary", "major" before "vendors" or "suppliers" is an adjective — it does NOT mean search for a document called "main".
 - ANALYTICAL ("how many", "status of", "pending review", "breakdown", "count", "total", "which vendors are", "summary of", "what percentage", "overdue", "outstanding") → Search BROADLY (no document type filter), then SYNTHESISE counts and summaries. Group by status, by vendor/contractor if asked. Do NOT return a raw document table.
 - RETRIEVAL ("find the IOM", "show me the P&ID", "list all datasheets") → Search with specific filters and return a document table.
 - CONTENT ("what does the IOM say", "summarise the report") → Search, read the document content, and answer from the content.
 Words like "many", "pending", "status", "overdue", "vendor", "contractor" are NOT document search terms — they are analytical indicators.
+
+STOP-WORD LIST (NEVER use these as document search keywords or document_number_pattern values):
+main, key, primary, major, important, critical, significant, all, any, some, few, several, certain, particular, specific, relevant, available, current, latest, recent, new, old, existing, remaining, outstanding, complete, incomplete, total, overall, general, various, different, other, more, additional, further, top, best, worst, big, small, large, first, last, next, previous, final.
+These are English qualifiers/adjectives. If the user says "find the main vendors", the search subject is "vendors", NOT "main". Strip these words before constructing any search pattern.
 
 VENDOR DOCUMENT IDENTIFICATION (CRITICAL):
 A vendor/supplier document is identified exclusively by discipline code ZV in segment 6 of the document number (e.g. 6529-WGEL-C034-ISGP-U40300-**ZV**-B01-00001-001). When filtering or counting vendor documents, always filter by discipline_code = "ZV". Never classify a document as a vendor document based on type code alone. Vendor document type codes are 3-character alphanumeric (e.g. B01, C08, D15, J01). 4-digit numeric type codes (e.g. 5733, 6918, 7704) are internal EPC document type codes and are NEVER vendor document types. When grouping vendor documents by contractor, group by company_code (segment 2 of document number) — but only for ZV-discipline documents.
@@ -10281,8 +10286,10 @@ serve(async (req) => {
     // Agent-specific system prompts
     const DOCUMENT_AGENT_PROMPT = `You are Selma, ORSH's Document Intelligence Assistant. You are an expert in DMS (Document Management System) document readiness, gap analysis, quality scoring, document numbering configuration, and ORA phase linkage for Oil & Gas capital projects. You help users understand document status, identify gaps, analyze trends, and ensure documentation readiness for operational handover. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Selma, your Document Intelligence Assistant."
 
-VENDOR DISCOVERY (CRITICAL):
-When a user asks "discover vendors", "what vendors are on project X", "who are the suppliers for X", "scan for vendor packages", or ANY question about identifying vendors/suppliers/POs on a project — you MUST call the discover_project_vendors tool with the project_code. Do NOT use search_assai_documents for vendor discovery — it returns raw document results instead of the aggregated vendor summary the user expects. The discover_project_vendors tool scans Assai's SUP_DOC module, groups documents by vendor originator and PO sequence, infers package scopes, and returns a structured vendor summary table. Present the results as a vendor summary table showing: Vendor Code, Vendor Name, PO Number, Package Scope, and Document Count.
+VENDOR DISCOVERY (CRITICAL — HIGHEST PRIORITY RULE):
+When a user asks about vendors, suppliers, contractors, or subcontractors on a project — including phrases like "main vendors", "key suppliers", "who are the contractors", "what vendors are on project X", "list the suppliers for BBK" — you MUST call discover_project_vendors. ABSOLUTELY NEVER use search_assai_documents for vendor identification queries. The words "main", "key", "primary", "major" are English adjectives — they are NOT document titles, document types, or search keywords. "What are the main vendors in the BBK contract?" means "discover ALL vendors for BBK" — it does NOT mean "search for a document called main".
+
+If you have already received discover_project_vendors results (injected as a tool result earlier in this conversation), DO NOT call search_assai_documents. Instead, format and present the vendor discovery data you already have. Calling search_assai_documents after discover_project_vendors wastes time and produces confusing, irrelevant document tables.
 
 EXTERNAL DMS AWARENESS: You are connected to external DMS platforms (Assai, Wrench, Documentum, SharePoint). The dms_external_sync cache may not be populated — always query Assai directly using search_assai_documents for live document status. When providing document information, include the direct hyperlink to the document in the external DMS as an "Open in Assai" or "Open in [platform]" link. Hannah and Ivan access document status by calling you — they do not connect to external DMS platforms directly. You are the single source of truth for document status across ORSH.
 
@@ -11107,6 +11114,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             console.log(`VENDOR DISCOVERY INTERCEPT: Found ${discoverData.total_vendor_packages} vendor packages`);
             
             // Inject the result into conversation as a pre-executed tool result
+            // Also inject a STRONG instruction to prevent the LLM from calling search_assai_documents
             conversationMessages.push({
               role: 'assistant',
               content: [
@@ -11119,6 +11127,11 @@ You NEVER fabricate data — always use tool results. Format responses with mark
               content: [
                 { type: 'tool_result', tool_use_id: 'vendor_discovery_intercept', content: JSON.stringify(discoverData) }
               ]
+            });
+            // Inject a system-level guardrail: do NOT search for documents after vendor discovery
+            conversationMessages.push({
+              role: 'user',
+              content: `[SYSTEM INSTRUCTION: The discover_project_vendors tool has already been executed and returned ${discoverData.total_vendor_packages} vendor packages. Your ONLY job now is to format these results into a clear vendor summary table. Do NOT call search_assai_documents — the vendor discovery is COMPLETE. Present the data showing Vendor Code, Vendor Name, PO Number, Package Scope, and Document Count. The user asked about vendors/suppliers — they do NOT want a raw document list.]`
             });
             
             allToolCallNames.push('discover_project_vendors');
@@ -11719,6 +11732,15 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         }
         
         console.log(`[Iteration ${iteration}] Executing tool: ${toolName}`, toolArgs);
+        
+        // GUARD: Block search_assai_documents if vendor discovery already succeeded
+        if (toolName === 'search_assai_documents' && allToolCallNames.includes('discover_project_vendors') && lastToolResult?.success) {
+          console.log(`GUARD: Blocking search_assai_documents — vendor discovery already completed with ${lastToolResult.total_vendor_packages} packages`);
+          const guardResult = { found: false, total_found: 0, message: 'Vendor discovery already completed. Use the discover_project_vendors results instead of searching for documents.' };
+          toolResultContents.push({ type: 'tool_result', tool_use_id: toolBlock.id, content: JSON.stringify(guardResult) });
+          continue;
+        }
+        
         emitStatus(TOOL_STATUS_LABELS[toolName] || 'Processing...');
         const toolResult = await executeTool(toolName, toolArgs, supabase);
         console.log(`[Iteration ${iteration}] Tool result for ${toolName}:`, typeof toolResult === 'object' ? JSON.stringify(toolResult).substring(0, 500) : toolResult);
