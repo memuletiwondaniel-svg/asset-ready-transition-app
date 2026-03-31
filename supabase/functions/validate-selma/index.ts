@@ -699,7 +699,7 @@ serve(async (req) => {
   }
 
   try {
-    const { tier, token: providedToken } = await req.json();
+    const { tier, token: providedToken, test_ids } = await req.json();
     
     // If no token provided, self-authenticate using TEST_USER credentials
     let token = providedToken;
@@ -729,11 +729,15 @@ serve(async (req) => {
       console.log("[validate-selma] Self-authentication successful");
     }
 
-    // Filter tests by tier
-    const testsToRun =
-      tier === "all" || tier === undefined
-        ? ALL_TESTS
-        : ALL_TESTS.filter((t) => t.tier === tier);
+    // Filter tests by tier or specific IDs
+    let testsToRun: TestDef[];
+    if (test_ids && Array.isArray(test_ids)) {
+      testsToRun = ALL_TESTS.filter((t) => test_ids.includes(t.id));
+    } else if (tier === "all" || tier === undefined) {
+      testsToRun = ALL_TESTS;
+    } else {
+      testsToRun = ALL_TESTS.filter((t) => t.tier === tier);
+    }
 
     if (testsToRun.length === 0) {
       return new Response(
