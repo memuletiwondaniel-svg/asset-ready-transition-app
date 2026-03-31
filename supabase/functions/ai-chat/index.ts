@@ -8598,8 +8598,8 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                   console.info('paginateByStatusSplit: searching ' + typesToSearch.length + ' type codes not in initial sample (skipping ' + typesInSample.size + ' already found)');
                   
                   for (const tc of typesToSearch) {
-                    if (totalQueryCount >= MAX_TOTAL_QUERIES) {
-                      console.warn('paginateByStatusSplit: hit query budget at type ' + tc + ' (' + totalQueryCount + '/' + MAX_TOTAL_QUERIES + ')');
+                    if (totalQueryCount >= MAX_TOTAL_QUERIES || (Date.now() - SWEEP_START_TIME) > SWEEP_TIME_GUARD_MS) {
+                      console.warn('paginateByStatusSplit: hit budget at type ' + tc + ' (queries: ' + totalQueryCount + '/' + MAX_TOTAL_QUERIES + ', elapsed: ' + (Date.now() - SWEEP_START_TIME) + 'ms)');
                       break;
                     }
                     try {
