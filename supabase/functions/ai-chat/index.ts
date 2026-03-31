@@ -4643,6 +4643,10 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
     
     case "get_user_tasks": {
       try {
+        const currentUserId = args._user_id;
+        if (!currentUserId) {
+          return { error: 'User not authenticated', total_tasks: 0 };
+        }
         const statusFilter = args.status_filter || 'pending';
         const categoryFilter = args.category_filter || 'all';
         const results: { category: string; tasks: any[] }[] = [];
@@ -4651,7 +4655,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
         let taskQuery = supabaseClient
           .from('user_tasks')
           .select('id, title, description, type, status, priority, due_date, progress_percentage, metadata, created_at')
-          .eq('user_id', userId)
+          .eq('user_id', currentUserId)
           .order('created_at', { ascending: false })
           .limit(50);
 
@@ -4697,7 +4701,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           const { data: pssrItems } = await supabaseClient
             .from('pssr_checklist_items')
             .select('id, item_text, category, status, pssr:pssrs!inner(id, title, project:projects(project_id_prefix, project_id_number))')
-            .eq('assigned_to', userId)
+            .eq('assigned_to', currentUserId)
             .in('status', statusFilter === 'all' ? ['pending', 'approved', 'rejected'] : ['pending'])
             .limit(20);
 
@@ -4721,7 +4725,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           const { data: p2aApprovals } = await supabaseClient
             .from('p2a_handover_approvers')
             .select('id, status, approver_role, handover:p2a_handovers!inner(id, handover_number, status, project:projects(project_id_prefix, project_id_number))')
-            .eq('user_id', userId)
+            .eq('user_id', currentUserId)
             .in('status', statusFilter === 'all' ? ['pending', 'approved', 'rejected'] : ['pending'])
             .limit(20);
 
@@ -7202,7 +7206,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         const toolName = toolBlock.name;
         allToolCallNames.push(toolName);
         const toolArgs = toolBlock.input || {};
-        if (['get_user_context', 'save_user_context'].includes(toolName) && currentUserId) {
+        if (['get_user_context', 'save_user_context', 'get_user_tasks'].includes(toolName) && currentUserId) {
           toolArgs._user_id = currentUserId;
         }
         
