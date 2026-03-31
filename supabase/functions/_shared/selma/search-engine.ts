@@ -149,10 +149,27 @@ export function parseDocuments(html: string, subclass?: string): SearchResult[] 
   }
 
   // Strategy 1: parse myCells JavaScript variable
-  const match = html.match(/var\s+myCells\s*=\s*(\[[\s\S]*?\]);\s*(?:var|function|\/\/|$)/m);
-  if (match) {
+  // Use a robust extraction: find "var myCells = [" then bracket-match to find the closing "];"
+  let myCellsJson: string | null = null;
+  const myCellsStart = html.indexOf('var myCells');
+  if (myCellsStart >= 0) {
+    const bracketStart = html.indexOf('[', myCellsStart);
+    if (bracketStart >= 0) {
+      let depth = 0;
+      let end = -1;
+      for (let i = bracketStart; i < html.length; i++) {
+        if (html[i] === '[') depth++;
+        else if (html[i] === ']') { depth--; if (depth === 0) { end = i; break; } }
+      }
+      if (end > bracketStart) {
+        myCellsJson = html.substring(bracketStart, end + 1);
+      }
+    }
+  }
+
+  if (myCellsJson) {
     try {
-      const myCells = JSON.parse(match[1]);
+      const myCells = JSON.parse(myCellsJson);
       if (myCells.length > 0) {
         console.info('parseDocuments: myCells strategy found ' + myCells.length + ' rows');
         return myCells.map((row: any) => ({
@@ -174,7 +191,7 @@ export function parseDocuments(html: string, subclass?: string): SearchResult[] 
         }));
       }
     } catch (e) {
-      console.error('parseDocuments: myCells parse error, trying TR fallback:', e);
+      console.error('parseDocuments: myCells parse error (json length=' + myCellsJson.length + '), trying TR fallback:', e);
     }
   }
 
