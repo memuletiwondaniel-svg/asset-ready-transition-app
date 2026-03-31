@@ -75,7 +75,7 @@ function mergeCookies(existing: string, newer: string): string {
 }
 
 // Module-level User-Agent constant for Assai requests
-const ASSAI_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+// ASSAI_UA now imported from _shared/assai-auth.ts
 
 // Module-level helper: fetch with redirect:'manual', capture cookies from every hop (302s included)
 async function fetchCaptureCookies(url: string, init: RequestInit, currentCookies: string): Promise<{ cookies: string; finalStatus: number; body: string }> {
