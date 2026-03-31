@@ -344,25 +344,33 @@ export async function executeFilteredSearch(
   ctx.totalQueryCount++;
   await new Promise(r => setTimeout(r, 300));
 
-  let subHidden: any[], subText: any[];
-  if (reuseSession) {
-    subHidden = reuseSession.hiddenFields;
-    subText = reuseSession.textFields;
-  } else {
-    const init = await initSearch(ctx, params);
-    subHidden = init.hiddenFields;
-    subText = init.textFields;
-  }
-  
-  // Build form payload independently (does NOT call fetchResultPage)
+  // Use the direct searchresult.aweb pattern (matches discover-vendors, parse-sdr, check-sdr-completeness)
+  // This does NOT require hidden fields from the search form — it's a standalone search API.
+  // The form-based result.aweb approach fails in the type-code sweep because each initSearch
+  // creates new form context that result.aweb doesn't recognize, returning the app frame instead.
   const cookieHeader = await ctx.sessionManager.getSession();
+
+  // Warmup: label.aweb + search.aweb GET (establish module context)
+  await fetch(ctx.assaiBase + '/label.aweb?subclass_type=' + params.subclass_type, {
+    headers: { Cookie: cookieHeader, 'User-Agent': ctx.ua },
+    redirect: 'follow',
+  }).catch(() => {});
+
+  await fetch(ctx.assaiBase + '/search.aweb?subclass_type=' + params.subclass_type + 
+    '&clas_seq_nr=' + params.clas_seq_nr + '&suty_seq_nr=' + params.suty_seq_nr, {
+    headers: { Cookie: cookieHeader, 'User-Agent': ctx.ua },
+    redirect: 'follow',
+  }).catch(() => {});
+
+  // Build minimal search params (discover-vendors pattern)
   const formData = new URLSearchParams();
-  for (const f of subHidden) formData.set(f.name, f.value);
-  for (const f of subText) formData.set(f.name, '');
   formData.set('subclass_type', params.subclass_type);
+  formData.set('clas_seq_nr', params.clas_seq_nr);
+  formData.set('suty_seq_nr', params.suty_seq_nr);
+  formData.set('action', 'search');
   if (ctx.poDigits) {
     formData.set('purchase_code', ctx.poDigits);
-  } else {
+  } else if (ctx.document_number_pattern) {
     formData.set('number', ctx.document_number_pattern);
   }
   if (ctx.discipline_code) formData.set('discipline_code', ctx.discipline_code);
@@ -373,23 +381,20 @@ export async function executeFilteredSearch(
   }
   if (startRow && startRow > 1) formData.set('start_row', String(startRow));
 
-  const searchUrl = ctx.assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
-  // Revert to result.aweb — searchresult.aweb returns 404 in form-based search context
-  const resp = await fetch(ctx.assaiBase + '/result.aweb', {
+  const resp = await fetch(ctx.assaiBase + '/searchresult.aweb', {
     method: 'POST',
     headers: {
       Cookie: cookieHeader,
       'Content-Type': 'application/x-www-form-urlencoded',
-      Accept: 'text/html',
-      Referer: searchUrl,
       'User-Agent': ctx.ua,
     },
     body: formData.toString(),
     redirect: 'follow',
   });
   const html = await resp.text();
+  console.info('executeFilteredSearch: searchresult.aweb POST status=' + resp.status + ', html length: ' + html.length + ', filters: ' + JSON.stringify(extraFilters));
   const docs = parseDocuments(html, params.subclass_type);
-  return { docs, hiddenFields: subHidden, textFields: subText };
+  return { docs, hiddenFields: [], textFields: [] };
 }
 
 export async function paginateFilteredSearch(
