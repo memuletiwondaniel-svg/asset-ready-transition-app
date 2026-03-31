@@ -8574,14 +8574,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                 const disciplines = [...new Set(docs.map((d: any) => d.discipline).filter(Boolean))];
                 console.info('paginateByStatusSplit: status=' + sc + ' hit cap, splitting by ' + disciplines.length + ' disciplines');
 
-                if (disciplines.length <= 1) {
-                  for (const doc of docs) {
-                    if (doc.document_number && !seen.has(doc.document_number)) {
-                      seen.add(doc.document_number);
-                      allDocs.push(doc);
-                    }
-                  }
-                } else {
+                if (disciplines.length > 1) {
                   for (const disc of disciplines) {
                     if (totalQueryCount >= MAX_TOTAL_QUERIES) break;
                     try {
@@ -8594,6 +8587,35 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
                       }
                     } catch (discErr) {
                       console.error('paginateByStatusSplit: sub-sub-search failed:', discErr);
+                    }
+                  }
+                } else {
+                  // Single or no discipline — try splitting by document_type instead
+                  const typeCodesInCap = [...new Set(docs.map((d: any) => d.type_code).filter(Boolean))];
+                  console.info('paginateByStatusSplit: single discipline for status=' + sc + ', splitting by ' + typeCodesInCap.length + ' document types');
+                  
+                  if (typeCodesInCap.length > 1) {
+                    for (const tc of typeCodesInCap) {
+                      if (totalQueryCount >= MAX_TOTAL_QUERIES) break;
+                      try {
+                        const typeDocs = await executeFilteredSearch(params, { status_code: sc, document_type: tc });
+                        for (const doc of typeDocs) {
+                          if (doc.document_number && !seen.has(doc.document_number)) {
+                            seen.add(doc.document_number);
+                            allDocs.push(doc);
+                          }
+                        }
+                      } catch (typeErr) {
+                        console.error('paginateByStatusSplit: type sub-search failed:', typeErr);
+                      }
+                    }
+                  } else {
+                    // Last resort: add what we have (capped at 100)
+                    for (const doc of docs) {
+                      if (doc.document_number && !seen.has(doc.document_number)) {
+                        seen.add(doc.document_number);
+                        allDocs.push(doc);
+                      }
                     }
                   }
                 }
@@ -8614,7 +8636,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           return allDocs;
         };
 
-        const paginateSearch = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }): Promise<any[]> => {
+         const paginateSearch = async (params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string }): Promise<any[]> => {
           const paginationStartTime = Date.now();
           // Step 1: Unfiltered search — gets first page
           const { hiddenFields, textFields } = await initSearch(params);
@@ -8630,14 +8652,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
 
           if (firstDocs.length < PAGE_CAP) return firstDocs;
 
-          // Step 2: Sequential start_row pagination with two-tier approach
-          // Tier 1: first page = full document objects for display
-          // Tier 2: subsequent pages = metadata only (type_code, status, document_number) for accurate breakdown
-          if (!totalFromHtml) {
-            // Total unknown — fall back to status split
-            console.warn('paginateSearch: totalFromHtml is null, falling back to paginateByStatusSplit');
-            return paginateByStatusSplit(params, firstDocs);
-          }
+          // Step 2: Try sequential start_row pagination FIRST (even without totalFromHtml)
+          // This probes page 2 to see if Assai supports start_row offset
+          const estimatedTotal = totalFromHtml || 10000; // If unknown, try up to 10k
 
           const detectedPageSize = firstDocs.length;
           const allDocs = [...firstDocs]; // Tier 1: full docs from page 1
@@ -8645,10 +8662,10 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           let startRow = detectedPageSize + 1;
           const TIME_GUARD_MS = 120000; // 120s of 148s budget
 
-          while (startRow <= totalFromHtml) {
+          while (startRow <= estimatedTotal) {
             // Time guard: stop if we've used too much time
             if (Date.now() - paginationStartTime > TIME_GUARD_MS) {
-              console.warn('paginateSearch: time guard hit at startRow=' + startRow + ', collected ' + (allDocs.length + metadataOnly.length) + ' of ' + totalFromHtml);
+              console.warn('paginateSearch: time guard hit at startRow=' + startRow + ', collected ' + (allDocs.length + metadataOnly.length) + ' of ' + estimatedTotal);
               break;
             }
 
@@ -8666,10 +8683,19 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
               ]);
               const newDocs = pageDocs.filter((d: any) => d.document_number && !existingNums.has(d.document_number));
 
-              if (newDocs.length === 0 && startRow === detectedPageSize + 1) {
+               if (newDocs.length === 0 && startRow === detectedPageSize + 1) {
                 // start_row not supported — fall back to status split
                 console.warn('paginateSearch: start_row pagination unsupported (page 2 all duplicates) — falling back to paginateByStatusSplit');
                 return paginateByStatusSplit(params, firstDocs);
+              }
+              // If we get here on page 2, start_row works! Update paginationTotalAssaiCount even if parseTotalCount failed
+              if (startRow === detectedPageSize + 1 && !totalFromHtml) {
+                // Try to parse total from page 2 as well
+                const page2Total = parseTotalCount(pageHtml);
+                if (page2Total) {
+                  paginationTotalAssaiCount = page2Total;
+                  console.info('paginateSearch: got total from page 2: ' + page2Total);
+                }
               }
 
               if (newDocs.length === 0) break; // No new docs on subsequent pages = done
@@ -10553,6 +10579,7 @@ serve(async (req) => {
     const DOCUMENT_AGENT_PROMPT = `You are Selma, ORSH's Document Intelligence Assistant. You are an expert in DMS (Document Management System) document readiness, gap analysis, quality scoring, document numbering configuration, and ORA phase linkage for Oil & Gas capital projects. You help users understand document status, identify gaps, analyze trends, and ensure documentation readiness for operational handover. You NEVER fabricate data — always use tool results. Format responses with markdown for clarity. When introducing yourself, say "I'm Selma, your Document Intelligence Assistant."
 
 DOCUMENT RETRIEVAL — MANDATORY RULES:
+0. ALWAYS RE-SEARCH: When a user asks "how many documents does X have?" or any document count/status query, you MUST call search_assai_documents EVERY TIME — even if you answered the same question earlier in this conversation. NEVER reuse previous results from conversation history. The tool must be invoked so the UI renders the structured table. Previous results may be stale or incomplete.
 1. ACRONYM RESOLUTION FIRST: Always resolve document type acronyms (BFD, P&ID, SLD, GA, ITP, etc.) via the dms_document_type_acronyms table or resolve_document_type tool BEFORE searching. Never skip this step.
 2. DP NUMBER NORMALISATION: Always normalise DP numbers before any project lookup (e.g. DP33A → DP-33A, dp 33 a → DP-33A). This must happen before any other resolution step.
 3. COMBINED CONSTRAINTS: When a query contains BOTH a document type reference AND a project reference, resolve both and search with both constraints combined. NEVER ask the user for project disambiguation when a document type is already present in the query.
