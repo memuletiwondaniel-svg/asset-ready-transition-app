@@ -5,8 +5,8 @@ export function assaiDetailsUrl(documentNumber: string): string {
   return `${ASSAI_BASE}/get/details/${ASSAI_PROJECT}/DOCS/${documentNumber}`;
 }
 
-export function assaiDownloadUrl(documentNumber: string): string {
-  return `${ASSAI_BASE}/get/download/${ASSAI_PROJECT}/DOCS/${documentNumber}`;
+export function assaiDownloadUrl(documentNumber: string, project: string = ASSAI_PROJECT): string {
+  return `${ASSAI_BASE}/get/download/${project}/DOCS/${documentNumber}`;
 }
 
 // Regex to detect Assai document numbers in free text
