@@ -8482,7 +8482,10 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           // Pattern 4: resultCount element
           const m3 = html.match(/resultCount[^>]*>(\d+)/i);
           if (m3) { console.info('parseTotalCount: matched pattern 3, total=' + m3[1]); return parseInt(m3[1], 10); }
-          // Pattern 5: Assai-specific "rowCount" or similar JS variable
+          // Pattern 5: Assai CORE ROWCOUNT — RowCount.getCount("255") or getCount("1234")
+          const m4a = html.match(/getCount\s*\(\s*["'](\d+)["']\s*\)/i);
+          if (m4a) { console.info('parseTotalCount: matched Assai ROWCOUNT pattern, total=' + m4a[1]); return parseInt(m4a[1], 10); }
+          // Pattern 5b: Assai-specific "rowCount" or similar JS variable
           const m4 = html.match(/(?:rowCount|totalRows|totalCount|recordCount|maxRows)\s*[=:]\s*['"]?(\d+)/i);
           if (m4) { console.info('parseTotalCount: matched pattern 4 (JS var), total=' + m4[1]); return parseInt(m4[1], 10); }
           // Pattern 6: Assai DWR-style total in navigation controls 
@@ -8674,7 +8677,14 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             try {
               const pageHtml = await fetchResultPage(hiddenFields, textFields, params, startRow);
               const pageDocs = parseDocuments(pageHtml, params.subclass_type);
-              if (pageDocs.length === 0) break;
+              if (pageDocs.length === 0) {
+                if (startRow === detectedPageSize + 1) {
+                  // Page 2 returned no parseable docs — start_row pagination doesn't work with this Assai version
+                  console.warn('paginateSearch: page 2 returned 0 parseable docs (html length: ' + pageHtml.length + ') — falling back to paginateByStatusSplit');
+                  return paginateByStatusSplit(params, firstDocs);
+                }
+                break; // Later pages empty = we've exhausted results
+              }
 
               // Duplicate detection — if page 2 returns all duplicates, start_row unsupported
               const existingNums = new Set([
