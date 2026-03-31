@@ -11157,6 +11157,175 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         }
       }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PRE-LOOP SPECIFIC DOCUMENT INTERCEPT
+    // Detects "{doc_type} for {project}" patterns and resolves both
+    // deterministically BEFORE the LLM loop, preventing unnecessary
+    // disambiguation questions and wrong tool selections.
+    // ═══════════════════════════════════════════════════════════════════════
+    const specificDocMatch = lastUserText.match(
+      /\b(bfd|basis for design|itp|inspection test plan|iom|fat|sat|sdr|mdr|sld|ga|gad|pfd|p&id|pid|bom|mds|datasheet|report|manual|procedure|specification|ifc|ifr|afc)\b.*?\b(dp[\s-]?\d+[a-z]?)\b|\b(dp[\s-]?\d+[a-z]?)\b.*?\b(bfd|basis for design|itp|inspection test plan|iom|fat|sat|sdr|mdr|sld|ga|gad|pfd|p&id|pid|bom|mds|datasheet|report|manual|procedure|specification|ifc|ifr|afc)\b/i
+    );
+    
+    if (specificDocMatch && !isVendorDiscoveryIntent) {
+      const docTypeText = (specificDocMatch[1] || specificDocMatch[4] || '').trim();
+      const projectText = (specificDocMatch[2] || specificDocMatch[3] || '').trim();
+      
+      console.log(`SPECIFIC DOC INTERCEPT: Detected doc="${docTypeText}" project="${projectText}"`);
+      emitStatus('Resolving document type...');
+      
+      // Force agent to document_agent
+      if (detectedAgent !== 'document_agent') {
+        console.log(`SPECIFIC DOC INTERCEPT: Overriding agent to document_agent`);
+        systemPrompt = DOCUMENT_AGENT_PROMPT + dmsConfigSnapshot + userContextPrompt;
+      }
+      
+      // Step 1: Resolve document type
+      const docTypeResult = await executeTool('resolve_document_type', { query: docTypeText }, supabaseClient);
+      let resolvedDocCode: string | null = null;
+      let resolvedDocName: string | null = null;
+      
+      if (docTypeResult?.found && docTypeResult.matches?.length > 0) {
+        if (docTypeResult.count === 1) {
+          resolvedDocCode = docTypeResult.matches[0].code;
+          resolvedDocName = docTypeResult.matches[0].name;
+        } else {
+          // Multiple matches — combine all codes
+          resolvedDocCode = docTypeResult.matches.map((m: any) => m.code).join('+');
+          resolvedDocName = docTypeResult.matches.map((m: any) => m.name).join(' / ');
+        }
+        console.log(`SPECIFIC DOC INTERCEPT: Resolved doc type "${docTypeText}" → ${resolvedDocCode} (${resolvedDocName})`);
+      }
+      
+      // Step 2: Resolve project code
+      emitStatus('Resolving project...');
+      const projectResult = await executeTool('resolve_project_code', { dp_number: projectText }, supabaseClient);
+      let resolvedProjectCode: string | null = null;
+      let resolvedProjectName: string | null = null;
+      
+      if (projectResult?.found && projectResult.projects?.length > 0) {
+        if (resolvedDocCode && projectResult.projects.length > 1) {
+          // MULTI-PROJECT SEARCH: When multiple projects match AND we have a doc type,
+          // search ALL projects with the doc type constraint to find the right one
+          console.log(`SPECIFIC DOC INTERCEPT: Multiple projects (${projectResult.projects.length}) matched — searching all with doc type ${resolvedDocCode}`);
+          emitStatus('Searching across matching projects...');
+          let allResults: Array<{ project: any; result: any }> = [];
+          for (const proj of projectResult.projects) {
+            try {
+              const result = await executeTool('search_assai_documents', {
+                document_type: resolvedDocCode,
+                document_number_pattern: `${proj.project_code}-%`
+              }, supabaseClient);
+              if (result?.found && result.total_found > 0) {
+                allResults.push({ project: proj, result });
+              }
+            } catch (searchErr) {
+              console.error(`SPECIFIC DOC INTERCEPT: Error searching project ${proj.project_code}:`, searchErr);
+            }
+          }
+          if (allResults.length > 0) {
+            // Use the project with the most results (or first one if tied)
+            allResults.sort((a, b) => (b.result.total_found || 0) - (a.result.total_found || 0));
+            resolvedProjectCode = allResults[0].project.project_code;
+            resolvedProjectName = allResults[0].project.project_name;
+            console.log(`SPECIFIC DOC INTERCEPT: Best match from multi-project search: ${resolvedProjectCode} (${resolvedProjectName}) with ${allResults[0].result.total_found} results`);
+            
+            // Inject the already-found results so we skip the Step 3 search below
+            const bestResult = allResults[0].result;
+            conversationMessages.push({
+              role: 'assistant',
+              content: [
+                { type: 'text', text: `I'll find the ${resolvedDocName} for project ${resolvedProjectName} (${resolvedProjectCode}).` },
+                { type: 'tool_use', id: 'doc_resolve_intercept_1', name: 'resolve_document_type', input: { query: docTypeText } },
+                { type: 'tool_use', id: 'doc_resolve_intercept_2', name: 'resolve_project_code', input: { dp_number: projectText } },
+                { type: 'tool_use', id: 'doc_search_intercept', name: 'search_assai_documents', input: { document_type: resolvedDocCode, document_number_pattern: `${resolvedProjectCode}-%` } }
+              ]
+            });
+            conversationMessages.push({
+              role: 'user',
+              content: [
+                { type: 'tool_result', tool_use_id: 'doc_resolve_intercept_1', content: JSON.stringify(docTypeResult) },
+                { type: 'tool_result', tool_use_id: 'doc_resolve_intercept_2', content: JSON.stringify(projectResult) },
+                { type: 'tool_result', tool_use_id: 'doc_search_intercept', content: JSON.stringify(bestResult) }
+              ]
+            });
+            conversationMessages.push({
+              role: 'user',
+              content: `[SYSTEM INSTRUCTION: The document search is COMPLETE. Project "${projectText}" resolved to ${resolvedProjectCode} (${resolvedProjectName}). Document type "${docTypeText}" resolved to code ${resolvedDocCode} (${resolvedDocName}). ${bestResult.total_found || 0} documents found. Your ONLY job is to present these results clearly. Do NOT call resolve_project_code or search_assai_documents again. Do NOT ask the user to clarify the project — it has been resolved. If results were found, present them as a concise list with document number, title, revision, status, and Assai link. If no results, say so clearly.]`
+            });
+            
+            allToolCallNames.push('resolve_document_type', 'resolve_project_code', 'search_assai_documents');
+            lastToolName = 'search_assai_documents';
+            lastToolResult = bestResult;
+            if (bestResult?.found && bestResult?.total_found > 0) {
+              searchToolResult = bestResult;
+            }
+            emitStatus('Compiling results...');
+            // Skip Step 3 since we already have results
+            resolvedProjectCode = null; // Prevent Step 3 from running
+          } else {
+            // No results from any project — fall back to first project
+            resolvedProjectCode = projectResult.projects[0].project_code;
+            resolvedProjectName = projectResult.projects[0].project_name;
+            console.log(`SPECIFIC DOC INTERCEPT: No results from multi-project search, falling back to ${resolvedProjectCode}`);
+          }
+        } else {
+          // Single project match — use it directly
+          resolvedProjectCode = projectResult.projects[0].project_code;
+          resolvedProjectName = projectResult.projects[0].project_name;
+          console.log(`SPECIFIC DOC INTERCEPT: Resolved project "${projectText}" → ${resolvedProjectCode} (${resolvedProjectName})`);
+        }
+      }
+      
+      // Step 3: If both resolved (and not already searched in multi-project path), search Assai directly
+      if (resolvedDocCode && resolvedProjectCode) {
+        emitStatus('Searching Assai portal (250,000+ documents)...');
+        const searchArgs: any = {
+          document_type: resolvedDocCode,
+          document_number_pattern: `${resolvedProjectCode}-%`
+        };
+        const searchResult = await executeTool('search_assai_documents', searchArgs, supabaseClient);
+        
+        if (searchResult) {
+          console.log(`SPECIFIC DOC INTERCEPT: Search returned ${searchResult.total_found || 0} results`);
+          
+          // Inject pre-resolved results into conversation so LLM just formats them
+          conversationMessages.push({
+            role: 'assistant',
+            content: [
+              { type: 'text', text: `I'll find the ${resolvedDocName} for project ${resolvedProjectName} (${resolvedProjectCode}).` },
+              { type: 'tool_use', id: 'doc_resolve_intercept_1', name: 'resolve_document_type', input: { query: docTypeText } },
+              { type: 'tool_use', id: 'doc_resolve_intercept_2', name: 'resolve_project_code', input: { dp_number: projectText } },
+              { type: 'tool_use', id: 'doc_search_intercept', name: 'search_assai_documents', input: searchArgs }
+            ]
+          });
+          conversationMessages.push({
+            role: 'user',
+            content: [
+              { type: 'tool_result', tool_use_id: 'doc_resolve_intercept_1', content: JSON.stringify(docTypeResult) },
+              { type: 'tool_result', tool_use_id: 'doc_resolve_intercept_2', content: JSON.stringify(projectResult) },
+              { type: 'tool_result', tool_use_id: 'doc_search_intercept', content: JSON.stringify(searchResult) }
+            ]
+          });
+          // Guardrail: tell LLM the work is done
+          conversationMessages.push({
+            role: 'user',
+            content: `[SYSTEM INSTRUCTION: The document search is COMPLETE. Project "${projectText}" resolved to ${resolvedProjectCode} (${resolvedProjectName}). Document type "${docTypeText}" resolved to code ${resolvedDocCode} (${resolvedDocName}). ${searchResult.total_found || 0} documents found. Your ONLY job is to present these results clearly. Do NOT call resolve_project_code or search_assai_documents again. Do NOT ask the user to clarify the project — it has been resolved. If results were found, present them as a concise list with document number, title, revision, status, and Assai link. If no results, say so clearly.]`
+          });
+          
+          allToolCallNames.push('resolve_document_type', 'resolve_project_code', 'search_assai_documents');
+          lastToolName = 'search_assai_documents';
+          lastToolResult = searchResult;
+          if (searchResult?.found && searchResult?.total_found > 0) {
+            searchToolResult = searchResult;
+          }
+          
+          emitStatus('Compiling results...');
+        }
+      }
+    }
+
     while (iteration < MAX_ITERATIONS) {
       iteration++;
       // Time guard: break if approaching edge function timeout
@@ -11209,108 +11378,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
             return makeCall();
           }
           return firstAttempt; // Not enough time to retry
-    }
+        }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // PRE-LOOP SPECIFIC DOCUMENT INTERCEPT
-    // Detects "{doc_type} for {project}" patterns and resolves both
-    // deterministically BEFORE the LLM loop, preventing unnecessary
-    // disambiguation questions and wrong tool selections.
-    // ═══════════════════════════════════════════════════════════════════════
-    const specificDocMatch = lastUserText.match(
-      /\b(bfd|basis for design|itp|inspection test plan|iom|fat|sat|sdr|mdr|sld|ga|gad|pfd|p&id|pid|bom|mds|datasheet|report|manual|procedure|specification|ifc|ifr|afc)\b.*?\b(dp[\s-]?\d+[a-z]?)\b|\b(dp[\s-]?\d+[a-z]?)\b.*?\b(bfd|basis for design|itp|inspection test plan|iom|fat|sat|sdr|mdr|sld|ga|gad|pfd|p&id|pid|bom|mds|datasheet|report|manual|procedure|specification|ifc|ifr|afc)\b/i
-    );
-    
-    if (specificDocMatch && !isVendorDiscoveryIntent) {
-      const docTypeText = (specificDocMatch[1] || specificDocMatch[4] || '').trim();
-      const projectText = (specificDocMatch[2] || specificDocMatch[3] || '').trim();
-      
-      console.log(`SPECIFIC DOC INTERCEPT: Detected doc="${docTypeText}" project="${projectText}"`);
-      emitStatus('Resolving document type...');
-      
-      // Force agent to document_agent
-      if (detectedAgent !== 'document_agent') {
-        console.log(`SPECIFIC DOC INTERCEPT: Overriding agent to document_agent`);
-        systemPrompt = DOCUMENT_AGENT_PROMPT + dmsConfigSnapshot + userContextPrompt;
-      }
-      
-      // Step 1: Resolve document type
-      const docTypeResult = await executeTool('resolve_document_type', { query: docTypeText }, supabaseClient);
-      let resolvedDocCode: string | null = null;
-      let resolvedDocName: string | null = null;
-      
-      if (docTypeResult?.found && docTypeResult.matches?.length > 0) {
-        if (docTypeResult.count === 1) {
-          resolvedDocCode = docTypeResult.matches[0].code;
-          resolvedDocName = docTypeResult.matches[0].name;
-        } else {
-          // Multiple matches — combine all codes
-          resolvedDocCode = docTypeResult.matches.map((m: any) => m.code).join('+');
-          resolvedDocName = docTypeResult.matches.map((m: any) => m.name).join(' / ');
-        }
-        console.log(`SPECIFIC DOC INTERCEPT: Resolved doc type "${docTypeText}" → ${resolvedDocCode} (${resolvedDocName})`);
-      }
-      
-      // Step 2: Resolve project code
-      emitStatus('Resolving project...');
-      const projectResult = await executeTool('resolve_project_code', { dp_number: projectText }, supabaseClient);
-      let resolvedProjectCode: string | null = null;
-      let resolvedProjectName: string | null = null;
-      
-      if (projectResult?.found && projectResult.projects?.length > 0) {
-        // Take the first (best) match — the improved regex now handles alpha suffixes
-        resolvedProjectCode = projectResult.projects[0].project_code;
-        resolvedProjectName = projectResult.projects[0].project_name;
-        console.log(`SPECIFIC DOC INTERCEPT: Resolved project "${projectText}" → ${resolvedProjectCode} (${resolvedProjectName})`);
-      }
-      
-      // Step 3: If both resolved, search Assai directly
-      if (resolvedDocCode && resolvedProjectCode) {
-        emitStatus('Searching Assai portal (250,000+ documents)...');
-        const searchArgs: any = {
-          document_type: resolvedDocCode,
-          document_number_pattern: `${resolvedProjectCode}-%`
-        };
-        const searchResult = await executeTool('search_assai_documents', searchArgs, supabaseClient);
-        
-        if (searchResult) {
-          console.log(`SPECIFIC DOC INTERCEPT: Search returned ${searchResult.total_found || 0} results`);
-          
-          // Inject pre-resolved results into conversation so LLM just formats them
-          conversationMessages.push({
-            role: 'assistant',
-            content: [
-              { type: 'text', text: `I'll find the ${resolvedDocName} for project ${resolvedProjectName} (${resolvedProjectCode}).` },
-              { type: 'tool_use', id: 'doc_resolve_intercept_1', name: 'resolve_document_type', input: { query: docTypeText } },
-              { type: 'tool_use', id: 'doc_resolve_intercept_2', name: 'resolve_project_code', input: { dp_number: projectText } },
-              { type: 'tool_use', id: 'doc_search_intercept', name: 'search_assai_documents', input: searchArgs }
-            ]
-          });
-          conversationMessages.push({
-            role: 'user',
-            content: [
-              { type: 'tool_result', tool_use_id: 'doc_resolve_intercept_1', content: JSON.stringify(docTypeResult) },
-              { type: 'tool_result', tool_use_id: 'doc_resolve_intercept_2', content: JSON.stringify(projectResult) },
-              { type: 'tool_result', tool_use_id: 'doc_search_intercept', content: JSON.stringify(searchResult) }
-            ]
-          });
-          // Guardrail: tell LLM the work is done
-          conversationMessages.push({
-            role: 'user',
-            content: `[SYSTEM INSTRUCTION: The document search is COMPLETE. Project "${projectText}" resolved to ${resolvedProjectCode} (${resolvedProjectName}). Document type "${docTypeText}" resolved to code ${resolvedDocCode} (${resolvedDocName}). ${searchResult.total_found || 0} documents found. Your ONLY job is to present these results clearly. Do NOT call resolve_project_code or search_assai_documents again. Do NOT ask the user to clarify the project — it has been resolved. If results were found, present them. If no results, say so clearly.]`
-          });
-          
-          allToolCallNames.push('resolve_document_type', 'resolve_project_code', 'search_assai_documents');
-          lastToolName = 'search_assai_documents';
-          lastToolResult = searchResult;
-          if (searchResult?.found && searchResult?.total_found > 0) {
-            searchToolResult = searchResult;
-          }
-          
-          emitStatus('Compiling results...');
-        }
-      }
-    }
         // Non-429 error (500, 503, etc.) → retry once after 2s
         console.log(`Anthropic API returned ${firstAttempt.status}, retrying in 2s...`);
         await new Promise(r => setTimeout(r, 2000));
