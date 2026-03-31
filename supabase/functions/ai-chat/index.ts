@@ -952,6 +952,9 @@ Bob: (uses resolve_entity_for_navigation first)
 User: "Open my tasks"
 Bob: "Sure thing! Here's your tasks page: [LINK]"
 
+User: "What tasks do I have?" or "What do I need to do this week?"
+Bob: (ALWAYS calls get_user_tasks tool first to query ALL categories — PSSR, ORA, P2A, OWL, VCR, actions. NEVER guess or assume empty. Present results grouped by category with counts.)
+
 User: "Go to the ORA plans"
 Bob: "Opening Operation Readiness page for you: [LINK]"
 
@@ -2937,6 +2940,29 @@ const tools = [
       }
     }
   },
+  {
+    type: "function",
+    function: {
+      name: "get_user_tasks",
+      description: "Get the current user's unified task list across ALL task categories (PSSR reviews, ORA deliverables, P2A handover approvals, OWL items, VCR bundles, and general action items). Use for ANY question about 'my tasks', 'what do I need to do', 'pending items', 'tasks this week'. Always call this — never guess or assume the user has no tasks.",
+      parameters: {
+        type: "object",
+        properties: {
+          status_filter: {
+            type: "string",
+            enum: ["pending", "in_progress", "completed", "all"],
+            description: "Filter by task status. Default is 'pending' to show open items."
+          },
+          category_filter: {
+            type: "string",
+            enum: ["all", "pssr", "ora", "p2a", "owl", "vcr", "action"],
+            description: "Filter by task category. Default is 'all'."
+          }
+        },
+        required: []
+      }
+    }
+  },
   // ═══════════════════════════════════════════════════════════════════════════
   // HANNAH (P2A HANDOVER INTELLIGENCE AGENT) TOOLS
   // ═══════════════════════════════════════════════════════════════════════════
@@ -3201,8 +3227,8 @@ interface A2AResponse {
 // Agent capability registry (in-memory, synced from DB on cold start)
 const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; model: string }> = {
   copilot: { 
-    tools: ['get_pssr_stats', 'get_checklist_item_stats', 'get_priority_action_stats', 'get_team_member_info', 'get_region_info', 'get_project_info', 'get_hub_info', 'navigate_to_page', 'resolve_entity_for_navigation', 'get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_pssr_detailed_summary', 'get_discipline_status', 'get_executive_summary'],
-    domains: ['pssr', 'ora', 'platform', 'navigation'],
+    tools: ['get_pssr_stats', 'get_checklist_item_stats', 'get_priority_action_stats', 'get_team_member_info', 'get_region_info', 'get_project_info', 'get_hub_info', 'navigate_to_page', 'resolve_entity_for_navigation', 'get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_pssr_detailed_summary', 'get_discipline_status', 'get_executive_summary', 'get_user_tasks'],
+    domains: ['pssr', 'ora', 'platform', 'navigation', 'tasks'],
     model: 'claude-sonnet-4-5'
   },
   pssr_ora_agent: {
@@ -4611,6 +4637,130 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
       }
     }
     
+    // ═══════════════════════════════════════════════════════════════════════════
+    // UNIFIED TASK QUERY HANDLER
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    case "get_user_tasks": {
+      try {
+        const statusFilter = args.status_filter || 'pending';
+        const categoryFilter = args.category_filter || 'all';
+        const results: { category: string; tasks: any[] }[] = [];
+
+        // 1. User Tasks table (general actions, ORA, ORM, VCR tasks)
+        let taskQuery = supabaseClient
+          .from('user_tasks')
+          .select('id, title, description, type, status, priority, due_date, progress_percentage, metadata, created_at')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (statusFilter === 'pending') {
+          taskQuery = taskQuery.in('status', ['pending', 'in_progress', 'assigned', 'pending_lead_review', 'under_review']);
+        } else if (statusFilter !== 'all') {
+          taskQuery = taskQuery.eq('status', statusFilter);
+        }
+
+        const { data: userTasks, error: taskErr } = await taskQuery;
+        if (taskErr) console.error('[get_user_tasks] user_tasks error:', taskErr);
+
+        const allUserTasks = userTasks || [];
+
+        // Categorize user_tasks by type
+        const tasksByType: Record<string, any[]> = {};
+        for (const t of allUserTasks) {
+          const cat = t.type?.includes('ora') || t.type?.includes('orp') ? 'ora'
+            : t.type?.includes('p2a') || t.type?.includes('vcr') ? 'p2a'
+            : t.type?.includes('pssr') ? 'pssr'
+            : t.type?.includes('owl') ? 'owl'
+            : 'action';
+          if (categoryFilter !== 'all' && cat !== categoryFilter) continue;
+          if (!tasksByType[cat]) tasksByType[cat] = [];
+          tasksByType[cat].push({
+            id: t.id,
+            title: t.title,
+            type: t.type,
+            status: t.status,
+            priority: t.priority,
+            due_date: t.due_date,
+            progress: t.progress_percentage,
+            project: (t.metadata as any)?.project_code || (t.metadata as any)?.project_id_prefix || null,
+          });
+        }
+
+        for (const [cat, tasks] of Object.entries(tasksByType)) {
+          results.push({ category: cat, tasks });
+        }
+
+        // 2. PSSR items awaiting review (if not filtered out)
+        if (categoryFilter === 'all' || categoryFilter === 'pssr') {
+          const { data: pssrItems } = await supabaseClient
+            .from('pssr_checklist_items')
+            .select('id, item_text, category, status, pssr:pssrs!inner(id, title, project:projects(project_id_prefix, project_id_number))')
+            .eq('assigned_to', userId)
+            .in('status', statusFilter === 'all' ? ['pending', 'approved', 'rejected'] : ['pending'])
+            .limit(20);
+
+          if (pssrItems && pssrItems.length > 0) {
+            results.push({
+              category: 'pssr_reviews',
+              tasks: pssrItems.map((item: any) => ({
+                id: item.id,
+                title: item.item_text,
+                category: item.category,
+                status: item.status,
+                project: item.pssr?.project ? `${item.pssr.project.project_id_prefix}${item.pssr.project.project_id_number}` : null,
+                pssr_title: item.pssr?.title,
+              }))
+            });
+          }
+        }
+
+        // 3. P2A Handover approvals pending (if not filtered out)
+        if (categoryFilter === 'all' || categoryFilter === 'p2a') {
+          const { data: p2aApprovals } = await supabaseClient
+            .from('p2a_handover_approvers')
+            .select('id, status, approver_role, handover:p2a_handovers!inner(id, handover_number, status, project:projects(project_id_prefix, project_id_number))')
+            .eq('user_id', userId)
+            .in('status', statusFilter === 'all' ? ['pending', 'approved', 'rejected'] : ['pending'])
+            .limit(20);
+
+          if (p2aApprovals && p2aApprovals.length > 0) {
+            results.push({
+              category: 'p2a_approvals',
+              tasks: p2aApprovals.map((a: any) => ({
+                id: a.id,
+                role: a.approver_role,
+                status: a.status,
+                handover_number: a.handover?.handover_number,
+                project: a.handover?.project ? `${a.handover.project.project_id_prefix}${a.handover.project.project_id_number}` : null,
+              }))
+            });
+          }
+        }
+
+        // Build summary
+        const totalTasks = results.reduce((sum, r) => sum + r.tasks.length, 0);
+        const categorySummary: Record<string, number> = {};
+        for (const r of results) {
+          categorySummary[r.category] = (categorySummary[r.category] || 0) + r.tasks.length;
+        }
+
+        return {
+          total_tasks: totalTasks,
+          filter_applied: { status: statusFilter, category: categoryFilter },
+          category_summary: categorySummary,
+          categories: results,
+          message: totalTasks === 0
+            ? `No ${statusFilter} tasks found across any category.`
+            : `Found ${totalTasks} ${statusFilter} task(s) across ${results.length} categories.`,
+        };
+      } catch (err) {
+        console.error('[get_user_tasks] error:', err);
+        return { error: String(err), total_tasks: 0 };
+      }
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // STATUS QUERY TOOL HANDLERS
     // ═══════════════════════════════════════════════════════════════════════════
