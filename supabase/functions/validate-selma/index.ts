@@ -107,12 +107,12 @@ async function sendChatAndParse(
             if (data === "[DONE]") continue;
             try {
               const parsed = JSON.parse(data);
-              if (parsed.content) content += parsed.content;
-              if (parsed.text) content += parsed.text;
-              // Handle direct string messages
-              if (typeof parsed === "string") content += parsed;
+              // Handle ai-chat SSE format: {choices: [{delta: {content: "..."}}]}
+              if (parsed.choices?.[0]?.delta?.content) content += parsed.choices[0].delta.content;
+              else if (parsed.content) content += parsed.content;
+              else if (parsed.text) content += parsed.text;
+              else if (typeof parsed === "string") content += parsed;
             } catch {
-              // Non-JSON data line — might be raw content
               if (data !== "[DONE]") content += data;
             }
           }
