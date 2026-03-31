@@ -7052,8 +7052,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         
         
         emitStatus(TOOL_STATUS_LABELS[toolName] || 'Processing...');
-        const isSelmatool = selmaSession && ['resolve_document_type', 'resolve_project_code', 'search_assai_documents', 'read_assai_document', 'discover_project_vendors', 'learn_acronym'].includes(toolName);
-        const toolResult = isSelmaool
+        const isSelmaTool = selmaSession && ['resolve_document_type', 'resolve_project_code', 'search_assai_documents', 'read_assai_document', 'discover_project_vendors', 'learn_acronym'].includes(toolName);
+        const toolResult = isSelmaTool
           ? await executeSelmaTool(toolName, toolArgs, supabase, selmaSession, emitStatus)
           : await executeTool(toolName, toolArgs, supabase);
         console.log(`[Iteration ${iteration}] Tool result for ${toolName}:`, typeof toolResult === 'object' ? JSON.stringify(toolResult).substring(0, 500) : toolResult);
