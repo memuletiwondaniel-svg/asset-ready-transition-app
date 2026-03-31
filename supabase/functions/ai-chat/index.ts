@@ -6869,6 +6869,13 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       input_schema: t.function.parameters
     }));
 
+    // Agent-specific tool filtering — Selma sees ONLY her 6 tools
+    let selmaSession: any = null;
+    if (detectedAgent === 'document_agent') {
+      anthropicTools = SELMA_TOOLS;
+      selmaSession = await buildSelmaSessionManager(supabaseClient);
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // MULTI-ROUND AGENTIC TOOL LOOP
     // Supports chained tool calls (e.g. resolve_document_type → search_assai_documents)
