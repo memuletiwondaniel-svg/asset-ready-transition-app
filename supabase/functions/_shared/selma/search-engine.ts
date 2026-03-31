@@ -495,10 +495,10 @@ export async function paginateByStatusSplit(
     });
     console.info('paginateByStatusSplit: status split incomplete (' + allDocs.length + ' found' +
       (expectedFromHeader ? ', expected ~' + expectedFromHeader : '') + '), capped statuses: ' + cappedStatuses.join(', ') +
-      ', starting type-code sweep with re-auth');
+      ', starting type-code sweep (no re-auth — preserving session context)');
 
-    // RE-AUTH before sweep via SessionManager
-    await ctx.sessionManager.getSession(true);
+    // DO NOT force re-auth here — it destroys the Assai server-side search context
+    // that result.aweb depends on. The SessionManager will auto-refresh if needed.
 
     // Fetch ALL active document type codes from DB
     let allTypeCodes: string[] = [];
