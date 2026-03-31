@@ -591,6 +591,19 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
             const parsed = JSON.parse(dataStr);
 
             if (eventType === 'status' && parsed.status) {
+              if (parsed.status.startsWith('agent:')) {
+                const agent = parsed.status.replace('agent:', '');
+                setActiveAgent(agent);
+                setMessages(prev => {
+                  const updated = [...prev];
+                  const lastIdx = updated.length - 1;
+                  if (lastIdx >= 0 && updated[lastIdx].role === 'assistant') {
+                    updated[lastIdx] = { ...updated[lastIdx], agentName: agent };
+                  }
+                  return updated;
+                });
+                continue;
+              }
               setAgentStatus(parsed.status);
               continue;
             }
