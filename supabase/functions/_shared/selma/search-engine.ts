@@ -747,7 +747,7 @@ export async function executeSearch(
     sweepStartTime: Date.now(),
     SWEEP_TIME_GUARD_MS: 90000,
     MAX_TOTAL_QUERIES: 80,
-    PAGE_CAP: 100,
+    PAGE_CAP: 500,
     emitStatus: options.emitStatus || (() => {}),
     supabase,
     maxResults: options.maxResults || 50,
