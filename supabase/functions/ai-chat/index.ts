@@ -7016,7 +7016,6 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         }
 
         if (apiResponse.status === 429) {
-          }
           const rateLimitMsg = "I'm experiencing high demand right now. Please try again in about 30 seconds.";
           const sseRateLimit = `data: ${JSON.stringify({ choices: [{ delta: { content: rateLimitMsg } }] })}\n\ndata: [DONE]\n\n`;
           return new Response(sseRateLimit, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
