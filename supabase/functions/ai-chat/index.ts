@@ -8517,8 +8517,9 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           params: { subclass_type: string; clas_seq_nr: string; suty_seq_nr: string },
           firstDocs: any[],
         ): Promise<any[]> => {
+          sweepStartTime = Date.now(); // set when search actually executes, not when closure is created
           const statusCodes = [...new Set(firstDocs.map((d: any) => d.status).filter(Boolean))];
-          console.info('paginateByStatusSplit: splitting into ' + statusCodes.length + ' status sub-searches: ' + statusCodes.join(', '));
+          console.info('paginateByStatusSplit: splitting into ' + statusCodes.length + ' status sub-searches: ' + statusCodes.join(', ') + ' (time guard: ' + SWEEP_TIME_GUARD_MS + 'ms)');
 
           if (statusCodes.length <= 1) {
             console.warn('paginateByStatusSplit: single status, cannot split further');
