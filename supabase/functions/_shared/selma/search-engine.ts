@@ -16,7 +16,7 @@ export class SessionManager {
   private cookieHeader: string = '';
   private queryCount: number = 0;
   private lastAuthTime: number = 0;
-  private readonly MAX_QUERIES_BEFORE_REFRESH = 12;
+  private readonly MAX_QUERIES_BEFORE_REFRESH = 50;
   private readonly MAX_AGE_MS = 90000;
 
   constructor(
@@ -354,7 +354,7 @@ export async function executeFilteredSearch(
     subText = init.textFields;
   }
   
-  // Build form payload independently (does NOT call fetchResultPage)
+  // Build form payload using hidden fields from initSearch
   const cookieHeader = await ctx.sessionManager.getSession();
   const formData = new URLSearchParams();
   for (const f of subHidden) formData.set(f.name, f.value);
@@ -362,7 +362,7 @@ export async function executeFilteredSearch(
   formData.set('subclass_type', params.subclass_type);
   if (ctx.poDigits) {
     formData.set('purchase_code', ctx.poDigits);
-  } else {
+  } else if (ctx.document_number_pattern) {
     formData.set('number', ctx.document_number_pattern);
   }
   if (ctx.discipline_code) formData.set('discipline_code', ctx.discipline_code);
@@ -374,7 +374,6 @@ export async function executeFilteredSearch(
   if (startRow && startRow > 1) formData.set('start_row', String(startRow));
 
   const searchUrl = ctx.assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
-  // Revert to result.aweb — searchresult.aweb returns 404 in form-based search context
   const resp = await fetch(ctx.assaiBase + '/result.aweb', {
     method: 'POST',
     headers: {
@@ -388,6 +387,7 @@ export async function executeFilteredSearch(
     redirect: 'follow',
   });
   const html = await resp.text();
+  console.info('executeFilteredSearch: result.aweb POST status=' + resp.status + ', html length: ' + html.length + ', filters: ' + JSON.stringify(extraFilters));
   const docs = parseDocuments(html, params.subclass_type);
   return { docs, hiddenFields: subHidden, textFields: subText };
 }
@@ -495,10 +495,10 @@ export async function paginateByStatusSplit(
     });
     console.info('paginateByStatusSplit: status split incomplete (' + allDocs.length + ' found' +
       (expectedFromHeader ? ', expected ~' + expectedFromHeader : '') + '), capped statuses: ' + cappedStatuses.join(', ') +
-      ', starting type-code sweep with re-auth');
+      ', starting type-code sweep (no re-auth — preserving session context)');
 
-    // RE-AUTH before sweep via SessionManager
-    await ctx.sessionManager.getSession(true);
+    // DO NOT force re-auth here — it destroys the Assai server-side search context
+    // that result.aweb depends on. The SessionManager will auto-refresh if needed.
 
     // Fetch ALL active document type codes from DB
     let allTypeCodes: string[] = [];
