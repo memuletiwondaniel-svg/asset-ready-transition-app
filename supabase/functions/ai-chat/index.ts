@@ -8677,7 +8677,14 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
             try {
               const pageHtml = await fetchResultPage(hiddenFields, textFields, params, startRow);
               const pageDocs = parseDocuments(pageHtml, params.subclass_type);
-              if (pageDocs.length === 0) break;
+              if (pageDocs.length === 0) {
+                if (startRow === detectedPageSize + 1) {
+                  // Page 2 returned no parseable docs — start_row pagination doesn't work with this Assai version
+                  console.warn('paginateSearch: page 2 returned 0 parseable docs (html length: ' + pageHtml.length + ') — falling back to paginateByStatusSplit');
+                  return paginateByStatusSplit(params, firstDocs);
+                }
+                break; // Later pages empty = we've exhausted results
+              }
 
               // Duplicate detection — if page 2 returns all duplicates, start_row unsupported
               const existingNums = new Set([
