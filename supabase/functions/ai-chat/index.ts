@@ -4701,7 +4701,7 @@ async function executeTool(toolName: string, args: any, supabaseClient: any): Pr
           const { data: pssrItems } = await supabaseClient
             .from('pssr_checklist_items')
             .select('id, item_text, category, status, pssr:pssrs!inner(id, title, project:projects(project_id_prefix, project_id_number))')
-            .eq('assigned_to', userId)
+            .eq('assigned_to', currentUserId)
             .in('status', statusFilter === 'all' ? ['pending', 'approved', 'rejected'] : ['pending'])
             .limit(20);
 
