@@ -11338,6 +11338,17 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       }
     }
 
+    // If the intercept already resolved and searched, strip search tools so the LLM
+    // can only format results — prevents it from re-searching and producing confused output.
+    const interceptCompleted = searchToolResult && allToolCallNames.includes('search_assai_documents');
+    if (interceptCompleted) {
+      const blockedTools = new Set(['search_assai_documents', 'resolve_document_type', 'resolve_project_code', 'discover_project_vendors']);
+      anthropicTools = anthropicTools.filter((t: any) => !blockedTools.has(t.function?.name));
+      // Limit to 1 iteration — the LLM just needs to format
+      MAX_ITERATIONS = 1;
+      console.log('INTERCEPT GUARD: Stripped search tools and limited iterations to 1');
+    }
+
     while (iteration < MAX_ITERATIONS) {
       iteration++;
       // Time guard: break if approaching edge function timeout
