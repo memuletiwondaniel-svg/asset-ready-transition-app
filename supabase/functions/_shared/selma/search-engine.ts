@@ -278,7 +278,9 @@ export async function fetchResultPage(
   if (startRow && startRow > 1) formData.set('start_row', String(startRow));
 
   const searchUrl = ctx.assaiBase + '/search.aweb?subclass_type=' + params.subclass_type;
-  const resultResp = await fetch(ctx.assaiBase + '/result.aweb', {
+  // Use searchresult.aweb — matches all working Assai integrations (discover-vendors, parse-sdr, check-sdr-completeness)
+  const resultUrl = ctx.assaiBase + '/searchresult.aweb';
+  const resultResp = await fetch(resultUrl, {
     method: 'POST',
     headers: {
       Cookie: cookieHeader,
@@ -290,8 +292,29 @@ export async function fetchResultPage(
     body: formData.toString(),
     redirect: 'follow',
   });
-  const resultHtml = await resultResp.text();
-  console.info('result.aweb POST (start_row=' + (startRow ?? 1) + '): status ' + resultResp.status + ', html length: ' + resultHtml.length);
+  let resultHtml = await resultResp.text();
+  console.info('searchresult.aweb POST (start_row=' + (startRow ?? 1) + '): status ' + resultResp.status + ', html length: ' + resultHtml.length);
+
+  // Login-page detection — if Assai returned the login page, force session refresh and retry once
+  if (resultHtml.includes('type="password"') || resultHtml.includes('id="password"') || resultHtml.includes('loginForm')) {
+    console.warn('[Selma:SEARCH_V11] fetchResultPage returned login page — forcing session refresh');
+    const freshCookie = await ctx.sessionManager.getSession(true);
+    const retryResp = await fetch(resultUrl, {
+      method: 'POST',
+      headers: {
+        Cookie: freshCookie,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Accept: 'text/html',
+        Referer: searchUrl,
+        'User-Agent': ctx.ua,
+      },
+      body: formData.toString(),
+      redirect: 'follow',
+    });
+    resultHtml = await retryResp.text();
+    console.info('[Selma:SEARCH_V11] fetchResultPage retry: status ' + retryResp.status + ', html length: ' + resultHtml.length);
+  }
+
   return resultHtml;
 }
 
