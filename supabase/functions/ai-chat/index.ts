@@ -3875,7 +3875,7 @@ function detectAgentDomainRegex(message: string): string {
     return 'document_agent';
   }
   // Part 3: Retrieval intent combined with DP number reference
-  if (/(?:what\s+is|find|get|show|where)\s+.*\bdp[\s-]?\d+/i.test(lower)) {
+  if (/(?:what\s+is|find|get|show|where|how\s+many)\s+.*\bdp[\s-]?\d+/i.test(lower)) {
     return 'document_agent';
   }
   
