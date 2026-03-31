@@ -2937,6 +2937,29 @@ const tools = [
       }
     }
   },
+  {
+    type: "function",
+    function: {
+      name: "get_user_tasks",
+      description: "Get the current user's unified task list across ALL task categories (PSSR reviews, ORA deliverables, P2A handover approvals, OWL items, VCR bundles, and general action items). Use for ANY question about 'my tasks', 'what do I need to do', 'pending items', 'tasks this week'. Always call this — never guess or assume the user has no tasks.",
+      parameters: {
+        type: "object",
+        properties: {
+          status_filter: {
+            type: "string",
+            enum: ["pending", "in_progress", "completed", "all"],
+            description: "Filter by task status. Default is 'pending' to show open items."
+          },
+          category_filter: {
+            type: "string",
+            enum: ["all", "pssr", "ora", "p2a", "owl", "vcr", "action"],
+            description: "Filter by task category. Default is 'all'."
+          }
+        },
+        required: []
+      }
+    }
+  },
   // ═══════════════════════════════════════════════════════════════════════════
   // HANNAH (P2A HANDOVER INTELLIGENCE AGENT) TOOLS
   // ═══════════════════════════════════════════════════════════════════════════
