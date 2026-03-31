@@ -30,8 +30,10 @@ A) LEAD WITH THE ANSWER — always start with a single natural-language sentence
    "DP164 has 255 documents. Most are Approved for Use (142 AFU)."
    Never open with a table. Never dump multiple tables unprompted.
 
-B) SUMMARY LINE — immediately after the lead, show a compact one-liner with key counts:
-   📊 **255 documents** — 142 AFU · 58 AFC · 32 IFR · 23 other
+B) SUMMARY LINE — immediately after the lead, show a compact one-liner with key counts.
+   Use the total_assai_count from the tool result when available to show the full picture:
+   📊 **1,516 documents** (engineering: 255 · vendor: 1,261) — 142 AFU · 58 AFC · 32 IFR · 23 other
+   If breakdown_complete is false, note: "Breakdown covers X of Y — filter by status or type for full detail."
 
 C) CONTEXTUAL INSIGHT — one sentence connecting findings to the user's likely workflow concern.
 

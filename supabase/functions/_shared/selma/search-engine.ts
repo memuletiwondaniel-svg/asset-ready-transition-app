@@ -717,7 +717,9 @@ export async function executeSearch(
   const isPOSearch = (options.documentNumberPattern || '').match(/%-?(\d{5})-?%?$/) || (options.documentNumberPattern || '').match(/^(\d{5})$/);
   const poDigits = isPOSearch?.[1] || '';
   const useSupDoc = options.disciplineCode === 'ZV' || !!poDigits;
-  const searchBothModules = !useSupDoc && (!!options.documentType || isMultiTypeSearch) && !options.disciplineCode;
+  // Search both modules for: document type queries, multi-type searches, OR broad project-level patterns (e.g. '6523-%')
+  const isBroadProjectPattern = !!(options.documentNumberPattern && /^\d{4,5}-?%$/.test(options.documentNumberPattern.trim()));
+  const searchBothModules = !useSupDoc && ((!!options.documentType || isMultiTypeSearch || isBroadProjectPattern) && !options.disciplineCode);
 
   const moduleParams = useSupDoc
     ? { subclass_type: 'SUP_DOC', clas_seq_nr: '2', suty_seq_nr: '7' }
