@@ -3846,6 +3846,10 @@ function detectAgentDomain(message: string): string {
   if (/(?:document\s*(?:status|gap|type|trend|velocity|search|number|quality|comparison)|documentation\s*(?:gap|maturity)|discipline\s*code|cross.?discipline|bulk\s*status|dms\s*health|doc.*p2a|read.*document|summarise.*\d{4}|summarize.*\d{4}|open\s*comments|review.*crs|extract.*from.*doc|what\s*does.*say|vendor\s*doc|supplier\s*doc|vendor\s*completeness|supplier\s*completeness|vendor\s*submission|supplier\s*submission|discover.*vendor|vendor.*discover|scan.*vendor|what\s*vendors|who.*supplier|who.*vendor|list.*vendor|list.*supplier|vendor.*project|supplier.*project|vendor\s*packages?|vendors?\s*(?:for|on)\b|suppliers?\s*(?:for|on)\b|vendor.*po\b|po.*vendor|main\s*vendors?|main\s*suppliers?)/i.test(lower)) {
     return 'document_agent';
   }
+  // Part 3: Retrieval intent combined with DP number reference
+  if (/(?:what\s+is|find|get|show|where)\s+.*\bdp[\s-]?\d+/i.test(lower)) {
+    return 'document_agent';
+  }
   
   // Fred (PSSR/ORA Safety Agent) triggers
   if (/\b(pssr|pre-?startup safety|safety review|sof\b|statement of fitness|ora checklist|pssr checklist|pssr status|pssr completion|safety readiness|pssr items|pssr action|startup safety|pssr walkdown|safety inspection|pssr findings)\b/i.test(lower)) {
