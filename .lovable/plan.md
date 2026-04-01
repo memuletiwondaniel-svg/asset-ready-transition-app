@@ -1,46 +1,58 @@
 
 
-# Diagnostic: Why "Read and Analyze" Failed Again
+# Server-Side Gate: Force 3-Turn Flow for Document Reading
 
-## What happened in the screenshot
+## Why This Keeps Happening
 
-1. **Who responded**: Selma responded (routed correctly via regex matching "bfd"). The "B" icon is by design — all agents use Bob's visual identity.
+The 3-turn flow is **prompt-only** — a soft instruction the LLM routinely ignores. There is zero server-side enforcement. When Selma receives "Read and analyze the BfD for DP300", the model calls `read_assai_document` directly on turn 1, skipping search and confirmation. The download fails, links are missing, and the user gets a broken response.
 
-2. **Why no links**: Selma skipped the mandatory 3-turn flow. Instead of doing Turn 1 (search → present metadata with links → wait for confirmation), she called `read_assai_document` directly. When the download failed, the tool returned `content_available: false` with metadata but no project cabinet info for links. Selma then presented a failure message without Open/Download links because she never ran `search_assai_documents` (which returns the project context needed for links).
+**Prompt instructions cannot prevent tool calls.** The fix must be architectural.
 
-3. **Why the download failed**: This screenshot may be from before the cabinet fix was deployed — OR the cabinet fix is working but there's still an auth/session issue with the REST download endpoint. The `dms_projects` table confirms only `BGC_PROJ` and `ISG` exist as cabinets, so the fix is correct.
+## The Fix: Intercept at the Tool Execution Layer
 
-4. **Why pills aren't clickable**: The response shows "Alternative approaches" as bold text, not `<follow_ups>` JSON tags.
+**File: `supabase/functions/ai-chat/index.ts`** (~line 7342)
 
-## Root cause
+Before executing `read_assai_document`, check whether `search_assai_documents` was called earlier in the **same conversation**. If not, **block the call** and instead run `search_assai_documents` automatically, returning the search results with metadata and links — forcing the LLM into Turn 1 behavior.
 
-The 3-turn flow is prompt-instructed but **not enforced architecturally**. The LLM can still call `read_assai_document` on Turn 1, skipping the search-and-confirm step. When it does and the download fails, there's no project context to build links.
+### How it works
 
-## Fix (3 changes)
+1. Track whether `search_assai_documents` has been called in this session by checking `allToolCallNames` (which accumulates all tool calls across iterations) AND scanning prior conversation messages for evidence of a previous search.
 
-### 1. Add `read_assai_document` gate in the handler (`handlers.ts`)
-When `read_assai_document` returns `content_available: false`, include the Open in Assai and Download links in the response using the cabinet that was attempted. This way, even when download fails, the user gets actionable links.
+2. When `read_assai_document` is called **without a prior search in the conversation**:
+   - Extract `document_number` from the tool args
+   - Automatically call `search_assai_documents` with that document number instead
+   - Return the search results with a message: *"I found this document. Please confirm you'd like me to read and analyze it."*
+   - Include `assai_open_link` and `assai_download_link` in the result
+   - Include `follow_ups: ["Read and analyze this document", "Search for a different document"]`
 
+3. When `read_assai_document` is called **after a prior search exists** (user confirmed on Turn 2):
+   - Execute normally — download and analyze
+
+### Implementation detail
+
+```text
+Tool execution flow (line ~7342):
+
+  if toolName === 'read_assai_document'
+    AND 'search_assai_documents' NOT in allToolCallNames
+    AND no prior search found in conversationMessages
+  → intercept: run search_assai_documents instead
+  → return search results + links + follow_up pills
+  → LLM sees search results, presents metadata (Turn 1 complete)
+
+  else
+  → execute read_assai_document normally (Turn 3)
 ```
-Lines 759-767: When returning failure, add:
-  assai_open_link: `https://eu.assaicloud.com/AWeu578/get/details/${bestCabinet}/DOCS/${docNumber}`
-  assai_download_link: `https://eu.assaicloud.com/AWeu578/get/download/${bestCabinet}/DOCS/${docNumber}`
-```
-
-### 2. Strengthen the prompt to prevent direct `read_assai_document` calls (`prompt.ts`)
-Add to Section F, Turn 2:
-```
-CRITICAL: You MUST NOT call read_assai_document on the same turn the user first asks to read/analyze.
-Always search first (Turn 1), present results with links, and wait for confirmation (Turn 2) before calling read_assai_document.
-```
-
-### 3. Add links to failure responses in the prompt (`prompt.ts`)
-Add instruction that when `read_assai_document` returns `content_available: false`, Selma MUST still include the Open in Assai and Download links from the tool result, and emit `<follow_ups>` tags (not bold text).
 
 ### Files changed
 
 | File | Change |
 |------|--------|
-| `supabase/functions/_shared/selma/handlers.ts` | Include `assai_open_link` and `assai_download_link` in all `read_assai_document` responses (success and failure) |
-| `supabase/functions/_shared/selma/prompt.ts` | Strengthen Turn 1 gate: forbid calling `read_assai_document` without prior search. Add instruction to always show links from tool result even on failure. |
+| `supabase/functions/ai-chat/index.ts` | Add gate before `read_assai_document` execution (~line 7342): intercept if no prior search, redirect to `search_assai_documents` |
+
+### What this guarantees
+- **Impossible** for Selma to skip Turn 1 — the server blocks it
+- Links (Open in Assai, Download) always appear because search results include project cabinet context
+- Follow-up pills are included in the intercepted result
+- No prompt changes needed — this is architectural enforcement
 
