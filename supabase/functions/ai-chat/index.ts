@@ -7339,10 +7339,51 @@ You NEVER fabricate data — always use tool results. Format responses with mark
         
         
         emitStatus(TOOL_STATUS_LABELS[toolName] || 'Processing...');
-        const isSelmaTool = selmaSession && ['resolve_document_type', 'resolve_project_code', 'search_assai_documents', 'read_assai_document', 'discover_project_vendors', 'learn_acronym'].includes(toolName);
-        const toolResult = isSelmaTool
-          ? await executeSelmaTool(toolName, toolArgs, supabase, selmaSession, emitStatus)
-          : await executeTool(toolName, toolArgs, supabase);
+
+        // ── SERVER-SIDE GATE: Force 3-turn flow for read_assai_document ──
+        // If LLM tries to call read_assai_document without a prior search in
+        // this session, intercept and redirect to search_assai_documents.
+        let effectiveToolName = toolName;
+        let effectiveToolArgs = toolArgs;
+        let gateIntercepted = false;
+
+        if (toolName === 'read_assai_document') {
+          const hasSearchInSession = allToolCallNames.includes('search_assai_documents');
+          const hasSearchInHistory = conversationMessages.some((msg: any) => {
+            if (typeof msg.content === 'string') return msg.content.includes('search_assai_documents');
+            if (Array.isArray(msg.content)) return msg.content.some((c: any) =>
+              (c.type === 'tool_use' && c.name === 'search_assai_documents') ||
+              (c.type === 'tool_result' && typeof c.content === 'string' && c.content.includes('search_assai_documents'))
+            );
+            return false;
+          });
+
+          if (!hasSearchInSession && !hasSearchInHistory) {
+            console.log(`[GATE] Intercepting read_assai_document — no prior search. Redirecting to search_assai_documents.`);
+            effectiveToolName = 'search_assai_documents';
+            effectiveToolArgs = {
+              document_number_pattern: toolArgs.document_number || '',
+              max_results: 10
+            };
+            gateIntercepted = true;
+          }
+        }
+
+        const isSelmaTool = selmaSession && ['resolve_document_type', 'resolve_project_code', 'search_assai_documents', 'read_assai_document', 'discover_project_vendors', 'learn_acronym'].includes(effectiveToolName);
+        let toolResult = isSelmaTool
+          ? await executeSelmaTool(effectiveToolName, effectiveToolArgs, supabase, selmaSession, emitStatus)
+          : await executeTool(effectiveToolName, effectiveToolArgs, supabase);
+
+        // If we intercepted, wrap the result so the LLM presents metadata + links first
+        if (gateIntercepted && toolResult) {
+          toolResult = {
+            ...toolResult,
+            _gate_message: `IMPORTANT: You searched for the document instead of reading it directly. Present the search results to the user with metadata, Open in Assai link, and Download link. Ask the user to confirm before reading. Do NOT call read_assai_document yet.`,
+            follow_ups: ["Read and analyze this document", "Show me more details", "Search for a different document"]
+          };
+          // Track that search was now called
+          allToolCallNames.push('search_assai_documents');
+        }
         console.log(`[Iteration ${iteration}] Tool result for ${toolName}:`, typeof toolResult === 'object' ? JSON.stringify(toolResult).substring(0, 500) : toolResult);
 
         lastToolName = toolName;
