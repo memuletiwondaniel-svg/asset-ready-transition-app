@@ -1333,6 +1333,19 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                             ))}
                           </div>
                         )}
+                        {/* Inline status indicator for streaming assistant messages — no extra avatar */}
+                        {isLoading && isLastAssistant && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="flex gap-1.5">
+                              <div className="w-1.5 h-1.5 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '0ms' }} />
+                              <div className="w-1.5 h-1.5 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '150ms' }} />
+                              <div className="w-1.5 h-1.5 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '300ms' }} />
+                            </div>
+                            <span className="text-xs text-muted-foreground transition-opacity duration-300">
+                              {agentStatus || 'Co-Pilot is thinking…'}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       {message.role === 'assistant' && !isLoading && (
                         <div className="flex flex-col mt-1.5">
