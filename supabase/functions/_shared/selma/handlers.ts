@@ -897,7 +897,7 @@ export async function executeSelmaTool(
           }
         }
 
-        return { metadata, content_available: false, reason: 'Document content could not be retrieved.', question_asked: question };
+        return { metadata, content_available: false, reason: 'Document content could not be retrieved.', ...analysisLinks, question_asked: question };
       } catch (err) {
         console.error('read_assai_document error:', err);
         return { error: String(err) };
