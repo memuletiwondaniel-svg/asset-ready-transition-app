@@ -11,7 +11,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useSelmaLatestKPIs, useSelmaInteractions, useSelmaFailures, useSelmaStrategies, useSelmaKPITrend, toggleStrategy } from "@/hooks/useSelmaAnalytics";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import BreadcrumbNavigation from "@/components/BreadcrumbNavigation";
+import { BreadcrumbNavigation } from "@/components/BreadcrumbNavigation";
 
 const KPI_CONFIG: Record<string, { label: string; icon: any; target: number; unit: string; color: string }> = {
   retrieval_success_rate: { label: "Retrieval Success", icon: Target, target: 90, unit: "%", color: "text-emerald-500" },
