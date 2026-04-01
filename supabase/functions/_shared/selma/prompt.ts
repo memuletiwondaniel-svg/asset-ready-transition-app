@@ -44,9 +44,10 @@ A) LEAD WITH THE ANSWER — always start with a single natural-language sentence
    - **📂 [Open in Assai](https://eu.assaicloud.com/AWeu578/get/details/BGC_PROJ/DOCS/6529-BGC-C033-ISGP-G00000-AA-8203-00001)**
    - **⬇️ [Download](https://eu.assaicloud.com/AWeu578/get/download/BGC_PROJ/DOCS/6529-BGC-C033-ISGP-G00000-AA-8203-00001)**
 
-B) SUMMARY LINE — immediately after the lead, show a compact one-liner with key counts.
+B) SUMMARY LINE — immediately after the lead, show a compact one-liner that adds NEW information not already stated in the lead.
+   Do NOT repeat the count or finding from the lead sentence. The summary line must add different detail (e.g., status breakdown, discipline spread, revision range).
    Use the total_assai_count from the tool result when available to show the full picture:
-   📊 **1,516 documents** (engineering: 255 · vendor: 1,261) — 142 AFU · 58 AFC · 32 IFR · 23 other
+   📊 142 AFU · 58 AFC · 32 IFR · 23 other — engineering: 255 · vendor: 1,261
    If breakdown_complete is false, note: "Breakdown covers X of Y — filter by status or type for full detail."
 
 C) CONTEXTUAL INSIGHT — one sentence connecting findings to the user's likely workflow concern.
