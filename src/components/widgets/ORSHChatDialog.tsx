@@ -1199,6 +1199,23 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                             }
                           }
 
+                          // Tier 4: Bold-text pill fallback — catches **pill** · **pill** patterns the LLM sometimes uses inline
+                          if (followUpItems.length === 0) {
+                            // Match lines that are primarily bold items separated by · or |
+                            const boldPillLineRegex = /(?:^|\n)\s*(\*\*[^*\n]{5,60}\*\*(?:\s*[·|•]\s*\*\*[^*\n]{5,60}\*\*)+)\s*(?:\n|$)/g;
+                            let bpMatch: RegExpExecArray | null;
+                            while ((bpMatch = boldPillLineRegex.exec(processed)) !== null) {
+                              const pillRegex = /\*\*([^*]{5,60})\*\*/g;
+                              let pm: RegExpExecArray | null;
+                              while ((pm = pillRegex.exec(bpMatch[1])) !== null) {
+                                followUpItems.push(pm[1].replace(/\?$/, '').trim());
+                              }
+                              if (followUpItems.length > 0) {
+                                processed = processed.replace(bpMatch[0], '\n').trim();
+                              }
+                            }
+                          }
+
                           // Sanity filter: reject metadata lines, doc numbers, prose, echoes, bare acronyms, and near-duplicates
                           const METADATA_PREFIXES = /^(document number|status|revision|supplier|title|originator|unit|discipline|contractor|type code|doc no|vendor|company|area|weight|date|drawing)\s*:/i;
                           const PROSE_PREFIXES = /^(contact|you could|the document|note that|please note|this means|however|unfortunately|it appears|based on|i can|i will|i'll|let me)/i;
