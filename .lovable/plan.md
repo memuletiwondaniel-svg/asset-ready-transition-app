@@ -1,58 +1,107 @@
 
 
-# Server-Side Gate: Force 3-Turn Flow for Document Reading
+# Comprehensive Agent Routing Protocol — Architectural Fix
 
-## Why This Keeps Happening
+## The Screenshots Confirm: It Works Now
 
-The 3-turn flow is **prompt-only** — a soft instruction the LLM routinely ignores. There is zero server-side enforcement. When Selma receives "Read and analyze the BfD for DP300", the model calls `read_assai_document` directly on turn 1, skipping search and confirmation. The download fails, links are missing, and the user gets a broken response.
+The 7 screenshots show the complete 3-turn flow executing perfectly:
+- **Turn 1**: Search found the DP-223 BfD, presented metadata with Open in Assai + Download links, and clickable pills ("Search for other DP223 design documents?", "Search for DP223 specifications?")
+- **Turn 2**: User clicked "Read and analyse this document?" — Selma confirmed and read it
+- **Turn 3**: Full analysis with project identity, design capacity, gas composition, product specs, key findings, critical notes, and document completeness — ending with clickable pills and document links
 
-**Prompt instructions cannot prevent tool calls.** The fix must be architectural.
+**The read-and-analyze pipeline is architecturally fixed and working.** The server-side gate, cabinet fix, and 100-page truncation are all in place.
 
-## The Fix: Intercept at the Tool Execution Layer
+---
 
-**File: `supabase/functions/ai-chat/index.ts`** (~line 7342)
+## The Remaining Vulnerability: Agent Routing
 
-Before executing `read_assai_document`, check whether `search_assai_documents` was called earlier in the **same conversation**. If not, **block the call** and instead run `search_assai_documents` automatically, returning the search results with metadata and links — forcing the LLM into Turn 1 behavior.
+The current routing has a critical gap that can cause Bob to handle specialist queries:
 
-### How it works
-
-1. Track whether `search_assai_documents` has been called in this session by checking `allToolCallNames` (which accumulates all tool calls across iterations) AND scanning prior conversation messages for evidence of a previous search.
-
-2. When `read_assai_document` is called **without a prior search in the conversation**:
-   - Extract `document_number` from the tool args
-   - Automatically call `search_assai_documents` with that document number instead
-   - Return the search results with a message: *"I found this document. Please confirm you'd like me to read and analyze it."*
-   - Include `assai_open_link` and `assai_download_link` in the result
-   - Include `follow_ups: ["Read and analyze this document", "Search for a different document"]`
-
-3. When `read_assai_document` is called **after a prior search exists** (user confirmed on Turn 2):
-   - Execute normally — download and analyze
-
-### Implementation detail
+### How Routing Works Today
 
 ```text
-Tool execution flow (line ~7342):
-
-  if toolName === 'read_assai_document'
-    AND 'search_assai_documents' NOT in allToolCallNames
-    AND no prior search found in conversationMessages
-  → intercept: run search_assai_documents instead
-  → return search results + links + follow_up pills
-  → LLM sees search results, presents metadata (Turn 1 complete)
-
-  else
-  → execute read_assai_document normally (Turn 3)
+User message → detectAgentDomainRegex()
+  ├── Regex match? → specialist agent (fast path)
+  └── No match? → "copilot"
+       ├── CONTINUATION_PATTERN? → inherit from history
+       └── Not continuation? → classifyIntent (Haiku, 2s timeout)
+            ├── confidence ≥ 0.7 → specialist
+            └── confidence < 0.7 or timeout → Bob handles it
 ```
 
-### Files changed
+### The 3 Failure Modes
+
+**1. Pill text doesn't match regex**
+When the user clicks "Read and analyze this document", the regex Part 6 requires `\b\d{4}-[A-Z]` (a document number pattern). "this document" has no document number → falls through to `copilot`. It's not a short confirmation either ("Read and analyze this document" doesn't match `CONTINUATION_PATTERN`). Haiku classifier may or may not catch it.
+
+**2. History detection is too shallow**
+`detectAgentFromHistory` only re-runs the regex on previous *user* messages. It doesn't check whether the *assistant* previously used Selma tools (like `search_assai_documents`). So even though Selma just searched, the system can't tell.
+
+**3. Haiku timeout = Bob**
+If the 2-second Haiku classifier times out or returns low confidence, the query defaults to Bob — who doesn't have Selma's tools.
+
+### The Fix: 3-Layer Defence
+
+#### Layer 1: Tool-Aware History Detection (Server-Side)
+
+Upgrade `detectAgentFromHistory` to check assistant messages for tool usage, not just user message regex:
+
+```text
+detectAgentFromHistory():
+  Walk backward through conversation messages
+  For each assistant message:
+    If it contains tool_use blocks with Selma tool names → return 'document_agent'
+    If it contains tool_use blocks with Fred tool names → return 'pssr_ora_agent'
+    If it contains tool_use blocks with Hannah tool names → return 'hannah'
+    If it contains tool_use blocks with Ivan tool names → return 'ivan'
+  For each user message:
+    Run regex (existing behavior)
+```
+
+This means "Read and analyze this document" — which follows a Selma search — will correctly inherit `document_agent` because the prior assistant message used `search_assai_documents`.
+
+#### Layer 2: Expanded Continuation Pattern
+
+Add pill-generated phrases to the continuation pattern or create a new `SPECIALIST_CONTINUATION_PATTERN`:
+
+```text
+/^(read and analy[sz]e this document|read this document|
+   analy[sz]e this document|show me more details|
+   search for a different document|view by status|
+   view by discipline|list top \d+ documents|
+   compare with.*document|extract tag list|
+   check revision|try reading again|open document in assai)[\s.!?]*$/i
+```
+
+These are the exact pill texts Selma emits. When matched, inherit the agent from history.
+
+#### Layer 3: Tool Guard at Execution Layer
+
+Add a server-side guard that prevents Bob from executing specialist tools. If Bob (copilot) somehow receives a `search_assai_documents` or `read_assai_document` call, the system should:
+- Log a routing misfire
+- Re-route the entire request to the correct specialist
+
+```text
+At tool execution (line ~7372):
+  if detectedAgent === 'copilot' AND toolName is a Selma tool:
+    log("[ROUTING MISFIRE] Bob attempted Selma tool — re-routing")
+    Switch systemPrompt to SELMA_SYSTEM_PROMPT
+    Switch tools to SELMA_TOOLS
+    Initialize selmaSession
+```
+
+This is the "impossible to break" layer — even if Layers 1 and 2 both fail.
+
+### Files to Change
 
 | File | Change |
 |------|--------|
-| `supabase/functions/ai-chat/index.ts` | Add gate before `read_assai_document` execution (~line 7342): intercept if no prior search, redirect to `search_assai_documents` |
+| `supabase/functions/ai-chat/index.ts` | **Layer 1**: Upgrade `detectAgentFromHistory` to scan assistant tool_use blocks. **Layer 2**: Add `SPECIALIST_CONTINUATION_PATTERN` with pill texts. **Layer 3**: Add tool-guard that re-routes copilot if it tries specialist tools. |
 
-### What this guarantees
-- **Impossible** for Selma to skip Turn 1 — the server blocks it
-- Links (Open in Assai, Download) always appear because search results include project cabinet context
-- Follow-up pills are included in the intercepted result
-- No prompt changes needed — this is architectural enforcement
+### What This Guarantees
+
+- **Pill clicks** (e.g., "Read and analyze this document") always route to the correct specialist because Layer 2 matches the text and Layer 1 confirms Selma was active
+- **Haiku timeouts** are irrelevant — Layers 1 and 2 resolve before Haiku is ever called
+- **Misroutes are self-correcting** — Layer 3 catches any remaining edge case at the tool execution boundary
+- **Future agents** (Zain, Alex) benefit automatically — just add their tool names to the Layer 1 map
 
