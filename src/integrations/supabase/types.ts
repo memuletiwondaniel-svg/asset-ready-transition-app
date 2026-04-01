@@ -10085,6 +10085,180 @@ export type Database = {
           },
         ]
       }
+      selma_interaction_metrics: {
+        Row: {
+          agent_routed: string | null
+          analysis_completed: boolean | null
+          analysis_latency_ms: number | null
+          cascade_depth: number | null
+          conversation_id: string | null
+          created_at: string
+          document_number: string | null
+          documents_found: number | null
+          download_attempted: boolean | null
+          download_latency_ms: number | null
+          download_success: boolean | null
+          error_details: string | null
+          id: string
+          intent_detected: string | null
+          outcome: string | null
+          pages_processed: number | null
+          query_text: string | null
+          routing_method: string | null
+          search_latency_ms: number | null
+          search_strategy_used: Json | null
+          tenant_id: string | null
+          tool_calls: string[] | null
+          total_latency_ms: number | null
+          user_feedback: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_routed?: string | null
+          analysis_completed?: boolean | null
+          analysis_latency_ms?: number | null
+          cascade_depth?: number | null
+          conversation_id?: string | null
+          created_at?: string
+          document_number?: string | null
+          documents_found?: number | null
+          download_attempted?: boolean | null
+          download_latency_ms?: number | null
+          download_success?: boolean | null
+          error_details?: string | null
+          id?: string
+          intent_detected?: string | null
+          outcome?: string | null
+          pages_processed?: number | null
+          query_text?: string | null
+          routing_method?: string | null
+          search_latency_ms?: number | null
+          search_strategy_used?: Json | null
+          tenant_id?: string | null
+          tool_calls?: string[] | null
+          total_latency_ms?: number | null
+          user_feedback?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_routed?: string | null
+          analysis_completed?: boolean | null
+          analysis_latency_ms?: number | null
+          cascade_depth?: number | null
+          conversation_id?: string | null
+          created_at?: string
+          document_number?: string | null
+          documents_found?: number | null
+          download_attempted?: boolean | null
+          download_latency_ms?: number | null
+          download_success?: boolean | null
+          error_details?: string | null
+          id?: string
+          intent_detected?: string | null
+          outcome?: string | null
+          pages_processed?: number | null
+          query_text?: string | null
+          routing_method?: string | null
+          search_latency_ms?: number | null
+          search_strategy_used?: Json | null
+          tenant_id?: string | null
+          tool_calls?: string[] | null
+          total_latency_ms?: number | null
+          user_feedback?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "selma_interaction_metrics_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "selma_interaction_metrics_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      selma_kpi_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          kpi_name: string
+          kpi_value: number
+          metadata: Json | null
+          period_end: string
+          period_start: string
+          sample_size: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kpi_name: string
+          kpi_value: number
+          metadata?: Json | null
+          period_end: string
+          period_start: string
+          sample_size?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kpi_name?: string
+          kpi_value?: number
+          metadata?: Json | null
+          period_end?: string
+          period_start?: string
+          sample_size?: number | null
+        }
+        Relationships: []
+      }
+      selma_learned_strategies: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          learned_value: Json
+          source: string | null
+          strategy_type: string
+          success_rate: number | null
+          times_applied: number | null
+          trigger_pattern: string
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          learned_value?: Json
+          source?: string | null
+          strategy_type: string
+          success_rate?: number | null
+          times_applied?: number | null
+          trigger_pattern: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          learned_value?: Json
+          source?: string | null
+          strategy_type?: string
+          success_rate?: number | null
+          times_applied?: number | null
+          trigger_pattern?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sof_allowed_approver_roles: {
         Row: {
           created_at: string
