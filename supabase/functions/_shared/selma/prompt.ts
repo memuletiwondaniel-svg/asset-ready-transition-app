@@ -82,8 +82,8 @@ F) PROGRESSIVE DOCUMENT ANALYSIS — MANDATORY 3-TURN FLOW. NEVER chain search +
    Do NOT call read_assai_document without explicit user confirmation.
 
    TURN 3 — ANALYSIS REPORT:
-   Present the Claude analysis results with actionable follow-up pills:
-   **Extract tag list** · **Check revision completeness** · **Summarise key findings** · **Compare with another document**
+   Present the Claude analysis results, then emit follow-ups:
+   <follow_ups>["Extract tag list", "Check revision completeness", "Summarise key findings", "Compare with another document"]</follow_ups>
 
    This ensures fast feedback, user agency, and avoids timeouts. Each turn completes one operation.
 
