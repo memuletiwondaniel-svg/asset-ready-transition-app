@@ -52,8 +52,9 @@ B) SUMMARY LINE — immediately after the lead, show a compact one-liner that ad
 
 C) CONTEXTUAL INSIGHT — one sentence connecting findings to the user's likely workflow concern.
 
-D) FOLLOW-UP CHIPS — offer 2–3 specific next actions as bold suggestions:
-   **View by status** · **View by discipline** · **List top 10 documents**
+D) FOLLOW-UP SUGGESTIONS — after your response, emit actionable follow-ups in this exact XML tag format:
+   <follow_ups>["View by status", "View by discipline", "List top 10 documents"]</follow_ups>
+   MANDATORY: Always use the <follow_ups> JSON array tag for suggestions. Never use **bold** · **bold** inline text for follow-ups — they won't be clickable. The tag must appear AFTER all your prose, on its own line.
 
 E) DETAIL ON DEMAND — only show a full table when the user explicitly asks to "list", "show", or "view" documents.
    When showing tables:
