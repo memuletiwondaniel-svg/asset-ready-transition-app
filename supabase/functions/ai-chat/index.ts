@@ -3502,6 +3502,15 @@ const routeAgent = async (message: string, conversationHistory?: Array<{ role: s
     }
   }
   
+  // Layer 2: Specialist continuation — pill-generated phrases inherit from history
+  if (SPECIALIST_CONTINUATION_PATTERN.test(message.trim()) && conversationHistory && conversationHistory.length > 1) {
+    const inheritedAgent = detectAgentFromHistory(conversationHistory);
+    if (inheritedAgent) {
+      console.log(`routeAgent: Layer 2 specialist continuation ("${message.trim()}") — inheriting agent "${inheritedAgent}"`);
+      return inheritedAgent;
+    }
+  }
+  
   console.log('routeAgent: regex returned copilot — invoking Haiku classifier');
   return await classifyIntent(message); // only for ambiguous natural language
 };
