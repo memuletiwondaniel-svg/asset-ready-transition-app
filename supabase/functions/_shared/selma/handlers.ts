@@ -556,19 +556,33 @@ export async function executeSelmaTool(
         let pdfBase64: string | null = null;
         let documentMediaType = 'application/pdf';
 
-        // Fetch available project codes from dms_projects, fallback to known defaults
-        const FALLBACK_PROJECTS = ['BGC_PROJ', 'BGC_OPS', 'ISG'];
-        let projectCodes: string[] = FALLBACK_PROJECTS;
+        // Fetch available cabinet names (NOT numeric codes) from dms_projects
+        // The REST download URL requires cabinet names like BGC_PROJ, BGC_OPS, ISG
+        const FALLBACK_CABINETS = ['BGC_PROJ', 'BGC_OPS', 'ISG'];
+        let projectCodes: string[] = FALLBACK_CABINETS;
         try {
-          const { data: projRows } = await supabase
+          const { data: cabinetRows } = await supabase
             .from('dms_projects')
-            .select('code')
-            .eq('is_active', true)
-            .order('display_order');
-          if (projRows && projRows.length > 0) {
-            projectCodes = projRows.map((r: any) => r.code);
+            .select('cabinet')
+            .eq('is_active', true);
+          if (cabinetRows && cabinetRows.length > 0) {
+            const uniqueCabinets = [...new Set(cabinetRows.map((r: any) => r.cabinet).filter(Boolean))];
+            if (uniqueCabinets.length > 0) {
+              projectCodes = uniqueCabinets as string[];
+            }
           }
         } catch { /* use fallback */ }
+
+        // Prioritize cabinet matching the document's originator
+        // e.g. doc "6529-BGC-..." → try BGC_PROJ first
+        const docParts = docNumber.split('-');
+        if (docParts.length >= 2) {
+          const originator = docParts[1].toUpperCase();
+          const prioritized = projectCodes.filter(c => c.toUpperCase().startsWith(originator));
+          const rest = projectCodes.filter(c => !c.toUpperCase().startsWith(originator));
+          projectCodes = [...prioritized, ...rest];
+        }
+        console.log(`read_assai_document: Will try cabinets in order: ${projectCodes.join(', ')}`);
 
         const attemptRestDownload = async (cookies: string, project: string, label: string) => {
           const url = assaiBase + '/get/download/' + project + '/DOCS/' + docNumber;
