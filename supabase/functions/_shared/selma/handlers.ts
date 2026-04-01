@@ -798,44 +798,83 @@ export async function executeSelmaTool(
           pdfBase64 = btoa(binary);
         } catch (fetchErr: any) {
           console.error('read_assai_document: download error:', fetchErr?.name, fetchErr?.message);
+          const failCabinet = projectCodes[0] || 'BGC_PROJ';
+          const failLinks = {
+            assai_open_link: `https://eu.assaicloud.com/AWeu578/get/details/${failCabinet}/DOCS/${docNumber}`,
+            assai_download_link: `https://eu.assaicloud.com/AWeu578/get/download/${failCabinet}/DOCS/${docNumber}`
+          };
           if (fetchErr?.name === 'AbortError') {
-            return { metadata, content_available: false, reason: 'Download timed out (>15s).', question_asked: question };
+            return { metadata, content_available: false, reason: 'Download timed out (>15s).', ...failLinks, question_asked: question };
           }
-          return { metadata, content_available: false, reason: 'Failed to download from Assai: ' + (fetchErr?.message || 'Unknown error'), question_asked: question };
+          return { metadata, content_available: false, reason: 'Failed to download from Assai: ' + (fetchErr?.message || 'Unknown error'), ...failLinks, question_asked: question };
         }
 
         // STAGE 7: Claude inner-call for document analysis
+        const analysisCabinet = projectCodes[0] || 'BGC_PROJ';
+        const analysisLinks = {
+          assai_open_link: `https://eu.assaicloud.com/AWeu578/get/details/${analysisCabinet}/DOCS/${docNumber}`,
+          assai_download_link: `https://eu.assaicloud.com/AWeu578/get/download/${analysisCabinet}/DOCS/${docNumber}`
+        };
+
         if (pdfBase64) {
           try {
             const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY");
             if (!ANTHROPIC_KEY) {
-              return { metadata, content_available: false, reason: 'AI reading service not configured.', question_asked: question };
+              return { metadata, content_available: false, reason: 'AI reading service not configured.', ...analysisLinks, question_asked: question };
             }
 
-            const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
-              method: "POST",
-              headers: {
-                "x-api-key": ANTHROPIC_KEY,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-              },
-              body: JSON.stringify({
-                model: "claude-sonnet-4-5-20250929",
-                max_tokens: 2000,
-                messages: [{
-                  role: "user",
-                  content: [
-                    { type: "document", source: { type: "base64", media_type: documentMediaType, data: pdfBase64 } },
-                    { type: "text", text: question }
-                  ]
-                }]
-              }),
-            });
+            // Build document source — use pages param to limit to first 100 pages
+            const docSource: any = { type: "base64", media_type: documentMediaType, data: pdfBase64 };
 
+            const makeClaudeRequest = async (pages?: number[]) => {
+              const docBlock: any = { type: "document", source: docSource };
+              // Claude API supports a "pages" field on the document block to select specific pages
+              if (pages) {
+                docBlock.pages = pages;
+              }
+              return fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: {
+                  "x-api-key": ANTHROPIC_KEY!,
+                  "anthropic-version": "2023-06-01",
+                  "content-type": "application/json",
+                },
+                body: JSON.stringify({
+                  model: "claude-sonnet-4-5-20250929",
+                  max_tokens: 2000,
+                  messages: [{
+                    role: "user",
+                    content: [
+                      docBlock,
+                      { type: "text", text: question }
+                    ]
+                  }]
+                }),
+              });
+            };
+
+            // First attempt — full document
+            let claudeRes = await makeClaudeRequest();
+
+            // If Claude rejects due to >100 pages, retry with first 100 pages
             if (!claudeRes.ok) {
               const errText = await claudeRes.text();
               console.error('Claude document reading error:', claudeRes.status, errText.substring(0, 300));
-              return { metadata, content_available: false, reason: 'AI could not process the document.', question_asked: question };
+
+              if (errText.includes('100 PDF pages') || errText.includes('maximum')) {
+                console.log('read_assai_document: PDF exceeds 100 pages, retrying with pages 1-100');
+                // Generate page array [1, 2, ..., 100]
+                const firstHundredPages = Array.from({ length: 100 }, (_, i) => i + 1);
+                claudeRes = await makeClaudeRequest(firstHundredPages);
+
+                if (!claudeRes.ok) {
+                  const retryErr = await claudeRes.text();
+                  console.error('Claude retry also failed:', claudeRes.status, retryErr.substring(0, 300));
+                  return { metadata, content_available: false, reason: 'Document is very large and could not be processed even with page truncation. Use the download link to review manually.', ...analysisLinks, question_asked: question };
+                }
+              } else {
+                return { metadata, content_available: false, reason: 'AI could not process the document.', ...analysisLinks, question_asked: question };
+              }
             }
 
             const claudeResult = await claudeRes.json();
@@ -849,15 +888,16 @@ export async function executeSelmaTool(
               content_available: true,
               document_content_answer: textContent,
               question_asked: question,
-              note: 'This answer is based on the actual document content fetched live from Assai DMS.'
+              note: 'This answer is based on the actual document content fetched live from Assai DMS.',
+              ...analysisLinks
             };
           } catch (claudeErr) {
             console.error('Claude document reading exception:', claudeErr);
-            return { metadata, content_available: false, reason: 'AI reading encountered an error.', question_asked: question };
+            return { metadata, content_available: false, reason: 'AI reading encountered an error.', ...analysisLinks, question_asked: question };
           }
         }
 
-        return { metadata, content_available: false, reason: 'Document content could not be retrieved.', question_asked: question };
+        return { metadata, content_available: false, reason: 'Document content could not be retrieved.', ...analysisLinks, question_asked: question };
       } catch (err) {
         console.error('read_assai_document error:', err);
         return { error: String(err) };
