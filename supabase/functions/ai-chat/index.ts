@@ -7415,8 +7415,31 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           }
         }
 
+        // ── LAYER 3: TOOL GUARD — Prevent Bob from executing specialist tools ──
+        // If routing detected 'copilot' but the LLM is calling a specialist tool,
+        // hot-swap to the correct specialist agent mid-stream.
+        if (detectedAgent === 'copilot') {
+          for (const [agentName, agentTools] of Object.entries(SPECIALIST_TOOL_NAMES)) {
+            if (agentTools.includes(effectiveToolName)) {
+              console.log(`[ROUTING MISFIRE] Bob attempted ${effectiveToolName} — hot-swapping to "${agentName}"`);
+              // Hot-swap: initialize specialist session if needed
+              if (agentName === 'document_agent' && !selmaSession) {
+                selmaSession = await buildSelmaSessionManager(supabaseClient);
+                console.log(`[ROUTING MISFIRE] Initialized Selma session for hot-swap`);
+              }
+              break;
+            }
+          }
+        }
+
         const isSelmaTool = selmaSession && ['resolve_document_type', 'resolve_project_code', 'search_assai_documents', 'read_assai_document', 'discover_project_vendors', 'learn_acronym'].includes(effectiveToolName);
-        let toolResult = isSelmaTool
+        // Layer 3 fallback: even without selmaSession, if this IS a Selma tool, initialize session on-the-fly
+        if (!isSelmaTool && SPECIALIST_TOOL_NAMES.document_agent?.includes(effectiveToolName) && !selmaSession) {
+          selmaSession = await buildSelmaSessionManager(supabaseClient);
+          console.log(`[LAYER 3] Late-init Selma session for tool "${effectiveToolName}"`);
+        }
+        const finalIsSelmaTool = selmaSession && SPECIALIST_TOOL_NAMES.document_agent?.includes(effectiveToolName);
+        let toolResult = finalIsSelmaTool
           ? await executeSelmaTool(effectiveToolName, effectiveToolArgs, supabase, selmaSession, emitStatus)
           : await executeTool(effectiveToolName, effectiveToolArgs, supabase);
 
