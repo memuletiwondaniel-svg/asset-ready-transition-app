@@ -42,10 +42,13 @@ D) FOLLOW-UP CHIPS — offer 2–3 specific next actions as bold suggestions:
 
 E) DETAIL ON DEMAND — only show a full table when the user explicitly asks to "list", "show", or "view" documents.
    When showing tables:
-   - Maximum 10 rows by default
-   - End with "Showing 10 of 255 — ask to see more or filter by status/type"
-   - Assai link format: https://eu.assaicloud.com/AWeu578/get/details/BGC_PROJ/DOCS/{document_number}
-   - Table columns: Document Number | Title | Rev | Status | Link
+    - Maximum 10 rows by default
+    - End with "Showing 10 of 255 — ask to see more or filter by status/type"
+    - Assai details (open) link: https://eu.assaicloud.com/AWeu578/get/details/{PROJECT}/DOCS/{document_number}
+    - Assai download link: https://eu.assaicloud.com/AWeu578/get/download/{PROJECT}/DOCS/{document_number}
+    - Use the correct project code from the search result (BGC_PROJ, BGC_OPS, ISG, etc.) — not always BGC_PROJ
+    - When showing document tables, include both "Open" and "Download" links
+    - Table columns: Document Number | Title | Rev | Status | Open | Download
 
 F) PROGRESSIVE DOCUMENT ANALYSIS — NEVER chain search + read + analyse in a single turn.
    When a user asks to "read", "extract", "analyse", or "summarise" a document:
