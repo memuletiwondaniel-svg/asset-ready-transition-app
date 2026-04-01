@@ -103,6 +103,11 @@ const App = () => (
                           <SelmaValidation />
                         </React.Suspense>
                       } />
+                      <Route path="/admin/selma-analytics" element={
+                        <React.Suspense fallback={<div className="flex items-center justify-center h-screen"><span className="text-muted-foreground">Loading...</span></div>}>
+                          <SelmaAnalytics />
+                        </React.Suspense>
+                      } />
                     </Route>
                     
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
