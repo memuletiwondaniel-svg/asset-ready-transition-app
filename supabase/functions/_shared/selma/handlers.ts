@@ -786,7 +786,8 @@ export async function executeSelmaTool(
             const bestCab2 = projectCodes[0] || 'BGC_PROJ';
               return { metadata, content_available: false, reason: 'Document is in Office format (Excel/Word), not PDF. Direct AI reading is only supported for PDF files.', assai_open_link: `https://eu.assaicloud.com/AWeu578/get/details/${bestCab2}/DOCS/${docNumber}`, assai_download_link: `https://eu.assaicloud.com/AWeu578/get/download/${bestCab2}/DOCS/${docNumber}`, question_asked: question };
             }
-            return { metadata, content_available: false, reason: 'Downloaded file is not a valid PDF (unexpected format).', question_asked: question };
+            const bestCab3 = projectCodes[0] || 'BGC_PROJ';
+              return { metadata, content_available: false, reason: 'Downloaded file is not a valid PDF (unexpected format).', assai_open_link: `https://eu.assaicloud.com/AWeu578/get/details/${bestCab3}/DOCS/${docNumber}`, assai_download_link: `https://eu.assaicloud.com/AWeu578/get/download/${bestCab3}/DOCS/${docNumber}`, question_asked: question };
           }
 
           // STAGE 6: Base64 encoding
