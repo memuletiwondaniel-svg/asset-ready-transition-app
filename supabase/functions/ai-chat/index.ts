@@ -3435,10 +3435,47 @@ Intents:
 // In that case, inherit the agent from the prior conversation context.
 const CONTINUATION_PATTERN = /^(yes|yeah|yep|yea|sure|ok|okay|go ahead|do it|please|proceed|confirm|confirmed|absolutely|definitely|let's do it|go for it|that one|the first one|the second|option \d|sounds good|perfect|great|thanks|thank you|no[.,!]?\s*$|nope|not yet|cancel|stop|never\s*mind)[\s.!?]*$/i;
 
+// Layer 2: Specialist continuation pattern — catches pill-generated phrases that lack document numbers
+const SPECIALIST_CONTINUATION_PATTERN = /^(read and analy[sz]e this document|read this document|analy[sz]e this document|show me more details|search for a different document|view by status|view by discipline|list top \d+ documents|compare with.*document|extract tag list|check revision|try reading again|open document in assai|search for other.*documents|search for.*specifications|show me.*vendor.*documents|read and analy[sz]e|download this document)[\s.!?]*$/i;
+
+// Layer 1: Tool-to-agent mapping for tool-aware history detection
+const TOOL_AGENT_MAP: Record<string, string> = {
+  resolve_document_type: 'document_agent',
+  resolve_project_code: 'document_agent',
+  search_assai_documents: 'document_agent',
+  read_assai_document: 'document_agent',
+  discover_project_vendors: 'document_agent',
+  learn_acronym: 'document_agent',
+  get_pssr_pending_items: 'pssr_ora_agent',
+  get_pssr_pending_approvers: 'pssr_ora_agent',
+  get_executive_summary: 'pssr_ora_agent',
+  get_pssr_detailed_summary: 'pssr_ora_agent',
+  get_pssr_stats: 'pssr_ora_agent',
+  get_discipline_status: 'pssr_ora_agent',
+  // Future agents: add hannah/ivan/zain/alex tool names here
+};
+
+// Layer 3: Reverse lookup — which tools belong to which specialist
+const SPECIALIST_TOOL_NAMES: Record<string, string[]> = {
+  document_agent: ['resolve_document_type', 'resolve_project_code', 'search_assai_documents', 'read_assai_document', 'discover_project_vendors', 'learn_acronym'],
+  pssr_ora_agent: ['get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_executive_summary', 'get_pssr_detailed_summary', 'get_pssr_stats', 'get_discipline_status'],
+};
+
 function detectAgentFromHistory(messages: Array<{ role: string; content: string }>): string | null {
-  // Walk backward through conversation to find the last user message that routed to a specialist
-  for (let i = messages.length - 2; i >= 0; i--) {
+  // Layer 1: Check assistant messages for tool_use blocks (most reliable signal)
+  for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
+    if (msg.role === 'assistant') {
+      // Check string content for tool names
+      const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+      for (const [toolName, agent] of Object.entries(TOOL_AGENT_MAP)) {
+        if (content.includes(toolName)) {
+          console.log(`detectAgentFromHistory: Layer 1 — found tool "${toolName}" in assistant message → "${agent}"`);
+          return agent;
+        }
+      }
+    }
+    // Fallback: check user messages via regex (existing behavior)
     if (msg.role === 'user') {
       const domain = detectAgentDomainRegex(msg.content);
       if (domain !== 'copilot') return domain;
