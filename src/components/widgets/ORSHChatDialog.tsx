@@ -1018,9 +1018,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                 /* Messages */
                 <div className="space-y-4">
                   {messages.map((message, index) => {
-                    if (isLoading && index === messages.length - 1 && message.role === 'assistant' && !message.content) {
-                      return null;
-                    }
+                    const isLastAssistant = index === messages.length - 1 && message.role === 'assistant';
                     return (
                     <div key={index} className={cn("flex gap-4", message.role === 'user' ? 'justify-end' : 'justify-start')}>
                       {message.role === 'assistant' && (
@@ -1329,6 +1327,19 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                                 <span className="text-xs truncate">{message.fileNames?.[idx] || 'Document'}</span>
                               </a>
                             ))}
+                          </div>
+                        )}
+                        {/* Inline status indicator for streaming assistant messages — no extra avatar */}
+                        {isLoading && isLastAssistant && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="flex gap-1.5">
+                              <div className="w-1.5 h-1.5 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '0ms' }} />
+                              <div className="w-1.5 h-1.5 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '150ms' }} />
+                              <div className="w-1.5 h-1.5 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: '300ms' }} />
+                            </div>
+                            <span className="text-xs text-muted-foreground transition-opacity duration-300">
+                              {agentStatus || 'Co-Pilot is thinking…'}
+                            </span>
                           </div>
                         )}
                       </div>
