@@ -1,45 +1,46 @@
 
 
-# Fix: Duplicate Text and Non-Clickable Pills
+# Diagnostic: Why "Read and Analyze" Failed Again
 
-## Two Issues Identified
+## What happened in the screenshot
 
-### Issue 1: Duplicate Text
-The prompt has overlapping instructions causing the LLM to state the count twice:
-- **Section A** ("LEAD WITH THE ANSWER"): "start with a single natural-language sentence summarising the result" → LLM writes "I found 10 Basis of Design documents..."
-- **Section B** ("SUMMARY LINE"): "show a compact one-liner with key counts" → LLM repeats "I found 10 Basis of Design documents..."
+1. **Who responded**: Selma responded (routed correctly via regex matching "bfd"). The "B" icon is by design — all agents use Bob's visual identity.
 
-Both sections encourage stating counts, so when there's a single document type result, the model generates nearly identical sentences.
+2. **Why no links**: Selma skipped the mandatory 3-turn flow. Instead of doing Turn 1 (search → present metadata with links → wait for confirmation), she called `read_assai_document` directly. When the download failed, the tool returned `content_available: false` with metadata but no project cabinet info for links. Selma then presented a failure message without Open/Download links because she never ran `search_assai_documents` (which returns the project context needed for links).
 
-**Fix**: Update the prompt to clarify that Section B should NOT repeat the lead sentence. Add: "Do NOT repeat the count or finding from the lead sentence. The summary line should add NEW information (e.g., status breakdown, discipline spread) — not restate what was already said."
+3. **Why the download failed**: This screenshot may be from before the cabinet fix was deployed — OR the cabinet fix is working but there's still an auth/session issue with the REST download endpoint. The `dms_projects` table confirms only `BGC_PROJ` and `ISG` exist as cabinets, so the fix is correct.
 
-### Issue 2: Non-Clickable Pills
-The pills visible in the screenshot ("Read main project BfD", "Read Process Design Basis", etc.) are **bold markdown text**, not interactive buttons. The prompt instructs Selma to format follow-ups as `**Bold text** · **Bold text**`, which renders as styled text in markdown — not clickable elements.
+4. **Why pills aren't clickable**: The response shows "Alternative approaches" as bold text, not `<follow_ups>` JSON tags.
 
-The existing follow-up extraction system (3-tier: `<follow_ups>` JSON tag → header regex → colon-header fallback) works well but the LLM isn't using any of those formats. The LLM is embedding pills inline as bold text separated by "·" dots.
+## Root cause
 
-**Fix (two-pronged)**:
+The 3-turn flow is prompt-instructed but **not enforced architecturally**. The LLM can still call `read_assai_document` on Turn 1, skipping the search-and-confirm step. When it does and the download fails, there's no project context to build links.
 
-**a) Prompt change**: Instruct Selma to emit follow-up suggestions using the `<follow_ups>` JSON tag format instead of bold inline text. Replace Section D and the pill instructions in Section F with:
+## Fix (3 changes)
+
+### 1. Add `read_assai_document` gate in the handler (`handlers.ts`)
+When `read_assai_document` returns `content_available: false`, include the Open in Assai and Download links in the response using the cabinet that was attempted. This way, even when download fails, the user gets actionable links.
 
 ```
-D) FOLLOW-UP SUGGESTIONS — after your response, emit actionable follow-ups in this exact format:
-<follow_ups>["View by status", "View by discipline", "List top 10 documents"]</follow_ups>
-Never use **bold** inline text for follow-ups. Always use the <follow_ups> tag.
+Lines 759-767: When returning failure, add:
+  assai_open_link: `https://eu.assaicloud.com/AWeu578/get/details/${bestCabinet}/DOCS/${docNumber}`
+  assai_download_link: `https://eu.assaicloud.com/AWeu578/get/download/${bestCabinet}/DOCS/${docNumber}`
 ```
 
-Update Section F Turn 1 and Turn 3 similarly to use `<follow_ups>` tags.
+### 2. Strengthen the prompt to prevent direct `read_assai_document` calls (`prompt.ts`)
+Add to Section F, Turn 2:
+```
+CRITICAL: You MUST NOT call read_assai_document on the same turn the user first asks to read/analyze.
+Always search first (Turn 1), present results with links, and wait for confirmation (Turn 2) before calling read_assai_document.
+```
 
-**b) Fallback extraction**: Add a Tier 4 extraction in `ORSHChatDialog.tsx` that catches bold-text pills separated by "·" or on their own line, converting them to clickable buttons. This catches cases where the LLM ignores the tag format.
+### 3. Add links to failure responses in the prompt (`prompt.ts`)
+Add instruction that when `read_assai_document` returns `content_available: false`, Selma MUST still include the Open in Assai and Download links from the tool result, and emit `<follow_ups>` tags (not bold text).
 
-### Files to Change
+### Files changed
 
 | File | Change |
 |------|--------|
-| `supabase/functions/_shared/selma/prompt.ts` | Fix duplicate text instruction; switch pill format to `<follow_ups>` JSON tags |
-| `src/components/widgets/ORSHChatDialog.tsx` | Add Tier 4 bold-pill extraction fallback (~line 1200) |
-
-### Expected Outcome
-- No more duplicate "I found X documents" sentences
-- Pills like "Read main project BfD" become clickable buttons that send the text as a message when clicked
+| `supabase/functions/_shared/selma/handlers.ts` | Include `assai_open_link` and `assai_download_link` in all `read_assai_document` responses (success and failure) |
+| `supabase/functions/_shared/selma/prompt.ts` | Strengthen Turn 1 gate: forbid calling `read_assai_document` without prior search. Add instruction to always show links from tool result even on failure. |
 
