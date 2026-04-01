@@ -1019,10 +1019,7 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                 <div className="space-y-4">
                   {messages.map((message, index) => {
                     const isLastAssistant = index === messages.length - 1 && message.role === 'assistant';
-                    // Skip rendering empty assistant placeholder — the status will show inline below
-                    if (isLoading && isLastAssistant && !message.content) {
-                      return null;
-                    }
+                    return (
                     return (
                     <div key={index} className={cn("flex gap-4", message.role === 'user' ? 'justify-end' : 'justify-start')}>
                       {message.role === 'assistant' && (
