@@ -757,12 +757,15 @@ export async function executeSelmaTool(
           }
 
           if (!downloadSuccess || !fileBytes) {
-            // Return metadata with actionable guidance
+            // Return metadata with actionable guidance AND links using the best cabinet
+            const bestCabinet = projectCodes[0] || 'BGC_PROJ';
             return {
               metadata,
               content_available: false,
               reason: downloadFailReason || 'Document file could not be retrieved — this is likely a session or access issue, NOT a missing file.',
               actionable_guidance: 'The document exists in Assai and has a file attached. The download failed due to a session or access restriction. Try again in a moment, or ask an Assai administrator to check access permissions.',
+              assai_open_link: `https://eu.assaicloud.com/AWeu578/get/details/${bestCabinet}/DOCS/${docNumber}`,
+              assai_download_link: `https://eu.assaicloud.com/AWeu578/get/download/${bestCabinet}/DOCS/${docNumber}`,
               question_asked: question,
             };
           }
@@ -780,9 +783,11 @@ export async function executeSelmaTool(
             const isZip = fileBytes[0] === 0x50 && fileBytes[1] === 0x4B;
             const isOle = fileBytes[0] === 0xD0 && fileBytes[1] === 0xCF;
             if (isZip || isOle) {
-              return { metadata, content_available: false, reason: 'Document is in Office format (Excel/Word), not PDF. Direct AI reading is only supported for PDF files.', question_asked: question };
+            const bestCab2 = projectCodes[0] || 'BGC_PROJ';
+              return { metadata, content_available: false, reason: 'Document is in Office format (Excel/Word), not PDF. Direct AI reading is only supported for PDF files.', assai_open_link: `https://eu.assaicloud.com/AWeu578/get/details/${bestCab2}/DOCS/${docNumber}`, assai_download_link: `https://eu.assaicloud.com/AWeu578/get/download/${bestCab2}/DOCS/${docNumber}`, question_asked: question };
             }
-            return { metadata, content_available: false, reason: 'Downloaded file is not a valid PDF (unexpected format).', question_asked: question };
+            const bestCab3 = projectCodes[0] || 'BGC_PROJ';
+              return { metadata, content_available: false, reason: 'Downloaded file is not a valid PDF (unexpected format).', assai_open_link: `https://eu.assaicloud.com/AWeu578/get/details/${bestCab3}/DOCS/${docNumber}`, assai_download_link: `https://eu.assaicloud.com/AWeu578/get/download/${bestCab3}/DOCS/${docNumber}`, question_asked: question };
           }
 
           // STAGE 6: Base64 encoding
