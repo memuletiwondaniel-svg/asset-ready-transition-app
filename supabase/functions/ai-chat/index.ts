@@ -3359,6 +3359,14 @@ function detectAgentDomainRegex(message: string): string {
   if (/(stands?\s+for|=\s*[A-Z]{2,}|means?\s+[A-Z]|acronym|abbreviation|short\s+for)/i.test(lower)) {
     return 'document_agent';
   }
+  // Part 5: Assai document number pattern (e.g. 6529-BGC-C033-ISGP-G00000-AA-8203-00001)
+  if (/\b\d{4}-[A-Z]{2,6}-[A-Z0-9]{2,}-[A-Z]{2,}-[A-Z0-9]+-[A-Z]{2}-[A-Z0-9]+-\d{3,}/i.test(message)) {
+    return 'document_agent';
+  }
+  // Part 6: Read/analyze/open/download intent with a document-like reference
+  if (/\b(?:read|analy[sz]e|interpret|open|download|fetch|retrieve)\b.*\b\d{4}-[A-Z]/i.test(message)) {
+    return 'document_agent';
+  }
   
   // Fred (PSSR/ORA Safety Agent) triggers
   if (/\b(pssr|pre-?startup safety|safety review|sof\b|statement of fitness|ora checklist|pssr checklist|pssr status|pssr completion|safety readiness|pssr items|pssr action|startup safety|pssr walkdown|safety inspection|pssr findings)\b/i.test(lower)) {
