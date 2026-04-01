@@ -238,27 +238,99 @@ serve(async (req) => {
       total_improvements_generated: suggestions.length
     };
 
-    // 8. Log the training review event
+    // 8. SELMA LEARNING LOOP — Mine failure patterns from selma_interaction_metrics
+    let learnedStrategiesGenerated = 0;
+    try {
+      const { data: selmaFailures } = await supabase
+        .from('selma_interaction_metrics')
+        .select('query_text, intent_detected, outcome, cascade_depth, search_strategy_used, document_number, error_details')
+        .gte('created_at', yesterday)
+        .in('outcome', ['no_results', 'error', 'download_failed']);
+
+      if (selmaFailures && selmaFailures.length >= 3) {
+        // Pattern mine: group by intent + outcome
+        const patterns: Record<string, any[]> = {};
+        for (const f of selmaFailures) {
+          const key = `${f.intent_detected}:${f.outcome}`;
+          if (!patterns[key]) patterns[key] = [];
+          patterns[key].push(f);
+        }
+
+        for (const [pattern, failures] of Object.entries(patterns)) {
+          if (failures.length < 2) continue;
+          
+          // Check if strategy already exists
+          const { data: existing } = await supabase
+            .from('selma_learned_strategies')
+            .select('id')
+            .eq('trigger_pattern', pattern)
+            .maybeSingle();
+
+          if (!existing) {
+            // High cascade depth → learn to skip early stages
+            const avgCascade = failures.reduce((a: number, f: any) => a + (f.cascade_depth || 0), 0) / failures.length;
+            const commonErrors = failures.map((f: any) => f.error_details).filter(Boolean).slice(0, 3);
+
+            await supabase.from('selma_learned_strategies').insert({
+              strategy_type: 'failure_pattern',
+              trigger_pattern: pattern,
+              learned_value: {
+                avg_cascade_depth: avgCascade,
+                sample_queries: failures.slice(0, 3).map((f: any) => f.query_text?.substring(0, 100)),
+                common_errors: commonErrors,
+                suggestion: avgCascade > 2 ? 'skip_early_cascade_stages' : 'review_search_parameters'
+              },
+              confidence: Math.min(0.3 + (failures.length * 0.1), 0.9),
+              source: 'pattern_mining'
+            });
+            learnedStrategiesGenerated++;
+          }
+        }
+      }
+
+      // Deactivate underperforming strategies (success_rate < 30% over 30+ applications)
+      const { data: underperforming } = await supabase
+        .from('selma_learned_strategies')
+        .select('id')
+        .eq('is_active', true)
+        .lt('success_rate', 0.3)
+        .gte('times_applied', 30);
+
+      if (underperforming && underperforming.length > 0) {
+        for (const s of underperforming) {
+          await supabase.from('selma_learned_strategies')
+            .update({ is_active: false, updated_at: new Date().toISOString() })
+            .eq('id', s.id);
+        }
+        console.log(`Deactivated ${underperforming.length} underperforming strategies`);
+      }
+    } catch (learnErr) {
+      console.error('Selma learning loop error:', learnErr);
+    }
+
+    // 9. Log the training review event
     await supabase.from('ai_training_log').insert({
       event_type: 'daily_training_review',
       agent_code: 'bob-copilot',
-      description: `Autonomous training review: ${posCount}+ ${negCount}- feedback. ${suggestions.length} improvements generated (${autoAppliedCount} auto-applied). ${autoResolvedCount} edge cases auto-resolved.`,
+      description: `Autonomous training review: ${posCount}+ ${negCount}- feedback. ${suggestions.length} improvements generated (${autoAppliedCount} auto-applied). ${autoResolvedCount} edge cases auto-resolved. ${learnedStrategiesGenerated} Selma strategies mined.`,
       metadata: {
         ...feedbackSummaryObj,
         suggestions_count: suggestions.length,
+        learned_strategies_generated: learnedStrategiesGenerated,
         reviewed_at: new Date().toISOString(),
-        version: 'v2-autonomous'
+        version: 'v3-selma-learning'
       }
     });
 
-    console.log(`✅ Training review complete: ${posCount}+ ${negCount}- feedback, ${suggestions.length} suggestions (${autoAppliedCount} auto-applied), ${autoResolvedCount} edge cases resolved`);
+    console.log(`✅ Training review complete: ${posCount}+ ${negCount}- feedback, ${suggestions.length} suggestions (${autoAppliedCount} auto-applied), ${autoResolvedCount} edge cases resolved, ${learnedStrategiesGenerated} Selma strategies`);
 
     return new Response(JSON.stringify({
       success: true,
       summary: feedbackSummaryObj,
       suggestions_generated: suggestions.length,
       auto_applied: autoAppliedCount,
-      edge_cases_auto_resolved: autoResolvedCount
+      edge_cases_auto_resolved: autoResolvedCount,
+      selma_strategies_generated: learnedStrategiesGenerated
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

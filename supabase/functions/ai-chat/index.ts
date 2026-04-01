@@ -7594,11 +7594,62 @@ You NEVER fabricate data — always use tool results. Format responses with mark
     }
     
     // Log response and persist memory
-    logResponseFeedback(supabase, null, detectedAgent, allToolCallNames, Date.now() - requestStartTime)
+    const totalLatencyMs = Date.now() - requestStartTime;
+    logResponseFeedback(supabase, null, detectedAgent, allToolCallNames, totalLatencyMs)
       .catch(e => console.error('Feedback log error:', e));
     if (currentUserId) {
       extractAndPersistContext(supabase, currentUserId, messages)
         .catch(e => console.error('Context persist error:', e));
+    }
+
+    // ── SELMA INSTRUMENTATION: Log detailed interaction metrics (fire-and-forget) ──
+    if (detectedAgent === 'document_agent' && currentUserId) {
+      try {
+        const selmaTools = allToolCallNames.filter((t: string) => 
+          ['resolve_document_type', 'resolve_project_code', 'search_assai_documents', 'read_assai_document', 'discover_project_vendors', 'learn_acronym'].includes(t)
+        );
+        const hasSearch = selmaTools.includes('search_assai_documents');
+        const hasRead = selmaTools.includes('read_assai_document');
+        const hasDownload = hasRead;
+        
+        // Determine outcome
+        let selmaOutcome = 'success';
+        if (lastToolResult?.error) selmaOutcome = 'error';
+        else if (lastToolResult?.found === false || lastToolResult?.total_found === 0) selmaOutcome = 'no_results';
+        else if (hasDownload && lastToolResult?.download_failed) selmaOutcome = 'download_failed';
+        else if (hasSearch && !hasRead && lastToolResult?.total_found > 0) selmaOutcome = 'partial';
+
+        // Cascade depth from search strategy metadata
+        const cascadeDepth = lastToolResult?.cascade_depth || lastToolResult?.strategy_stages?.length || (hasSearch ? 1 : 0);
+        const docsFound = lastToolResult?.total_found || lastToolResult?.documents?.length || 0;
+
+        supabase.from('selma_interaction_metrics').insert({
+          user_id: currentUserId,
+          conversation_id: null,
+          query_text: (lastUserMessage?.content || '').substring(0, 500),
+          intent_detected: hasRead ? 'read_document' : hasSearch ? 'search_document' : selmaTools[0] || 'unknown',
+          agent_routed: detectedAgent,
+          routing_method: 'detected',
+          search_strategy_used: lastToolResult?.strategy_stages ? { stages: lastToolResult.strategy_stages } : null,
+          documents_found: docsFound,
+          document_number: lastToolResult?.document_number || null,
+          download_attempted: hasDownload,
+          download_success: hasDownload && !lastToolResult?.download_failed,
+          analysis_completed: hasRead && !!finalTextContent && finalTextContent.length > 200,
+          pages_processed: lastToolResult?.pages_processed || 0,
+          cascade_depth: cascadeDepth,
+          total_latency_ms: totalLatencyMs,
+          search_latency_ms: lastToolResult?.search_latency_ms || 0,
+          download_latency_ms: lastToolResult?.download_latency_ms || 0,
+          analysis_latency_ms: lastToolResult?.analysis_latency_ms || 0,
+          tool_calls: selmaTools,
+          outcome: selmaOutcome,
+          error_details: lastToolResult?.error || null
+        }).then(() => console.log('[Selma Metrics] Interaction logged'))
+          .catch((e: any) => console.error('[Selma Metrics] Log failed:', e));
+      } catch (metricsErr) {
+        console.error('[Selma Metrics] Instrumentation error:', metricsErr);
+      }
     }
     
     const finalContent = finalTextContent || "I'm here to help. What would you like to know?";

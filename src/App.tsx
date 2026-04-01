@@ -37,6 +37,7 @@ import MicrosoftCallback from "@/pages/auth/MicrosoftCallback";
 import BacklogPage from "@/pages/BacklogPage";
 
 const SelmaValidation = React.lazy(() => import("@/pages/admin/SelmaValidation"));
+const SelmaAnalytics = React.lazy(() => import("@/pages/admin/SelmaAnalytics"));
 
 // Create QueryClient outside component to prevent recreation on every render
 const queryClient = new QueryClient({
@@ -100,6 +101,11 @@ const App = () => (
                       <Route path="/admin/selma-validation" element={
                         <React.Suspense fallback={<div className="flex items-center justify-center h-screen"><span className="text-muted-foreground">Loading...</span></div>}>
                           <SelmaValidation />
+                        </React.Suspense>
+                      } />
+                      <Route path="/admin/selma-analytics" element={
+                        <React.Suspense fallback={<div className="flex items-center justify-center h-screen"><span className="text-muted-foreground">Loading...</span></div>}>
+                          <SelmaAnalytics />
                         </React.Suspense>
                       } />
                     </Route>
