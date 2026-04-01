@@ -1,63 +1,32 @@
 
 
-# Fix T5.2: Route Acronym-Learning to Selma (Not Bob)
+## Problem
+Selma's system prompt only includes the **details** (open in Assai) link format but not the **download** link format. Users want Selma to provide both options when presenting document results.
 
-## The Problem
+## Current State
+- `prompt.ts` line 47: only mentions `https://eu.assaicloud.com/AWeu578/get/details/BGC_PROJ/DOCS/{document_number}`
+- No mention of the download URL pattern in the prompt
+- The `assaiLinks.ts` helper already has both `assaiDetailsUrl` and `assaiDownloadUrl` functions, but only the frontend (`StructuredResponse.tsx`) uses them — Selma's LLM doesn't know about the download pattern
 
-The query "Please save this: FCD = Flow Control Diagram" doesn't match any Selma regex pattern, so it falls to `copilot` (Bob). Bob's Hard Routing Rules only catch queries about "finding, retrieving, or searching" documents — not acronym teaching. So Bob answers conversationally and `learn_acronym` is never called.
+## Plan
 
-## Why the Sr Dev's Proposal (Give Bob `learn_acronym`) Is Wrong
+### 1. Update Selma's system prompt (`supabase/functions/_shared/selma/prompt.ts`)
 
-You're correct that Bob should **never** handle document intelligence tasks. Adding `learn_acronym` to Bob violates the architectural principle that Bob is a router, not a specialist. If we give Bob document tools, we erode the boundary between agents.
-
-## The Correct Fix (Two Layers)
-
-### Layer 1 — Route acronym-learning queries to Selma via regex
-
-Add a Part 4 block to `detectAgentDomainRegex` in `ai-chat/index.ts`:
-
-```typescript
-// Part 4: Acronym-learning intent
-if (/(stands?\s+for|=\s*[A-Z]{2,}|means?\s+[A-Z]|acronym|abbreviation|short\s+for)/i.test(lower)) {
-  return 'document_agent';
-}
-```
-
-This catches patterns like "FCD = Flow Control Diagram", "BFD stands for", "this acronym means", etc.
-
-### Layer 2 — Strengthen Bob's Hard Routing Rules as safety net
-
-Update Bob's Hard Routing Rule #1 (line 295-298) to also cover acronym/abbreviation queries:
+In the **RESPONSE FORMAT** section (around line 47), update the link format guidance to include both URL patterns:
 
 ```
-1. Any query about finding, retrieving, or searching for documents, drawings,
-   specifications, datasheets, vendor documents, anything in a DMS,
-   OR any request to learn, save, or define a document type acronym or abbreviation →
-   respond: "That's a question for Selma..."
+- Assai details link: https://eu.assaicloud.com/AWeu578/get/details/{PROJECT}/DOCS/{document_number}
+- Assai download link: https://eu.assaicloud.com/AWeu578/get/download/{PROJECT}/DOCS/{document_number}
+- When showing document tables, include both "Open" and "Download" links
+- Use the correct project code (BGC_PROJ, BGC_OPS, ISG) — not always BGC_PROJ
 ```
 
-This ensures that even if the regex somehow misses, Bob refuses and redirects rather than answering.
-
-### Layer 3 — Selma's prompt (unchanged from previous proposal)
-
-Add to `prompt.ts`:
+Also update the table columns line to:
 ```
-When a user teaches you a new acronym, abbreviation, or document type shorthand —
-call learn_acronym IMMEDIATELY. Do not just acknowledge conversationally.
-The tool call is mandatory, not optional.
+- Table columns: Document Number | Title | Rev | Status | Open | Download
 ```
 
-## What NOT to Do
+### 2. Redeploy the `ai-chat` edge function
 
-- Do NOT add `learn_acronym` to Bob's tool list — violates agent boundary architecture
-- Do NOT add generic words like "save" or "remember" to the regex — too broad
-
-## Files to Change
-
-1. **`supabase/functions/ai-chat/index.ts`** — Add Part 4 regex block after line 3329; update Bob's Hard Routing Rule #1 at line 295
-2. **`supabase/functions/_shared/selma/prompt.ts`** — Add mandatory learn_acronym instruction
-
-## Combined with Other Fixes
-
-This replaces Fix 2 Part B from the Sr Dev's proposal. All other fixes (1A-1D, Fix 3, Fix 4) remain unchanged.
+Deploy to apply the updated prompt.
 
