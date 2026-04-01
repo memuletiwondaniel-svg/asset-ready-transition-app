@@ -1020,7 +1020,6 @@ export const ORSHChatDialog: React.FC<ORSHChatDialogProps> = ({
                   {messages.map((message, index) => {
                     const isLastAssistant = index === messages.length - 1 && message.role === 'assistant';
                     return (
-                    return (
                     <div key={index} className={cn("flex gap-4", message.role === 'user' ? 'justify-end' : 'justify-start')}>
                       {message.role === 'assistant' && (
                         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0">
