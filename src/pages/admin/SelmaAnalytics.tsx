@@ -344,6 +344,129 @@ export default function SelmaAnalytics() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Knowledge Training */}
+          <TabsContent value="knowledge">
+            <div className="space-y-4">
+              {/* Training Queue Summary */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {['completed', 'in_progress', 'pending', 'failed', 'skipped'].map(status => {
+                  const count = (trainingQueue || []).filter(q => q.status === status).length;
+                  const colors: Record<string, string> = {
+                    completed: 'text-emerald-500',
+                    in_progress: 'text-blue-500',
+                    pending: 'text-muted-foreground',
+                    failed: 'text-red-500',
+                    skipped: 'text-amber-500',
+                  };
+                  return (
+                    <Card key={status}>
+                      <CardContent className="p-3 text-center">
+                        <span className={`text-2xl font-bold ${colors[status]}`}>{count}</span>
+                        <p className="text-[10px] text-muted-foreground capitalize mt-1">{status.replace('_', ' ')}</p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Learned Knowledge */}
+              {knowledge && knowledge.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <Brain className="h-4 w-4 text-primary" />
+                      Learned Document Type Knowledge ({knowledge.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Type Code</TableHead>
+                          <TableHead className="text-xs">Name</TableHead>
+                          <TableHead className="text-xs">Purpose</TableHead>
+                          <TableHead className="text-xs">Confidence</TableHead>
+                          <TableHead className="text-xs">Docs Analysed</TableHead>
+                          <TableHead className="text-xs">Trained</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {knowledge.map(k => (
+                          <TableRow key={k.id}>
+                            <TableCell className="text-xs font-mono">{k.type_code}</TableCell>
+                            <TableCell className="text-xs">{k.type_name}</TableCell>
+                            <TableCell className="text-xs max-w-[300px] truncate">{k.purpose || '—'}</TableCell>
+                            <TableCell className="text-xs tabular-nums">
+                              <span className={k.confidence >= 0.7 ? 'text-emerald-500' : k.confidence >= 0.4 ? 'text-amber-500' : 'text-red-500'}>
+                                {(k.confidence * 100).toFixed(0)}%
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-xs tabular-nums">{k.documents_analyzed}</TableCell>
+                            <TableCell className="text-[10px] text-muted-foreground">
+                              {k.last_trained_at ? new Date(k.last_trained_at).toLocaleDateString() : '—'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Training Queue */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Training Queue</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs">Priority</TableHead>
+                        <TableHead className="text-xs">Type Code</TableHead>
+                        <TableHead className="text-xs">Name</TableHead>
+                        <TableHead className="text-xs">Status</TableHead>
+                        <TableHead className="text-xs">Last Attempt</TableHead>
+                        <TableHead className="text-xs">Error</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(trainingQueue || []).slice(0, 50).map(q => (
+                        <TableRow key={q.id}>
+                          <TableCell className="text-xs tabular-nums">{q.priority}</TableCell>
+                          <TableCell className="text-xs font-mono">{q.type_code}</TableCell>
+                          <TableCell className="text-xs">{q.type_name || '—'}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              q.status === 'completed' ? 'default' :
+                              q.status === 'failed' ? 'destructive' :
+                              q.status === 'in_progress' ? 'secondary' : 'outline'
+                            } className="text-[10px]">
+                              {q.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-[10px] text-muted-foreground">
+                            {q.last_attempt ? new Date(q.last_attempt).toLocaleString() : '—'}
+                          </TableCell>
+                          <TableCell className="text-xs max-w-[200px] truncate text-red-500">
+                            {q.error_details || '—'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {(!trainingQueue || trainingQueue.length === 0) && (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-muted-foreground text-sm py-8">
+                            Training queue not seeded yet — invoke selma-knowledge-builder to start
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
     </div>
