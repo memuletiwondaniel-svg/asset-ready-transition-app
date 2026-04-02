@@ -10085,6 +10085,66 @@ export type Database = {
           },
         ]
       }
+      selma_document_type_knowledge: {
+        Row: {
+          avg_page_count: number | null
+          common_statuses: Json | null
+          confidence: number | null
+          created_at: string
+          cross_references: Json | null
+          documents_analyzed: number | null
+          handover_relevance: string | null
+          id: string
+          key_themes: Json | null
+          last_trained_at: string | null
+          purpose: string | null
+          sample_projects: Json | null
+          selma_tips: string | null
+          type_code: string
+          type_name: string
+          typical_structure: Json | null
+          updated_at: string
+        }
+        Insert: {
+          avg_page_count?: number | null
+          common_statuses?: Json | null
+          confidence?: number | null
+          created_at?: string
+          cross_references?: Json | null
+          documents_analyzed?: number | null
+          handover_relevance?: string | null
+          id?: string
+          key_themes?: Json | null
+          last_trained_at?: string | null
+          purpose?: string | null
+          sample_projects?: Json | null
+          selma_tips?: string | null
+          type_code: string
+          type_name: string
+          typical_structure?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          avg_page_count?: number | null
+          common_statuses?: Json | null
+          confidence?: number | null
+          created_at?: string
+          cross_references?: Json | null
+          documents_analyzed?: number | null
+          handover_relevance?: string | null
+          id?: string
+          key_themes?: Json | null
+          last_trained_at?: string | null
+          purpose?: string | null
+          sample_projects?: Json | null
+          selma_tips?: string | null
+          type_code?: string
+          type_name?: string
+          typical_structure?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       selma_interaction_metrics: {
         Row: {
           agent_routed: string | null
@@ -10255,6 +10315,45 @@ export type Database = {
           success_rate?: number | null
           times_applied?: number | null
           trigger_pattern?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      selma_training_queue: {
+        Row: {
+          created_at: string
+          documents_sampled: Json | null
+          error_details: string | null
+          id: string
+          last_attempt: string | null
+          priority: number
+          status: string
+          type_code: string
+          type_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          documents_sampled?: Json | null
+          error_details?: string | null
+          id?: string
+          last_attempt?: string | null
+          priority?: number
+          status?: string
+          type_code: string
+          type_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          documents_sampled?: Json | null
+          error_details?: string | null
+          id?: string
+          last_attempt?: string | null
+          priority?: number
+          status?: string
+          type_code?: string
+          type_name?: string | null
           updated_at?: string
         }
         Relationships: []
