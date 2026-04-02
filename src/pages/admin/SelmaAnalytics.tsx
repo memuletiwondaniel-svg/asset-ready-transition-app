@@ -58,6 +58,8 @@ export default function SelmaAnalytics() {
   const { data: failures } = useSelmaFailures(20);
   const { data: strategies } = useSelmaStrategies();
   const { data: trendData } = useSelmaKPITrend(trendKPI, 30);
+  const { data: trainingQueue } = useSelmaTrainingQueue();
+  const { data: knowledge } = useSelmaKnowledge();
 
   const handleToggleStrategy = async (id: string, current: boolean) => {
     try {
