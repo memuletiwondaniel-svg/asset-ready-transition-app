@@ -133,50 +133,56 @@ Deno.serve(async (req) => {
 
     const { sessionManager, assaiBase } = selmaSession;
 
-    // Step 4: Search Assai for documents of this type across projects
-    // Get a few active projects to sample from
-    const { data: projects } = await supabase
-      .from("dms_projects")
-      .select("code, project_name, proj_seq_nr, cabinet")
-      .eq("is_active", true)
-      .order("project_name")
-      .limit(5);
-
+    // Step 4: Search Assai for documents of this type
+    // First try a broad search (no project filter) to find any docs of this type
     const sampleDocs: Array<{ doc_number: string; project: string; title: string; status: string }> = [];
 
-    for (const proj of (projects || []).slice(0, 3)) {
-      if (sampleDocs.length >= 3) break;
+    try {
+      const searchOpts: SearchOptions = {
+        documentType: typeCode,
+        maxResults: 20,
+        username: selmaSession.username,
+        password: selmaSession.password,
+        assaiBase,
+      };
 
-      try {
-        const searchOpts: SearchOptions = {
-          documentType: typeCode,
-          documentNumberPattern: `${proj.code}-%`,
-          maxResults: 10,
-          username: selmaSession.username,
-          password: selmaSession.password,
-          assaiBase,
-        };
+      const results = await executeSearch(searchOpts, sessionManager, supabase);
+      console.log(`[KnowledgeBuilder] Broad search for type ${typeCode}: ${results.results?.length || 0} results`);
 
-        const results = await executeSearch(searchOpts, sessionManager, supabase);
+      // Pick docs with mature status (AFU/AFC preferred)
+      const candidates = (results.results || [])
+        .filter((d: any) => d.status && ["AFU", "AFC", "IFA"].includes(d.status.toUpperCase()));
 
-        // Pick docs with mature status (AFU/AFC preferred)
-        const sorted = (results.results || [])
-          .filter((d: any) => d.status && ["AFU", "AFC", "IFA"].includes(d.status.toUpperCase()))
-          .slice(0, 2);
-
-        for (const doc of sorted) {
-          if (sampleDocs.length < 3) {
-            sampleDocs.push({
-              doc_number: doc.document_number,
-              project: proj.project_name,
-              title: doc.title || "",
-              status: doc.status || "",
-            });
-          }
-        }
-      } catch (searchErr: any) {
-        console.warn(`[KnowledgeBuilder] Search failed for ${proj.code}: ${searchErr.message}`);
+      // Take up to 3 diverse docs (different document numbers)
+      const seen = new Set<string>();
+      for (const doc of candidates) {
+        if (seen.has(doc.document_number)) continue;
+        seen.add(doc.document_number);
+        sampleDocs.push({
+          doc_number: doc.document_number,
+          project: doc.project || "unknown",
+          title: doc.title || "",
+          status: doc.status || "",
+        });
+        if (sampleDocs.length >= 3) break;
       }
+
+      // If no AFU/AFC, take any docs
+      if (sampleDocs.length === 0) {
+        for (const doc of (results.results || [])) {
+          if (seen.has(doc.document_number)) continue;
+          seen.add(doc.document_number);
+          sampleDocs.push({
+            doc_number: doc.document_number,
+            project: doc.project || "unknown",
+            title: doc.title || "",
+            status: doc.status || "",
+          });
+          if (sampleDocs.length >= 3) break;
+        }
+      }
+    } catch (searchErr: any) {
+      console.warn(`[KnowledgeBuilder] Search failed for type ${typeCode}: ${searchErr.message}`);
     }
 
     if (sampleDocs.length === 0) {
