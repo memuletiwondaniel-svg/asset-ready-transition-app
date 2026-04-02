@@ -146,3 +146,61 @@ export function useSelmaKPITrend(kpiName: string, days = 30) {
     },
   });
 }
+
+// ─── Knowledge Training hooks ───
+
+export interface TrainingQueueItem {
+  id: string;
+  type_code: string;
+  type_name: string | null;
+  status: string;
+  priority: number;
+  documents_sampled: any;
+  last_attempt: string | null;
+  error_details: string | null;
+  created_at: string;
+}
+
+export interface DocumentTypeKnowledge {
+  id: string;
+  type_code: string;
+  type_name: string;
+  purpose: string | null;
+  typical_structure: string[];
+  key_themes: string[];
+  handover_relevance: string | null;
+  cross_references: string[];
+  selma_tips: string | null;
+  confidence: number;
+  documents_analyzed: number;
+  last_trained_at: string | null;
+  sample_projects: string[];
+}
+
+export function useSelmaTrainingQueue() {
+  return useQuery({
+    queryKey: ['selma-training-queue'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('selma_training_queue')
+        .select('*')
+        .order('priority', { ascending: true });
+      if (error) throw error;
+      return (data || []) as TrainingQueueItem[];
+    },
+  });
+}
+
+export function useSelmaKnowledge() {
+  return useQuery({
+    queryKey: ['selma-knowledge'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('selma_document_type_knowledge')
+        .select('*')
+        .order('confidence', { ascending: false });
+      if (error) throw error;
+      return (data || []) as DocumentTypeKnowledge[];
+    },
+  });
+}

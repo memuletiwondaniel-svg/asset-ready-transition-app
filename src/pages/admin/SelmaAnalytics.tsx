@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
-import { useSelmaLatestKPIs, useSelmaInteractions, useSelmaFailures, useSelmaStrategies, useSelmaKPITrend, toggleStrategy } from "@/hooks/useSelmaAnalytics";
+import { useSelmaLatestKPIs, useSelmaInteractions, useSelmaFailures, useSelmaStrategies, useSelmaKPITrend, toggleStrategy, useSelmaTrainingQueue, useSelmaKnowledge } from "@/hooks/useSelmaAnalytics";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { BreadcrumbNavigation } from "@/components/BreadcrumbNavigation";
