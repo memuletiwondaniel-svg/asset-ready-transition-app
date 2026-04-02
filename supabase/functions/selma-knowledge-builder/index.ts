@@ -149,16 +149,18 @@ Deno.serve(async (req) => {
 
       try {
         const searchOpts: SearchOptions = {
-          document_type: typeCode,
-          document_number_pattern: `${proj.code}-%`,
-          max_results: 10,
+          documentType: typeCode,
+          documentNumberPattern: `${proj.code}-%`,
+          maxResults: 10,
+          username: selmaSession.username,
+          password: selmaSession.password,
+          assaiBase,
         };
 
-        const cookies = await sessionManager.getSession();
-        const results = await executeSearch(searchOpts, cookies, assaiBase);
+        const results = await executeSearch(searchOpts, sessionManager, supabase);
 
         // Pick docs with mature status (AFU/AFC preferred)
-        const sorted = results.documents
+        const sorted = (results.results || [])
           .filter((d: any) => d.status && ["AFU", "AFC", "IFA"].includes(d.status.toUpperCase()))
           .slice(0, 2);
 
