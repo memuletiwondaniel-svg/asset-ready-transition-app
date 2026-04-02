@@ -1,0 +1,1 @@
+UPDATE public.selma_training_queue SET status = 'pending', error_details = NULL WHERE type_code = '5507'
