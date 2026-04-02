@@ -184,6 +184,7 @@ export default function SelmaAnalytics() {
             <TabsTrigger value="failures">Failure Analysis</TabsTrigger>
             <TabsTrigger value="cascade">Search Strategy</TabsTrigger>
             <TabsTrigger value="strategies">Learned Strategies</TabsTrigger>
+            <TabsTrigger value="knowledge">Knowledge Training</TabsTrigger>
           </TabsList>
 
           {/* Recent Interactions */}
