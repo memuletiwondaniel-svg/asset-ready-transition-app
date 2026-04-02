@@ -38,6 +38,20 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Handle reset request
+    let body: any = {};
+    try { body = await req.json(); } catch { /* empty body OK */ }
+    
+    if (body.reset_type_code) {
+      await supabase
+        .from("selma_training_queue")
+        .update({ status: "pending", error_details: null })
+        .eq("type_code", body.reset_type_code);
+      return new Response(JSON.stringify({ action: "reset", type_code: body.reset_type_code }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Step 1: Pick next pending type from queue
     const { data: queueItem, error: queueErr } = await supabase
       .from("selma_training_queue")
