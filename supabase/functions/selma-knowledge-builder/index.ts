@@ -83,11 +83,15 @@ Deno.serve(async (req) => {
             priority: priorityMap[t.code] || 50 + Math.floor(Math.random() * 50),
           }));
 
-          await supabase.from("selma_training_queue").upsert(queueRows, { onConflict: "type_code" });
+          const { error: seedErr } = await supabase.from("selma_training_queue").upsert(queueRows, { onConflict: "type_code" });
+          if (seedErr) {
+            console.error("[KnowledgeBuilder] Seed error:", seedErr.message, seedErr.details);
+          }
           return new Response(JSON.stringify({
             action: "seeded_queue",
             types_queued: queueRows.length,
-            message: "Training queue seeded. Run again to start processing.",
+            seed_error: seedErr?.message || null,
+            message: seedErr ? `Seeding failed: ${seedErr.message}` : "Training queue seeded. Run again to start processing.",
           }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
       }
