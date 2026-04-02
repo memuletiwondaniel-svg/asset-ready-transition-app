@@ -34,6 +34,24 @@ export async function buildDmsConfigSnapshot(supabase: any): Promise<string> {
     `  ${t.code} → ${t.document_name} (discipline: ${t.discipline_code || 'N/A'})`
   ).join('\n') || '  (none loaded)';
 
+  // Load learned document type knowledge
+  const { data: knowledgeRows } = await supabase
+    .from('selma_document_type_knowledge')
+    .select('type_code, type_name, purpose, key_themes, handover_relevance, cross_references, selma_tips')
+    .gt('confidence', 0.4)
+    .order('confidence', { ascending: false })
+    .limit(30);
+
+  const knowledge = knowledgeRows || [];
+  const knowledgeBlock = knowledge.length > 0
+    ? `\n\nDOCUMENT TYPE EXPERTISE (${knowledge.length} types learned):\n` +
+      knowledge.map((k: any) => {
+        const themes = Array.isArray(k.key_themes) ? k.key_themes.slice(0, 5).join(', ') : '';
+        const refs = Array.isArray(k.cross_references) ? k.cross_references.join(', ') : '';
+        return `  ${k.type_code} (${k.type_name}): ${k.purpose || ''}${themes ? ` | Themes: ${themes}` : ''}${refs ? ` | Refs: ${refs}` : ''}${k.selma_tips ? ` | Tip: ${k.selma_tips}` : ''}`;
+      }).join('\n')
+    : '';
+
   return `
 
 === ORSH LIVE CONFIGURATION ===
@@ -49,5 +67,6 @@ ${docTypeList}
 
 DISCIPLINES: ${disciplines.map((d: any) => `${d.code}=${d.name}`).join(', ')}
 STATUS CODES: ${statuses.map((s: any) => `${s.code}=${s.description}`).join(', ')}
+${knowledgeBlock}
 ===`;
 }
