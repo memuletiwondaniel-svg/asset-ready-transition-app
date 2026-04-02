@@ -76,12 +76,16 @@ Deno.serve(async (req) => {
             "6611": 9,   // Master Document Register
           };
 
-          const queueRows = types.map((t: any) => ({
-            type_code: t.code,
-            type_name: t.document_name,
-            status: "pending",
-            priority: priorityMap[t.code] || 50 + Math.floor(Math.random() * 50),
-          }));
+          // Deduplicate by type_code
+          const seen = new Set<string>();
+          const queueRows = types
+            .filter((t: any) => { if (seen.has(t.code)) return false; seen.add(t.code); return true; })
+            .map((t: any) => ({
+              type_code: t.code,
+              type_name: t.document_name,
+              status: "pending",
+              priority: priorityMap[t.code] || 50 + Math.floor(Math.random() * 50),
+            }));
 
           const { error: seedErr } = await supabase.from("selma_training_queue").upsert(queueRows, { onConflict: "type_code" });
           if (seedErr) {
