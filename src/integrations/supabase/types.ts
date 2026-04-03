@@ -1323,6 +1323,75 @@ export type Database = {
         }
         Relationships: []
       }
+      dms_reserved_numbers: {
+        Row: {
+          created_at: string | null
+          discipline_code: string | null
+          document_number: string
+          document_type_code: string
+          id: string
+          package_tag: string | null
+          project_id: string | null
+          reserved_at: string | null
+          reserved_by: string | null
+          source_id: string | null
+          source_table: string | null
+          status: string | null
+          tenant_id: string | null
+          unit_code: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          discipline_code?: string | null
+          document_number: string
+          document_type_code: string
+          id?: string
+          package_tag?: string | null
+          project_id?: string | null
+          reserved_at?: string | null
+          reserved_by?: string | null
+          source_id?: string | null
+          source_table?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          unit_code?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          discipline_code?: string | null
+          document_number?: string
+          document_type_code?: string
+          id?: string
+          package_tag?: string | null
+          project_id?: string | null
+          reserved_at?: string | null
+          reserved_by?: string | null
+          source_id?: string | null
+          source_table?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          unit_code?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dms_reserved_numbers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dms_reserved_numbers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_enriched"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dms_sites: {
         Row: {
           code: string
@@ -6463,10 +6532,15 @@ export type Database = {
           created_at: string
           description: string | null
           display_order: number
+          dms_status: string | null
+          document_number: string | null
+          document_type_code: string | null
           handover_point_id: string
           id: string
           notes: string | null
           responsible_person: string | null
+          rlmu_file_path: string | null
+          rlmu_status: string | null
           status: string
           target_date: string | null
           title: string
@@ -6477,10 +6551,15 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number
+          dms_status?: string | null
+          document_number?: string | null
+          document_type_code?: string | null
           handover_point_id: string
           id?: string
           notes?: string | null
           responsible_person?: string | null
+          rlmu_file_path?: string | null
+          rlmu_status?: string | null
           status?: string
           target_date?: string | null
           title: string
@@ -6491,10 +6570,15 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number
+          dms_status?: string | null
+          document_number?: string | null
+          document_type_code?: string | null
           handover_point_id?: string
           id?: string
           notes?: string | null
           responsible_person?: string | null
+          rlmu_file_path?: string | null
+          rlmu_status?: string | null
           status?: string
           target_date?: string | null
           title?: string
@@ -6791,12 +6875,17 @@ export type Database = {
           created_at: string
           description: string | null
           display_order: number
+          dms_status: string | null
+          document_number: string | null
+          document_type_code: string | null
           handover_point_id: string
           id: string
           name: string | null
           notes: string | null
           register_type: string | null
           responsible_person: string | null
+          rlmu_file_path: string | null
+          rlmu_status: string | null
           status: string
           target_date: string | null
           updated_at: string
@@ -6807,12 +6896,17 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number
+          dms_status?: string | null
+          document_number?: string | null
+          document_type_code?: string | null
           handover_point_id: string
           id?: string
           name?: string | null
           notes?: string | null
           register_type?: string | null
           responsible_person?: string | null
+          rlmu_file_path?: string | null
+          rlmu_status?: string | null
           status?: string
           target_date?: string | null
           updated_at?: string
@@ -6823,12 +6917,17 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number
+          dms_status?: string | null
+          document_number?: string | null
+          document_type_code?: string | null
           handover_point_id?: string
           id?: string
           name?: string | null
           notes?: string | null
           register_type?: string | null
           responsible_person?: string | null
+          rlmu_file_path?: string | null
+          rlmu_status?: string | null
           status?: string
           target_date?: string | null
           updated_at?: string
@@ -9773,6 +9872,42 @@ export type Database = {
           },
         ]
       }
+      rlmu_reviews: {
+        Row: {
+          created_at: string | null
+          file_path: string
+          findings: Json | null
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_id: string
+          source_table: string
+          verdict: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_path: string
+          findings?: Json | null
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_id: string
+          source_table: string
+          verdict: string
+        }
+        Update: {
+          created_at?: string | null
+          file_path?: string
+          findings?: Json | null
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_id?: string
+          source_table?: string
+          verdict?: string
+        }
+        Relationships: []
+      }
       role_category: {
         Row: {
           created_at: string
@@ -11574,8 +11709,10 @@ export type Database = {
       }
       vcr_document_requirements: {
         Row: {
+          assigned_document_number: string | null
           created_at: string | null
           discipline_code: string | null
+          dms_status: string | null
           document_scope: string | null
           document_type_id: string | null
           id: string
@@ -11584,14 +11721,20 @@ export type Database = {
           is_mdr: boolean | null
           package_tag: string | null
           po_number: string | null
+          rlmu_file_path: string | null
+          rlmu_review_findings: Json | null
+          rlmu_reviewed_at: string | null
+          rlmu_status: string | null
           status: string | null
           tenant_id: string | null
           vcr_id: string | null
           vendor_po_sequence: string | null
         }
         Insert: {
+          assigned_document_number?: string | null
           created_at?: string | null
           discipline_code?: string | null
+          dms_status?: string | null
           document_scope?: string | null
           document_type_id?: string | null
           id?: string
@@ -11600,14 +11743,20 @@ export type Database = {
           is_mdr?: boolean | null
           package_tag?: string | null
           po_number?: string | null
+          rlmu_file_path?: string | null
+          rlmu_review_findings?: Json | null
+          rlmu_reviewed_at?: string | null
+          rlmu_status?: string | null
           status?: string | null
           tenant_id?: string | null
           vcr_id?: string | null
           vendor_po_sequence?: string | null
         }
         Update: {
+          assigned_document_number?: string | null
           created_at?: string | null
           discipline_code?: string | null
+          dms_status?: string | null
           document_scope?: string | null
           document_type_id?: string | null
           id?: string
@@ -11616,6 +11765,10 @@ export type Database = {
           is_mdr?: boolean | null
           package_tag?: string | null
           po_number?: string | null
+          rlmu_file_path?: string | null
+          rlmu_review_findings?: Json | null
+          rlmu_reviewed_at?: string | null
+          rlmu_status?: string | null
           status?: string | null
           tenant_id?: string | null
           vcr_id?: string | null
