@@ -1,46 +1,69 @@
 
 
-# Set Up Cron Jobs + Increase Training Throughput
+# VCR Plan Workflow — Current Status and Completion Roadmap
 
-## Overview
+## What's Already Built
 
-Three changes needed:
-1. **Fix `selma-performance-scorer`** — remove the JWT auth guard so cron can call it (cron sends anon key, not a user session)
-2. **Increase knowledge builder throughput** — process 3-5 document types per invocation instead of 1
-3. **Create pg_cron scheduled jobs** — via SQL insert (not migration, since it contains project-specific keys)
+All 8 wizard steps exist and are functional:
 
-## Changes
+| Step | Component | Status |
+|------|-----------|--------|
+| 1. VCR Items | `VCRItemsStep.tsx` | Built — prerequisite checklist items |
+| 2. Training | `TrainingStep.tsx` | Built — training records with add wizard |
+| 3. Procedures | `ProceduresStep.tsx` | Built — procedure identification |
+| 4. Critical Documents | `CriticalDocumentsStep.tsx` + `CriticalDocsWizard` (3-step sub-wizard) | Built — tier badges, RLMU status badges, document selection by discipline/package |
+| 5. Op. Registers | `OperationalRegistersStep.tsx` | Built — catalog-based selection |
+| 6. Logsheets | `LogsheetsStep.tsx` | Built — manual entry with display order |
+| 7. ITP | `InspectionTestPlanStep.tsx` | Built — witness/hold points per system |
+| 8. Approvers | `ApproversStep.tsx` | Built — auto-resolved from personnel with region/plant matching |
 
-### 1. Fix `selma-performance-scorer/index.ts`
-Remove the JWT auth guard (lines 14-27). The cron job will call this with the anon key in the Authorization header, which will fail the `getClaims` check. Replace with a simple service-role approach — the function already uses `SUPABASE_SERVICE_ROLE_KEY` for its actual work.
+Supporting infrastructure: wizard shell, progress sync to `ora_plan_activities` and `user_tasks`, step completion tracking, save-and-exit, VCR ID badges.
 
-### 2. Modify `selma-knowledge-builder/index.ts` — Process 3-5 Types Per Run
-Change the queue fetch from `.limit(1).maybeSingle()` to `.limit(5)` and wrap the processing logic in a loop. Each type is processed sequentially within a single invocation. If one fails, mark it as failed and continue to the next. Return a summary of all types processed.
+## What's NOT Yet Built (the Selma Integration Layer)
 
-### 3. Set Up pg_cron Jobs via SQL
-Run SQL directly (not a migration) to schedule:
+The wizard captures *what* is needed but lacks intelligence, automation, and lifecycle tracking. Here is the remaining work, organized into 4 implementation phases:
 
-- **`selma-knowledge-builder`**: Daily at 10:00 AM UTC (1 hour after the daily sync at 9 AM)
-  - Cron expression: `0 10 * * *`
-- **`selma-performance-scorer`**: Daily at 11:00 AM UTC
-  - Cron expression: `0 11 * * *`
+### Phase 1 — Schema Foundation (1 session)
+- Add `rlmu_status`, `rlmu_file_path`, `dms_status`, `document_number`, `document_type_code` columns to `p2a_vcr_register_selections` and `p2a_vcr_logsheets`
+- Add `assigned_document_number` to `vcr_document_requirements`
+- Create `rlmu_reviews` table (polymorphic: covers critical docs, registers, logsheets)
+- Create `dms_reserved_numbers` table for document number reservation
+- Create `rlmu-uploads` storage bucket
+- Add trigger: auto-set `rlmu_status = 'pending'` when linked doc type has `rlmu = 'Yes'`
 
-Both call the edge function URL with the anon key.
+### Phase 2 — Selma Tools and Prompt (2-3 sessions)
+- **`check_vcr_document_readiness`** tool — queries all 3 deliverable tables, joins `dms_document_types` for tier/RLMU, checks Assai live status, returns unified readiness report
+- **`get_checklist_document_insights`** tool — cross-references checklist items with live document status, provides actionable recommendations
+- **`assign_document_numbers`** tool — reserves next sequential 9-segment numbers in `dms_reserved_numbers`
+- **`organize_project_documents`** tool — hierarchical views by discipline or package
+- Update `prompt.ts` with Tier 1/2 domain knowledge, RLMU lifecycle rules, proactive recommendation patterns
+- Add tool handlers in `ai-chat/index.ts`
 
-## Technical Details
+### Phase 3 — RLMU Review Automation (1-2 sessions)
+- New edge function `selma-rlmu-reviewer` using Claude Vision
+- Checks: RLMU stamp, scan quality, redline completeness, document number match
+- On pass: auto-creates DC upload task
+- On fail: creates specific remediation tasks with full history
+- Wire into upload flow across all 3 deliverable steps
 
-| Item | Detail |
-|------|--------|
-| Throughput increase | 5 types/day × 30 days = 150 types in first month; top 9 priority types done in 2 days |
-| Cron scheduling | Uses `pg_cron` + `pg_net` extensions (must be enabled) |
-| Auth fix | Performance scorer drops JWT guard, relies on service role key internally |
-| Edge function timeout | ~60-90s per type × 5 = 5-7 min total; within Supabase Pro limits |
+### Phase 4 — UI Enhancements (2-3 sessions)
+- **CriticalDocumentsStep**: add RLMU file upload action, Selma review results display, "Assign Numbers" button for new documents
+- **OperationalRegistersStep**: add document number, DMS status badge, RLMU status badge, upload action
+- **LogsheetsStep**: same DMS enhancements as registers
+- **TaskDetailSheet**: handle `rlmu_upload` task type with integrated review feedback
+- **ProjectDocumentBrowser**: new component for discipline/package document organization
+- Proactive notifications: Selma suggests VCR item completion when all categories are ready
 
-## Files Modified
+## Estimated Timeline
 
-| File | Change |
-|------|--------|
-| `supabase/functions/selma-performance-scorer/index.ts` | Remove JWT auth guard |
-| `supabase/functions/selma-knowledge-builder/index.ts` | Process up to 5 types per run |
-| SQL (via insert tool) | Create 2 cron jobs |
+| Phase | Effort | Dependency |
+|-------|--------|------------|
+| Phase 1 — Schema | 1 session | None |
+| Phase 2 — Selma Tools | 2-3 sessions | Phase 1 |
+| Phase 3 — RLMU Reviewer | 1-2 sessions | Phase 1 |
+| Phase 4 — UI | 2-3 sessions | Phases 1-3 |
+
+**Total: approximately 6-9 sessions to complete the full Selma-integrated VCR Plan workflow.**
+
+The basic wizard flow (capture what's needed) is done. What remains is the intelligence layer — making Selma an active participant that tracks readiness, reviews uploads, assigns numbers, and proactively advises users.
 
