@@ -52,18 +52,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Step 1: Pick next pending type from queue
-    const { data: queueItem, error: queueErr } = await supabase
+    // Step 1: Pick next pending types from queue (up to 5 per run)
+    const { data: queueItems, error: queueErr } = await supabase
       .from("selma_training_queue")
       .select("*")
       .eq("status", "pending")
       .order("priority", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+      .limit(5);
 
     if (queueErr) throw new Error(`Queue read error: ${queueErr.message}`);
 
-    if (!queueItem) {
+    if (!queueItems || queueItems.length === 0) {
       // Check if queue is empty — seed it from dms_document_types
       const { count } = await supabase
         .from("selma_training_queue")
@@ -77,20 +76,10 @@ Deno.serve(async (req) => {
           .eq("is_active", true);
 
         if (types && types.length > 0) {
-          // Priority map — lower number = higher priority
           const priorityMap: Record<string, number> = {
-            "5507": 1,   // Basis for Design
-            "5501": 2,   // Process Flow Diagram
-            "5502": 3,   // P&ID
-            "5515": 4,   // Equipment Data Sheet
-            "5520": 5,   // ITP
-            "5511": 6,   // GA / Layout
-            "5513": 7,   // Single Line Diagram
-            "5760": 8,   // Project Execution Plan
-            "6611": 9,   // Master Document Register
+            "5507": 1, "5501": 2, "5502": 3, "5515": 4, "5520": 5,
+            "5511": 6, "5513": 7, "5760": 8, "6611": 9,
           };
-
-          // Deduplicate by type_code
           const seen = new Set<string>();
           const queueRows = types
             .filter((t: any) => { if (seen.has(t.code)) return false; seen.add(t.code); return true; })
@@ -100,15 +89,10 @@ Deno.serve(async (req) => {
               status: "pending",
               priority: priorityMap[t.code] || 50 + Math.floor(Math.random() * 50),
             }));
-
           const { error: seedErr } = await supabase.from("selma_training_queue").upsert(queueRows, { onConflict: "type_code" });
-          if (seedErr) {
-            console.error("[KnowledgeBuilder] Seed error:", seedErr.message, seedErr.details);
-          }
+          if (seedErr) console.error("[KnowledgeBuilder] Seed error:", seedErr.message);
           return new Response(JSON.stringify({
-            action: "seeded_queue",
-            types_queued: queueRows.length,
-            seed_error: seedErr?.message || null,
+            action: "seeded_queue", types_queued: queueRows.length,
             message: seedErr ? `Seeding failed: ${seedErr.message}` : "Training queue seeded. Run again to start processing.",
           }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
@@ -120,26 +104,20 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const typeCode = queueItem.type_code;
-    const typeName = queueItem.type_name || typeCode;
-    console.log(`[KnowledgeBuilder] Processing type: ${typeCode} (${typeName})`);
+    console.log(`[KnowledgeBuilder] Processing batch of ${queueItems.length} types: ${queueItems.map((q: any) => q.type_code).join(", ")}`);
 
-    // Step 2: Mark in_progress
-    await supabase
-      .from("selma_training_queue")
-      .update({ status: "in_progress", last_attempt: new Date().toISOString() })
-      .eq("id", queueItem.id);
-
-    // Step 3: Build Assai session
+    // Build Assai session once for the entire batch
     let selmaSession;
     try {
       selmaSession = await buildSelmaSessionManager(supabase);
     } catch (authErr: any) {
       console.error("[KnowledgeBuilder] Assai auth failed:", authErr.message);
-      await supabase
-        .from("selma_training_queue")
-        .update({ status: "failed", error_details: `Auth failed: ${authErr.message}` })
-        .eq("id", queueItem.id);
+      // Mark all items as failed
+      for (const item of queueItems) {
+        await supabase.from("selma_training_queue")
+          .update({ status: "failed", error_details: `Auth failed: ${authErr.message}` })
+          .eq("id", item.id);
+      }
       return new Response(JSON.stringify({ error: "Assai auth failed", details: authErr.message }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -147,78 +125,6 @@ Deno.serve(async (req) => {
 
     const { sessionManager, assaiBase } = selmaSession;
 
-    // Step 4: Search Assai for documents of this type
-    // First try a broad search (no project filter) to find any docs of this type
-    const sampleDocs: Array<{ doc_number: string; project: string; title: string; status: string }> = [];
-
-    try {
-      const searchOpts: SearchOptions = {
-        documentType: typeCode,
-        maxResults: 20,
-        username: selmaSession.username,
-        password: selmaSession.password,
-        assaiBase,
-      };
-
-      const results = await executeSearch(searchOpts, sessionManager, supabase);
-      console.log(`[KnowledgeBuilder] Broad search for type ${typeCode}: ${results.results?.length || 0} results`);
-
-      // Pick docs with mature status (AFU/AFC preferred)
-      const candidates = (results.results || [])
-        .filter((d: any) => d.status && ["AFU", "AFC", "IFA"].includes(d.status.toUpperCase()));
-
-      // Take up to 3 diverse docs (different document numbers)
-      const seen = new Set<string>();
-      for (const doc of candidates) {
-        if (seen.has(doc.document_number)) continue;
-        seen.add(doc.document_number);
-        sampleDocs.push({
-          doc_number: doc.document_number,
-          project: doc.project || "unknown",
-          title: doc.title || "",
-          status: doc.status || "",
-        });
-        if (sampleDocs.length >= 3) break;
-      }
-
-      // If no AFU/AFC, take any docs
-      if (sampleDocs.length === 0) {
-        for (const doc of (results.results || [])) {
-          if (seen.has(doc.document_number)) continue;
-          seen.add(doc.document_number);
-          sampleDocs.push({
-            doc_number: doc.document_number,
-            project: doc.project || "unknown",
-            title: doc.title || "",
-            status: doc.status || "",
-          });
-          if (sampleDocs.length >= 3) break;
-        }
-      }
-    } catch (searchErr: any) {
-      console.warn(`[KnowledgeBuilder] Search failed for type ${typeCode}: ${searchErr.message}`);
-    }
-
-    if (sampleDocs.length === 0) {
-      console.log(`[KnowledgeBuilder] No documents found for type ${typeCode} — marking skipped`);
-      await supabase
-        .from("selma_training_queue")
-        .update({
-          status: "skipped",
-          error_details: "No documents found in Assai for this type code across sampled projects",
-        })
-        .eq("id", queueItem.id);
-
-      return new Response(JSON.stringify({
-        action: "skipped",
-        type_code: typeCode,
-        reason: "No documents found",
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    console.log(`[KnowledgeBuilder] Found ${sampleDocs.length} sample docs for ${typeCode}: ${sampleDocs.map(d => d.doc_number).join(", ")}`);
-
-    // Step 5: Download and analyse each document
     const FALLBACK_CABINETS = ["BGC_PROJ", "BGC_OPS", "ISG"];
     const { data: cabinetRows } = await supabase
       .from("dms_projects")
@@ -228,183 +134,179 @@ Deno.serve(async (req) => {
       ? [...new Set(cabinetRows.map((r: any) => r.cabinet).filter(Boolean))]
       : FALLBACK_CABINETS;
 
-    const analysisResults: any[] = [];
+    const batchResults: any[] = [];
 
-    for (const doc of sampleDocs) {
+    // Process each queue item sequentially
+    for (const queueItem of queueItems) {
+      const typeCode = queueItem.type_code;
+      const typeName = queueItem.type_name || typeCode;
+      const itemStart = Date.now();
+
       try {
-        // Download via REST
-        let fileBytes: Uint8Array | null = null;
-        const cookies = await sessionManager.getSession();
+        console.log(`[KnowledgeBuilder] Processing type: ${typeCode} (${typeName})`);
 
-        for (const cabinet of cabinets as string[]) {
+        // Mark in_progress
+        await supabase.from("selma_training_queue")
+          .update({ status: "in_progress", last_attempt: new Date().toISOString() })
+          .eq("id", queueItem.id);
+
+        // Search Assai for documents of this type
+        const sampleDocs: Array<{ doc_number: string; project: string; title: string; status: string }> = [];
+
+        try {
+          const searchOpts: SearchOptions = {
+            documentType: typeCode,
+            maxResults: 20,
+            username: selmaSession.username,
+            password: selmaSession.password,
+            assaiBase,
+          };
+          const results = await executeSearch(searchOpts, sessionManager, supabase);
+          const candidates = (results.results || [])
+            .filter((d: any) => d.status && ["AFU", "AFC", "IFA"].includes(d.status.toUpperCase()));
+          const seen = new Set<string>();
+          for (const doc of candidates) {
+            if (seen.has(doc.document_number)) continue;
+            seen.add(doc.document_number);
+            sampleDocs.push({ doc_number: doc.document_number, project: doc.project || "unknown", title: doc.title || "", status: doc.status || "" });
+            if (sampleDocs.length >= 3) break;
+          }
+          if (sampleDocs.length === 0) {
+            for (const doc of (results.results || [])) {
+              if (seen.has(doc.document_number)) continue;
+              seen.add(doc.document_number);
+              sampleDocs.push({ doc_number: doc.document_number, project: doc.project || "unknown", title: doc.title || "", status: doc.status || "" });
+              if (sampleDocs.length >= 3) break;
+            }
+          }
+        } catch (searchErr: any) {
+          console.warn(`[KnowledgeBuilder] Search failed for ${typeCode}: ${searchErr.message}`);
+        }
+
+        if (sampleDocs.length === 0) {
+          await supabase.from("selma_training_queue")
+            .update({ status: "skipped", error_details: "No documents found in Assai" })
+            .eq("id", queueItem.id);
+          batchResults.push({ type_code: typeCode, action: "skipped", reason: "No documents found" });
+          continue;
+        }
+
+        // Download and analyse each document
+        const analysisResults: any[] = [];
+        for (const doc of sampleDocs) {
           try {
-            const url = `${assaiBase}/get/download/${cabinet}/DOCS/${doc.doc_number}`;
-            const controller = new AbortController();
-            const tid = setTimeout(() => controller.abort(), 20000);
-            const res = await fetch(url, {
-              headers: { Cookie: cookies, "User-Agent": "Mozilla/5.0" },
-              signal: controller.signal,
-              redirect: "manual",
-            });
-            clearTimeout(tid);
+            let fileBytes: Uint8Array | null = null;
+            const cookies = await sessionManager.getSession();
+            for (const cabinet of cabinets as string[]) {
+              try {
+                const url = `${assaiBase}/get/download/${cabinet}/DOCS/${doc.doc_number}`;
+                const controller = new AbortController();
+                const tid = setTimeout(() => controller.abort(), 20000);
+                const res = await fetch(url, { headers: { Cookie: cookies, "User-Agent": "Mozilla/5.0" }, signal: controller.signal, redirect: "manual" });
+                clearTimeout(tid);
+                if (res.status === 301 || res.status === 302) continue;
+                if (!res.ok) { await res.text(); continue; }
+                const bytes = new Uint8Array(await res.arrayBuffer());
+                const ct = res.headers.get("content-type") || "";
+                if (ct.includes("text/html") || bytes.length < 500) continue;
+                if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) { fileBytes = bytes; break; }
+              } catch { continue; }
+            }
+            if (!fileBytes) continue;
 
-            if (res.status === 301 || res.status === 302) continue;
-            if (!res.ok) { await res.text(); continue; }
+            let binary = "";
+            for (let i = 0; i < fileBytes.length; i++) binary += String.fromCharCode(fileBytes[i]);
+            const b64 = btoa(binary);
 
-            const bytes = new Uint8Array(await res.arrayBuffer());
-            const ct = res.headers.get("content-type") || "";
-            if (ct.includes("text/html") || bytes.length < 500) continue;
+            const docBlock: any = { type: "document", source: { type: "base64", media_type: "application/pdf", data: b64 } };
+            const makeRequest = async (pages?: number[]) => {
+              const block = { ...docBlock };
+              if (pages) block.pages = pages;
+              return fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: { "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+                body: JSON.stringify({
+                  model: "claude-sonnet-4-5-20250929",
+                  max_tokens: 2000,
+                  messages: [{ role: "user", content: [block, { type: "text", text: KNOWLEDGE_EXTRACTION_PROMPT }] }],
+                }),
+              });
+            };
 
-            // Check it's a PDF
-            if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) {
-              fileBytes = bytes;
-              break;
+            let claudeRes = await makeRequest();
+            if (!claudeRes.ok) {
+              const errText = await claudeRes.text();
+              if (errText.includes("100 PDF pages") || errText.includes("maximum")) {
+                claudeRes = await makeRequest(Array.from({ length: 100 }, (_, i) => i + 1));
+                if (!claudeRes.ok) continue;
+              } else continue;
+            }
+
+            const result = await claudeRes.json();
+            const textContent = (result.content || []).filter((b: any) => b.type === "text").map((b: any) => b.text).join("\n");
+            const jsonMatch = textContent.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              try {
+                const parsed = JSON.parse(jsonMatch[0]);
+                analysisResults.push({ doc_number: doc.doc_number, project: doc.project, ...parsed });
+              } catch { /* skip */ }
             }
           } catch { continue; }
         }
 
-        if (!fileBytes) {
-          console.warn(`[KnowledgeBuilder] Could not download ${doc.doc_number}`);
+        if (analysisResults.length === 0) {
+          await supabase.from("selma_training_queue")
+            .update({ status: "failed", error_details: "Claude analysis produced no results" })
+            .eq("id", queueItem.id);
+          batchResults.push({ type_code: typeCode, action: "failed", reason: "No analysis results" });
           continue;
         }
 
-        // Base64 encode
-        let binary = "";
-        for (let i = 0; i < fileBytes.length; i++) {
-          binary += String.fromCharCode(fileBytes[i]);
-        }
-        const b64 = btoa(binary);
-
-        // Send to Claude for knowledge extraction
-        const docBlock: any = { type: "document", source: { type: "base64", media_type: "application/pdf", data: b64 } };
-        // Limit to 100 pages
-        const makeRequest = async (pages?: number[]) => {
-          const block = { ...docBlock };
-          if (pages) block.pages = pages;
-          return fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: {
-              "x-api-key": ANTHROPIC_KEY,
-              "anthropic-version": "2023-06-01",
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "claude-sonnet-4-5-20250929",
-              max_tokens: 2000,
-              messages: [{
-                role: "user",
-                content: [block, { type: "text", text: KNOWLEDGE_EXTRACTION_PROMPT }],
-              }],
-            }),
-          });
+        // Merge insights
+        const mergeArrays = (key: string): string[] => [...new Set(analysisResults.flatMap(r => r[key] || []))];
+        const merged = {
+          type_code: typeCode,
+          type_name: typeName,
+          purpose: analysisResults[0]?.purpose || null,
+          typical_structure: mergeArrays("typical_structure"),
+          key_themes: mergeArrays("key_themes"),
+          handover_relevance: analysisResults[0]?.handover_relevance || null,
+          cross_references: mergeArrays("cross_references"),
+          selma_tips: analysisResults[0]?.selma_tips || null,
+          avg_page_count: Math.round(analysisResults.reduce((sum, r) => sum + (r.avg_page_count || 0), 0) / analysisResults.length),
+          sample_projects: sampleDocs.map(d => d.project),
+          confidence: Math.min(0.95, 0.5 + analysisResults.length * 0.15),
+          documents_analyzed: sampleDocs.length,
+          last_trained_at: new Date().toISOString(),
         };
 
-        let claudeRes = await makeRequest();
-        if (!claudeRes.ok) {
-          const errText = await claudeRes.text();
-          if (errText.includes("100 PDF pages") || errText.includes("maximum")) {
-            claudeRes = await makeRequest(Array.from({ length: 100 }, (_, i) => i + 1));
-            if (!claudeRes.ok) { console.warn(`[KnowledgeBuilder] Claude retry failed for ${doc.doc_number}`); continue; }
-          } else {
-            console.warn(`[KnowledgeBuilder] Claude error for ${doc.doc_number}: ${errText.substring(0, 200)}`);
-            continue;
-          }
+        const { error: upsertErr } = await supabase.from("selma_document_type_knowledge").upsert(merged, { onConflict: "type_code" });
+        if (upsertErr) {
+          await supabase.from("selma_training_queue").update({ status: "failed", error_details: `DB upsert: ${upsertErr.message}` }).eq("id", queueItem.id);
+          batchResults.push({ type_code: typeCode, action: "failed", reason: upsertErr.message });
+          continue;
         }
 
-        const result = await claudeRes.json();
-        const textContent = (result.content || [])
-          .filter((b: any) => b.type === "text")
-          .map((b: any) => b.text)
-          .join("\n");
+        await supabase.from("selma_training_queue").update({ status: "completed", documents_sampled: sampleDocs, error_details: null }).eq("id", queueItem.id);
+        const elapsed = Date.now() - itemStart;
+        console.log(`[KnowledgeBuilder] ✅ ${typeCode} completed in ${elapsed}ms`);
+        batchResults.push({ type_code: typeCode, action: "completed", documents_analyzed: analysisResults.length, confidence: merged.confidence, elapsed_ms: elapsed });
 
-        // Parse JSON from Claude response
-        const jsonMatch = textContent.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          try {
-            const parsed = JSON.parse(jsonMatch[0]);
-            analysisResults.push({ doc_number: doc.doc_number, project: doc.project, ...parsed });
-          } catch {
-            console.warn(`[KnowledgeBuilder] JSON parse failed for ${doc.doc_number}`);
-          }
-        }
-      } catch (docErr: any) {
-        console.warn(`[KnowledgeBuilder] Error processing ${doc.doc_number}: ${docErr.message}`);
+      } catch (itemErr: any) {
+        console.error(`[KnowledgeBuilder] Error processing ${typeCode}:`, itemErr.message);
+        await supabase.from("selma_training_queue").update({ status: "failed", error_details: itemErr.message }).eq("id", queueItem.id);
+        batchResults.push({ type_code: typeCode, action: "failed", reason: itemErr.message });
       }
     }
 
-    if (analysisResults.length === 0) {
-      await supabase
-        .from("selma_training_queue")
-        .update({ status: "failed", error_details: "Downloaded docs but Claude analysis produced no results" })
-        .eq("id", queueItem.id);
-
-      return new Response(JSON.stringify({
-        action: "failed",
-        type_code: typeCode,
-        reason: "Analysis produced no results",
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    // Step 6: Merge insights across documents
-    const mergeArrays = (key: string): string[] => {
-      const all = analysisResults.flatMap(r => r[key] || []);
-      return [...new Set(all)];
-    };
-
-    const merged = {
-      type_code: typeCode,
-      type_name: typeName,
-      purpose: analysisResults[0]?.purpose || null,
-      typical_structure: mergeArrays("typical_structure"),
-      key_themes: mergeArrays("key_themes"),
-      handover_relevance: analysisResults[0]?.handover_relevance || null,
-      cross_references: mergeArrays("cross_references"),
-      selma_tips: analysisResults[0]?.selma_tips || null,
-      avg_page_count: Math.round(
-        analysisResults.reduce((sum, r) => sum + (r.avg_page_count || 0), 0) / analysisResults.length
-      ),
-      sample_projects: sampleDocs.map(d => d.project),
-      confidence: Math.min(0.95, 0.5 + analysisResults.length * 0.15),
-      documents_analyzed: sampleDocs.length,
-      last_trained_at: new Date().toISOString(),
-    };
-
-    // Step 7: Upsert knowledge
-    const { error: upsertErr } = await supabase
-      .from("selma_document_type_knowledge")
-      .upsert(merged, { onConflict: "type_code" });
-
-    if (upsertErr) {
-      console.error("[KnowledgeBuilder] Upsert error:", upsertErr.message);
-      await supabase
-        .from("selma_training_queue")
-        .update({ status: "failed", error_details: `DB upsert failed: ${upsertErr.message}` })
-        .eq("id", queueItem.id);
-      throw new Error(`Upsert failed: ${upsertErr.message}`);
-    }
-
-    // Step 8: Mark completed
-    await supabase
-      .from("selma_training_queue")
-      .update({
-        status: "completed",
-        documents_sampled: sampleDocs,
-        error_details: null,
-      })
-      .eq("id", queueItem.id);
-
-    const elapsed = Date.now() - startTime;
-    console.log(`[KnowledgeBuilder] ✅ ${typeCode} completed in ${elapsed}ms — ${analysisResults.length} docs analysed`);
+    const totalElapsed = Date.now() - startTime;
+    console.log(`[KnowledgeBuilder] Batch complete: ${batchResults.length} types in ${totalElapsed}ms`);
 
     return new Response(JSON.stringify({
-      action: "completed",
-      type_code: typeCode,
-      type_name: typeName,
-      documents_analyzed: analysisResults.length,
-      documents_sampled: sampleDocs.map(d => d.doc_number),
-      knowledge_keys: Object.keys(merged),
-      confidence: merged.confidence,
-      elapsed_ms: elapsed,
+      action: "batch_completed",
+      types_processed: batchResults.length,
+      results: batchResults,
+      elapsed_ms: totalElapsed,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err: any) {
