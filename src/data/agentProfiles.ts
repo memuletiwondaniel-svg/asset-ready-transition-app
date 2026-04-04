@@ -191,12 +191,12 @@ export const agentProfiles: AgentProfile[] = [
   {
     code: 'alex',
     name: 'Alex',
-    role: 'CMMS & Maintenance',
+    role: 'Maintenance & Inspection System Build',
     avatar: alexAvatar,
     status: 'planned',
     gradient: 'from-cyan-600 to-slate-600',
     accentColor: 'hsl(190, 50%, 45%)',
-    introduction: "I'm Alex — the CMMS & Maintenance Intelligence agent. My specialty is extracting technical data from engineering drawings and documents to build comprehensive asset registers and CMMS datasets. I'm being designed to automate one of the most tedious parts of asset management.",
+    introduction: "I'm Alex — the Maintenance & Inspection System Build specialist. My focus is extracting technical data from engineering drawings and documents to build comprehensive asset registers, CMMS datasets, and inspection management frameworks. I automate one of the most tedious parts of asset management — turning drawings into structured, actionable maintenance data.",
     specializations: [
       'Technical data extraction from drawings',
       'Asset register construction',
