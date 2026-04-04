@@ -279,11 +279,10 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <ul className="list-disc list-inside space-y-1 text-xs mt-3">
                   <li><strong className="text-foreground">CoPilot (Bob):</strong> Claude Sonnet 4.5 — strong reasoning for multi-domain routing, tool selection, and nuanced responses</li>
                   <li><strong className="text-foreground">Selma (Document Intelligence):</strong> Claude Sonnet 4.5 — accurate SQL-based analysis and status calculations</li>
-                  <li><strong className="text-foreground">Fred (PSSR/ORA):</strong> Claude Sonnet 4.5 — safety-critical domain requiring high accuracy</li>
-                  <li><strong className="text-foreground">Hannah (P2A Handover):</strong> Claude Sonnet 4.5 — cross-agent readiness orchestration requiring complex multi-source aggregation</li>
-                  <li><strong className="text-foreground">Ivan (Process TA):</strong> Claude Sonnet 4.5 — process safety domain requiring precision, cumulative risk assessment, and cross-agent aggregation</li>
-                  <li><strong className="text-foreground">Zain — Training Intelligence (planned):</strong> Will use Claude Haiku — training queries are structured and domain-specific</li>
-                  <li><strong className="text-foreground">Alex — CMMS & Maintenance (planned):</strong> Will use Claude Haiku — maintenance queries are lookup-heavy, speed matters</li>
+                  <li><strong className="text-foreground">Fred (Commissioning & Hardware Readiness):</strong> Claude Sonnet 4.5 — completions data analysis, GoCompletions integration</li>
+                  <li><strong className="text-foreground">Ivan (Technical Authority):</strong> Claude Sonnet 4.5 — process safety domain requiring precision, cumulative risk assessment, and cross-agent aggregation</li>
+                  <li><strong className="text-foreground">Zain — Training & Competence Development (planned):</strong> Will use Claude Haiku — competency queries are structured and domain-specific</li>
+                  <li><strong className="text-foreground">Alex — Maintenance & Inspection System Build (planned):</strong> Will use Claude Haiku — maintenance queries are lookup-heavy, speed matters</li>
                   
                 </ul>
               </CardContent>
