@@ -23,7 +23,7 @@ const AgentRelationshipMap: React.FC<AgentRelationshipMapProps> = ({ onAgentClic
           onClick={() => onAgentClick('bob')}
         >
           <div className={cn(
-            "w-16 h-16 rounded-full overflow-hidden border-2 border-amber-400/50 group-hover:border-amber-400 transition-all shadow-lg shadow-amber-500/20 group-hover:scale-110"
+            "w-16 h-16 rounded-full overflow-hidden border-2 border-amber-400/50 group-hover:border-amber-400 transition-all duration-300 shadow-lg shadow-amber-500/20 group-hover:scale-[1.35]"
           )}>
             <img src={bob.avatar} alt={bob.name} className="w-full h-full object-cover" loading="lazy" />
           </div>
