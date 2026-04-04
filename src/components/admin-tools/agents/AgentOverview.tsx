@@ -53,15 +53,6 @@ const AgentOverview: React.FC<AgentOverviewProps> = ({ onAgentClick }) => {
         </CardContent>
       </Card>
 
-      {/* Agent Grid */}
-      <div>
-        <h3 className="text-sm font-semibold text-foreground mb-4">All Agents</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {agentProfiles.map((agent) => (
-            <AgentCard key={agent.code} agent={agent} onClick={() => onAgentClick(agent.code)} />
-          ))}
-        </div>
-      </div>
     </div>
   );
 };
