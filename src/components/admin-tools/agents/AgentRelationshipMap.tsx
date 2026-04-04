@@ -23,7 +23,7 @@ const AgentRelationshipMap: React.FC<AgentRelationshipMapProps> = ({ onAgentClic
           onClick={() => onAgentClick('bob')}
         >
           <div className={cn(
-            "w-16 h-16 rounded-full overflow-hidden border-2 border-amber-400/50 group-hover:border-amber-400 transition-all shadow-lg shadow-amber-500/20 group-hover:scale-110"
+            "w-16 h-16 rounded-full overflow-hidden border-2 border-amber-400/50 group-hover:border-amber-400 transition-all duration-300 shadow-lg shadow-amber-500/20 group-hover:scale-[1.35]"
           )}>
             <img src={bob.avatar} alt={bob.name} className="w-full h-full object-cover" loading="lazy" />
           </div>
@@ -46,18 +46,13 @@ const AgentRelationshipMap: React.FC<AgentRelationshipMapProps> = ({ onAgentClic
               className="flex flex-col items-center gap-1.5 cursor-pointer group w-[100px]"
               onClick={() => onAgentClick(agent.code)}
             >
-              <div className="relative">
-                <div className={cn(
-                  "w-12 h-12 rounded-full overflow-hidden border-2 transition-all",
-                  agent.status === 'active' 
-                    ? 'border-border/50 group-hover:border-primary/50 group-hover:scale-110 shadow-md' 
-                    : 'border-border/30 opacity-60 group-hover:opacity-80 group-hover:scale-105'
-                )}>
-                  <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" loading="lazy" />
-                </div>
-                {agent.status === 'active' && (
-                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-background rounded-full" />
-                )}
+              <div className={cn(
+                "w-12 h-12 rounded-full overflow-hidden border-2 transition-all duration-300",
+                agent.status === 'active' 
+                  ? 'border-border/50 group-hover:border-primary/50 group-hover:scale-[1.35] shadow-md' 
+                  : 'border-border/30 opacity-60 group-hover:opacity-80 group-hover:scale-125'
+              )}>
+                <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" loading="lazy" />
               </div>
               <span className="text-[11px] font-medium text-foreground group-hover:text-primary transition-colors">
                 {agent.name}
