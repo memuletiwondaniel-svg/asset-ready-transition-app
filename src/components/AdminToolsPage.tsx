@@ -710,8 +710,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                         </button>
                         <div className="flex items-start gap-3 pr-6 w-full">
                           {(item as any).avatarSrc ? (
-                            <div className={`w-9 h-9 aspect-square rounded-full shrink-0 group-hover:scale-110 transition-transform duration-300 ring-[1.5px] ring-offset-1 ring-offset-card`} style={{ '--tw-ring-color': `var(--agent-ring, hsl(var(--border)))` } as any}>
-                              <img src={(item as any).avatarSrc} alt={item.title} className="w-full h-full object-cover rounded-full" loading="lazy" />
+                            <div className="w-9 h-9 aspect-square rounded-full shrink-0 group-hover:scale-110 transition-transform duration-300 overflow-hidden border-2 border-border/60">
+                              <img src={(item as any).avatarSrc} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
                             </div>
                           ) : (
                             <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
