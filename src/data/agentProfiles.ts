@@ -1,7 +1,7 @@
 import bobAvatar from '@/assets/agents/bob.jpg';
 import selmaAvatar from '@/assets/agents/selma.jpg';
 import fredAvatar from '@/assets/agents/fred.jpg';
-import hannahAvatar from '@/assets/agents/hannah.jpg';
+
 import ivanAvatar from '@/assets/agents/ivan.jpg';
 import zainAvatar from '@/assets/agents/zain.jpg';
 import alexAvatar from '@/assets/agents/alex.jpg';
