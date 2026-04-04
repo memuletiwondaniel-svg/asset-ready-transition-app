@@ -632,15 +632,15 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
               <Card className="bg-muted/30 border-border border-dashed">
                 <CardContent className="pt-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">6. Zain — Training Intelligence (Planned)</h3>
-                  <p className="text-xs text-muted-foreground">Claude Haiku — training plan analysis, competency gaps, cost tracking.</p>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">5. Zain — Training & Competence Development (Planned)</h3>
+                  <p className="text-xs text-muted-foreground">Claude Haiku — competence management, OperatorSuite integration, training gap analysis.</p>
                 </CardContent>
               </Card>
 
               <Card className="bg-muted/30 border-border border-dashed">
                 <CardContent className="pt-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">7. Alex — CMMS & Maintenance Intelligence (Planned)</h3>
-                  <p className="text-xs text-muted-foreground">Claude Haiku — equipment care, spare parts, maintenance readiness.</p>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">6. Alex — Maintenance & Inspection System Build (Planned)</h3>
+                  <p className="text-xs text-muted-foreground">Claude Haiku — asset registers, CMMS data, inspection frameworks.</p>
                 </CardContent>
               </Card>
             </div>
