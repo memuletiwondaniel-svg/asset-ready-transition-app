@@ -23,6 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CriticalDocsWizard } from './critical-docs/CriticalDocsWizard';
+import { RlmuStatusBadge, DmsStatusBadge, DocumentNumberChip, RlmuUploadButton } from './shared/DmsStatusBadges';
 
 interface CriticalDocumentsStepProps {
   vcrId: string;

@@ -17,6 +17,7 @@ import {
 import { ScrollText, Plus, Trash2, User, Calendar, Search, X, RefreshCw, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { RlmuStatusBadge, DmsStatusBadge, DocumentNumberChip, RlmuUploadButton } from './shared/DmsStatusBadges';
 
 interface LogsheetsStepProps {
   vcrId: string;
