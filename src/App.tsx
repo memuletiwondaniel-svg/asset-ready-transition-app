@@ -38,6 +38,7 @@ import BacklogPage from "@/pages/BacklogPage";
 
 const SelmaValidation = React.lazy(() => import("@/pages/admin/SelmaValidation"));
 const SelmaAnalytics = React.lazy(() => import("@/pages/admin/SelmaAnalytics"));
+const AIAgentHub = React.lazy(() => import("@/pages/admin/AIAgentHub"));
 
 // Create QueryClient outside component to prevent recreation on every render
 const queryClient = new QueryClient({
