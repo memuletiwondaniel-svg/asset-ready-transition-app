@@ -131,8 +131,8 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">
                 ORSH employs a <strong className="text-foreground">Google A2A-inspired multi-agent architecture</strong> where 
                 <strong className="text-foreground"> Bob</strong> (the CoPilot) serves as the central orchestrator, routing queries to 
-                specialist domain agents via a structured Agent-to-Agent (A2A) communication protocol. <strong className="text-foreground">Hannah</strong> (P2A Handover Intelligence) 
-                serves as the cross-agent readiness conductor, aggregating data from Selma, Fred, Zain, and Alex into handover verdicts. Each agent has its own 
+                specialist domain agents via a structured Agent-to-Agent (A2A) communication protocol. <strong className="text-foreground">Ivan</strong> (Technical Authority) 
+                serves as the cross-agent readiness conductor, aggregating data from Selma, Fred, Zain, and Alex to deliver Safe-to-Start verdicts. Each agent has its own 
                 optimized LLM model, tool registry, and domain knowledge — enabling independent scaling, training, and improvement.
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed">
