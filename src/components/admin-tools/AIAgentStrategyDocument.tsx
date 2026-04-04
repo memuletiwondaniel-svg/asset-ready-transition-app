@@ -192,13 +192,13 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
                       <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
-                        <p className="font-semibold text-foreground">Fred (PSSR & Operational Readiness)</p>
-                        <p className="text-muted-foreground">Claude Sonnet 4.5 | 14 tools | Safety reviews</p>
+                        <p className="font-semibold text-foreground">Fred (Commissioning & Hardware Readiness)</p>
+                        <p className="text-muted-foreground">Claude Sonnet 4.5 | 14 tools | GoCompletions integration, ITR/punch list tracking</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
                       <div className="bg-emerald-500/5 rounded p-2 border border-emerald-500/20">
-                        <p className="font-semibold text-foreground">Hannah (P2A Handover Intelligence)</p>
-                        <p className="text-muted-foreground">Claude Sonnet 4.5 | 12 tools | Handover readiness orchestrator</p>
+                        <p className="font-semibold text-foreground">Ivan (Technical Authority)</p>
+                        <p className="text-muted-foreground">Claude Sonnet 4.5 | 17 tools | Safe-to-Start verdict, cumulative risk</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">ACTIVE</Badge>
                       </div>
                     </div>
