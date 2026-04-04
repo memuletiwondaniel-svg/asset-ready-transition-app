@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Brain } from 'lucide-react';
@@ -7,32 +7,70 @@ import { getAgentByCode } from '@/data/agentProfiles';
 import AgentOverview from '@/components/admin-tools/agents/AgentOverview';
 import AgentProfileView from '@/components/admin-tools/agents/AgentProfileView';
 
-const AIAgentHub: React.FC = () => {
-  const { agentCode } = useParams();
+interface AIAgentHubProps {
+  embedded?: boolean;
+  onBackToAdmin?: () => void;
+  initialAgentCode?: string | null;
+  initialTab?: string | null;
+}
+
+const AIAgentHub: React.FC<AIAgentHubProps> = ({
+  embedded = false,
+  onBackToAdmin,
+  initialAgentCode = null,
+  initialTab = null,
+}) => {
+  const { agentCode: routeAgentCode } = useParams();
   const navigate = useNavigate();
-  const [selectedAgent, setSelectedAgent] = useState<string | null>(agentCode || null);
+  const resolvedInitialAgent = initialAgentCode ?? routeAgentCode ?? null;
+  const [selectedAgent, setSelectedAgent] = React.useState<string | null>(resolvedInitialAgent);
+  const [selectedTab, setSelectedTab] = React.useState<string | null>(initialTab);
+
+  React.useEffect(() => {
+    setSelectedAgent(initialAgentCode ?? routeAgentCode ?? null);
+  }, [initialAgentCode, routeAgentCode]);
+
+  React.useEffect(() => {
+    setSelectedTab(initialTab ?? null);
+  }, [initialTab, initialAgentCode, routeAgentCode]);
 
   const agent = selectedAgent ? getAgentByCode(selectedAgent) : null;
 
   const handleAgentClick = (code: string) => {
     setSelectedAgent(code);
+    setSelectedTab(null);
+
+    if (embedded) {
+      return;
+    }
+
     navigate(`/admin/ai-agents/${code}`, { replace: true });
   };
 
   const handleBack = () => {
     setSelectedAgent(null);
+    setSelectedTab(null);
+
+    if (embedded) {
+      return;
+    }
+
     navigate('/admin/ai-agents', { replace: true });
   };
 
   const handleBackToAdmin = () => {
+    if (embedded) {
+      onBackToAdmin?.();
+      return;
+    }
+
     navigate('/admin-tools', { state: { activeView: 'dashboard', navKey: Date.now() } });
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
-      {/* Header */}
       <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-3 md:py-4 sticky top-0 z-10">
-        <BreadcrumbNavigation currentPageLabel="AI Agents" />
+        <BreadcrumbNavigation currentPageLabel="AI Agents" favoritePath="/admin-tools" />
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={handleBackToAdmin} className="shrink-0">
@@ -49,11 +87,15 @@ const AIAgentHub: React.FC = () => {
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 overflow-auto">
         <div className="container pt-6 pb-20 md:pb-8 max-w-5xl mx-auto px-4 md:px-6">
           {agent ? (
-            <AgentProfileView agent={agent} onBack={handleBack} onAgentClick={handleAgentClick} />
+            <AgentProfileView
+              agent={agent}
+              onBack={handleBack}
+              onAgentClick={handleAgentClick}
+              initialTab={selectedTab}
+            />
           ) : (
             <AgentOverview onAgentClick={handleAgentClick} />
           )}

@@ -22,6 +22,7 @@ interface AgentProfileViewProps {
   agent: AgentProfile;
   onBack: () => void;
   onAgentClick: (code: string) => void;
+  initialTab?: string | null;
 }
 
 const LoadingFallback = () => (
@@ -30,52 +31,71 @@ const LoadingFallback = () => (
   </div>
 );
 
-const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onBack, onAgentClick }) => {
+const AgentProfileView: React.FC<AgentProfileViewProps> = ({
+  agent,
+  onBack,
+  onAgentClick,
+  initialTab,
+}) => {
   const status = statusConfig[agent.status];
   const collaborators = agent.worksWith
     .map(code => agentProfiles.find(a => a.code === code))
     .filter(Boolean) as AgentProfile[];
 
+  const fallbackTab = agent.deepDiveTabs[0]?.toLowerCase() ?? 'configuration';
+  const preferredTab = React.useMemo(() => {
+    const normalizedInitialTab = initialTab?.toLowerCase();
+
+    if (
+      normalizedInitialTab &&
+      agent.deepDiveTabs.some(tab => tab.toLowerCase() === normalizedInitialTab)
+    ) {
+      return normalizedInitialTab;
+    }
+
+    return fallbackTab;
+  }, [agent.deepDiveTabs, fallbackTab, initialTab]);
+
+  const [activeTab, setActiveTab] = React.useState(preferredTab);
+
+  React.useEffect(() => {
+    setActiveTab(preferredTab);
+  }, [preferredTab, agent.code]);
+
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Back Button */}
       <Button variant="ghost" size="sm" onClick={onBack} className="gap-2 -ml-2">
         <ArrowLeft className="h-4 w-4" />
         Back to Overview
       </Button>
 
-      {/* Profile Header */}
       <Card className="border-border/40 overflow-hidden">
-        <div className={cn("h-2 bg-gradient-to-r", agent.gradient)} />
+        <div className={cn('h-2 bg-gradient-to-r', agent.gradient)} />
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start gap-6">
-            {/* Avatar */}
             <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-border/30 shadow-xl shrink-0">
               <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
             </div>
 
-            {/* Info */}
             <div className="flex-1 space-y-3">
               <div className="flex items-center gap-3 flex-wrap">
                 <h2 className="text-2xl font-bold text-foreground">{agent.name}</h2>
-                <span className={cn("text-xs font-medium px-2.5 py-0.5 rounded-full border", status.className)}>
+                <span className={cn('text-xs font-medium px-2.5 py-0.5 rounded-full border', status.className)}>
                   {status.label}
                 </span>
               </div>
               <p className="text-sm text-muted-foreground font-medium">{agent.role}</p>
-              
-              {/* Introduction with typewriter */}
-              <AgentIntroduction 
-                text={agent.introduction} 
-                agentName={agent.name} 
-                gradient={agent.gradient} 
+
+              <AgentIntroduction
+                text={agent.introduction}
+                agentName={agent.name}
+                gradient={agent.gradient}
               />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Works With */}
       {collaborators.length > 0 && (
         <Card className="border-border/40">
           <CardContent className="p-6">
@@ -101,7 +121,6 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onBack, onAg
         </Card>
       )}
 
-      {/* Specializations */}
       <Card className="border-border/40">
         <CardContent className="p-6">
           <AgentSpecializations
@@ -111,9 +130,8 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onBack, onAg
         </CardContent>
       </Card>
 
-      {/* Deep-Dive Tabs */}
       {agent.deepDiveTabs.length > 0 && (
-        <Tabs defaultValue={agent.deepDiveTabs[0]?.toLowerCase()} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full justify-start">
             {agent.deepDiveTabs.map((tab) => (
               <TabsTrigger key={tab} value={tab.toLowerCase()}>
@@ -122,7 +140,6 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onBack, onAg
             ))}
           </TabsList>
 
-          {/* Selma-specific deep dives */}
           {agent.code === 'selma' && (
             <>
               <TabsContent value="analytics">
