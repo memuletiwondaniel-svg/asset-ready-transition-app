@@ -72,7 +72,7 @@ export const agentProfiles: AgentProfile[] = [
       'Does not perform safety assessments',
       'Does not handle P2A handover workflows',
     ],
-    worksWith: ['bob', 'hannah', 'alex'],
+    worksWith: ['bob', 'fred', 'alex'],
     deepDiveTabs: ['Analytics', 'Validation', 'Configuration', 'Feedback'],
     statsLabel: 'Tests',
     statsValue: '31',
