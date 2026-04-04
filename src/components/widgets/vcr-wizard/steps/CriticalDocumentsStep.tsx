@@ -37,13 +37,6 @@ const TIER_COLORS: Record<string, string> = {
   tier_2: 'border-blue-300 text-blue-600',
 };
 
-const RLMU_STATUS_CLS: Record<string, string> = {
-  not_required: 'bg-muted text-muted-foreground',
-  pending: 'bg-amber-500/10 text-amber-600',
-  submitted: 'bg-blue-500/10 text-blue-600',
-  approved: 'bg-emerald-500/10 text-emerald-600',
-};
-
 export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vcrId, projectCode, plantCode, handoverPlanId }) => {
   const queryClient = useQueryClient();
   const [wizardOpen, setWizardOpen] = useState(false);
