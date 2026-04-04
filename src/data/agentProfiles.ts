@@ -134,7 +134,7 @@ export const agentProfiles: AgentProfile[] = [
     limitations: [
       "Does not manage completions data directly (Fred's domain)",
       "Does not search document management systems (Selma's domain)",
-      "Does not manage training programs (Zain's domain)",
+      "Does not manage training programs (Hannah's domain)",
     ],
     worksWith: ['bob', 'fred', 'alex', 'zain'],
     deepDiveTabs: ['Configuration', 'Feedback'],
