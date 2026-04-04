@@ -572,6 +572,19 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         </Suspense>
       </div>;
   }
+  if (activeView === 'ai-agents-hub') {
+    const state = location.state as any;
+    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          <AIAgentHub
+            embedded
+            onBackToAdmin={() => setActiveView('dashboard')}
+            initialAgentCode={state?.agentCode || null}
+            initialTab={state?.initialTab || null}
+          />
+        </Suspense>
+      </div>;
+  }
   
   // Show skeleton while initial data is loading
   if (isInitialLoading) {
