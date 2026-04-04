@@ -7432,7 +7432,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           }
         }
 
-        const isSelmaTool = selmaSession && ['resolve_document_type', 'resolve_project_code', 'search_assai_documents', 'read_assai_document', 'discover_project_vendors', 'learn_acronym'].includes(effectiveToolName);
+        const isSelmaTool = selmaSession && ['resolve_document_type', 'resolve_project_code', 'search_assai_documents', 'read_assai_document', 'discover_project_vendors', 'learn_acronym', 'check_vcr_document_readiness', 'get_checklist_document_insights', 'assign_document_numbers', 'organize_project_documents'].includes(effectiveToolName);
         // Layer 3 fallback: even without selmaSession, if this IS a Selma tool, initialize session on-the-fly
         if (!isSelmaTool && SPECIALIST_TOOL_NAMES.document_agent?.includes(effectiveToolName) && !selmaSession) {
           selmaSession = await buildSelmaSessionManager(supabaseClient);
