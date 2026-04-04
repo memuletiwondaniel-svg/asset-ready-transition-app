@@ -101,7 +101,7 @@ export const agentProfiles: AgentProfile[] = [
       "Does not make Technical Authority decisions (Ivan's domain)",
       "Does not manage training records (Zain's domain)",
     ],
-    worksWith: ['bob', 'ivan', 'hannah', 'selma'],
+    worksWith: ['bob', 'ivan', 'selma'],
     deepDiveTabs: ['Configuration', 'Feedback'],
   },
   {
