@@ -35,7 +35,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onClick, size = 'md' }) =>
         {/* Avatar */}
         <div className={cn(
           "relative rounded-full overflow-hidden border-2 border-border/30 group-hover:border-primary/30 transition-all duration-300 group-hover:scale-105",
-          size === 'sm' ? 'w-14 h-14' : 'w-20 h-20'
+          size === 'sm' ? 'w-16 h-16' : 'w-24 h-24'
         )}>
           <img 
             src={agent.avatar} 
