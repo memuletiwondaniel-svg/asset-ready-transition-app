@@ -109,6 +109,16 @@ const App = () => (
                           <SelmaAnalytics />
                         </React.Suspense>
                       } />
+                      <Route path="/admin/ai-agents" element={
+                        <React.Suspense fallback={<div className="flex items-center justify-center h-screen"><span className="text-muted-foreground">Loading...</span></div>}>
+                          <AIAgentHub />
+                        </React.Suspense>
+                      } />
+                      <Route path="/admin/ai-agents/:agentCode" element={
+                        <React.Suspense fallback={<div className="flex items-center justify-center h-screen"><span className="text-muted-foreground">Loading...</span></div>}>
+                          <AIAgentHub />
+                        </React.Suspense>
+                      } />
                     </Route>
                     
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
