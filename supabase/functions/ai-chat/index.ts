@@ -3457,7 +3457,7 @@ const TOOL_AGENT_MAP: Record<string, string> = {
 
 // Layer 3: Reverse lookup — which tools belong to which specialist
 const SPECIALIST_TOOL_NAMES: Record<string, string[]> = {
-  document_agent: ['resolve_document_type', 'resolve_project_code', 'search_assai_documents', 'read_assai_document', 'discover_project_vendors', 'learn_acronym'],
+  document_agent: ['resolve_document_type', 'resolve_project_code', 'search_assai_documents', 'read_assai_document', 'discover_project_vendors', 'learn_acronym', 'check_vcr_document_readiness', 'get_checklist_document_insights', 'assign_document_numbers', 'organize_project_documents'],
   pssr_ora_agent: ['get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_executive_summary', 'get_pssr_detailed_summary', 'get_pssr_stats', 'get_discipline_status'],
 };
 
