@@ -227,9 +227,9 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       label: 'AI AGENTS',
       columns: 3 as const,
       items: [
-        { id: 'ai-agents-hub', title: 'AI Agents Hub', description: 'Overview, profiles, relationships', icon: Brain, gradient: 'from-violet-500 to-purple-600', badge: '7 agents' as const, onClick: () => navigate('/admin/ai-agents') },
-        { id: 'selma-validation', title: 'Selma Validation', description: '31 tests across 7 tiers', icon: FlaskConical, gradient: 'from-emerald-500 to-teal-600', badge: 'v6.0' as const, onClick: () => navigate('/admin/ai-agents/selma') },
-        { id: 'selma-analytics', title: 'Selma Analytics', description: 'KPIs, learning loop, strategies', icon: Activity, gradient: 'from-cyan-500 to-blue-600', badge: 'live' as const, onClick: () => navigate('/admin/ai-agents/selma') },
+        { id: 'ai-agents-hub', title: 'AI Agents Hub', description: 'Overview, profiles, relationships', icon: Brain, gradient: 'from-violet-500 to-purple-600', badge: '7 agents' as const, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', navKey: Date.now() } }) },
+        { id: 'selma-validation', title: 'Selma Validation', description: '31 tests across 7 tiers', icon: FlaskConical, gradient: 'from-emerald-500 to-teal-600', badge: 'v6.0' as const, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'selma', initialTab: 'validation', navKey: Date.now() } }) },
+        { id: 'selma-analytics', title: 'Selma Analytics', description: 'KPIs, learning loop, strategies', icon: Activity, gradient: 'from-cyan-500 to-blue-600', badge: 'live' as const, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'selma', initialTab: 'analytics', navKey: Date.now() } }) },
         { id: 'auto-update-controls', title: 'Auto-Update Controls', description: 'Living doc triggers, update queue', icon: Settings, gradient: 'from-sky-500 to-blue-600', onClick: () => toast.info('Auto-Update Controls coming soon') },
         { id: 'training-feedback', title: 'Training & Feedback', description: 'Agent feedback loop, ratings', icon: HeartPulse, gradient: 'from-pink-500 to-rose-600', onClick: () => toast.info('Training & Feedback coming soon') },
       ],
