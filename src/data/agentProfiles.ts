@@ -81,7 +81,7 @@ export const agentProfiles: AgentProfile[] = [
   {
     code: 'fred',
     name: 'Fred',
-    role: 'Commissioning & Hardware Readiness',
+    role: 'System & Hardware Readiness',
     avatar: fredAvatar,
     status: 'active',
     gradient: 'from-red-500 to-rose-600',
