@@ -866,7 +866,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <br />
                 Continuously updated as new agents are built, tools added, and training strategy evolves.
                 <br />
-                Last updated: March 2026 — ORM Agent removed. Confirmed agent family (7): Bob (CoPilot), Selma (Document Intelligence), Fred (PSSR/ORA), Hannah (P2A Handover), Ivan (Process Technical Authority), Zain (Training), Alex (CMMS).
+                Last updated: April 2026 — Hannah removed. Confirmed agent family (6): Bob (CoPilot), Selma (Document Intelligence), Fred (Commissioning & Hardware Readiness), Ivan (Technical Authority), Zain (Training & Competence Development), Alex (Maintenance & Inspection System Build).
               </p>
             </CardContent>
           </Card>
