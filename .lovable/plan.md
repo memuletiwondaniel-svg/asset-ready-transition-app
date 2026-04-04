@@ -26,13 +26,15 @@
 - ✅ Proactive recommendation patterns
 - ✅ Tool routing updated in `ai-chat/index.ts`
 
-## Phase 3 — RLMU Review Automation
+## Phase 3 — RLMU Review Automation ✅ COMPLETE
 
-- New edge function `selma-rlmu-reviewer` using Claude Vision
-- Checks: RLMU stamp, scan quality, redline completeness, document number match
-- On pass: auto-creates DC upload task
-- On fail: creates specific remediation tasks
-- Polymorphic source support for all 3 deliverable types
+- ✅ New edge function `selma-rlmu-reviewer` using Claude Vision (claude-sonnet-4-5)
+- ✅ Checks: RLMU stamp, scan quality, redline completeness, document number match, revision indicator
+- ✅ On pass: auto-creates DC upload task (`rlmu_upload` type)
+- ✅ On fail: creates specific remediation tasks (`rlmu_remediation` type) with detailed findings
+- ✅ Polymorphic source support for all 3 deliverable types
+- ✅ Saves full audit trail to `rlmu_reviews` table
+- ✅ Auto-updates `rlmu_status` on source row (approved/rejected/under_review)
 
 ## Phase 4 — UI Enhancements
 
