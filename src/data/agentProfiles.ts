@@ -100,7 +100,7 @@ export const agentProfiles: AgentProfile[] = [
     limitations: [
       "Does not perform document content analysis (Selma's domain)",
       "Does not make Technical Authority decisions (Ivan's domain)",
-      "Does not manage training records (Zain's domain)",
+      "Does not manage training records (Hannah's domain)",
     ],
     worksWith: ['bob', 'ivan', 'selma'],
     deepDiveTabs: ['Configuration', 'Feedback'],
