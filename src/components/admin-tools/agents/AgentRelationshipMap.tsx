@@ -38,26 +38,31 @@ const AgentRelationshipMap: React.FC<AgentRelationshipMapProps> = ({ onAgentClic
           <div className="w-px h-6 bg-border" />
         </div>
 
-        {/* Specialist agents grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 w-full max-w-2xl">
+        {/* Specialist agents row - centered */}
+        <div className="flex justify-center gap-6 sm:gap-8 flex-wrap max-w-2xl">
           {specialists.map((agent) => (
             <div
               key={agent.code}
-              className="flex flex-col items-center gap-1.5 cursor-pointer group"
+              className="flex flex-col items-center gap-1.5 cursor-pointer group w-[100px]"
               onClick={() => onAgentClick(agent.code)}
             >
-              <div className={cn(
-                "w-12 h-12 rounded-full overflow-hidden border-2 transition-all",
-                agent.status === 'active' 
-                  ? 'border-border/50 group-hover:border-primary/50 group-hover:scale-110 shadow-md' 
-                  : 'border-border/30 opacity-60 group-hover:opacity-80 group-hover:scale-105'
-              )}>
-                <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" loading="lazy" />
+              <div className="relative">
+                <div className={cn(
+                  "w-12 h-12 rounded-full overflow-hidden border-2 transition-all",
+                  agent.status === 'active' 
+                    ? 'border-border/50 group-hover:border-primary/50 group-hover:scale-110 shadow-md' 
+                    : 'border-border/30 opacity-60 group-hover:opacity-80 group-hover:scale-105'
+                )}>
+                  <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" loading="lazy" />
+                </div>
+                {agent.status === 'active' && (
+                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-background rounded-full" />
+                )}
               </div>
               <span className="text-[11px] font-medium text-foreground group-hover:text-primary transition-colors">
                 {agent.name}
               </span>
-              <span className="text-[9px] text-muted-foreground leading-tight text-center">
+              <span className="text-[9px] text-muted-foreground leading-tight text-center line-clamp-2">
                 {agent.role}
               </span>
             </div>
