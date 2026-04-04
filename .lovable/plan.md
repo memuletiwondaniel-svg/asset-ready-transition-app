@@ -36,11 +36,10 @@
 - ✅ Saves full audit trail to `rlmu_reviews` table
 - ✅ Auto-updates `rlmu_status` on source row (approved/rejected/under_review)
 
-## Phase 4 — UI Enhancements
+## Phase 4 — UI Enhancements ✅ COMPLETE
 
-- **CriticalDocumentsStep**: RLMU file upload, review results display, "Assign Numbers" button
-- **OperationalRegistersStep**: document number, DMS status badge, RLMU status badge, upload action
-- **LogsheetsStep**: same DMS enhancements as registers
-- **TaskDetailSheet**: `rlmu_upload` task type with integrated review feedback
-- **ProjectDocumentBrowser**: new component for discipline/package document organization
-- Proactive notifications: Selma suggests VCR item completion when all categories are ready
+- ✅ **Shared DmsStatusBadges component**: `RlmuStatusBadge`, `DmsStatusBadge`, `DocumentNumberChip`, `RlmuUploadButton`
+- ✅ **CriticalDocumentsStep**: RLMU status badge, DMS status badge, document number chip, RLMU upload with auto-Selma review
+- ✅ **OperationalRegistersStep**: document number, DMS status badge, RLMU status badge, upload action
+- ✅ **LogsheetsStep**: same DMS enhancements as registers
+- **Future**: TaskDetailSheet `rlmu_upload` task type, ProjectDocumentBrowser, proactive notifications

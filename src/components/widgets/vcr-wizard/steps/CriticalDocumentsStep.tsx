@@ -23,6 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CriticalDocsWizard } from './critical-docs/CriticalDocsWizard';
+import { RlmuStatusBadge, DmsStatusBadge, DocumentNumberChip, RlmuUploadButton } from './shared/DmsStatusBadges';
 
 interface CriticalDocumentsStepProps {
   vcrId: string;
@@ -34,13 +35,6 @@ interface CriticalDocumentsStepProps {
 const TIER_COLORS: Record<string, string> = {
   tier_1: 'border-red-300 text-red-600',
   tier_2: 'border-blue-300 text-blue-600',
-};
-
-const RLMU_STATUS_CLS: Record<string, string> = {
-  not_required: 'bg-muted text-muted-foreground',
-  pending: 'bg-amber-500/10 text-amber-600',
-  submitted: 'bg-blue-500/10 text-blue-600',
-  approved: 'bg-emerald-500/10 text-emerald-600',
 };
 
 export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vcrId, projectCode, plantCode, handoverPlanId }) => {
@@ -231,7 +225,10 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 flex-wrap text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground">
+                        {item.assigned_document_number && (
+                          <DocumentNumberChip number={item.assigned_document_number} />
+                        )}
                         {item.responsible_person && (
                           <span className="flex items-center gap-1"><User className="w-3 h-3" />{item.responsible_person}</span>
                         )}
@@ -247,19 +244,18 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
                           <option value="in_progress">In Progress</option>
                           <option value="complete">Complete</option>
                         </select>
+                        {item.dms_status && <DmsStatusBadge status={item.dms_status} />}
                         {rlmuRequired ? (
-                          <select
-                            value={item.rlmu_status || 'pending'}
-                            onChange={(e) => updateItem.mutate({ id: item.id, updates: { rlmu_status: e.target.value } })}
-                            className={cn(
-                              'text-[10px] border border-border rounded px-1.5 py-0.5 cursor-pointer',
-                              RLMU_STATUS_CLS[item.rlmu_status as string] || ''
-                            )}
-                          >
-                            <option value="pending">RLMU: Pending</option>
-                            <option value="submitted">RLMU: Submitted</option>
-                            <option value="approved">RLMU: Approved</option>
-                          </select>
+                          <>
+                            <RlmuStatusBadge status={item.rlmu_status} />
+                            <RlmuUploadButton
+                              sourceTable="vcr_document_requirements"
+                              sourceId={item.id}
+                              documentNumber={item.assigned_document_number}
+                              rlmuStatus={item.rlmu_status}
+                              onUploadComplete={() => queryClient.invalidateQueries({ queryKey: ['vcr-critical-docs', vcrId] })}
+                            />
+                          </>
                         ) : (
                           <span className="flex items-center gap-0.5 opacity-40">
                             <Stamp className="w-3 h-3" /> No RLMU

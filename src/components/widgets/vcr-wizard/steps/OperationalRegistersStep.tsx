@@ -17,6 +17,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClipboardList, Plus, Trash2, User, Calendar, Search, X, RefreshCw, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { RlmuStatusBadge, DmsStatusBadge, DocumentNumberChip, RlmuUploadButton } from './shared/DmsStatusBadges';
 
 interface OperationalRegistersStepProps {
   vcrId: string;
@@ -187,7 +188,10 @@ export const OperationalRegistersStep: React.FC<OperationalRegistersStepProps> =
                         <p className="text-xs text-muted-foreground line-clamp-1">{desc}</p>
                       )}
 
-                      <div className="flex items-center gap-3 flex-wrap text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground">
+                        {item.document_number && (
+                          <DocumentNumberChip number={item.document_number} />
+                        )}
                         {item.responsible_person && (
                           <span className="flex items-center gap-1"><User className="w-3 h-3" />{item.responsible_person}</span>
                         )}
@@ -203,6 +207,19 @@ export const OperationalRegistersStep: React.FC<OperationalRegistersStepProps> =
                           <option value="in_progress">In Progress</option>
                           <option value="complete">Complete</option>
                         </select>
+                        {item.dms_status && <DmsStatusBadge status={item.dms_status} />}
+                        {item.rlmu_status && item.rlmu_status !== 'not_applicable' && (
+                          <>
+                            <RlmuStatusBadge status={item.rlmu_status} />
+                            <RlmuUploadButton
+                              sourceTable="p2a_vcr_register_selections"
+                              sourceId={item.id}
+                              documentNumber={item.document_number}
+                              rlmuStatus={item.rlmu_status}
+                              onUploadComplete={() => queryClient.invalidateQueries({ queryKey: ['vcr-register-selections', vcrId] })}
+                            />
+                          </>
+                        )}
                       </div>
                     </div>
 
