@@ -264,11 +264,10 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
               rows={[
                 ['Bob CoPilot', 'claude-sonnet-4-5', 'Anthropic', 'Complex routing, multi-domain reasoning', 'Active'],
                 ['Selma (Document Intelligence)', 'claude-sonnet-4-5', 'Anthropic', 'Document intelligence specialist', 'Active'],
-                ['Fred (PSSR/ORA Agent)', 'claude-sonnet-4-5', 'Anthropic', 'Safety-critical domain', 'Active'],
-                ['Hannah (P2A Handover)', 'claude-sonnet-4-5', 'Anthropic', 'Handover readiness orchestration, cross-agent aggregation', 'Active'],
-                ['Ivan (Process TA)', 'claude-sonnet-4-5', 'Anthropic', 'HAZOP, STQ, MOC, cumulative risk, operational registers', 'Active'],
-                ['Zain — Training Intelligence (Phase 2)', 'claude-haiku', 'Anthropic', 'Training queries, competency gaps', 'Planned'],
-                ['Alex — CMMS & Maintenance (Phase 2)', 'claude-haiku', 'Anthropic', 'Maintenance, equipment, spares', 'Planned'],
+                ['Fred (Commissioning & Hardware Readiness)', 'claude-sonnet-4-5', 'Anthropic', 'GoCompletions integration, hardware readiness', 'Active'],
+                ['Ivan (Technical Authority)', 'claude-sonnet-4-5', 'Anthropic', 'HAZOP, cumulative risk, Safe-to-Start verdict', 'Active'],
+                ['Zain — Training & Competence Development (Phase 2)', 'claude-haiku', 'Anthropic', 'Competency management, training gaps', 'Planned'],
+                ['Alex — Maintenance & Inspection System Build (Phase 2)', 'claude-haiku', 'Anthropic', 'CMMS data, asset registers', 'Planned'],
                 
               ]}
             />
