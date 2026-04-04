@@ -1,45 +1,107 @@
 
-# Selma-Powered VCR Plan Workflow — Unified Document Intelligence
 
-## Phase 1 — Schema Foundation ✅ COMPLETE
+# AI Agents Hub — Reorganization Plan
 
-- ✅ Added `assigned_document_number`, `rlmu_status`, `rlmu_file_path`, `rlmu_reviewed_at`, `rlmu_review_findings`, `dms_status` to `vcr_document_requirements`
-- ✅ Added `document_number`, `document_type_code`, `dms_status`, `rlmu_status`, `rlmu_file_path` to `p2a_vcr_register_selections`
-- ✅ Added `document_number`, `document_type_code`, `dms_status`, `rlmu_status`, `rlmu_file_path` to `p2a_vcr_logsheets`
-- ✅ Created `rlmu_reviews` table (polymorphic: covers critical docs, registers, logsheets)
-- ✅ Created `dms_reserved_numbers` table for document number reservation
-- ✅ Created `rlmu-uploads` storage bucket (private)
-- ✅ Added trigger: auto-set `rlmu_status = 'pending'` when doc type has `rlmu = 'Yes'`
+## Overview
 
-## Phase 2 — Selma Tools and Prompt ✅ COMPLETE
+Reorganize the current "AI AGENTS" section in Admin Tools from a flat grid of cards into a world-class agent-centric experience with an Overview page, individual agent profiles with AI-generated avatars, self-introductions, and deep-dive management views.
 
-### New Tools (added to `tools.ts` + handlers in `handlers.ts`)
-1. ✅ **`check_vcr_document_readiness`** — queries `vcr_document_requirements`, `p2a_vcr_register_selections`, `p2a_vcr_logsheets`; joins `dms_document_types` for tier/RLMU; returns unified readiness report
-2. ✅ **`get_checklist_document_insights`** — cross-references checklist items with live document status
-3. ✅ **`assign_document_numbers`** — reserves sequential 9-segment numbers in `dms_reserved_numbers`
-4. ✅ **`organize_project_documents`** — hierarchical views by discipline or package
+## Architecture
 
-### Prompt Updates
-- ✅ Tier 1/2 domain knowledge
-- ✅ RLMU lifecycle rules (pending → uploaded → under_review → approved/rejected)
-- ✅ Registers and logsheets are DMS documents with same lifecycle
-- ✅ Proactive recommendation patterns
-- ✅ Tool routing updated in `ai-chat/index.ts`
+```text
+Admin Tools → AI AGENTS section
+  ├── Overview (new)          — All agents map, how they interact
+  ├── Bob (CoPilot)           — Profile + config
+  ├── Selma (Documents)       — Profile + Analytics/Validation/Training
+  ├── Fred (PSSR/ORA Safety)  — Profile + config
+  ├── Hannah (P2A Handover)   — Profile + config
+  ├── Ivan (Process Tech)     — Profile + config
+  ├── Zain (Training)         — Profile + config (planned)
+  └── Alex (CMMS)             — Profile + config (planned)
+```
 
-## Phase 3 — RLMU Review Automation ✅ COMPLETE
+## What Gets Built
 
-- ✅ New edge function `selma-rlmu-reviewer` using Claude Vision (claude-sonnet-4-5)
-- ✅ Checks: RLMU stamp, scan quality, redline completeness, document number match, revision indicator
-- ✅ On pass: auto-creates DC upload task (`rlmu_upload` type)
-- ✅ On fail: creates specific remediation tasks (`rlmu_remediation` type) with detailed findings
-- ✅ Polymorphic source support for all 3 deliverable types
-- ✅ Saves full audit trail to `rlmu_reviews` table
-- ✅ Auto-updates `rlmu_status` on source row (approved/rejected/under_review)
+### 1. AI Agent Hub Page (`src/pages/admin/AIAgentHub.tsx`)
+A new routed page at `/admin/ai-agents` (and sub-routes `/admin/ai-agents/:agentCode`) that serves as the central agent management experience.
 
-## Phase 4 — UI Enhancements ✅ COMPLETE
+**Overview tab** — renders when no agent is selected:
+- Hero section with "Meet the ORSH AI Team" heading
+- Agent relationship diagram showing how agents collaborate (Bob routes → specialists, Selma ↔ Hannah for docs, etc.)
+- Grid of all 7 agents as avatar cards with status indicators (active/planned)
+- Quick stats: total interactions, active agents, tools count
 
-- ✅ **Shared DmsStatusBadges component**: `RlmuStatusBadge`, `DmsStatusBadge`, `DocumentNumberChip`, `RlmuUploadButton`
-- ✅ **CriticalDocumentsStep**: RLMU status badge, DMS status badge, document number chip, RLMU upload with auto-Selma review
-- ✅ **OperationalRegistersStep**: document number, DMS status badge, RLMU status badge, upload action
-- ✅ **LogsheetsStep**: same DMS enhancements as registers
-- **Future**: TaskDetailSheet `rlmu_upload` task type, ProjectDocumentBrowser, proactive notifications
+**Agent Profile view** — renders when clicking an agent card:
+- Large avatar + name + role title
+- Animated typewriter-style self-introduction (first-person, e.g., "Hi, I'm Selma. I'm your Document Intelligence specialist...")
+- "Areas of Specialization" section with capability chips
+- "What I Don't Do" section (clear boundaries)
+- "I Work Closely With" section showing linked agent avatars
+- Status badge (Active / Planned / In Training)
+- Deep-dive tabs: Analytics, Validation, Configuration, Feedback (varies per agent)
+
+### 2. Agent Avatars
+Generate 7 AI avatars using the AI image generation skill (Nano Banana 2 — `google/gemini-3.1-flash-image-preview`). Each avatar will be a professional, 3D-rendered style portrait matching the agent's personality:
+- **Bob** — Friendly, approachable male, warm tones (the helpful CoPilot)
+- **Selma** — Sharp, professional female, cool tones (Document Intelligence)
+- **Fred** — Serious, safety-focused male (PSSR/ORA Safety)
+- **Hannah** — Organized, detail-oriented female (P2A Handover)
+- **Ivan** — Technical, authoritative male (Process Technical Authority)
+- **Zain** — Young, energetic male (Training Intelligence)
+- **Alex** — Precise, methodical male (CMMS & Maintenance)
+
+Avatars stored in `src/assets/agents/` and imported as ES6 modules.
+
+### 3. Agent Data Model
+Leverage existing `ai_agent_registry` table (already has `agent_code`, `display_name`, `description`, `capabilities`, `limitations`, `domain_tags`, `status`). Add a static config file `src/data/agentProfiles.ts` for UI-specific data:
+- Introduction text (first-person)
+- Avatar import reference
+- Specialization labels
+- "Works with" agent codes
+- Available deep-dive tabs per agent
+- Gradient/color theme per agent
+
+### 4. Admin Tools Integration
+- Replace the current 5 flat cards in the "AI AGENTS" section with a single "AI Agents Hub" entry plus individual agent shortcuts
+- New items: Overview, Bob, Selma, Fred, Hannah, Ivan, Zain, Alex (8 cards in a 4-column grid)
+- Each card shows the agent's avatar, name, role subtitle, and status
+- Clicking navigates to `/admin/ai-agents` or `/admin/ai-agents/:code`
+
+### 5. Selma Deep-Dive Tabs
+Existing pages (`SelmaAnalytics`, `SelmaValidation`) get embedded as tabs within Selma's agent profile rather than standalone routes. The standalone routes remain for backward compatibility but redirect into the hub.
+
+### 6. Component Structure
+
+```text
+src/pages/admin/AIAgentHub.tsx          — Main hub page with routing
+src/components/admin-tools/agents/
+  ├── AgentOverview.tsx                 — Overview with relationship map
+  ├── AgentProfileView.tsx              — Individual agent profile
+  ├── AgentCard.tsx                     — Card for grid display
+  ├── AgentIntroduction.tsx             — Typewriter self-intro component
+  ├── AgentRelationshipMap.tsx          — Visual agent collaboration diagram
+  ├── AgentSpecializations.tsx          — Capability/limitation chips
+  └── AgentDeepDiveTabs.tsx             — Tab container for analytics/config
+src/data/agentProfiles.ts               — Static agent UI metadata
+src/assets/agents/                      — AI-generated avatar images
+```
+
+## UX Design Principles
+- **Dark glass-morphism cards** with subtle gradients per agent's color theme
+- **Smooth transitions** between overview and profile views (fade + scale)
+- **Status indicators**: green pulse for active, amber for in-training, gray for planned
+- **Typewriter animation** for first-person introductions on profile load
+- **Hover effects** on agent cards revealing quick-stats tooltip
+- **Responsive**: 4-col grid on desktop, 2-col on tablet, 1-col on mobile
+
+## Implementation Order
+1. Generate 7 agent avatar images and save to `src/assets/agents/`
+2. Create `src/data/agentProfiles.ts` with all agent metadata
+3. Build shared components (`AgentCard`, `AgentIntroduction`, `AgentSpecializations`)
+4. Build `AgentOverview.tsx` with relationship map
+5. Build `AgentProfileView.tsx` with deep-dive tabs
+6. Build `AIAgentHub.tsx` main page with sub-routing
+7. Update `AdminToolsPage.tsx` AI AGENTS section with new card layout
+8. Add route in `App.tsx`
+9. Wire Selma Analytics/Validation as embedded tabs
+
