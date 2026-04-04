@@ -454,7 +454,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                   </div>
                   <ul className="list-disc list-inside space-y-1 text-xs">
                     <li>Static system prompt with comprehensive domain knowledge</li>
-                    <li>53 SQL-backed tool functions across 4 active agents (Bob, Selma, Fred, Hannah)</li>
+                    <li>53 SQL-backed tool functions across 4 active agents (Bob, Selma, Fred, Ivan)</li>
                     <li>A2A communication protocol implemented and logging to database</li>
                     <li>Agent registry in PostgreSQL with model assignments</li>
                     <li>Response feedback logging (latency, tools used, agent detected)</li>
