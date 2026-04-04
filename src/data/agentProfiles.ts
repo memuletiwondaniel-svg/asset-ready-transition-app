@@ -47,7 +47,7 @@ export const agentProfiles: AgentProfile[] = [
       'Does not execute safety reviews',
       'Does not modify system configurations',
     ],
-    worksWith: ['selma', 'fred', 'hannah', 'ivan'],
+    worksWith: ['selma', 'fred', 'ivan'],
     deepDiveTabs: ['Configuration', 'Feedback'],
   },
   {
