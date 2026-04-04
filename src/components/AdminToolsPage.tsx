@@ -51,6 +51,7 @@ const CustomerJourneyMaps = lazy(() => import("./admin-tools/CustomerJourneyMaps
 const ProcessFlowMaps = lazy(() => import("./admin-tools/ProcessFlowMaps"));
 const DocumentManagementSystem = lazy(() => import("./admin-tools/DocumentManagementSystem"));
 const AIAgentStrategyDocument = lazy(() => import("./admin-tools/AIAgentStrategyDocument"));
+const AIAgentHub = lazy(() => import("@/pages/admin/AIAgentHub"));
 
 const TenantSetupWizardLazy = lazy(() => import("./tenant-setup/TenantSetupWizard").then(m => ({ default: m.TenantSetupWizard })));
 
@@ -83,7 +84,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'integration-hub' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows' | 'document-management' | 'ai-agent-strategy' | 'tenant-setup'>(() => {
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'integration-hub' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows' | 'document-management' | 'ai-agent-strategy' | 'ai-agents-hub' | 'tenant-setup'>(() => {
     // Check if navigated with a specific activeView from favorites
     const state = location.state as any;
     return state?.activeView || 'dashboard';
