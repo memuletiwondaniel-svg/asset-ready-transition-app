@@ -938,6 +938,374 @@ export async function executeSelmaTool(
       return { success: true, learned: String(input.acronym).toUpperCase() };
     }
 
+    // ════════════════════════════════════════════════════════════
+    // CHECK VCR DOCUMENT READINESS
+    // ════════════════════════════════════════════════════════════
+    case 'check_vcr_document_readiness': {
+      emitStatus('Checking VCR document readiness...');
+      try {
+        const vcrId = input.vcr_id;
+        const category = input.category;
+        const report: any = { vcr_id: vcrId, categories: {} };
+
+        // Critical Documents
+        if (!category || category === 'critical_documents') {
+          const { data: docs } = await supabase
+            .from('vcr_document_requirements')
+            .select('id, document_type_id, assigned_document_number, rlmu_status, dms_status')
+            .eq('vcr_id', vcrId);
+
+          const docRows = docs || [];
+          const typeIds = [...new Set(docRows.map((d: any) => d.document_type_id).filter(Boolean))];
+          let typeMap: Record<string, any> = {};
+          if (typeIds.length > 0) {
+            const { data: types } = await supabase
+              .from('dms_document_types')
+              .select('id, code, document_name, tier, rlmu')
+              .in('id', typeIds);
+            for (const t of (types || [])) typeMap[t.id] = t;
+          }
+
+          const enriched = docRows.map((d: any) => ({
+            ...d,
+            tier: typeMap[d.document_type_id]?.tier || null,
+            rlmu_required: typeMap[d.document_type_id]?.rlmu === 'Yes',
+            type_code: typeMap[d.document_type_id]?.code || null,
+            type_name: typeMap[d.document_type_id]?.document_name || null,
+          }));
+
+          const tier1 = enriched.filter((d: any) => d.tier === 'Tier 1');
+          const tier2 = enriched.filter((d: any) => d.tier === 'Tier 2');
+
+          report.categories.critical_documents = {
+            total: enriched.length,
+            tier1: { total: tier1.length, with_number: tier1.filter((d: any) => d.assigned_document_number).length, rlmu_pending: tier1.filter((d: any) => d.rlmu_status === 'pending').length, rlmu_approved: tier1.filter((d: any) => d.rlmu_status === 'approved').length },
+            tier2: { total: tier2.length, with_number: tier2.filter((d: any) => d.assigned_document_number).length, rlmu_pending: tier2.filter((d: any) => d.rlmu_status === 'pending').length, rlmu_approved: tier2.filter((d: any) => d.rlmu_status === 'approved').length },
+            missing_numbers: enriched.filter((d: any) => !d.assigned_document_number).length,
+            gaps: enriched.filter((d: any) => d.rlmu_required && d.rlmu_status !== 'approved').map((d: any) => ({ id: d.id, type: d.type_name, rlmu_status: d.rlmu_status })),
+          };
+        }
+
+        // Operational Registers
+        if (!category || category === 'registers') {
+          const { data: regs } = await supabase
+            .from('p2a_vcr_register_selections')
+            .select('id, register_name, document_number, document_type_code, dms_status, rlmu_status, status')
+            .eq('vcr_id', vcrId);
+
+          const regRows = regs || [];
+          report.categories.registers = {
+            total: regRows.length,
+            complete: regRows.filter((r: any) => r.status === 'complete').length,
+            with_number: regRows.filter((r: any) => r.document_number).length,
+            missing_numbers: regRows.filter((r: any) => !r.document_number).length,
+            rlmu_pending: regRows.filter((r: any) => r.rlmu_status === 'pending').length,
+            rlmu_approved: regRows.filter((r: any) => r.rlmu_status === 'approved').length,
+            items: regRows.map((r: any) => ({ id: r.id, name: r.register_name, doc_number: r.document_number, status: r.status, rlmu: r.rlmu_status })),
+          };
+        }
+
+        // Logsheets
+        if (!category || category === 'logsheets') {
+          const { data: logs } = await supabase
+            .from('p2a_vcr_logsheets')
+            .select('id, logsheet_name, document_number, document_type_code, dms_status, rlmu_status, status')
+            .eq('vcr_id', vcrId);
+
+          const logRows = logs || [];
+          report.categories.logsheets = {
+            total: logRows.length,
+            complete: logRows.filter((l: any) => l.status === 'complete').length,
+            with_number: logRows.filter((l: any) => l.document_number).length,
+            missing_numbers: logRows.filter((l: any) => !l.document_number).length,
+            rlmu_pending: logRows.filter((l: any) => l.rlmu_status === 'pending').length,
+            rlmu_approved: logRows.filter((l: any) => l.rlmu_status === 'approved').length,
+            items: logRows.map((l: any) => ({ id: l.id, name: l.logsheet_name, doc_number: l.document_number, status: l.status, rlmu: l.rlmu_status })),
+          };
+        }
+
+        // Summary
+        const cats = report.categories;
+        const totalDocs = (cats.critical_documents?.total || 0) + (cats.registers?.total || 0) + (cats.logsheets?.total || 0);
+        const totalMissing = (cats.critical_documents?.missing_numbers || 0) + (cats.registers?.missing_numbers || 0) + (cats.logsheets?.missing_numbers || 0);
+        const totalRlmuPending = (cats.critical_documents?.tier1?.rlmu_pending || 0) + (cats.critical_documents?.tier2?.rlmu_pending || 0) + (cats.registers?.rlmu_pending || 0) + (cats.logsheets?.rlmu_pending || 0);
+
+        report.summary = {
+          total_deliverables: totalDocs,
+          missing_document_numbers: totalMissing,
+          rlmu_pending: totalRlmuPending,
+          recommendation: totalMissing > 0
+            ? `${totalMissing} deliverables need document numbers assigned. Use assign_document_numbers to reserve them.`
+            : totalRlmuPending > 0
+              ? `${totalRlmuPending} deliverables have pending RLMU reviews. Upload redline markup files to proceed.`
+              : 'All deliverables have document numbers and RLMU requirements are on track.',
+        };
+
+        return report;
+      } catch (err) {
+        console.error('check_vcr_document_readiness error:', err);
+        return { error: String(err) };
+      }
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // GET CHECKLIST DOCUMENT INSIGHTS
+    // ════════════════════════════════════════════════════════════
+    case 'get_checklist_document_insights': {
+      emitStatus('Analysing checklist document coverage...');
+      try {
+        const vcrId = input.vcr_id;
+
+        // Get VCR items (checklist)
+        const { data: items } = await supabase
+          .from('p2a_vcr_items')
+          .select('id, item_text, category, status, is_applicable')
+          .eq('vcr_id', vcrId)
+          .eq('is_applicable', true);
+
+        // Get all deliverables for context
+        const [docsRes, regsRes, logsRes] = await Promise.all([
+          supabase.from('vcr_document_requirements').select('id, document_type_id, assigned_document_number, rlmu_status, dms_status').eq('vcr_id', vcrId),
+          supabase.from('p2a_vcr_register_selections').select('id, register_name, document_number, status, rlmu_status').eq('vcr_id', vcrId),
+          supabase.from('p2a_vcr_logsheets').select('id, logsheet_name, document_number, status, rlmu_status').eq('vcr_id', vcrId),
+        ]);
+
+        const docs = docsRes.data || [];
+        const regs = regsRes.data || [];
+        const logs = logsRes.data || [];
+
+        const docComplete = docs.filter((d: any) => d.assigned_document_number && d.rlmu_status !== 'pending').length;
+        const regComplete = regs.filter((r: any) => r.status === 'complete').length;
+        const logComplete = logs.filter((l: any) => l.status === 'complete').length;
+
+        const insights = {
+          vcr_id: vcrId,
+          checklist_items: (items || []).length,
+          applicable_items: (items || []).filter((i: any) => i.is_applicable).length,
+          deliverable_coverage: {
+            critical_documents: { total: docs.length, ready: docComplete, percentage: docs.length ? Math.round(docComplete / docs.length * 100) : 0 },
+            registers: { total: regs.length, ready: regComplete, percentage: regs.length ? Math.round(regComplete / regs.length * 100) : 0 },
+            logsheets: { total: logs.length, ready: logComplete, percentage: logs.length ? Math.round(logComplete / logs.length * 100) : 0 },
+          },
+          recommendations: [] as string[],
+        };
+
+        if (docs.length > 0 && docComplete < docs.length) {
+          insights.recommendations.push(`${docs.length - docComplete} critical documents still need completion before VCR items can be signed off.`);
+        }
+        if (regs.length > 0 && regComplete < regs.length) {
+          insights.recommendations.push(`${regs.length - regComplete} operational registers are incomplete.`);
+        }
+        if (logs.length > 0 && logComplete < logs.length) {
+          insights.recommendations.push(`${logs.length - logComplete} logsheets are incomplete.`);
+        }
+        if (docComplete === docs.length && regComplete === regs.length && logComplete === logs.length) {
+          insights.recommendations.push('All deliverables are complete. VCR checklist items can be reviewed for sign-off.');
+        }
+
+        return insights;
+      } catch (err) {
+        console.error('get_checklist_document_insights error:', err);
+        return { error: String(err) };
+      }
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // ASSIGN DOCUMENT NUMBERS
+    // ════════════════════════════════════════════════════════════
+    case 'assign_document_numbers': {
+      emitStatus('Reserving document numbers...');
+      try {
+        const { vcr_id, source_table, source_ids, project_id } = input;
+
+        // Validate source_table
+        const validTables = ['vcr_document_requirements', 'p2a_vcr_register_selections', 'p2a_vcr_logsheets'];
+        if (!validTables.includes(source_table)) {
+          return { error: `Invalid source_table: ${source_table}. Must be one of: ${validTables.join(', ')}` };
+        }
+
+        // Determine the number column name based on table
+        const numberCol = source_table === 'vcr_document_requirements' ? 'assigned_document_number' : 'document_number';
+
+        // Get rows that need numbers
+        let query = supabase.from(source_table).select('id, document_type_code').eq('vcr_id', vcr_id).is(numberCol, null);
+        if (source_ids && source_ids.length > 0) {
+          query = query.in('id', source_ids);
+        }
+        const { data: rows, error: rowError } = await query;
+        if (rowError) return { error: rowError.message };
+        if (!rows || rows.length === 0) return { message: 'No rows need document numbers assigned.', assigned: 0 };
+
+        // For vcr_document_requirements, get the type code from the linked document_type
+        let enrichedRows = rows;
+        if (source_table === 'vcr_document_requirements') {
+          const { data: docReqs } = await supabase
+            .from('vcr_document_requirements')
+            .select('id, document_type_id')
+            .in('id', rows.map((r: any) => r.id));
+
+          if (docReqs) {
+            const typeIds = [...new Set(docReqs.map((d: any) => d.document_type_id).filter(Boolean))];
+            let typeCodeMap: Record<string, string> = {};
+            if (typeIds.length > 0) {
+              const { data: types } = await supabase.from('dms_document_types').select('id, code').in('id', typeIds);
+              for (const t of (types || [])) typeCodeMap[t.id] = t.code;
+            }
+            enrichedRows = docReqs.map((d: any) => ({ id: d.id, document_type_code: typeCodeMap[d.document_type_id] || '9999' }));
+          }
+        }
+
+        // Get project prefix for numbering
+        const { data: proj } = await supabase
+          .from('projects')
+          .select('project_id_prefix, project_id_number')
+          .eq('id', project_id)
+          .maybeSingle();
+
+        const projectPrefix = proj ? `${proj.project_id_prefix || '6529'}-BGC` : '6529-BGC';
+
+        // Get highest existing sequence per type code
+        const typeCodes = [...new Set(enrichedRows.map((r: any) => r.document_type_code).filter(Boolean))];
+        const assignments: any[] = [];
+
+        for (const typeCode of typeCodes) {
+          const typeRows = enrichedRows.filter((r: any) => r.document_type_code === typeCode);
+
+          // Find highest existing sequence
+          const { data: existing } = await supabase
+            .from('dms_reserved_numbers')
+            .select('document_number')
+            .eq('document_type_code', typeCode)
+            .eq('project_id', project_id)
+            .order('document_number', { ascending: false })
+            .limit(1);
+
+          let nextSeq = 1;
+          if (existing && existing.length > 0) {
+            const lastNum = existing[0].document_number;
+            const seqPart = lastNum.split('-').slice(-2, -1)[0];
+            const parsed = parseInt(seqPart, 10);
+            if (!isNaN(parsed)) nextSeq = parsed + 1;
+          }
+
+          for (const row of typeRows) {
+            const seqStr = String(nextSeq).padStart(5, '0');
+            const docNumber = `${projectPrefix}-G00000-AA-${typeCode}-${seqStr}-00001`;
+
+            // Reserve the number
+            await supabase.from('dms_reserved_numbers').insert({
+              document_number: docNumber,
+              document_type_code: typeCode,
+              project_id: project_id,
+              source_table: source_table,
+              source_id: row.id,
+              status: 'reserved',
+              reserved_at: new Date().toISOString(),
+            });
+
+            // Update the source row
+            await supabase.from(source_table).update({ [numberCol]: docNumber }).eq('id', row.id);
+
+            assignments.push({ id: row.id, document_number: docNumber, type_code: typeCode });
+            nextSeq++;
+          }
+        }
+
+        return { success: true, assigned: assignments.length, assignments };
+      } catch (err) {
+        console.error('assign_document_numbers error:', err);
+        return { error: String(err) };
+      }
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // ORGANIZE PROJECT DOCUMENTS
+    // ════════════════════════════════════════════════════════════
+    case 'organize_project_documents': {
+      emitStatus('Organizing project documents...');
+      try {
+        const { vcr_id, group_by } = input;
+
+        // Fetch all deliverables
+        const [docsRes, regsRes, logsRes] = await Promise.all([
+          supabase.from('vcr_document_requirements').select('id, document_type_id, assigned_document_number, rlmu_status, dms_status').eq('vcr_id', vcr_id),
+          supabase.from('p2a_vcr_register_selections').select('id, register_name, document_number, document_type_code, dms_status, rlmu_status, status').eq('vcr_id', vcr_id),
+          supabase.from('p2a_vcr_logsheets').select('id, logsheet_name, document_number, document_type_code, dms_status, rlmu_status, status').eq('vcr_id', vcr_id),
+        ]);
+
+        const docs = docsRes.data || [];
+        const regs = regsRes.data || [];
+        const logs = logsRes.data || [];
+
+        // Enrich docs with type info
+        const typeIds = [...new Set(docs.map((d: any) => d.document_type_id).filter(Boolean))];
+        let typeMap: Record<string, any> = {};
+        if (typeIds.length > 0) {
+          const { data: types } = await supabase
+            .from('dms_document_types')
+            .select('id, code, document_name, discipline_code, discipline_name, tier, package_tag')
+            .in('id', typeIds);
+          for (const t of (types || [])) typeMap[t.id] = t;
+        }
+
+        const enrichedDocs = docs.map((d: any) => ({
+          ...d,
+          category: 'critical_document',
+          name: typeMap[d.document_type_id]?.document_name || 'Unknown',
+          discipline_code: typeMap[d.document_type_id]?.discipline_code || 'ZZ',
+          discipline_name: typeMap[d.document_type_id]?.discipline_name || 'Other',
+          package_tag: typeMap[d.document_type_id]?.package_tag || null,
+          tier: typeMap[d.document_type_id]?.tier || null,
+          doc_number: d.assigned_document_number,
+        }));
+
+        const enrichedRegs = regs.map((r: any) => ({
+          ...r, category: 'register', name: r.register_name, discipline_code: 'OPS', discipline_name: 'Operations',
+          package_tag: null, tier: null, doc_number: r.document_number,
+        }));
+
+        const enrichedLogs = logs.map((l: any) => ({
+          ...l, category: 'logsheet', name: l.logsheet_name, discipline_code: 'OPS', discipline_name: 'Operations',
+          package_tag: null, tier: null, doc_number: l.document_number,
+        }));
+
+        const allItems = [...enrichedDocs, ...enrichedRegs, ...enrichedLogs];
+
+        // Group
+        const groups: Record<string, any[]> = {};
+        const groupKey = group_by === 'package' ? 'package_tag' : 'discipline_code';
+
+        for (const item of allItems) {
+          const key = item[groupKey] || (group_by === 'package' ? 'No Package' : 'Other');
+          if (!groups[key]) groups[key] = [];
+          groups[key].push(item);
+        }
+
+        const organized = Object.entries(groups).map(([key, items]) => ({
+          group: key,
+          group_name: group_by === 'discipline' ? (items[0]?.discipline_name || key) : key,
+          total: items.length,
+          with_number: items.filter((i: any) => i.doc_number).length,
+          rlmu_approved: items.filter((i: any) => i.rlmu_status === 'approved').length,
+          rlmu_pending: items.filter((i: any) => i.rlmu_status === 'pending').length,
+          items: items.map((i: any) => ({
+            category: i.category, name: i.name, doc_number: i.doc_number,
+            tier: i.tier, rlmu_status: i.rlmu_status, dms_status: i.dms_status,
+          })),
+        })).sort((a, b) => b.total - a.total);
+
+        return {
+          vcr_id: vcr_id,
+          group_by: group_by,
+          total_deliverables: allItems.length,
+          groups: organized,
+        };
+      } catch (err) {
+        console.error('organize_project_documents error:', err);
+        return { error: String(err) };
+      }
+    }
+
     default:
       return { error: `Unknown Selma tool: ${name}` };
   }

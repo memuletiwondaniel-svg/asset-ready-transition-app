@@ -114,5 +114,86 @@ export const SELMA_TOOLS = [
       },
       required: ["acronym", "full_name", "type_code"]
     }
+  },
+  {
+    name: "check_vcr_document_readiness",
+    description: "Check VCR document readiness across all deliverable categories for a project. Queries critical documents (vcr_document_requirements), operational registers (p2a_vcr_register_selections), and logsheets (p2a_vcr_logsheets). Joins dms_document_types for tier/RLMU metadata. Returns a unified readiness report with counts, gaps, and recommendations.",
+    input_schema: {
+      type: "object",
+      properties: {
+        vcr_id: {
+          type: "string",
+          description: "The VCR plan ID (UUID) to check readiness for"
+        },
+        category: {
+          type: "string",
+          description: "Optional filter: 'critical_documents', 'registers', 'logsheets', or omit for all"
+        }
+      },
+      required: ["vcr_id"]
+    }
+  },
+  {
+    name: "get_checklist_document_insights",
+    description: "Cross-reference VCR/PSSR checklist items with live document status. For each checklist item, identifies which documents, registers, and logsheets are relevant and their current readiness state. Provides actionable recommendations for completing checklist items.",
+    input_schema: {
+      type: "object",
+      properties: {
+        vcr_id: {
+          type: "string",
+          description: "The VCR plan ID (UUID)"
+        },
+        checklist_item_id: {
+          type: "string",
+          description: "Optional: specific checklist item ID to analyse. Omit for overview of all items."
+        }
+      },
+      required: ["vcr_id"]
+    }
+  },
+  {
+    name: "assign_document_numbers",
+    description: "Reserve sequential 9-segment document numbers for VCR deliverables (critical documents, registers, or logsheets) that don't yet have assigned numbers. Uses the project's numbering convention and reserves in dms_reserved_numbers.",
+    input_schema: {
+      type: "object",
+      properties: {
+        vcr_id: {
+          type: "string",
+          description: "The VCR plan ID (UUID)"
+        },
+        source_table: {
+          type: "string",
+          description: "Which deliverable table: 'vcr_document_requirements', 'p2a_vcr_register_selections', or 'p2a_vcr_logsheets'"
+        },
+        source_ids: {
+          type: "array",
+          items: { type: "string" },
+          description: "Array of row IDs to assign numbers to. If omitted, assigns to all rows missing document numbers in the source_table for this VCR."
+        },
+        project_id: {
+          type: "string",
+          description: "The project UUID for numbering context"
+        }
+      },
+      required: ["vcr_id", "source_table", "project_id"]
+    }
+  },
+  {
+    name: "organize_project_documents",
+    description: "Organize and display project documentation in a hierarchical view. Groups documents by discipline or by package, showing counts, completion status, and RLMU state for each group. Useful for asset teams to understand what documentation exists and what's missing.",
+    input_schema: {
+      type: "object",
+      properties: {
+        vcr_id: {
+          type: "string",
+          description: "The VCR plan ID (UUID)"
+        },
+        group_by: {
+          type: "string",
+          description: "'discipline' or 'package' — how to organize the view"
+        }
+      },
+      required: ["vcr_id", "group_by"]
+    }
   }
 ];
