@@ -3,6 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Users, Settings, CheckCircle, Home, Search, X, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container, MapPin, GitBranch, Files, Brain, ChevronDown, Star, FlaskConical } from 'lucide-react';
+import bobAvatar from '@/assets/agents/bob.jpg';
+import selmaAvatar from '@/assets/agents/selma.jpg';
+import fredAvatar from '@/assets/agents/fred.jpg';
+import ivanAvatar from '@/assets/agents/ivan.jpg';
+import hannahAvatar from '@/assets/agents/hannah.jpg';
+import alexAvatar from '@/assets/agents/alex.jpg';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
