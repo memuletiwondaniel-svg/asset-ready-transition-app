@@ -1,9 +1,8 @@
 import bobAvatar from '@/assets/agents/bob.jpg';
 import selmaAvatar from '@/assets/agents/selma.jpg';
 import fredAvatar from '@/assets/agents/fred.jpg';
-
 import ivanAvatar from '@/assets/agents/ivan.jpg';
-import zainAvatar from '@/assets/agents/zain.jpg';
+import hannahAvatar from '@/assets/agents/hannah.jpg';
 import alexAvatar from '@/assets/agents/alex.jpg';
 
 export type AgentStatus = 'active' | 'planned' | 'in-training';
@@ -53,7 +52,7 @@ export const agentProfiles: AgentProfile[] = [
   {
     code: 'selma',
     name: 'Selma',
-    role: 'Document Intelligence',
+    role: 'Documentation & Information Readiness',
     avatar: selmaAvatar,
     status: 'active',
     gradient: 'from-cyan-500 to-blue-600',
@@ -80,7 +79,7 @@ export const agentProfiles: AgentProfile[] = [
   {
     code: 'fred',
     name: 'Fred',
-    role: 'Commissioning & Hardware Readiness',
+    role: 'System & Hardware Readiness',
     avatar: fredAvatar,
     status: 'active',
     gradient: 'from-red-500 to-rose-600',
@@ -99,7 +98,7 @@ export const agentProfiles: AgentProfile[] = [
     limitations: [
       "Does not perform document content analysis (Selma's domain)",
       "Does not make Technical Authority decisions (Ivan's domain)",
-      "Does not manage training records (Zain's domain)",
+      "Does not manage training records (Hannah's domain)",
     ],
     worksWith: ['bob', 'ivan', 'selma'],
     deepDiveTabs: ['Configuration', 'Feedback'],
@@ -112,7 +111,7 @@ export const agentProfiles: AgentProfile[] = [
     status: 'active',
     gradient: 'from-slate-600 to-blue-800',
     accentColor: 'hsl(220, 60%, 40%)',
-    introduction: "I'm Ivan — the Technical Authority. I've been in this industry longer than most systems have been running. My expertise spans process engineering, technical safety, instrumentation, control & automation, and decades of deep operational experience. I read and interpret P&IDs, Cause & Effects, and Safeguarding Memoranda. I review HAZOPs, run what-if scenario analyses, and understand human factors engineering, process and flow assurance. I review all PSSR and VCR items and advise based on my experience and assessment of where the project stands. I conduct Design Safety Reviews. I set up operations teams — Start-of-Shift Orientation meetings, operator rounds, asset management systems, Operating Mode Assurance Reviews, and all the registers and templates that need to be in place. Ultimately, I take everything Fred and Zain tell me, assess cumulative risk, and determine whether it is technically safe to start up.",
+    introduction: "I'm Ivan — the Technical Authority. I've been in this industry longer than most systems have been running. My expertise spans process engineering, technical safety, instrumentation, control & automation, and decades of deep operational experience. I read and interpret P&IDs, Cause & Effects, and Safeguarding Memoranda. I review HAZOPs, run what-if scenario analyses, and understand human factors engineering, process and flow assurance. I review all PSSR and VCR items and advise based on my experience and assessment of where the project stands. I conduct Design Safety Reviews. I set up operations teams — Start-of-Shift Orientation meetings, operator rounds, asset management systems, Operating Mode Assurance Reviews, and all the registers and templates that need to be in place. Ultimately, I take everything Fred and Hannah tell me, assess cumulative risk, and determine whether it is technically safe to start up.",
     specializations: [
       'Process engineering & technical safety',
       'HAZOP review & what-if scenario analysis',
@@ -133,20 +132,20 @@ export const agentProfiles: AgentProfile[] = [
     limitations: [
       "Does not manage completions data directly (Fred's domain)",
       "Does not search document management systems (Selma's domain)",
-      "Does not manage training programs (Zain's domain)",
+      "Does not manage training programs (Hannah's domain)",
     ],
-    worksWith: ['bob', 'fred', 'alex', 'zain'],
+    worksWith: ['bob', 'fred', 'alex', 'hannah'],
     deepDiveTabs: ['Configuration', 'Feedback'],
   },
   {
-    code: 'zain',
-    name: 'Zain',
-    role: 'Training & Competence Development',
-    avatar: zainAvatar,
+    code: 'hannah',
+    name: 'Hannah',
+    role: 'People Readiness',
+    avatar: hannahAvatar,
     status: 'planned',
     gradient: 'from-violet-500 to-purple-600',
     accentColor: 'hsl(270, 70%, 55%)',
-    introduction: "I'm Zain — your Training & Competence Development specialist. I manage the internal Competence Management System, referencing programs like OperatorSuite by Woods. I track and manage the competencies of all operators, working closely with Selma for training documentation, Fred for commissioning-related competency requirements, and Ivan for technical authority sign-off. Together we understand what training needs to be done, how much has been completed, what remains, and critically — what the gap means for startup readiness.",
+    introduction: "I'm Hannah — your People Readiness specialist. I manage the internal Competence Management System, referencing programs like OperatorSuite by Woods. I track and manage the competencies of all operators, working closely with Selma for training documentation, Fred for commissioning-related competency requirements, and Ivan for technical authority sign-off. Together we understand what training needs to be done, how much has been completed, what remains, and critically — what the gap means for startup readiness.",
     specializations: [
       'Competence Management System administration (OperatorSuite)',
       'Operator competency tracking & assessment',
@@ -167,7 +166,7 @@ export const agentProfiles: AgentProfile[] = [
   {
     code: 'alex',
     name: 'Alex',
-    role: 'Maintenance & Inspection System Build',
+    role: 'Maintenance System Readiness',
     avatar: alexAvatar,
     status: 'planned',
     gradient: 'from-cyan-600 to-slate-600',
