@@ -73,7 +73,7 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({
         <div className={cn('h-2 bg-gradient-to-r', agent.gradient)} />
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start gap-6">
-            <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-border/30 shadow-xl shrink-0">
+            <div className="w-28 h-28 rounded-2xl overflow-hidden border-2 border-border/30 shadow-xl shrink-0">
               <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
             </div>
 
