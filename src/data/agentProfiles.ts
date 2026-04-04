@@ -135,7 +135,7 @@ export const agentProfiles: AgentProfile[] = [
       "Does not search document management systems (Selma's domain)",
       "Does not manage training programs (Zain's domain)",
     ],
-    worksWith: ['bob', 'fred', 'hannah', 'alex', 'zain'],
+    worksWith: ['bob', 'fred', 'alex', 'zain'],
     deepDiveTabs: ['Configuration', 'Feedback'],
   },
   {
