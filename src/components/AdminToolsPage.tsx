@@ -709,9 +709,15 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                           <Star className="h-3.5 w-3.5 text-amber-400/60 fill-amber-400/60 hover:text-amber-500 hover:fill-amber-500 transition-all duration-200" />
                         </button>
                         <div className="flex items-start gap-3 pr-6 w-full">
-                          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
-                            <IconComponent className="h-4 w-4 text-white" />
-                          </div>
+                          {(item as any).avatarSrc ? (
+                            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 group-hover:scale-110 transition-transform duration-300 border border-border/30">
+                              <img src={(item as any).avatarSrc} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+                            </div>
+                          ) : (
+                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                              <IconComponent className="h-4 w-4 text-white" />
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
