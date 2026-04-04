@@ -846,9 +846,9 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['Q1 2026', 'Advanced Document Tools (v4)', 'Cross-discipline, bulk status, trend analysis, task creation (11 tools)', 'Complete'],
                 ['Q1 2026', 'Autonomous Training + Quality Score (v5)', 'Auto-apply improvements, self-healing edge cases, quality scoring, ORA linkage (13 tools)', 'Complete'],
                 ['Q1 2026', 'Anthropic Migration (v6)', 'Claude Sonnet 4.5 migration, Selma naming, Document Intelligence build sequence', 'Complete'],
-                ['Q1 2026', 'Hannah (P2A Handover)', '12 tools — VCR readiness, punch list, ITR, PAC/FAC, cross-agent aggregation', 'Active'],
-                ['Q2 2026', 'Zain (Training Agent)', 'Training plan tools, competency gap analysis (Claude Haiku)', 'Planned'],
-                ['Q2 2026', 'Alex (CMMS Agent)', 'Equipment care tools, maintenance readiness (Claude Haiku)', 'Planned'],
+                ['Q1 2026', 'Hannah Retired', 'P2A Handover agent removed — responsibilities split between Fred (hardware) and Ivan (readiness verdict)', 'Complete'],
+                ['Q2 2026', 'Zain (Training & Competence Development)', 'Competence management, OperatorSuite integration, training gap analysis (Claude Haiku)', 'Planned'],
+                ['Q2 2026', 'Alex (Maintenance & Inspection System Build)', 'Asset registers, CMMS data, inspection frameworks (Claude Haiku)', 'Planned'],
                 
                 ['Q3 2026', 'Cross-Agent Reasoning', 'A2A cross_reference messages, Claude synthesis', 'Planned'],
                 ['Q3 2026', 'Predictive Analytics', 'Trend forecasting, schedule risk alerts', 'Planned'],
