@@ -622,20 +622,10 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
               <Card className="bg-muted/30 border-border">
                 <CardContent className="pt-4">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">4. Hannah — P2A Handover Intelligence</h3>
-                  <p className="text-xs">
-                    Hannah owns the Project-to-Asset handover process. She has <strong className="text-foreground">12 tools</strong> covering 
-                    VCR readiness, ITR status, punch list tracking, PAC/FAC readiness, and cross-agent handover aggregation.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-muted/30 border-border">
-                <CardContent className="pt-4">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">5. Ivan — Process Technical Authority</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">4. Ivan — Technical Authority</h3>
                   <p className="text-xs">
                     Ivan has <strong className="text-foreground">17 tools</strong> covering HAZOP reviews, STQ/MOC assessment, 
-                    operational register development, override risk analysis, and cumulative startup risk assessment.
+                    operational register development, override risk analysis, PSSR/VCR review, Design Safety Reviews, and cumulative startup risk assessment. He delivers the Safe-to-Start verdict.
                   </p>
                 </CardContent>
               </Card>
