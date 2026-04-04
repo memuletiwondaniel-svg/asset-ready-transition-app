@@ -3,6 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Users, Settings, CheckCircle, Home, Search, X, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container, MapPin, GitBranch, Files, Brain, ChevronDown, Star, FlaskConical } from 'lucide-react';
+import bobAvatar from '@/assets/agents/bob.jpg';
+import selmaAvatar from '@/assets/agents/selma.jpg';
+import fredAvatar from '@/assets/agents/fred.jpg';
+import ivanAvatar from '@/assets/agents/ivan.jpg';
+import hannahAvatar from '@/assets/agents/hannah.jpg';
+import alexAvatar from '@/assets/agents/alex.jpg';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -228,14 +234,12 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       columns: 3 as const,
       items: [
         { id: 'ai-agents-hub', title: 'AI Agents Hub', description: 'Overview, profiles, relationships', icon: Brain, gradient: 'from-violet-500 to-purple-600', badge: '6 agents' as const, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', navKey: Date.now() } }) },
-        { id: 'agent-bob', title: 'Bob', description: 'CoPilot & Router', icon: Brain, gradient: 'from-amber-500 to-orange-600', onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'bob', navKey: Date.now() } }) },
-        { id: 'agent-selma', title: 'Selma', description: 'Documentation & Information Readiness', icon: FileSearch, gradient: 'from-cyan-500 to-blue-600', onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'selma', navKey: Date.now() } }) },
-        { id: 'agent-fred', title: 'Fred', description: 'System & Hardware Readiness', icon: CheckCircle, gradient: 'from-red-500 to-rose-600', onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'fred', navKey: Date.now() } }) },
-        { id: 'agent-ivan', title: 'Ivan', description: 'Technical Authority, Process, Ops & Safety', icon: Shield, gradient: 'from-slate-600 to-blue-800', onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'ivan', navKey: Date.now() } }) },
-        { id: 'agent-hannah', title: 'Hannah', description: 'Training & People Readiness', icon: Users, gradient: 'from-violet-500 to-purple-600', badge: 'planned' as const, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'hannah', navKey: Date.now() } }) },
-        { id: 'agent-alex', title: 'Alex', description: 'Maintenance System Readiness', icon: Settings, gradient: 'from-cyan-600 to-slate-600', badge: 'planned' as const, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'alex', navKey: Date.now() } }) },
-        { id: 'auto-update-controls', title: 'Auto-Update Controls', description: 'Living doc triggers, update queue', icon: Settings, gradient: 'from-sky-500 to-blue-600', onClick: () => toast.info('Auto-Update Controls coming soon') },
-        { id: 'training-feedback', title: 'Training & Feedback', description: 'Agent feedback loop, ratings', icon: HeartPulse, gradient: 'from-pink-500 to-rose-600', onClick: () => toast.info('Training & Feedback coming soon') },
+        { id: 'agent-bob', title: 'Bob', description: 'CoPilot & Router', icon: Brain, gradient: 'from-amber-500 to-orange-600', avatarSrc: bobAvatar, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'bob', navKey: Date.now() } }) },
+        { id: 'agent-selma', title: 'Selma', description: 'Documentation & Information Readiness', icon: FileSearch, gradient: 'from-cyan-500 to-blue-600', avatarSrc: selmaAvatar, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'selma', navKey: Date.now() } }) },
+        { id: 'agent-fred', title: 'Fred', description: 'System & Hardware Readiness', icon: CheckCircle, gradient: 'from-red-500 to-rose-600', avatarSrc: fredAvatar, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'fred', navKey: Date.now() } }) },
+        { id: 'agent-ivan', title: 'Ivan', description: 'Technical Authority, Process, Ops & Safety', icon: Shield, gradient: 'from-slate-600 to-blue-800', avatarSrc: ivanAvatar, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'ivan', navKey: Date.now() } }) },
+        { id: 'agent-hannah', title: 'Hannah', description: 'Training & People Readiness', icon: Users, gradient: 'from-violet-500 to-purple-600', badge: 'planned' as const, avatarSrc: hannahAvatar, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'hannah', navKey: Date.now() } }) },
+        { id: 'agent-alex', title: 'Alex', description: 'Maintenance System Readiness', icon: Settings, gradient: 'from-cyan-600 to-slate-600', badge: 'planned' as const, avatarSrc: alexAvatar, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'alex', navKey: Date.now() } }) },
       ],
     },
     {
@@ -275,6 +279,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         { id: 'journey-maps', title: 'Customer Journey Maps', description: 'Persona journeys, onboarding flows', icon: MapPin, gradient: 'from-pink-600 to-rose-700', onClick: () => setActiveView('journey-maps') },
         { id: 'deployment-log', title: 'Deployment Log', description: 'Version history, release notes', icon: Rocket, gradient: 'from-emerald-500 to-teal-600', badge: 'auto-update' as const, onClick: () => setActiveView('deployment-log') },
         { id: 'process-flows', title: 'Process Flow Maps', description: 'Workflows, approval chains', icon: GitBranch, gradient: 'from-emerald-600 to-teal-700', onClick: () => setActiveView('process-flows') },
+        { id: 'auto-update-controls', title: 'Auto-Update Controls', description: 'Living doc triggers, update queue', icon: Settings, gradient: 'from-sky-500 to-blue-600', onClick: () => toast.info('Auto-Update Controls coming soon') },
       ],
     },
   ], [navigate, t]);
@@ -704,9 +709,15 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                           <Star className="h-3.5 w-3.5 text-amber-400/60 fill-amber-400/60 hover:text-amber-500 hover:fill-amber-500 transition-all duration-200" />
                         </button>
                         <div className="flex items-start gap-3 pr-6 w-full">
-                          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
-                            <IconComponent className="h-4 w-4 text-white" />
-                          </div>
+                          {(item as any).avatarSrc ? (
+                            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 group-hover:scale-110 transition-transform duration-300 border border-border/30">
+                              <img src={(item as any).avatarSrc} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+                            </div>
+                          ) : (
+                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                              <IconComponent className="h-4 w-4 text-white" />
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
@@ -771,9 +782,15 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                                 }`} />
                               </button>
                               <div className="flex items-start gap-3 pr-6 w-full">
+                              {(item as any).avatarSrc ? (
+                                <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 group-hover:scale-110 transition-transform duration-300 border border-border/30">
+                                  <img src={(item as any).avatarSrc} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+                                </div>
+                              ) : (
                                 <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300`}>
                                   <IconComponent className="h-4 w-4 text-white" />
                                 </div>
+                              )}
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <h3 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
