@@ -710,7 +710,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                         </button>
                         <div className="flex items-start gap-3 pr-6 w-full">
                           {(item as any).avatarSrc ? (
-                            <div className={`w-9 h-9 rounded-full overflow-hidden shrink-0 group-hover:scale-110 transition-transform duration-300 border-2 border-gradient bg-gradient-to-br ${item.gradient} p-[2px]`}>
+                            <div className={`w-9 h-9 rounded-full overflow-hidden shrink-0 group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br ${item.gradient} p-[1.5px]`}>
                               <img src={(item as any).avatarSrc} alt={item.title} className="w-full h-full object-cover rounded-full" loading="lazy" />
                             </div>
                           ) : (
@@ -783,7 +783,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                               </button>
                               <div className="flex items-start gap-3 pr-6 w-full">
                               {(item as any).avatarSrc ? (
-                                <div className={`w-9 h-9 rounded-full overflow-hidden shrink-0 group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br ${item.gradient} p-[2px]`}>
+                                <div className={`w-9 h-9 rounded-full overflow-hidden shrink-0 group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br ${item.gradient} p-[1.5px]`}>
                                   <img src={(item as any).avatarSrc} alt={item.title} className="w-full h-full object-cover rounded-full" loading="lazy" />
                                 </div>
                               ) : (
