@@ -82,7 +82,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               <p className="text-sm text-muted-foreground">Living document — ORSH → ORIP evolution & strategic positioning</p>
               <div className="flex items-center gap-1.5 mt-1">
                 <Calendar className="h-3 w-3 text-muted-foreground/70" />
-                <span className="text-xs text-muted-foreground/70">Last updated: 24 March 2026 — ORM Agent removed. Agent family: Bob, Selma, Fred, Hannah, Ivan, Zain, Alex.</span>
+                <span className="text-xs text-muted-foreground/70">Last updated: April 2026 — Hannah removed. Agent family: Bob, Selma, Fred, Ivan, Zain, Alex.</span>
               </div>
             </div>
           </div>
@@ -372,9 +372,8 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
             <StatusTable rows={[
               { label: 'Bob CoPilot (Router)', value: 'Central AI agent running on Claude Sonnet 4.5 (Anthropic) with intent detection, user context learning, and specialist dispatch', status: 'active' },
               { label: 'Selma (Document Specialist)', value: '13-tool agent for DMS gap analysis, quality scoring, numbering config, and ORA linkage — confirmed live with excellent performance', status: 'active' },
-              { label: 'Fred (PSSR/ORA Agent)', value: '14-tool specialist for safety review guidance, checklist intelligence, and ORA activity planning', status: 'active' },
-              { label: 'Hannah (P2A Handover Intelligence)', value: '12-tool cross-agent readiness orchestrator — VCR lifecycle, punch list, ITR, PAC/FAC, GoCompletions sync, startup risk flagging. Aggregates from Selma, Fred, Zain, Alex.', status: 'active' },
-              { label: 'Ivan (Process Technical Authority)', value: '17-tool agent for HAZOP, STQ, MOC, override registers, cumulative risk assessment, OMAR, SIMOPS, flow assurance. Cross-agent aggregation from Selma, Fred, Hannah.', status: 'active' },
+              { label: 'Fred (Commissioning & Hardware Readiness)', value: '14-tool specialist for GoCompletions integration, ITR/punch list tracking, hardware readiness assessments', status: 'active' },
+              { label: 'Ivan (Technical Authority)', value: '17-tool agent for HAZOP, STQ, MOC, override registers, cumulative risk assessment, PSSR/VCR review, Design Safety Reviews, Safe-to-Start verdict. Cross-agent aggregation from Selma, Fred, Zain.', status: 'active' },
               { label: 'Autonomous Training Loop', value: 'v5.0 — daily cron-driven feedback analysis, auto-apply prompt improvements, self-healing edge cases', status: 'active' },
               { label: 'User Context Persistence', value: 'Per-user preference learning stored in ai_user_context — personalizes responses over time', status: 'active' },
               { label: 'Zain — Training Intelligence (Phase 2)', value: 'Domain-specific agent for training plan intelligence — claude-haiku planned', status: 'planned' },
@@ -516,7 +515,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
               { label: 'Task Manager', value: 'Unified task inbox with auto-generated tasks from all modules → Action closeout velocity metric', status: 'active' },
               { label: 'Admin Tools', value: '28+ management tools (users, roles, security, audit, config) → Governance & compliance layer', status: 'active' },
               { label: 'DMS', value: 'Document Intelligence build sequence defined — 9 phases from data model through project knowledge reading. Phase 1 (data model) ready to execute. Selma (Document AI Agent) confirmed live with 13 tools and excellent performance on document readiness analysis.', status: 'active' },
-              { label: 'AI CoPilot (Bob)', value: 'Multi-agent AI running on Claude Sonnet 4.5 (Anthropic). Bob CoPilot, Selma (Document Agent), Fred (PSSR/ORA) and Hannah (P2A Handover) all live. Autonomous training loop v5.0 active. Phase 2 agents (Zain, Alex, ORM) in build queue.', status: 'active' },
+              { label: 'AI CoPilot (Bob)', value: 'Multi-agent AI running on Claude Sonnet 4.5 (Anthropic). Bob CoPilot, Selma (Document Agent), Fred (Commissioning) and Ivan (Technical Authority) all live. Autonomous training loop v5.0 active. Phase 2 agents (Zain, Alex) in build queue.', status: 'active' },
             ]} />
 
             <Card className="bg-amber-500/5 border-amber-500/20 mt-4">
@@ -544,7 +543,7 @@ const StrategicNorthstarDocument: React.FC<StrategicNorthstarDocumentProps> = ({
                 <p className="font-bold text-foreground mb-3">CLAUDE MIGRATION COMPLETE</p>
                 <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
                   <li>All active ORSH AI agents migrated from Lovable AI Gateway to <strong className="text-foreground">Anthropic API</strong></li>
-                  <li>Model: <strong className="text-foreground">claude-sonnet-4-5</strong> for Bob CoPilot, Selma (Document Intelligence), Fred (PSSR/ORA), Hannah (P2A Handover) and Ivan (Process TA)</li>
+                  <li>Model: <strong className="text-foreground">claude-sonnet-4-5</strong> for Bob CoPilot, Selma (Document Intelligence), Fred (Commissioning) and Ivan (Technical Authority)</li>
                   <li>The Lovable AI Gateway dependency eliminated — full Anthropic API control</li>
                   <li><strong className="text-foreground">Selma (Document Agent) confirmed live:</strong> delivered document intelligence analysis showing 988 documents tracked, quality score 45/100, 3 prioritised action items, identified RLMU compliance gap blocking operational handover</li>
                   <li><strong className="text-foreground">Security hardening:</strong> 6 critical issues resolved, enterprise-grade security posture confirmed</li>

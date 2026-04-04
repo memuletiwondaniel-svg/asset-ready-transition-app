@@ -536,9 +536,8 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
               <div className="pl-4">├── User Context Loading (ai_user_context)</div>
               <div className="pl-4">├── Specialist Agent Dispatch:</div>
                <div className="pl-8">├── Selma — Document Intelligence (DMS domain — 13 tools)</div>
-               <div className="pl-8">├── Fred — PSSR/ORA Safety & Readiness (14 tools)</div>
-               <div className="pl-8">├── Hannah — P2A Handover Intelligence (12 tools)</div>
-               <div className="pl-8">├── Ivan — Process Technical Authority (17 tools)</div>
+               <div className="pl-8">├── Fred — Commissioning & Hardware Readiness (14 tools)</div>
+               <div className="pl-8">├── Ivan — Technical Authority (17 tools)</div>
               <div className="pl-8">└── General CoPilot (fallback)</div>
               <div className="pl-4">└── Response Synthesis + Context Persistence</div>
             </div>
@@ -623,35 +622,25 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
 
               <Card className="bg-muted/30 border-border">
                 <CardContent className="pt-4">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">4. Hannah — P2A Handover Intelligence</h3>
-                  <p className="text-xs">
-                    Hannah owns the Project-to-Asset handover process. She has <strong className="text-foreground">12 tools</strong> covering 
-                    VCR readiness, ITR status, punch list tracking, PAC/FAC readiness, and cross-agent handover aggregation.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-muted/30 border-border">
-                <CardContent className="pt-4">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">5. Ivan — Process Technical Authority</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">4. Ivan — Technical Authority</h3>
                   <p className="text-xs">
                     Ivan has <strong className="text-foreground">17 tools</strong> covering HAZOP reviews, STQ/MOC assessment, 
-                    operational register development, override risk analysis, and cumulative startup risk assessment.
+                    operational register development, override risk analysis, PSSR/VCR review, Design Safety Reviews, and cumulative startup risk assessment. He delivers the Safe-to-Start verdict.
                   </p>
                 </CardContent>
               </Card>
 
               <Card className="bg-muted/30 border-border border-dashed">
                 <CardContent className="pt-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">6. Zain — Training Intelligence (Planned)</h3>
-                  <p className="text-xs text-muted-foreground">Claude Haiku — training plan analysis, competency gaps, cost tracking.</p>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">5. Zain — Training & Competence Development (Planned)</h3>
+                  <p className="text-xs text-muted-foreground">Claude Haiku — competence management, OperatorSuite integration, training gap analysis.</p>
                 </CardContent>
               </Card>
 
               <Card className="bg-muted/30 border-border border-dashed">
                 <CardContent className="pt-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">7. Alex — CMMS & Maintenance Intelligence (Planned)</h3>
-                  <p className="text-xs text-muted-foreground">Claude Haiku — equipment care, spare parts, maintenance readiness.</p>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">6. Alex — Maintenance & Inspection System Build (Planned)</h3>
+                  <p className="text-xs text-muted-foreground">Claude Haiku — asset registers, CMMS data, inspection frameworks.</p>
                 </CardContent>
               </Card>
             </div>
@@ -1152,7 +1141,7 @@ const PlatformGuideDocument: React.FC<PlatformGuideDocumentProps> = ({ onBack })
           <div className="text-center text-xs text-muted-foreground py-6 border-t border-border">
             <p><strong className="text-foreground">ORSH Platform Guide — Living Document</strong></p>
             <p>Updated continuously as new features, workflows, and tables are added.</p>
-            <p>Last updated: 24 March 2026 — ORM Agent removed. Agent family: Bob, Selma, Fred, Hannah, Ivan, Zain, Alex.</p>
+            <p>Last updated: April 2026 — Hannah removed. Agent family: Bob, Selma, Fred, Ivan, Zain, Alex.</p>
           </div>
         </div>
       </div>
