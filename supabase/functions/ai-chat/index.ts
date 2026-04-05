@@ -3457,7 +3457,12 @@ const TOOL_AGENT_MAP: Record<string, string> = {
   get_pssr_detailed_summary: 'pssr_ora_agent',
   get_pssr_stats: 'pssr_ora_agent',
   get_discipline_status: 'pssr_ora_agent',
-  // Future agents: add hannah/ivan/zain/alex tool names here
+  // Fred GoCompletions tools
+  search_completions_tags: 'pssr_ora_agent',
+  get_completion_status: 'pssr_ora_agent',
+  get_punchlist_details: 'pssr_ora_agent',
+  get_handover_certificate_status: 'pssr_ora_agent',
+  lookup_itr_for_equipment: 'pssr_ora_agent',
 };
 
 // Layer 3: Reverse lookup — which tools belong to which specialist
