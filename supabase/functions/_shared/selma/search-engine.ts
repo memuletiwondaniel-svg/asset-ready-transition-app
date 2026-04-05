@@ -883,7 +883,7 @@ export async function executeSearch(
     }
 
     if (allDocuments.length === 0) {
-      return { found: false, results: [], totalFound: 0, total_found: 0, message: 'No documents found matching the search criteria in Assai. Strategies tried: ' + strategiesTried.join(', ') + '.', search_pattern: ctx.document_number_pattern, strategies_tried: strategiesTried };
+      return { found: false, results: [], totalFound: 0, total_found: 0, message: 'No documents found matching the search criteria in Assai. Strategies tried: ' + strategiesTried.join(', ') + '.', search_pattern: ctx.document_number_pattern, strategies_tried: strategiesTried, cascade_depth: strategiesTried.length, strategy_stages: strategiesTried };
     }
 
     // Build summaries
