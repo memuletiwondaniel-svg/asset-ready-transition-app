@@ -930,6 +930,8 @@ export async function executeSearch(
         ? `Breakdown covers ${totalSwept} of ${realTotal} documents. Apply a type or status filter for complete results on a specific category.`
         : `Complete breakdown of all ${realTotal} documents.`,
       strategies_tried: strategiesTried,
+      cascade_depth: strategiesTried.length,
+      strategy_stages: strategiesTried,
     };
   } catch (err: any) {
     console.error('[SEARCH_V11] executeSearch error:', err);
