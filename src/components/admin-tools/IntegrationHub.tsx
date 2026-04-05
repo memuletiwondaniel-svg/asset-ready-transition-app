@@ -1213,6 +1213,8 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     {testResultInPanel.message}
                   </div>
                 )}
+
+                {/* Primary row: Remove (left) — Save (right, prominent when dirty) */}
                 <div className="flex items-center justify-between">
                   <div>
                     {!showRemoveConfirm ? (
@@ -1230,68 +1232,90 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                      disabled={!credentialsSaved || testingInPanel}
-                      onClick={testConnection}
-                    >
-                      {testingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wifi className="h-3 w-3 mr-1" />}
-                      Test Connection
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                      disabled={!credentialsSaved || syncingInPanel}
-                      onClick={triggerSync}
-                    >
-                      {syncingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
-                      Sync Now
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs"
-                      disabled={!credentialsSaved || syncingProjects}
-                      onClick={async () => {
-                        setSyncingProjects(true);
-                        try {
-                          const { data, error } = await supabase.functions.invoke('sync-assai-projects');
-                          if (error) throw error;
-                          if (data?.success) {
-                            toast.success(`${data.projects_synced} projects synced from Assai`);
-                          } else {
-                            toast.error(data?.error || 'Project sync failed');
-                          }
-                        } catch (err: any) {
-                          toast.error('Project sync failed: ' + (err.message || 'Unknown error'));
-                        } finally {
-                          setSyncingProjects(false);
+                  <Button
+                    size="sm"
+                    className={cn("text-xs relative", isDirty && "shadow-md")}
+                    disabled={!isFormValid || saving || !isDirty}
+                    onClick={() => { setTriedSave(true); if (isFormValid) saveConfig(); }}
+                  >
+                    {saving && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+                    Save
+                    {isDirty && (
+                      <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-amber-500 border-2 border-background animate-pulse" />
+                    )}
+                  </Button>
+                </div>
+
+                {/* Secondary row: Test Connection + Sync Projects */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs flex-1"
+                    disabled={!credentialsSaved || testingInPanel}
+                    onClick={testConnection}
+                  >
+                    {testingInPanel ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wifi className="h-3 w-3 mr-1" />}
+                    Test Connection
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs flex-1"
+                    disabled={!credentialsSaved || syncingProjects}
+                    onClick={async () => {
+                      setSyncingProjects(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke('sync-assai-projects');
+                        if (error) throw error;
+                        if (data?.success) {
+                          toast.success(`${data.projects_synced} projects synced from Assai`);
+                        } else {
+                          toast.error(data?.error || 'Project sync failed');
                         }
-                      }}
-                    >
-                      {syncingProjects ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
-                      Sync Projects
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="text-xs"
-                      disabled={!isFormValid || saving || !isDirty}
-                      onClick={() => { setTriedSave(true); if (isFormValid) saveConfig(); }}
-                    >
-                      {saving && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
-                      Save
-                    </Button>
-                  </div>
+                      } catch (err: any) {
+                        toast.error('Project sync failed: ' + (err.message || 'Unknown error'));
+                      } finally {
+                        setSyncingProjects(false);
+                      }
+                    }}
+                    title="Sync project metadata from Assai into ORSH"
+                  >
+                    {syncingProjects ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                    Sync Projects
+                  </Button>
                 </div>
               </div>
             </>
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Method Switch Confirmation Dialog */}
+      <AlertDialog open={showMethodSwitchDialog} onOpenChange={setShowMethodSwitchDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Switch to API Mode?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                The REST API integration is <span className="font-semibold">not yet configured</span> and requires server-side setup by your administrator.
+              </p>
+              <p>
+                Selma (Agent mode) is currently the active and fully functional connection method. Switching to API will disable Selma's direct access until API configuration is complete.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Agent</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => setConnectionMethod('api')}
+            >
+              Switch Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
