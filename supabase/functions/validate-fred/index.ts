@@ -265,7 +265,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { tier, token } = await req.json();
+    const body = await req.json();
+    const tier = body.tier;
+    const token = body.token || req.headers.get("Authorization")?.replace("Bearer ", "");
     if (!token) return new Response(JSON.stringify({ error: "Missing token" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
