@@ -518,28 +518,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     }
   };
 
-  const triggerSync = async () => {
-    if (!panelPlatform) return;
-    if (panelPlatform.id === 'assai') {
-      toast.info('Starting Assai document sync via Agent (Selma)...');
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const { data, error } = await supabase.functions.invoke('agent-assai-connect', {
-          headers: { Authorization: `Bearer ${session?.access_token}` },
-        });
-        if (error) throw error;
-        if (data?.success) {
-          toast.success(data.message || 'Agent connected successfully');
-        } else {
-          toast.error(data?.message || data?.error || 'Sync failed');
-        }
-      } catch (err: any) {
-        toast.error(err.message || 'Sync failed');
-      }
-    } else {
-      toast.info(`Sync function not yet available for ${panelPlatform?.name}`);
-    }
-  };
+  // triggerSync removed — "Sync Now" consolidated into "Sync Projects"
 
   const removeCredentials = async () => {
     if (!panelPlatform) return;
