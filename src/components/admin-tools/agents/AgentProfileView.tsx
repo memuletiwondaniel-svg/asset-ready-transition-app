@@ -10,6 +10,8 @@ import { agentProfiles } from '@/data/agentProfiles';
 
 const SelmaValidation = lazy(() => import('@/pages/admin/SelmaValidation'));
 const SelmaAnalytics = lazy(() => import('@/pages/admin/SelmaAnalytics'));
+const FredValidation = lazy(() => import('@/pages/admin/FredValidation'));
+const FredAnalytics = lazy(() => import('@/pages/admin/FredAnalytics'));
 
 const statusConfig = {
   active: { label: 'Active', className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
