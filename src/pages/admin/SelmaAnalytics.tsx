@@ -1,14 +1,16 @@
 import React, { useState } from "react";
-import { TrendingUp, TrendingDown, Clock, Target, Search, Download, Brain, Activity, AlertTriangle, CheckCircle2, XCircle, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Clock, Target, Search, Download, Brain, Activity, AlertTriangle, CheckCircle2, XCircle, Minus, Play, BookOpen, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
-import { useSelmaLatestKPIs, useSelmaInteractions, useSelmaFailures, useSelmaStrategies, useSelmaKPITrend, toggleStrategy, useSelmaTrainingQueue, useSelmaKnowledge } from "@/hooks/useSelmaAnalytics";
+import { useSelmaLatestKPIs, useSelmaInteractions, useSelmaFailures, useSelmaStrategies, useSelmaKPITrend, toggleStrategy, useSelmaTrainingQueue, useSelmaKnowledge, useSelmaResolutionFailures } from "@/hooks/useSelmaAnalytics";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const KPI_CONFIG: Record<string, { label: string; icon: any; target: number; unit: string; color: string }> = {
   retrieval_success_rate: { label: "Retrieval Success", icon: Target, target: 90, unit: "%", color: "text-emerald-500" },
@@ -48,6 +50,7 @@ function OutcomeBadge({ outcome }: { outcome: string }) {
 export default function SelmaAnalytics() {
   const queryClient = useQueryClient();
   const [trendKPI, setTrendKPI] = useState("retrieval_success_rate");
+  const [scorerRunning, setScorerRunning] = useState(false);
 
   const { data: latestKPIs } = useSelmaLatestKPIs();
   const { data: interactions } = useSelmaInteractions(100);
@@ -56,6 +59,7 @@ export default function SelmaAnalytics() {
   const { data: trendData } = useSelmaKPITrend(trendKPI, 30);
   const { data: trainingQueue } = useSelmaTrainingQueue();
   const { data: knowledge } = useSelmaKnowledge();
+  const { data: resolutionFailures } = useSelmaResolutionFailures(true);
 
   const handleToggleStrategy = async (id: string, current: boolean) => {
     try {
@@ -64,6 +68,50 @@ export default function SelmaAnalytics() {
       toast.success(`Strategy ${!current ? 'activated' : 'deactivated'}`);
     } catch {
       toast.error("Failed to update strategy");
+    }
+  };
+
+  const handleRunScorer = async () => {
+    setScorerRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('selma-performance-scorer');
+      if (error) throw error;
+      toast.success(`Scorer completed: ${data?.total_interactions || 0} interactions processed`);
+      queryClient.invalidateQueries({ queryKey: ['selma-latest-kpis'] });
+      queryClient.invalidateQueries({ queryKey: ['selma-kpi-trend'] });
+    } catch (err: any) {
+      toast.error(`Scorer failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setScorerRunning(false);
+    }
+  };
+
+  const handleAddToDictionary = async (failure: { cleaned_query: string; query_text: string; levenshtein_top3: any[] }) => {
+    if (!failure.levenshtein_top3 || failure.levenshtein_top3.length === 0) {
+      toast.error("No suggested matches to add");
+      return;
+    }
+    const best = failure.levenshtein_top3[0];
+    try {
+      const { error } = await supabase.from('dms_document_type_acronyms').insert({
+        acronym: failure.cleaned_query,
+        type_code: best.type_code,
+        full_name: best.full_name,
+        notes: `Auto-added from resolution failure. Original query: "${failure.query_text}"`,
+        is_learned: true,
+        usage_count: 0,
+      });
+      if (error) throw error;
+
+      // Mark as resolved
+      await supabase.from('selma_resolution_failures')
+        .update({ resolved: true, resolved_as: best.type_code })
+        .eq('cleaned_query', failure.cleaned_query);
+
+      queryClient.invalidateQueries({ queryKey: ['selma-resolution-failures'] });
+      toast.success(`Added "${failure.cleaned_query}" → ${best.type_code} to dictionary`);
+    } catch (err: any) {
+      toast.error(`Failed to add: ${err.message}`);
     }
   };
 
@@ -82,11 +130,25 @@ export default function SelmaAnalytics() {
       {/* Performance Analytics — single wrapper card */}
       <Card className="border-border/40">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Activity className="h-5 w-5 text-primary" />
-            Performance Analytics
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">Self-improvement framework — KPIs, learning loop, strategy management</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" />
+                Performance Analytics
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">Self-improvement framework — KPIs, learning loop, strategy management</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRunScorer}
+              disabled={scorerRunning}
+              className="gap-1.5"
+            >
+              <Play className="h-3.5 w-3.5" />
+              {scorerRunning ? 'Running...' : 'Run Scorer Now'}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* KPI Summary Cards */}
@@ -148,7 +210,7 @@ export default function SelmaAnalytics() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm rounded-lg border border-dashed border-border">
-                No trend data yet — KPIs are computed daily
+                No trend data yet — click "Run Scorer Now" to compute KPIs
               </div>
             )}
           </div>
@@ -157,9 +219,15 @@ export default function SelmaAnalytics() {
 
       {/* Learning & Analysis Tabs */}
       <Tabs defaultValue="interactions" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="interactions">Recent Interactions</TabsTrigger>
           <TabsTrigger value="failures">Failure Analysis</TabsTrigger>
+          <TabsTrigger value="unresolved">
+            Unresolved Acronyms
+            {resolutionFailures && resolutionFailures.length > 0 && (
+              <Badge variant="destructive" className="ml-1.5 text-[9px] px-1.5 py-0">{resolutionFailures.length}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="cascade">Search Strategy</TabsTrigger>
           <TabsTrigger value="strategies">Learned Strategies</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge Training</TabsTrigger>
@@ -234,6 +302,83 @@ export default function SelmaAnalytics() {
                     <TableRow>
                       <TableCell colSpan={6} className="text-center text-muted-foreground text-sm py-8">
                         No failures recorded — Selma is performing well 🎉
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="unresolved">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-amber-500" />
+                Unresolved Document Type Queries
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Queries that failed to resolve to a document type code. Add them to the acronym dictionary with one click.
+              </p>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Query</TableHead>
+                    <TableHead className="text-xs">Cleaned</TableHead>
+                    <TableHead className="text-xs">Occurrences</TableHead>
+                    <TableHead className="text-xs">Closest Matches</TableHead>
+                    <TableHead className="text-xs">First Seen</TableHead>
+                    <TableHead className="text-xs">Last Seen</TableHead>
+                    <TableHead className="text-xs">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(resolutionFailures || []).map(rf => (
+                    <TableRow key={rf.id}>
+                      <TableCell className="text-xs max-w-[150px] truncate">{rf.query_text}</TableCell>
+                      <TableCell className="text-xs font-mono">{rf.cleaned_query}</TableCell>
+                      <TableCell className="text-xs tabular-nums">
+                        <Badge variant={rf.occurrence_count >= 5 ? 'destructive' : rf.occurrence_count >= 3 ? 'secondary' : 'outline'} className="text-[10px]">
+                          {rf.occurrence_count}×
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs max-w-[250px]">
+                        {rf.levenshtein_top3 && rf.levenshtein_top3.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {rf.levenshtein_top3.map((m, idx) => (
+                              <Badge key={idx} variant="outline" className="text-[9px] gap-0.5">
+                                {m.acronym} ({m.similarity})
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">No close matches</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-[10px] text-muted-foreground">{new Date(rf.first_seen).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-[10px] text-muted-foreground">{new Date(rf.last_seen).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        {rf.levenshtein_top3 && rf.levenshtein_top3.length > 0 ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs gap-1"
+                            onClick={() => handleAddToDictionary(rf)}
+                          >
+                            <Plus className="h-3 w-3" />
+                            Add
+                          </Button>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {(!resolutionFailures || resolutionFailures.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground text-sm py-8">
+                        No unresolved acronyms — Selma's dictionary is comprehensive 🎉
                       </TableCell>
                     </TableRow>
                   )}
