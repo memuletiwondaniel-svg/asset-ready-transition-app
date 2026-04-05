@@ -507,7 +507,13 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           headers: { Authorization: `Bearer ${session?.access_token}` },
         });
         if (error) throw error;
-        setTestResultInPanel(data);
+        setTestResultInPanel({
+          success: data?.success ?? false,
+          message: data?.success
+            ? `Fred Connected · ${data.response_time_ms ?? '—'}ms`
+            : data?.error || 'Connection failed',
+          response_time_ms: data?.response_time_ms,
+        });
       } catch (err: any) {
         setTestResultInPanel({ success: false, message: err.message || 'Test failed' });
       } finally {
@@ -797,7 +803,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     >
                       <BrainCircuit className={cn('h-5 w-5', connectionMethod === 'agent' ? 'text-emerald-600' : 'text-muted-foreground')} />
                       <span className={cn('font-medium text-sm', connectionMethod === 'agent' ? 'text-emerald-700 dark:text-emerald-400' : 'text-foreground')}>Agent</span>
-                      <p className="text-[11px] text-muted-foreground leading-tight">Selma AI</p>
+                      <p className="text-[11px] text-muted-foreground leading-tight">{panelPlatform?.id === 'gocompletions' ? 'Fred AI' : 'Selma AI'}</p>
                       </button>
                   </div>
 
@@ -1052,7 +1058,9 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50">
                         <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                         <p className="text-[11px] text-blue-700 dark:text-blue-400 leading-relaxed">
-                          Automation mode stores your login credentials so ORSH can access this platform directly. Your credentials are encrypted and stored securely.
+                          {panelPlatform?.id === 'gocompletions'
+                            ? 'GoCompletions — enter the GoTechnology Hub2 portal URL (e.g. https://goc.gotechnology.online/BGC/). Fred will use these credentials to access completions data via web automation.'
+                            : 'Automation mode stores your login credentials so ORSH can access this platform directly. Your credentials are encrypted and stored securely.'}
                         </p>
                       </div>
                       <div className="flex items-center justify-between">
@@ -1245,10 +1253,14 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     onClick={async () => {
                       setSyncingProjects(true);
                       try {
-                        const { data, error } = await supabase.functions.invoke('sync-assai-projects');
+                        const syncFn = panelPlatform?.id === 'gocompletions' ? 'gohub-sync-counts' : 'sync-assai-projects';
+                        const { data, error } = await supabase.functions.invoke(syncFn);
                         if (error) throw error;
                         if (data?.success) {
-                          toast.success(`${data.projects_synced} projects synced from Assai`);
+                          const msg = panelPlatform?.id === 'gocompletions'
+                            ? `GoCompletions sync complete`
+                            : `${data.projects_synced} projects synced from Assai`;
+                          toast.success(msg);
                         } else {
                           toast.error(data?.error || 'Project sync failed');
                         }
@@ -1258,7 +1270,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         setSyncingProjects(false);
                       }
                     }}
-                    title="Sync project metadata from Assai into ORSH"
+                    title={panelPlatform?.id === 'gocompletions' ? 'Sync system/subsystem data from GoCompletions' : 'Sync project metadata from Assai into ORSH'}
                   >
                     {syncingProjects ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
                     Sync Projects
@@ -1280,7 +1292,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                 The REST API integration is <span className="font-semibold">not yet configured</span> and requires server-side setup by your administrator.
               </p>
               <p>
-                Selma (Agent mode) is currently the active and fully functional connection method. Switching to API will disable Selma's direct access until API configuration is complete.
+                {panelPlatform?.id === 'gocompletions' ? 'Fred' : 'Selma'} (Agent mode) is currently the active and fully functional connection method. Switching to API will disable {panelPlatform?.id === 'gocompletions' ? "Fred's" : "Selma's"} direct access until API configuration is complete.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
