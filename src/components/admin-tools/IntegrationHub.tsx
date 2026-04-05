@@ -174,6 +174,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const [syncingProjects, setSyncingProjects] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [showMethodSwitchDialog, setShowMethodSwitchDialog] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     favorites: true,
     dms: false,
