@@ -205,7 +205,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   }, []);
 
   // Section definitions for the sectioned layout
-  const sections = useMemo(() => [
+  const sections = [
     {
       label: 'USER MANAGEMENT',
       columns: 2 as const,
@@ -282,7 +282,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         { id: 'auto-update-controls', title: 'Auto-Update Controls', description: 'Living doc triggers, update queue', icon: Settings, gradient: 'from-sky-500 to-blue-600', onClick: () => toast.info('Auto-Update Controls coming soon') },
       ],
     },
-  ], [navigate, t]);
+  ];
 
   // Build a flat map of all items for favorites lookup
   const allItemsMap = useMemo(() => {
