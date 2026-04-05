@@ -1251,10 +1251,14 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     onClick={async () => {
                       setSyncingProjects(true);
                       try {
-                        const { data, error } = await supabase.functions.invoke('sync-assai-projects');
+                        const syncFn = panelPlatform?.id === 'gocompletions' ? 'gohub-sync-counts' : 'sync-assai-projects';
+                        const { data, error } = await supabase.functions.invoke(syncFn);
                         if (error) throw error;
                         if (data?.success) {
-                          toast.success(`${data.projects_synced} projects synced from Assai`);
+                          const msg = panelPlatform?.id === 'gocompletions'
+                            ? `GoCompletions sync complete`
+                            : `${data.projects_synced} projects synced from Assai`;
+                          toast.success(msg);
                         } else {
                           toast.error(data?.error || 'Project sync failed');
                         }
@@ -1264,7 +1268,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         setSyncingProjects(false);
                       }
                     }}
-                    title="Sync project metadata from Assai into ORSH"
+                    title={panelPlatform?.id === 'gocompletions' ? 'Sync system/subsystem data from GoCompletions' : 'Sync project metadata from Assai into ORSH'}
                   >
                     {syncingProjects ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
                     Sync Projects
