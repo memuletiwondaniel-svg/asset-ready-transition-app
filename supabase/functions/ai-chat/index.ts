@@ -7251,6 +7251,12 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       get_user_context: 'Loading your preferences...',
       save_user_context: 'Saving your preferences...',
       get_all_projects: 'Fetching project list...',
+      // Fred GoCompletions tools
+      search_completions_tags: 'Searching GoCompletions tags...',
+      get_completion_status: 'Fetching completion status...',
+      get_punchlist_details: 'Loading punchlist details...',
+      get_handover_certificate_status: 'Checking certificate status...',
+      lookup_itr_for_equipment: 'Looking up ITR allocation...',
     };
     // Real-time streaming controller — set inside ReadableStream start()
     let streamController: ReadableStreamDefaultController<Uint8Array> | null = null;
