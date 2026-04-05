@@ -69,8 +69,8 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({
         Back to Overview
       </Button>
 
+      {/* Main agent card — NO blue taper/gradient bar */}
       <Card className="border-border/40 overflow-hidden">
-        <div className={cn('h-2 bg-gradient-to-r', agent.gradient)} />
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start gap-6">
             <div className="w-28 h-28 rounded-2xl overflow-hidden border-2 border-border/30 shadow-xl shrink-0">
@@ -93,33 +93,32 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({
               />
             </div>
           </div>
+
+          {/* Collaborators — merged into the same card */}
+          {collaborators.length > 0 && (
+            <div className="mt-6 pt-5 border-t border-border/30">
+              <h4 className="text-sm font-semibold text-foreground mb-3">I Work Closely With</h4>
+              <div className="flex flex-wrap gap-3">
+                {collaborators.map((collab) => (
+                  <div
+                    key={collab.code}
+                    className="flex items-center gap-2.5 bg-muted/50 hover:bg-muted rounded-xl px-3 py-2 cursor-pointer transition-colors group"
+                    onClick={() => onAgentClick(collab.code)}
+                  >
+                    <div className="w-8 h-8 rounded-full overflow-hidden border border-border/30">
+                      <img src={collab.avatar} alt={collab.name} className="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">{collab.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{collab.role}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {collaborators.length > 0 && (
-        <Card className="border-border/40">
-          <CardContent className="p-6">
-            <h4 className="text-sm font-semibold text-foreground mb-4">I Work Closely With</h4>
-            <div className="flex flex-wrap gap-3">
-              {collaborators.map((collab) => (
-                <div
-                  key={collab.code}
-                  className="flex items-center gap-2.5 bg-muted/50 hover:bg-muted rounded-xl px-3 py-2 cursor-pointer transition-colors group"
-                  onClick={() => onAgentClick(collab.code)}
-                >
-                  <div className="w-8 h-8 rounded-full overflow-hidden border border-border/30">
-                    <img src={collab.avatar} alt={collab.name} className="w-full h-full object-cover" loading="lazy" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">{collab.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{collab.role}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <Card className="border-border/40">
         <CardContent className="p-6">
