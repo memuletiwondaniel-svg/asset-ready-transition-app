@@ -19,9 +19,21 @@ serve(async (req) => {
 
     const now = new Date();
     const periodEnd = now.toISOString();
-    const periodStart = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    // Rolling 7-day window to handle low-usage periods
+    const periodStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    console.log(`📊 Selma Performance Scorer running for ${periodStart} → ${periodEnd}`);
+    console.log(`📊 Selma Performance Scorer running for ${periodStart} → ${periodEnd} (7-day window)`);
+
+    // Watermark check: skip if we already scored within the last 6 hours and no new data
+    const { data: lastSnapshot } = await supabase
+      .from('selma_kpi_snapshots')
+      .select('created_at')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    const lastScoredAt = lastSnapshot?.created_at ? new Date(lastSnapshot.created_at).getTime() : 0;
+    const sixHoursAgo = now.getTime() - 6 * 60 * 60 * 1000;
 
     // Fetch all Selma interactions in the period
     const { data: metrics, error: metricsError } = await supabase
