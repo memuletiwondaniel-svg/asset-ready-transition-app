@@ -446,6 +446,181 @@ export default function FredAnalytics() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="training">
+          <div className="space-y-4">
+            {/* Upload Section */}
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Upload className="h-4 w-4 text-primary" />
+                    Upload Training Documents
+                  </CardTitle>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRunTraining}
+                    disabled={trainingRunning}
+                    className="gap-1.5"
+                  >
+                    <Play className="h-3.5 w-3.5" />
+                    {trainingRunning ? 'Training...' : 'Run Knowledge Builder'}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-end gap-3">
+                  <div className="flex-1">
+                    <label className="text-xs text-muted-foreground mb-1 block">Category</label>
+                    <Select value={uploadCategory} onValueChange={setUploadCategory}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FRED_TRAINING_CATEGORIES.map(c => (
+                          <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Documents</label>
+                    <Input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.pptx,.xlsx,.png,.jpg,.jpeg"
+                      onChange={handleUploadTrainingDoc}
+                      className="h-9 text-xs"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Status Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {['completed', 'in_progress', 'pending', 'failed'].map(status => {
+                const count = (trainingQueue || []).filter(q => q.status === status).length;
+                const colors: Record<string, string> = {
+                  completed: 'text-emerald-500',
+                  in_progress: 'text-blue-500',
+                  pending: 'text-muted-foreground',
+                  failed: 'text-red-500',
+                };
+                return (
+                  <Card key={status}>
+                    <CardContent className="p-3 text-center">
+                      <span className={`text-2xl font-bold ${colors[status]}`}>{count}</span>
+                      <p className="text-[10px] text-muted-foreground capitalize mt-1">{status.replace('_', ' ')}</p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Domain Knowledge Table */}
+            {domainKnowledge && domainKnowledge.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Brain className="h-4 w-4 text-primary" />
+                    Learned Domain Knowledge ({domainKnowledge.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs">Category</TableHead>
+                        <TableHead className="text-xs">Type</TableHead>
+                        <TableHead className="text-xs">Title</TableHead>
+                        <TableHead className="text-xs">Confidence</TableHead>
+                        <TableHead className="text-xs">Tags</TableHead>
+                        <TableHead className="text-xs">Trained</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {domainKnowledge.map(k => (
+                        <TableRow key={k.id}>
+                          <TableCell className="text-xs">{FRED_TRAINING_CATEGORIES.find(c => c.value === k.category)?.label || k.category}</TableCell>
+                          <TableCell className="text-xs font-mono">{k.knowledge_type}</TableCell>
+                          <TableCell className="text-xs max-w-[250px] truncate">{k.title}</TableCell>
+                          <TableCell className="text-xs tabular-nums">
+                            <span className={k.confidence >= 0.7 ? 'text-emerald-500' : k.confidence >= 0.4 ? 'text-amber-500' : 'text-red-500'}>
+                              {(k.confidence * 100).toFixed(0)}%
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            <div className="flex flex-wrap gap-0.5">
+                              {(k.tags || []).slice(0, 4).map((t, i) => (
+                                <Badge key={i} variant="outline" className="text-[9px]">{t}</Badge>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-[10px] text-muted-foreground">
+                            {new Date(k.updated_at).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Training Queue */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  Training Queue
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">Priority</TableHead>
+                      <TableHead className="text-xs">File</TableHead>
+                      <TableHead className="text-xs">Category</TableHead>
+                      <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-xs">Error</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(trainingQueue || []).slice(0, 50).map(q => (
+                      <TableRow key={q.id}>
+                        <TableCell className="text-xs tabular-nums">{q.priority}</TableCell>
+                        <TableCell className="text-xs max-w-[200px] truncate">{q.file_path.split('/').pop()}</TableCell>
+                        <TableCell className="text-xs">{FRED_TRAINING_CATEGORIES.find(c => c.value === q.category)?.label || q.category}</TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            q.status === 'completed' ? 'default' :
+                            q.status === 'failed' ? 'destructive' :
+                            q.status === 'in_progress' ? 'secondary' : 'outline'
+                          } className="text-[10px]">
+                            {q.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs max-w-[200px] truncate text-red-500">
+                          {q.error_details || '—'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(!trainingQueue || trainingQueue.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground text-sm py-8">
+                          No training documents uploaded yet — upload documents above to start training Fred
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
       </Tabs>
     </div>
   );
