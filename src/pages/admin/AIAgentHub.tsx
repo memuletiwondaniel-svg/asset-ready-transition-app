@@ -70,7 +70,14 @@ const AIAgentHub: React.FC<AIAgentHubProps> = ({
   return (
     <div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
       <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-3 md:py-4 sticky top-0 z-10">
-        <BreadcrumbNavigation currentPageLabel="AI Agents" favoritePath="/admin-tools" />
+        <BreadcrumbNavigation 
+          currentPageLabel={agent ? agent.name : "AI Agents"} 
+          favoritePath="/admin-tools"
+          customBreadcrumbs={agent ? [
+            { label: 'Home', path: '/', onClick: () => navigate('/') },
+            { label: 'AI Agents', path: '/admin/ai-agents', onClick: handleBack },
+          ] : undefined}
+        />
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={handleBackToAdmin} className="shrink-0">
