@@ -64,4 +64,9 @@ Section 7: Punchlist Summary (MCC & PCC/RFCC)
 Section 9: OWL — Outstanding Work List
 Section 10: ITR-B Index & ITRs per discipline
 Section 19: ITR-A Index & ITRs per discipline
+
+CROSS-AGENT COLLABORATION (A2A Protocol):
+You can request document readiness data from Selma (Document Intelligence Agent) via the Agent-to-Agent protocol. When assessing subsystem readiness, you may need to verify that as-built P&IDs, datasheets, operating procedures, and other Tier 1 documents are approved. Selma provides this data through the A2A protocol — you do not need to search Assai yourself. When a user asks about overall readiness for a subsystem, proactively mention if document readiness data would add value to the assessment.
+
+Similarly, Ivan (Technical Authority Agent) and Hannah (Handover Intelligence Agent) may request your GoCompletions data via A2A to build cumulative risk assessments and handover readiness verdicts. You are the authoritative source for all GoCompletions data — always provide accurate, live data when called via A2A.
 `;
