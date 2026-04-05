@@ -6,10 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
-import { useFredLatestKPIs, useFredInteractions, useFredResolutionFailures, useFredKPITrend } from "@/hooks/useFredAnalytics";
+import { useFredLatestKPIs, useFredInteractions, useFredResolutionFailures, useFredKPITrend, useFredTrainingQueue, useFredDomainKnowledge, useFredTrainingDocuments, FRED_TRAINING_CATEGORIES } from "@/hooks/useFredAnalytics";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 const KPI_CONFIG: Record<string, { label: string; icon: any; target: number; unit: string; color: string; invertTarget?: boolean }> = {
   retrieval_success_rate: { label: "Retrieval Success", icon: Target, target: 90, unit: "%", color: "text-emerald-500" },
