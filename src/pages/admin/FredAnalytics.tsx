@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { TrendingUp, TrendingDown, Clock, Target, Search, Activity, AlertTriangle, CheckCircle2, XCircle, Minus, Play, BookOpen, Wrench } from "lucide-react";
+import React, { useState, useCallback } from "react";
+import { TrendingUp, TrendingDown, Clock, Target, Search, Activity, AlertTriangle, CheckCircle2, XCircle, Minus, Play, BookOpen, Wrench, Upload, Brain, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
