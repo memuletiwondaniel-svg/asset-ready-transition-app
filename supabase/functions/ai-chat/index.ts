@@ -5,6 +5,9 @@ import { SELMA_SYSTEM_PROMPT } from '../_shared/selma/prompt.ts';
 import { SELMA_TOOLS } from '../_shared/selma/tools.ts';
 import { executeSelmaTool, buildSelmaSessionManager } from '../_shared/selma/handlers.ts';
 import { buildDmsConfigSnapshot } from '../_shared/selma/context-loader.ts';
+import { FRED_SYSTEM_PROMPT } from '../_shared/fred/prompt.ts';
+import { FRED_GOCOMPLETIONS_TOOLS, FRED_GOC_TOOL_NAMES } from '../_shared/fred/tools.ts';
+import { executeFredTool } from '../_shared/fred/handlers.ts';
 
 // Smart region inference from project titles
 function inferRegionFromTitle(title: string): 'North' | 'Central' | 'South' | null {
