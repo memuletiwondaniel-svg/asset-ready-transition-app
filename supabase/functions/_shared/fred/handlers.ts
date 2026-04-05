@@ -478,6 +478,93 @@ export async function handleLookupITRForEquipment(
   };
 }
 
+// ─── A2A: Fred → Selma Document Readiness Check ─────────────
+
+async function handleCheckDocumentReadiness(
+  args: any,
+  supabaseClient: any,
+  userId?: string
+): Promise<any> {
+  const subSystem = args.sub_system || '';
+  const projectCode = args.project_code || 'BNGL';
+  const discipline = args.discipline || null;
+  const certificatePhase = args.certificate_phase || 'MCC';
+
+  // Define which document types are critical per phase
+  const phaseDocs: Record<string, string[]> = {
+    MCC: ['As-Built P&ID', 'Piping GA', 'Isometric Drawing', 'Instrument Datasheet', 'Cable Schedule', 'Equipment Datasheet'],
+    PCC: ['Loop Diagram', 'Cause & Effect Matrix', 'Control Narrative', 'Operating Procedure', 'Pre-Commissioning Procedure'],
+    RFSU: ['Operating Procedure', 'Maintenance Manual', 'Spare Parts List', 'Safety Case', 'HAZOP Close-out'],
+    FAC: ['As-Built Drawings (all)', 'O&M Manual', 'Final Inspection Report', 'Warranty Certificate'],
+  };
+
+  const criticalDocs = phaseDocs[certificatePhase] || phaseDocs['MCC'];
+
+  try {
+    // Call Selma's A2A endpoint
+    const a2aSecret = Deno.env.get('A2A_SHARED_SECRET') || '';
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    
+    const a2aPayload = {
+      source_agent: 'fred',
+      target_agent: 'selma',
+      request_type: 'document_readiness_check',
+      parameters: {
+        sub_system: subSystem,
+        project_code: projectCode,
+        discipline: discipline,
+        certificate_phase: certificatePhase,
+        critical_document_types: criticalDocs,
+      },
+    };
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/selma-a2a`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${a2aSecret}`,
+        'x-a2a-source': 'fred',
+      },
+      body: JSON.stringify(a2aPayload),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error(`Fred→Selma A2A failed (${response.status}): ${errText}`);
+      return {
+        status: 'a2a_unavailable',
+        sub_system: subSystem,
+        project_code: projectCode,
+        certificate_phase: certificatePhase,
+        critical_documents: criticalDocs,
+        message: `Document readiness check via Selma is currently unavailable. The following document types should be verified manually for ${certificatePhase} readiness:`,
+        manual_checklist: criticalDocs.map(doc => ({ document_type: doc, status: 'VERIFY MANUALLY' })),
+      };
+    }
+
+    const selmaResult = await response.json();
+    return {
+      status: 'success',
+      sub_system: subSystem,
+      project_code: projectCode,
+      certificate_phase: certificatePhase,
+      document_readiness: selmaResult,
+      critical_documents: criticalDocs,
+    };
+  } catch (err) {
+    console.error(`Fred→Selma A2A error: ${err}`);
+    return {
+      status: 'a2a_error',
+      sub_system: subSystem,
+      project_code: projectCode,
+      certificate_phase: certificatePhase,
+      critical_documents: criticalDocs,
+      message: `Could not reach Selma for document readiness. Verify these document types manually for ${certificatePhase}:`,
+      manual_checklist: criticalDocs.map(doc => ({ document_type: doc, status: 'VERIFY MANUALLY' })),
+    };
+  }
+}
+
 // ─── Handler Router ──────────────────────────────────────────
 
 export async function executeFredTool(
@@ -497,6 +584,8 @@ export async function executeFredTool(
       return handleGetHandoverCertificateStatus(args, supabaseClient, userId);
     case "lookup_itr_for_equipment":
       return handleLookupITRForEquipment(args, supabaseClient, userId);
+    case "check_document_readiness":
+      return handleCheckDocumentReadiness(args, supabaseClient, userId);
     default:
       return { error: `Unknown Fred tool: ${toolName}` };
   }
