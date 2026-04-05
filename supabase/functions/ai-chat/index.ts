@@ -3413,10 +3413,10 @@ const classifyIntent = async (userMessage: string): Promise<string> => {
 Respond with JSON only, no other text: {"intent": "<intent>", "confidence": <0.0-1.0>}
 
 Intents:
-- document_agent: finding, retrieving, or searching for documents, drawings, specs, datasheets, vendor docs, BfD, P&ID, SLD, GA, or anything in a Document Management System
-- pssr_ora_agent: pre-startup safety reviews, PSSR checklists, ORA items
-- ivan: punchlist items, punch items, outstanding actions, ITRs, process safety, HAZOP
-- hannah: handover certificates, mechanical completion, turnover packages
+- document_agent: finding, retrieving, or searching for documents, drawings, specs, datasheets, vendor docs, BfD, P&ID, SLD, GA, or anything in a Document Management System (Assai)
+- pssr_ora_agent: pre-startup safety reviews, PSSR checklists, ORA items, GoCompletions data, completion status, equipment tags, ITR codes, punchlist items (category A/B), handover certificates (MCC/PCC/RFC/RFSU/FAC), subsystem completion, commissioning status, BGC projects (BNGL, SANDPIT, Zubair)
+- ivan: process safety, HAZOP, safeguarding, MOC, override register, cause and effect, operating procedures, technical authority
+- hannah: P2A handover orchestration, VCR lifecycle, system readiness verdicts, PAC/FAC issuance, two-phase approval workflow
 - training_agent: training courses, competency assessments, learning materials
 - cmms_agent: equipment, assets, maintenance, work orders, CMMS
 - copilot: tasks, schedules, general questions, greetings, platform help, everything else`,
