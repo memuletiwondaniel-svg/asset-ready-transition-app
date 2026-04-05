@@ -212,7 +212,21 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({
                 </>
               )}
 
-              <TabsContent value="configuration" className="mt-0">
+              {agent.code === 'fred' && (
+                <>
+                  <TabsContent value="analytics" className="mt-0">
+                    <Suspense fallback={<LoadingFallback />}>
+                      <FredAnalytics />
+                    </Suspense>
+                  </TabsContent>
+                  <TabsContent value="validation" className="mt-0">
+                    <Suspense fallback={<LoadingFallback />}>
+                      <FredValidation />
+                    </Suspense>
+                  </TabsContent>
+                </>
+              )
+
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <Sparkles className="h-8 w-8 text-muted-foreground/40 mb-3" />
                   <p className="text-sm font-medium text-muted-foreground">
