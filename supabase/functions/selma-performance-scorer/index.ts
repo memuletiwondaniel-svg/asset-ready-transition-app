@@ -46,8 +46,21 @@ serve(async (req) => {
 
     const total = metrics?.length || 0;
     if (total === 0) {
-      console.log('No Selma interactions in period — skipping KPI computation');
-      return new Response(JSON.stringify({ success: true, message: 'No data', kpis: {} }), {
+      console.log('No Selma interactions in 7-day window — skipping KPI computation');
+      return new Response(JSON.stringify({ success: true, message: 'No data in 7-day window', kpis: {} }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check if data has changed since last scoring
+    const latestInteraction = metrics!.reduce((latest: any, m: any) => 
+      new Date(m.created_at).getTime() > new Date(latest.created_at).getTime() ? m : latest
+    , metrics![0]);
+    const latestInteractionTime = new Date(latestInteraction.created_at).getTime();
+    
+    if (lastScoredAt > sixHoursAgo && latestInteractionTime < lastScoredAt) {
+      console.log('No new interactions since last scoring — skipping');
+      return new Response(JSON.stringify({ success: true, message: 'No new data since last scoring', last_scored_at: lastSnapshot?.created_at }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

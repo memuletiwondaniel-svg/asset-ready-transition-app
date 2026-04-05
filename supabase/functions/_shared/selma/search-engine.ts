@@ -472,8 +472,25 @@ export async function paginateByStatusSplit(
     }
   }
 
-  // Strategy 1: status-split
-  const statusCodes = [...new Set(firstDocs.map((d: any) => d.status).filter(Boolean))];
+  // Strategy 1: status-split — fetch ALL active status codes from DB, fallback to page-1 statuses
+  let statusCodes: string[] = [];
+  try {
+    const { data: allStatuses } = await ctx.supabase
+      .from('dms_status_codes')
+      .select('code')
+      .eq('is_active', true)
+      .order('code');
+    if (allStatuses && allStatuses.length > 0) {
+      statusCodes = [...new Set(allStatuses.map((s: any) => s.code).filter(Boolean))];
+      console.info('paginateByStatusSplit: fetched ' + statusCodes.length + ' active status codes from dms_status_codes');
+    }
+  } catch (dbErr) {
+    console.warn('paginateByStatusSplit: failed to fetch status codes from DB, falling back to page-1 statuses:', dbErr);
+  }
+  // Fallback: use statuses from first page results if DB query failed
+  if (statusCodes.length === 0) {
+    statusCodes = [...new Set(firstDocs.map((d: any) => d.status).filter(Boolean))];
+  }
   console.info('paginateByStatusSplit: splitting into ' + statusCodes.length + ' status sub-searches: ' + statusCodes.join(', '));
 
   if (statusCodes.length > 1) {
