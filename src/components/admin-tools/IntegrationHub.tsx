@@ -507,7 +507,13 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           headers: { Authorization: `Bearer ${session?.access_token}` },
         });
         if (error) throw error;
-        setTestResultInPanel(data);
+        setTestResultInPanel({
+          success: data?.success ?? false,
+          message: data?.success
+            ? `Fred Connected · ${data.response_time_ms ?? '—'}ms`
+            : data?.error || 'Connection failed',
+          response_time_ms: data?.response_time_ms,
+        });
       } catch (err: any) {
         setTestResultInPanel({ success: false, message: err.message || 'Test failed' });
       } finally {
