@@ -1058,7 +1058,9 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                       <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50">
                         <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                         <p className="text-[11px] text-blue-700 dark:text-blue-400 leading-relaxed">
-                          Automation mode stores your login credentials so ORSH can access this platform directly. Your credentials are encrypted and stored securely.
+                          {panelPlatform?.id === 'gocompletions'
+                            ? 'GoCompletions — enter the GoTechnology Hub2 portal URL (e.g. https://goc.gotechnology.online/BGC/). Fred will use these credentials to access completions data via web automation.'
+                            : 'Automation mode stores your login credentials so ORSH can access this platform directly. Your credentials are encrypted and stored securely.'}
                         </p>
                       </div>
                       <div className="flex items-center justify-between">
