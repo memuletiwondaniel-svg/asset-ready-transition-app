@@ -101,7 +101,9 @@ export const agentProfiles: AgentProfile[] = [
       "Does not manage training records (Hannah's domain)",
     ],
     worksWith: ['bob', 'ivan', 'selma'],
-    deepDiveTabs: ['Configuration', 'Feedback'],
+    deepDiveTabs: ['Analytics', 'Validation', 'Configuration', 'Feedback'],
+    statsLabel: 'Tests',
+    statsValue: '27',
   },
   {
     code: 'ivan',
