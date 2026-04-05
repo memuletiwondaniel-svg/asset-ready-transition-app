@@ -472,8 +472,25 @@ export async function paginateByStatusSplit(
     }
   }
 
-  // Strategy 1: status-split
-  const statusCodes = [...new Set(firstDocs.map((d: any) => d.status).filter(Boolean))];
+  // Strategy 1: status-split — fetch ALL active status codes from DB, fallback to page-1 statuses
+  let statusCodes: string[] = [];
+  try {
+    const { data: allStatuses } = await ctx.supabase
+      .from('dms_status_codes')
+      .select('code')
+      .eq('is_active', true)
+      .order('code');
+    if (allStatuses && allStatuses.length > 0) {
+      statusCodes = [...new Set(allStatuses.map((s: any) => s.code).filter(Boolean))];
+      console.info('paginateByStatusSplit: fetched ' + statusCodes.length + ' active status codes from dms_status_codes');
+    }
+  } catch (dbErr) {
+    console.warn('paginateByStatusSplit: failed to fetch status codes from DB, falling back to page-1 statuses:', dbErr);
+  }
+  // Fallback: use statuses from first page results if DB query failed
+  if (statusCodes.length === 0) {
+    statusCodes = [...new Set(firstDocs.map((d: any) => d.status).filter(Boolean))];
+  }
   console.info('paginateByStatusSplit: splitting into ' + statusCodes.length + ' status sub-searches: ' + statusCodes.join(', '));
 
   if (statusCodes.length > 1) {
@@ -883,7 +900,7 @@ export async function executeSearch(
     }
 
     if (allDocuments.length === 0) {
-      return { found: false, results: [], totalFound: 0, total_found: 0, message: 'No documents found matching the search criteria in Assai. Strategies tried: ' + strategiesTried.join(', ') + '.', search_pattern: ctx.document_number_pattern, strategies_tried: strategiesTried };
+      return { found: false, results: [], totalFound: 0, total_found: 0, message: 'No documents found matching the search criteria in Assai. Strategies tried: ' + strategiesTried.join(', ') + '.', search_pattern: ctx.document_number_pattern, strategies_tried: strategiesTried, cascade_depth: strategiesTried.length, strategy_stages: strategiesTried };
     }
 
     // Build summaries
@@ -930,6 +947,8 @@ export async function executeSearch(
         ? `Breakdown covers ${totalSwept} of ${realTotal} documents. Apply a type or status filter for complete results on a specific category.`
         : `Complete breakdown of all ${realTotal} documents.`,
       strategies_tried: strategiesTried,
+      cascade_depth: strategiesTried.length,
+      strategy_stages: strategiesTried,
     };
   } catch (err: any) {
     console.error('[SEARCH_V11] executeSearch error:', err);

@@ -19,9 +19,21 @@ serve(async (req) => {
 
     const now = new Date();
     const periodEnd = now.toISOString();
-    const periodStart = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    // Rolling 7-day window to handle low-usage periods
+    const periodStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    console.log(`📊 Selma Performance Scorer running for ${periodStart} → ${periodEnd}`);
+    console.log(`📊 Selma Performance Scorer running for ${periodStart} → ${periodEnd} (7-day window)`);
+
+    // Watermark check: skip if we already scored within the last 6 hours and no new data
+    const { data: lastSnapshot } = await supabase
+      .from('selma_kpi_snapshots')
+      .select('created_at')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    const lastScoredAt = lastSnapshot?.created_at ? new Date(lastSnapshot.created_at).getTime() : 0;
+    const sixHoursAgo = now.getTime() - 6 * 60 * 60 * 1000;
 
     // Fetch all Selma interactions in the period
     const { data: metrics, error: metricsError } = await supabase
@@ -34,8 +46,21 @@ serve(async (req) => {
 
     const total = metrics?.length || 0;
     if (total === 0) {
-      console.log('No Selma interactions in period — skipping KPI computation');
-      return new Response(JSON.stringify({ success: true, message: 'No data', kpis: {} }), {
+      console.log('No Selma interactions in 7-day window — skipping KPI computation');
+      return new Response(JSON.stringify({ success: true, message: 'No data in 7-day window', kpis: {} }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check if data has changed since last scoring
+    const latestInteraction = metrics!.reduce((latest: any, m: any) => 
+      new Date(m.created_at).getTime() > new Date(latest.created_at).getTime() ? m : latest
+    , metrics![0]);
+    const latestInteractionTime = new Date(latestInteraction.created_at).getTime();
+    
+    if (lastScoredAt > sixHoursAgo && latestInteractionTime < lastScoredAt) {
+      console.log('No new interactions since last scoring — skipping');
+      return new Response(JSON.stringify({ success: true, message: 'No new data since last scoring', last_scored_at: lastSnapshot?.created_at }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -119,6 +144,80 @@ serve(async (req) => {
       value: dlLatencies.length > 0 ? Math.round(dlLatencies.reduce((a: number, b: number) => a + b, 0) / dlLatencies.length) : 0,
       sample_size: dlLatencies.length
     };
+
+    // 11. Cascade depth distribution (which strategy levels resolve queries)
+    const depthDist: Record<number, { total: number; success: number }> = {};
+    for (const m of metrics!) {
+      const depth = m.cascade_depth || 1;
+      if (!depthDist[depth]) depthDist[depth] = { total: 0, success: 0 };
+      depthDist[depth].total++;
+      if (m.outcome === 'success' || m.outcome === 'partial') depthDist[depth].success++;
+    }
+    kpis['cascade_depth_distribution'] = {
+      value: Object.keys(depthDist).length,
+      sample_size: total,
+      metadata: depthDist
+    };
+
+    // 12. Resolution failure rate (from selma_resolution_failures table)
+    try {
+      const { count: totalFailures } = await supabase
+        .from('selma_resolution_failures')
+        .select('*', { count: 'exact', head: true })
+        .gte('last_seen', periodStart);
+      
+      const { count: unresolvedFailures } = await supabase
+        .from('selma_resolution_failures')
+        .select('*', { count: 'exact', head: true })
+        .eq('resolved', false)
+        .gte('last_seen', periodStart);
+
+      kpis['resolution_failure_count'] = {
+        value: unresolvedFailures || 0,
+        sample_size: totalFailures || 0,
+        metadata: { unresolved: unresolvedFailures || 0, total_period: totalFailures || 0 }
+      };
+
+      // Auto-suggest acronyms: failures with 3+ occurrences → insert as learned strategy suggestions
+      const { data: frequentFailures } = await supabase
+        .from('selma_resolution_failures')
+        .select('cleaned_query, levenshtein_top3, occurrence_count')
+        .eq('resolved', false)
+        .gte('occurrence_count', 3)
+        .order('occurrence_count', { ascending: false })
+        .limit(10);
+
+      if (frequentFailures && frequentFailures.length > 0) {
+        for (const f of frequentFailures) {
+          const top3 = f.levenshtein_top3 || [];
+          if (top3.length > 0) {
+            // Check if suggestion already exists
+            const { data: existing } = await supabase
+              .from('selma_learned_strategies')
+              .select('id')
+              .eq('strategy_type', 'acronym_suggestion')
+              .eq('trigger_pattern', f.cleaned_query)
+              .maybeSingle();
+
+            if (!existing) {
+              await supabase.from('selma_learned_strategies').insert({
+                strategy_type: 'acronym_suggestion',
+                trigger_pattern: f.cleaned_query,
+                learned_value: { suggested_matches: top3, occurrence_count: f.occurrence_count },
+                confidence: 0.5,
+                times_applied: 0,
+                success_rate: 0,
+                source: 'auto_scorer',
+                is_active: false,
+              });
+              console.log(`📝 Auto-suggested acronym strategy for "${f.cleaned_query}" (${f.occurrence_count} failures)`);
+            }
+          }
+        }
+      }
+    } catch (resErr) {
+      console.warn('Resolution failure KPI computation error (non-fatal):', resErr);
+    }
 
     // Insert all KPI snapshots
     const snapshots = Object.entries(kpis).map(([name, data]) => ({

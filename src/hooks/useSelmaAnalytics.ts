@@ -177,6 +177,19 @@ export interface DocumentTypeKnowledge {
   sample_projects: string[];
 }
 
+export interface ResolutionFailure {
+  id: string;
+  query_text: string;
+  cleaned_query: string;
+  levenshtein_top3: Array<{ acronym: string; type_code: string; full_name: string; similarity: string }>;
+  occurrence_count: number;
+  first_seen: string;
+  last_seen: string;
+  resolved: boolean;
+  resolved_as: string | null;
+  created_at: string;
+}
+
 export function useSelmaTrainingQueue() {
   return useQuery({
     queryKey: ['selma-training-queue'],
@@ -201,6 +214,52 @@ export function useSelmaKnowledge() {
         .order('confidence', { ascending: false });
       if (error) throw error;
       return (data || []) as DocumentTypeKnowledge[];
+    },
+  });
+}
+
+// ─── Resolution Failures (P2 self-improvement) ───
+
+export function useSelmaResolutionFailures(unresolvedOnly = true) {
+  return useQuery({
+    queryKey: ['selma-resolution-failures', unresolvedOnly],
+    queryFn: async () => {
+      let query = supabase
+        .from('selma_resolution_failures')
+        .select('*')
+        .order('occurrence_count', { ascending: false })
+        .limit(50);
+      if (unresolvedOnly) {
+        query = query.eq('resolved', false);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []) as ResolutionFailure[];
+    },
+  });
+}
+
+// ─── Audit Trail ───
+
+export function useSelmaAuditTrail(limit = 50) {
+  return useQuery({
+    queryKey: ['selma-audit-trail', limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('selma_interaction_metrics')
+        .select('id, query_text, intent_detected, outcome, total_latency_ms, documents_found, created_at')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data || []) as Array<{
+        id: string;
+        query_text: string | null;
+        intent_detected: string | null;
+        outcome: string;
+        total_latency_ms: number;
+        documents_found: number;
+        created_at: string;
+      }>;
     },
   });
 }
