@@ -3341,7 +3341,8 @@ function detectAgentDomainRegex(message: string): string {
   }
   
   // Hannah (P2A Handover Intelligence Agent) triggers — MUST come before document_agent to catch handover-specific queries
-  if (/\b(p2a|handover|vcr|itr\b|inspection test record|punch\s?list|punch list a|punch list b|itp\b|inspection test plan|pac\b|fac\b|provisional acceptance|final acceptance|system readiness|hardware readiness|commissioning|gocompletions|rfsu|rfo|handover readiness|owl\b|outstanding work|system completion|subsystem|two phase approval|deputy plant director handover|vcr sign off|vcr prerequisites|hand over|ready to hand over|handover verdict|startup risk|startup blocker)\b/i.test(lower)) {
+  // NOTE: GoCompletions-specific queries (completion status, tags, certificates, ITR codes) are handled by Fred above
+  if (/\b(p2a|handover|vcr|inspection test record|inspection test plan|pac\b|fac\b|provisional acceptance|final acceptance|system readiness|hardware readiness|handover readiness|two phase approval|deputy plant director handover|vcr sign off|vcr prerequisites|hand over|ready to hand over|handover verdict|startup risk|startup blocker)\b/i.test(lower)) {
     return 'hannah';
   }
   
