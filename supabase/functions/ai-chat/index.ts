@@ -3236,8 +3236,8 @@ const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; m
     model: 'claude-sonnet-4-5'
   },
   pssr_ora_agent: {
-    tools: ['get_pssr_stats', 'get_checklist_item_stats', 'get_priority_action_stats', 'get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_pssr_detailed_summary', 'get_discipline_status', 'get_executive_summary', 'get_pssr_checklist_details', 'get_ora_activity_status', 'get_ora_plan_summary', 'get_safety_readiness_score', 'get_sof_status', 'get_pssr_walkdown_items'],
-    domains: ['pssr', 'ora', 'safety', 'checklist', 'sof', 'startup_safety'],
+    tools: ['get_pssr_stats', 'get_checklist_item_stats', 'get_priority_action_stats', 'get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_pssr_detailed_summary', 'get_discipline_status', 'get_executive_summary', 'get_pssr_checklist_details', 'get_ora_activity_status', 'get_ora_plan_summary', 'get_safety_readiness_score', 'get_sof_status', 'get_pssr_walkdown_items', ...FRED_GOC_TOOL_NAMES],
+    domains: ['pssr', 'ora', 'safety', 'checklist', 'sof', 'startup_safety', 'gocompletions', 'completions', 'itr', 'punchlist', 'mcc', 'pcc', 'rfc', 'tags', 'subsystem'],
     model: 'claude-sonnet-4-5'
   },
   hannah: {
