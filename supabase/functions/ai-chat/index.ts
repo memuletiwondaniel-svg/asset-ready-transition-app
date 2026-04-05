@@ -5,6 +5,9 @@ import { SELMA_SYSTEM_PROMPT } from '../_shared/selma/prompt.ts';
 import { SELMA_TOOLS } from '../_shared/selma/tools.ts';
 import { executeSelmaTool, buildSelmaSessionManager } from '../_shared/selma/handlers.ts';
 import { buildDmsConfigSnapshot } from '../_shared/selma/context-loader.ts';
+import { FRED_SYSTEM_PROMPT } from '../_shared/fred/prompt.ts';
+import { FRED_GOCOMPLETIONS_TOOLS, FRED_GOC_TOOL_NAMES } from '../_shared/fred/tools.ts';
+import { executeFredTool } from '../_shared/fred/handlers.ts';
 
 // Smart region inference from project titles
 function inferRegionFromTitle(title: string): 'North' | 'Central' | 'South' | null {
@@ -3233,8 +3236,8 @@ const AGENT_CAPABILITIES: Record<string, { tools: string[]; domains: string[]; m
     model: 'claude-sonnet-4-5'
   },
   pssr_ora_agent: {
-    tools: ['get_pssr_stats', 'get_checklist_item_stats', 'get_priority_action_stats', 'get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_pssr_detailed_summary', 'get_discipline_status', 'get_executive_summary', 'get_pssr_checklist_details', 'get_ora_activity_status', 'get_ora_plan_summary', 'get_safety_readiness_score', 'get_sof_status', 'get_pssr_walkdown_items'],
-    domains: ['pssr', 'ora', 'safety', 'checklist', 'sof', 'startup_safety'],
+    tools: ['get_pssr_stats', 'get_checklist_item_stats', 'get_priority_action_stats', 'get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_pssr_detailed_summary', 'get_discipline_status', 'get_executive_summary', 'get_pssr_checklist_details', 'get_ora_activity_status', 'get_ora_plan_summary', 'get_safety_readiness_score', 'get_sof_status', 'get_pssr_walkdown_items', ...FRED_GOC_TOOL_NAMES],
+    domains: ['pssr', 'ora', 'safety', 'checklist', 'sof', 'startup_safety', 'gocompletions', 'completions', 'itr', 'punchlist', 'mcc', 'pcc', 'rfc', 'tags', 'subsystem'],
     model: 'claude-sonnet-4-5'
   },
   hannah: {
@@ -3338,7 +3341,8 @@ function detectAgentDomainRegex(message: string): string {
   }
   
   // Hannah (P2A Handover Intelligence Agent) triggers — MUST come before document_agent to catch handover-specific queries
-  if (/\b(p2a|handover|vcr|itr\b|inspection test record|punch\s?list|punch list a|punch list b|itp\b|inspection test plan|pac\b|fac\b|provisional acceptance|final acceptance|system readiness|hardware readiness|commissioning|gocompletions|rfsu|rfo|handover readiness|owl\b|outstanding work|system completion|subsystem|two phase approval|deputy plant director handover|vcr sign off|vcr prerequisites|hand over|ready to hand over|handover verdict|startup risk|startup blocker)\b/i.test(lower)) {
+  // NOTE: GoCompletions-specific queries (completion status, tags, certificates, ITR codes) are handled by Fred above
+  if (/\b(p2a|handover|vcr|inspection test record|inspection test plan|pac\b|fac\b|provisional acceptance|final acceptance|system readiness|hardware readiness|handover readiness|two phase approval|deputy plant director handover|vcr sign off|vcr prerequisites|hand over|ready to hand over|handover verdict|startup risk|startup blocker)\b/i.test(lower)) {
     return 'hannah';
   }
   
@@ -3368,8 +3372,9 @@ function detectAgentDomainRegex(message: string): string {
     return 'document_agent';
   }
   
-  // Fred (PSSR/ORA Safety Agent) triggers
-  if (/\b(pssr|pre-?startup safety|safety review|sof\b|statement of fitness|ora checklist|pssr checklist|pssr status|pssr completion|safety readiness|pssr items|pssr action|startup safety|pssr walkdown|safety inspection|pssr findings)\b/i.test(lower)) {
+  // Fred (Completions & Hardware Readiness + PSSR/ORA Safety Agent) triggers
+  // GoCompletions queries (completion status, tags, certificates, ITR codes) AND PSSR/safety queries
+  if (/\b(pssr|pre-?startup safety|safety review|sof\b|statement of fitness|ora checklist|pssr checklist|pssr status|pssr completion|safety readiness|pssr items|pssr action|startup safety|pssr walkdown|safety inspection|pssr findings|gocompletions|go\s*completions|completion status|completions?\s+data|tag\s+(?:search|register|list)|equipment tag|mcc\b|pcc\b|rfc\b|mechanical completion|pre-?commissioning|a-?itr|b-?itr|itr code|itr allocation|punch\s*list\s*(?:a|b|detail|item)|owl\b|outstanding work|handover certificate|certificate status|subsystem\s+\d|system\s+\d{2,3}|discipline.*(?:instrument|mechanical|electrical|piping)|bgc-[imepx]\d|dossier|completions?\s+dossier|bngl|sandpit|zubair|north rumaila|south rumaila|umm qasr|west qurna)\b/i.test(lower)) {
     return 'pssr_ora_agent';
   }
   
@@ -3408,10 +3413,10 @@ const classifyIntent = async (userMessage: string): Promise<string> => {
 Respond with JSON only, no other text: {"intent": "<intent>", "confidence": <0.0-1.0>}
 
 Intents:
-- document_agent: finding, retrieving, or searching for documents, drawings, specs, datasheets, vendor docs, BfD, P&ID, SLD, GA, or anything in a Document Management System
-- pssr_ora_agent: pre-startup safety reviews, PSSR checklists, ORA items
-- ivan: punchlist items, punch items, outstanding actions, ITRs, process safety, HAZOP
-- hannah: handover certificates, mechanical completion, turnover packages
+- document_agent: finding, retrieving, or searching for documents, drawings, specs, datasheets, vendor docs, BfD, P&ID, SLD, GA, or anything in a Document Management System (Assai)
+- pssr_ora_agent: pre-startup safety reviews, PSSR checklists, ORA items, GoCompletions data, completion status, equipment tags, ITR codes, punchlist items (category A/B), handover certificates (MCC/PCC/RFC/RFSU/FAC), subsystem completion, commissioning status, BGC projects (BNGL, SANDPIT, Zubair)
+- ivan: process safety, HAZOP, safeguarding, MOC, override register, cause and effect, operating procedures, technical authority
+- hannah: P2A handover orchestration, VCR lifecycle, system readiness verdicts, PAC/FAC issuance, two-phase approval workflow
 - training_agent: training courses, competency assessments, learning materials
 - cmms_agent: equipment, assets, maintenance, work orders, CMMS
 - copilot: tasks, schedules, general questions, greetings, platform help, everything else`,
@@ -3452,13 +3457,18 @@ const TOOL_AGENT_MAP: Record<string, string> = {
   get_pssr_detailed_summary: 'pssr_ora_agent',
   get_pssr_stats: 'pssr_ora_agent',
   get_discipline_status: 'pssr_ora_agent',
-  // Future agents: add hannah/ivan/zain/alex tool names here
+  // Fred GoCompletions tools
+  search_completions_tags: 'pssr_ora_agent',
+  get_completion_status: 'pssr_ora_agent',
+  get_punchlist_details: 'pssr_ora_agent',
+  get_handover_certificate_status: 'pssr_ora_agent',
+  lookup_itr_for_equipment: 'pssr_ora_agent',
 };
 
 // Layer 3: Reverse lookup — which tools belong to which specialist
 const SPECIALIST_TOOL_NAMES: Record<string, string[]> = {
   document_agent: ['resolve_document_type', 'resolve_project_code', 'search_assai_documents', 'read_assai_document', 'discover_project_vendors', 'learn_acronym', 'check_vcr_document_readiness', 'get_checklist_document_insights', 'assign_document_numbers', 'organize_project_documents'],
-  pssr_ora_agent: ['get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_executive_summary', 'get_pssr_detailed_summary', 'get_pssr_stats', 'get_discipline_status'],
+  pssr_ora_agent: ['get_pssr_pending_items', 'get_pssr_pending_approvers', 'get_executive_summary', 'get_pssr_detailed_summary', 'get_pssr_stats', 'get_discipline_status', ...FRED_GOC_TOOL_NAMES],
 };
 
 function detectAgentFromHistory(messages: Array<{ role: string; content: string }>): string | null {
@@ -7183,7 +7193,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       const dmsSnapshot = await buildDmsConfigSnapshot(supabaseClient);
       systemPrompt = SELMA_SYSTEM_PROMPT + dmsSnapshot + userContextPrompt;
     } else if (detectedAgent === 'pssr_ora_agent') {
-      systemPrompt = PSSR_ORA_AGENT_PROMPT + userContextPrompt;
+      systemPrompt = FRED_SYSTEM_PROMPT + '\n\n' + PSSR_ORA_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'hannah') {
       systemPrompt = HANNAH_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'ivan') {
@@ -7200,11 +7210,19 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       input_schema: t.function.parameters
     }));
 
-    // Agent-specific tool filtering — Selma sees ONLY her 6 tools
+    // Agent-specific tool filtering — Selma sees ONLY her tools, Fred gets his GoC tools added
     let selmaSession: any = null;
     if (detectedAgent === 'document_agent') {
       anthropicTools = SELMA_TOOLS;
       selmaSession = await buildSelmaSessionManager(supabaseClient);
+    } else if (detectedAgent === 'pssr_ora_agent') {
+      // Add Fred's GoCompletions tools alongside the existing PSSR/Bob tools
+      const fredToolDefs = FRED_GOCOMPLETIONS_TOOLS.map((t: any) => ({
+        name: t.function.name,
+        description: t.function.description,
+        input_schema: t.function.parameters
+      }));
+      anthropicTools = [...anthropicTools, ...fredToolDefs];
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -7233,6 +7251,12 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       get_user_context: 'Loading your preferences...',
       save_user_context: 'Saving your preferences...',
       get_all_projects: 'Fetching project list...',
+      // Fred GoCompletions tools
+      search_completions_tags: 'Searching GoCompletions tags...',
+      get_completion_status: 'Fetching completion status...',
+      get_punchlist_details: 'Loading punchlist details...',
+      get_handover_certificate_status: 'Checking certificate status...',
+      lookup_itr_for_equipment: 'Looking up ITR allocation...',
     };
     // Real-time streaming controller — set inside ReadableStream start()
     let streamController: ReadableStreamDefaultController<Uint8Array> | null = null;
@@ -7439,9 +7463,12 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           console.log(`[LAYER 3] Late-init Selma session for tool "${effectiveToolName}"`);
         }
         const finalIsSelmaTool = selmaSession && SPECIALIST_TOOL_NAMES.document_agent?.includes(effectiveToolName);
+        const isFredGocTool = FRED_GOC_TOOL_NAMES.includes(effectiveToolName);
         let toolResult = finalIsSelmaTool
           ? await executeSelmaTool(effectiveToolName, effectiveToolArgs, supabase, selmaSession, emitStatus)
-          : await executeTool(effectiveToolName, effectiveToolArgs, supabase);
+          : isFredGocTool
+            ? await executeFredTool(effectiveToolName, effectiveToolArgs, supabase)
+            : await executeTool(effectiveToolName, effectiveToolArgs, supabase);
 
         // If we intercepted, wrap the result so the LLM presents metadata + links first
         if (gateIntercepted && toolResult) {
