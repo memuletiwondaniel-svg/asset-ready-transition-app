@@ -1290,7 +1290,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                 The REST API integration is <span className="font-semibold">not yet configured</span> and requires server-side setup by your administrator.
               </p>
               <p>
-                Selma (Agent mode) is currently the active and fully functional connection method. Switching to API will disable Selma's direct access until API configuration is complete.
+                {panelPlatform?.id === 'gocompletions' ? 'Fred' : 'Selma'} (Agent mode) is currently the active and fully functional connection method. Switching to API will disable {panelPlatform?.id === 'gocompletions' ? "Fred's" : "Selma's"} direct access until API configuration is complete.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
