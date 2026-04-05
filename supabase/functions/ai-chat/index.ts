@@ -3359,6 +3359,18 @@ function detectAgentDomainRegex(message: string): string {
   if (/\bbgc-[imepx]\d{2}[ab]?\b/i.test(lower)) {
     return 'pssr_ora_agent';
   }
+  // Part 4: Subsystem code patterns (e.g. 100-01, 960-08, 200-03)
+  if (/\b\d{3}-\d{2}\b/.test(lower) && /\b(?:status|ready|complet|progress|itr|punch|block|outstanding|mc\b|pc\b)\b/i.test(lower)) {
+    return 'pssr_ora_agent';
+  }
+  // Part 5: Natural-language readiness/blocking intent
+  if (/\b(?:how\s+ready|what(?:'s| is)\s+(?:left|remaining|blocking|holding|outstanding|incomplete)|ready\s+for\s+(?:mc|pc|comm|startup|rfsu|handover)|what\s+(?:is|are)\s+blocking|not\s+ready|blockers?\s+for|can\s+we\s+(?:start|commission|proceed)|safe\s+to\s+(?:commission|start)|walk\s*down\s+(?:status|result|finding)|mc\s+walk\s*down|pc\s+walk\s*down)\b/i.test(lower)) {
+    return 'pssr_ora_agent';
+  }
+  // Part 6: Discipline + status combos (e.g. "how many piping punches", "electrical ITRs outstanding")
+  if (/(?:piping|electrical|instrument|mechanical|painting|coating)\s+(?:itr|punch|owl|status|progress|complet|outstanding|remaining)/i.test(lower)) {
+    return 'pssr_ora_agent';
+  }
   
   // Selma (Document Intelligence Assistant) triggers
   // Part 1: Simple word-boundary keywords
@@ -3422,7 +3434,7 @@ Respond with JSON only, no other text: {"intent": "<intent>", "confidence": <0.0
 
 Intents:
 - document_agent: finding, retrieving, or searching for documents, drawings, specs, datasheets, vendor docs, BfD, P&ID, SLD, GA, or anything in a Document Management System (Assai)
-- pssr_ora_agent: pre-startup safety reviews, PSSR checklists, ORA items, GoCompletions data, completion status, equipment tags, ITR codes, punchlist items (category A/B), handover certificates (MCC/PCC/RFC/RFSU/FAC), subsystem completion, commissioning status, BGC projects (BNGL, SANDPIT, Zubair)
+- pssr_ora_agent: pre-startup safety reviews, PSSR checklists, ORA items, GoCompletions data, completion status, equipment tags, ITR codes, punchlist items (category A/B), handover certificates (MCC/PCC/RFC/RFSU/FAC), subsystem completion, commissioning status, BGC projects (BNGL, SANDPIT, Zubair), readiness questions ("how ready", "what's blocking", "what's left", "can we start commissioning"), walkdown results, discipline completion (piping/electrical/instrument/mechanical status)
 - ivan: process safety, HAZOP, safeguarding, MOC, override register, cause and effect, operating procedures, technical authority
 - hannah: P2A handover orchestration, VCR lifecycle, system readiness verdicts, PAC/FAC issuance, two-phase approval workflow
 - training_agent: training courses, competency assessments, learning materials

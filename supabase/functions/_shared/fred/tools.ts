@@ -99,6 +99,27 @@ export const FRED_GOCOMPLETIONS_TOOLS = [
       },
     },
   },
+  {
+    type: "function" as const,
+    function: {
+      name: "check_document_readiness",
+      description: "Query Selma (Document Intelligence Agent) via A2A protocol to check document readiness for a subsystem or discipline. Returns status of as-built P&IDs, datasheets, operating procedures, and other Tier 1/2 documents relevant to the completions dossier. Use this when assessing overall readiness for MCC/PCC/RFSU or when identifying documentation gaps blocking handover.",
+      parameters: {
+        type: "object",
+        properties: {
+          sub_system: { type: "string", description: "Sub-system code (e.g. '100-01', '960-08')" },
+          project_code: { type: "string", description: "BGC project code (e.g. 'BNGL'). Default: BNGL" },
+          discipline: { type: "string", description: "Optional discipline filter: instrument, mechanical, electrical, piping" },
+          certificate_phase: { 
+            type: "string", 
+            enum: ["MCC", "PCC", "RFSU", "FAC"],
+            description: "Which handover phase to check document readiness for. Determines which document types are critical."
+          },
+        },
+        required: ["sub_system"],
+      },
+    },
+  },
 ];
 
 /** Tool names for TOOL_AGENT_MAP and SPECIALIST_TOOL_NAMES */
@@ -108,4 +129,5 @@ export const FRED_GOC_TOOL_NAMES = [
   'get_punchlist_details',
   'get_handover_certificate_status',
   'lookup_itr_for_equipment',
+  'check_document_readiness',
 ];
