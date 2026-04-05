@@ -797,7 +797,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     >
                       <BrainCircuit className={cn('h-5 w-5', connectionMethod === 'agent' ? 'text-emerald-600' : 'text-muted-foreground')} />
                       <span className={cn('font-medium text-sm', connectionMethod === 'agent' ? 'text-emerald-700 dark:text-emerald-400' : 'text-foreground')}>Agent</span>
-                      <p className="text-[11px] text-muted-foreground leading-tight">Selma AI</p>
+                      <p className="text-[11px] text-muted-foreground leading-tight">{panelPlatform?.id === 'gocompletions' ? 'Fred AI' : 'Selma AI'}</p>
                       </button>
                   </div>
 
