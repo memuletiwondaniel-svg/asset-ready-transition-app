@@ -3371,8 +3371,9 @@ function detectAgentDomainRegex(message: string): string {
     return 'document_agent';
   }
   
-  // Fred (PSSR/ORA Safety Agent) triggers
-  if (/\b(pssr|pre-?startup safety|safety review|sof\b|statement of fitness|ora checklist|pssr checklist|pssr status|pssr completion|safety readiness|pssr items|pssr action|startup safety|pssr walkdown|safety inspection|pssr findings)\b/i.test(lower)) {
+  // Fred (Completions & Hardware Readiness + PSSR/ORA Safety Agent) triggers
+  // GoCompletions queries (completion status, tags, certificates, ITR codes) AND PSSR/safety queries
+  if (/\b(pssr|pre-?startup safety|safety review|sof\b|statement of fitness|ora checklist|pssr checklist|pssr status|pssr completion|safety readiness|pssr items|pssr action|startup safety|pssr walkdown|safety inspection|pssr findings|gocompletions|go\s*completions|completion status|completions?\s+data|tag\s+(?:search|register|list)|equipment tag|mcc\b|pcc\b|rfc\b|mechanical completion|pre-?commissioning|a-?itr|b-?itr|itr code|itr allocation|punch\s*list\s*(?:a|b|detail|item)|owl\b|outstanding work|handover certificate|certificate status|subsystem\s+\d|system\s+\d{2,3}|discipline.*(?:instrument|mechanical|electrical|piping)|bgc-[imepx]\d|dossier|completions?\s+dossier|bngl|sandpit|zubair|north rumaila|south rumaila|umm qasr|west qurna)\b/i.test(lower)) {
     return 'pssr_ora_agent';
   }
   
