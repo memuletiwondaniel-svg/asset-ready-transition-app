@@ -1,4 +1,4 @@
-
+<!-- See .lovable/plans/ for detailed phase docs -->
 
 # Fred's GoCompletions Pipeline — Integrated Implementation Plan
 
