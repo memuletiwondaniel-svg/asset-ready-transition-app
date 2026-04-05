@@ -789,7 +789,13 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                   <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Primary Method</span>
                   <div className="grid grid-cols-2 gap-2.5">
                     <button
-                      onClick={() => setConnectionMethod('api')}
+                      onClick={() => {
+                        if (connectionMethod === 'agent') {
+                          setShowMethodSwitchDialog(true);
+                        } else {
+                          setConnectionMethod('api');
+                        }
+                      }}
                       className={cn(
                         'flex flex-col items-center gap-2 p-3.5 rounded-xl transition-all duration-200 text-center min-h-[110px] justify-center',
                         connectionMethod === 'api'
