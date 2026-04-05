@@ -272,6 +272,7 @@ export default function FredAnalytics() {
           </TabsTrigger>
           <TabsTrigger value="tools">Tool Usage</TabsTrigger>
           <TabsTrigger value="projects">Project Heatmap</TabsTrigger>
+          <TabsTrigger value="training">Knowledge Training</TabsTrigger>
         </TabsList>
 
         <TabsContent value="interactions">
