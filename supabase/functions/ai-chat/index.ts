@@ -8,6 +8,7 @@ import { buildDmsConfigSnapshot } from '../_shared/selma/context-loader.ts';
 import { FRED_SYSTEM_PROMPT } from '../_shared/fred/prompt.ts';
 import { FRED_GOCOMPLETIONS_TOOLS, FRED_GOC_TOOL_NAMES } from '../_shared/fred/tools.ts';
 import { executeFredTool } from '../_shared/fred/handlers.ts';
+import { buildFredKnowledgeContext } from '../_shared/fred/context-loader.ts';
 
 // Smart region inference from project titles
 function inferRegionFromTitle(title: string): 'North' | 'Central' | 'South' | null {
@@ -7213,7 +7214,8 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       const dmsSnapshot = await buildDmsConfigSnapshot(supabaseClient);
       systemPrompt = SELMA_SYSTEM_PROMPT + dmsSnapshot + userContextPrompt;
     } else if (detectedAgent === 'pssr_ora_agent') {
-      systemPrompt = FRED_SYSTEM_PROMPT + '\n\n' + PSSR_ORA_AGENT_PROMPT + userContextPrompt;
+      const fredKnowledge = await buildFredKnowledgeContext(supabaseClient, lastUserMessage);
+      systemPrompt = FRED_SYSTEM_PROMPT + fredKnowledge + '\n\n' + PSSR_ORA_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'hannah') {
       systemPrompt = HANNAH_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'ivan') {

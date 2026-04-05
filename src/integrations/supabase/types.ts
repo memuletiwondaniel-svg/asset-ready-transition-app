@@ -2031,6 +2031,45 @@ export type Database = {
           },
         ]
       }
+      fred_domain_knowledge: {
+        Row: {
+          category: Database["public"]["Enums"]["fred_training_category"]
+          confidence: number
+          content: Json
+          created_at: string
+          id: string
+          knowledge_type: Database["public"]["Enums"]["fred_knowledge_type"]
+          source_file: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["fred_training_category"]
+          confidence?: number
+          content?: Json
+          created_at?: string
+          id?: string
+          knowledge_type: Database["public"]["Enums"]["fred_knowledge_type"]
+          source_file?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["fred_training_category"]
+          confidence?: number
+          content?: Json
+          created_at?: string
+          id?: string
+          knowledge_type?: Database["public"]["Enums"]["fred_knowledge_type"]
+          source_file?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fred_interaction_metrics: {
         Row: {
           cascade_depth: number | null
@@ -2151,6 +2190,72 @@ export type Database = {
           query_text?: string
           resolved?: boolean
           resolved_as?: string | null
+        }
+        Relationships: []
+      }
+      fred_training_documents: {
+        Row: {
+          category: Database["public"]["Enums"]["fred_training_category"]
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["fred_training_category"]
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["fred_training_category"]
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      fred_training_queue: {
+        Row: {
+          category: Database["public"]["Enums"]["fred_training_category"]
+          created_at: string
+          error_details: string | null
+          file_path: string
+          id: string
+          priority: number
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["fred_training_category"]
+          created_at?: string
+          error_details?: string | null
+          file_path: string
+          id?: string
+          priority?: number
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["fred_training_category"]
+          created_at?: string
+          error_details?: string | null
+          file_path?: string
+          id?: string
+          priority?: number
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -13004,6 +13109,30 @@ export type Database = {
         | "manage_orm"
         | "create_p2a_plan"
       dependency_type: "blocks" | "gates" | "informs" | "requires"
+      fred_knowledge_type:
+        | "procedure"
+        | "lesson"
+        | "itr_template"
+        | "test_criteria"
+        | "incident"
+        | "failure_pattern"
+        | "risk_pattern"
+        | "plan_template"
+        | "acceptance_criteria"
+      fred_training_category:
+        | "losh_drawings"
+        | "completions_procedure"
+        | "logic_way"
+        | "csu_masterclass"
+        | "blank_itrs"
+        | "repetitive_failure"
+        | "lessons_learnt"
+        | "flaws_database"
+        | "csi_database"
+        | "ctps"
+        | "sat_fat_sit"
+        | "csu_plans"
+        | "hazop_omar"
       ora_training_approval_status: "PENDING" | "APPROVED" | "REJECTED"
       ora_training_execution_stage:
         | "NOT_STARTED"
@@ -13294,6 +13423,32 @@ export const Constants = {
         "create_p2a_plan",
       ],
       dependency_type: ["blocks", "gates", "informs", "requires"],
+      fred_knowledge_type: [
+        "procedure",
+        "lesson",
+        "itr_template",
+        "test_criteria",
+        "incident",
+        "failure_pattern",
+        "risk_pattern",
+        "plan_template",
+        "acceptance_criteria",
+      ],
+      fred_training_category: [
+        "losh_drawings",
+        "completions_procedure",
+        "logic_way",
+        "csu_masterclass",
+        "blank_itrs",
+        "repetitive_failure",
+        "lessons_learnt",
+        "flaws_database",
+        "csi_database",
+        "ctps",
+        "sat_fat_sit",
+        "csu_plans",
+        "hazop_omar",
+      ],
       ora_training_approval_status: ["PENDING", "APPROVED", "REJECTED"],
       ora_training_execution_stage: [
         "NOT_STARTED",
