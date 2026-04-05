@@ -10454,6 +10454,45 @@ export type Database = {
         }
         Relationships: []
       }
+      selma_resolution_failures: {
+        Row: {
+          cleaned_query: string
+          created_at: string
+          first_seen: string
+          id: string
+          last_seen: string
+          levenshtein_top3: Json | null
+          occurrence_count: number
+          query_text: string
+          resolved: boolean
+          resolved_as: string | null
+        }
+        Insert: {
+          cleaned_query: string
+          created_at?: string
+          first_seen?: string
+          id?: string
+          last_seen?: string
+          levenshtein_top3?: Json | null
+          occurrence_count?: number
+          query_text: string
+          resolved?: boolean
+          resolved_as?: string | null
+        }
+        Update: {
+          cleaned_query?: string
+          created_at?: string
+          first_seen?: string
+          id?: string
+          last_seen?: string
+          levenshtein_top3?: Json | null
+          occurrence_count?: number
+          query_text?: string
+          resolved?: boolean
+          resolved_as?: string | null
+        }
+        Relationships: []
+      }
       selma_training_queue: {
         Row: {
           created_at: string
