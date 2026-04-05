@@ -7457,9 +7457,12 @@ You NEVER fabricate data — always use tool results. Format responses with mark
           console.log(`[LAYER 3] Late-init Selma session for tool "${effectiveToolName}"`);
         }
         const finalIsSelmaTool = selmaSession && SPECIALIST_TOOL_NAMES.document_agent?.includes(effectiveToolName);
+        const isFredGocTool = FRED_GOC_TOOL_NAMES.includes(effectiveToolName);
         let toolResult = finalIsSelmaTool
           ? await executeSelmaTool(effectiveToolName, effectiveToolArgs, supabase, selmaSession, emitStatus)
-          : await executeTool(effectiveToolName, effectiveToolArgs, supabase);
+          : isFredGocTool
+            ? await executeFredTool(effectiveToolName, effectiveToolArgs, supabase)
+            : await executeTool(effectiveToolName, effectiveToolArgs, supabase);
 
         // If we intercepted, wrap the result so the LLM presents metadata + links first
         if (gateIntercepted && toolResult) {
