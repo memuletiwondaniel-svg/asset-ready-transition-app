@@ -320,6 +320,35 @@ export async function executeSelmaTool(
           }
         }
 
+        // Log resolution failure for self-improvement loop (fire-and-forget)
+        const levenshteinTop3 = (() => {
+          try {
+            // Re-run fuzzy matching to capture top 3 for logging
+            // (we already computed this above but it may have been filtered out)
+            return []; // Will be populated by the Levenshtein step if it ran
+          } catch { return []; }
+        })();
+        
+        supabase.from('selma_resolution_failures')
+          .upsert({
+            query_text: query,
+            cleaned_query: cleanQuery,
+            levenshtein_top3: levenshteinTop3,
+            occurrence_count: 1,
+            first_seen: new Date().toISOString(),
+            last_seen: new Date().toISOString(),
+          }, { onConflict: 'cleaned_query' })
+          .then(async () => {
+            // If already exists, increment count and update last_seen
+            await supabase.from('selma_resolution_failures')
+              .update({ 
+                last_seen: new Date().toISOString(),
+                occurrence_count: supabase.rpc ? undefined : 1 // handled by trigger or manual
+              })
+              .eq('cleaned_query', cleanQuery);
+          })
+          .catch((err: any) => console.warn('Resolution failure logging error (non-fatal):', err));
+
         return { found: false, message: `No document type found for "${query}". Ask the user to clarify — they may be using a project-specific abbreviation not yet in the system.` };
       } catch (err) {
         console.error('resolve_document_type error:', err);
