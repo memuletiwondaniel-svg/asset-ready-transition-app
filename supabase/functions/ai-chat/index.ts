@@ -7193,7 +7193,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       const dmsSnapshot = await buildDmsConfigSnapshot(supabaseClient);
       systemPrompt = SELMA_SYSTEM_PROMPT + dmsSnapshot + userContextPrompt;
     } else if (detectedAgent === 'pssr_ora_agent') {
-      systemPrompt = PSSR_ORA_AGENT_PROMPT + userContextPrompt;
+      systemPrompt = FRED_SYSTEM_PROMPT + '\n\n' + PSSR_ORA_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'hannah') {
       systemPrompt = HANNAH_AGENT_PROMPT + userContextPrompt;
     } else if (detectedAgent === 'ivan') {
