@@ -48,11 +48,17 @@ export default function FredAnalytics() {
   const queryClient = useQueryClient();
   const [trendKPI, setTrendKPI] = useState("retrieval_success_rate");
   const [scorerRunning, setScorerRunning] = useState(false);
+  const [uploadCategory, setUploadCategory] = useState<string>("blank_itrs");
+  const [trainingRunning, setTrainingRunning] = useState(false);
+  const { session } = useAuth();
 
   const { data: latestKPIs } = useFredLatestKPIs();
   const { data: interactions } = useFredInteractions(100);
   const { data: resolutionFailures } = useFredResolutionFailures(true);
   const { data: trendData } = useFredKPITrend(trendKPI, 30);
+  const { data: trainingQueue } = useFredTrainingQueue();
+  const { data: domainKnowledge } = useFredDomainKnowledge();
+  const { data: trainingDocs } = useFredTrainingDocuments();
 
   const handleRunScorer = async () => {
     setScorerRunning(true);
