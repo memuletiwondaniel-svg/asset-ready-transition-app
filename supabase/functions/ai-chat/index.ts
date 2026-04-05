@@ -3360,6 +3360,32 @@ function detectAgentDomainRegex(message: string): string {
     return 'pssr_ora_agent';
   }
   
+  // Selma (Document Intelligence Assistant) triggers
+  // Part 1: Simple word-boundary keywords
+  if (/\b(documents?|docs|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|sdr|mdr|bfd|basis for design|basis of design|design basis|iom|itp|fat|sat|datasheet|mds|sld|gad|pfd|p&id|p&ids)\b/i.test(lower)) {
+    return 'document_agent';
+  }
+  // Part 2: Multi-word / wildcard patterns
+  if (/(?:document\s*(?:status|gap|type|trend|velocity|search|number|quality|comparison)|documentation\s*(?:gap|maturity)|discipline\s*code|cross.?discipline|bulk\s*status|dms\s*health|doc.*p2a|read.*document|summarise.*\d{4}|summarize.*\d{4}|open\s*comments|review.*crs|extract.*from.*doc|what\s*does.*say|vendor\s*doc|supplier\s*doc|vendor\s*completeness|supplier\s*completeness|vendor\s*submission|supplier\s*submission|discover.*vendor|vendor.*discover|scan.*vendor|what\s*vendors|who.*supplier|who.*vendor|list.*vendor|list.*supplier|vendor.*project|supplier.*project|vendor\s*packages?|vendors?\s*(?:for|on)\b|suppliers?\s*(?:for|on)\b|vendor.*po\b|po.*vendor|main\s*vendors?|main\s*suppliers?)/i.test(lower)) {
+    return 'document_agent';
+  }
+  // Part 3: Retrieval intent combined with DP number reference
+  if (/(?:what\s+is|find|get|show|where|how\s+many)\s+.*\bdp[\s-]?\d+/i.test(lower)) {
+    return 'document_agent';
+  }
+  // Part 4: Acronym-learning intent
+  if (/(stands?\s+for|=\s*[A-Z]{2,}|means?\s+[A-Z]|acronym|abbreviation|short\s+for)/i.test(lower)) {
+    return 'document_agent';
+  }
+  // Part 5: Assai document number pattern (e.g. 6529-BGC-C033-ISGP-G00000-AA-8203-00001)
+  if (/\b\d{4}-[A-Z]{2,6}-[A-Z0-9]{2,}-[A-Z]{2,}-[A-Z0-9]+-[A-Z]{2}-[A-Z0-9]+-\d{3,}/i.test(message)) {
+    return 'document_agent';
+  }
+  // Part 6: Read/analyze/open/download intent with a document-like reference
+  if (/\b(?:read|analy[sz]e|interpret|open|download|fetch|retrieve)\b.*\b\d{4}-[A-Z]/i.test(message)) {
+    return 'document_agent';
+  }
+
   // Zain (Training Intelligence) triggers (planned)
   if (/\b(training|competency|competence|learning|course|certification|skill gap|training plan|training cost)\b/i.test(lower)) {
     return 'training_agent';
