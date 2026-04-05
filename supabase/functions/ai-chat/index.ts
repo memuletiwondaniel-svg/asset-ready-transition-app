@@ -3434,7 +3434,7 @@ Respond with JSON only, no other text: {"intent": "<intent>", "confidence": <0.0
 
 Intents:
 - document_agent: finding, retrieving, or searching for documents, drawings, specs, datasheets, vendor docs, BfD, P&ID, SLD, GA, or anything in a Document Management System (Assai)
-- pssr_ora_agent: pre-startup safety reviews, PSSR checklists, ORA items, GoCompletions data, completion status, equipment tags, ITR codes, punchlist items (category A/B), handover certificates (MCC/PCC/RFC/RFSU/FAC), subsystem completion, commissioning status, BGC projects (BNGL, SANDPIT, Zubair)
+- pssr_ora_agent: pre-startup safety reviews, PSSR checklists, ORA items, GoCompletions data, completion status, equipment tags, ITR codes, punchlist items (category A/B), handover certificates (MCC/PCC/RFC/RFSU/FAC), subsystem completion, commissioning status, BGC projects (BNGL, SANDPIT, Zubair), readiness questions ("how ready", "what's blocking", "what's left", "can we start commissioning"), walkdown results, discipline completion (piping/electrical/instrument/mechanical status)
 - ivan: process safety, HAZOP, safeguarding, MOC, override register, cause and effect, operating procedures, technical authority
 - hannah: P2A handover orchestration, VCR lifecycle, system readiness verdicts, PAC/FAC issuance, two-phase approval workflow
 - training_agent: training courses, competency assessments, learning materials
