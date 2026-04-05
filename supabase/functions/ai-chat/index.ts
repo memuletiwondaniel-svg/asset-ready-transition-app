@@ -7210,11 +7210,19 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       input_schema: t.function.parameters
     }));
 
-    // Agent-specific tool filtering — Selma sees ONLY her 6 tools
+    // Agent-specific tool filtering — Selma sees ONLY her tools, Fred gets his GoC tools added
     let selmaSession: any = null;
     if (detectedAgent === 'document_agent') {
       anthropicTools = SELMA_TOOLS;
       selmaSession = await buildSelmaSessionManager(supabaseClient);
+    } else if (detectedAgent === 'pssr_ora_agent') {
+      // Add Fred's GoCompletions tools alongside the existing PSSR/Bob tools
+      const fredToolDefs = FRED_GOCOMPLETIONS_TOOLS.map((t: any) => ({
+        name: t.function.name,
+        description: t.function.description,
+        input_schema: t.function.parameters
+      }));
+      anthropicTools = [...anthropicTools, ...fredToolDefs];
     }
 
     // ═══════════════════════════════════════════════════════════════════════
