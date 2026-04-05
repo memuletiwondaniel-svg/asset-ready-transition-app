@@ -3335,23 +3335,37 @@ async function routeA2AMessage(message: A2AMessage, supabaseClient: any): Promis
 function detectAgentDomainRegex(message: string): string {
   const lower = message.toLowerCase();
   
-  // Ivan (Process Technical Authority Agent) triggers — MUST come before Hannah to catch process safety queries
-  if (/\b(hazop|hazid|hemp\b|process safety|pid review|p&id review|pefs|safeguarding memorandum|psm\b|operating procedure|startup procedure|shutdown procedure|simops|simultaneous operations|omar|operating mode assurance|commissioning procedure|control narrative|cause and effect|c&e matrix|flow assurance|hydrate|slugging|technical authority|ta2|process engineering|design safety|constructability|3d model review|stq\b|site technical query|moc\b|management of change|lock open|lock close|override register|temporary hose|temporary equipment|operational register|daily log|round sheet|cumulative risk|hazop closeout|override risk|bypass|pssr work-?down|startup risk assessment|do not start|safe to start)\b/i.test(lower)) {
+  // Ivan (Process Technical Authority Agent) triggers — MUST come before all others for process safety
+  if (/\b(hazop|hazid|hemp\b|process safety|pid review|p&id review|pefs|safeguarding memorandum|psm\b|operating procedure|startup procedure|shutdown procedure|simops|simultaneous operations|omar|operating mode assurance|commissioning procedure|control narrative|cause and effect|c&e matrix|flow assurance|hydrate|slugging|technical authority|ta2|process engineering|design safety|constructability|3d model review|stq\b|stqs\b|site technical query|moc\b|management of change|lock open|lock close|override register|temporary hose|temporary equipment|operational register|daily log|round sheet|cumulative risk|hazop closeout|override risk|bypass|pssr work-?down|startup risk assessment|do not start|safe to start)\b/i.test(lower)) {
     return 'ivan';
   }
   
-  // Hannah (P2A Handover Intelligence Agent) triggers — MUST come before document_agent to catch handover-specific queries
-  // NOTE: GoCompletions-specific queries (completion status, tags, certificates, ITR codes) are handled by Fred above
-  if (/\b(p2a|handover|vcr|inspection test record|inspection test plan|pac\b|fac\b|provisional acceptance|final acceptance|system readiness|hardware readiness|handover readiness|two phase approval|deputy plant director handover|vcr sign off|vcr prerequisites|hand over|ready to hand over|handover verdict|startup risk|startup blocker)\b/i.test(lower)) {
+  // Hannah (P2A Handover Intelligence Agent) triggers — handover orchestration and approval workflows
+  if (/\b(p2a|handover|vcr|inspection test plan|pac\b|fac\b|provisional acceptance|final acceptance|system readiness|hardware readiness|handover readiness|two phase approval|deputy plant director|vcr sign off|vcr prerequisites|hand\s*over|ready to hand over|handover verdict|startup risk|startup blocker)\b/i.test(lower)) {
     return 'hannah';
+  }
+  
+  // Fred (Completions & Hardware Readiness + PSSR/ORA Safety Agent) triggers
+  // MUST come BEFORE Selma — completions keywords overlap with doc keywords (e.g. "subsystem", "status")
+  // Part 1: Core GoCompletions & PSSR keywords
+  if (/\b(pssr|pre-?startup safety|safety review|sof\b|statement of fitness|ora\b|ora checklist|ora plan|pssr checklist|pssr status|pssr completion|safety readiness|safety findings|pssr items|pssr action|startup safety|pssr walkdown|safety inspection|pssr findings|gocompletions|go\s*completions|completion status|completions?\s+data|completions?\s+progress|construction progress|commissioning\b|tag\s+(?:search|register|list)|equipment tag|mcc\b|pcc\b|rfc\b|rfsu\b|rfoc\b|rfcc\b|mechanical completion|pre-?commissioning|a-?itr|b-?itr|itr\b|itrs\b|itr code|itr allocation|itr status|inspection test record|punch\s*list|punchlists?|punches|category\s*[ab]\s*punch|owl\b|outstanding work|handover certificate|certificate status|subsystem\b|sub-?system|system\s+\d{2,3}|bgc-[imepx]\d|dossier|completions?\s+dossier|bngl|sandpit|zubair|north rumaila|south rumaila|umm qasr|west qurna)\b/i.test(lower) || /(?:piping|electrical|instrument|mechanical)\s+complet/i.test(lower)) {
+    return 'pssr_ora_agent';
+  }
+  // Part 2: Tag patterns (e.g. C017-403PIT-002, V-1001, PSV-100)
+  if (/\b(?:tag|search.*tag|punchlist.*tag)\b/i.test(lower) || /\b[A-Z]{1,4}-?\d{2,}[A-Z]*-?\d{0,}/i.test(message) && /\b(?:tag|itr|punch|status|complete|outstanding)\b/i.test(lower)) {
+    return 'pssr_ora_agent';
+  }
+  // Part 3: BGC ITR code patterns (BGC-I01A, BGC-M03B, etc.)
+  if (/\bbgc-[imepx]\d{2}[ab]?\b/i.test(lower)) {
+    return 'pssr_ora_agent';
   }
   
   // Selma (Document Intelligence Assistant) triggers
   // Part 1: Simple word-boundary keywords
-  if (/\b(documents?|docs|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|sdr|mdr|bfd|basis for design|basis of design|design basis|iom|itp|fat|sat|datasheet|mds|sld|gad|pfd|p&id)\b/i.test(lower)) {
+  if (/\b(documents?|docs|dms|readiness|numbering|afc|ifr|ifc|rlmu|assai|documentum|wrench|sdr|mdr|bfd|basis for design|basis of design|design basis|iom|itp|fat|sat|datasheet|mds|sld|gad|pfd|p&id|p&ids)\b/i.test(lower)) {
     return 'document_agent';
   }
-  // Part 2: Multi-word / wildcard patterns (no \b wrapping — these use .* which crosses word boundaries)
+  // Part 2: Multi-word / wildcard patterns
   if (/(?:document\s*(?:status|gap|type|trend|velocity|search|number|quality|comparison)|documentation\s*(?:gap|maturity)|discipline\s*code|cross.?discipline|bulk\s*status|dms\s*health|doc.*p2a|read.*document|summarise.*\d{4}|summarize.*\d{4}|open\s*comments|review.*crs|extract.*from.*doc|what\s*does.*say|vendor\s*doc|supplier\s*doc|vendor\s*completeness|supplier\s*completeness|vendor\s*submission|supplier\s*submission|discover.*vendor|vendor.*discover|scan.*vendor|what\s*vendors|who.*supplier|who.*vendor|list.*vendor|list.*supplier|vendor.*project|supplier.*project|vendor\s*packages?|vendors?\s*(?:for|on)\b|suppliers?\s*(?:for|on)\b|vendor.*po\b|po.*vendor|main\s*vendors?|main\s*suppliers?)/i.test(lower)) {
     return 'document_agent';
   }
@@ -3359,7 +3373,7 @@ function detectAgentDomainRegex(message: string): string {
   if (/(?:what\s+is|find|get|show|where|how\s+many)\s+.*\bdp[\s-]?\d+/i.test(lower)) {
     return 'document_agent';
   }
-  // Part 4: Acronym-learning intent (routes to Selma for learn_acronym tool)
+  // Part 4: Acronym-learning intent
   if (/(stands?\s+for|=\s*[A-Z]{2,}|means?\s+[A-Z]|acronym|abbreviation|short\s+for)/i.test(lower)) {
     return 'document_agent';
   }
@@ -3371,13 +3385,7 @@ function detectAgentDomainRegex(message: string): string {
   if (/\b(?:read|analy[sz]e|interpret|open|download|fetch|retrieve)\b.*\b\d{4}-[A-Z]/i.test(message)) {
     return 'document_agent';
   }
-  
-  // Fred (Completions & Hardware Readiness + PSSR/ORA Safety Agent) triggers
-  // GoCompletions queries (completion status, tags, certificates, ITR codes) AND PSSR/safety queries
-  if (/\b(pssr|pre-?startup safety|safety review|sof\b|statement of fitness|ora checklist|pssr checklist|pssr status|pssr completion|safety readiness|pssr items|pssr action|startup safety|pssr walkdown|safety inspection|pssr findings|gocompletions|go\s*completions|completion status|completions?\s+data|tag\s+(?:search|register|list)|equipment tag|mcc\b|pcc\b|rfc\b|mechanical completion|pre-?commissioning|a-?itr|b-?itr|itr code|itr allocation|punch\s*list\s*(?:a|b|detail|item)|owl\b|outstanding work|handover certificate|certificate status|subsystem\s+\d|system\s+\d{2,3}|discipline.*(?:instrument|mechanical|electrical|piping)|bgc-[imepx]\d|dossier|completions?\s+dossier|bngl|sandpit|zubair|north rumaila|south rumaila|umm qasr|west qurna)\b/i.test(lower)) {
-    return 'pssr_ora_agent';
-  }
-  
+
   // Zain (Training Intelligence) triggers (planned)
   if (/\b(training|competency|competence|learning|course|certification|skill gap|training plan|training cost)\b/i.test(lower)) {
     return 'training_agent';
