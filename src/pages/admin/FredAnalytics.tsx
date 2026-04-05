@@ -93,6 +93,61 @@ export default function FredAnalytics() {
     }
   };
 
+  const handleUploadTrainingDoc = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const userId = session?.user?.id;
+    if (!userId) { toast.error("Not authenticated"); return; }
+
+    for (const file of Array.from(files)) {
+      const filePath = `${userId}/${uploadCategory}/${file.name}`;
+      try {
+        const { error: uploadErr } = await supabase.storage
+          .from('fred_training_docs')
+          .upload(filePath, file, { upsert: true });
+        if (uploadErr) throw uploadErr;
+
+        // Register document
+        await supabase.from('fred_training_documents').insert({
+          file_name: file.name,
+          file_path: filePath,
+          category: uploadCategory,
+          file_size: file.size,
+          uploaded_by: userId,
+        } as any);
+
+        // Add to training queue
+        await supabase.from('fred_training_queue').insert({
+          file_path: filePath,
+          category: uploadCategory,
+          priority: 5,
+        } as any);
+
+        toast.success(`Uploaded: ${file.name}`);
+      } catch (err: any) {
+        toast.error(`Failed: ${file.name} — ${err.message}`);
+      }
+    }
+    queryClient.invalidateQueries({ queryKey: ['fred-training-queue'] });
+    queryClient.invalidateQueries({ queryKey: ['fred-training-documents'] });
+    e.target.value = '';
+  }, [uploadCategory, session, queryClient]);
+
+  const handleRunTraining = async () => {
+    setTrainingRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fred-knowledge-builder');
+      if (error) throw error;
+      toast.success(`Training completed: ${data?.processed || 0} documents processed`);
+      queryClient.invalidateQueries({ queryKey: ['fred-training-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['fred-domain-knowledge'] });
+    } catch (err: any) {
+      toast.error(`Training failed: ${err.message}`);
+    } finally {
+      setTrainingRunning(false);
+    }
+  };
+
   // Tool usage distribution from interactions
   const toolDistribution = interactions ? (() => {
     const dist: Record<string, number> = {};
