@@ -2031,6 +2031,129 @@ export type Database = {
           },
         ]
       }
+      fred_interaction_metrics: {
+        Row: {
+          cascade_depth: number | null
+          created_at: string
+          error_details: string | null
+          id: string
+          latency_ms: number | null
+          outcome: string
+          project_code: string | null
+          query_text: string | null
+          result_count: number | null
+          strategies_tried: string[] | null
+          subsystem_code: string | null
+          tool_used: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cascade_depth?: number | null
+          created_at?: string
+          error_details?: string | null
+          id?: string
+          latency_ms?: number | null
+          outcome?: string
+          project_code?: string | null
+          query_text?: string | null
+          result_count?: number | null
+          strategies_tried?: string[] | null
+          subsystem_code?: string | null
+          tool_used?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cascade_depth?: number | null
+          created_at?: string
+          error_details?: string | null
+          id?: string
+          latency_ms?: number | null
+          outcome?: string
+          project_code?: string | null
+          query_text?: string | null
+          result_count?: number | null
+          strategies_tried?: string[] | null
+          subsystem_code?: string | null
+          tool_used?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      fred_kpi_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          kpi_name: string
+          kpi_value: number
+          metadata: Json | null
+          period_end: string
+          period_start: string
+          period_type: string
+          sample_size: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kpi_name: string
+          kpi_value?: number
+          metadata?: Json | null
+          period_end: string
+          period_start: string
+          period_type?: string
+          sample_size?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kpi_name?: string
+          kpi_value?: number
+          metadata?: Json | null
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          sample_size?: number
+        }
+        Relationships: []
+      }
+      fred_resolution_failures: {
+        Row: {
+          cleaned_query: string
+          closest_matches: Json | null
+          created_at: string
+          first_seen: string
+          id: string
+          last_seen: string
+          occurrence_count: number
+          query_text: string
+          resolved: boolean
+          resolved_as: string | null
+        }
+        Insert: {
+          cleaned_query: string
+          closest_matches?: Json | null
+          created_at?: string
+          first_seen?: string
+          id?: string
+          last_seen?: string
+          occurrence_count?: number
+          query_text: string
+          resolved?: boolean
+          resolved_as?: string | null
+        }
+        Update: {
+          cleaned_query?: string
+          closest_matches?: Json | null
+          created_at?: string
+          first_seen?: string
+          id?: string
+          last_seen?: string
+          occurrence_count?: number
+          query_text?: string
+          resolved?: boolean
+          resolved_as?: string | null
+        }
+        Relationships: []
+      }
       handover_certificate_templates: {
         Row: {
           certificate_type: string
