@@ -225,8 +225,9 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({
                     </Suspense>
                   </TabsContent>
                 </>
-              )
+              )}
 
+              <TabsContent value="configuration" className="mt-0">
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <Sparkles className="h-8 w-8 text-muted-foreground/40 mb-3" />
                   <p className="text-sm font-medium text-muted-foreground">
