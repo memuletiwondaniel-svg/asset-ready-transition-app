@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Users, Settings, CheckCircle, Home, Search, X, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container, MapPin, GitBranch, Files, Brain, ChevronDown, Star, FlaskConical } from 'lucide-react';
-import { agentProfiles } from '@/data/agentProfiles';
+
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { useUserScopedFavorites } from '@/hooks/useUserScopedFavorites';
-import { ADMIN_AI_AGENT_SIGNATURE, ADMIN_AI_BUILD_ID } from '@/lib/adminAiBuild';
+import AgentRosterGrid from '@/components/admin-tools/agents/AgentRosterGrid';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './admin/ThemeToggle';
@@ -253,19 +253,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     {
       label: 'AI AGENTS',
       columns: 3 as const,
-      items: [
-        { id: 'ai-agents-hub', title: 'AI Agents Hub', description: 'Canonical overview, profiles, relationships', icon: Brain, gradient: 'from-violet-500 to-purple-600', badge: `${agentProfiles.length} agents` as const, onClick: () => navigate('/admin/ai-agents') },
-        ...agentProfiles.map(agent => ({
-          id: `agent-${agent.code}`,
-          title: agent.name,
-          description: agent.role,
-          icon: Brain,
-          gradient: agent.gradient,
-          avatarSrc: agent.avatar,
-          ...(agent.status === 'planned' ? { badge: 'planned' as const } : {}),
-          onClick: () => navigate(`/admin/ai-agents/${agent.code}`),
-        })),
-      ],
+      items: [],
+      customContent: true,
     },
     {
       label: 'INTEGRATIONS',
@@ -654,7 +643,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   }
 
 
-  return <><div data-admin-ai-build={ADMIN_AI_BUILD_ID} className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
+  return <><div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
         {/* Header */}
         <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-3 md:py-4 sticky top-0 z-10">
           <BreadcrumbNavigation currentPageLabel="Administration" favoritePath="/admin-tools" />
@@ -768,17 +757,17 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                         {section.label}
                       </span>
                       <div className="flex-1 h-px bg-border/40" />
-                      {section.label === 'AI AGENTS' && <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[9px] text-muted-foreground">
-                          {ADMIN_AI_BUILD_ID}
-                        </span>}
                       <span className="text-[10px] text-muted-foreground/40 tabular-nums">{section.items.length}</span>
                     </CollapsibleTrigger>
 
                     <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
-                      {section.label === 'AI AGENTS' && <div className="mb-3 ml-6 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
-                          <span className="rounded-full border border-border bg-muted/60 px-2 py-1">Canonical roster</span>
-                          <span className="rounded-full border border-border bg-muted/60 px-2 py-1">{ADMIN_AI_AGENT_SIGNATURE}</span>
-                        </div>}
+                      {(section as any).customContent && section.label === 'AI AGENTS' ? (
+                        <AgentRosterGrid
+                          showHubCard
+                          onHubClick={() => navigate('/admin/ai-agents')}
+                          onAgentClick={(code) => navigate(`/admin/ai-agents/${code}`)}
+                        />
+                      ) : (
                       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                         {section.items.map((item) => {
                           const IconComponent = item.icon;
@@ -825,6 +814,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                           );
                         })}
                       </div>
+                      )}
                     </CollapsibleContent>
                   </Collapsible>
                 );

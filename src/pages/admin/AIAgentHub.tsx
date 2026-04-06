@@ -6,7 +6,7 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { getAgentByCode } from '@/data/agentProfiles';
 import AgentOverview from '@/components/admin-tools/agents/AgentOverview';
 import AgentProfileView from '@/components/admin-tools/agents/AgentProfileView';
-import { ADMIN_AI_AGENT_SIGNATURE, ADMIN_AI_BUILD_ID } from '@/lib/adminAiBuild';
+
 
 const AIAgentHub: React.FC = () => {
   const { agentCode } = useParams();
@@ -41,7 +41,7 @@ const AIAgentHub: React.FC = () => {
   };
 
   return (
-    <div data-admin-ai-build={ADMIN_AI_BUILD_ID} className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
       <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-3 md:py-4 sticky top-0 z-10">
         <BreadcrumbNavigation 
           currentPageLabel={agent ? agent.name : "AI Agents"} 
@@ -62,10 +62,6 @@ const AIAgentHub: React.FC = () => {
             <div>
               <h1 className="text-xl font-bold text-foreground">AI Agents Hub</h1>
               <p className="text-xs text-muted-foreground">Manage, monitor, and configure your AI team</p>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
-                <span className="rounded-full border border-border bg-muted/60 px-2 py-0.5">{ADMIN_AI_BUILD_ID}</span>
-                <span className="rounded-full border border-border bg-muted/60 px-2 py-0.5">{ADMIN_AI_AGENT_SIGNATURE}</span>
-              </div>
             </div>
           </div>
         </div>
