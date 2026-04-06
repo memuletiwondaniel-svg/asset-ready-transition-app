@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { agentProfiles } from '@/data/agentProfiles';
 
 export interface FavoritePage {
   path: string;
@@ -8,6 +9,17 @@ export interface FavoritePage {
 
 const STORAGE_KEY_PREFIX = 'orsh-favorite-pages';
 const LEGACY_STORAGE_KEY = 'orsh-favorite-pages';
+
+const AI_AGENT_LABEL_TO_PATH = Object.fromEntries(
+  agentProfiles.map((agent) => [agent.name, `/admin/ai-agents/${agent.code}`])
+);
+
+const LEGACY_PATH_TO_PATH: Record<string, string> = {
+  '/admin-tools/ai-agents': '/admin/ai-agents',
+  '/admin-tools/ai-agents-hub': '/admin/ai-agents',
+  '/admin-tools/agent-registry': '/admin/ai-agents',
+  '/admin-tools/training-feedback': '/admin/ai-agents',
+};
 
 const getStorageKey = (userId?: string) => 
   userId ? `${STORAGE_KEY_PREFIX}-${userId}` : LEGACY_STORAGE_KEY;
@@ -22,7 +34,8 @@ export const useFavoritePages = () => {
     try {
       const stored = localStorage.getItem(key);
       if (!stored) return [];
-      const parsed: FavoritePage[] = JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      const safeParsed: FavoritePage[] = Array.isArray(parsed) ? parsed : [];
       
       // Migrate stale /admin-tools entries to correct virtual paths
       const LABEL_TO_PATH: Record<string, string> = {
@@ -42,14 +55,24 @@ export const useFavoritePages = () => {
         'Manage Handover': '/admin-tools/handover-management',
         'AI Agents': '/admin/ai-agents',
         'AI Agents Hub': '/admin/ai-agents',
+        'Agent Registry': '/admin/ai-agents',
+        'Training & Feedback': '/admin/ai-agents',
+        ...AI_AGENT_LABEL_TO_PATH,
       };
       
       let migrated = false;
-      const result = parsed.map(fav => {
-        if (fav.path === '/admin-tools' && LABEL_TO_PATH[fav.label]) {
+      const result = safeParsed.map(fav => {
+        const migratedPath = LEGACY_PATH_TO_PATH[fav.path] ?? (
+          fav.path === '/admin-tools' && LABEL_TO_PATH[fav.label]
+            ? LABEL_TO_PATH[fav.label]
+            : fav.path
+        );
+
+        if (migratedPath !== fav.path) {
           migrated = true;
-          return { ...fav, path: LABEL_TO_PATH[fav.label] };
+          return { ...fav, path: migratedPath };
         }
+
         return fav;
       });
       

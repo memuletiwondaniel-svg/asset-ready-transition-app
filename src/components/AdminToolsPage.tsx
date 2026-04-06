@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { useUserScopedFavorites } from '@/hooks/useUserScopedFavorites';
+import { ADMIN_AI_AGENT_SIGNATURE, ADMIN_AI_BUILD_ID } from '@/lib/adminAiBuild';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './admin/ThemeToggle';
@@ -69,6 +70,18 @@ const ViewLoadingFallback = () => (
 interface AdminToolsPageProps {
   onBack: () => void;
 }
+
+const LEGACY_AI_AGENT_VIEWS = new Set([
+  'ai-agents-hub',
+  'agent-registry',
+  'training-feedback',
+  'training-and-feedback',
+  'ai-training-feedback',
+]);
+
+const isLegacyAiAgentView = (activeView?: string | null) =>
+  Boolean(activeView && LEGACY_AI_AGENT_VIEWS.has(activeView));
+
 const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   onBack
 }) => {
@@ -87,9 +100,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   // State management - consolidated for cleaner code
   const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'integration-hub' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows' | 'document-management' | 'ai-agent-strategy' | 'tenant-setup'>(() => {
     // Check if navigated with a specific activeView from favorites
-    const state = location.state as any;
-    // Redirect legacy ai-agents-hub state to canonical route
-    if (state?.activeView === 'ai-agents-hub') {
+    const state = location.state as { activeView?: string } | null;
+    if (isLegacyAiAgentView(state?.activeView)) {
       return 'dashboard'; // will redirect via useEffect below
     }
     return state?.activeView || 'dashboard';
@@ -97,8 +109,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
 
   // Redirect legacy ai-agents-hub state to canonical routes
   useEffect(() => {
-    const state = location.state as any;
-    if (state?.activeView === 'ai-agents-hub') {
+    const state = location.state as { activeView?: string; agentCode?: string } | null;
+    if (isLegacyAiAgentView(state?.activeView)) {
       const agentCode = state?.agentCode;
       navigate(agentCode ? `/admin/ai-agents/${agentCode}` : '/admin/ai-agents', { replace: true });
       return;
@@ -107,8 +119,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
 
   // Reset to dashboard when sidebar navigation triggers a same-route click (without activeView)
   useEffect(() => {
-    const state = location.state as any;
-    if (state?.navKey && state?.activeView !== 'ai-agents-hub') {
+    const state = location.state as { navKey?: number; activeView?: string } | null;
+    if (state?.navKey && !isLegacyAiAgentView(state?.activeView)) {
       setActiveView(state.activeView || 'dashboard');
     }
   }, [(location.state as any)?.navKey]);
@@ -242,7 +254,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       label: 'AI AGENTS',
       columns: 3 as const,
       items: [
-        { id: 'ai-agents-hub', title: 'AI Agents Hub', description: 'Overview, profiles, relationships', icon: Brain, gradient: 'from-violet-500 to-purple-600', badge: `${agentProfiles.length} agents` as const, onClick: () => navigate('/admin/ai-agents') },
+        { id: 'ai-agents-hub', title: 'AI Agents Hub', description: 'Canonical overview, profiles, relationships', icon: Brain, gradient: 'from-violet-500 to-purple-600', badge: `${agentProfiles.length} agents` as const, onClick: () => navigate('/admin/ai-agents') },
         ...agentProfiles.map(agent => ({
           id: `agent-${agent.code}`,
           title: agent.name,
@@ -642,7 +654,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   }
 
 
-  return <><div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
+  return <><div data-admin-ai-build={ADMIN_AI_BUILD_ID} className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
         {/* Header */}
         <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-3 md:py-4 sticky top-0 z-10">
           <BreadcrumbNavigation currentPageLabel="Administration" favoritePath="/admin-tools" />
@@ -756,10 +768,17 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                         {section.label}
                       </span>
                       <div className="flex-1 h-px bg-border/40" />
+                      {section.label === 'AI AGENTS' && <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[9px] text-muted-foreground">
+                          {ADMIN_AI_BUILD_ID}
+                        </span>}
                       <span className="text-[10px] text-muted-foreground/40 tabular-nums">{section.items.length}</span>
                     </CollapsibleTrigger>
 
                     <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+                      {section.label === 'AI AGENTS' && <div className="mb-3 ml-6 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+                          <span className="rounded-full border border-border bg-muted/60 px-2 py-1">Canonical roster</span>
+                          <span className="rounded-full border border-border bg-muted/60 px-2 py-1">{ADMIN_AI_AGENT_SIGNATURE}</span>
+                        </div>}
                       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                         {section.items.map((item) => {
                           const IconComponent = item.icon;
