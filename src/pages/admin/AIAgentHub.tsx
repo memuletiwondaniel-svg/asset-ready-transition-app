@@ -41,7 +41,7 @@ const AIAgentHub: React.FC = () => {
   };
 
   return (
-    <div data-admin-ai-build={ADMIN_AI_BUILD_ID} className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
       <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-3 md:py-4 sticky top-0 z-10">
         <BreadcrumbNavigation 
           currentPageLabel={agent ? agent.name : "AI Agents"} 
