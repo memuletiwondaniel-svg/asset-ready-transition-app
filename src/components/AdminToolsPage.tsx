@@ -253,19 +253,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     {
       label: 'AI AGENTS',
       columns: 3 as const,
-      items: [
-        { id: 'ai-agents-hub', title: 'AI Agents Hub', description: 'Canonical overview, profiles, relationships', icon: Brain, gradient: 'from-violet-500 to-purple-600', badge: `${agentProfiles.length} agents` as const, onClick: () => navigate('/admin/ai-agents') },
-        ...agentProfiles.map(agent => ({
-          id: `agent-${agent.code}`,
-          title: agent.name,
-          description: agent.role,
-          icon: Brain,
-          gradient: agent.gradient,
-          avatarSrc: agent.avatar,
-          ...(agent.status === 'planned' ? { badge: 'planned' as const } : {}),
-          onClick: () => navigate(`/admin/ai-agents/${agent.code}`),
-        })),
-      ],
+      items: [],
+      customContent: true,
     },
     {
       label: 'INTEGRATIONS',
