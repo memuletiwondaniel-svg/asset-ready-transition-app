@@ -62,10 +62,6 @@ const AIAgentHub: React.FC = () => {
             <div>
               <h1 className="text-xl font-bold text-foreground">AI Agents Hub</h1>
               <p className="text-xs text-muted-foreground">Manage, monitor, and configure your AI team</p>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
-                <span className="rounded-full border border-border bg-muted/60 px-2 py-0.5">{ADMIN_AI_BUILD_ID}</span>
-                <span className="rounded-full border border-border bg-muted/60 px-2 py-0.5">{ADMIN_AI_AGENT_SIGNATURE}</span>
-              </div>
             </div>
           </div>
         </div>

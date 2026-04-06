@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Brain, Users, Zap, BarChart3 } from 'lucide-react';
 import { agentProfiles, getActiveAgents, getPlannedAgents } from '@/data/agentProfiles';
-import AgentCard from './AgentCard';
+import AgentRosterGrid from './AgentRosterGrid';
 import AgentRelationshipMap from './AgentRelationshipMap';
 
 interface AgentOverviewProps {

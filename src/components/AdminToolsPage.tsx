@@ -757,9 +757,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                         {section.label}
                       </span>
                       <div className="flex-1 h-px bg-border/40" />
-                      {section.label === 'AI AGENTS' && <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[9px] text-muted-foreground">
-                          {ADMIN_AI_BUILD_ID}
-                        </span>}
                       <span className="text-[10px] text-muted-foreground/40 tabular-nums">{section.items.length}</span>
                     </CollapsibleTrigger>
 
