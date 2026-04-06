@@ -1,56 +1,57 @@
 
-Issue summary
 
-- The current “permanent fix” is incomplete. `src/main.tsx` already unregisters service workers and clears caches, so this is no longer just a PWA/cache cleanup problem.
-- The bigger structural problem is that AI Agents still exist in two navigation modes:
-  1. embedded inside `/admin-tools` via `location.state.activeView = 'ai-agents-hub'`
-  2. real routes at `/admin/ai-agents` and `/admin/ai-agents/:agentCode`
-- That split makes the Admin experience easier to drift, look stale, and behave differently depending on how the user arrived there.
-- There is also content drift: the admin AI-agent cards are hand-maintained in `AdminToolsPage.tsx`, while the real roster lives in `src/data/agentProfiles.ts`. Some AI-agent copy is still inconsistent (`AgentOverview` still says “Seven specialized AI agents”, and some docs still contain older agent naming).
+## Permanent fix for AI Agents section in Admin Tools
 
-Plan
+### Root cause
 
-1. Make the AI Agents Hub route-based and canonical
-- Change the Admin dashboard AI-agent items to navigate to `/admin/ai-agents` and `/admin/ai-agents/:agentCode`.
-- Stop treating AI Agents as a same-route embedded subview of `/admin-tools`.
+The AI AGENTS section in `AdminToolsPage.tsx` builds its card list inline (lines 253-268) using `agentProfiles.map(...)`. The code itself is correct and reads from `agentProfiles.ts`. However, two things make the experience fragile and cluttered:
 
-2. Remove stale state dependency from the Admin entry flow
-- Reduce or remove the `activeView === 'ai-agents-hub'` branch in `AdminToolsPage.tsx`.
-- Let `AIAgentHub` own agent selection from URL state instead of depending on `location.state.agentCode` passed through `/admin-tools`.
+1. **Debug UI still present** -- build ID badge (line 771-773), "Canonical roster" and agent signature pills (line 778-781) clutter the section header.
+2. **Duplicate rendering logic** -- the Admin Tools dashboard and the AI Agent Hub (`/admin/ai-agents`) both independently build their own card grids from `agentProfiles`. When either is edited, they can drift apart.
+3. **`location.state` bootstrapping** -- on refresh, browser history can replay stale `activeView` state values, though current guards mostly catch this.
 
-3. Single-source the AI-agent cards
-- Generate the AI AGENTS dashboard cards from shared agent data instead of maintaining a separate hardcoded list.
-- Keep one shared “AI Agents Hub” entry plus cards derived from `agentProfiles`.
+### What will change
 
-4. Fix the inconsistent AI-agent copy
-- Update `AgentOverview.tsx` to reflect the current agent count.
-- Clean remaining stale AI-agent references in supporting admin documents so the UI no longer looks partially reverted.
+**Create a shared roster component** that both Admin Tools and the AI Agent Hub use, so there is exactly one place that turns `agentProfiles` into cards.
 
-5. Tighten favorites/breadcrumb paths
-- Update AI-agent favorite paths and breadcrumb favorite targets to use the canonical AI-agent route instead of generic `/admin-tools`.
-- Add a small migration for any saved AI-agent shortcuts that still point to old admin subviews.
+### Plan
 
-6. Add a lightweight anti-stale safeguard
-- Add a visible build/version marker in the Admin/AI Agents area so it is obvious when a stale bundle is being shown.
-- Use this as a verification aid, not the primary fix.
+#### 1. Create shared `AgentRosterGrid` component
+**New file: `src/components/admin-tools/agents/AgentRosterGrid.tsx`**
 
-Verification
+- Accepts `onAgentClick: (code: string) => void` and optional `showHubCard?: boolean`
+- Renders the "AI Agents Hub" launcher card (links to `/admin/ai-agents`) when `showHubCard` is true
+- Maps over `agentProfiles` to render individual agent cards (Bob, Selma, Fred, Ivan, Hannah, Alex)
+- Uses the same card styling currently in `AdminToolsPage.tsx` (avatar, gradient, badge for planned agents)
+- This becomes the single source of truth for the AI agent card grid
 
-- Open Admin Tools directly on mobile width.
-- Expand AI AGENTS and confirm the intended current set appears consistently.
-- Open AI Agents via dashboard card, direct route, back navigation, and agent deep links.
-- Confirm old combinations like “Agent Registry / Training & Feedback / Auto-Update Controls” cannot reappear under AI AGENTS.
-- Re-test after refresh and same-route navigation.
+#### 2. Update `AdminToolsPage.tsx`
+- Remove the inline AI AGENTS `items` array (lines 253-268) and replace it with a reference to `AgentRosterGrid` rendered inside the collapsible section
+- Remove the debug badges: build ID pill (lines 771-773), "Canonical roster" pill, and agent signature pill (lines 778-781)
+- Remove unused imports of `ADMIN_AI_BUILD_ID` and `ADMIN_AI_AGENT_SIGNATURE`
+- The AI AGENTS collapsible section will render `<AgentRosterGrid showHubCard onAgentClick={(code) => navigate(\`/admin/ai-agents/\${code}\`)} />` directly
+- Keep favorites support: the grid will accept the `toggleFavorite` and `adminFavorites` props so starring still works
 
-Files likely affected
+#### 3. Update `AgentOverview.tsx` (used by AI Agent Hub)
+- Replace the inline agent mapping with `<AgentRosterGrid onAgentClick={onAgentClick} />` (without Hub card since you're already in the Hub)
+- Keep the stats row and relationship map above/below the grid
 
-- `src/components/AdminToolsPage.tsx`
-- `src/pages/admin/AIAgentHub.tsx`
-- `src/data/agentProfiles.ts`
-- `src/components/admin-tools/agents/AgentOverview.tsx`
-- possibly `src/hooks/useFavoritePages.ts`
+#### 4. Clean up `AIAgentHub.tsx`
+- Remove the debug build ID and agent signature pills from the header (lines 65-68)
+- Remove unused `ADMIN_AI_BUILD_ID` and `ADMIN_AI_AGENT_SIGNATURE` imports
 
-Technical details
+#### 5. Harden state initialization (already mostly done, minor tightening)
+- In `AdminToolsPage.tsx`, ensure `activeView` always defaults to `'dashboard'` on a full page refresh, ignoring any `location.state` that may have survived in browser history
 
-- Best fix: use real routes as the single source of navigation truth.
-- Why this should stick: it removes the split between state-driven embedded views and route-driven pages, which is the most likely reason the problem keeps returning even after temporary cleanup fixes.
+### Files affected
+- `src/components/admin-tools/agents/AgentRosterGrid.tsx` (new)
+- `src/components/AdminToolsPage.tsx` (edit)
+- `src/components/admin-tools/agents/AgentOverview.tsx` (edit)
+- `src/pages/admin/AIAgentHub.tsx` (edit)
+
+### Why this is permanent
+- One component, one data source (`agentProfiles.ts`), used in both places
+- No debug/verification UI left to confuse the display
+- No duplicate card-building logic that can drift between files
+- State initialization hardened against stale browser history
+
