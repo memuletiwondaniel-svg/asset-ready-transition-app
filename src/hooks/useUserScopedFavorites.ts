@@ -15,14 +15,43 @@ export const useUserScopedFavorites = (storagePrefix: string) => {
   const storageKey = getKey(userId);
   const prevKeyRef = useRef(storageKey);
 
+  const normalizeFavorites = useCallback((ids: string[]) => {
+    const uniqueIds = Array.from(new Set(ids));
+
+    if (storagePrefix !== 'orsh-admin-favorites') {
+      return uniqueIds;
+    }
+
+    const legacyAdminFavoriteMap: Record<string, string> = {
+      'agent-registry': 'ai-agents-hub',
+      'training-feedback': 'ai-agents-hub',
+      'training-and-feedback': 'ai-agents-hub',
+      'ai-training-feedback': 'ai-agents-hub',
+    };
+
+    return Array.from(
+      new Set(uniqueIds.map((id) => legacyAdminFavoriteMap[id] ?? id))
+    );
+  }, [storagePrefix]);
+
   const readFromStorage = useCallback((key: string): string[] => {
     try {
       const stored = localStorage.getItem(key);
-      return stored ? JSON.parse(stored) : [];
+      if (!stored) return [];
+
+      const parsed = JSON.parse(stored);
+      const safeParsed = Array.isArray(parsed) ? parsed : [];
+      const normalized = normalizeFavorites(safeParsed);
+
+      if (JSON.stringify(safeParsed) !== JSON.stringify(normalized)) {
+        localStorage.setItem(key, JSON.stringify(normalized));
+      }
+
+      return normalized;
     } catch {
       return [];
     }
-  }, []);
+  }, [normalizeFavorites]);
 
   const [favorites, setFavorites] = useState<string[]>(() => {
     const userFavs = readFromStorage(storageKey);

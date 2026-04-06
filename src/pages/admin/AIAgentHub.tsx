@@ -6,73 +6,46 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { getAgentByCode } from '@/data/agentProfiles';
 import AgentOverview from '@/components/admin-tools/agents/AgentOverview';
 import AgentProfileView from '@/components/admin-tools/agents/AgentProfileView';
+import { ADMIN_AI_AGENT_SIGNATURE, ADMIN_AI_BUILD_ID } from '@/lib/adminAiBuild';
 
-interface AIAgentHubProps {
-  embedded?: boolean;
-  onBackToAdmin?: () => void;
-  initialAgentCode?: string | null;
-  initialTab?: string | null;
-}
-
-const AIAgentHub: React.FC<AIAgentHubProps> = ({
-  embedded = false,
-  onBackToAdmin,
-  initialAgentCode = null,
-  initialTab = null,
-}) => {
-  const { agentCode: routeAgentCode } = useParams();
+const AIAgentHub: React.FC = () => {
+  const { agentCode } = useParams();
   const navigate = useNavigate();
-  const resolvedInitialAgent = initialAgentCode ?? routeAgentCode ?? null;
-  const [selectedAgent, setSelectedAgent] = React.useState<string | null>(resolvedInitialAgent);
-  const [selectedTab, setSelectedTab] = React.useState<string | null>(initialTab);
+  const [selectedTab, setSelectedTab] = React.useState<string | null>(null);
+  const agent = agentCode ? getAgentByCode(agentCode) : null;
 
   React.useEffect(() => {
-    setSelectedAgent(initialAgentCode ?? routeAgentCode ?? null);
-  }, [initialAgentCode, routeAgentCode]);
+    setSelectedTab(null);
+  }, [agentCode]);
 
   React.useEffect(() => {
-    setSelectedTab(initialTab ?? null);
-  }, [initialTab, initialAgentCode, routeAgentCode]);
-
-  const agent = selectedAgent ? getAgentByCode(selectedAgent) : null;
+    if (agentCode && !agent) {
+      navigate('/admin/ai-agents', { replace: true });
+    }
+  }, [agent, agentCode, navigate]);
 
   const handleAgentClick = (code: string) => {
-    setSelectedAgent(code);
     setSelectedTab(null);
-
-    if (embedded) {
-      return;
-    }
 
     navigate(`/admin/ai-agents/${code}`, { replace: true });
   };
 
   const handleBack = () => {
-    setSelectedAgent(null);
     setSelectedTab(null);
-
-    if (embedded) {
-      return;
-    }
 
     navigate('/admin/ai-agents', { replace: true });
   };
 
   const handleBackToAdmin = () => {
-    if (embedded) {
-      onBackToAdmin?.();
-      return;
-    }
-
     navigate('/admin-tools', { state: { activeView: 'dashboard', navKey: Date.now() } });
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
+    <div data-admin-ai-build={ADMIN_AI_BUILD_ID} className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-background via-background to-muted/20">
       <div className="border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6 py-3 md:py-4 sticky top-0 z-10">
         <BreadcrumbNavigation 
           currentPageLabel={agent ? agent.name : "AI Agents"} 
-          favoritePath="/admin-tools"
+          favoritePath={agent ? `/admin/ai-agents/${agent.code}` : '/admin/ai-agents'}
           customBreadcrumbs={agent ? [
             { label: 'Home', path: '/', onClick: () => navigate('/') },
             { label: 'AI Agents', path: '/admin/ai-agents', onClick: handleBack },
@@ -89,6 +62,10 @@ const AIAgentHub: React.FC<AIAgentHubProps> = ({
             <div>
               <h1 className="text-xl font-bold text-foreground">AI Agents Hub</h1>
               <p className="text-xs text-muted-foreground">Manage, monitor, and configure your AI team</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+                <span className="rounded-full border border-border bg-muted/60 px-2 py-0.5">{ADMIN_AI_BUILD_ID}</span>
+                <span className="rounded-full border border-border bg-muted/60 px-2 py-0.5">{ADMIN_AI_AGENT_SIGNATURE}</span>
+              </div>
             </div>
           </div>
         </div>
