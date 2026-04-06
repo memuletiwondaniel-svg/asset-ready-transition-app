@@ -40,6 +40,8 @@ export const useFavoritePages = () => {
         'Audit Retention': '/admin-tools/audit-retention',
         'Handover Management': '/admin-tools/handover-management',
         'Manage Handover': '/admin-tools/handover-management',
+        'AI Agents': '/admin/ai-agents',
+        'AI Agents Hub': '/admin/ai-agents',
       };
       
       let migrated = false;
