@@ -764,10 +764,13 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                     </CollapsibleTrigger>
 
                     <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
-                      {section.label === 'AI AGENTS' && <div className="mb-3 ml-6 flex flex-wrap gap-2 text-[10px] text-muted-foreground">
-                          <span className="rounded-full border border-border bg-muted/60 px-2 py-1">Canonical roster</span>
-                          <span className="rounded-full border border-border bg-muted/60 px-2 py-1">{ADMIN_AI_AGENT_SIGNATURE}</span>
-                        </div>}
+                      {(section as any).customContent && section.label === 'AI AGENTS' ? (
+                        <AgentRosterGrid
+                          showHubCard
+                          onHubClick={() => navigate('/admin/ai-agents')}
+                          onAgentClick={(code) => navigate(`/admin/ai-agents/${code}`)}
+                        />
+                      ) : (
                       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                         {section.items.map((item) => {
                           const IconComponent = item.icon;
