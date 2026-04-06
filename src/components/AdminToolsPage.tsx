@@ -88,13 +88,27 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'integration-hub' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows' | 'document-management' | 'ai-agent-strategy' | 'tenant-setup'>(() => {
     // Check if navigated with a specific activeView from favorites
     const state = location.state as any;
+    // Redirect legacy ai-agents-hub state to canonical route
+    if (state?.activeView === 'ai-agents-hub') {
+      return 'dashboard'; // will redirect via useEffect below
+    }
     return state?.activeView || 'dashboard';
   });
+
+  // Redirect legacy ai-agents-hub state to canonical routes
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.activeView === 'ai-agents-hub') {
+      const agentCode = state?.agentCode;
+      navigate(agentCode ? `/admin/ai-agents/${agentCode}` : '/admin/ai-agents', { replace: true });
+      return;
+    }
+  }, [location.state, navigate]);
 
   // Reset to dashboard when sidebar navigation triggers a same-route click (without activeView)
   useEffect(() => {
     const state = location.state as any;
-    if (state?.navKey) {
+    if (state?.navKey && state?.activeView !== 'ai-agents-hub') {
       setActiveView(state.activeView || 'dashboard');
     }
   }, [(location.state as any)?.navKey]);
