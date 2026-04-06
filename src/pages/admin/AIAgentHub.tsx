@@ -6,7 +6,7 @@ import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { getAgentByCode } from '@/data/agentProfiles';
 import AgentOverview from '@/components/admin-tools/agents/AgentOverview';
 import AgentProfileView from '@/components/admin-tools/agents/AgentProfileView';
-import { ADMIN_AI_AGENT_SIGNATURE, ADMIN_AI_BUILD_ID } from '@/lib/adminAiBuild';
+
 
 const AIAgentHub: React.FC = () => {
   const { agentCode } = useParams();
