@@ -26,7 +26,7 @@ const AgentOverview: React.FC<AgentOverviewProps> = ({ onAgentClick }) => {
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-foreground">Meet the ORSH AI Team</h2>
         <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-          Seven specialized AI agents working together to power your operational readiness workflows. 
+          {agentProfiles.length} specialized AI agents working together to power your operational readiness workflows. 
           Each agent has unique expertise and collaborates seamlessly with others.
         </p>
       </div>

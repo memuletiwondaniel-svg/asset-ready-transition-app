@@ -3,12 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Users, Settings, CheckCircle, Home, Search, X, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container, MapPin, GitBranch, Files, Brain, ChevronDown, Star, FlaskConical } from 'lucide-react';
-import bobAvatar from '@/assets/agents/bob.jpg';
-import selmaAvatar from '@/assets/agents/selma.jpg';
-import fredAvatar from '@/assets/agents/fred.jpg';
-import ivanAvatar from '@/assets/agents/ivan.jpg';
-import hannahAvatar from '@/assets/agents/hannah.jpg';
-import alexAvatar from '@/assets/agents/alex.jpg';
+import { agentProfiles } from '@/data/agentProfiles';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
@@ -57,7 +52,7 @@ const CustomerJourneyMaps = lazy(() => import("./admin-tools/CustomerJourneyMaps
 const ProcessFlowMaps = lazy(() => import("./admin-tools/ProcessFlowMaps"));
 const DocumentManagementSystem = lazy(() => import("./admin-tools/DocumentManagementSystem"));
 const AIAgentStrategyDocument = lazy(() => import("./admin-tools/AIAgentStrategyDocument"));
-const AIAgentHub = lazy(() => import("@/pages/admin/AIAgentHub"));
+
 
 const TenantSetupWizardLazy = lazy(() => import("./tenant-setup/TenantSetupWizard").then(m => ({ default: m.TenantSetupWizard })));
 
@@ -90,16 +85,30 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const location = useLocation();
 
   // State management - consolidated for cleaner code
-  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'integration-hub' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows' | 'document-management' | 'ai-agent-strategy' | 'ai-agents-hub' | 'tenant-setup'>(() => {
+  const [activeView, setActiveView] = useState<'dashboard' | 'users' | 'activity-log' | 'ora-configuration' | 'handover-management' | 'bulk-upload' | 'integration-hub' | 'sso' | 'roles-permissions' | 'audit-logs' | 'session-timeout' | 'brute-force' | 'data-export' | 'audit-retention' | 'disaster-recovery' | 'api-keys' | 'webhook-security' | 'integration-health' | 'user-offboarding' | 'permission-review' | 'deployment-log' | 'feature-flags' | 'security-document' | 'platform-guide' | 'northstar-document' | 'incident-response' | 'deployment-configs' | 'journey-maps' | 'process-flows' | 'document-management' | 'ai-agent-strategy' | 'tenant-setup'>(() => {
     // Check if navigated with a specific activeView from favorites
     const state = location.state as any;
+    // Redirect legacy ai-agents-hub state to canonical route
+    if (state?.activeView === 'ai-agents-hub') {
+      return 'dashboard'; // will redirect via useEffect below
+    }
     return state?.activeView || 'dashboard';
   });
+
+  // Redirect legacy ai-agents-hub state to canonical routes
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.activeView === 'ai-agents-hub') {
+      const agentCode = state?.agentCode;
+      navigate(agentCode ? `/admin/ai-agents/${agentCode}` : '/admin/ai-agents', { replace: true });
+      return;
+    }
+  }, [location.state, navigate]);
 
   // Reset to dashboard when sidebar navigation triggers a same-route click (without activeView)
   useEffect(() => {
     const state = location.state as any;
-    if (state?.navKey) {
+    if (state?.navKey && state?.activeView !== 'ai-agents-hub') {
       setActiveView(state.activeView || 'dashboard');
     }
   }, [(location.state as any)?.navKey]);
@@ -233,13 +242,17 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       label: 'AI AGENTS',
       columns: 3 as const,
       items: [
-        { id: 'ai-agents-hub', title: 'AI Agents Hub', description: 'Overview, profiles, relationships', icon: Brain, gradient: 'from-violet-500 to-purple-600', badge: '6 agents' as const, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', navKey: Date.now() } }) },
-        { id: 'agent-bob', title: 'Bob', description: 'CoPilot & Router', icon: Brain, gradient: 'from-amber-500 to-orange-600', avatarSrc: bobAvatar, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'bob', navKey: Date.now() } }) },
-        { id: 'agent-selma', title: 'Selma', description: 'Documentation & Information Readiness', icon: FileSearch, gradient: 'from-cyan-500 to-blue-600', avatarSrc: selmaAvatar, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'selma', navKey: Date.now() } }) },
-        { id: 'agent-fred', title: 'Fred', description: 'System & Hardware Readiness', icon: CheckCircle, gradient: 'from-red-500 to-rose-600', avatarSrc: fredAvatar, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'fred', navKey: Date.now() } }) },
-        { id: 'agent-ivan', title: 'Ivan', description: 'Technical Authority, Process, Ops & Safety', icon: Shield, gradient: 'from-slate-600 to-blue-800', avatarSrc: ivanAvatar, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'ivan', navKey: Date.now() } }) },
-        { id: 'agent-hannah', title: 'Hannah', description: 'Training & People Readiness', icon: Users, gradient: 'from-violet-500 to-purple-600', badge: 'planned' as const, avatarSrc: hannahAvatar, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'hannah', navKey: Date.now() } }) },
-        { id: 'agent-alex', title: 'Alex', description: 'Maintenance System Readiness', icon: Settings, gradient: 'from-cyan-600 to-slate-600', badge: 'planned' as const, avatarSrc: alexAvatar, onClick: () => navigate('/admin-tools', { state: { activeView: 'ai-agents-hub', agentCode: 'alex', navKey: Date.now() } }) },
+        { id: 'ai-agents-hub', title: 'AI Agents Hub', description: 'Overview, profiles, relationships', icon: Brain, gradient: 'from-violet-500 to-purple-600', badge: `${agentProfiles.length} agents` as const, onClick: () => navigate('/admin/ai-agents') },
+        ...agentProfiles.map(agent => ({
+          id: `agent-${agent.code}`,
+          title: agent.name,
+          description: agent.role,
+          icon: Brain,
+          gradient: agent.gradient,
+          avatarSrc: agent.avatar,
+          ...(agent.status === 'planned' ? { badge: 'planned' as const } : {}),
+          onClick: () => navigate(`/admin/ai-agents/${agent.code}`),
+        })),
       ],
     },
     {
@@ -578,19 +591,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
         <Suspense fallback={<ViewLoadingFallback />}>
           <AIAgentStrategyDocument onBack={() => setActiveView('dashboard')} />
-        </Suspense>
-      </div>;
-  }
-  if (activeView === 'ai-agents-hub') {
-    const state = location.state as any;
-    return <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
-        <Suspense fallback={<ViewLoadingFallback />}>
-          <AIAgentHub
-            embedded
-            onBackToAdmin={() => setActiveView('dashboard')}
-            initialAgentCode={state?.agentCode || null}
-            initialTab={state?.initialTab || null}
-          />
         </Suspense>
       </div>;
   }
