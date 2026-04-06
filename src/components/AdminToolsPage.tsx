@@ -121,7 +121,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   useEffect(() => {
     const state = location.state as { navKey?: number; activeView?: string } | null;
     if (state?.navKey && !isLegacyAiAgentView(state?.activeView)) {
-      setActiveView(state.activeView || 'dashboard');
+      setActiveView((state.activeView || 'dashboard') as AdminView);
     }
   }, [(location.state as any)?.navKey]);
   const [searchQuery, setSearchQuery] = useState('');
