@@ -814,6 +814,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                           );
                         })}
                       </div>
+                      )}
                     </CollapsibleContent>
                   </Collapsible>
                 );
