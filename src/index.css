@@ -938,3 +938,34 @@
   background-color: var(--vcr-accent-dark, hsl(var(--muted) / 0.6));
   color: var(--vcr-color-dark, hsl(var(--foreground)));
 }/* cache-bust */
+
+/* ─── Training Studio: section-aware markdown headings ─── */
+.training-message h2 {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: hsl(var(--muted-foreground));
+  margin-top: 16px;
+  margin-bottom: 6px;
+  padding-left: 8px;
+  border-left: 2px solid hsl(var(--border));
+}
+.training-message h2:first-child {
+  margin-top: 0;
+}
+.training-message h2[data-section="facts"] {
+  border-left-color: hsl(var(--chart-2));
+}
+.training-message h2[data-section="procedures"] {
+  border-left-color: hsl(var(--chart-4));
+}
+.training-message h2[data-section="rules"] {
+  border-left-color: hsl(var(--chart-5));
+}
+.training-message h2[data-section="questions"] {
+  border-left-color: hsl(var(--chart-1));
+  background: hsl(var(--accent));
+  padding: 4px 8px;
+  border-radius: 0 4px 4px 0;
+}
