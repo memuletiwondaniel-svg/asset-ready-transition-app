@@ -12,6 +12,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { useUserScopedFavorites } from '@/hooks/useUserScopedFavorites';
 import AgentRosterGrid from '@/components/admin-tools/agents/AgentRosterGrid';
+import { agentProfiles } from '@/data/agentProfiles';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './admin/ThemeToggle';
@@ -757,7 +758,11 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                         {section.label}
                       </span>
                       <div className="flex-1 h-px bg-border/40" />
-                      <span className="text-[10px] text-muted-foreground/40 tabular-nums">{section.items.length}</span>
+                      <span className="text-[10px] text-muted-foreground/40 tabular-nums">
+                        {(section as any).customContent && section.label === 'AI AGENTS' 
+                          ? agentProfiles.length + 1
+                          : section.items.length}
+                      </span>
                     </CollapsibleTrigger>
 
                     <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
