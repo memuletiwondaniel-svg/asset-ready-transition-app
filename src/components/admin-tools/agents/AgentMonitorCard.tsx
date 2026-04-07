@@ -138,7 +138,6 @@ const FredActivityView: React.FC<{ agentCode: string; agentName: string }> = ({ 
 };
 
 const FredPerformanceView: React.FC<{ agentCode: string; agentName: string }> = ({ agentCode, agentName }) => {
-  const { useFredLatestKPIs } = require('@/hooks/useFredAnalytics');
   const { data: kpis = [], isLoading } = useFredLatestKPIs();
 
   if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
