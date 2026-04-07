@@ -53,6 +53,7 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     '/p2o': 'P2O Handover',
     '/users': 'User Management',
     '/admin-tools': 'Admin Tools',
+    '/admin/ai-agents': 'AI Agents',
     '/manage-checklist': 'Manage Checklist',
     '/projects': 'Projects',
     '/project': 'Projects',
