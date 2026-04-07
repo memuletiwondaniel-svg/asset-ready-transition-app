@@ -757,7 +757,11 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                         {section.label}
                       </span>
                       <div className="flex-1 h-px bg-border/40" />
-                      <span className="text-[10px] text-muted-foreground/40 tabular-nums">{section.items.length}</span>
+                      <span className="text-[10px] text-muted-foreground/40 tabular-nums">
+                        {(section as any).customContent && section.label === 'AI AGENTS' 
+                          ? agentProfiles.length + 1
+                          : section.items.length}
+                      </span>
                     </CollapsibleTrigger>
 
                     <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
