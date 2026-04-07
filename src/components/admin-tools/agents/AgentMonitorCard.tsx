@@ -142,7 +142,7 @@ const FredPerformanceView: React.FC<{ agentCode: string; agentName: string }> = 
 
   if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
 
-  const getKPI = (name: string) => kpis.find((k: any) => k.kpi_name === name);
+  const getKPI = (name: string) => (kpis as any[]).find((k) => k.kpi_name === name);
   const successRate = getKPI('retrieval_success_rate');
   const avgLatency = getKPI('mean_time_to_answer_ms');
   const unresolvedRate = getKPI('unresolved_rate');
