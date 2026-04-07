@@ -462,7 +462,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
         <CardHeader className="pb-0 pt-4 px-5 shrink-0">
           <div className="flex items-center justify-between mb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center hover:scale-110 transition-transform">
                 <BookOpen className="h-3.5 w-3.5 text-primary" />
               </div>
               Knowledge & Training
@@ -474,12 +474,12 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
             )}
           </div>
           <TabsList className="w-full justify-start bg-muted/50 p-1">
-            <TabsTrigger value="chat" className="gap-1.5 text-xs">
-              <MessageSquare className="h-3.5 w-3.5" />
+            <TabsTrigger value="chat" className="gap-1.5 text-xs group hover:bg-accent/80 hover:text-foreground transition-all duration-200 hover:scale-[1.02]">
+              <MessageSquare className="h-3.5 w-3.5 group-hover:text-primary transition-colors" />
               Training Chat
             </TabsTrigger>
-            <TabsTrigger value="history" className="gap-1.5 text-xs">
-              <History className="h-3.5 w-3.5" />
+            <TabsTrigger value="history" className="gap-1.5 text-xs group hover:bg-accent/80 hover:text-foreground transition-all duration-200 hover:scale-[1.02]">
+              <History className="h-3.5 w-3.5 group-hover:text-primary transition-colors" />
               Training History
             </TabsTrigger>
           </TabsList>

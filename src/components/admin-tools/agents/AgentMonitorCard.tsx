@@ -42,22 +42,22 @@ const AgentMonitorCard: React.FC<AgentMonitorCardProps> = ({ agent }) => {
       <Tabs defaultValue="activity" className="h-full flex flex-col">
         <CardHeader className="pb-0 pt-4 px-5 shrink-0">
           <CardTitle className="text-sm font-semibold flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center">
+            <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center hover:scale-110 transition-transform">
               <Activity className="h-3.5 w-3.5 text-muted-foreground" />
             </div>
             Agent Monitor
           </CardTitle>
           <TabsList className="w-full justify-start bg-muted/50 p-1">
-            <TabsTrigger value="activity" className="gap-1.5 text-xs">
-              <Activity className="h-3.5 w-3.5" />
+            <TabsTrigger value="activity" className="gap-1.5 text-xs group hover:bg-accent/80 hover:text-foreground transition-all duration-200 hover:scale-[1.02]">
+              <Activity className="h-3.5 w-3.5 group-hover:text-primary transition-colors" />
               Activity
             </TabsTrigger>
-            <TabsTrigger value="performance" className="gap-1.5 text-xs">
-              <TrendingUp className="h-3.5 w-3.5" />
+            <TabsTrigger value="performance" className="gap-1.5 text-xs group hover:bg-accent/80 hover:text-foreground transition-all duration-200 hover:scale-[1.02]">
+              <TrendingUp className="h-3.5 w-3.5 group-hover:text-primary transition-colors" />
               Performance
             </TabsTrigger>
-            <TabsTrigger value="issues" className="gap-1.5 text-xs">
-              <AlertTriangle className="h-3.5 w-3.5" />
+            <TabsTrigger value="issues" className="gap-1.5 text-xs group hover:bg-accent/80 hover:text-foreground transition-all duration-200 hover:scale-[1.02]">
+              <AlertTriangle className="h-3.5 w-3.5 group-hover:text-primary transition-colors" />
               Issues
             </TabsTrigger>
           </TabsList>
