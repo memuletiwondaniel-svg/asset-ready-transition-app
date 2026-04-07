@@ -62,6 +62,51 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_training_sessions: {
+        Row: {
+          agent_code: string
+          completed_at: string | null
+          created_at: string
+          document_description: string | null
+          document_name: string | null
+          id: string
+          key_learnings: string | null
+          status: string
+          tags: string[] | null
+          transcript: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_code: string
+          completed_at?: string | null
+          created_at?: string
+          document_description?: string | null
+          document_name?: string | null
+          id?: string
+          key_learnings?: string | null
+          status?: string
+          tags?: string[] | null
+          transcript?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_code?: string
+          completed_at?: string | null
+          created_at?: string
+          document_description?: string | null
+          document_name?: string | null
+          id?: string
+          key_learnings?: string | null
+          status?: string
+          tags?: string[] | null
+          transcript?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_agent_communications: {
         Row: {
           conversation_id: string | null
