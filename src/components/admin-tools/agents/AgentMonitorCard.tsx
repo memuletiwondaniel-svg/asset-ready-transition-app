@@ -8,7 +8,7 @@ import { Activity, TrendingUp, AlertTriangle, ChevronDown, Loader2, Wrench, Play
 import { cn } from '@/lib/utils';
 import type { AgentProfile } from '@/data/agentProfiles';
 import { format } from 'date-fns';
-import { useFredLatestKPIs, useFredRecentInteractions, useFredResolutionFailures } from '@/hooks/useFredAnalytics';
+import { useFredLatestKPIs, useFredInteractions, useFredResolutionFailures } from '@/hooks/useFredAnalytics';
 
 interface AgentMonitorCardProps {
   agent: AgentProfile;
