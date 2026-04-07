@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -8,16 +8,7 @@ import { Activity, TrendingUp, AlertTriangle, ChevronDown, Loader2, Wrench, Play
 import { cn } from '@/lib/utils';
 import type { AgentProfile } from '@/data/agentProfiles';
 import { format } from 'date-fns';
-
-// Lazy load Fred/Selma-specific analytics hooks only when needed
-const useFredAnalytics = () => {
-  const mod = require('@/hooks/useFredAnalytics');
-  return {
-    useLatestKPIs: mod.useFredLatestKPIs,
-    useRecentInteractions: mod.useFredRecentInteractions,
-    useResolutionFailures: mod.useFredResolutionFailures,
-  };
-};
+import { useFredLatestKPIs, useFredInteractions, useFredResolutionFailures } from '@/hooks/useFredAnalytics';
 
 interface AgentMonitorCardProps {
   agent: AgentProfile;
@@ -119,8 +110,7 @@ const AgentMonitorCard: React.FC<AgentMonitorCardProps> = ({ agent }) => {
 
 // Sub-components that use Fred analytics hooks
 const FredActivityView: React.FC<{ agentCode: string; agentName: string }> = ({ agentCode, agentName }) => {
-  const { useFredRecentInteractions } = require('@/hooks/useFredAnalytics');
-  const { data: interactions = [], isLoading } = useFredRecentInteractions(10);
+  const { data: interactions = [], isLoading } = useFredInteractions(10);
 
   if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   if (interactions.length === 0) return <EmptyState icon={Activity} message="No interactions recorded yet" />;
@@ -148,12 +138,11 @@ const FredActivityView: React.FC<{ agentCode: string; agentName: string }> = ({ 
 };
 
 const FredPerformanceView: React.FC<{ agentCode: string; agentName: string }> = ({ agentCode, agentName }) => {
-  const { useFredLatestKPIs } = require('@/hooks/useFredAnalytics');
   const { data: kpis = [], isLoading } = useFredLatestKPIs();
 
   if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
 
-  const getKPI = (name: string) => kpis.find((k: any) => k.kpi_name === name);
+  const getKPI = (name: string) => (kpis as any[]).find((k) => k.kpi_name === name);
   const successRate = getKPI('retrieval_success_rate');
   const avgLatency = getKPI('mean_time_to_answer_ms');
   const unresolvedRate = getKPI('unresolved_rate');
@@ -197,7 +186,6 @@ const FredPerformanceView: React.FC<{ agentCode: string; agentName: string }> = 
 };
 
 const FredIssuesView: React.FC<{ agentCode: string; agentName: string }> = ({ agentCode, agentName }) => {
-  const { useFredResolutionFailures } = require('@/hooks/useFredAnalytics');
   const { data: failures = [], isLoading } = useFredResolutionFailures();
 
   if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
