@@ -110,8 +110,7 @@ const AgentMonitorCard: React.FC<AgentMonitorCardProps> = ({ agent }) => {
 
 // Sub-components that use Fred analytics hooks
 const FredActivityView: React.FC<{ agentCode: string; agentName: string }> = ({ agentCode, agentName }) => {
-  const { useFredRecentInteractions } = require('@/hooks/useFredAnalytics');
-  const { data: interactions = [], isLoading } = useFredRecentInteractions(10);
+  const { data: interactions = [], isLoading } = useFredInteractions(10);
 
   if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   if (interactions.length === 0) return <EmptyState icon={Activity} message="No interactions recorded yet" />;
