@@ -65,42 +65,99 @@ export type Database = {
       agent_training_sessions: {
         Row: {
           agent_code: string
+          anonymization_rules: Json | null
           completed_at: string | null
+          completion_method: string | null
+          confidence_level: string | null
+          contradiction_flags: Json | null
           created_at: string
           document_description: string | null
+          document_domain: string | null
           document_name: string | null
+          document_revision: string | null
+          document_type: string | null
+          extracted_tags: string[] | null
+          file_mime_type: string | null
+          file_path: string | null
+          file_size_bytes: number | null
           id: string
           key_learnings: string | null
+          knowledge_card: Json | null
+          last_test_at: string | null
+          last_test_score: number | null
+          message_count: number | null
+          open_questions_count: number | null
+          stale_after: string | null
           status: string
           tags: string[] | null
+          test_history: Json | null
+          training_duration_seconds: number | null
           transcript: Json | null
           updated_at: string
           user_id: string
         }
         Insert: {
           agent_code: string
+          anonymization_rules?: Json | null
           completed_at?: string | null
+          completion_method?: string | null
+          confidence_level?: string | null
+          contradiction_flags?: Json | null
           created_at?: string
           document_description?: string | null
+          document_domain?: string | null
           document_name?: string | null
+          document_revision?: string | null
+          document_type?: string | null
+          extracted_tags?: string[] | null
+          file_mime_type?: string | null
+          file_path?: string | null
+          file_size_bytes?: number | null
           id?: string
           key_learnings?: string | null
+          knowledge_card?: Json | null
+          last_test_at?: string | null
+          last_test_score?: number | null
+          message_count?: number | null
+          open_questions_count?: number | null
+          stale_after?: string | null
           status?: string
           tags?: string[] | null
+          test_history?: Json | null
+          training_duration_seconds?: number | null
           transcript?: Json | null
           updated_at?: string
           user_id: string
         }
         Update: {
           agent_code?: string
+          anonymization_rules?: Json | null
           completed_at?: string | null
+          completion_method?: string | null
+          confidence_level?: string | null
+          contradiction_flags?: Json | null
           created_at?: string
           document_description?: string | null
+          document_domain?: string | null
           document_name?: string | null
+          document_revision?: string | null
+          document_type?: string | null
+          extracted_tags?: string[] | null
+          file_mime_type?: string | null
+          file_path?: string | null
+          file_size_bytes?: number | null
           id?: string
           key_learnings?: string | null
+          knowledge_card?: Json | null
+          last_test_at?: string | null
+          last_test_score?: number | null
+          message_count?: number | null
+          open_questions_count?: number | null
+          stale_after?: string | null
           status?: string
           tags?: string[] | null
+          test_history?: Json | null
+          training_duration_seconds?: number | null
           transcript?: Json | null
           updated_at?: string
           user_id?: string
