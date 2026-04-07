@@ -186,7 +186,6 @@ const FredPerformanceView: React.FC<{ agentCode: string; agentName: string }> = 
 };
 
 const FredIssuesView: React.FC<{ agentCode: string; agentName: string }> = ({ agentCode, agentName }) => {
-  const { useFredResolutionFailures } = require('@/hooks/useFredAnalytics');
   const { data: failures = [], isLoading } = useFredResolutionFailures();
 
   if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
