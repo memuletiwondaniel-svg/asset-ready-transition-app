@@ -12,6 +12,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { useUserScopedFavorites } from '@/hooks/useUserScopedFavorites';
 import AgentRosterGrid from '@/components/admin-tools/agents/AgentRosterGrid';
+import { agentProfiles } from '@/data/agentProfiles';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from './admin/ThemeToggle';
