@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -8,16 +8,7 @@ import { Activity, TrendingUp, AlertTriangle, ChevronDown, Loader2, Wrench, Play
 import { cn } from '@/lib/utils';
 import type { AgentProfile } from '@/data/agentProfiles';
 import { format } from 'date-fns';
-
-// Lazy load Fred/Selma-specific analytics hooks only when needed
-const useFredAnalytics = () => {
-  const mod = require('@/hooks/useFredAnalytics');
-  return {
-    useLatestKPIs: mod.useFredLatestKPIs,
-    useRecentInteractions: mod.useFredRecentInteractions,
-    useResolutionFailures: mod.useFredResolutionFailures,
-  };
-};
+import { useFredLatestKPIs, useFredRecentInteractions, useFredResolutionFailures } from '@/hooks/useFredAnalytics';
 
 interface AgentMonitorCardProps {
   agent: AgentProfile;
