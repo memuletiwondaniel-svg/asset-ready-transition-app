@@ -231,18 +231,27 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
             user_id: user.id,
             document_name: docName || fileName || null,
             document_description: input.trim() || null,
-            document_type: docType || null,
-            document_domain: docDomain || null,
-            document_revision: docRevision || null,
-            file_path: fileStoragePath || null,
-            file_mime_type: attachedFile?.type || null,
-            file_size_bytes: attachedFile?.size || null,
-            anonymization_rules: anonymizationRules.filter(r => r.find && r.replace),
             status: 'active',
             transcript: [],
-          })
+          } as any)
           .select('id')
           .single();
+
+        // Update extended columns separately (not in generated types yet)
+        if (data?.id) {
+          await supabase
+            .from('agent_training_sessions')
+            .update({
+              document_type: docType || null,
+              document_domain: docDomain || null,
+              document_revision: docRevision || null,
+              file_path: fileStoragePath || null,
+              file_mime_type: attachedFile?.type || null,
+              file_size_bytes: attachedFile?.size || null,
+              anonymization_rules: anonymizationRules.filter(r => r.find && r.replace),
+            } as any)
+            .eq('id', data.id);
+        }
         if (error) throw error;
         currentSessionId = data.id;
         setSessionId(data.id);
