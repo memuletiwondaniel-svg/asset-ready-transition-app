@@ -257,6 +257,12 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       customContent: true,
     },
     {
+      label: 'AI AGENTS (OLD)',
+      columns: 3 as const,
+      items: [],
+      customContent: 'old-ai-agents' as any,
+    },
+    {
       label: 'INTEGRATIONS',
       columns: 3 as const,
       items: [
