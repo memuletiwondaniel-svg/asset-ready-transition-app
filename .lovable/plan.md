@@ -1,52 +1,109 @@
 
 
-## Agent Detail Page Layout Redesign
+## Self-Learning Enhancements — Final Implementation Plan
 
-### What Changes
+### Technical Challenges to the Senior Developer's Proposal
 
-**1. Stack cards vertically with collapsible sections (matching Admin Tools pattern)**
+The proposal is 95% correct. Three refinements:
 
-Replace the current side-by-side `lg:grid-cols-5` layout in `AgentProfileView.tsx` with three stacked, collapsible sections using the exact same `Collapsible` + `CollapsibleTrigger` pattern from `AdminToolsPage.tsx` (lines 754-768):
+**1. Completeness score should NOT be in the Claude extraction prompt.** The proposal asks Claude to calculate the score using a deterministic formula. Claude is non-deterministic — it may miscalculate. The scoring formula is purely rule-based (count items, check flags). Calculate it **server-side in TypeScript** after parsing the knowledge card. This is cheaper (no extra tokens), deterministic, and testable.
 
-- **ABOUT [AGENT NAME]** — the existing profile card content (introduction, collaborators, specializations, limitations)
-- **KNOWLEDGE & TRAINING** — the `AgentTrainingStudio` component
-- **PERFORMANCE** — the `AgentMonitorCard` component
+**2. Scroll-gated verification is security theater.** Requiring admins to scroll to the bottom of Core Facts before enabling "Confirm Verification" adds friction without ensuring comprehension. An admin can scroll instantly without reading. A better UX pattern: require the admin to **check a confirmation checkbox** ("I have reviewed the extracted knowledge and confirm it is accurate") — this is the standard enterprise governance pattern (DocuSign, Jira, ServiceNow) and is legally defensible. Simpler to implement, no scroll tracking needed.
 
-Each section uses: `ChevronDown` with rotate animation, uppercase tracking label, horizontal rule, and item count — identical to Admin Tools sections.
+**3. The `buildKnowledgeContext` function loads up to 100 sessions and scores them in-memory.** This works for now but the `.limit(100)` is arbitrary. Better: filter at the DB level first. Use Postgres `to_tsvector`/`plainto_tsquery` for basic relevance if available, or at minimum filter by `document_domain` match before loading into memory. For v1 though, 100 sessions with in-memory scoring is acceptable — just add a comment marking it for future optimization.
 
-Default state: all three sections expanded (unlike Admin Tools where they start collapsed).
+Everything else is accepted.
 
-**2. Add `AnimatedBackground` to the agent detail page**
+---
 
-Wrap the `AIAgentHub` page content area with the existing `AnimatedBackground` component (`src/components/ui/AnimatedBackground.tsx`) — the same dynamic color orb background used on the home page. Replace the static `bg-gradient-to-br from-background via-background to-muted/20` on the outer container.
+### Phase 1 — Database Migration
 
-**3. Add hover effects to tabs and icons in Knowledge & Training and Agent Monitor cards**
+Add 3 columns to `agent_training_sessions`:
 
-In both `AgentTrainingStudio.tsx` and `AgentMonitorCard.tsx`:
-- `TabsTrigger`: add `hover:bg-accent/80 hover:text-foreground transition-all duration-200` and scale on hover (`hover:scale-[1.02]`)
-- Icons inside tab triggers: add `group-hover:text-primary transition-colors` 
-- Card header icons: add `hover:scale-110 transition-transform` effect
+```sql
+ALTER TABLE agent_training_sessions
+  ADD COLUMN IF NOT EXISTS completeness_score integer DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS knowledge_status text DEFAULT 'pending_review',
+  ADD COLUMN IF NOT EXISTS correction_history jsonb DEFAULT '[]';
+```
 
-**4. Self-learning and continuous learning — current status**
+No CHECK constraint on `knowledge_status` — flexible for future states.
 
-Currently only **Fred** and **Selma** have self-learning infrastructure:
-- `fred_interaction_metrics` + `fred_resolution_failures` + `fred_kpi_snapshots` tables
-- `selma_interaction_metrics` + equivalent tables
-- Performance scorer edge functions
+### Phase 2 — Edge Function Changes
 
-**Bob, Hannah, Alex, and Ivan do NOT have interaction metrics tables or self-learning loops.** The Agent Monitor card shows empty states for these agents (`hasAnalytics` check on line 35 of `AgentMonitorCard.tsx` only returns true for `fred` and `selma`).
+**File**: `supabase/functions/agent-training-chat/index.ts`
 
-The Training Studio (knowledge ingestion) works for all agents, but the operational self-learning feedback loop (interaction logging → failure detection → KPI scoring) is only wired for Fred and Selma. Extending this to all 6 agents requires creating interaction metrics, resolution failures, and KPI snapshot tables for each — this is a separate migration effort.
+**2a. Prefilling** — For `mode === 'training'` only, append `{ role: 'assistant', content: '## What I understood\n' }` to the messages array sent to Claude. 3-line change.
+
+**2b. Self-organizing context** — Replace `buildExistingKnowledgeSection()` with `buildKnowledgeContext()` that:
+- Loads all completed sessions across ALL agents (limit 100)
+- Scores by keyword overlap with current document domain/name
+- Separates into "YOUR PREVIOUS TRAINING" (same agent) and "PEER AGENT KNOWLEDGE" (cross-agent, max 3)
+- Respects a 2000-token budget
+- Returns empty string if no relevant context found
+
+**2c. Server-side completeness scoring** — After parsing the knowledge card in `complete` mode, calculate `completeness_score` deterministically in TypeScript:
+- +20 if `core_facts.length >= 5`
+- +10 if any fact has `confidence === 'high'`
+- +20 if any procedure has `steps.length >= 3`
+- +15 if `entities.length >= 3`
+- +15 if `decision_rules.length >= 1`
+- +20 if session had `open_questions_count === 0` at completion
+- -10 per contradiction flag (max -20)
+- -10 if `confidence_level === 'low'`
+- Floor 0, ceiling 100
+
+Save `completeness_score` and set `knowledge_status = 'pending_review'` alongside existing completion fields.
+
+### Phase 3 — KnowledgeCardModal: Inline Corrections + Verification
+
+**File**: `src/components/admin-tools/agents/training/KnowledgeCardModal.tsx`
+
+**New props**: `verificationMode?: boolean`, `onVerify?: () => void`, `onCorrection?: (correction: CorrectionEntry) => void`, `canAdmin?: boolean`
+
+**3a. Inline corrections** — Each row gets a hover-visible pencil button (admin only). Clicking replaces the row with an inline editor showing original value pre-filled, a "Correct to" textarea, Cancel and Save Correction buttons. On save: calls `onCorrection` callback which the parent handles (Supabase update to `knowledge_card` JSONB + append to `correction_history` + reset `knowledge_status`).
+
+**3b. Verification flow** — When `verificationMode === true`, show a banner at top with a confirmation checkbox: "I have reviewed the extracted knowledge and confirm it is accurate." Button enabled only when checked. On confirm: calls `onVerify` callback.
+
+### Phase 4 — TrainingHistoryPanel: Governance UI
+
+**File**: `src/components/admin-tools/agents/training/TrainingHistoryPanel.tsx`
+
+**4a. Status filter** — Add `pending_review`, `verified`, `flagged` options to the status dropdown. Filter logic: for completed sessions, check `knowledge_status`; for active/archived, check `status`.
+
+**4b. Badge system** — Priority-ordered badges on collapsed cards:
+| Condition | Badge | Color |
+|-----------|-------|-------|
+| `knowledge_status === 'flagged'` | ⚠ Flagged | Red |
+| `contradiction_flags.length > 0` | ⚠ Conflict | Red |
+| `correction_history.length > 0` | ✏ Corrected (N) | Amber |
+| `stale_after < now()` | ⚠ Stale | Amber |
+| `knowledge_status === 'pending_review'` | ○ Pending | Gray |
+| `knowledge_status === 'verified'` | ✓ Verified | Green |
+
+**4c. Completeness display** — Show alongside confidence: `●●● High · 87/100 quality`. Hide score if 0 or null.
+
+**4d. Review banner** — In expanded card when `knowledge_status === 'pending_review'`: "View & Verify" opens KnowledgeCardModal in verification mode. "Flag" shows inline reason input, saves to `knowledge_status = 'flagged'` + appends to `contradiction_flags`.
+
+**4e. Verified indicator** — When verified: `✓ Verified` with "Unverify" button to reset to `pending_review`.
+
+**4f. Corrections section** — In expanded card when `correction_history.length > 0`: chronological list showing date, corrector, fact type, before/after text. Read-only audit trail.
+
+---
 
 ### Files to Edit
 
-| File | Change |
-|------|--------|
-| `src/components/admin-tools/agents/AgentProfileView.tsx` | Replace grid layout with 3 collapsible sections |
-| `src/pages/admin/AIAgentHub.tsx` | Wrap content area with `AnimatedBackground` |
-| `src/components/admin-tools/agents/AgentTrainingStudio.tsx` | Add hover effects to tabs/icons |
-| `src/components/admin-tools/agents/AgentMonitorCard.tsx` | Add hover effects to tabs/icons |
+| Action | File |
+|--------|------|
+| Create | DB migration: 3 new columns |
+| Edit | `supabase/functions/agent-training-chat/index.ts` — prefill, context, completeness |
+| Edit | `src/components/admin-tools/agents/training/KnowledgeCardModal.tsx` — corrections, verification |
+| Edit | `src/components/admin-tools/agents/training/TrainingHistoryPanel.tsx` — governance, badges, completeness |
 
-### What is NOT in this scope
-- Creating self-learning tables for Bob, Hannah, Alex, Ivan (separate effort — needs 12+ new tables and 4 edge functions)
+### Not Built
+- `connection_flags` column (no consumer)
+- `mode: 'correct'` edge function mode (UI corrections instead)
+- Hardcoded cross-agent pairs (self-organizing overlap)
+- Bob correction detection prompt (deferred)
+- Confidence decay cron (client-side stale check sufficient)
 
