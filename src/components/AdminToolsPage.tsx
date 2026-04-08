@@ -128,7 +128,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [tenantSetupOpen, setTenantSetupOpen] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set([
-    'USER MANAGEMENT', 'LIVING DOCUMENTATION', 'AI AGENTS', 'INTEGRATIONS', 'SYSTEM', 'OPERATIONS & CONFIGURATION'
+    'USER MANAGEMENT', 'LIVING DOCUMENTATION', 'AI AGENT', 'AI CONFIGURATION', 'INTEGRATIONS', 'SYSTEM', 'OPERATIONS & CONFIGURATION'
   ]));
 
   // Admin favorites - user-scoped and persisted
@@ -252,10 +252,19 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       ],
     },
     {
-      label: 'AI AGENTS',
+      label: 'AI AGENT',
       columns: 3 as const,
       items: [],
       customContent: true,
+    },
+    {
+      label: 'AI CONFIGURATION',
+      columns: 3 as const,
+      items: [
+        { id: 'agent-registry', title: 'Agent Registry', description: 'Manage AI agent profiles, capabilities', icon: Brain, gradient: 'from-violet-500 to-purple-600', onClick: () => navigate('/admin/ai-agents') },
+        { id: 'auto-update-controls', title: 'Auto-Update Controls', description: 'Living doc triggers, update queue', icon: Settings, gradient: 'from-sky-500 to-blue-600', onClick: () => toast.info('Auto-Update Controls coming soon') },
+        { id: 'training-feedback', title: 'Training & Feedback', description: 'Training sessions, feedback analytics', icon: GraduationCap, gradient: 'from-emerald-500 to-teal-600', onClick: () => toast.info('Training & Feedback coming soon') },
+      ],
     },
     {
       label: 'INTEGRATIONS',
@@ -759,14 +768,14 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                       </span>
                       <div className="flex-1 h-px bg-border/40" />
                       <span className="text-[10px] text-muted-foreground/40 tabular-nums">
-                        {(section as any).customContent && section.label === 'AI AGENTS' 
+                        {(section as any).customContent && section.label === 'AI AGENT' 
                           ? agentProfiles.length + 1
                           : section.items.length}
                       </span>
                     </CollapsibleTrigger>
 
                     <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
-                      {(section as any).customContent && section.label === 'AI AGENTS' ? (
+                      {(section as any).customContent && section.label === 'AI AGENT' ? (
                         <AgentRosterGrid
                           showHubCard
                           onHubClick={() => navigate('/admin/ai-agents')}
