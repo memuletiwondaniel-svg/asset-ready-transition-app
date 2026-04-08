@@ -128,7 +128,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [tenantSetupOpen, setTenantSetupOpen] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set([
-    'USER MANAGEMENT', 'LIVING DOCUMENTATION', 'AI AGENT', 'AI CONFIGURATION', 'INTEGRATIONS', 'SYSTEM', 'OPERATIONS & CONFIGURATION'
+    'USER MANAGEMENT', 'LIVING DOCUMENTATION', 'AI AGENT', 'INTEGRATIONS', 'SYSTEM', 'OPERATIONS & CONFIGURATION'
   ]));
 
   // Admin favorites - user-scoped and persisted
@@ -256,15 +256,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       columns: 3 as const,
       items: [],
       customContent: true,
-    },
-    {
-      label: 'AI CONFIGURATION',
-      columns: 3 as const,
-      items: [
-        { id: 'agent-registry', title: 'Agent Registry', description: 'Manage AI agent profiles, capabilities', icon: Brain, gradient: 'from-violet-500 to-purple-600', onClick: () => navigate('/admin/ai-agents') },
-        { id: 'auto-update-controls', title: 'Auto-Update Controls', description: 'Living doc triggers, update queue', icon: Settings, gradient: 'from-sky-500 to-blue-600', onClick: () => toast.info('Auto-Update Controls coming soon') },
-        { id: 'training-feedback', title: 'Training & Feedback', description: 'Training sessions, feedback analytics', icon: GraduationCap, gradient: 'from-emerald-500 to-teal-600', onClick: () => toast.info('Training & Feedback coming soon') },
-      ],
     },
     {
       label: 'INTEGRATIONS',
