@@ -67,9 +67,11 @@ export type Database = {
           agent_code: string
           anonymization_rules: Json | null
           completed_at: string | null
+          completeness_score: number | null
           completion_method: string | null
           confidence_level: string | null
           contradiction_flags: Json | null
+          correction_history: Json | null
           created_at: string
           document_description: string | null
           document_domain: string | null
@@ -83,6 +85,7 @@ export type Database = {
           id: string
           key_learnings: string | null
           knowledge_card: Json | null
+          knowledge_status: string | null
           last_test_at: string | null
           last_test_score: number | null
           message_count: number | null
@@ -100,9 +103,11 @@ export type Database = {
           agent_code: string
           anonymization_rules?: Json | null
           completed_at?: string | null
+          completeness_score?: number | null
           completion_method?: string | null
           confidence_level?: string | null
           contradiction_flags?: Json | null
+          correction_history?: Json | null
           created_at?: string
           document_description?: string | null
           document_domain?: string | null
@@ -116,6 +121,7 @@ export type Database = {
           id?: string
           key_learnings?: string | null
           knowledge_card?: Json | null
+          knowledge_status?: string | null
           last_test_at?: string | null
           last_test_score?: number | null
           message_count?: number | null
@@ -133,9 +139,11 @@ export type Database = {
           agent_code?: string
           anonymization_rules?: Json | null
           completed_at?: string | null
+          completeness_score?: number | null
           completion_method?: string | null
           confidence_level?: string | null
           contradiction_flags?: Json | null
+          correction_history?: Json | null
           created_at?: string
           document_description?: string | null
           document_domain?: string | null
@@ -149,6 +157,7 @@ export type Database = {
           id?: string
           key_learnings?: string | null
           knowledge_card?: Json | null
+          knowledge_status?: string | null
           last_test_at?: string | null
           last_test_score?: number | null
           message_count?: number | null

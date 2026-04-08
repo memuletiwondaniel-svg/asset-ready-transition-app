@@ -2,15 +2,16 @@ import React, { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { FileText, Search, GraduationCap, RotateCcw, MoreHorizontal, Archive, Trash2, ChevronDown, AlertTriangle, ExternalLink, Loader2 } from 'lucide-react';
+import { FileText, Search, GraduationCap, RotateCcw, MoreHorizontal, Archive, Trash2, ChevronDown, AlertTriangle, ExternalLink, Loader2, ShieldCheck, ShieldAlert, Pencil, Flag, Undo2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import KnowledgeCardModal from './KnowledgeCardModal';
+import KnowledgeCardModal, { type CorrectionEntry } from './KnowledgeCardModal';
 import ReactMarkdown from 'react-markdown';
 
 interface TrainingHistoryPanelProps {
@@ -23,7 +24,8 @@ interface TrainingHistoryPanelProps {
   isLoading?: boolean;
 }
 
-const ConfidenceDots: React.FC<{ level?: string }> = ({ level }) => {
+// ─── Confidence dots + completeness score display ───
+const ConfidenceDots: React.FC<{ level?: string; completenessScore?: number }> = ({ level, completenessScore }) => {
   const filled = level === 'high' ? 3 : level === 'medium' ? 2 : 1;
   return (
     <span className="inline-flex items-center gap-0.5">
@@ -31,7 +33,51 @@ const ConfidenceDots: React.FC<{ level?: string }> = ({ level }) => {
         <span key={i} className={cn('w-1.5 h-1.5 rounded-full', i <= filled ? 'bg-emerald-500' : 'bg-muted-foreground/20')} />
       ))}
       <span className="text-[10px] text-muted-foreground ml-1 capitalize">{level || 'unknown'}</span>
+      {completenessScore != null && completenessScore > 0 && (
+        <span className="text-[10px] text-muted-foreground ml-1">· {completenessScore}/100</span>
+      )}
     </span>
+  );
+};
+
+// ─── Governance badges ───
+const GovernanceBadges: React.FC<{ session: any }> = ({ session }) => {
+  const badges: Array<{ label: string; color: string; icon?: React.ReactNode }> = [];
+  const ks = session.knowledge_status;
+  const corrections = session.correction_history || [];
+  const contradictions = session.contradiction_flags || [];
+  const isStale = session.stale_after && new Date(session.stale_after) < new Date();
+
+  // Priority order: Flagged > Conflict > Corrected > Stale > Pending > Verified
+  if (ks === 'flagged') {
+    badges.push({ label: '⚠ Flagged', color: 'border-red-500/30 text-red-600 dark:text-red-400 bg-red-500/5' });
+  }
+  if (contradictions.length > 0) {
+    badges.push({ label: '⚠ Conflict', color: 'border-red-500/30 text-red-600 dark:text-red-400 bg-red-500/5' });
+  }
+  if (corrections.length > 0) {
+    badges.push({ label: `✏ Corrected (${corrections.length})`, color: 'border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5' });
+  }
+  if (isStale) {
+    badges.push({ label: '⚠ Stale', color: 'border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5' });
+  }
+  if (ks === 'pending_review') {
+    badges.push({ label: '○ Pending', color: 'border-muted-foreground/30 text-muted-foreground bg-muted/30' });
+  }
+  if (ks === 'verified') {
+    badges.push({ label: '✓ Verified', color: 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5' });
+  }
+
+  if (badges.length === 0) return null;
+
+  return (
+    <>
+      {badges.map((b, i) => (
+        <Badge key={i} variant="outline" className={cn('text-[9px] py-0 px-1.5', b.color)}>
+          {b.label}
+        </Badge>
+      ))}
+    </>
   );
 };
 
@@ -50,6 +96,9 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showTranscript, setShowTranscript] = useState<string | null>(null);
   const [knowledgeModal, setKnowledgeModal] = useState<any>(null);
+  const [verificationModal, setVerificationModal] = useState<any>(null);
+  const [flaggingId, setFlaggingId] = useState<string | null>(null);
+  const [flagReason, setFlagReason] = useState('');
   const queryClient = useQueryClient();
 
   const domains = useMemo(() => {
@@ -61,22 +110,86 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
     return sessions.filter(s => {
       if (search && !s.document_name?.toLowerCase().includes(search.toLowerCase())) return false;
       if (domainFilter !== 'all' && s.document_domain !== domainFilter) return false;
-      if (statusFilter !== 'all' && s.status !== statusFilter) return false;
-      return true;
+      if (statusFilter === 'all') return true;
+      // Governance status filters
+      if (['pending_review', 'verified', 'flagged'].includes(statusFilter)) {
+        return s.knowledge_status === statusFilter;
+      }
+      return s.status === statusFilter;
     });
   }, [sessions, search, domainFilter, statusFilter]);
 
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['agent-training-sessions', agentCode] });
+
   const handleArchive = async (sessionId: string) => {
     await supabase.from('agent_training_sessions').update({ status: 'archived' }).eq('id', sessionId);
-    queryClient.invalidateQueries({ queryKey: ['agent-training-sessions', agentCode] });
+    invalidate();
     toast.success('Session archived');
   };
 
   const handleDelete = async (sessionId: string) => {
     if (!confirm('Delete this training session permanently?')) return;
     await supabase.from('agent_training_sessions').delete().eq('id', sessionId);
-    queryClient.invalidateQueries({ queryKey: ['agent-training-sessions', agentCode] });
+    invalidate();
     toast.success('Session deleted');
+  };
+
+  const handleVerify = async (sessionId: string) => {
+    await supabase.from('agent_training_sessions')
+      .update({ knowledge_status: 'verified' } as any)
+      .eq('id', sessionId);
+    invalidate();
+    toast.success('Knowledge verified ✓');
+  };
+
+  const handleUnverify = async (sessionId: string) => {
+    await supabase.from('agent_training_sessions')
+      .update({ knowledge_status: 'pending_review' } as any)
+      .eq('id', sessionId);
+    invalidate();
+    toast.success('Status reset to pending review');
+  };
+
+  const handleFlag = async (sessionId: string) => {
+    if (!flagReason.trim()) return;
+    const { data: current } = await supabase.from('agent_training_sessions')
+      .select('contradiction_flags')
+      .eq('id', sessionId)
+      .single();
+
+    const existingFlags = (current as any)?.contradiction_flags || [];
+    const updatedFlags = [...existingFlags, {
+      flagged_at: new Date().toISOString(),
+      reason: flagReason.trim(),
+      flagged_by: 'Admin',
+    }];
+
+    await supabase.from('agent_training_sessions')
+      .update({ knowledge_status: 'flagged', contradiction_flags: updatedFlags } as any)
+      .eq('id', sessionId);
+    invalidate();
+    setFlaggingId(null);
+    setFlagReason('');
+    toast.success('Session flagged for review');
+  };
+
+  const handleCorrection = async (sessionId: string, correction: CorrectionEntry, updatedKnowledgeCard: any) => {
+    const { data: current } = await supabase.from('agent_training_sessions')
+      .select('correction_history')
+      .eq('id', sessionId)
+      .single();
+
+    const existingCorrections = (current as any)?.correction_history || [];
+
+    await supabase.from('agent_training_sessions')
+      .update({
+        knowledge_card: updatedKnowledgeCard,
+        correction_history: [...existingCorrections, correction],
+        knowledge_status: 'pending_review',
+      } as any)
+      .eq('id', sessionId);
+    invalidate();
+    toast.success('Correction saved. Session marked for review.');
   };
 
   const getKnowledgeStats = (kc: any) => {
@@ -121,7 +234,7 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-8 text-xs w-[120px]">
+            <SelectTrigger className="h-8 text-xs w-[140px]">
               <SelectValue placeholder="Status: All" />
             </SelectTrigger>
             <SelectContent>
@@ -129,6 +242,9 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
               <SelectItem value="archived">Archived</SelectItem>
+              <SelectItem value="pending_review">○ Pending review</SelectItem>
+              <SelectItem value="verified">✓ Verified</SelectItem>
+              <SelectItem value="flagged">⚠ Flagged</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -150,8 +266,7 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
         {filtered.map((session) => {
           const isExpanded = expandedId === session.id;
           const stats = getKnowledgeStats(session.knowledge_card);
-          const isStale = session.stale_after && new Date(session.stale_after) < new Date();
-          const hasContradictions = (session.contradiction_flags || []).length > 0;
+          const corrections: any[] = session.correction_history || [];
 
           return (
             <div key={session.id} className="border border-border/40 rounded-xl overflow-hidden transition-colors hover:bg-muted/20">
@@ -176,8 +291,10 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
                     <p className="text-[10px] text-muted-foreground mt-0.5">
                       {[session.document_domain, session.document_type].filter(Boolean).join(' · ') || 'No metadata'}
                     </p>
-                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                      {session.confidence_level && <ConfidenceDots level={session.confidence_level} />}
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      {session.confidence_level && (
+                        <ConfidenceDots level={session.confidence_level} completenessScore={session.completeness_score} />
+                      )}
                       {stats && (
                         <span className="text-[10px] text-muted-foreground">
                           {stats.facts} facts · {stats.procedures} procedures
@@ -188,18 +305,7 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
                           Test: {session.last_test_score}/100 ✓
                         </span>
                       )}
-                      {isStale && (
-                        <Badge variant="outline" className="text-[9px] py-0 px-1.5 border-amber-500/30 text-amber-600 dark:text-amber-400">
-                          <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
-                          Stale
-                        </Badge>
-                      )}
-                      {hasContradictions && (
-                        <Badge variant="outline" className="text-[9px] py-0 px-1.5 border-red-500/30 text-red-600 dark:text-red-400">
-                          <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
-                          Conflict
-                        </Badge>
-                      )}
+                      <GovernanceBadges session={session} />
                     </div>
                   </div>
                 </div>
@@ -238,6 +344,94 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
               {/* Expanded content */}
               {isExpanded && (
                 <div className="px-4 pb-4 pt-0 border-t border-border/30 space-y-4">
+                  {/* ─── Review banner ─── */}
+                  {session.knowledge_status === 'pending_review' && !readOnly && (
+                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3">
+                      {flaggingId === session.id ? (
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-foreground">Reason for flagging:</p>
+                          <Textarea
+                            value={flagReason}
+                            onChange={(e) => setFlagReason(e.target.value)}
+                            className="text-xs min-h-[60px]"
+                            placeholder="Describe the issue..."
+                            autoFocus
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setFlaggingId(null); setFlagReason(''); }}>
+                              Cancel
+                            </Button>
+                            <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => handleFlag(session.id)} disabled={!flagReason.trim()}>
+                              Confirm Flag
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-medium text-foreground">○ Pending review</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              This session's knowledge has not been verified by an admin.
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs gap-1"
+                              onClick={(e) => { e.stopPropagation(); setVerificationModal(session); }}
+                            >
+                              <ShieldCheck className="h-3 w-3" /> View & Verify
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs gap-1 text-red-600 dark:text-red-400 border-red-500/30"
+                              onClick={(e) => { e.stopPropagation(); setFlaggingId(session.id); }}
+                            >
+                              <Flag className="h-3 w-3" /> Flag
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ─── Verified indicator ─── */}
+                  {session.knowledge_status === 'verified' && !readOnly && (
+                    <div className="flex items-center justify-between bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3">
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
+                        <ShieldCheck className="h-3.5 w-3.5" /> Verified
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-[10px] text-muted-foreground"
+                        onClick={() => handleUnverify(session.id)}
+                      >
+                        <Undo2 className="h-3 w-3 mr-1" /> Unverify
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* ─── Flagged indicator ─── */}
+                  {session.knowledge_status === 'flagged' && !readOnly && (
+                    <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-red-600 dark:text-red-400 font-medium flex items-center gap-1.5">
+                          <ShieldAlert className="h-3.5 w-3.5" /> Flagged
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-[10px] text-muted-foreground"
+                          onClick={() => handleUnverify(session.id)}
+                        >
+                          <Undo2 className="h-3 w-3 mr-1" /> Reset to pending
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Key learnings */}
                   {session.key_learnings && (
                     <div>
@@ -253,6 +447,31 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
                       <div className="flex flex-wrap gap-1">
                         {session.extracted_tags.map((tag: string, i: number) => (
                           <Badge key={i} variant="outline" className="text-[9px] py-0 px-1.5">{tag}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ─── Corrections audit trail ─── */}
+                  {corrections.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                        Corrections ({corrections.length})
+                      </p>
+                      <div className="border border-border/30 rounded-lg divide-y divide-border/20">
+                        {corrections.map((c: any, i: number) => (
+                          <div key={i} className="p-3 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Pencil className="h-3 w-3 text-amber-500" />
+                              <span className="text-[10px] text-muted-foreground">
+                                {c.corrected_at ? format(new Date(c.corrected_at), 'MMM d') : '—'}
+                                {' · '}{c.corrected_by || 'Unknown'}
+                                {' · '}{(c.fact_type || '').replace('_', ' ')}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground line-through pl-5">{c.original}</p>
+                            <p className="text-xs text-foreground pl-5">{c.corrected}</p>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -321,12 +540,39 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
         })}
       </div>
 
-      {/* Knowledge Card Modal */}
+      {/* Knowledge Card Modal — read-only view */}
       <KnowledgeCardModal
         open={!!knowledgeModal}
         onOpenChange={(open) => !open && setKnowledgeModal(null)}
         session={knowledgeModal}
         agentName={agentName}
+        canAdmin={!readOnly}
+        onCorrection={(correction, updatedKC) => {
+          if (knowledgeModal) {
+            handleCorrection(knowledgeModal.id, correction, updatedKC);
+            // Update local state for immediate feedback
+            setKnowledgeModal({ ...knowledgeModal, knowledge_card: updatedKC });
+          }
+        }}
+      />
+
+      {/* Knowledge Card Modal — verification mode */}
+      <KnowledgeCardModal
+        open={!!verificationModal}
+        onOpenChange={(open) => !open && setVerificationModal(null)}
+        session={verificationModal}
+        agentName={agentName}
+        verificationMode={true}
+        canAdmin={true}
+        onVerify={() => {
+          if (verificationModal) handleVerify(verificationModal.id);
+        }}
+        onCorrection={(correction, updatedKC) => {
+          if (verificationModal) {
+            handleCorrection(verificationModal.id, correction, updatedKC);
+            setVerificationModal({ ...verificationModal, knowledge_card: updatedKC });
+          }
+        }}
       />
     </div>
   );

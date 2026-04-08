@@ -53,28 +53,116 @@ ${ruleLines}
 Violating these rules is a critical error. They apply permanently for this session.\n`;
 }
 
-async function buildExistingKnowledgeSection(supabaseAdmin: any, agentCode: string): Promise<string> {
-  const { data: prevSessions } = await supabaseAdmin
+// ─── CHANGE 2b: Self-organizing context injection ───
+// Replaces the old buildExistingKnowledgeSection that only loaded 5 same-agent sessions.
+// This version loads ALL completed sessions across ALL agents, scores by keyword overlap,
+// and injects the most relevant within a token budget.
+// TODO: For scale beyond ~100 sessions, consider Postgres full-text search (to_tsvector) pre-filtering.
+async function buildKnowledgeContext(
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
+  currentAgentCode: string,
+  documentContext: { document_domain?: string; document_name?: string } | undefined,
+  maxTokens: number = 2000
+): Promise<string> {
+  const { data: allSessions } = await supabaseAdmin
     .from("agent_training_sessions")
-    .select("document_name, key_learnings")
-    .eq("agent_code", agentCode)
+    .select("id, agent_code, document_name, document_domain, key_learnings, extracted_tags, completed_at")
     .eq("status", "completed")
     .order("completed_at", { ascending: false })
-    .limit(5);
+    .limit(100);
 
-  if (!prevSessions || prevSessions.length === 0) return "";
+  if (!allSessions || allSessions.length === 0) return "";
 
-  const entries = prevSessions
-    .filter((s: any) => s.key_learnings)
-    .map((s: any, i: number) => `${i + 1}. "${s.document_name || "Untitled"}": ${s.key_learnings}`)
-    .join("\n");
+  const currentDomainWords = [
+    ...(documentContext?.document_domain ?? "").toLowerCase().split(/\s+/),
+    ...(documentContext?.document_name ?? "").toLowerCase().split(/\s+/),
+  ].filter(w => w.length > 3);
 
-  if (!entries) return "";
+  if (currentDomainWords.length === 0) {
+    // No domain context — fall back to most recent same-agent sessions
+    const recent = allSessions
+      .filter(s => s.agent_code === currentAgentCode && s.key_learnings)
+      .slice(0, 3);
+    if (recent.length === 0) return "";
+    const lines = recent.map(s => `- "${s.document_name || "Untitled"}": ${s.key_learnings}`).join("\n");
+    return `\nYOUR PREVIOUS TRAINING (most recent):\n${lines}\n`;
+  }
 
-  return `\nEXISTING KNOWLEDGE FROM PREVIOUS TRAINING:
-${entries}
-If the new document contradicts anything above, flag it using this exact format:
-⚠️ CONTRADICTION: This document states [X]. Previously I learned [Y] from [document name]. Please clarify which is correct.\n`;
+  const scored = allSessions.map(session => {
+    const sessionText = [
+      session.document_domain ?? "",
+      session.document_name ?? "",
+      (session.extracted_tags ?? []).join(" "),
+    ].join(" ").toLowerCase();
+    const overlapScore = currentDomainWords.filter(word => sessionText.includes(word)).length;
+    return { ...session, overlapScore };
+  }).filter(s => s.overlapScore > 0)
+    .sort((a, b) => b.overlapScore - a.overlapScore);
+
+  const sameAgent = scored.filter(s => s.agent_code === currentAgentCode);
+  const crossAgent = scored.filter(s => s.agent_code !== currentAgentCode);
+
+  let tokenCount = 0;
+  const sameAgentLines: string[] = [];
+  for (const session of sameAgent) {
+    const line = `- "${session.document_name}" (${session.document_domain}): ${session.key_learnings}`;
+    const tokens = Math.ceil(line.length / 4);
+    if (tokenCount + tokens > maxTokens * 0.7) break;
+    sameAgentLines.push(line);
+    tokenCount += tokens;
+  }
+
+  const crossAgentLines: string[] = [];
+  for (const session of crossAgent.slice(0, 3)) {
+    const line = `- ${session.agent_code.toUpperCase()} trained on "${session.document_name}" (${session.document_domain}): ${session.key_learnings}`;
+    const tokens = Math.ceil(line.length / 4);
+    if (tokenCount + tokens > maxTokens) break;
+    crossAgentLines.push(line);
+    tokenCount += tokens;
+  }
+
+  if (sameAgentLines.length === 0 && crossAgentLines.length === 0) return "";
+
+  let contextString = "";
+  if (sameAgentLines.length > 0) {
+    contextString += `\nYOUR PREVIOUS TRAINING (most relevant to this document):\n`;
+    contextString += sameAgentLines.join("\n") + "\n";
+    contextString += `\nIf the new document contradicts anything above, flag it:\n`;
+    contextString += `⚠️ CONTRADICTION: This document states [X]. Previously I learned [Y] from [document name]. Please clarify.\n`;
+  }
+  if (crossAgentLines.length > 0) {
+    contextString += `\nPEER AGENT KNOWLEDGE (reference only — do not modify or contradict without flagging):\n`;
+    contextString += crossAgentLines.join("\n") + "\n";
+  }
+
+  return contextString;
+}
+
+// ─── CHANGE 2c: Server-side completeness score calculation ───
+function calculateCompletenessScore(
+  knowledgeCard: any,
+  confidenceLevel: string,
+  contradictionFlagsCount: number,
+  openQuestionsCount: number
+): number {
+  let score = 0;
+  const facts = knowledgeCard?.core_facts || [];
+  const procedures = knowledgeCard?.procedures || [];
+  const entities = knowledgeCard?.entities || [];
+  const rules = knowledgeCard?.decision_rules || [];
+
+  if (facts.length >= 5) score += 20;
+  if (facts.some((f: any) => f.confidence === "high")) score += 10;
+  if (procedures.some((p: any) => (p.steps || []).length >= 3)) score += 20;
+  if (entities.length >= 3) score += 15;
+  if (rules.length >= 1) score += 15;
+  if (openQuestionsCount === 0) score += 20;
+
+  const contradictionDeduction = Math.min(contradictionFlagsCount * 10, 20);
+  score -= contradictionDeduction;
+  if (confidenceLevel === "low") score -= 10;
+
+  return Math.max(0, Math.min(100, score));
 }
 
 const TRAINING_RESPONSE_FORMAT = `
@@ -289,13 +377,26 @@ ${JSON.stringify(transcript)}`;
       const durationSeconds = Math.round((Date.now() - createdAt) / 1000);
       const staleAfter = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
 
+      // ─── CHANGE 2c: Calculate completeness score server-side ───
+      const kc = parsed.knowledge_card || {};
+      const contradictionCount = (session.contradiction_flags || []).length;
+      const openQuestions = session.open_questions_count || 0;
+      const completenessScore = calculateCompletenessScore(
+        kc,
+        parsed.confidence_level || "medium",
+        contradictionCount,
+        openQuestions
+      );
+
       await supabaseAdmin
         .from("agent_training_sessions")
         .update({
-          knowledge_card: parsed.knowledge_card || {},
+          knowledge_card: kc,
           key_learnings: parsed.key_learnings_summary || "",
           confidence_level: parsed.confidence_level || "medium",
           extracted_tags: parsed.extracted_tags || [],
+          completeness_score: completenessScore,
+          knowledge_status: "pending_review",
           status: "completed",
           completed_at: new Date().toISOString(),
           stale_after: staleAfter,
@@ -307,7 +408,8 @@ ${JSON.stringify(transcript)}`;
       return new Response(JSON.stringify({
         content: "Training session completed. Knowledge card extracted.",
         metadata: { completion_suggested: false, open_questions_count: 0, contradiction_detected: false, session_updated: true },
-        knowledge_card: parsed.knowledge_card,
+        knowledge_card: kc,
+        completeness_score: completenessScore,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -352,8 +454,8 @@ and specifically based only on what you learned during training. If you are unce
 say so explicitly. Apply the same anonymization rules — never use the original company
 or system names.`;
     } else {
-      // Training mode
-      const existingKnowledge = await buildExistingKnowledgeSection(supabaseAdmin, agent_code);
+      // Training mode — use self-organizing context
+      const existingKnowledge = await buildKnowledgeContext(supabaseAdmin, agent_code, document_context);
 
       systemPrompt = `${agentPrompt}
 
@@ -402,6 +504,12 @@ ${buildAnonymizationSection(anonymization_rules)}${existingKnowledge}${TRAINING_
 
     const maxTokens = mode === "training" ? 8192 : 4096;
 
+    // ─── CHANGE 2a: Prefilling for training mode ───
+    // Append a partial assistant message to force structured response format
+    const apiMessages = mode === "training"
+      ? [...claudeMessages, { role: "assistant" as const, content: "## What I understood\n" }]
+      : claudeMessages;
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -413,7 +521,7 @@ ${buildAnonymizationSection(anonymization_rules)}${existingKnowledge}${TRAINING_
         model: "claude-sonnet-4-20250514",
         max_tokens: maxTokens,
         system: systemPrompt,
-        messages: claudeMessages,
+        messages: apiMessages,
       }),
     });
 
@@ -426,7 +534,12 @@ ${buildAnonymizationSection(anonymization_rules)}${existingKnowledge}${TRAINING_
     }
 
     const result = await response.json();
-    const content = result.content?.[0]?.text || "I could not generate a response. Please try again.";
+    let content = result.content?.[0]?.text || "I could not generate a response. Please try again.";
+
+    // For training mode, prepend the prefill since Claude continues from it
+    if (mode === "training") {
+      content = "## What I understood\n" + content;
+    }
 
     // Analyze response for metadata
     const metadata = {
