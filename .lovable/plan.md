@@ -1,80 +1,62 @@
 
 
-## P&ID Foundation Knowledge — Implementation Plan
+## Integrated Fix: Admin Tools Loading Flash + Stale State Prevention
 
-### Summary
+### Comparison of Proposals
 
-Create a new `agent_foundation_knowledge` table to store curated base knowledge, extraction templates, and agent-specific lenses for P&ID reading. Update the training edge function to dynamically load and inject these at runtime. Add P&ID document types and a training path checklist to the Training Studio UI for Fred and Ivan.
+**Senior developer's proposal** identifies two concrete, immediately actionable bugs:
+1. Skeleton shows old large-card layout (causes visual flash) — correct, confirmed at lines 622-640
+2. Collapsed section state not persisted — correct, `collapsedSections` is plain `useState` at line 130
 
-### Phase 1 — Database Migration: `agent_foundation_knowledge` table
+**My earlier proposal** identified three issues:
+1. Orphaned build guard (`adminAiBuild.ts` unused) — correct but over-engineered; the real fix is simpler
+2. Legacy favorite normalization maps to `ai-agents-hub` which no longer exists as a card — correct
+3. Hook-order bug in `AuthenticatedLayout.tsx` — separate issue, out of scope for this fix
 
-Create the table with columns: `id` (uuid PK), `agent_code` (text, nullable — NULL = universal), `document_type` (text, nullable), `template_type` (text NOT NULL — `knowledge`|`extraction`|`lens`), `title` (text NOT NULL), `knowledge_card` (jsonb), `prompt_fragment` (text), `is_active` (boolean default true), `sort_order` (integer default 0), `created_at`, `updated_at`.
+### Assessment
 
-RLS: enable RLS, single SELECT policy for authenticated users.
+The senior developer's Bug 1 and Bug 2 are immediately correct and should be built as-is. However, his Bug 2 Step 3 (rename `AI AGENT` back to `AI AGENTS`) is **rejected** — the singular was an intentional design decision and all rendering logic (lines 762, 769) references `'AI AGENT'`. Renaming would require updating multiple string comparisons and risks introducing the exact stale-state bug we're fixing.
 
-**No new columns on `agent_training_sessions`** — `document_description` already exists.
+My additional finding about `useUserScopedFavorites` normalizing legacy IDs to `ai-agents-hub` (which doesn't exist as a card) is valid and should be included — those legacy mappings should remove the IDs entirely rather than remap them.
 
-### Phase 2 — Seed 7 Foundation Records
+### What to Build
 
-All inserted with explicit UUIDs and `ON CONFLICT (id) DO NOTHING` for idempotency.
+**Fix 1 — Replace skeleton with section-matching layout** (lines 616-641 of `AdminToolsPage.tsx`)
 
-| # | agent_code | document_type | template_type | title |
-|---|-----------|--------------|---------------|-------|
-| 1 | NULL | NULL | knowledge | P&ID Universal Literacy — ISA 5.1 |
-| 2 | fred | NULL | knowledge | P&ID for Commissioning Engineers |
-| 3 | ivan | NULL | knowledge | P&ID for Technical Authority — HAZOP |
-| 4 | NULL | P&ID | extraction | P&ID extraction sections |
-| 5 | NULL | P&ID Legend Sheet | extraction | Legend Sheet extraction sections |
-| 6 | fred | P&ID | lens | Fred's Commissioning Lens |
-| 7 | ivan | P&ID | lens | Ivan's Technical Authority Lens |
+Replace the 6 large `<Card>` skeleton grid with a skeleton that matches the current design:
+- Same `max-w-6xl` container (not `max-w-7xl`)
+- Search bar skeleton (h-9, not h-10)
+- 3 collapsible section skeletons, each with a header row (chevron + label + divider + count) and a grid of 3 compact `h-[72px]` card placeholders
+- Zero layout shift when real content loads
 
-Knowledge card content uses the exact JSON structures from the reconciled prompt. Lens and extraction records store `prompt_fragment` text.
+**Fix 2 — Persist collapsed sections to localStorage** (lines 130-132 of `AdminToolsPage.tsx`)
 
-### Phase 3 — Edge Function: `agent-training-chat/index.ts`
+- Add `COLLAPSED_SECTIONS_KEY = 'orsh-admin-collapsed-sections'` constant
+- Replace the `useState` initializer with a lazy function that reads from localStorage, falling back to the default set
+- Add a `useEffect` to persist `collapsedSections` on every change
+- Keep the default set as `['USER MANAGEMENT', 'LIVING DOCUMENTATION', 'AI AGENT', 'INTEGRATIONS', 'SYSTEM', 'OPERATIONS & CONFIGURATION']` (note: `AI AGENT` singular, matching the current section label)
 
-**3a. Foundation knowledge injection in `buildKnowledgeContext`:**
-- After loading completed sessions, query `agent_foundation_knowledge` where `template_type = 'knowledge'`, `is_active = true`, and `agent_code IS NULL OR agent_code = $current_agent`.
-- Score by keyword overlap (same as sessions). Inject as `FOUNDATION KNOWLEDGE (verified, always applies):` section before session-based context. Foundation knowledge is outside the 2000-token session budget.
+**Fix 3 — Sanitize legacy favorite IDs** (`useUserScopedFavorites.ts` lines 25-30)
 
-**3b. Dynamic template and lens loading in training mode:**
-- Before building the system prompt, query for `extraction` template matching `document_type` (with `agent_code IS NULL OR agent_code = $current_agent`).
-- Query for `lens` record matching `agent_code` + `document_type`.
-- Append lens `prompt_fragment` to the agent domain prompt (Section A).
-- Append extraction `prompt_fragment` to `TRAINING_RESPONSE_FORMAT` (Section E).
-
-**3c. No changes to image handling** — existing base64 injection (lines 478-502) already works for P&ID images. The extraction template adds P&ID-specific sections automatically when `document_type` matches.
-
-**3d. Pass `document_context` to training mode** — ensure `document_context` (including `document_type`) is forwarded from the request body into `buildKnowledgeContext` and the template loading queries. Currently `document_context` is destructured from body but only passed to `buildKnowledgeContext` — the template/lens queries are new code that also uses it.
-
-### Phase 4 — UI: `AgentTrainingStudio.tsx`
-
-**4a. Add document types:**
-Add `'P&ID'`, `'P&ID Legend Sheet'`, and `'LOSH Drawing'` to the `DOCUMENT_TYPES` array.
-
-**4b. Training path checklist (Fred & Ivan only):**
-In the setup sub-state (Sub-state A), between the anonymization rules and the file drop zone, render a compact checklist widget when `agent.code === 'fred' || agent.code === 'ivan'`:
-
-- Query completed sessions for this agent to check which P&ID document types exist.
-- Render 3-4 rows (LOSH row only for Fred):
-  - `✓ Foundation knowledge` — always checked (seeded records exist)
-  - `○ Project legend sheet` — checked when a `P&ID Legend Sheet` session exists; shows amber warning if P&ID sessions exist but no legend sheet
-  - `○ Process P&IDs` — checked when any `P&ID` session exists
-  - `○ LOSH drawings` — Fred only, checked when `LOSH Drawing` session exists
-- Widget disappears when all rows are checked.
-- Styled inline using existing `Badge`, `CheckCircle2`, `AlertTriangle` icons, and Tailwind classes. No new component file.
+Change the `legacyAdminFavoriteMap` to map all legacy AI admin IDs to `null` (removal) instead of `ai-agents-hub`:
+```
+'agent-registry': null,
+'training-feedback': null,
+'training-and-feedback': null,
+'ai-training-feedback': null,
+'ai-agents-hub': null,
+```
+Update the normalization to filter out null-mapped IDs rather than remapping them. This prevents stale favorites from pointing to non-existent cards.
 
 ### Files
 
-| Action | File |
-|--------|------|
-| Create | Migration 1: `agent_foundation_knowledge` table + RLS |
-| Create | Migration 2: Seed 7 foundation records with full knowledge card JSON |
-| Edit | `supabase/functions/agent-training-chat/index.ts` — foundation context loading, dynamic template/lens injection |
-| Edit | `src/components/admin-tools/agents/AgentTrainingStudio.tsx` — P&ID doc types, training path checklist |
+| File | Change |
+|------|--------|
+| `src/components/AdminToolsPage.tsx` | Fix 1: Replace skeleton (lines 616-641). Fix 2: Persist collapsed state (lines 130-132 + new useEffect) |
+| `src/hooks/useUserScopedFavorites.ts` | Fix 3: Legacy IDs removed instead of remapped (lines 25-34) |
 
 ### Not Built
-- `is_image_document` / `image_description` columns (existing fields suffice)
-- Hardcoded prompt fragments in edge function (DB-driven templates replace them)
-- Direct session seeding into `agent_training_sessions` (foundation knowledge table replaces it)
-- Static banner with project-specific text (dynamic checklist replaces it)
+- Rename `AI AGENT` to `AI AGENTS` — rejected, current singular label is intentional and all logic references it
+- Build guard / version handshake in `main.tsx` — unnecessary; the real bugs are the skeleton and unpersisted state, not stale bundles
+- `AuthenticatedLayout.tsx` hook-order fix — separate issue, not causing the admin page flash
 
