@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { FileText, Search, GraduationCap, RotateCcw, MoreHorizontal, Archive, Trash2, ChevronDown, AlertTriangle, ExternalLink, Loader2, ShieldCheck, ShieldAlert, Pencil, Flag, Undo2 } from 'lucide-react';
+import { FileText, Search, GraduationCap, RotateCcw, MoreHorizontal, Archive, Trash2, ChevronDown, AlertTriangle, ExternalLink, Loader2, ShieldCheck, ShieldAlert, Pencil, Flag, Undo2, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -212,6 +212,61 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* P&ID Training Path (Fred & Ivan only) */}
+      {(agentCode === 'fred' || agentCode === 'ivan') && (() => {
+        const hasLegendSheet = sessions.some(s => (s as any).document_type === 'P&ID Legend Sheet' && s.status === 'completed');
+        const hasPID = sessions.some(s => (s as any).document_type === 'P&ID' && s.status === 'completed');
+        const hasLOSH = sessions.some(s => (s as any).document_type === 'LOSH Drawing' && s.status === 'completed');
+        const allComplete = hasLegendSheet && hasPID && (agentCode === 'ivan' || hasLOSH);
+
+        if (allComplete) return null;
+
+        return (
+          <details className="rounded-lg border border-border/40 bg-muted/20 overflow-hidden">
+            <summary className="px-3 py-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/40 transition-colors select-none">
+              P&ID Training Path
+            </summary>
+            <div className="px-3 pb-3 space-y-1">
+              <div className="flex items-center gap-2 text-xs">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span className="text-muted-foreground">Foundation knowledge</span>
+                <Badge variant="secondary" className="text-[8px] py-0 ml-auto">ready</Badge>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                {hasLegendSheet ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                ) : (
+                  <div className="h-3.5 w-3.5 rounded-full border border-muted-foreground/30 shrink-0" />
+                )}
+                <span className={hasLegendSheet ? 'text-muted-foreground' : 'text-foreground'}>Project legend sheet</span>
+                {!hasLegendSheet && hasPID && (
+                  <Badge variant="outline" className="text-[8px] py-0 ml-auto text-amber-600 border-amber-500/30 gap-0.5">
+                    <AlertTriangle className="h-2.5 w-2.5" />Upload before P&IDs
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                {hasPID ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                ) : (
+                  <div className="h-3.5 w-3.5 rounded-full border border-muted-foreground/30 shrink-0" />
+                )}
+                <span className={hasPID ? 'text-muted-foreground' : 'text-foreground'}>Process P&IDs</span>
+              </div>
+              {agentCode === 'fred' && (
+                <div className="flex items-center gap-2 text-xs">
+                  {hasLOSH ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  ) : (
+                    <div className="h-3.5 w-3.5 rounded-full border border-muted-foreground/30 shrink-0" />
+                  )}
+                  <span className={hasLOSH ? 'text-muted-foreground' : 'text-foreground'}>LOSH drawings</span>
+                </div>
+              )}
+            </div>
+          </details>
+        );
+      })()}
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
         <div className="relative flex-1 w-full sm:w-auto">
