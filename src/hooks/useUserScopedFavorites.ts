@@ -22,16 +22,16 @@ export const useUserScopedFavorites = (storagePrefix: string) => {
       return uniqueIds;
     }
 
-    const legacyAdminFavoriteMap: Record<string, string> = {
-      'agent-registry': 'ai-agents-hub',
-      'training-feedback': 'ai-agents-hub',
-      'training-and-feedback': 'ai-agents-hub',
-      'ai-training-feedback': 'ai-agents-hub',
-    };
+    // Legacy IDs that no longer exist — remove them entirely
+    const legacyRemoveSet = new Set([
+      'agent-registry',
+      'training-feedback',
+      'training-and-feedback',
+      'ai-training-feedback',
+      'ai-agents-hub',
+    ]);
 
-    return Array.from(
-      new Set(uniqueIds.map((id) => legacyAdminFavoriteMap[id] ?? id))
-    );
+    return uniqueIds.filter((id) => !legacyRemoveSet.has(id));
   }, [storagePrefix]);
 
   const readFromStorage = useCallback((key: string): string[] => {
