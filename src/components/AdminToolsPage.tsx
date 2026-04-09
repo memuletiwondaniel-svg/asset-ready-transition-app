@@ -127,9 +127,22 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   }, [(location.state as any)?.navKey]);
   const [searchQuery, setSearchQuery] = useState('');
   const [tenantSetupOpen, setTenantSetupOpen] = useState(false);
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set([
-    'USER MANAGEMENT', 'LIVING DOCUMENTATION', 'AI AGENT', 'INTEGRATIONS', 'SYSTEM', 'OPERATIONS & CONFIGURATION'
-  ]));
+  const COLLAPSED_SECTIONS_KEY = 'orsh-admin-collapsed-sections';
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem(COLLAPSED_SECTIONS_KEY);
+      if (saved) return new Set(JSON.parse(saved) as string[]);
+    } catch {}
+    return new Set([
+      'USER MANAGEMENT', 'LIVING DOCUMENTATION', 'AI AGENT', 'INTEGRATIONS', 'SYSTEM', 'OPERATIONS & CONFIGURATION'
+    ]);
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLLAPSED_SECTIONS_KEY, JSON.stringify([...collapsedSections]));
+    } catch {}
+  }, [collapsedSections]);
 
   // Admin favorites - user-scoped and persisted
   const { favorites: adminFavorites, toggleFavorite: toggleAdminFavoriteRaw } = useUserScopedFavorites('orsh-admin-favorites');
@@ -613,29 +626,27 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
             </div>
           </div>
         </div>
-        {/* Content Skeleton */}
+        {/* Content Skeleton — matches current sectioned design */}
         <div className="flex-1 overflow-auto">
-          <div className="container pt-6 md:pt-8 pb-20 md:pb-8 max-w-7xl mx-auto px-4 md:px-6">
-            <div className="flex items-center justify-end mb-6 md:mb-10">
-              <div className="w-full sm:w-80 h-10 bg-muted animate-pulse rounded-lg" />
+          <div className="container pt-4 md:pt-6 pb-20 md:pb-8 max-w-6xl mx-auto px-4 md:px-6">
+            <div className="flex items-center justify-end mb-6 md:mb-8">
+              <div className="w-full sm:w-80 h-9 bg-muted animate-pulse rounded-lg" />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Card key={i}>
-                  <CardHeader className="relative space-y-4 p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="w-12 h-12 rounded-xl bg-muted animate-pulse" />
-                      <div className="flex flex-col items-end space-y-1">
-                        <div className="h-8 w-12 bg-muted animate-pulse rounded" />
-                        <div className="h-3 w-16 bg-muted animate-pulse rounded" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-6 w-3/4 bg-muted animate-pulse rounded" />
-                      <div className="h-4 w-full bg-muted animate-pulse rounded" />
-                    </div>
-                  </CardHeader>
-                </Card>
+            <div className="space-y-6">
+              {[1, 2, 3].map((s) => (
+                <div key={s}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-3 w-3 bg-muted animate-pulse rounded" />
+                    <div className="h-3 w-32 bg-muted animate-pulse rounded" />
+                    <div className="flex-1 h-px bg-border/40" />
+                    <div className="h-3 w-4 bg-muted animate-pulse rounded" />
+                  </div>
+                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                    {[1, 2, 3].map((c) => (
+                      <div key={c} className="h-[72px] bg-muted/40 animate-pulse rounded-xl border border-border/20" />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
