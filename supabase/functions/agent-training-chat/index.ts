@@ -61,9 +61,17 @@ Violating these rules is a critical error. They apply permanently for this sessi
 async function buildKnowledgeContext(
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
   currentAgentCode: string,
-  documentContext: { document_domain?: string; document_name?: string } | undefined,
+  documentContext: { document_domain?: string; document_name?: string; document_type?: string } | undefined,
   maxTokens: number = 2000
 ): Promise<string> {
+  // Load foundation knowledge (agent_code IS NULL = universal, or matches current agent)
+  const { data: foundationKnowledge } = await supabaseAdmin
+    .from("agent_foundation_knowledge")
+    .select("title, knowledge_card, agent_code, template_type")
+    .eq("template_type", "knowledge")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+
   const { data: allSessions } = await supabaseAdmin
     .from("agent_training_sessions")
     .select("id, agent_code, document_name, document_domain, key_learnings, extracted_tags, completed_at")
@@ -71,21 +79,51 @@ async function buildKnowledgeContext(
     .order("completed_at", { ascending: false })
     .limit(100);
 
-  if (!allSessions || allSessions.length === 0) return "";
-
   const currentDomainWords = [
     ...(documentContext?.document_domain ?? "").toLowerCase().split(/\s+/),
     ...(documentContext?.document_name ?? "").toLowerCase().split(/\s+/),
+    ...(documentContext?.document_type ?? "").toLowerCase().split(/\s+/),
   ].filter(w => w.length > 3);
 
+  let contextString = "";
+
+  // Inject foundation knowledge FIRST (outside session token budget)
+  const relevantFoundation = (foundationKnowledge ?? []).filter(fk =>
+    fk.agent_code === null || fk.agent_code === currentAgentCode
+  );
+
+  if (relevantFoundation.length > 0) {
+    const scoredFoundation = relevantFoundation.map(fk => {
+      const fkText = (fk.title + " " + JSON.stringify(fk.knowledge_card?.core_facts?.map((f: any) => f.tags))).toLowerCase();
+      const overlapScore = currentDomainWords.length > 0
+        ? currentDomainWords.filter(w => fkText.includes(w)).length
+        : (fk.agent_code === currentAgentCode ? 1 : 0);
+      return { ...fk, overlapScore };
+    }).filter(f => f.overlapScore > 0 || f.agent_code === currentAgentCode);
+
+    if (scoredFoundation.length > 0) {
+      contextString += `\nFOUNDATION KNOWLEDGE (verified, always applies):\n`;
+      for (const fk of scoredFoundation) {
+        const summary = (fk.knowledge_card?.core_facts as any[])
+          ?.slice(0, 3)
+          .map((f: any) => `- ${f.statement}`)
+          .join("\n") ?? "";
+        contextString += `[${fk.title}]\n${summary}\n\n`;
+      }
+    }
+  }
+
+  if (!allSessions || allSessions.length === 0) return contextString;
+
   if (currentDomainWords.length === 0) {
-    // No domain context — fall back to most recent same-agent sessions
     const recent = allSessions
       .filter(s => s.agent_code === currentAgentCode && s.key_learnings)
       .slice(0, 3);
-    if (recent.length === 0) return "";
-    const lines = recent.map(s => `- "${s.document_name || "Untitled"}": ${s.key_learnings}`).join("\n");
-    return `\nYOUR PREVIOUS TRAINING (most recent):\n${lines}\n`;
+    if (recent.length > 0) {
+      const lines = recent.map(s => `- "${s.document_name || "Untitled"}": ${s.key_learnings}`).join("\n");
+      contextString += `\nYOUR PREVIOUS TRAINING (most recent):\n${lines}\n`;
+    }
+    return contextString;
   }
 
   const scored = allSessions.map(session => {
@@ -121,9 +159,6 @@ async function buildKnowledgeContext(
     tokenCount += tokens;
   }
 
-  if (sameAgentLines.length === 0 && crossAgentLines.length === 0) return "";
-
-  let contextString = "";
   if (sameAgentLines.length > 0) {
     contextString += `\nYOUR PREVIOUS TRAINING (most relevant to this document):\n`;
     contextString += sameAgentLines.join("\n") + "\n";
@@ -454,14 +489,55 @@ and specifically based only on what you learned during training. If you are unce
 say so explicitly. Apply the same anonymization rules — never use the original company
 or system names.`;
     } else {
-      // Training mode — use self-organizing context
+      // Training mode — use self-organizing context + dynamic templates
       const existingKnowledge = await buildKnowledgeContext(supabaseAdmin, agent_code, document_context);
 
-      systemPrompt = `${agentPrompt}
+      // Load dynamic lens for this agent + document type
+      let lensFragment = "";
+      let extractionFragment = "";
+      const docType = document_context?.document_type ?? "";
+
+      if (docType) {
+        const { data: lensRecord } = await supabaseAdmin
+          .from("agent_foundation_knowledge")
+          .select("prompt_fragment")
+          .eq("template_type", "lens")
+          .eq("is_active", true)
+          .eq("agent_code", agent_code)
+          .eq("document_type", docType)
+          .limit(1)
+          .maybeSingle();
+
+        if (lensRecord?.prompt_fragment) {
+          lensFragment = "\n\n" + lensRecord.prompt_fragment;
+        }
+
+        // Load extraction template (agent_code IS NULL = universal)
+        const { data: extractionRecords } = await supabaseAdmin
+          .from("agent_foundation_knowledge")
+          .select("prompt_fragment")
+          .eq("template_type", "extraction")
+          .eq("is_active", true)
+          .eq("document_type", docType)
+          .order("sort_order", { ascending: true });
+
+        if (extractionRecords && extractionRecords.length > 0) {
+          // Use the most specific match (agent-specific if exists, else universal)
+          const record = extractionRecords[0];
+          if (record.prompt_fragment) {
+            extractionFragment = "\n\n" + record.prompt_fragment;
+          }
+        }
+      }
+
+      const agentPromptWithLens = agentPrompt + lensFragment;
+      const responseFormat = TRAINING_RESPONSE_FORMAT + extractionFragment;
+
+      systemPrompt = `${agentPromptWithLens}
 
 You are operating in TRAINING MODE. A user is training you on a new document.
 Your role is to read the material carefully and extract structured knowledge from it.
-${buildAnonymizationSection(anonymization_rules)}${existingKnowledge}${TRAINING_RESPONSE_FORMAT}`;
+${buildAnonymizationSection(anonymization_rules)}${existingKnowledge}${responseFormat}`;
     }
 
     // Build Claude messages

@@ -38,7 +38,7 @@ interface AgentTrainingStudioProps {
 
 type ChatSubState = 'setup' | 'active' | 'testing';
 
-const DOCUMENT_TYPES = ['Procedure', 'Standard', 'Reference Manual', 'Report', 'Checklist', 'Certificate', 'Drawing', 'Other'];
+const DOCUMENT_TYPES = ['Procedure', 'Standard', 'Reference Manual', 'Report', 'Checklist', 'Certificate', 'Drawing', 'P&ID', 'P&ID Legend Sheet', 'LOSH Drawing', 'Other'];
 const ACCEPTED_MIME = '.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.webp';
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
@@ -275,6 +275,11 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
           mode,
           messages: messagesForApi,
           file_data: fileData,
+          document_context: {
+            document_type: docType || undefined,
+            document_domain: docDomain || undefined,
+            document_name: docName || undefined,
+          },
           anonymization_rules: anonymizationRules.filter(r => r.find && r.replace),
         },
       });
@@ -522,6 +527,63 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
 
                   <AnonymizationRulesInline rules={anonymizationRules} onRulesChange={setAnonymizationRules} agentCode={agent.code} agentName={agent.name} />
                 </div>
+
+                {/* P&ID Training Path Checklist (Fred & Ivan only) */}
+                {(agent.code === 'fred' || agent.code === 'ivan') && (() => {
+                  const hasLegendSheet = sessions.some(s => (s as any).document_type === 'P&ID Legend Sheet' && s.status === 'completed');
+                  const hasPID = sessions.some(s => (s as any).document_type === 'P&ID' && s.status === 'completed');
+                  const hasLOSH = sessions.some(s => (s as any).document_type === 'LOSH Drawing' && s.status === 'completed');
+                  const allComplete = hasLegendSheet && hasPID && (agent.code === 'ivan' || hasLOSH);
+
+                  if (allComplete) return null;
+
+                  return (
+                    <div className="rounded-lg border border-border/40 bg-muted/20 p-3 space-y-1.5">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">P&ID Training Path</p>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                          <span className="text-muted-foreground">Foundation knowledge</span>
+                          <Badge variant="secondary" className="text-[8px] py-0 ml-auto">ready</Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          {hasLegendSheet ? (
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                          ) : (
+                            <div className="h-3.5 w-3.5 rounded-full border border-muted-foreground/30 shrink-0" />
+                          )}
+                          <span className={hasLegendSheet ? 'text-muted-foreground' : 'text-foreground'}>Project legend sheet</span>
+                          {!hasLegendSheet && hasPID && (
+                            <Badge variant="outline" className="text-[8px] py-0 ml-auto text-amber-600 border-amber-500/30 gap-0.5">
+                              <AlertTriangle className="h-2.5 w-2.5" />Upload before P&IDs
+                            </Badge>
+                          )}
+                          {!hasLegendSheet && !hasPID && (
+                            <span className="text-[10px] text-muted-foreground/60 ml-auto">upload first</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          {hasPID ? (
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                          ) : (
+                            <div className="h-3.5 w-3.5 rounded-full border border-muted-foreground/30 shrink-0" />
+                          )}
+                          <span className={hasPID ? 'text-muted-foreground' : 'text-foreground'}>Process P&IDs</span>
+                        </div>
+                        {agent.code === 'fred' && (
+                          <div className="flex items-center gap-2 text-xs">
+                            {hasLOSH ? (
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                            ) : (
+                              <div className="h-3.5 w-3.5 rounded-full border border-muted-foreground/30 shrink-0" />
+                            )}
+                            <span className={hasLOSH ? 'text-muted-foreground' : 'text-foreground'}>LOSH drawings</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* File drop zone */}
                 <div className="border-t border-border/30 pt-4">
