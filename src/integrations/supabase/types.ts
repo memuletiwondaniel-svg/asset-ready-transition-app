@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_foundation_knowledge: {
+        Row: {
+          agent_code: string | null
+          created_at: string | null
+          document_type: string | null
+          id: string
+          is_active: boolean | null
+          knowledge_card: Json | null
+          prompt_fragment: string | null
+          sort_order: number | null
+          template_type: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          agent_code?: string | null
+          created_at?: string | null
+          document_type?: string | null
+          id?: string
+          is_active?: boolean | null
+          knowledge_card?: Json | null
+          prompt_fragment?: string | null
+          sort_order?: number | null
+          template_type: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          agent_code?: string | null
+          created_at?: string | null
+          document_type?: string | null
+          id?: string
+          is_active?: boolean | null
+          knowledge_card?: Json | null
+          prompt_fragment?: string | null
+          sort_order?: number | null
+          template_type?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       agent_navigation_steps: {
         Row: {
           action_type: string
