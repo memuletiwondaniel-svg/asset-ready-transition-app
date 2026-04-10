@@ -271,8 +271,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     {
       label: 'AI AGENTS',
       columns: 3 as const,
-      items: [],
-      customContent: true,
+      items: [] as { id: string; title: string; description: string; icon: any; gradient: string; badge?: any; onClick: () => void }[],
+      customContent: true as const,
     },
     {
       label: 'INTEGRATIONS',
@@ -340,7 +340,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           item.description.toLowerCase().includes(query)
         ),
       }))
-      .filter(section => section.items.length > 0 || (section as any).customContent);
+      .filter(section => section.items.length > 0 || section.label === 'AI AGENTS');
   }, [searchQuery, sections]);
 
   const totalFilteredItems = useMemo(() => 
@@ -774,14 +774,14 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                       </span>
                       <div className="flex-1 h-px bg-border/40" />
                       <span className="text-[10px] text-muted-foreground/40 tabular-nums">
-                        {(section as any).customContent
+                        {section.label === 'AI AGENTS'
                           ? agentProfiles.length + 1
                           : section.items.length}
                       </span>
                     </CollapsibleTrigger>
 
                     <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
-                      {(section as any).customContent ? (
+                      {section.label === 'AI AGENTS' ? (
                         <AgentRosterGrid
                           showHubCard
                           onHubClick={() => navigate('/admin/ai-agents')}
