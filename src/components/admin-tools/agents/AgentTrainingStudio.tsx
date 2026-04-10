@@ -66,9 +66,9 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [fileUploading, setFileUploading] = useState(false);
-  const [fileStoragePath, setFileStoragePath] = useState<string | null>(null);
+  const [fileStoragePaths, setFileStoragePaths] = useState<string[]>([]);
 
   // Setup form state (hidden from UI, kept for API compatibility)
   const [docName, setDocName] = useState('');
@@ -95,7 +95,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
   const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
 
   // Track if user has started engaging (typing or attaching)
-  const hasEngaged = input.trim().length > 0 || !!attachedFile || !!docLink.trim();
+  const hasEngaged = input.trim().length > 0 || attachedFiles.length > 0 || !!docLink.trim();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -149,8 +149,8 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
     setSubState('setup');
     setMessages([]);
     setSessionId(null);
-    setAttachedFile(null);
-    setFileStoragePath(null);
+    setAttachedFiles([]);
+    setFileStoragePaths([]);
     setDocName('');
     setDocType('');
     setDocDomain('');
@@ -168,16 +168,17 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
     const ext = file.name.split('.').pop();
-    const path = `${user.id}/${agent.code}/pending/original.${ext}`;
+    const uniqueId = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const path = `${user.id}/${agent.code}/pending/${uniqueId}.${ext}`;
     setFileUploading(true);
     try {
       const { error } = await supabase.storage.from('agent-training-docs').upload(path, file, { upsert: true });
       if (error) throw error;
-      setFileStoragePath(path);
+      setFileStoragePaths(prev => [...prev, path]);
       return path;
     } catch (err) {
       console.error('Upload error:', err);
-      toast.error('Failed to upload file');
+      toast.error(`Failed to upload ${file.name}`);
       return null;
     } finally {
       setFileUploading(false);
@@ -186,65 +187,74 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
 
   const handleFileDrop = async (e: React.DragEvent) => {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file && file.size <= MAX_FILE_SIZE) {
-      setAttachedFile(file);
-      if (!docName.trim()) setDocName(file.name.replace(/\.[^/.]+$/, ''));
-      await uploadFileToStorage(file);
-    } else {
-      toast.error('File too large (max 50MB)');
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    for (const file of droppedFiles) {
+      if (file.size <= MAX_FILE_SIZE) {
+        setAttachedFiles(prev => [...prev, file]);
+        if (!docName.trim()) setDocName(file.name.replace(/\.[^/.]+$/, ''));
+        await uploadFileToStorage(file);
+      } else {
+        toast.error(`${file.name} is too large (max 50MB)`);
+      }
     }
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.size <= MAX_FILE_SIZE) {
-      setAttachedFile(file);
-      if (!docName.trim()) setDocName(file.name.replace(/\.[^/.]+$/, ''));
-      if (subState === 'setup') {
-        await uploadFileToStorage(file);
+    const selectedFiles = Array.from(e.target.files || []);
+    for (const file of selectedFiles) {
+      if (file.size <= MAX_FILE_SIZE) {
+        setAttachedFiles(prev => [...prev, file]);
+        if (!docName.trim()) setDocName(file.name.replace(/\.[^/.]+$/, ''));
+        if (subState === 'setup') {
+          await uploadFileToStorage(file);
+        }
+      } else {
+        toast.error(`${file.name} is too large (max 50MB)`);
       }
-    } else if (file) {
-      toast.error('File too large (max 50MB)');
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const removeAttachedFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+    setFileStoragePaths(prev => prev.filter((_, i) => i !== index));
+  };
+
   const sendMessage = async () => {
-    if (!input.trim() && !attachedFile) return;
+    if (!input.trim() && attachedFiles.length === 0) return;
 
     let fileData: any = null;
-    let fileName: string | null = null;
+    let fileNames: string[] = [];
 
-    if (attachedFile) {
-      fileName = attachedFile.name;
-      const isImage = attachedFile.type.startsWith('image/');
-      if (isImage) {
+    if (attachedFiles.length > 0) {
+      fileNames = attachedFiles.map(f => f.name);
+      // For the first image file, encode as base64 for the API
+      const firstImage = attachedFiles.find(f => f.type.startsWith('image/'));
+      if (firstImage) {
         const reader = new FileReader();
         const base64 = await new Promise<string>((resolve) => {
           reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(attachedFile);
+          reader.readAsDataURL(firstImage);
         });
         fileData = {
           base64,
-          mime_type: attachedFile.type,
-          filename: attachedFile.name,
+          mime_type: firstImage.type,
+          filename: firstImage.name,
         };
       }
-      // Non-images: fileData stays null. Edge function creates text reference.
     }
 
     const userMessage: TrainingMessage = {
       role: 'user',
       content: input.trim(),
       timestamp: new Date(),
-      ...(fileName ? { attachment: { name: fileName, type: attachedFile!.type } } : {}),
+      ...(fileNames.length > 0 ? { attachment: { name: fileNames.join(', '), type: attachedFiles[0]?.type || '' } } : {}),
     };
 
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput('');
-    setAttachedFile(null);
+    setAttachedFiles([]);
     setIsStreaming(true);
     setCompletionSuggested(false);
     setContradictionDetected(false);
@@ -262,7 +272,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
           .insert({
             agent_code: agent.code,
             user_id: user.id,
-            document_name: docName.trim() || fileName || 'Training Session',
+            document_name: docName.trim() || fileNames[0] || 'Training Session',
             document_description: input.trim() || null,
             status: 'active',
             transcript: [],
@@ -277,9 +287,9 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
               document_type: docType || null,
               document_domain: docDomain || null,
               document_revision: docRevision || null,
-              file_path: fileStoragePath || null,
-              file_mime_type: attachedFile?.type || null,
-              file_size_bytes: attachedFile?.size || null,
+              file_path: fileStoragePaths[0] || null,
+              file_mime_type: attachedFiles[0]?.type || null,
+              file_size_bytes: attachedFiles[0]?.size || null,
               anonymization_rules: anonymizationRules.filter(r => r.find && r.replace),
             } as any)
             .eq('id', data.id);
@@ -468,7 +478,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
     }
   };
 
-  const sendDisabled = isStreaming || fileUploading || isTranscribing || (!input.trim() && !attachedFile);
+  const sendDisabled = isStreaming || fileUploading || isTranscribing || (!input.trim() && attachedFiles.length === 0);
 
   // Read-only mode for non-admin users
   if (!permLoading && !canTrain) {
@@ -654,8 +664,9 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
         input={input}
         setInput={setInput}
         isStreaming={isStreaming}
-        attachedFile={attachedFile}
-        setAttachedFile={setAttachedFile}
+        attachedFiles={attachedFiles}
+        setAttachedFiles={setAttachedFiles}
+        removeAttachedFile={removeAttachedFile}
         fileUploading={fileUploading}
         docName={docName}
         setDocName={setDocName}
