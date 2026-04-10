@@ -606,234 +606,23 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
       <div className="flex-1 overflow-hidden flex flex-col">
         {/* ─── TRAINING CHAT TAB ─── */}
         <TabsContent value="chat" className="mt-0 flex-1 flex flex-col overflow-hidden m-0">
-          {/* SUB-STATE A: Setup — compact chat-first interface */}
-          {subState === 'setup' && (
-            <>
-              <div className={cn(
-                "flex-1 overflow-y-auto flex flex-col px-4 transition-all duration-300",
-                hasEngaged ? "justify-end py-3" : "items-center justify-center py-4"
-              )}>
-                {/* Compact empty state — collapses when user starts engaging */}
-                <div className={cn(
-                  "flex flex-col items-center text-center transition-all duration-300",
-                  hasEngaged ? "mb-3" : "mb-5"
-                )}>
-                  <div className={cn(
-                    "rounded-full overflow-hidden ring-2 ring-border/20 transition-all duration-300",
-                    hasEngaged ? "w-8 h-8 mb-1.5" : "w-10 h-10 mb-2"
-                  )}>
-                    <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
-                  </div>
-                  <h3 className={cn(
-                    "font-semibold text-foreground transition-all duration-300",
-                    hasEngaged ? "text-xs mb-0.5" : "text-sm mb-1"
-                  )}>
-                    Train {agent.name}
-                  </h3>
-                  {!hasEngaged && (
-                    <p className="text-[11px] text-muted-foreground max-w-xs leading-relaxed">
-                      Upload a document, paste a link, or start typing — {agent.name} will ask questions to build its understanding.
-                    </p>
-                  )}
-                </div>
-
-                {/* Inline setup row — session name + resource toggle */}
-                <div className={cn(
-                  "w-full transition-all duration-300",
-                  hasEngaged ? "max-w-full" : "max-w-md mx-auto"
-                )}>
-                  {/* Session name — compact inline */}
-                  <div className="mb-3">
-                    <input
-                      type="text"
-                      value={docName}
-                      onChange={(e) => setDocName(e.target.value)}
-                      placeholder="Session name..."
-                      className="w-full text-xs font-medium bg-transparent border-0 border-b border-border/30 rounded-none focus:outline-none focus:border-primary/50 pb-1 placeholder:text-muted-foreground/40"
-                    />
-                  </div>
-
-                  {/* Resource row — toggle + content inline */}
-                  <div className="flex items-start gap-2">
-                    <div className="flex items-center gap-1 shrink-0 pt-0.5">
-                      <button
-                        onClick={() => setUploadMode('upload')}
-                        className={cn(
-                          'text-[10px] px-2 py-1 rounded-full border transition-colors',
-                          uploadMode === 'upload'
-                            ? 'bg-primary/10 text-primary border-primary/20 font-medium'
-                            : 'text-muted-foreground border-border/30 hover:border-border/60'
-                        )}
-                      >
-                        <Paperclip className="h-2.5 w-2.5 inline mr-0.5" />
-                        File
-                      </button>
-                      <button
-                        onClick={() => setUploadMode('link')}
-                        className={cn(
-                          'text-[10px] px-2 py-1 rounded-full border transition-colors',
-                          uploadMode === 'link'
-                            ? 'bg-primary/10 text-primary border-primary/20 font-medium'
-                            : 'text-muted-foreground border-border/30 hover:border-border/60'
-                        )}
-                      >
-                        <Link2 className="h-2.5 w-2.5 inline mr-0.5" />
-                        Link
-                      </button>
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      {uploadMode === 'upload' ? (
-                        <>
-                          {attachedFile ? (
-                            <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 rounded-lg border border-border/40">
-                              <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                              <span className="text-[11px] font-medium text-foreground flex-1 truncate">{attachedFile.name}</span>
-                              <span className="text-[9px] text-muted-foreground">{(attachedFile.size / 1024 / 1024).toFixed(1)}MB</span>
-                              {fileUploading ? (
-                                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                              ) : (
-                                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                              )}
-                              <button onClick={() => { setAttachedFile(null); setFileStoragePath(null); }} className="text-muted-foreground hover:text-destructive">
-                                <X className="h-3 w-3" />
-                              </button>
-                            </div>
-                          ) : (
-                            <div
-                              className="flex items-center gap-2 px-3 py-2 rounded-lg ring-1 ring-dashed ring-border/40 hover:ring-primary/40 hover:bg-primary/5 transition-all cursor-pointer bg-muted/10"
-                              onDragOver={(e) => e.preventDefault()}
-                              onDrop={handleFileDrop}
-                              onClick={() => fileInputRef.current?.click()}
-                            >
-                              <Upload className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
-                              <span className="text-[11px] text-muted-foreground">Drop or browse · PDF, DOCX, XLSX, PNG, JPG</span>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="relative">
-                          <Input
-                            value={docLink}
-                            onChange={(e) => setDocLink(e.target.value)}
-                            placeholder="https://..."
-                            className="text-xs h-8"
-                          />
-                          {docLink.trim() && (
-                            <button
-                              onClick={() => setDocLink('')}
-                              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-destructive"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <input ref={fileInputRef} type="file" accept={ACCEPTED_MIME} onChange={handleFileSelect} className="hidden" />
-            </>
-          )}
-
-          {/* SUB-STATE B/C: Active session or Testing */}
-          {(subState === 'active' || subState === 'testing') && (
-            <>
-              {/* Compact session header */}
-              <div className="px-4 py-2 border-b border-border/30 flex items-center justify-between gap-2">
-                {subState === 'testing' ? (
-                  <div className="flex items-center gap-1.5">
-                    <FlaskConical className="h-3 w-3 text-amber-500" />
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                      Testing — {testSession?.document_name || 'Document'}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <div className="w-5 h-5 rounded-full overflow-hidden border border-border/30 shrink-0">
-                      <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
-                    </div>
-                    <span className="text-[11px] font-medium text-foreground truncate">{docName || 'Training Session'}</span>
-                    <Badge variant="outline" className="text-[8px] py-0 shrink-0">Active</Badge>
-                  </div>
-                )}
-                {anonymizationRules.filter(r => r.find).length > 0 && (
-                  <Badge variant="secondary" className="text-[9px] py-0 gap-1 shrink-0">
-                    <Lock className="h-2.5 w-2.5" />
-                    {anonymizationRules.filter(r => r.find).length}
-                  </Badge>
-                )}
-              </div>
-
-              {/* Messages area */}
-              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-[200px]">
-                {messages.length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-full text-center py-8">
-                    <div className="w-12 h-12 rounded-full overflow-hidden border border-border/30 shadow-sm mb-3">
-                      <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
-                    </div>
-                    <p className="text-xs font-medium text-foreground mb-0.5">
-                      {subState === 'testing' ? `Test ${agent.name}'s understanding` : `Chat with ${agent.name}`}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground max-w-xs">
-                      {subState === 'testing'
-                        ? `Ask questions to verify what ${agent.name} learned.`
-                        : `Send a message or upload a document to begin training.`
-                      }
-                    </p>
-                  </div>
-                )}
-
-                {renderMessages()}
-              </div>
-
-              {/* Contradiction alert */}
-              {contradictionDetected && (
-                <div className="mx-4 mb-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center gap-2">
-                  <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
-                  <p className="text-[10px] text-amber-700 dark:text-amber-400">
-                    {agent.name} flagged a contradiction with previous training.
-                  </p>
-                </div>
-              )}
-
-              {/* Completion banner */}
-              {completionSuggested && !isStreaming && (
-                <div className="mx-4 mb-2 px-3 py-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                    <p className="text-[11px] font-medium text-foreground">
-                      {subState === 'testing' ? 'All questions answered.' : `${agent.name} has no further questions.`}
-                    </p>
-                  </div>
-                  <div className="flex gap-2 ml-5">
-                    <Button size="sm" onClick={completeSession} disabled={isCompleting} className="h-6 text-[10px] gap-1">
-                      {isCompleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
-                      {subState === 'testing' ? 'Save Score' : 'Complete & Save'}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setCompletionSuggested(false)} className="h-6 text-[10px]">
-                      {subState === 'testing' ? 'Ask more' : 'Keep Training'}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Completing overlay */}
-              {isCompleting && (
-                <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10 rounded-xl">
-                  <div className="text-center">
-                    <Loader2 className="h-5 w-5 animate-spin text-primary mx-auto mb-1.5" />
-                    <p className="text-[11px] font-medium text-foreground">Extracting knowledge card...</p>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Unified input bar — always visible */}
-          {(subState === 'setup' || subState === 'active' || subState === 'testing') && renderInputBar()}
+          <div className="flex flex-col items-center gap-4 py-6 px-4">
+            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border/20">
+              <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-foreground">Train {agent.name}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {completedSessions.length > 0
+                  ? `${completedSessions.length} session${completedSessions.length !== 1 ? 's' : ''} completed · Last: ${lastSessionDate}`
+                  : `No sessions yet — start the first training session`}
+              </p>
+            </div>
+            <Button onClick={() => setDialogOpen(true)} className="gap-2" size="sm">
+              <BookOpen className="h-4 w-4" />
+              Open Training Chat
+            </Button>
+          </div>
         </TabsContent>
 
         {/* ─── HISTORY TAB ─── */}
@@ -849,6 +638,44 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
           />
         </TabsContent>
       </div>
+
+      {/* Training Dialog Overlay */}
+      <AgentTrainingDialog
+        agent={agent}
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        subState={subState}
+        messages={messages}
+        input={input}
+        setInput={setInput}
+        isStreaming={isStreaming}
+        attachedFile={attachedFile}
+        setAttachedFile={setAttachedFile}
+        fileUploading={fileUploading}
+        docName={docName}
+        setDocName={setDocName}
+        docLink={docLink}
+        setDocLink={setDocLink}
+        uploadMode={uploadMode}
+        setUploadMode={setUploadMode}
+        isRecording={isRecording}
+        isTranscribing={isTranscribing}
+        completionSuggested={completionSuggested}
+        contradictionDetected={contradictionDetected}
+        isCompleting={isCompleting}
+        testSession={testSession}
+        userProfile={userProfile}
+        messagesEndRef={messagesEndRef}
+        fileInputRef={fileInputRef}
+        sendMessage={sendMessage}
+        resetChat={resetChat}
+        completeSession={completeSession}
+        setCompletionSuggested={setCompletionSuggested}
+        toggleRecording={toggleRecording}
+        handleFileSelect={handleFileSelect}
+        handleFileDrop={handleFileDrop}
+        sendDisabled={sendDisabled}
+      />
     </Tabs>
   );
 };
