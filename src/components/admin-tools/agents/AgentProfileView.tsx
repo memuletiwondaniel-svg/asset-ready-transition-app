@@ -75,6 +75,7 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
               icon={Users}
               isOpen={aboutOpen}
               onToggle={() => setAboutOpen(o => !o)}
+              color="blue"
             />
           </div>
         </CollapsibleTrigger>
@@ -160,6 +161,7 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
               icon={BookOpen}
               isOpen={trainingOpen}
               onToggle={() => setTrainingOpen(o => !o)}
+              color="amber"
             />
           </div>
         </CollapsibleTrigger>
