@@ -190,17 +190,21 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
     let fileName: string | null = null;
 
     if (attachedFile) {
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(attachedFile);
-      });
-      fileData = {
-        base64,
-        mime_type: attachedFile.type,
-        filename: attachedFile.name,
-      };
       fileName = attachedFile.name;
+      const isImage = attachedFile.type.startsWith('image/');
+      if (isImage) {
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(attachedFile);
+        });
+        fileData = {
+          base64,
+          mime_type: attachedFile.type,
+          filename: attachedFile.name,
+        };
+      }
+      // Non-images: fileData stays null. Edge function creates text reference.
     }
 
     const userMessage: TrainingMessage = {
@@ -312,10 +316,11 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
         }
       }
     } catch (err) {
-      console.error('Training chat error:', err);
+      const errorDetail = err instanceof Error ? err.message : String(err);
+      console.error('Training chat error detail:', errorDetail);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'I encountered an error processing your request. Please try again.',
+        content: `Sorry, I hit a snag on that one. Try sending again — if you attached a large document, send your message first then re-attach the file separately.`,
         timestamp: new Date(),
       }]);
     } finally {
