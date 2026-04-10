@@ -131,10 +131,14 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => {
     try {
       const saved = localStorage.getItem(COLLAPSED_SECTIONS_KEY);
-      if (saved) return new Set(JSON.parse(saved) as string[]);
+      if (saved) {
+        const parsed = JSON.parse(saved) as string[];
+        const migrated = parsed.map(s => s === 'AI AGENT' ? 'AI AGENTS' : s);
+        return new Set(migrated);
+      }
     } catch {}
     return new Set([
-      'USER MANAGEMENT', 'LIVING DOCUMENTATION', 'AI AGENT', 'INTEGRATIONS', 'SYSTEM', 'OPERATIONS & CONFIGURATION'
+      'USER MANAGEMENT', 'LIVING DOCUMENTATION', 'AI AGENTS', 'INTEGRATIONS', 'SYSTEM', 'OPERATIONS & CONFIGURATION'
     ]);
   });
 
@@ -265,7 +269,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       ],
     },
     {
-      label: 'AI AGENT',
+      label: 'AI AGENTS',
       columns: 3 as const,
       items: [],
       customContent: true,
@@ -770,14 +774,14 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                       </span>
                       <div className="flex-1 h-px bg-border/40" />
                       <span className="text-[10px] text-muted-foreground/40 tabular-nums">
-                        {(section as any).customContent && section.label === 'AI AGENT' 
+                        {(section as any).customContent
                           ? agentProfiles.length + 1
                           : section.items.length}
                       </span>
                     </CollapsibleTrigger>
 
                     <CollapsibleContent className="data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
-                      {(section as any).customContent && section.label === 'AI AGENT' ? (
+                      {(section as any).customContent ? (
                         <AgentRosterGrid
                           showHubCard
                           onHubClick={() => navigate('/admin/ai-agents')}
