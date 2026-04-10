@@ -240,18 +240,53 @@ exact markdown headings in this exact order:
 ## My clarifying questions
 [List 2–3 specific, targeted questions about genuine ambiguities in the document.
 If you have no further questions after this exchange, write exactly:
-"No further questions — I believe I have a complete understanding."]`;
+"No further questions — I believe I have a complete understanding."
+IMPORTANT: When your confidence level is High and you have no remaining ambiguities, you MUST use the exact phrase above instead of asking more questions. Do NOT suggest uploading additional documents — each document is a separate training session.]`;
 
 function analyzeResponse(responseText: string): {
   completion_suggested: boolean;
   open_questions_count: number;
   contradiction_detected: boolean;
 } {
-  const completionSuggested = responseText.includes("No further questions — I believe I have a complete understanding");
+  const lower = responseText.toLowerCase();
+
+  // Exact match first
+  let completionSuggested = responseText.includes("No further questions — I believe I have a complete understanding");
+
+  // Flexible fallback: detect common paraphrases of completion
+  if (!completionSuggested) {
+    const completionPatterns = [
+      /no\s+further\s+questions/i,
+      /complete\s+understanding/i,
+      /no\s+remaining\s+(questions|ambiguities|clarifications)/i,
+      /no\s+clarifying\s+questions\s+(remain|needed|necessary|at\s+this\s+time)/i,
+      /i\s+(have\s+)?no\s+(more|additional)\s+questions/i,
+      /nothing\s+(else|more)\s+to\s+(clarify|ask)/i,
+    ];
+    // Require at least one pattern match AND high confidence
+    const hasCompletionPhrase = completionPatterns.some(p => p.test(responseText));
+    const hasHighConfidence = /confidence\s*(level)?[\s:]*high/i.test(responseText);
+    completionSuggested = hasCompletionPhrase && hasHighConfidence;
+  }
+
+  // Also trigger if confidence is High and the clarifying questions section has no listed questions
+  if (!completionSuggested) {
+    const hasHighConfidence = /confidence\s*(level)?[\s:]*high/i.test(responseText);
+    if (hasHighConfidence) {
+      const questionsSection = responseText.match(/##\s*My clarifying questions[\s\S]*$/);
+      if (questionsSection) {
+        const qLines = questionsSection[0].split("\n").filter(l => /^\s*(\d+\.\s|-\s)/.test(l));
+        if (qLines.length === 0) {
+          completionSuggested = true;
+        }
+      }
+    }
+  }
+
   const contradictionDetected = responseText.includes("⚠️ CONTRADICTION:");
 
   let openQuestionsCount = 0;
-  const questionsMatch = responseText.match(/## My clarifying questions[\s\S]*$/);
+  const questionsMatch = responseText.match(/##\s*My clarifying questions[\s\S]*$/);
   if (questionsMatch && !completionSuggested) {
     const lines = questionsMatch[0].split("\n");
     openQuestionsCount = lines.filter(l => /^\s*\d+\.\s/.test(l) || /^\s*-\s/.test(l)).length;
