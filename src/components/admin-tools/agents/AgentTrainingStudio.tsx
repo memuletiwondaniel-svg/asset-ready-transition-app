@@ -38,7 +38,7 @@ interface AgentTrainingStudioProps {
 type ChatSubState = 'setup' | 'active' | 'testing';
 
 const ACCEPTED_MIME = '.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.webp';
-const MAX_FILE_SIZE = 20 * 1024 * 1024;
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 // Custom h2 renderer for training message section styling
 const trainingH2Renderer = ({ children, ...props }: any) => {
@@ -192,7 +192,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
       if (!docName.trim()) setDocName(file.name.replace(/\.[^/.]+$/, ''));
       await uploadFileToStorage(file);
     } else {
-      toast.error('File too large (max 20MB)');
+      toast.error('File too large (max 50MB)');
     }
   };
 
@@ -205,7 +205,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
         await uploadFileToStorage(file);
       }
     } else if (file) {
-      toast.error('File too large (max 20MB)');
+      toast.error('File too large (max 50MB)');
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
