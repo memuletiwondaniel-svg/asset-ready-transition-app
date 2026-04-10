@@ -271,8 +271,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
     {
       label: 'AI AGENTS',
       columns: 3 as const,
-      items: [],
-      customContent: true,
+      items: [] as { id: string; title: string; description: string; icon: any; gradient: string; badge?: any; onClick: () => void }[],
+      customContent: true as const,
     },
     {
       label: 'INTEGRATIONS',
