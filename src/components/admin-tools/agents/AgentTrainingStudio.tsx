@@ -119,6 +119,11 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
     },
   });
 
+  const completedSessions = sessions.filter((s: any) => s.status === 'completed');
+  const lastSessionDate = completedSessions.length > 0
+    ? format(new Date(completedSessions[0].completed_at || completedSessions[0].created_at), 'dd MMM yyyy')
+    : '';
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
