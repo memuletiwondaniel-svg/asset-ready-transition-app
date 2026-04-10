@@ -90,6 +90,10 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
   const [testSession, setTestSession] = useState<any>(null);
   const [testQuestionIndex, setTestQuestionIndex] = useState(0);
 
+  // Dialog + user profile
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
+
   // Track if user has started engaging (typing or attaching)
   const hasEngaged = input.trim().length > 0 || !!attachedFile || !!docLink.trim();
 
