@@ -180,9 +180,23 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
             </p>
           </div>
           {subState !== 'setup' && (
-            <Button size="sm" variant="ghost" onClick={resetChat} className="text-xs h-7 shrink-0">
-              + New Session
-            </Button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {!completionSuggested && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={completeSession}
+                  disabled={isCompleting}
+                  className="text-xs h-7 gap-1 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-700"
+                >
+                  {isCompleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                  Mark Complete
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" onClick={resetChat} className="text-xs h-7 shrink-0">
+                + New Session
+              </Button>
+            </div>
           )}
           <Button size="icon" variant="ghost" onClick={onClose} className="h-8 w-8 shrink-0 rounded-full">
             <X className="h-4 w-4" />
