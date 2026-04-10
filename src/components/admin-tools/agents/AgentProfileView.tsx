@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Check, X, Users, ChevronDown, BookOpen, Activity } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -13,19 +14,30 @@ interface AgentProfileViewProps {
   onAgentClick: (code: string) => void;
 }
 
+type SectionColor = 'blue' | 'amber' | 'emerald';
+
+const sectionColorMap: Record<SectionColor, { bg: string; icon: string }> = {
+  blue:    { bg: 'bg-blue-500/10 group-hover:bg-blue-500/15',       icon: 'text-blue-600 dark:text-blue-400' },
+  amber:   { bg: 'bg-amber-500/10 group-hover:bg-amber-500/15',     icon: 'text-amber-600 dark:text-amber-400' },
+  emerald: { bg: 'bg-emerald-500/10 group-hover:bg-emerald-500/15', icon: 'text-emerald-600 dark:text-emerald-400' },
+};
+
 const SectionHeader: React.FC<{
   label: string;
   icon: React.ElementType;
   isOpen: boolean;
   onToggle: () => void;
   count?: number;
-}> = ({ label, icon: Icon, isOpen, onToggle, count }) => (
+  color?: SectionColor;
+}> = ({ label, icon: Icon, isOpen, onToggle, count, color = 'blue' }) => {
+  const c = sectionColorMap[color];
+  return (
   <button
     onClick={onToggle}
     className="group flex items-center gap-3 w-full py-3 cursor-pointer select-none"
   >
-    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/15 transition-colors">
-      <Icon className="h-3.5 w-3.5 text-primary" />
+    <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center transition-colors", c.bg)}>
+      <Icon className={cn("h-3.5 w-3.5", c.icon)} />
     </div>
     <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
       {label}
@@ -40,7 +52,8 @@ const SectionHeader: React.FC<{
       className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-0' : '-rotate-90'}`}
     />
   </button>
-);
+  );
+};
 
 const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick }) => {
   const [aboutOpen, setAboutOpen] = React.useState(true);
@@ -62,6 +75,7 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
               icon={Users}
               isOpen={aboutOpen}
               onToggle={() => setAboutOpen(o => !o)}
+              color="blue"
             />
           </div>
         </CollapsibleTrigger>
@@ -147,6 +161,7 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
               icon={BookOpen}
               isOpen={trainingOpen}
               onToggle={() => setTrainingOpen(o => !o)}
+              color="amber"
             />
           </div>
         </CollapsibleTrigger>
@@ -164,6 +179,7 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
               icon={Activity}
               isOpen={performanceOpen}
               onToggle={() => setPerformanceOpen(o => !o)}
+              color="emerald"
             />
           </div>
         </CollapsibleTrigger>
