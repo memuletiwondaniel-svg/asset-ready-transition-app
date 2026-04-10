@@ -123,6 +123,23 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Fetch user profile for avatar
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (profile) setUserProfile(profile);
+      } catch {}
+    };
+    fetchProfile();
+  }, []);
+
   const resetChat = useCallback(() => {
     setSubState('setup');
     setMessages([]);
@@ -421,6 +438,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
     const retrainMsg = `We are revisiting ${session.document_name || 'this document'}. Here is what you previously understood: ${session.key_learnings || 'No summary available'}. Please review the document again and flag anything new, changed, or that needs updating.`;
     setInput(retrainMsg);
     setActiveTab('chat');
+    setDialogOpen(true);
   };
 
   const handleTest = (session: any) => {
@@ -435,6 +453,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
       setTestQuestionIndex(0);
     }
     setActiveTab('chat');
+    setDialogOpen(true);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
