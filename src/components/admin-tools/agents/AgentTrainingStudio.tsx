@@ -449,7 +449,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
     setDocDomain(session.document_domain || '');
     setDocRevision(session.document_revision || '');
     setAnonymizationRules(session.anonymization_rules || []);
-    setFileStoragePath(session.file_path || null);
+    setFileStoragePaths(session.file_path ? [session.file_path] : []);
     const retrainMsg = `We are revisiting ${session.document_name || 'this document'}. Here is what you previously understood: ${session.key_learnings || 'No summary available'}. Please review the document again and flag anything new, changed, or that needs updating.`;
     setInput(retrainMsg);
     setActiveTab('chat');
@@ -503,13 +503,15 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
   // Shared input bar component
   const renderInputBar = () => (
     <div className="shadow-[0_-1px_0_hsl(var(--border)/0.3)] px-4 py-2.5 backdrop-blur-sm bg-card/80">
-      {attachedFile && subState !== 'setup' && (
-        <div className="flex items-center gap-2 mb-2 px-2">
-          <Badge variant="secondary" className="text-[10px] gap-1 py-0.5">
-            <FileText className="h-3 w-3" />
-            {attachedFile.name}
-            <button onClick={() => setAttachedFile(null)} className="ml-1 hover:text-destructive">×</button>
-          </Badge>
+      {attachedFiles.length > 0 && subState !== 'setup' && (
+        <div className="flex flex-wrap items-center gap-2 mb-2 px-2">
+          {attachedFiles.map((file, i) => (
+            <Badge key={i} variant="secondary" className="text-[10px] gap-1 py-0.5">
+              <FileText className="h-3 w-3" />
+              {file.name}
+              <button onClick={() => removeAttachedFile(i)} className="ml-1 hover:text-destructive">×</button>
+            </Badge>
+          ))}
         </div>
       )}
       <div className="flex items-end gap-1.5">
