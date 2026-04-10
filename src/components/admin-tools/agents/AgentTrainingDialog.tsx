@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -82,6 +82,8 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
   completeSession, setCompletionSuggested, toggleRecording, handleFileSelect,
   handleFileDrop, sendDisabled,
 }) => {
+  const [isDragging, setIsDragging] = useState(false);
+
   if (!open) return null;
 
   const hasEngaged = input.trim().length > 0 || !!attachedFile || !!docLink.trim();
@@ -91,6 +93,37 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  // ── Drag-and-drop handlers for the full dialog ──
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set false when leaving the dialog boundary
+    const relatedTarget = e.relatedTarget as Node | null;
+    if (!e.currentTarget.contains(relatedTarget)) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDialogDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    handleFileDrop(e);
   };
 
   const renderUserAvatar = () => (
@@ -125,7 +158,13 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
         onClick={onClose}
       />
       {/* Chat panel */}
-      <div className="relative z-10 w-[960px] max-w-[95vw] h-[90vh] flex flex-col bg-background border border-border/50 shadow-2xl rounded-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
+      <div
+        className="relative z-10 w-[960px] max-w-[95vw] h-[90vh] flex flex-col bg-background border border-border/50 shadow-2xl rounded-2xl overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300"
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDialogDrop}
+      >
 
         {/* ─── Header ─── */}
         <div className="flex items-center gap-3 px-5 py-3 border-b border-border/50 shrink-0">
@@ -150,28 +189,54 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
         </div>
 
         {/* ─── Body ─── */}
-        <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-hidden flex flex-col relative">
+          {/* ── Drag-and-drop overlay ── */}
+          {isDragging && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-primary/5 border-2 border-dashed border-primary/40 rounded-xl m-2 animate-in fade-in duration-150">
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <Upload className="h-8 w-8 text-primary/60" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-foreground">Drop file here</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">PDF, DOCX, XLSX, PNG, JPG</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {subState === 'setup' ? (
             /* ── Setup state inside dialog ── */
             <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-6 py-8">
+              {/* Avatar */}
               <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-border/20 mb-4">
                 <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
               </div>
-              <h3 className="text-base font-semibold text-foreground mb-1">Train {agent.name}</h3>
-              <p className="text-sm text-muted-foreground max-w-md text-center mb-6">
-                Upload a document, paste a link, or start typing — {agent.name} will ask questions to build its understanding.
-              </p>
 
-              <div className="w-full max-w-xl space-y-4">
-                {/* Session name */}
+              {/* Session name — hero element */}
+              <div className="w-full text-center mb-2">
                 <input
                   type="text"
                   value={docName}
                   onChange={(e) => setDocName(e.target.value)}
-                  placeholder="Session name..."
-                  className="w-full text-sm font-medium bg-transparent border-0 border-b border-border/30 rounded-none focus:outline-none focus:border-primary/50 pb-2 placeholder:text-muted-foreground/40"
+                  placeholder="Name this session..."
+                  className={cn(
+                    "w-full text-center text-xl font-semibold bg-transparent border-none outline-none",
+                    "placeholder:text-muted-foreground/30 text-foreground",
+                    "focus:placeholder:text-muted-foreground/20",
+                    "pb-1"
+                  )}
+                  autoFocus
                 />
+                <div className="h-px bg-border/30 mx-auto w-48 mt-1" />
+              </div>
 
+              {/* Welcome subtitle */}
+              <p className="text-sm text-muted-foreground max-w-md text-center mb-6">
+                Upload a document or paste a link — {agent.name} will ask questions as he reads.
+              </p>
+
+              <div className="w-full max-w-xl space-y-4">
                 {/* Resource row */}
                 <div className="flex items-start gap-3">
                   <div className="flex items-center gap-1.5 shrink-0 pt-1">
@@ -184,7 +249,6 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
                           : 'text-muted-foreground border-border/30 hover:border-border/60'
                       )}
                     >
-                      <Paperclip className="h-3 w-3 inline mr-1" />
                       File
                     </button>
                     <button
@@ -196,7 +260,6 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
                           : 'text-muted-foreground border-border/30 hover:border-border/60'
                       )}
                     >
-                      <Link2 className="h-3 w-3 inline mr-1" />
                       Link
                     </button>
                   </div>
@@ -225,7 +288,7 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
                           onClick={() => fileInputRef.current?.click()}
                         >
                           <Upload className="h-4 w-4 text-muted-foreground/50 shrink-0" />
-                          <span className="text-sm text-muted-foreground">Drop or browse · PDF, DOCX, XLSX, PNG, JPG</span>
+                          <span className="text-sm text-muted-foreground">Drop a file here, or click to browse</span>
                         </div>
                       )
                     ) : (
@@ -393,21 +456,28 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
             <div className="relative flex items-end gap-2 bg-muted/50 rounded-2xl border border-border/50 p-2 focus-within:border-primary/50 transition-colors">
               <input ref={fileInputRef} type="file" accept={ACCEPTED_MIME} onChange={handleFileSelect} className="hidden" />
 
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isStreaming || fileUploading}
-                className="h-9 w-9 rounded-xl hover:bg-background"
-              >
-                <Paperclip className="h-5 w-5 text-muted-foreground" />
-              </Button>
+              {/* Paperclip — only in active/testing, not setup */}
+              {subState !== 'setup' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isStreaming || fileUploading}
+                  className="h-9 w-9 rounded-xl hover:bg-background"
+                >
+                  <Paperclip className="h-5 w-5 text-muted-foreground" />
+                </Button>
+              )}
 
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={subState === 'setup' ? `Describe what ${agent.name} should learn...` : `Continue training ${agent.name}...`}
+                placeholder={
+                  subState === 'setup'
+                    ? `What should ${agent.name} learn? Describe the context...`
+                    : `Continue training ${agent.name}...`
+                }
                 rows={1}
                 disabled={isStreaming || fileUploading}
                 className="flex-1 bg-transparent border-none outline-none resize-none py-2 px-1 text-sm placeholder:text-muted-foreground max-h-[200px] min-h-[40px]"
