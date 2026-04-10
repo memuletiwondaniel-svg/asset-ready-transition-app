@@ -38,7 +38,7 @@ interface AgentTrainingStudioProps {
 type ChatSubState = 'setup' | 'active' | 'testing';
 
 const ACCEPTED_MIME = '.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.webp';
-const MAX_FILE_SIZE = 50 * 1024 * 1024;
+const MAX_FILE_SIZE = 80 * 1024 * 1024;
 
 // Custom h2 renderer for training message section styling
 const trainingH2Renderer = ({ children, ...props }: any) => {
