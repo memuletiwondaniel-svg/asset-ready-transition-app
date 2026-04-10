@@ -194,7 +194,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
         if (!docName.trim()) setDocName(file.name.replace(/\.[^/.]+$/, ''));
         await uploadFileToStorage(file);
       } else {
-        toast.error(`${file.name} is too large (max 50MB)`);
+        toast.error(`${file.name} is too large (max 80MB)`);
       }
     }
   };
@@ -209,7 +209,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
           await uploadFileToStorage(file);
         }
       } else {
-        toast.error(`${file.name} is too large (max 50MB)`);
+        toast.error(`${file.name} is too large (max 80MB)`);
       }
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
