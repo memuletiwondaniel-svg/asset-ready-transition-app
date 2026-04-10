@@ -515,7 +515,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
         </div>
       )}
       <div className="flex items-end gap-1.5">
-        <input ref={fileInputRef} type="file" accept={ACCEPTED_MIME} onChange={handleFileSelect} className="hidden" />
+        <input ref={fileInputRef} type="file" accept={ACCEPTED_MIME} onChange={handleFileSelect} multiple className="hidden" />
         <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground">
           <Paperclip className="h-4 w-4" />
         </Button>
