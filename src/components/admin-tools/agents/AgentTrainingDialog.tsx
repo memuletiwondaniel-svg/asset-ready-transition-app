@@ -45,8 +45,9 @@ interface AgentTrainingDialogProps {
   input: string;
   setInput: (v: string) => void;
   isStreaming: boolean;
-  attachedFile: File | null;
-  setAttachedFile: (f: File | null) => void;
+  attachedFiles: File[];
+  setAttachedFiles: (f: File[]) => void;
+  removeAttachedFile: (index: number) => void;
   fileUploading: boolean;
   docName: string;
   setDocName: (v: string) => void;
