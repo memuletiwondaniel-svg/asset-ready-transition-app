@@ -45,8 +45,9 @@ interface AgentTrainingDialogProps {
   input: string;
   setInput: (v: string) => void;
   isStreaming: boolean;
-  attachedFile: File | null;
-  setAttachedFile: (f: File | null) => void;
+  attachedFiles: File[];
+  setAttachedFiles: (f: File[]) => void;
+  removeAttachedFile: (index: number) => void;
   fileUploading: boolean;
   docName: string;
   setDocName: (v: string) => void;
@@ -75,7 +76,7 @@ interface AgentTrainingDialogProps {
 
 const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
   agent, open, onClose, subState, messages, input, setInput, isStreaming,
-  attachedFile, setAttachedFile, fileUploading, docName, setDocName,
+  attachedFiles, setAttachedFiles, removeAttachedFile, fileUploading, docName, setDocName,
   docLink, setDocLink, uploadMode, setUploadMode, isRecording, isTranscribing,
   completionSuggested, contradictionDetected, isCompleting, testSession,
   userProfile, messagesEndRef, fileInputRef, sendMessage, resetChat,
@@ -86,7 +87,7 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
 
   if (!open) return null;
 
-  const hasEngaged = input.trim().length > 0 || !!attachedFile || !!docLink.trim();
+  const hasEngaged = input.trim().length > 0 || attachedFiles.length > 0 || !!docLink.trim();
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -266,21 +267,26 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
 
                   <div className="flex-1 min-w-0">
                     {uploadMode === 'upload' ? (
-                      attachedFile ? (
-                        <div className="flex items-center gap-2 px-3 py-2.5 bg-muted/30 rounded-lg border border-border/40">
-                          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span className="text-sm text-foreground flex-1 truncate">{attachedFile.name}</span>
-                          <span className="text-xs text-muted-foreground">{(attachedFile.size / 1024 / 1024).toFixed(1)}MB</span>
-                          {fileUploading ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-                          ) : (
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                          )}
-                          <button onClick={() => setAttachedFile(null)} className="text-muted-foreground hover:text-destructive">
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      ) : (
+                      <>
+                        {attachedFiles.length > 0 && (
+                          <div className="space-y-2">
+                            {attachedFiles.map((file, i) => (
+                              <div key={i} className="flex items-center gap-2 px-3 py-2.5 bg-muted/30 rounded-lg border border-border/40">
+                                <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <span className="text-sm text-foreground flex-1 truncate">{file.name}</span>
+                                <span className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(1)}MB</span>
+                                {fileUploading ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                                ) : (
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                                )}
+                                <button onClick={() => removeAttachedFile(i)} className="text-muted-foreground hover:text-destructive">
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         <div
                           className="flex items-center gap-3 px-4 py-3 rounded-lg ring-1 ring-dashed ring-border/40 hover:ring-primary/40 hover:bg-primary/5 transition-all cursor-pointer bg-muted/10"
                           onDragOver={(e) => e.preventDefault()}
@@ -288,9 +294,11 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
                           onClick={() => fileInputRef.current?.click()}
                         >
                           <Upload className="h-4 w-4 text-muted-foreground/50 shrink-0" />
-                          <span className="text-sm text-muted-foreground">Drop a file here, or click to browse</span>
+                          <span className="text-sm text-muted-foreground">
+                            {attachedFiles.length > 0 ? 'Add another file...' : 'Drop a file here, or click to browse'}
+                          </span>
                         </div>
-                      )
+                      </>
                     ) : (
                       <div className="relative">
                         <Input
@@ -313,7 +321,7 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
                 </div>
               </div>
 
-              <input ref={fileInputRef} type="file" accept={ACCEPTED_MIME} onChange={handleFileSelect} className="hidden" />
+              <input ref={fileInputRef} type="file" accept={ACCEPTED_MIME} onChange={handleFileSelect} multiple className="hidden" />
             </div>
           ) : (
             /* ── Active/Testing: message area ── */
@@ -440,21 +448,23 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
         <div className="p-4 border-t border-border/50 shrink-0">
           <div className="max-w-3xl mx-auto">
             {/* Attached file preview */}
-            {attachedFile && subState !== 'setup' && (
+            {attachedFiles.length > 0 && subState !== 'setup' && (
               <div className="flex flex-wrap gap-2 mb-3">
-                <div className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg group">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm max-w-[150px] truncate">{attachedFile.name}</span>
-                  <button onClick={() => setAttachedFile(null)} className="text-muted-foreground hover:text-destructive">
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                {attachedFiles.map((file, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg group">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm max-w-[150px] truncate">{file.name}</span>
+                    <button onClick={() => removeAttachedFile(i)} className="text-muted-foreground hover:text-destructive">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
 
             {/* Input container — Bob style */}
             <div className="relative flex items-end gap-2 bg-muted/50 rounded-2xl border border-border/50 p-2 focus-within:border-primary/50 transition-colors">
-              <input ref={fileInputRef} type="file" accept={ACCEPTED_MIME} onChange={handleFileSelect} className="hidden" />
+              <input ref={fileInputRef} type="file" accept={ACCEPTED_MIME} onChange={handleFileSelect} multiple className="hidden" />
 
               {/* Paperclip — only in active/testing, not setup */}
               {subState !== 'setup' && (
