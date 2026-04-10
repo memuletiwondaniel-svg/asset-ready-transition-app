@@ -76,7 +76,7 @@ interface AgentTrainingDialogProps {
 
 const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
   agent, open, onClose, subState, messages, input, setInput, isStreaming,
-  attachedFile, setAttachedFile, fileUploading, docName, setDocName,
+  attachedFiles, setAttachedFiles, removeAttachedFile, fileUploading, docName, setDocName,
   docLink, setDocLink, uploadMode, setUploadMode, isRecording, isTranscribing,
   completionSuggested, contradictionDetected, isCompleting, testSession,
   userProfile, messagesEndRef, fileInputRef, sendMessage, resetChat,
