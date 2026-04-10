@@ -340,7 +340,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           item.description.toLowerCase().includes(query)
         ),
       }))
-      .filter(section => section.items.length > 0 || (section as any).customContent);
+      .filter(section => section.items.length > 0 || section.label === 'AI AGENTS');
   }, [searchQuery, sections]);
 
   const totalFilteredItems = useMemo(() => 
