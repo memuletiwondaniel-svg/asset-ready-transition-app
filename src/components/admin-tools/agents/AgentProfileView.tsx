@@ -179,6 +179,7 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
               icon={Activity}
               isOpen={performanceOpen}
               onToggle={() => setPerformanceOpen(o => !o)}
+              color="emerald"
             />
           </div>
         </CollapsibleTrigger>
