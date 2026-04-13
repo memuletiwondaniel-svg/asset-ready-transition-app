@@ -171,7 +171,7 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
 
           {/* Action buttons */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {activeTab === 'chat' && subState !== 'setup' && !completionSuggested && (
+            {subState !== 'setup' && !completionSuggested && (
               <Button
                 size="sm"
                 variant="outline"
@@ -190,7 +190,7 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
         </div>
 
         {/* ─── Body ─── */}
-        {activeTab === 'chat' ? (
+        {true ? (
           <div
             className="flex-1 overflow-hidden flex flex-col relative min-h-0"
             onDragEnter={handleDragEnter}
