@@ -1,175 +1,46 @@
 
-# Training Overlay Repair — Final UI/UX Plan
 
-## Diagnosis from the current code
-The current overlay is a custom fixed `<div>` in `AgentTrainingDialog.tsx`, not the shared Radix dialog system. That is why the modal behavior feels off:
-- centering is visually unstable against the sticky page header/background
-- backdrop is custom and not using the app’s standard modal overlay
-- outside click closes, but draft persistence is accidental rather than intentionally designed
-- Train/History switching is split between the card and the overlay, so the interaction model feels inconsistent
-- the setup view is still too tall and airy for an enterprise-grade training modal
-- the history view lives outside the modal while the user expects it to be part of the same focused training workspace
+# Final Plan — Competency-Driven Training Workspace
 
-## Superior design direction
-Move to a true **focus-mode training workspace**:
-- compact launcher on the page
-- one centered modal overlay for both Train and History
-- darkened backdrop with blur
-- click outside / Esc closes the modal
-- closing the modal preserves draft/session state
-- explicit “New session” resets state only when the user asks for it
-- modern segmented Train / History controls with hover + active states
-- no irrelevant tabs like activity/performance inside the training modal
+## Status: Approved by Senior Developer — Ready to Implement
 
-## Files to update
-1. `src/components/admin-tools/agents/AgentTrainingDialog.tsx`
-2. `src/components/admin-tools/agents/AgentTrainingStudio.tsx`
+The plan from the previous round is fully signed off with two minor implementation notes incorporated:
 
-## Change 1 — Rebuild the overlay on top of shared Dialog primitives
-Replace the custom fixed wrapper in `AgentTrainingDialog.tsx` with:
-- `Dialog`
-- `DialogContent`
-- `DialogHeader` / custom header region
+1. **"New" badge**: Derive client-side from `created_at` — no DB column needed. `isNewCompetency(createdAt) = (now - createdAt) < 7 days`.
+2. **Reassess fuzzy matching**: Add explicit instruction to `competency-chat` system prompt to match user-provided names against `current_competencies` by ID, and ask for clarification if no confident match.
 
-Use the existing shared dialog behavior from `src/components/ui/dialog.tsx` so the modal:
-- opens centered
-- gets the standard dark overlay
-- traps focus correctly
-- supports outside-click close reliably
-- feels consistent with the rest of the product
+## Implementation Order (14 steps)
 
-Implementation detail:
-- use a wide desktop modal, roughly `sm:max-w-5xl`
-- use `h-[85vh]` / `max-h-[85vh]`
-- add `overflow-hidden`
-- keep rounded corners and strong shadow
-- use a darker overlay via `overlayClassName="bg-black/70 backdrop-blur-md"`
+1. **DB migration** — `agent_competency_areas` + `agent_competency_updates` tables with RLS
+2. **`competencyLevels.ts`** — shared constant + `getLevelFromProgress()` + `isNewCompetency()`
+3. **`useAgentCompetencies` hook** — React Query CRUD, seeding from specializations, merge/redescribe gap fixes
+4. **`assess-agent-competencies` edge function** — AI assessment triggered on session complete, new competency, description change, reassess
+5. **`CompetencyDonut` + `CompetencyInlineSummary`** — replaces K&T card content (no avatar, donut + top 3 gaps + CTA)
+6. **`CompetencyDrawer` + `CompetencyProfilePanel` + `CompetencyDetailView`** — Sheet side="right" max-w-[720px], 3 tabs, list/detail views
+7. **`AddCompetencyDialog`** — centered dialog with "Save & Assess"
+8. **Wire drawer into `AgentProfileView`** — replace AgentTrainingStudio, pass userName prop
+9. **Wire assessment into `AgentTrainingStudio.completeSession`** — trigger edge function + discovery toast
+10. **Update `AgentTrainingDialog`** — remove History tab, train-only focus
+11. **Fix "All Pending" status** in Sessions tab
+12. **`competency-chat` edge function** — conversational AI with action types, fuzzy name matching
+13. **`CompetencyChat.tsx`** — Ask Fred tab with proposed change cards, reassess handler
+14. **Wire "Ask Fred" tab into `CompetencyDrawer`**
 
-## Change 2 — Preserve draft state intentionally on close
-Do **not** call `resetChat()` when the modal closes from:
-- outside click
-- Esc
-- close button
+## Files
 
-Keep current in-memory state alive:
-- `input`
-- `docName`
-- `docLink`
-- `uploadMode`
-- `attachedFiles`
-- `messages`
-- `subState`
-- `sessionId`
+**12 new**: Migration SQL, `competencyLevels.ts`, `CompetencyDonut.tsx`, `CompetencyInlineSummary.tsx`, `CompetencyDrawer.tsx`, `CompetencyProfilePanel.tsx`, `CompetencyDetailView.tsx`, `AddCompetencyDialog.tsx`, `CompetencyChat.tsx`, `useAgentCompetencies.ts`, `assess-agent-competencies/index.ts`, `competency-chat/index.ts`
 
-Only reset when the user explicitly chooses:
-- “New session”
-- session completion flow that intentionally finalizes and returns to history
+**3 modified**: `AgentProfileView.tsx`, `AgentTrainingStudio.tsx`, `AgentTrainingDialog.tsx`
 
-This gives the resume behavior the user requested.
+## Key Technical Details
 
-## Change 3 — Move Train and History into the modal header
-Unify the experience:
-- the page card remains a compact preview/entry point
-- once opened, the modal contains the real workspace
-- Train and History become segmented controls inside the modal header
+- **Schema**: Two tables with `trigger_type` on audit trail, `linked_session_ids uuid[]` on competencies, RLS for authenticated read / admin write
+- **Merge**: Inherits + deduplicates session IDs from both source rows
+- **Redescribe**: Two-step chain — update description then trigger reassessment
+- **Chat reassess**: `competency-chat` returns `action: { type: 'reassess', competency_id }`, client calls `assess-agent-competencies` directly
+- **Seeding**: From `agentProfiles.specializations` on first load when zero rows exist
+- **"New" badge**: Client-derived from `created_at`, no DB column
+- **Donut**: Recharts `PieChart` with `innerRadius`, 48px (inline) and 64px (drawer) variants
 
-Result:
-- user can switch between Train and History without leaving the overlay
-- the “can’t see train now tab” issue disappears because both modes live in one consistent place
-- history is no longer a detached secondary surface
+Nothing changes in the training chat flow, file upload, agent header, About card, Performance section, governance model, or routing.
 
-Interaction pattern:
-- left side: avatar + modal title/subtitle
-- center/right: segmented tabs for `Train` and `History`
-- far right: `New session` + close
-
-## Change 4 — Upgrade Train/History tabs to enterprise segmented controls
-Replace plain ghost buttons with world-class segmented controls:
-- shared pill container `bg-muted/60 border border-border/50 rounded-xl p-1`
-- active state: `bg-background shadow-sm text-foreground`
-- inactive state: `text-muted-foreground hover:text-foreground hover:bg-background/60`
-- smooth motion: `transition-all duration-200`
-- subtle hover affordance on both tabs
-- icons remain small and consistent
-
-This applies both in the modal and, if retained on the card preview, in the preview controls too.
-
-## Change 5 — Tighten the setup view inside the modal
-The setup area should look like a premium workspace, not a sparse empty state:
-- reduce excess vertical whitespace
-- cap content width to a comfortable reading measure
-- smaller hero avatar
-- stronger hierarchy:
-  - session title input
-  - one-line helper text
-  - compact source toggle
-  - refined upload/link drop zone
-- keep the message composer docked at the bottom
-
-Target behavior:
-- modal feels centered and dense
-- the first usable controls are visible without “dead space”
-- user focus goes immediately to naming/uploading/typing
-
-## Change 6 — Make History a modal panel, not a page replacement
-Render `TrainingHistoryPanel` inside the same dialog body when `activeTab === 'history'`.
-Also:
-- keep the panel height constrained inside modal content
-- allow internal scrolling
-- preserve active draft when switching away from Train
-- include a clear CTA in history header: `Resume draft` if there is unfinished work, and `New session` if user wants to start over
-
-## Change 7 — Improve close behavior and affordances
-Refine modal close interactions:
-- clicking outside closes the modal
-- Esc closes the modal
-- close button in header closes the modal
-- if there is unsaved draft state, do not warn yet unless current UX already has a confirmation pattern; just preserve state and resume on reopen
-- reopening from Train should restore exactly where the user left off
-
-## Change 8 — Keep only training-relevant content in the modal
-Remove or avoid any modal-local UI that suggests unrelated product domains:
-- no activity tabs
-- no performance tabs
-- no analytics-style extras inside the training overlay
-
-The training workspace should contain only:
-- Train
-- History
-- session controls
-- conversation
-- attachments
-- completion flow
-
-## Implementation notes
-### `AgentTrainingStudio.tsx`
-- keep the compact card as launcher/status preview
-- opening Train should open modal and default to `activeTab = 'chat'`
-- opening History should open modal and default to `activeTab = 'history'`
-- keep draft state in the parent studio component
-- `resetChat()` remains explicit, not tied to close
-
-### `AgentTrainingDialog.tsx`
-- convert to shared dialog primitives
-- accept `activeTab` and `setActiveTab` as props from the studio
-- render either setup/chat or history within the same modal shell
-- reuse `TrainingHistoryPanel` here instead of treating history as a separate card-only mode
-- ensure body area uses `min-h-0` and internal scroll regions so centering and overflow behave correctly
-
-## What will not change
-- training data logic
-- session creation logic
-- completion logic
-- upload/link behavior
-- transcript/history data model
-- About / Performance sections
-
-## Expected result
-After implementation, the training experience will behave like a proper enterprise modal:
-- centered on screen
-- darkened, focus-driven backdrop
-- outside click closes cleanly
-- reopening restores draft/session progress
-- Train and History are both accessible inside one polished overlay
-- hover and active states feel modern and intentional
-- no irrelevant tabs or oversized empty layouts
