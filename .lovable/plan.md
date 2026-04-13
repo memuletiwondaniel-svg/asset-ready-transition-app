@@ -1,154 +1,175 @@
 
+# Training Overlay Repair — Final UI/UX Plan
 
-# Challenge + Superior Converged Plan
+## Diagnosis from the current code
+The current overlay is a custom fixed `<div>` in `AgentTrainingDialog.tsx`, not the shared Radix dialog system. That is why the modal behavior feels off:
+- centering is visually unstable against the sticky page header/background
+- backdrop is custom and not using the app’s standard modal overlay
+- outside click closes, but draft persistence is accidental rather than intentionally designed
+- Train/History switching is split between the card and the overlay, so the interaction model feels inconsistent
+- the setup view is still too tall and airy for an enterprise-grade training modal
+- the history view lives outside the modal while the user expects it to be part of the same focused training workspace
 
-## Where the Senior Developer is Correct — Concessions
+## Superior design direction
+Move to a true **focus-mode training workspace**:
+- compact launcher on the page
+- one centered modal overlay for both Train and History
+- darkened backdrop with blur
+- click outside / Esc closes the modal
+- closing the modal preserves draft/session state
+- explicit “New session” resets state only when the user asks for it
+- modern segmented Train / History controls with hover + active states
+- no irrelevant tabs like activity/performance inside the training modal
 
-**Count-based slicing over `max-h` clipping — correct.** The senior dev is right that both `max-h-[4.5rem]` and `max-h-[3.5rem]` are identically fragile. Browser zoom, OS font rendering, and display scaling all shift badge height unpredictably. Array slicing by index is deterministic and zoom-proof. Concede fully — this is the technically superior approach.
+## Files to update
+1. `src/components/admin-tools/agents/AgentTrainingDialog.tsx`
+2. `src/components/admin-tools/agents/AgentTrainingStudio.tsx`
 
-**`+N more` over "Show all" — correct on UX grounds.** "+4 more" communicates quantity; "Show all" communicates nothing. GitHub labels, Linear tags, and Jira assignees all use `+N more`. Concede.
+## Change 1 — Rebuild the overlay on top of shared Dialog primitives
+Replace the custom fixed wrapper in `AgentTrainingDialog.tsx` with:
+- `Dialog`
+- `DialogContent`
+- `DialogHeader` / custom header region
 
-**`text-[11px]` contradiction caught — valid.** My previous plan criticized `text-[11px]` then used it in the K&T sub-label. The correct resolution: `text-[10px]` for all sub-labels and meta text. `text-xs` (12px) for anything needing comfortable readability. No `text-[11px]` anywhere.
+Use the existing shared dialog behavior from `src/components/ui/dialog.tsx` so the modal:
+- opens centered
+- gets the standard dark overlay
+- traps focus correctly
+- supports outside-click close reliably
+- feels consistent with the rest of the product
 
-## Where the Senior Developer's Plan Has Gaps
+Implementation detail:
+- use a wide desktop modal, roughly `sm:max-w-5xl`
+- use `h-[85vh]` / `max-h-[85vh]`
+- add `overflow-hidden`
+- keep rounded corners and strong shadow
+- use a darker overlay via `overlayClassName="bg-black/70 backdrop-blur-md"`
 
-### 1. Section headers still use `text-[11px]` — must fix
+## Change 2 — Preserve draft state intentionally on close
+Do **not** call `resetChat()` when the modal closes from:
+- outside click
+- Esc
+- close button
 
-The current `SectionHeader` component (line 42) uses `text-[11px] font-semibold uppercase tracking-wider`. The senior dev's plan specifies `text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50` for section headers — but then also says "text-[11px] must not appear anywhere." The section header component itself still has `text-[11px]` and needs to be updated as part of this implementation.
+Keep current in-memory state alive:
+- `input`
+- `docName`
+- `docLink`
+- `uploadMode`
+- `attachedFiles`
+- `messages`
+- `subState`
+- `sessionId`
 
-### 2. `SPEC_VISIBLE = 6` needs validation against actual data
+Only reset when the user explicitly chooses:
+- “New session”
+- session completion flow that intentionally finalizes and returns to history
 
-Fred has **8 specializations** and **3 limitations**. With `SPEC_VISIBLE = 6`, Fred shows 6 of 8 specs with "+2 more." That works. But Ivan has potentially 8+ specializations too. The count of 6 is reasonable — it fits ~2 visual rows of badges at current sizing. For limitations, Fred has only 3 — so `LIMIT_VISIBLE = 4` means no overflow trigger for Fred. That's fine — the toggle only appears when needed. Validated.
+This gives the resume behavior the user requested.
 
-### 3. The senior dev's plan doesn't address the "Show more" bio detection
+## Change 3 — Move Train and History into the modal header
+Unify the experience:
+- the page card remains a compact preview/entry point
+- once opened, the modal contains the real workspace
+- Train and History become segmented controls inside the modal header
 
-The plan says "Only show the toggle if the bio actually exceeds 3 lines" and suggests character length (~200 chars) or `useRef + scrollHeight`. Fred's bio is 430+ characters — it will always need clamping. Ivan's bio is 700+ characters. But character count is a poor proxy for rendered line count (depends on container width and font). The `useRef` approach is correct but adds complexity. **Pragmatic solution**: always show the toggle. If the bio fits in 3 lines, `line-clamp-3` has no visible effect and "Show more" is a no-op that harmlessly toggles. This avoids measurement complexity entirely. But for polish, a simple `useRef` check is worth adding — `scrollHeight > clientHeight` on the paragraph after initial render.
+Result:
+- user can switch between Train and History without leaving the overlay
+- the “can’t see train now tab” issue disappears because both modes live in one consistent place
+- history is no longer a detached secondary surface
 
-### 4. K&T card wrapper creates double padding
+Interaction pattern:
+- left side: avatar + modal title/subtitle
+- center/right: segmented tabs for `Train` and `History`
+- far right: `New session` + close
 
-The senior dev wraps `<AgentTrainingStudio>` in `<Card><CardContent className="p-4">` — but the compact row inside also has `py-2 px-4`. That's 16px outer + 8px/16px inner = 24px/32px total padding. Excessive for a single-row layout. **Fix**: use `p-0` on the CardContent wrapper since the inner row handles its own padding, OR remove padding from the inner row and let the card provide it. One layer of padding, not two.
+## Change 4 — Upgrade Train/History tabs to enterprise segmented controls
+Replace plain ghost buttons with world-class segmented controls:
+- shared pill container `bg-muted/60 border border-border/50 rounded-xl p-1`
+- active state: `bg-background shadow-sm text-foreground`
+- inactive state: `text-muted-foreground hover:text-foreground hover:bg-background/60`
+- smooth motion: `transition-all duration-200`
+- subtle hover affordance on both tabs
+- icons remain small and consistent
 
----
+This applies both in the modal and, if retained on the card preview, in the preview controls too.
 
-## Definitive Converged Plan
+## Change 5 — Tighten the setup view inside the modal
+The setup area should look like a premium workspace, not a sparse empty state:
+- reduce excess vertical whitespace
+- cap content width to a comfortable reading measure
+- smaller hero avatar
+- stronger hierarchy:
+  - session title input
+  - one-line helper text
+  - compact source toggle
+  - refined upload/link drop zone
+- keep the message composer docked at the bottom
 
-### Files Modified: 2
-- `src/components/admin-tools/agents/AgentProfileView.tsx`
-- `src/components/admin-tools/agents/AgentTrainingStudio.tsx`
+Target behavior:
+- modal feels centered and dense
+- the first usable controls are visible without “dead space”
+- user focus goes immediately to naming/uploading/typing
 
-### Fix 1 — Bio: `line-clamp-3` with expand toggle
+## Change 6 — Make History a modal panel, not a page replacement
+Render `TrainingHistoryPanel` inside the same dialog body when `activeTab === 'history'`.
+Also:
+- keep the panel height constrained inside modal content
+- allow internal scrolling
+- preserve active draft when switching away from Train
+- include a clear CTA in history header: `Resume draft` if there is unfinished work, and `New session` if user wants to start over
 
-Add `const [bioExpanded, setBioExpanded] = React.useState(false)` to `AgentProfileView`.
+## Change 7 — Improve close behavior and affordances
+Refine modal close interactions:
+- clicking outside closes the modal
+- Esc closes the modal
+- close button in header closes the modal
+- if there is unsaved draft state, do not warn yet unless current UX already has a confirmation pattern; just preserve state and resume on reopen
+- reopening from Train should restore exactly where the user left off
 
-**Line 85**: Replace the `<p>` with:
-```tsx
-<p className={cn("text-sm text-muted-foreground/80 leading-relaxed",
-  !bioExpanded && "line-clamp-3")}>
-  {agent.introduction}
-</p>
-<button
-  onClick={() => setBioExpanded(e => !e)}
-  className="text-[10px] text-muted-foreground/60 hover:text-foreground mt-1 transition-colors duration-150"
->
-  {bioExpanded ? "Show less" : "Show more"}
-</button>
-```
+## Change 8 — Keep only training-relevant content in the modal
+Remove or avoid any modal-local UI that suggests unrelated product domains:
+- no activity tabs
+- no performance tabs
+- no analytics-style extras inside the training overlay
 
-Always render the toggle — if bio fits in 3 lines, it's a harmless no-op. Avoids `useRef` measurement complexity.
+The training workspace should contain only:
+- Train
+- History
+- session controls
+- conversation
+- attachments
+- completion flow
 
-### Fix 2 — Specializations: count-based slicing with `+N more`
+## Implementation notes
+### `AgentTrainingStudio.tsx`
+- keep the compact card as launcher/status preview
+- opening Train should open modal and default to `activeTab = 'chat'`
+- opening History should open modal and default to `activeTab = 'history'`
+- keep draft state in the parent studio component
+- `resetChat()` remains explicit, not tied to close
 
-Add `const [showAllSpecs, setShowAllSpecs] = React.useState(false)` state.
+### `AgentTrainingDialog.tsx`
+- convert to shared dialog primitives
+- accept `activeTab` and `setActiveTab` as props from the studio
+- render either setup/chat or history within the same modal shell
+- reuse `TrainingHistoryPanel` here instead of treating history as a separate card-only mode
+- ensure body area uses `min-h-0` and internal scroll regions so centering and overflow behave correctly
 
-**Lines 118-128**: Replace with array-sliced rendering:
-- `SPEC_VISIBLE = 6` — fits ~2 rows of badges
-- Show `specializations.slice(0, SPEC_VISIBLE)` when collapsed
-- Show all when expanded
-- Toggle text: `+{hiddenCount} more` / `Show less` in `text-[10px] text-muted-foreground/60`
+## What will not change
+- training data logic
+- session creation logic
+- completion logic
+- upload/link behavior
+- transcript/history data model
+- About / Performance sections
 
-### Fix 3 — Limitations: same count-based pattern
-
-Add `const [showAllLimits, setShowAllLimits] = React.useState(false)` state.
-
-**Lines 137-147**: Same pattern, `LIMIT_VISIBLE = 4`. Limitations are already `<Badge variant="outline">` (confirmed at lines 139-145) — no conversion needed.
-
-### Fix 4 — Tighten About card spacing
-
-| Element | Current | New |
-|---------|---------|-----|
-| CardContent padding (line 84) | `p-6` | `p-5` |
-| Bio bottom margin (line 85) | `mb-4` | `mb-3` |
-| Works-with section (line 90) | `mb-4 pb-4` | `mb-3 pb-3` |
-| Spec/Limit grid gap (line 110) | `gap-4` | `gap-3` |
-
-### Fix 5 — Section header typography (SectionHeader component, line 42)
-
-Current: `text-[11px] font-semibold uppercase tracking-wider`
-New: `text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50`
-
-Consistent with sidebar standard. Eliminates `text-[11px]` from the codebase.
-
-### Change 1 — Knowledge & Training: card wrapper
-
-**Lines 168-170**: Wrap in matching card:
-```tsx
-<Card className="border-border/40 shadow-sm bg-card/80 backdrop-blur-sm">
-  <CardContent className="p-0">
-    <AgentTrainingStudio agent={agent} />
-  </CardContent>
-</Card>
-```
-
-`p-0` on CardContent — the inner layout handles its own padding. No double-padding.
-
-### Change 2 — Training Studio: compact single-row layout
-
-**Lines 626-642** of `AgentTrainingStudio.tsx`: Replace centered avatar+button with horizontal row:
-
-```tsx
-<div className="flex items-center gap-3 py-3 px-4">
-  <div className="w-8 h-8 rounded-full overflow-hidden border border-border/20 shrink-0">
-    <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
-  </div>
-  <div className="flex-1 min-w-0">
-    <p className="text-sm font-semibold text-foreground leading-tight">Train {agent.name}</p>
-    <p className="text-[10px] text-muted-foreground mt-0.5">
-      {completedSessions.length > 0
-        ? `${completedSessions.length} session${completedSessions.length !== 1 ? 's' : ''} completed · Last: ${lastSessionDate}`
-        : 'No sessions yet · Start the first session'}
-    </p>
-  </div>
-  <div className="flex items-center gap-2 shrink-0">
-    <Button onClick={() => setDialogOpen(true)} size="sm" className="h-7 text-xs gap-1.5">
-      <BookOpen className="h-3.5 w-3.5" /> Train
-    </Button>
-    <Button onClick={() => setActiveTab('history')} variant="ghost" size="sm" className="h-7 text-xs gap-1.5">
-      <History className="h-3.5 w-3.5" /> History
-    </Button>
-  </div>
-</div>
-```
-
-Sub-label uses `text-[10px]` — not `text-[11px]`.
-
-### Change 3 — Remove floating tab bar
-
-**Lines 605-621**: Remove the `<TabsList>` container entirely. Keep `<Tabs>` wrapper and `<TabsContent>` — the two buttons drive `setActiveTab` directly.
-
-Also remove the "New Session" button from the tab bar (line 616-620) — relocate it into the history tab content if needed, or keep it as-is within the tab content area.
-
-### What does NOT change
-- Agent header, avatar, name, Active badge
-- Performance section
-- Collapse/expand behavior
-- Section header color branding (blue/amber/emerald)
-- Training dialog overlay
-- Routing or data logic
-- `text-[11px]` must not appear anywhere in final output
-
-### Corrections over the senior dev's plan
-1. **Double padding fix**: `p-0` on CardContent, not `p-4` — inner row handles padding
-2. **Section header `text-[11px]` → `text-[10px]`** — the component itself needed updating
-3. **Bio toggle always rendered** — avoids `useRef` measurement complexity
-4. **Validated data**: Fred has 8 specs, 3 limits — `SPEC_VISIBLE=6` and `LIMIT_VISIBLE=4` are correct thresholds
-
+## Expected result
+After implementation, the training experience will behave like a proper enterprise modal:
+- centered on screen
+- darkened, focus-driven backdrop
+- outside click closes cleanly
+- reopening restores draft/session progress
+- Train and History are both accessible inside one polished overlay
+- hover and active states feel modern and intentional
+- no irrelevant tabs or oversized empty layouts
