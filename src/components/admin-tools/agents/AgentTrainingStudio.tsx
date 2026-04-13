@@ -65,7 +65,6 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent, dialog
   const [testSession, setTestSession] = useState<any>(null);
   const [testQuestionIndex, setTestQuestionIndex] = useState(0);
 
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
