@@ -131,14 +131,13 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [tenantSetupOpen, setTenantSetupOpen] = useState(false);
   const COLLAPSED_SECTIONS_KEY = 'orsh-admin-collapsed-sections-v2';
-  const COLLAPSED_SECTIONS_LEGACY_KEY =
+  const COLLAPSED_SECTIONS_LEGACY_KEY = 'orsh-admin-collapsed-sections';
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => {
     try {
       const saved = localStorage.getItem(COLLAPSED_SECTIONS_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as string[];
-        const migrated = parsed.map(s => s === 'AI AGENT' ? 'AI AGENTS' : s);
-        return new Set(migrated);
+        return new Set(parsed);
       }
     } catch {}
     return new Set([
@@ -634,7 +633,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
             </div>
           </div>
         </div>
-        {/* Content Skeleton — matches current sectioned design */}
+        {/* Content Skeleton â matches current sectioned design */}
         <div className="flex-1 overflow-auto">
           <div className="container pt-4 md:pt-6 pb-20 md:pb-8 max-w-6xl mx-auto px-4 md:px-6">
             <div className="flex items-center justify-end mb-6 md:mb-8">
