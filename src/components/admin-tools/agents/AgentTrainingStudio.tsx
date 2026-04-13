@@ -466,87 +466,46 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
   }
 
   return (
-    <Card className="border-border/40 shadow-sm bg-card/80 backdrop-blur-sm">
-      <CardContent className="p-0">
-        <div className="flex items-center gap-3 py-3 px-4">
-          <div className="w-8 h-8 rounded-full overflow-hidden border border-border/20 shrink-0">
-            <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground leading-tight">Train {agent.name}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              {completedSessions.length > 0
-                ? `${completedSessions.length} session${completedSessions.length !== 1 ? 's' : ''} completed · Last: ${lastSessionDate}`
-                : 'No sessions yet · Start the first session'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              onClick={() => { setActiveTab('chat'); setDialogOpen(true); }}
-              size="sm"
-              className="h-7 text-xs gap-1.5"
-            >
-              <BookOpen className="h-3.5 w-3.5" />
-              Train
-            </Button>
-            <Button
-              onClick={() => { setActiveTab('history'); setDialogOpen(true); }}
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs gap-1.5"
-            >
-              <History className="h-3.5 w-3.5" />
-              History
-            </Button>
-          </div>
-        </div>
-
-        {/* Dialog — preserves draft on close */}
-        <AgentTrainingDialog
-          agent={agent}
-          open={dialogOpen}
-          onClose={() => setDialogOpen(false)}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          subState={subState}
-          messages={messages}
-          input={input}
-          setInput={setInput}
-          isStreaming={isStreaming}
-          attachedFiles={attachedFiles}
-          setAttachedFiles={setAttachedFiles}
-          removeAttachedFile={removeAttachedFile}
-          fileUploading={fileUploading}
-          docName={docName}
-          setDocName={setDocName}
-          docLink={docLink}
-          setDocLink={setDocLink}
-          uploadMode={uploadMode}
-          setUploadMode={setUploadMode}
-          isRecording={isRecording}
-          isTranscribing={isTranscribing}
-          completionSuggested={completionSuggested}
-          contradictionDetected={contradictionDetected}
-          isCompleting={isCompleting}
-          testSession={testSession}
-          userProfile={userProfile}
-          messagesEndRef={messagesEndRef}
-          fileInputRef={fileInputRef}
-          sendMessage={sendMessage}
-          resetChat={resetChat}
-          completeSession={completeSession}
-          setCompletionSuggested={setCompletionSuggested}
-          toggleRecording={toggleRecording}
-          handleFileSelect={handleFileSelect}
-          handleFileDrop={handleFileDrop}
-          sendDisabled={sendDisabled}
-          sessions={sessions}
-          sessionsLoading={sessionsLoading}
-          onRetrain={handleRetrain}
-          onTest={handleTest}
-        />
-      </CardContent>
-    </Card>
+    <>
+      {/* Dialog — preserves draft on close */}
+      <AgentTrainingDialog
+        agent={agent}
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        subState={subState}
+        messages={messages}
+        input={input}
+        setInput={setInput}
+        isStreaming={isStreaming}
+        attachedFiles={attachedFiles}
+        setAttachedFiles={setAttachedFiles}
+        removeAttachedFile={removeAttachedFile}
+        fileUploading={fileUploading}
+        docName={docName}
+        setDocName={setDocName}
+        docLink={docLink}
+        setDocLink={setDocLink}
+        uploadMode={uploadMode}
+        setUploadMode={setUploadMode}
+        isRecording={isRecording}
+        isTranscribing={isTranscribing}
+        completionSuggested={completionSuggested}
+        contradictionDetected={contradictionDetected}
+        isCompleting={isCompleting}
+        testSession={testSession}
+        userProfile={userProfile}
+        messagesEndRef={messagesEndRef}
+        fileInputRef={fileInputRef}
+        sendMessage={sendMessage}
+        resetChat={resetChat}
+        completeSession={completeSession}
+        setCompletionSuggested={setCompletionSuggested}
+        toggleRecording={toggleRecording}
+        handleFileSelect={handleFileSelect}
+        handleFileDrop={handleFileDrop}
+        sendDisabled={sendDisabled}
+      />
+    </>
   );
 };
 
