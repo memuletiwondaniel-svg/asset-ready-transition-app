@@ -1,21 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { History, Paperclip, Mic, Send, MicOff, FileText, CheckCircle2, Loader2, Upload, Lock, AlertTriangle, FlaskConical, X, Link2, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { cn } from '@/lib/utils';
 import type { AgentProfile } from '@/data/agentProfiles';
-import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { usePermissions } from '@/hooks/usePermissions';
 import { type AnonymizationRule } from './training/AnonymizationRulesInline';
-import TrainingHistoryPanel from './training/TrainingHistoryPanel';
 import AgentTrainingDialog from './AgentTrainingDialog';
-import { Card, CardContent } from '@/components/ui/card';
 
 interface TrainingMessage {
   role: 'user' | 'assistant';
@@ -33,6 +24,7 @@ interface TrainingMetadata {
 
 interface AgentTrainingStudioProps {
   agent: AgentProfile;
+  onOpenTraining?: () => void;
 }
 
 type ChatSubState = 'setup' | 'active' | 'testing';
