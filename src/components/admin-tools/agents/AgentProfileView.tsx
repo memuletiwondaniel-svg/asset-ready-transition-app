@@ -8,6 +8,12 @@ import type { AgentProfile } from '@/data/agentProfiles';
 import { agentProfiles } from '@/data/agentProfiles';
 import AgentTrainingStudio from './AgentTrainingStudio';
 import AgentMonitorCard from './AgentMonitorCard';
+import CompetencyInlineSummary from './training/CompetencyInlineSummary';
+import CompetencyDrawer from './training/CompetencyDrawer';
+import { useAgentCompetencies } from '@/hooks/useAgentCompetencies';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
 
 interface AgentProfileViewProps {
   agent: AgentProfile;
@@ -66,6 +72,34 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
   const [showAllSpecs, setShowAllSpecs] = React.useState(false);
   const [showAllLimits, setShowAllLimits] = React.useState(false);
 
+  // Competency + Drawer state
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [trainingDialogOpen, setTrainingDialogOpen] = React.useState(false);
+
+  const { competencies, isLoading: compLoading, overallProgress } = useAgentCompetencies(agent.code, agent);
+
+  // Sessions query (shared between drawer and studio)
+  const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
+    queryKey: ['agent-training-sessions', agent.code],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('agent_training_sessions')
+        .select('*')
+        .eq('agent_code', agent.code)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const completedSessions = sessions.filter((s: any) => s.status === 'completed');
+  const lastSessionDate = completedSessions.length > 0
+    ? format(new Date(completedSessions[0].completed_at || completedSessions[0].created_at), 'dd MMM yyyy')
+    : '';
+
   const collaborators = agent.worksWith
     .map(code => agentProfiles.find(a => a.code === code))
     .filter(Boolean) as AgentProfile[];
@@ -75,6 +109,14 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
 
   const visibleLimits = showAllLimits ? agent.limitations : agent.limitations.slice(0, LIMIT_VISIBLE);
   const hiddenLimitCount = agent.limitations.length - LIMIT_VISIBLE;
+
+  const handleRetrain = (session: any) => {
+    setTrainingDialogOpen(true);
+  };
+
+  const handleTest = (session: any) => {
+    setTrainingDialogOpen(true);
+  };
 
   return (
     <div className="space-y-2 animate-fade-in">
@@ -221,7 +263,14 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
         <CollapsibleContent>
           <Card className="border-border/40 shadow-sm bg-card/80 backdrop-blur-sm">
             <CardContent className="p-0">
-              <AgentTrainingStudio agent={agent} />
+              <CompetencyInlineSummary
+                competencies={competencies}
+                overallProgress={overallProgress}
+                sessionsCount={completedSessions.length}
+                lastSessionDate={lastSessionDate}
+                isLoading={compLoading}
+                onOpenWorkspace={() => setDrawerOpen(true)}
+              />
             </CardContent>
           </Card>
         </CollapsibleContent>
@@ -244,6 +293,25 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
           <AgentMonitorCard agent={agent} />
         </CollapsibleContent>
       </Collapsible>
+
+      {/* Competency Drawer */}
+      <CompetencyDrawer
+        agent={agent}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        onOpenTraining={() => setTrainingDialogOpen(true)}
+        sessions={sessions}
+        sessionsLoading={sessionsLoading}
+        onRetrain={handleRetrain}
+        onTest={handleTest}
+      />
+
+      {/* Training Dialog (train-only, no history tab) */}
+      <AgentTrainingStudio
+        agent={agent}
+        dialogOpen={trainingDialogOpen}
+        onDialogClose={() => setTrainingDialogOpen(false)}
+      />
     </div>
   );
 };
