@@ -14,6 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_competency_areas: {
+        Row: {
+          agent_code: string
+          ai_assessment_notes: string | null
+          created_at: string
+          description: string | null
+          id: string
+          last_assessed_at: string | null
+          linked_session_ids: string[] | null
+          name: string
+          progress: number
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_code: string
+          ai_assessment_notes?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          last_assessed_at?: string | null
+          linked_session_ids?: string[] | null
+          name: string
+          progress?: number
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_code?: string
+          ai_assessment_notes?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          last_assessed_at?: string | null
+          linked_session_ids?: string[] | null
+          name?: string
+          progress?: number
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agent_competency_updates: {
+        Row: {
+          assessment_notes: string | null
+          competency_id: string
+          created_at: string
+          id: string
+          new_progress: number | null
+          previous_progress: number | null
+          session_id: string | null
+          trigger_type: string
+        }
+        Insert: {
+          assessment_notes?: string | null
+          competency_id: string
+          created_at?: string
+          id?: string
+          new_progress?: number | null
+          previous_progress?: number | null
+          session_id?: string | null
+          trigger_type: string
+        }
+        Update: {
+          assessment_notes?: string | null
+          competency_id?: string
+          created_at?: string
+          id?: string
+          new_progress?: number | null
+          previous_progress?: number | null
+          session_id?: string | null
+          trigger_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_competency_updates_competency_id_fkey"
+            columns: ["competency_id"]
+            isOneToOne: false
+            referencedRelation: "agent_competency_areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_foundation_knowledge: {
         Row: {
           agent_code: string | null
