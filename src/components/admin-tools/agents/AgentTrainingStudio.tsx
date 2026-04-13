@@ -24,7 +24,8 @@ interface TrainingMetadata {
 
 interface AgentTrainingStudioProps {
   agent: AgentProfile;
-  onOpenTraining?: () => void;
+  dialogOpen: boolean;
+  onDialogClose: () => void;
 }
 
 type ChatSubState = 'setup' | 'active' | 'testing';
@@ -32,7 +33,7 @@ type ChatSubState = 'setup' | 'active' | 'testing';
 const ACCEPTED_MIME = '.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.webp';
 const MAX_FILE_SIZE = 80 * 1024 * 1024;
 
-const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
+const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent, dialogOpen, onDialogClose }) => {
   const { hasPermission, isLoading: permLoading } = usePermissions();
   const canTrain = !permLoading && hasPermission('access_admin');
 
