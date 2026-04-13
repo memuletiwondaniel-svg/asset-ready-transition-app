@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Paperclip, Mic, MicOff, FileText, CheckCircle2, Loader2,
   Upload, Lock, AlertTriangle, FlaskConical, X, Link2, ArrowUp,
-  BookOpen, History,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AgentProfile } from '@/data/agentProfiles';
@@ -15,7 +15,7 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
-import TrainingHistoryPanel from './training/TrainingHistoryPanel';
+
 
 // Custom h2 renderer for training message section styling
 const trainingH2Renderer = ({ children, ...props }: any) => {
