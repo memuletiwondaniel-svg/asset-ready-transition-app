@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-// Tabs removed — using simple conditional rendering
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,6 +15,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { type AnonymizationRule } from './training/AnonymizationRulesInline';
 import TrainingHistoryPanel from './training/TrainingHistoryPanel';
 import AgentTrainingDialog from './AgentTrainingDialog';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface TrainingMessage {
   role: 'user' | 'assistant';
@@ -40,25 +40,11 @@ type ChatSubState = 'setup' | 'active' | 'testing';
 const ACCEPTED_MIME = '.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.webp';
 const MAX_FILE_SIZE = 80 * 1024 * 1024;
 
-// Custom h2 renderer for training message section styling
-const trainingH2Renderer = ({ children, ...props }: any) => {
-  const text = String(children).toLowerCase();
-  let section = 'default';
-  if (text.includes('understood')) section = 'understood';
-  else if (text.includes('core facts')) section = 'facts';
-  else if (text.includes('procedures')) section = 'procedures';
-  else if (text.includes('terminology')) section = 'terminology';
-  else if (text.includes('decision rules')) section = 'rules';
-  else if (text.includes('confidence')) section = 'confidence';
-  else if (text.includes('clarifying questions')) section = 'questions';
-  return <h2 data-section={section} {...props}>{children}</h2>;
-};
-
 const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
   const { hasPermission, isLoading: permLoading } = usePermissions();
   const canTrain = !permLoading && hasPermission('access_admin');
 
-  const [activeTab, setActiveTab] = useState('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
   const [subState, setSubState] = useState<ChatSubState>('setup');
   const [messages, setMessages] = useState<TrainingMessage[]>([]);
   const [input, setInput] = useState('');
@@ -70,32 +56,24 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
   const [fileUploading, setFileUploading] = useState(false);
   const [fileStoragePaths, setFileStoragePaths] = useState<string[]>([]);
 
-  // Setup form state (hidden from UI, kept for API compatibility)
   const [docName, setDocName] = useState('');
   const [docType, setDocType] = useState('');
   const [docDomain, setDocDomain] = useState('');
   const [docRevision, setDocRevision] = useState('');
   const [anonymizationRules, setAnonymizationRules] = useState<AnonymizationRule[]>([]);
 
-  // Upload/link toggle
   const [uploadMode, setUploadMode] = useState<'upload' | 'link'>('upload');
   const [docLink, setDocLink] = useState('');
 
-  // Session state
   const [completionSuggested, setCompletionSuggested] = useState(false);
   const [contradictionDetected, setContradictionDetected] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
 
-  // Testing state
   const [testSession, setTestSession] = useState<any>(null);
   const [testQuestionIndex, setTestQuestionIndex] = useState(0);
 
-  // Dialog + user profile
   const [dialogOpen, setDialogOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
-
-  // Track if user has started engaging (typing or attaching)
-  const hasEngaged = input.trim().length > 0 || attachedFiles.length > 0 || !!docLink.trim();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -128,7 +106,6 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Fetch user profile for avatar
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -228,7 +205,6 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
 
     if (attachedFiles.length > 0) {
       fileNames = attachedFiles.map(f => f.name);
-      // For the first image file, encode as base64 for the API
       const firstImage = attachedFiles.find(f => f.type.startsWith('image/'));
       if (firstImage) {
         const reader = new FileReader();
@@ -236,11 +212,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
           reader.onload = () => resolve(reader.result as string);
           reader.readAsDataURL(firstImage);
         });
-        fileData = {
-          base64,
-          mime_type: firstImage.type,
-          filename: firstImage.name,
-        };
+        fileData = { base64, mime_type: firstImage.type, filename: firstImage.name };
       }
     }
 
@@ -261,7 +233,6 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
 
     let currentSessionId = sessionId;
 
-    // Lazy session creation on first send — optimistic transition
     if (!currentSessionId && subState === 'setup') {
       setSubState('active');
       try {
@@ -471,231 +442,111 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
     setDialogOpen(true);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
   const sendDisabled = isStreaming || fileUploading || isTranscribing || (!input.trim() && attachedFiles.length === 0);
 
-  // Read-only mode for non-admin users
   if (!permLoading && !canTrain) {
     return (
-      <div className="h-full flex flex-col">
-        <div className="px-5 pt-4 pb-3">
-          <p className="text-sm font-semibold text-foreground">Knowledge Base — {agent.name}</p>
-        </div>
-        <div className="flex-1 overflow-y-auto px-5 pb-5">
-          <TrainingHistoryPanel
-            sessions={sessions}
-            agentCode={agent.code}
-            agentName={agent.name}
-            readOnly={true}
-            isLoading={sessionsLoading}
-          />
-        </div>
-      </div>
+      <Card className="border-border/40 shadow-sm bg-card/80 backdrop-blur-sm">
+        <CardContent className="p-0">
+          <div className="px-5 pt-4 pb-3">
+            <p className="text-sm font-semibold text-foreground">Knowledge Base — {agent.name}</p>
+          </div>
+          <div className="overflow-y-auto max-h-[400px] px-5 pb-5">
+            <TrainingHistoryPanel
+              sessions={sessions}
+              agentCode={agent.code}
+              agentName={agent.name}
+              readOnly={true}
+              isLoading={sessionsLoading}
+            />
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  // Shared input bar component
-  const renderInputBar = () => (
-    <div className="shadow-[0_-1px_0_hsl(var(--border)/0.3)] px-4 py-2.5 backdrop-blur-sm bg-card/80">
-      {attachedFiles.length > 0 && subState !== 'setup' && (
-        <div className="flex flex-wrap items-center gap-2 mb-2 px-2">
-          {attachedFiles.map((file, i) => (
-            <Badge key={i} variant="secondary" className="text-[10px] gap-1 py-0.5">
-              <FileText className="h-3 w-3" />
-              {file.name}
-              <button onClick={() => removeAttachedFile(i)} className="ml-1 hover:text-destructive">×</button>
-            </Badge>
-          ))}
-        </div>
-      )}
-      <div className="flex items-end gap-1.5">
-        <input ref={fileInputRef} type="file" accept={ACCEPTED_MIME} onChange={handleFileSelect} multiple className="hidden" />
-        <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground">
-          <Paperclip className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost" size="icon" onClick={toggleRecording}
-          className={cn('h-8 w-8 shrink-0 relative', isRecording ? 'text-destructive animate-pulse' : 'text-muted-foreground hover:text-foreground')}
-        >
-          {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-          {isTranscribing && (
-            <span className="absolute -top-1 -right-1 text-[8px] bg-primary text-primary-foreground px-1 rounded">STT</span>
-          )}
-        </Button>
-        <Textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={subState === 'setup' ? `Describe what ${agent.name} should learn...` : `Continue training ${agent.name}...`}
-          className="min-h-[38px] max-h-[120px] resize-none text-sm border-border/40"
-          rows={1}
-        />
-        <Button size="icon" onClick={sendMessage} disabled={sendDisabled} className="h-8 w-8 shrink-0">
-          {isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-        </Button>
-      </div>
-    </div>
-  );
-
-  // Shared message list renderer
-  const renderMessages = () => (
-    <>
-      {messages.map((msg, i) => (
-        <div key={i} className={cn('flex gap-2.5', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
-          {msg.role === 'assistant' && (
-            <div className="w-7 h-7 rounded-full overflow-hidden border border-border/30 shrink-0 mt-0.5">
-              <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
-            </div>
-          )}
-          <div className={cn(
-            'max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm',
-            msg.role === 'user'
-              ? 'bg-primary text-primary-foreground rounded-br-md'
-              : 'bg-muted/60 text-foreground rounded-bl-md border border-border/30'
-          )}>
-            {msg.attachment && (
-              <div className="flex items-center gap-1.5 mb-1.5 text-xs opacity-80">
-                <FileText className="h-3 w-3" />{msg.attachment.name}
-              </div>
-            )}
-            {msg.role === 'assistant' ? (
-              <div className="training-message prose prose-sm dark:prose-invert max-w-none [&>p]:mb-1.5 [&>p:last-child]:mb-0">
-                <ReactMarkdown components={{ h2: trainingH2Renderer }}>{msg.content}</ReactMarkdown>
-              </div>
-            ) : (
-              <p className="whitespace-pre-wrap">{msg.content}</p>
-            )}
-            <p className={cn('text-[9px] mt-1', msg.role === 'user' ? 'text-primary-foreground/60' : 'text-muted-foreground')}>
-              {format(msg.timestamp, 'HH:mm')}
-            </p>
-          </div>
-        </div>
-      ))}
-
-      {isStreaming && (
-        <div className="flex gap-2.5 justify-start">
-          <div className="w-7 h-7 rounded-full overflow-hidden border border-border/30 shrink-0 mt-0.5">
+  return (
+    <Card className="border-border/40 shadow-sm bg-card/80 backdrop-blur-sm">
+      <CardContent className="p-0">
+        <div className="flex items-center gap-3 py-3 px-4">
+          <div className="w-8 h-8 rounded-full overflow-hidden border border-border/20 shrink-0">
             <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
           </div>
-          <div className="bg-muted/60 rounded-2xl rounded-bl-md px-3.5 py-2.5 border border-border/30">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">{agent.name} is thinking</span>
-              <div className="flex gap-1">
-                <span className="w-1.5 h-1.5 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-1.5 h-1.5 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-1.5 h-1.5 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-            </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground leading-tight">Train {agent.name}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {completedSessions.length > 0
+                ? `${completedSessions.length} session${completedSessions.length !== 1 ? 's' : ''} completed · Last: ${lastSessionDate}`
+                : 'No sessions yet · Start the first session'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              onClick={() => { setActiveTab('chat'); setDialogOpen(true); }}
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              Train
+            </Button>
+            <Button
+              onClick={() => { setActiveTab('history'); setDialogOpen(true); }}
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+            >
+              <History className="h-3.5 w-3.5" />
+              History
+            </Button>
           </div>
         </div>
-      )}
-      <div ref={messagesEndRef} />
-    </>
-  );
 
-  return (
-    <div className="h-full flex flex-col">
-      <div className="flex-1 overflow-hidden flex flex-col">
-        {activeTab === 'chat' ? (
-          <div className="flex items-center gap-3 py-3 px-4">
-            <div className="w-8 h-8 rounded-full overflow-hidden border border-border/20 shrink-0">
-              <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground leading-tight">Train {agent.name}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">
-                {completedSessions.length > 0
-                  ? `${completedSessions.length} session${completedSessions.length !== 1 ? 's' : ''} completed · Last: ${lastSessionDate}`
-                  : 'No sessions yet · Start the first session'}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button onClick={() => setDialogOpen(true)} size="sm" className="h-7 text-xs gap-1.5">
-                <BookOpen className="h-3.5 w-3.5" />
-                Train
-              </Button>
-              <Button onClick={() => setActiveTab('history')} variant="ghost" size="sm" className="h-7 text-xs gap-1.5">
-                <History className="h-3.5 w-3.5" />
-                History
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-border/30">
-              <Button onClick={() => setActiveTab('chat')} variant="ghost" size="sm" className="h-7 text-xs gap-1.5">
-                <BookOpen className="h-3.5 w-3.5" />
-                Train
-              </Button>
-              <span className="text-[10px] text-muted-foreground/40">·</span>
-              <span className="text-xs font-medium text-foreground">History</span>
-              <div className="flex-1" />
-              {subState !== 'setup' && (
-                <Button size="sm" variant="ghost" onClick={resetChat} className="text-xs h-7 shrink-0">
-                  + New Session
-                </Button>
-              )}
-            </div>
-            <div className="overflow-y-auto max-h-[400px] px-4 py-3">
-              <TrainingHistoryPanel
-                sessions={sessions}
-                agentCode={agent.code}
-                agentName={agent.name}
-                readOnly={false}
-                onRetrain={handleRetrain}
-                onTest={handleTest}
-                isLoading={sessionsLoading}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Training Dialog Overlay */}
-      <AgentTrainingDialog
-        agent={agent}
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        subState={subState}
-        messages={messages}
-        input={input}
-        setInput={setInput}
-        isStreaming={isStreaming}
-        attachedFiles={attachedFiles}
-        setAttachedFiles={setAttachedFiles}
-        removeAttachedFile={removeAttachedFile}
-        fileUploading={fileUploading}
-        docName={docName}
-        setDocName={setDocName}
-        docLink={docLink}
-        setDocLink={setDocLink}
-        uploadMode={uploadMode}
-        setUploadMode={setUploadMode}
-        isRecording={isRecording}
-        isTranscribing={isTranscribing}
-        completionSuggested={completionSuggested}
-        contradictionDetected={contradictionDetected}
-        isCompleting={isCompleting}
-        testSession={testSession}
-        userProfile={userProfile}
-        messagesEndRef={messagesEndRef}
-        fileInputRef={fileInputRef}
-        sendMessage={sendMessage}
-        resetChat={resetChat}
-        completeSession={completeSession}
-        setCompletionSuggested={setCompletionSuggested}
-        toggleRecording={toggleRecording}
-        handleFileSelect={handleFileSelect}
-        handleFileDrop={handleFileDrop}
-        sendDisabled={sendDisabled}
-      />
-    </div>
+        {/* Dialog — preserves draft on close */}
+        <AgentTrainingDialog
+          agent={agent}
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          subState={subState}
+          messages={messages}
+          input={input}
+          setInput={setInput}
+          isStreaming={isStreaming}
+          attachedFiles={attachedFiles}
+          setAttachedFiles={setAttachedFiles}
+          removeAttachedFile={removeAttachedFile}
+          fileUploading={fileUploading}
+          docName={docName}
+          setDocName={setDocName}
+          docLink={docLink}
+          setDocLink={setDocLink}
+          uploadMode={uploadMode}
+          setUploadMode={setUploadMode}
+          isRecording={isRecording}
+          isTranscribing={isTranscribing}
+          completionSuggested={completionSuggested}
+          contradictionDetected={contradictionDetected}
+          isCompleting={isCompleting}
+          testSession={testSession}
+          userProfile={userProfile}
+          messagesEndRef={messagesEndRef}
+          fileInputRef={fileInputRef}
+          sendMessage={sendMessage}
+          resetChat={resetChat}
+          completeSession={completeSession}
+          setCompletionSuggested={setCompletionSuggested}
+          toggleRecording={toggleRecording}
+          handleFileSelect={handleFileSelect}
+          handleFileDrop={handleFileDrop}
+          sendDisabled={sendDisabled}
+          sessions={sessions}
+          sessionsLoading={sessionsLoading}
+          onRetrain={handleRetrain}
+          onTest={handleTest}
+        />
+      </CardContent>
+    </Card>
   );
 };
 
