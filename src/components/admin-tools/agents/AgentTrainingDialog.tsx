@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Paperclip, Mic, MicOff, FileText, CheckCircle2, Loader2,
   Upload, Lock, AlertTriangle, FlaskConical, X, Link2, ArrowUp,
-  BookOpen, History,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AgentProfile } from '@/data/agentProfiles';
@@ -15,7 +15,7 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog';
-import TrainingHistoryPanel from './training/TrainingHistoryPanel';
+
 
 // Custom h2 renderer for training message section styling
 const trainingH2Renderer = ({ children, ...props }: any) => {
@@ -46,8 +46,6 @@ interface AgentTrainingDialogProps {
   agent: AgentProfile;
   open: boolean;
   onClose: () => void;
-  activeTab: 'chat' | 'history';
-  setActiveTab: (tab: 'chat' | 'history') => void;
   subState: ChatSubState;
   messages: TrainingMessage[];
   input: string;
@@ -80,22 +78,16 @@ interface AgentTrainingDialogProps {
   handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleFileDrop: (e: React.DragEvent) => void;
   sendDisabled: boolean;
-  // History props
-  sessions: any[];
-  sessionsLoading: boolean;
-  onRetrain: (session: any) => void;
-  onTest: (session: any) => void;
 }
 
 const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
-  agent, open, onClose, activeTab, setActiveTab, subState, messages, input, setInput, isStreaming,
+  agent, open, onClose, subState, messages, input, setInput, isStreaming,
   attachedFiles, setAttachedFiles, removeAttachedFile, fileUploading, docName, setDocName,
   docLink, setDocLink, uploadMode, setUploadMode, isRecording, isTranscribing,
   completionSuggested, contradictionDetected, isCompleting, testSession,
   userProfile, messagesEndRef, fileInputRef, sendMessage, resetChat,
   completeSession, setCompletionSuggested, toggleRecording, handleFileSelect,
   handleFileDrop, sendDisabled,
-  sessions, sessionsLoading, onRetrain, onTest,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -172,37 +164,14 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
             </p>
           </div>
 
-          {/* ── Segmented Train / History tabs ── */}
-          <div className="flex items-center bg-muted/60 border border-border/50 rounded-xl p-1 shrink-0">
-            <button
-              onClick={() => setActiveTab('chat')}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200",
-                activeTab === 'chat'
-                  ? "bg-background shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-background/60"
-              )}
-            >
-              <BookOpen className="h-3.5 w-3.5" />
-              Train
-            </button>
-            <button
-              onClick={() => setActiveTab('history')}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200",
-                activeTab === 'history'
-                  ? "bg-background shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-background/60"
-              )}
-            >
-              <History className="h-3.5 w-3.5" />
-              History
-            </button>
-          </div>
+          {/* Training mode indicator */}
+          <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-5 shrink-0">
+            {subState === 'testing' ? 'Testing' : 'Training'}
+          </Badge>
 
           {/* Action buttons */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {activeTab === 'chat' && subState !== 'setup' && !completionSuggested && (
+            {subState !== 'setup' && !completionSuggested && (
               <Button
                 size="sm"
                 variant="outline"
@@ -221,8 +190,7 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
         </div>
 
         {/* ─── Body ─── */}
-        {activeTab === 'chat' ? (
-          <div
+        <div
             className="flex-1 overflow-hidden flex flex-col relative min-h-0"
             onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
@@ -561,33 +529,6 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
               </div>
             </div>
           </div>
-        ) : (
-          /* ── History tab ── */
-          <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-            {hasDraft && (
-              <div className="mx-4 mt-3 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20 flex items-center gap-2">
-                <BookOpen className="h-3.5 w-3.5 text-primary shrink-0" />
-                <p className="text-xs text-foreground flex-1">You have an active draft session.</p>
-                <Button size="sm" variant="outline" onClick={() => setActiveTab('chat')} className="h-6 text-[10px] px-2">
-                  Resume
-                </Button>
-              </div>
-            )}
-            <ScrollArea className="flex-1 min-h-0">
-              <div className="px-4 py-3">
-                <TrainingHistoryPanel
-                  sessions={sessions}
-                  agentCode={agent.code}
-                  agentName={agent.name}
-                  readOnly={false}
-                  onRetrain={onRetrain}
-                  onTest={onTest}
-                  isLoading={sessionsLoading}
-                />
-              </div>
-            </ScrollArea>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );

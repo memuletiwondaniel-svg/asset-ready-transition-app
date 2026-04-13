@@ -1,21 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { History, Paperclip, Mic, Send, MicOff, FileText, CheckCircle2, Loader2, Upload, Lock, AlertTriangle, FlaskConical, X, Link2, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { cn } from '@/lib/utils';
 import type { AgentProfile } from '@/data/agentProfiles';
-import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { usePermissions } from '@/hooks/usePermissions';
 import { type AnonymizationRule } from './training/AnonymizationRulesInline';
-import TrainingHistoryPanel from './training/TrainingHistoryPanel';
 import AgentTrainingDialog from './AgentTrainingDialog';
-import { Card, CardContent } from '@/components/ui/card';
 
 interface TrainingMessage {
   role: 'user' | 'assistant';
@@ -33,6 +24,8 @@ interface TrainingMetadata {
 
 interface AgentTrainingStudioProps {
   agent: AgentProfile;
+  dialogOpen: boolean;
+  onDialogClose: () => void;
 }
 
 type ChatSubState = 'setup' | 'active' | 'testing';
@@ -40,11 +33,11 @@ type ChatSubState = 'setup' | 'active' | 'testing';
 const ACCEPTED_MIME = '.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.webp';
 const MAX_FILE_SIZE = 80 * 1024 * 1024;
 
-const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
+const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent, dialogOpen, onDialogClose }) => {
   const { hasPermission, isLoading: permLoading } = usePermissions();
   const canTrain = !permLoading && hasPermission('access_admin');
 
-  const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
+  
   const [subState, setSubState] = useState<ChatSubState>('setup');
   const [messages, setMessages] = useState<TrainingMessage[]>([]);
   const [input, setInput] = useState('');
@@ -72,7 +65,6 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
   const [testSession, setTestSession] = useState<any>(null);
   const [testQuestionIndex, setTestQuestionIndex] = useState(0);
 
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -363,7 +355,6 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
       }
 
       resetChat();
-      setActiveTab('history');
     } catch (err) {
       console.error('Complete session error:', err);
       toast.error('Failed to complete session. Try again.');
@@ -423,8 +414,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
     setFileStoragePaths(session.file_path ? [session.file_path] : []);
     const retrainMsg = `We are revisiting ${session.document_name || 'this document'}. Here is what you previously understood: ${session.key_learnings || 'No summary available'}. Please review the document again and flag anything new, changed, or that needs updating.`;
     setInput(retrainMsg);
-    setActiveTab('chat');
-    setDialogOpen(true);
+    // Dialog will be opened by parent via dialogOpen prop
   };
 
   const handleTest = (session: any) => {
@@ -438,115 +428,56 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
       setInput(questions[0].question);
       setTestQuestionIndex(0);
     }
-    setActiveTab('chat');
-    setDialogOpen(true);
+    // Dialog will be opened by parent via dialogOpen prop
   };
 
   const sendDisabled = isStreaming || fileUploading || isTranscribing || (!input.trim() && attachedFiles.length === 0);
 
   if (!permLoading && !canTrain) {
-    return (
-      <Card className="border-border/40 shadow-sm bg-card/80 backdrop-blur-sm">
-        <CardContent className="p-0">
-          <div className="px-5 pt-4 pb-3">
-            <p className="text-sm font-semibold text-foreground">Knowledge Base — {agent.name}</p>
-          </div>
-          <div className="overflow-y-auto max-h-[400px] px-5 pb-5">
-            <TrainingHistoryPanel
-              sessions={sessions}
-              agentCode={agent.code}
-              agentName={agent.name}
-              readOnly={true}
-              isLoading={sessionsLoading}
-            />
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   return (
-    <Card className="border-border/40 shadow-sm bg-card/80 backdrop-blur-sm">
-      <CardContent className="p-0">
-        <div className="flex items-center gap-3 py-3 px-4">
-          <div className="w-8 h-8 rounded-full overflow-hidden border border-border/20 shrink-0">
-            <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground leading-tight">Train {agent.name}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              {completedSessions.length > 0
-                ? `${completedSessions.length} session${completedSessions.length !== 1 ? 's' : ''} completed · Last: ${lastSessionDate}`
-                : 'No sessions yet · Start the first session'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              onClick={() => { setActiveTab('chat'); setDialogOpen(true); }}
-              size="sm"
-              className="h-7 text-xs gap-1.5"
-            >
-              <BookOpen className="h-3.5 w-3.5" />
-              Train
-            </Button>
-            <Button
-              onClick={() => { setActiveTab('history'); setDialogOpen(true); }}
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs gap-1.5"
-            >
-              <History className="h-3.5 w-3.5" />
-              History
-            </Button>
-          </div>
-        </div>
-
-        {/* Dialog — preserves draft on close */}
-        <AgentTrainingDialog
-          agent={agent}
-          open={dialogOpen}
-          onClose={() => setDialogOpen(false)}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          subState={subState}
-          messages={messages}
-          input={input}
-          setInput={setInput}
-          isStreaming={isStreaming}
-          attachedFiles={attachedFiles}
-          setAttachedFiles={setAttachedFiles}
-          removeAttachedFile={removeAttachedFile}
-          fileUploading={fileUploading}
-          docName={docName}
-          setDocName={setDocName}
-          docLink={docLink}
-          setDocLink={setDocLink}
-          uploadMode={uploadMode}
-          setUploadMode={setUploadMode}
-          isRecording={isRecording}
-          isTranscribing={isTranscribing}
-          completionSuggested={completionSuggested}
-          contradictionDetected={contradictionDetected}
-          isCompleting={isCompleting}
-          testSession={testSession}
-          userProfile={userProfile}
-          messagesEndRef={messagesEndRef}
-          fileInputRef={fileInputRef}
-          sendMessage={sendMessage}
-          resetChat={resetChat}
-          completeSession={completeSession}
-          setCompletionSuggested={setCompletionSuggested}
-          toggleRecording={toggleRecording}
-          handleFileSelect={handleFileSelect}
-          handleFileDrop={handleFileDrop}
-          sendDisabled={sendDisabled}
-          sessions={sessions}
-          sessionsLoading={sessionsLoading}
-          onRetrain={handleRetrain}
-          onTest={handleTest}
-        />
-      </CardContent>
-    </Card>
+    <>
+      {/* Dialog — preserves draft on close */}
+      <AgentTrainingDialog
+        agent={agent}
+        open={dialogOpen}
+        onClose={onDialogClose}
+        subState={subState}
+        messages={messages}
+        input={input}
+        setInput={setInput}
+        isStreaming={isStreaming}
+        attachedFiles={attachedFiles}
+        setAttachedFiles={setAttachedFiles}
+        removeAttachedFile={removeAttachedFile}
+        fileUploading={fileUploading}
+        docName={docName}
+        setDocName={setDocName}
+        docLink={docLink}
+        setDocLink={setDocLink}
+        uploadMode={uploadMode}
+        setUploadMode={setUploadMode}
+        isRecording={isRecording}
+        isTranscribing={isTranscribing}
+        completionSuggested={completionSuggested}
+        contradictionDetected={contradictionDetected}
+        isCompleting={isCompleting}
+        testSession={testSession}
+        userProfile={userProfile}
+        messagesEndRef={messagesEndRef}
+        fileInputRef={fileInputRef}
+        sendMessage={sendMessage}
+        resetChat={resetChat}
+        completeSession={completeSession}
+        setCompletionSuggested={setCompletionSuggested}
+        toggleRecording={toggleRecording}
+        handleFileSelect={handleFileSelect}
+        handleFileDrop={handleFileDrop}
+        sendDisabled={sendDisabled}
+      />
+    </>
   );
 };
 
