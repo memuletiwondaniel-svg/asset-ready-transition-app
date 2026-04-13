@@ -46,8 +46,6 @@ interface AgentTrainingDialogProps {
   agent: AgentProfile;
   open: boolean;
   onClose: () => void;
-  activeTab: 'chat' | 'history';
-  setActiveTab: (tab: 'chat' | 'history') => void;
   subState: ChatSubState;
   messages: TrainingMessage[];
   input: string;
@@ -80,22 +78,16 @@ interface AgentTrainingDialogProps {
   handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleFileDrop: (e: React.DragEvent) => void;
   sendDisabled: boolean;
-  // History props
-  sessions: any[];
-  sessionsLoading: boolean;
-  onRetrain: (session: any) => void;
-  onTest: (session: any) => void;
 }
 
 const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
-  agent, open, onClose, activeTab, setActiveTab, subState, messages, input, setInput, isStreaming,
+  agent, open, onClose, subState, messages, input, setInput, isStreaming,
   attachedFiles, setAttachedFiles, removeAttachedFile, fileUploading, docName, setDocName,
   docLink, setDocLink, uploadMode, setUploadMode, isRecording, isTranscribing,
   completionSuggested, contradictionDetected, isCompleting, testSession,
   userProfile, messagesEndRef, fileInputRef, sendMessage, resetChat,
   completeSession, setCompletionSuggested, toggleRecording, handleFileSelect,
   handleFileDrop, sendDisabled,
-  sessions, sessionsLoading, onRetrain, onTest,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
 
