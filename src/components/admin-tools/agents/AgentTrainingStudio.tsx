@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
+// Tabs removed — using simple conditional rendering
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -695,7 +695,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
         handleFileDrop={handleFileDrop}
         sendDisabled={sendDisabled}
       />
-    </Tabs>
+    </div>
   );
 };
 
