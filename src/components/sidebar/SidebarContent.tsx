@@ -6,14 +6,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import OrshLogo from '@/components/ui/OrshLogo';
-import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, AlertTriangle, FolderKanban, MessageSquare, CalendarCheck, Key, Wrench, ListChecks, Gauge, ClipboardList } from 'lucide-react';
+import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, FolderKanban, MessageSquare, Key, Wrench, ListChecks, Gauge, ClipboardList, ClipboardCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProfileCompletionIndicator } from '@/components/sidebar/ProfileCompletionIndicator';
 import { OnlineUsersIndicator } from '@/components/sidebar/OnlineUsersIndicator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useNewTaskCount } from '@/hooks/useNewTaskCount';
-import { GlossaryTerm } from '@/components/ui/GlossaryTerm';
 
 interface NavigationItem {
   labelKey: string;
@@ -67,21 +66,11 @@ interface SidebarContentProps {
   onToggleCollapse?: () => void;
 }
 
-// Map sidebar sections to glossary terms for tooltip definitions
-const sectionGlossaryTerm: Record<string, string> = {
-  'projects': 'Projects',
-  'pssr': 'PSSR',
-  'my-tasks': 'My Tasks',
-  'executive-dashboard': 'Executive Dashboard',
-  'or-maintenance': 'OR Maintenance',
-  'ask-orsh': 'Ask Bob',
-};
-
 const navigationItems: (NavigationItem & { requiresLeadership?: boolean })[] = [
   { labelKey: 'navHome', icon: Home, path: '/', section: 'home' },
   { labelKey: 'navProjects', icon: Key, path: '/vcrs', section: 'projects' },
-  { labelKey: 'navPSSR', icon: AlertTriangle, path: '/pssr', section: 'pssr' },
-  { labelKey: 'navMyTasks', icon: CalendarCheck, path: '/my-tasks', section: 'my-tasks' },
+  { labelKey: 'navPSSR', icon: ClipboardCheck, path: '/pssr', section: 'pssr' },
+  { labelKey: 'navMyTasks', icon: ListChecks, path: '/my-tasks', section: 'my-tasks' },
   { labelKey: 'navMyBacklog', icon: ClipboardList, path: '/my-backlog', section: 'my-backlog' },
   { labelKey: 'navExecutiveDashboard', icon: Gauge, path: '/executive-dashboard', section: 'executive-dashboard', requiresLeadership: true },
   { labelKey: 'navORMaintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance', requiresLeadership: true },
@@ -133,7 +122,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full select-none [&_button]:hover:!scale-100 [&_button]:active:!scale-100 [&_button]:active:!rotate-0 [&_svg]:stroke-[1.75]">
       {/* Header */}
       <div className="p-4 sm:p-6 border-b border-border/40 flex-shrink-0">
         <div className="flex items-center justify-center mb-4">
@@ -164,7 +153,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
             <Button 
               variant="ghost" 
               onClick={onProfileClick}
-              className="w-full p-3 h-auto hover:bg-muted/50 justify-start transition-colors"
+              className="w-full p-3 h-auto justify-start rounded-lg hover:bg-muted/40 transition-colors duration-150 cursor-pointer"
             >
               {isProfileLoading ? (
                 <Skeleton className="h-10 w-10 rounded-full flex-shrink-0 mr-3" />
@@ -184,8 +173,8 @@ export const SidebarContent = memo<SidebarContentProps>(({
                   </>
                 ) : (
                   <>
-                    <p className="text-sm font-medium truncate">{displayName.split(' ')[0]}</p>
-                    <p className="text-xs text-muted-foreground truncate">{displayTitle}</p>
+                    <p className="text-sm font-semibold leading-tight truncate">{displayName.split(' ')[0]}</p>
+                    <p className="text-[11px] text-muted-foreground/60 leading-tight truncate">{displayTitle}</p>
                   </>
                 )}
               </div>
@@ -205,11 +194,11 @@ export const SidebarContent = memo<SidebarContentProps>(({
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 px-2 sm:px-4">
+      <ScrollArea className="flex-1 px-2">
         <div className="py-4">
           {!isCollapsed && (
             <div className="mb-6">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-3 mb-2">
+              <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-[0.08em] px-3 mb-2">
                 {t.navigation || 'Navigation'}
               </p>
               <div className="space-y-1">
@@ -220,25 +209,21 @@ export const SidebarContent = memo<SidebarContentProps>(({
                   return (
                     <Button
                       key={item.section}
-                      variant={isActive ? "secondary" : "ghost"}
+                      variant="ghost"
                       size="sm"
                       onClick={() => onNavigate(item.section || '', isMobile)}
                       className={cn(
-                        "w-full justify-start h-10 sm:h-9 relative",
-                        isActive && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
+                        "w-full justify-start h-8 relative text-xs font-medium transition-colors duration-150",
+                        isActive 
+                          ? "bg-primary/10 text-primary font-semibold rounded-lg hover:bg-primary/20 hover:text-primary" 
+                          : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
                       )}
                     >
                       <Icon className={cn(
                         "mr-2 h-4 w-4 transition-colors flex-shrink-0",
                         isActive ? "text-primary" : "text-muted-foreground"
                       )} />
-                      {sectionGlossaryTerm[item.section || ''] ? (
-                        <GlossaryTerm term={sectionGlossaryTerm[item.section || '']}>
-                          <span className="truncate">{getLabel(item.labelKey)}</span>
-                        </GlossaryTerm>
-                      ) : (
-                        <span className="truncate">{getLabel(item.labelKey)}</span>
-                      )}
+                      <span className="truncate">{getLabel(item.labelKey)}</span>
                       {item.section === 'ask-orsh' && unreadChatCount > 0 && (
                         <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
                           {unreadChatCount}
@@ -257,7 +242,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
           )}
 
           {isCollapsed && (
-            <div className="space-y-2 mb-6">
+            <div className="space-y-1 mb-6">
               {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentPage === item.section;
@@ -265,12 +250,14 @@ export const SidebarContent = memo<SidebarContentProps>(({
                 return (
                   <Button
                     key={item.section}
-                    variant={isActive ? "secondary" : "ghost"}
+                    variant="ghost"
                     size="icon"
                     onClick={() => onNavigate(item.section || '', false)}
                     className={cn(
-                      "w-full h-9 relative",
-                      isActive && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
+                      "w-full h-8 relative transition-colors duration-150",
+                      isActive 
+                        ? "bg-primary/10 text-primary rounded-lg hover:bg-primary/20 hover:text-primary" 
+                        : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
                     )}
                     title={getLabel(item.labelKey)}
                   >
@@ -298,7 +285,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
 
           {!isCollapsed && (
             <div className="mb-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-3 mb-2">
+              <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-[0.08em] px-3 mb-2">
                 {t.settings || 'Settings'}
               </p>
             </div>
@@ -308,12 +295,14 @@ export const SidebarContent = memo<SidebarContentProps>(({
           <div className="space-y-2">
             {hasPermission('access_admin') && (
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size={isCollapsed ? "icon" : "sm"} 
                 onClick={() => onNavigate('admin-tools', isMobile)} 
                 className={cn(
-                  `w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`,
-                  currentPage === 'admin-tools' && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
+                  `w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`,
+                  currentPage === 'admin-tools' 
+                    ? "bg-primary/10 text-primary rounded-lg hover:bg-primary/20 hover:text-primary" 
+                    : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
                 )} 
                 title={t.adminTools || 'Admin Tools'}
               >
@@ -326,10 +315,10 @@ export const SidebarContent = memo<SidebarContentProps>(({
             )}
 
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size={isCollapsed ? "icon" : "sm"} 
               onClick={onThemeToggle} 
-              className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`} 
+              className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
               title={theme === 'dark' ? (t.lightMode || 'Light Mode') : (t.darkMode || 'Dark Mode')}
             >
               {theme === 'dark' ? (
@@ -346,9 +335,9 @@ export const SidebarContent = memo<SidebarContentProps>(({
             </Button>
 
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size={isCollapsed ? "icon" : "sm"} 
-              className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`} 
+              className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
               title={t.notifications || 'Notifications'}
             >
               <Bell className="w-4 h-4 text-muted-foreground" />
@@ -358,9 +347,9 @@ export const SidebarContent = memo<SidebarContentProps>(({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   size={isCollapsed ? "icon" : "sm"} 
-                  className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`} 
+                  className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
                   title={t.language || 'Language'}
                 >
                   <Languages className="w-4 h-4 text-muted-foreground" />
@@ -390,10 +379,10 @@ export const SidebarContent = memo<SidebarContentProps>(({
 
             {isLeadership && (
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size={isCollapsed ? "icon" : "sm"} 
                 onClick={onShowOnboarding} 
-                className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`} 
+                className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
                 title={t.takeTour || 'Take Tour'}
               >
                 <Clock className="w-4 h-4 text-muted-foreground" />
@@ -406,7 +395,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
           {searchHistory.length > 0 && !isCollapsed && (
             <div className="mt-6 pt-6 border-t border-border/40">
               <div className="flex items-center justify-between px-4 mb-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t.recent || 'Recent'}</p>
+                <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-[0.08em]">{t.recent || 'Recent'}</p>
                 <Button variant="ghost" size="icon" onClick={onToggleSearchHistory} className="h-6 w-6">
                   <ChevronDown className={`w-3 h-3 transition-transform ${showSearchHistory ? 'rotate-180' : ''}`} />
                 </Button>
@@ -438,12 +427,12 @@ export const SidebarContent = memo<SidebarContentProps>(({
       </div>
 
       {/* Footer */}
-      <div className="p-2 sm:p-4 border-t border-border/40 space-y-2 flex-shrink-0">
+      <div className="p-2 border-t border-border/40 space-y-2 flex-shrink-0">
         <Button 
-          variant="outline" 
+          variant="ghost" 
           size={isCollapsed ? "icon" : "sm"} 
           onClick={onLogout}
-          className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-destructive hover:text-destructive`} 
+          className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10`} 
           title={t.logout || 'Log Out'}
         >
           <LogOut className="w-4 h-4" />
@@ -456,7 +445,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
             variant="ghost" 
             size={isCollapsed ? "icon" : "sm"} 
             onClick={onToggleCollapse}
-            className={`w-full h-10 sm:h-9 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground hover:text-foreground`} 
+            className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground hover:text-foreground`} 
             title={isCollapsed ? (t.expandSidebar || 'Expand Sidebar') : (t.collapseSidebar || 'Collapse Sidebar')}
           >
             {isCollapsed ? (
