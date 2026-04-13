@@ -37,7 +37,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent, dialog
   const { hasPermission, isLoading: permLoading } = usePermissions();
   const canTrain = !permLoading && hasPermission('access_admin');
 
-  const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
+  
   const [subState, setSubState] = useState<ChatSubState>('setup');
   const [messages, setMessages] = useState<TrainingMessage[]>([]);
   const [input, setInput] = useState('');
@@ -355,7 +355,6 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent, dialog
       }
 
       resetChat();
-      setActiveTab('history');
     } catch (err) {
       console.error('Complete session error:', err);
       toast.error('Failed to complete session. Try again.');
@@ -415,8 +414,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent, dialog
     setFileStoragePaths(session.file_path ? [session.file_path] : []);
     const retrainMsg = `We are revisiting ${session.document_name || 'this document'}. Here is what you previously understood: ${session.key_learnings || 'No summary available'}. Please review the document again and flag anything new, changed, or that needs updating.`;
     setInput(retrainMsg);
-    setActiveTab('chat');
-    setDialogOpen(true);
+    // Dialog will be opened by parent via dialogOpen prop
   };
 
   const handleTest = (session: any) => {
@@ -430,8 +428,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent, dialog
       setInput(questions[0].question);
       setTestQuestionIndex(0);
     }
-    setActiveTab('chat');
-    setDialogOpen(true);
+    // Dialog will be opened by parent via dialogOpen prop
   };
 
   const sendDisabled = isStreaming || fileUploading || isTranscribing || (!input.trim() && attachedFiles.length === 0);
@@ -446,7 +443,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent, dialog
       <AgentTrainingDialog
         agent={agent}
         open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={onDialogClose}
         subState={subState}
         messages={messages}
         input={input}
