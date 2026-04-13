@@ -437,24 +437,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
   const sendDisabled = isStreaming || fileUploading || isTranscribing || (!input.trim() && attachedFiles.length === 0);
 
   if (!permLoading && !canTrain) {
-    return (
-      <Card className="border-border/40 shadow-sm bg-card/80 backdrop-blur-sm">
-        <CardContent className="p-0">
-          <div className="px-5 pt-4 pb-3">
-            <p className="text-sm font-semibold text-foreground">Knowledge Base — {agent.name}</p>
-          </div>
-          <div className="overflow-y-auto max-h-[400px] px-5 pb-5">
-            <TrainingHistoryPanel
-              sessions={sessions}
-              agentCode={agent.code}
-              agentName={agent.name}
-              readOnly={true}
-              isLoading={sessionsLoading}
-            />
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   return (
