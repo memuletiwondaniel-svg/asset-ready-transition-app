@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { MessageSquare, History, Paperclip, Mic, Send, MicOff, FileText, CheckCircle2, Loader2, Upload, Lock, AlertTriangle, FlaskConical, X, Link2, BookOpen } from 'lucide-react';
+import { History, Paperclip, Mic, Send, MicOff, FileText, CheckCircle2, Loader2, Upload, Lock, AlertTriangle, FlaskConical, X, Link2, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
@@ -601,44 +601,31 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-      {/* Compact tab bar */}
-      <div className="flex items-center gap-2 px-4 pt-2 pb-0 shrink-0">
-        <TabsList className="flex-1 bg-muted/50 p-0.5 h-7">
-          <TabsTrigger value="chat" className="text-[11px] h-6 gap-1.5 group hover:bg-accent/80 transition-all">
-            <MessageSquare className="h-3 w-3 group-hover:text-primary transition-colors" />
-            Training Chat
-          </TabsTrigger>
-          <TabsTrigger value="history" className="text-[11px] h-6 gap-1.5 group hover:bg-accent/80 transition-all">
-            <History className="h-3 w-3 group-hover:text-primary transition-colors" />
-            Training History
-          </TabsTrigger>
-        </TabsList>
-        {subState !== 'setup' && (
-          <Button size="sm" variant="ghost" onClick={resetChat} className="text-[11px] h-6 shrink-0">
-            New Session
-          </Button>
-        )}
-      </div>
-
       <div className="flex-1 overflow-hidden flex flex-col">
         {/* ─── TRAINING CHAT TAB ─── */}
         <TabsContent value="chat" className="mt-0 flex-1 flex flex-col overflow-hidden m-0">
-          <div className="flex flex-col items-center gap-4 py-6 px-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border/20">
+          <div className="flex items-center gap-3 py-3 px-4">
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-border/20 shrink-0">
               <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
             </div>
-            <div className="text-center">
-              <p className="text-sm font-semibold text-foreground">Train {agent.name}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground leading-tight">Train {agent.name}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
                 {completedSessions.length > 0
                   ? `${completedSessions.length} session${completedSessions.length !== 1 ? 's' : ''} completed · Last: ${lastSessionDate}`
-                  : `No sessions yet — start the first training session`}
+                  : 'No sessions yet · Start the first session'}
               </p>
             </div>
-            <Button onClick={() => setDialogOpen(true)} className="gap-2" size="sm">
-              <BookOpen className="h-4 w-4" />
-              Open Training Chat
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button onClick={() => setDialogOpen(true)} size="sm" className="h-7 text-xs gap-1.5">
+                <BookOpen className="h-3.5 w-3.5" />
+                Train
+              </Button>
+              <Button onClick={() => setActiveTab('history')} variant="ghost" size="sm" className="h-7 text-xs gap-1.5">
+                <History className="h-3.5 w-3.5" />
+                History
+              </Button>
+            </div>
           </div>
         </TabsContent>
 
