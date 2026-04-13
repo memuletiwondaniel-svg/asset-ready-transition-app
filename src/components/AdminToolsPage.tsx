@@ -125,9 +125,13 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       setActiveView((state.activeView || 'dashboard') as AdminView);
     }
   }, [(location.state as any)?.navKey]);
+  useEffect(() => {
+    try { localStorage.removeItem(COLLAPSED_SECTIONS_LEGACY_KEY); } catch {}
+  }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [tenantSetupOpen, setTenantSetupOpen] = useState(false);
-  const COLLAPSED_SECTIONS_KEY = 'orsh-admin-collapsed-sections';
+  const COLLAPSED_SECTIONS_KEY = 'orsh-admin-collapsed-sections-v2';
+  const COLLAPSED_SECTIONS_LEGACY_KEY =
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => {
     try {
       const saved = localStorage.getItem(COLLAPSED_SECTIONS_KEY);
