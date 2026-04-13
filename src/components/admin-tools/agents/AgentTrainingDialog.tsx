@@ -190,8 +190,7 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
         </div>
 
         {/* ─── Body ─── */}
-        {true ? (
-          <div
+        <div
             className="flex-1 overflow-hidden flex flex-col relative min-h-0"
             onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
@@ -530,7 +529,7 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
               </div>
             </div>
           </div>
-        ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );
