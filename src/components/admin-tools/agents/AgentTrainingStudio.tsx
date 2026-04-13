@@ -600,7 +600,7 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
   );
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+    <div className="h-full flex flex-col">
       <div className="flex-1 overflow-hidden flex flex-col">
         {activeTab === 'chat' ? (
           <div className="flex items-center gap-3 py-3 px-4">
