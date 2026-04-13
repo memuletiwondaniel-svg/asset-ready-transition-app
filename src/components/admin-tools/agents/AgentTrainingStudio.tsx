@@ -602,8 +602,8 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
       <div className="flex-1 overflow-hidden flex flex-col">
-        {/* ─── TRAINING CHAT TAB ─── */}
-        <TabsContent value="chat" className="mt-0 flex-1 flex flex-col overflow-hidden m-0">
+        {activeTab === 'chat' ? (
+          /* ─── COMPACT TRAINING ROW ─── */}
           <div className="flex items-center gap-3 py-3 px-4">
             <div className="w-8 h-8 rounded-full overflow-hidden border border-border/20 shrink-0">
               <img src={agent.avatar} alt={agent.name} className="w-full h-full object-cover" />
@@ -627,20 +627,36 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent }) => {
               </Button>
             </div>
           </div>
-        </TabsContent>
-
-        {/* ─── HISTORY TAB ─── */}
-        <TabsContent value="history" className="mt-0 flex-1 overflow-y-auto m-0 px-4 py-3">
-          <TrainingHistoryPanel
-            sessions={sessions}
-            agentCode={agent.code}
-            agentName={agent.name}
-            readOnly={false}
-            onRetrain={handleRetrain}
-            onTest={handleTest}
-            isLoading={sessionsLoading}
-          />
-        </TabsContent>
+        ) : (
+          /* ─── HISTORY PANEL ─── */}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-border/30">
+              <Button onClick={() => setActiveTab('chat')} variant="ghost" size="sm" className="h-7 text-xs gap-1.5">
+                <BookOpen className="h-3.5 w-3.5" />
+                Train
+              </Button>
+              <span className="text-[10px] text-muted-foreground/40">·</span>
+              <span className="text-xs font-medium text-foreground">History</span>
+              <div className="flex-1" />
+              {subState !== 'setup' && (
+                <Button size="sm" variant="ghost" onClick={resetChat} className="text-xs h-7 shrink-0">
+                  + New Session
+                </Button>
+              )}
+            </div>
+            <div className="overflow-y-auto max-h-[400px] px-4 py-3">
+              <TrainingHistoryPanel
+                sessions={sessions}
+                agentCode={agent.code}
+                agentName={agent.name}
+                readOnly={false}
+                onRetrain={handleRetrain}
+                onTest={handleTest}
+                isLoading={sessionsLoading}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Training Dialog Overlay */}
