@@ -529,7 +529,6 @@ const AgentTrainingDialog: React.FC<AgentTrainingDialogProps> = ({
               </div>
             </div>
           </div>
-        </div>
       </DialogContent>
     </Dialog>
   );
