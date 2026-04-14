@@ -183,11 +183,15 @@ Respond with ONLY valid JSON in this format:
 
       const newProgress = Math.max(0, Math.min(100, Math.round(assessment.progress)));
       const newStatus = getLevelStatus(newProgress);
-      const relevantSessionIds = assessment.relevant_session_ids || [];
+      const rawSessionIds = assessment.relevant_session_ids || [];
+      
+      // Filter to valid UUIDs only (Claude sometimes returns session names instead)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const validSessionIds = rawSessionIds.filter((id: string) => uuidRegex.test(id));
 
       // Merge linked_session_ids
       const existingIds = competency.linked_session_ids || [];
-      const mergedIds = [...new Set([...existingIds, ...relevantSessionIds])];
+      const mergedIds = [...new Set([...existingIds, ...validSessionIds])];
 
       // Update competency area
       const { error: updateErr } = await supabaseAdmin
