@@ -1,0 +1,1 @@
+UPDATE agent_competency_areas SET name = 'Completions Management System integration' WHERE name = 'Completions Management System integration (GoCompletions)';
