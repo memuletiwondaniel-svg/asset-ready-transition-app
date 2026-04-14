@@ -552,6 +552,59 @@ A user is testing your understanding of this document. Answer their questions pr
 and specifically based only on what you learned during training. If you are uncertain,
 say so explicitly. Apply the same anonymization rules — never use the original company
 or system names.`;
+    } else if (competency_context && Array.isArray(competency_context) && competency_context.length > 0) {
+      // ─── COMPETENCY DISCUSSION MODE ───
+      // User launched chat from "Discuss competencies" — inject full training history + competency profile
+      const { data: allSessions } = await supabaseAdmin
+        .from("agent_training_sessions")
+        .select("id, document_name, document_type, document_domain, key_learnings, extracted_tags, knowledge_card, completed_at")
+        .eq("agent_code", agent_code)
+        .eq("status", "completed")
+        .order("completed_at", { ascending: false })
+        .limit(50);
+
+      let trainingHistoryBlock = "";
+      if (allSessions && allSessions.length > 0) {
+        const sessionSummaries = allSessions.map((s: any, i: number) => {
+          const tags = (s.extracted_tags || []).join(", ");
+          const kc = s.knowledge_card || {};
+          const facts = Array.isArray(kc.facts) ? kc.facts.slice(0, 8).map((f: any) => typeof f === "string" ? f : f.statement || f).join("; ") : "";
+          const coreFacts = Array.isArray(kc.core_facts) ? kc.core_facts.slice(0, 8).map((f: any) => typeof f === "string" ? f : f.statement || f).join("; ") : "";
+          const procedures = Array.isArray(kc.procedures) ? kc.procedures.slice(0, 4).map((p: any) => typeof p === "string" ? p : p.name || p).join("; ") : "";
+          const allFacts = facts || coreFacts;
+          return `${i + 1}. "${s.document_name || "Untitled"}" (${s.document_type || "unknown"}, ${s.document_domain || "unknown domain"})
+   Key learnings: ${s.key_learnings || "None recorded"}
+   Tags: ${tags || "None"}
+   Facts: ${allFacts || "None"}
+   Procedures: ${procedures || "None"}`;
+        }).join("\n\n");
+
+        trainingHistoryBlock = `\nCOMPLETED TRAINING SESSIONS (${allSessions.length} total):
+These are ALL the documents and materials you have been trained on. You learned these — reference them naturally as YOUR knowledge.
+
+${sessionSummaries}\n`;
+      }
+
+      const competencyBlock = competency_context.map((c: any) =>
+        `- ${c.name}: ${c.progress}% (${c.status}) — ${c.description || "No description"}`
+      ).join("\n");
+
+      systemPrompt = `${agentPrompt}
+${buildAnonymizationSection(anonymization_rules)}
+You are operating in COMPETENCY DISCUSSION MODE. The user wants to discuss your competency development, training progress, knowledge gaps, or ask questions that draw on everything you have learned.
+
+YOUR COMPETENCY PROFILE:
+${competencyBlock}
+
+${trainingHistoryBlock}
+IMPORTANT INSTRUCTIONS FOR THIS MODE:
+1. You ARE the agent who completed all these training sessions — speak from first-person experience. Say "I learned that..." or "From the document on X, I recall that..."
+2. When asked about a competency area, connect it to specific training sessions and facts you learned.
+3. When asked what you know about a topic, draw on ALL relevant training session content above.
+4. If asked about gaps, identify competency areas with low progress and suggest what training would help.
+5. Be conversational and natural — this is a discussion, not a report.
+6. You can cross-reference between different training sessions to provide richer answers.
+7. If the user asks about something you were NOT trained on, say so honestly and suggest what training would fill that gap.`;
     } else {
       // Training mode — use self-organizing context + dynamic templates
       const existingKnowledge = await buildKnowledgeContext(supabaseAdmin, agent_code, document_context);
@@ -586,7 +639,6 @@ or system names.`;
           .order("sort_order", { ascending: true });
 
         if (extractionRecords && extractionRecords.length > 0) {
-          // Use the most specific match (agent-specific if exists, else universal)
           const record = extractionRecords[0];
           if (record.prompt_fragment) {
             extractionFragment = "\n\n" + record.prompt_fragment;
