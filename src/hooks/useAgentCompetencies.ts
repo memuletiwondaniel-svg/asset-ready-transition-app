@@ -178,7 +178,7 @@ export function useAgentCompetencies(agentCode: string, agent?: AgentProfile) {
         .eq('id', input.id);
 
       // Step 2: Trigger assessment edge function
-      const { error } = await supabase.functions.invoke('assess-agent-competencies', {
+      const { data, error } = await supabase.functions.invoke('assess-agent-competencies', {
         body: {
           agent_code: agentCode,
           trigger_type: 'description_change',
@@ -186,6 +186,13 @@ export function useAgentCompetencies(agentCode: string, agent?: AgentProfile) {
         },
       });
       if (error) throw error;
+      
+      // Check response for errors
+      const result = data as any;
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+      return result;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
