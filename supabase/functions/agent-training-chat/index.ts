@@ -608,8 +608,11 @@ ${sessionSummaries}\n`;
         `- ${c.name}: ${c.progress}% (${c.status}) — ${c.description || "No description"}`
       ).join("\n");
 
+      const userGreeting = userName ? `The user's name is ${userName}. Address them by name naturally.` : "";
+
       systemPrompt = `${agentPrompt}
 ${buildAnonymizationSection(anonymization_rules)}
+${userGreeting}
 You are operating in COMPETENCY DISCUSSION MODE. The user wants to discuss your competency development, training progress, knowledge gaps, or ask questions that draw on everything you have learned.
 
 YOUR COMPETENCY PROFILE:
