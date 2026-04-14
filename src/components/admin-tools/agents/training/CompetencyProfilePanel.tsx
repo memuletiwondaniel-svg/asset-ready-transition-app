@@ -40,7 +40,6 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
 
   const isSyncing = isSyncingProp || isSyncingLocal;
 
-  // Derive last assessed time from competencies
   const lastAssessedAt = React.useMemo(() => {
     const assessed = competencies
       .filter(c => c.last_assessed_at)
@@ -71,7 +70,7 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* Summary header */}
-      <div className="p-4 border-b border-border/40">
+      <div className="p-5 border-b border-border/40">
         <div className="flex items-center gap-4">
           <div className="shrink-0">
             <CompetencyDonut progress={overallProgress} size={80} />
@@ -80,7 +79,6 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
             <p className="text-xs text-muted-foreground">
               {competencies.length} competency area{competencies.length !== 1 ? 's' : ''} tracked
             </p>
-            {/* Sync status row */}
             <div className="mt-1.5">
               {isSyncing ? (
                 <div className="flex items-center gap-1.5 text-[10px] text-primary">
@@ -101,8 +99,7 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
           </div>
         </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center gap-2 mt-3">
           {needsSync && onSyncCompetencies && (
             <Button
               variant="outline"
@@ -173,11 +170,19 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
               <button
                 key={comp.id}
                 onClick={() => onSelectCompetency(comp)}
-                className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 hover:shadow-md transition-all duration-150 border-b border-b-border/20 group text-left"
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-4 border-b border-border/10 group text-left",
+                  "transition-all duration-200 ease-out",
+                  "hover:bg-gradient-to-r hover:from-muted/60 hover:to-transparent",
+                  "hover:shadow-[inset_3px_0_0_0_hsl(var(--primary)/0.5)]",
+                  "active:bg-muted/70"
+                )}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-medium text-foreground">{comp.name}</span>
+                    <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors duration-200">
+                      {comp.name}
+                    </span>
                     {isNew && (
                       <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 bg-primary/10 text-primary shrink-0">
                         New
@@ -185,18 +190,32 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5 shrink-0">
-                  <div className="w-24 h-[6px] rounded-full bg-muted/50 overflow-hidden">
-                    <div
-                      className={cn('h-full rounded-full transition-all', level.color)}
-                      style={{ width: `${comp.progress}%` }}
-                    />
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="w-24 shrink-0">
+                    <div className="h-1.5 rounded-full bg-muted/40 overflow-hidden">
+                      <div
+                        className={cn('h-full rounded-full transition-all duration-500', level.color)}
+                        style={{ width: `${comp.progress}%` }}
+                      />
+                    </div>
                   </div>
-                  <span className="text-[11px] font-medium text-muted-foreground w-8 text-right">{comp.progress}%</span>
-                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-border/40 font-normal hidden sm:inline-flex w-20 justify-center">
+                  <span className="text-[11px] font-medium text-muted-foreground w-8 text-right tabular-nums">
+                    {comp.progress}%
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-[9px] px-1.5 py-0 h-4 font-normal hidden sm:inline-flex w-20 justify-center border-transparent",
+                      level.key === 'not_started' && 'bg-muted/50 text-muted-foreground',
+                      level.key === 'foundational' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                      level.key === 'developing' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                      level.key === 'proficient' && 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                      level.key === 'expert' && 'bg-primary/10 text-primary',
+                    )}
+                  >
                     {level.label}
                   </Badge>
-                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200" />
                 </div>
               </button>
             );

@@ -36,7 +36,7 @@ const CompetencyInlineSummary: React.FC<CompetencyInlineSummaryProps> = ({
     .slice(0, 5);
 
   return (
-    <div className="px-5 py-5 space-y-4">
+    <div className="px-5 py-5 space-y-5">
       {/* Summary row */}
       <div className="flex items-center gap-5">
         <div className="shrink-0">
@@ -60,21 +60,23 @@ const CompetencyInlineSummary: React.FC<CompetencyInlineSummaryProps> = ({
         </Button>
       </div>
 
-      {/* Top 5 gaps — clean grid layout */}
+      {/* Top 5 gaps */}
       {gaps.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {gaps.map(gap => {
             const level = getLevelFromProgress(gap.progress);
             return (
-              <div key={gap.id} className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground w-[260px] shrink-0 truncate" title={gap.name}>
+              <div key={gap.id} className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground flex-1 min-w-0 truncate" title={gap.name}>
                   {gap.name}
                 </span>
-                <div className="flex-1 h-[6px] rounded-full bg-muted/50 overflow-hidden min-w-[80px]">
-                  <div
-                    className={cn('h-full rounded-full transition-all', level.color)}
-                    style={{ width: `${gap.progress}%` }}
-                  />
+                <div className="w-32 shrink-0">
+                  <div className="h-1.5 rounded-full bg-muted/40 overflow-hidden">
+                    <div
+                      className={cn('h-full rounded-full transition-all duration-500', level.color)}
+                      style={{ width: `${gap.progress}%` }}
+                    />
+                  </div>
                 </div>
                 <span className="text-[11px] font-medium text-muted-foreground w-8 text-right shrink-0 tabular-nums">
                   {gap.progress}%
