@@ -318,6 +318,7 @@ serve(async (req) => {
       document_context,
       anonymization_rules = [],
       testing = false,
+      competency_context,
     } = body;
 
     if (!agent_code) {
