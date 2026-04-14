@@ -2,7 +2,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Plus, Search, MessageSquare } from 'lucide-react';
+import { ChevronRight, Plus, Search, MessageSquare, RefreshCw, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getLevelFromProgress, isNewCompetency } from './competencyLevels';
 import CompetencyDonut from './CompetencyDonut';
@@ -16,6 +16,8 @@ interface CompetencyProfilePanelProps {
   onAddCompetency: () => void;
   agentName?: string;
   onOpenCompetenceChat?: () => void;
+  hasCompletedSessions?: boolean;
+  onSyncCompetencies?: () => Promise<void>;
 }
 
 const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
@@ -26,7 +28,10 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
   onAddCompetency,
   agentName,
   onOpenCompetenceChat,
+  hasCompletedSessions,
+  onSyncCompetencies,
 }) => {
+  const [isSyncing, setIsSyncing] = React.useState(false);
   const [search, setSearch] = React.useState('');
   const [levelFilter, setLevelFilter] = React.useState<string>('all');
 
@@ -49,6 +54,22 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
             </p>
           </div>
         </div>
+        {/* Sync button when all competencies are 0% but sessions exist */}
+        {overallProgress === 0 && competencies.length > 0 && hasCompletedSessions && onSyncCompetencies && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-8 text-xs gap-1.5 mt-2 border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950"
+            disabled={isSyncing}
+            onClick={async () => {
+              setIsSyncing(true);
+              try { await onSyncCompetencies(); } finally { setIsSyncing(false); }
+            }}
+          >
+            {isSyncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            {isSyncing ? 'Syncing...' : 'Sync from training history'}
+          </Button>
+        )}
       </div>
 
       {/* Search + filter */}
@@ -94,7 +115,7 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
               <button
                 key={comp.id}
                 onClick={() => onSelectCompetency(comp)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted/50 transition-colors duration-150 border-l-2 border-transparent hover:border-primary/30 border-b border-b-border/20 group text-left"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted/50 hover:shadow-md transition-all duration-150 border-l-2 border-transparent hover:border-primary/30 border-b border-b-border/20 group text-left"
               >
                 <div className={cn('h-2.5 w-2.5 rounded-full shrink-0', level.color)} />
                 <div className="flex-1 min-w-0">

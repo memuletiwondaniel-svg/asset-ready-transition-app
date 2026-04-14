@@ -276,7 +276,7 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
                   ? 'ring-1 ring-primary/20 bg-card shadow-sm'
                   : expandedId
                     ? 'opacity-50'
-                    : 'opacity-100 hover:bg-muted/20'
+                    : 'opacity-100 hover:bg-muted/20 hover:shadow-md'
               )}
             >
               {/* Collapsed header */}
@@ -423,9 +423,18 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
                     <div>
                       <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tags</p>
                       <div className="flex flex-wrap gap-1">
-                        {session.extracted_tags.map((tag: string, i: number) => (
-                          <Badge key={i} variant="outline" className="text-[9px] py-0 px-1.5">{tag}</Badge>
-                        ))}
+                        {session.extracted_tags.map((tag: string, i: number) => {
+                          const tagColors = [
+                            'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800',
+                            'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800',
+                            'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800',
+                            'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800',
+                            'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800',
+                          ];
+                          return (
+                            <Badge key={i} className={cn('text-[9px] py-0 px-1.5 border', tagColors[i % tagColors.length])}>{tag}</Badge>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
