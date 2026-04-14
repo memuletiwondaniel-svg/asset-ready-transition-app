@@ -2,7 +2,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Plus, Search, MessageSquare, RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
+import { ChevronRight, Plus, Search, MessageSquare, RefreshCw, Loader2, AlertTriangle, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getLevelFromProgress, isNewCompetency } from './competencyLevels';
 import CompetencyDonut from './CompetencyDonut';
@@ -16,7 +16,7 @@ interface CompetencyProfilePanelProps {
   onSelectCompetency: (competency: CompetencyArea) => void;
   onAddCompetency: () => void;
   agentName?: string;
-  onOpenCompetenceChat?: () => void;
+  onOpenTraining?: () => void;
   hasCompletedSessions?: boolean;
   onSyncCompetencies?: () => Promise<void>;
   isSyncing?: boolean;
@@ -29,7 +29,7 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
   onSelectCompetency,
   onAddCompetency,
   agentName,
-  onOpenCompetenceChat,
+  onOpenTraining,
   hasCompletedSessions,
   onSyncCompetencies,
   isSyncing: isSyncingProp,
@@ -225,6 +225,16 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
 
       {/* Bottom actions */}
       <div className="p-3 border-t border-border/40 space-y-1.5">
+        {onOpenTraining && (
+          <Button
+            size="sm"
+            className="w-full h-9 text-xs gap-2"
+            onClick={onOpenTraining}
+          >
+            <BookOpen className="h-4 w-4" />
+            Train & Discuss with {agentName || 'Agent'}
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"
@@ -234,20 +244,6 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
           <Plus className="h-3.5 w-3.5" />
           Add Competency Area
         </Button>
-        {onOpenCompetenceChat && (
-          <>
-            <div className="border-t border-border/30" />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full h-9 text-xs gap-2 text-muted-foreground/70 hover:text-foreground hover:bg-muted/50 justify-start"
-              onClick={onOpenCompetenceChat}
-            >
-              <MessageSquare className="h-4 w-4" />
-              Discuss competencies with {agentName || 'agent'}
-            </Button>
-          </>
-        )}
       </div>
     </div>
   );
