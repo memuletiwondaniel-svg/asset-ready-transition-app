@@ -15,10 +15,7 @@ import { toast } from 'sonner';
 import CompetencyProfilePanel from './CompetencyProfilePanel';
 import CompetencyDetailView from './CompetencyDetailView';
 import AddCompetencyDialog from './AddCompetencyDialog';
-import SessionsHistoryPanel from './SessionsHistoryPanel';
 import type { CompetencyArea } from '@/hooks/useAgentCompetencies';
-
-type DrawerTab = 'competencies' | 'sessions';
 
 interface CompetencyDrawerProps {
   agent: AgentProfile;
@@ -39,7 +36,6 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
   sessionsLoading,
   userName,
 }) => {
-  const [activeTab, setActiveTab] = useState<DrawerTab>('competencies');
   const [selectedCompetency, setSelectedCompetency] = useState<CompetencyArea | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isAssessing, setIsAssessing] = useState(false);
@@ -56,20 +52,14 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
     updateDescriptionAndReassess,
   } = useAgentCompetencies(agent.code, agent);
 
-  // Reset to competencies tab when drawer opens
-  useEffect(() => {
-    if (open) {
-      setActiveTab('competencies');
-      setSelectedCompetency(null);
-    }
-  }, [open]);
-
-  // Backfill trigger
+  // Backfill trigger: if all competencies are 0% but completed sessions exist
   useEffect(() => {
     if (!open || backfillTriggered.current || isLoading) return;
     if (competencies.length === 0) return;
+
     const allZero = competencies.every(c => c.progress === 0);
     const hasCompleted = sessions.some((s: any) => s.status === 'completed');
+
     if (allZero && hasCompleted) {
       backfillTriggered.current = true;
       setIsSyncing(true);
@@ -83,6 +73,7 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
       const { data, error } = await supabase.functions.invoke('assess-agent-competencies', {
         body: { agent_code: agent.code, trigger_type: 'manual_sync' },
       });
+
       if (error) {
         console.error('Competency sync failed:', error);
         toast.error(`Competency sync failed — use Reassess now to retry`, {
@@ -90,6 +81,7 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
         });
         return;
       }
+
       const result = data as any;
       if (result?.success && result?.updated?.length > 0) {
         toast.success(`Updated ${result.updated.length} competency area${result.updated.length !== 1 ? 's' : ''}`, {
@@ -98,6 +90,8 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
       } else if (result?.success) {
         toast.info(`No competency changes detected.`);
       }
+
+      // Refetch competency data to reflect updates
       await refetch();
     } catch (err) {
       console.error('Competency sync error:', err);
@@ -143,13 +137,6 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
     onOpenTraining({ competencyContext: competencyContext || competencies });
   };
 
-  const completedCount = sessions.filter((s: any) => s.status === 'completed').length;
-
-  const tabs: { key: DrawerTab; label: string; count?: number }[] = [
-    { key: 'competencies', label: 'Competencies', count: competencies.length },
-    { key: 'sessions', label: 'Sessions', count: completedCount },
-  ];
-
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
@@ -162,60 +149,23 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
             Competence development workspace for {agent.name}
           </SheetDescription>
 
-          {/* Header with tabs */}
-          <div className="border-b border-border/40">
-            <div className="flex items-center gap-3 px-4 py-3">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <img
-                  src={agent.avatar}
-                  alt={agent.name}
-                  className="w-6 h-6 rounded-full object-cover border border-border/30 shrink-0"
-                />
-                <SheetTitle className="text-sm font-semibold text-foreground">
-                  Competence Development
-                </SheetTitle>
-              </div>
+          {/* Header */}
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-border/40">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <img
+                src={agent.avatar}
+                alt={agent.name}
+                className="w-6 h-6 rounded-full object-cover border border-border/30 shrink-0"
+              />
+              <SheetTitle className="text-sm font-semibold text-foreground">
+                Competence Development
+              </SheetTitle>
             </div>
-
-            {/* Tab bar */}
-            {!selectedCompetency && (
-              <div className="flex px-4 gap-1">
-                {tabs.map(tab => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={cn(
-                      "relative px-3 py-2 text-xs font-medium transition-colors duration-200",
-                      activeTab === tab.key
-                        ? "text-foreground"
-                        : "text-muted-foreground/60 hover:text-muted-foreground"
-                    )}
-                  >
-                    <span className="flex items-center gap-1.5">
-                      {tab.label}
-                      {tab.count !== undefined && tab.count > 0 && (
-                        <span className={cn(
-                          "text-[9px] px-1.5 py-0 rounded-full tabular-nums",
-                          activeTab === tab.key
-                            ? "bg-primary/10 text-primary"
-                            : "bg-muted/50 text-muted-foreground/50"
-                        )}>
-                          {tab.count}
-                        </span>
-                      )}
-                    </span>
-                    {activeTab === tab.key && (
-                      <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-primary rounded-full" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Body */}
           <div className="flex-1 min-h-0 overflow-hidden">
-            {activeTab === 'competencies' && !selectedCompetency && (
+            {!selectedCompetency && (
               <CompetencyProfilePanel
                 competencies={competencies}
                 overallProgress={overallProgress}
@@ -227,14 +177,6 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
                 hasCompletedSessions={sessions.some((s: any) => s.status === 'completed')}
                 isSyncing={isSyncing}
                 onSyncCompetencies={triggerSync}
-              />
-            )}
-
-            {activeTab === 'sessions' && !selectedCompetency && (
-              <SessionsHistoryPanel
-                sessions={sessions}
-                isLoading={sessionsLoading}
-                agentName={agent.name}
               />
             )}
 
