@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Sheet,
@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/sheet';
 import type { AgentProfile } from '@/data/agentProfiles';
 import { useAgentCompetencies } from '@/hooks/useAgentCompetencies';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import CompetencyProfilePanel from './CompetencyProfilePanel';
 import CompetencyDetailView from './CompetencyDetailView';
@@ -17,7 +18,7 @@ import AddCompetencyDialog from './AddCompetencyDialog';
 import TrainingHistoryPanel from './TrainingHistoryPanel';
 import type { CompetencyArea } from '@/hooks/useAgentCompetencies';
 
-type DrawerTab = 'competence' | 'sessions' | 'chat';
+type DrawerTab = 'competence' | 'sessions';
 
 interface CompetencyDrawerProps {
   agent: AgentProfile;
@@ -29,6 +30,7 @@ interface CompetencyDrawerProps {
   onRetrain: (session: any) => void;
   onTest: (session: any) => void;
   userName?: string;
+  onOpenCompetenceChat?: (competencies: CompetencyArea[]) => void;
 }
 
 const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
@@ -41,11 +43,14 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
   onRetrain,
   onTest,
   userName,
+  onOpenCompetenceChat,
 }) => {
   const [activeTab, setActiveTab] = useState<DrawerTab>('competence');
   const [selectedCompetency, setSelectedCompetency] = useState<CompetencyArea | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isAssessing, setIsAssessing] = useState(false);
+  const [isBackfilling, setIsBackfilling] = useState(false);
+  const backfillTriggered = useRef(false);
 
   const {
     competencies,
@@ -55,6 +60,29 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
     deleteCompetency,
     updateDescriptionAndReassess,
   } = useAgentCompetencies(agent.code, agent);
+
+  // Backfill trigger: if all competencies are 0% but completed sessions exist
+  useEffect(() => {
+    if (!open || backfillTriggered.current || isLoading) return;
+    if (competencies.length === 0) return;
+
+    const allZero = competencies.every(c => c.progress === 0);
+    const hasCompleted = sessions.some((s: any) => s.status === 'completed');
+
+    if (allZero && hasCompleted) {
+      backfillTriggered.current = true;
+      setIsBackfilling(true);
+      supabase.functions.invoke('assess-agent-competencies', {
+        body: { agent_code: agent.code, trigger_type: 'session_complete' },
+      }).then(() => {
+        toast.info(`Syncing ${agent.name}'s competency profile from training history...`);
+      }).catch(() => {
+        // Silent fail — user can manually reassess
+      }).finally(() => {
+        setIsBackfilling(false);
+      });
+    }
+  }, [open, competencies, sessions, isLoading, agent.code, agent.name]);
 
   const handleAddCompetency = async (input: { name: string; description?: string }) => {
     setIsAssessing(true);
@@ -90,7 +118,6 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
   const tabs: { key: DrawerTab; label: string }[] = [
     { key: 'competence', label: 'Competence' },
     { key: 'sessions', label: 'Sessions' },
-    { key: 'chat', label: 'Ask ' + agent.name },
   ];
 
   return (
@@ -107,7 +134,12 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
 
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-border/40">
-            <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <img
+                src={agent.avatar}
+                alt={agent.name}
+                className="w-6 h-6 rounded-full object-cover border border-border/30 shrink-0"
+              />
               <SheetTitle className="text-sm font-semibold text-foreground">
                 {agent.name} · Training Workspace
               </SheetTitle>
@@ -120,10 +152,10 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
                   key={tab.key}
                   onClick={() => { setActiveTab(tab.key); setSelectedCompetency(null); }}
                   className={cn(
-                    'px-3 py-1 text-[11px] font-medium rounded-lg transition-all duration-200',
+                    'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-150 cursor-pointer',
                     activeTab === tab.key
-                      ? 'bg-background shadow-sm text-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-background/60'
+                      ? 'bg-primary/10 text-primary font-semibold'
+                      : 'text-muted-foreground/70 hover:text-foreground hover:bg-muted/50'
                   )}
                 >
                   {tab.label}
@@ -142,6 +174,16 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
             </Button>
           </div>
 
+          {/* Backfill indicator */}
+          {isBackfilling && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 border-b border-border/20">
+              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+              <span className="text-[10px] text-muted-foreground">
+                Syncing {agent.name}'s competency profile from training history...
+              </span>
+            </div>
+          )}
+
           {/* Body */}
           <div className="flex-1 min-h-0 overflow-hidden">
             {activeTab === 'competence' && !selectedCompetency && (
@@ -151,6 +193,8 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
                 isLoading={isLoading}
                 onSelectCompetency={setSelectedCompetency}
                 onAddCompetency={() => setAddDialogOpen(true)}
+                agentName={agent.name}
+                onOpenCompetenceChat={() => onOpenCompetenceChat?.(competencies)}
               />
             )}
 
@@ -176,15 +220,6 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
                   onRetrain={onRetrain}
                   onTest={onTest}
                 />
-              </div>
-            )}
-
-            {activeTab === 'chat' && (
-              <div className="h-full flex items-center justify-center text-sm text-muted-foreground p-4">
-                <p className="text-center">
-                  Ask {agent.name} chat coming soon.<br />
-                  <span className="text-[10px] text-muted-foreground/60">Use the Competence tab to manage areas, or Add Competency to create new ones.</span>
-                </p>
               </div>
             )}
           </div>

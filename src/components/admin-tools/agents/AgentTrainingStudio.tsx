@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { usePermissions } from '@/hooks/usePermissions';
 import { type AnonymizationRule } from './training/AnonymizationRulesInline';
 import AgentTrainingDialog from './AgentTrainingDialog';
+import type { CompetencyArea } from '@/hooks/useAgentCompetencies';
 
 interface TrainingMessage {
   role: 'user' | 'assistant';
@@ -26,6 +27,8 @@ interface AgentTrainingStudioProps {
   agent: AgentProfile;
   dialogOpen: boolean;
   onDialogClose: () => void;
+  initialSessionTitle?: string;
+  competencyContext?: CompetencyArea[];
 }
 
 type ChatSubState = 'setup' | 'active' | 'testing';
@@ -33,11 +36,16 @@ type ChatSubState = 'setup' | 'active' | 'testing';
 const ACCEPTED_MIME = '.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.webp';
 const MAX_FILE_SIZE = 80 * 1024 * 1024;
 
-const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent, dialogOpen, onDialogClose }) => {
+const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({
+  agent,
+  dialogOpen,
+  onDialogClose,
+  initialSessionTitle,
+  competencyContext,
+}) => {
   const { hasPermission, isLoading: permLoading } = usePermissions();
   const canTrain = !permLoading && hasPermission('access_admin');
 
-  
   const [subState, setSubState] = useState<ChatSubState>('setup');
   const [messages, setMessages] = useState<TrainingMessage[]>([]);
   const [input, setInput] = useState('');
@@ -71,7 +79,19 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent, dialog
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const initialTitleApplied = useRef(false);
   const queryClient = useQueryClient();
+
+  // Pre-fill session title from competence chat
+  useEffect(() => {
+    if (initialSessionTitle && dialogOpen && !initialTitleApplied.current && !docName) {
+      setDocName(initialSessionTitle);
+      initialTitleApplied.current = true;
+    }
+    if (!dialogOpen) {
+      initialTitleApplied.current = false;
+    }
+  }, [initialSessionTitle, dialogOpen, docName]);
 
   const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
     queryKey: ['agent-training-sessions', agent.code],
@@ -273,21 +293,33 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent, dialog
       const messagesForApi = newMessages.map(m => ({ role: m.role, content: m.content }));
       const mode = subState === 'testing' ? 'testing' : 'training';
 
-      const response = await supabase.functions.invoke('agent-training-chat', {
-        body: {
-          session_id: currentSessionId,
-          agent_code: agent.code,
-          mode,
-          messages: messagesForApi,
-          file_data: fileData,
-          document_context: {
-            document_type: docType || undefined,
-            document_domain: docDomain || undefined,
-            document_name: docName || undefined,
-            source_url: docLink || undefined,
-          },
-          anonymization_rules: anonymizationRules.filter(r => r.find && r.replace),
+      // Build body with optional competency context
+      const body: any = {
+        session_id: currentSessionId,
+        agent_code: agent.code,
+        mode,
+        messages: messagesForApi,
+        file_data: fileData,
+        document_context: {
+          document_type: docType || undefined,
+          document_domain: docDomain || undefined,
+          document_name: docName || undefined,
+          source_url: docLink || undefined,
         },
+        anonymization_rules: anonymizationRules.filter(r => r.find && r.replace),
+      };
+
+      if (competencyContext && competencyContext.length > 0) {
+        body.competency_context = competencyContext.map(c => ({
+          name: c.name,
+          progress: c.progress,
+          status: c.status,
+          description: c.description,
+        }));
+      }
+
+      const response = await supabase.functions.invoke('agent-training-chat', {
+        body,
       });
 
       if (response.error) throw response.error;
@@ -414,7 +446,6 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent, dialog
     setFileStoragePaths(session.file_path ? [session.file_path] : []);
     const retrainMsg = `We are revisiting ${session.document_name || 'this document'}. Here is what you previously understood: ${session.key_learnings || 'No summary available'}. Please review the document again and flag anything new, changed, or that needs updating.`;
     setInput(retrainMsg);
-    // Dialog will be opened by parent via dialogOpen prop
   };
 
   const handleTest = (session: any) => {
@@ -428,7 +459,6 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent, dialog
       setInput(questions[0].question);
       setTestQuestionIndex(0);
     }
-    // Dialog will be opened by parent via dialogOpen prop
   };
 
   const sendDisabled = isStreaming || fileUploading || isTranscribing || (!input.trim() && attachedFiles.length === 0);
@@ -439,7 +469,6 @@ const AgentTrainingStudio: React.FC<AgentTrainingStudioProps> = ({ agent, dialog
 
   return (
     <>
-      {/* Dialog — preserves draft on close */}
       <AgentTrainingDialog
         agent={agent}
         open={dialogOpen}
