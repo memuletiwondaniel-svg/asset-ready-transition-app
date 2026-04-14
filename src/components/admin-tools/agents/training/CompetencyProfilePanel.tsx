@@ -2,7 +2,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Plus, Search, MessageSquare } from 'lucide-react';
+import { ChevronRight, Plus, Search, MessageSquare, RefreshCw, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getLevelFromProgress, isNewCompetency } from './competencyLevels';
 import CompetencyDonut from './CompetencyDonut';
@@ -53,6 +53,23 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
               {competencies.length} competency area{competencies.length !== 1 ? 's' : ''} tracked
             </p>
           </div>
+        </div>
+        {/* Sync button when all competencies are 0% but sessions exist */}
+        {overallProgress === 0 && competencies.length > 0 && hasCompletedSessions && onSyncCompetencies && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-8 text-xs gap-1.5 mt-2 border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950"
+            disabled={isSyncing}
+            onClick={async () => {
+              setIsSyncing(true);
+              try { await onSyncCompetencies(); } finally { setIsSyncing(false); }
+            }}
+          >
+            {isSyncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            {isSyncing ? 'Syncing...' : 'Sync from training history'}
+          </Button>
+        )}
         </div>
       </div>
 

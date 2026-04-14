@@ -195,6 +195,13 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
                 onAddCompetency={() => setAddDialogOpen(true)}
                 agentName={agent.name}
                 onOpenCompetenceChat={() => onOpenCompetenceChat?.(competencies)}
+                hasCompletedSessions={sessions.some((s: any) => s.status === 'completed')}
+                onSyncCompetencies={async () => {
+                  await supabase.functions.invoke('assess-agent-competencies', {
+                    body: { agent_code: agent.code, trigger_type: 'session_complete' },
+                  });
+                  toast.info(`Syncing ${agent.name}'s competency profile from training history...`);
+                }}
               />
             )}
 
