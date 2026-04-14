@@ -14,17 +14,21 @@ const CompetencyDonut: React.FC<CompetencyDonutProps> = ({ progress, size = 48 }
     { value: 100 - progress },
   ];
 
-  const outerRadius = size / 2 - 2;
-  const ringWidth = size >= 80 ? 9 : size >= 72 ? 8 : size === 64 ? 7 : 5;
+  const outerRadius = size / 2 - 4;
+  const ringWidth = size >= 80 ? 8 : size >= 72 ? 7 : size === 64 ? 6 : 5;
   const innerRadius = outerRadius - ringWidth;
 
+  // Add generous padding to prevent clipping
+  const svgSize = size + 8;
+  const center = svgSize / 2 - 1;
+
   return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <PieChart width={size} height={size}>
+    <div className="relative flex items-center justify-center" style={{ width: svgSize, height: svgSize }}>
+      <PieChart width={svgSize} height={svgSize}>
         <Pie
           data={data}
-          cx={size / 2 - 1}
-          cy={size / 2 - 1}
+          cx={center}
+          cy={center}
           innerRadius={innerRadius}
           outerRadius={outerRadius}
           startAngle={90}
@@ -33,7 +37,7 @@ const CompetencyDonut: React.FC<CompetencyDonutProps> = ({ progress, size = 48 }
           stroke="none"
         >
           <Cell fill={level.chartColor} />
-          <Cell fill="hsl(var(--muted) / 0.5)" />
+          <Cell fill="hsl(var(--muted) / 0.35)" />
         </Pie>
       </PieChart>
       <span className={`absolute font-bold text-foreground ${size >= 72 ? 'text-sm' : 'text-[10px]'}`}>

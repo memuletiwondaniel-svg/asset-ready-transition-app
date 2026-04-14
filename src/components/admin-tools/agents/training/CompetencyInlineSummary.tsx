@@ -38,8 +38,8 @@ const CompetencyInlineSummary: React.FC<CompetencyInlineSummaryProps> = ({
   return (
     <div className="px-5 py-5 space-y-4">
       {/* Summary row */}
-      <div className="flex items-center gap-4">
-        <div className="shrink-0 p-1">
+      <div className="flex items-center gap-5">
+        <div className="shrink-0">
           <CompetencyDonut progress={overallProgress} size={72} />
         </div>
         <div className="flex-1 min-w-0">
@@ -60,23 +60,25 @@ const CompetencyInlineSummary: React.FC<CompetencyInlineSummaryProps> = ({
         </Button>
       </div>
 
-      {/* Top 5 gaps — aligned table layout */}
+      {/* Top 5 gaps — clean grid layout */}
       {gaps.length > 0 && (
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {gaps.map(gap => {
             const level = getLevelFromProgress(gap.progress);
             return (
               <div key={gap.id} className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground flex-1 min-w-0 truncate" title={gap.name}>
+                <span className="text-xs text-muted-foreground w-[260px] shrink-0 truncate" title={gap.name}>
                   {gap.name}
                 </span>
-                <div className="w-32 h-2 rounded-full bg-muted/60 overflow-hidden shrink-0">
+                <div className="flex-1 h-[6px] rounded-full bg-muted/50 overflow-hidden min-w-[80px]">
                   <div
                     className={cn('h-full rounded-full transition-all', level.color)}
                     style={{ width: `${gap.progress}%` }}
                   />
                 </div>
-                <span className="text-[10px] font-medium text-muted-foreground w-8 text-right shrink-0">{gap.progress}%</span>
+                <span className="text-[11px] font-medium text-muted-foreground w-8 text-right shrink-0 tabular-nums">
+                  {gap.progress}%
+                </span>
               </div>
             );
           })}
