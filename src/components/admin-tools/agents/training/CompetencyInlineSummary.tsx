@@ -36,13 +36,15 @@ const CompetencyInlineSummary: React.FC<CompetencyInlineSummaryProps> = ({
     .slice(0, 5);
 
   return (
-    <div className="px-5 py-4 space-y-3">
+    <div className="px-5 py-5 space-y-4">
       {/* Summary row */}
       <div className="flex items-center gap-4">
-        <CompetencyDonut progress={overallProgress} size={72} />
+        <div className="shrink-0 p-1">
+          <CompetencyDonut progress={overallProgress} size={72} />
+        </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs text-muted-foreground">
-            {overallProgress}% Overall · {competencies.length} areas · {sessionsCount} session{sessionsCount !== 1 ? 's' : ''}
+            {competencies.length} areas · {sessionsCount} session{sessionsCount !== 1 ? 's' : ''}
           </p>
           <p className="text-[10px] text-muted-foreground/70 mt-0.5">
             {lastSessionDate ? `Last trained: ${lastSessionDate}` : 'No training sessions yet'}
@@ -58,24 +60,23 @@ const CompetencyInlineSummary: React.FC<CompetencyInlineSummaryProps> = ({
         </Button>
       </div>
 
-      {/* Top 5 gaps */}
+      {/* Top 5 gaps — aligned table layout */}
       {gaps.length > 0 && (
-        <div className="space-y-1.5">
+        <div className="space-y-2.5">
           {gaps.map(gap => {
             const level = getLevelFromProgress(gap.progress);
             return (
-              <div key={gap.id} className="flex items-center gap-2">
-                <div className={cn('h-2 w-2 rounded-full shrink-0', level.color)} />
-                <span className="text-xs text-muted-foreground truncate max-w-[200px]">{gap.name}</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-28 h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={cn('h-full rounded-full transition-all', level.color)}
-                      style={{ width: `${gap.progress}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground w-7 text-right">{gap.progress}%</span>
+              <div key={gap.id} className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground flex-1 min-w-0 truncate" title={gap.name}>
+                  {gap.name}
+                </span>
+                <div className="w-32 h-2 rounded-full bg-muted/60 overflow-hidden shrink-0">
+                  <div
+                    className={cn('h-full rounded-full transition-all', level.color)}
+                    style={{ width: `${gap.progress}%` }}
+                  />
                 </div>
+                <span className="text-[10px] font-medium text-muted-foreground w-8 text-right shrink-0">{gap.progress}%</span>
               </div>
             );
           })}
