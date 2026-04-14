@@ -1,5 +1,4 @@
 import React from 'react';
-import { PieChart, Pie, Cell } from 'recharts';
 import { getLevelFromProgress } from './competencyLevels';
 
 interface CompetencyDonutProps {
@@ -9,38 +8,40 @@ interface CompetencyDonutProps {
 
 const CompetencyDonut: React.FC<CompetencyDonutProps> = ({ progress, size = 48 }) => {
   const level = getLevelFromProgress(progress);
-  const data = [
-    { value: progress },
-    { value: 100 - progress },
-  ];
-
-  const outerRadius = size / 2 - 4;
-  const ringWidth = size >= 80 ? 8 : size >= 72 ? 7 : size === 64 ? 6 : 5;
-  const innerRadius = outerRadius - ringWidth;
-
-  // Add generous padding to prevent clipping
-  const svgSize = size + 8;
-  const center = svgSize / 2 - 1;
+  const strokeWidth = size >= 80 ? 7 : size >= 72 ? 6 : size === 64 ? 5 : 4;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (progress / 100) * circumference;
+  const center = size / 2;
 
   return (
-    <div className="relative flex items-center justify-center" style={{ width: svgSize, height: svgSize }}>
-      <PieChart width={svgSize} height={svgSize}>
-        <Pie
-          data={data}
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {/* Background track */}
+        <circle
           cx={center}
           cy={center}
-          innerRadius={innerRadius}
-          outerRadius={outerRadius}
-          startAngle={90}
-          endAngle={-270}
-          dataKey="value"
-          stroke="none"
-        >
-          <Cell fill={level.chartColor} />
-          <Cell fill="hsl(var(--muted) / 0.35)" />
-        </Pie>
-      </PieChart>
-      <span className={`absolute font-bold text-foreground ${size >= 72 ? 'text-sm' : 'text-[10px]'}`}>
+          r={radius}
+          fill="none"
+          stroke="hsl(var(--muted) / 0.3)"
+          strokeWidth={strokeWidth}
+        />
+        {/* Progress arc */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke={level.chartColor}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          transform={`rotate(-90 ${center} ${center})`}
+          className="transition-all duration-700 ease-out"
+        />
+      </svg>
+      <span className={`absolute font-semibold text-foreground ${size >= 72 ? 'text-sm' : 'text-[10px]'}`}>
         {progress}%
       </span>
     </div>
