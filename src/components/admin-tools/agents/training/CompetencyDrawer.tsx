@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Sheet,
@@ -15,22 +15,16 @@ import { toast } from 'sonner';
 import CompetencyProfilePanel from './CompetencyProfilePanel';
 import CompetencyDetailView from './CompetencyDetailView';
 import AddCompetencyDialog from './AddCompetencyDialog';
-import TrainingHistoryPanel from './TrainingHistoryPanel';
 import type { CompetencyArea } from '@/hooks/useAgentCompetencies';
-
-type DrawerTab = 'competence' | 'sessions';
 
 interface CompetencyDrawerProps {
   agent: AgentProfile;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onOpenTraining: () => void;
+  onOpenTraining: (options?: { competencyContext?: CompetencyArea[] }) => void;
   sessions: any[];
   sessionsLoading: boolean;
-  onRetrain: (session: any) => void;
-  onTest: (session: any) => void;
   userName?: string;
-  onOpenCompetenceChat?: (competencies: CompetencyArea[]) => void;
 }
 
 const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
@@ -40,12 +34,8 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
   onOpenTraining,
   sessions,
   sessionsLoading,
-  onRetrain,
-  onTest,
   userName,
-  onOpenCompetenceChat,
 }) => {
-  const [activeTab, setActiveTab] = useState<DrawerTab>('competence');
   const [selectedCompetency, setSelectedCompetency] = useState<CompetencyArea | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isAssessing, setIsAssessing] = useState(false);
