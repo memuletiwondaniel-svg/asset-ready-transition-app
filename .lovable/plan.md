@@ -1,46 +1,19 @@
 
 
-# Final Plan — Competency-Driven Training Workspace
+# Fix: Bootstrap Loading Screen to Prevent Flash of Old Content
 
-## Status: Approved by Senior Developer — Ready to Implement
+## Problem
+The `clearLegacyWebCaches()` async call in `main.tsx` creates a gap before React mounts. During this gap, the browser can briefly render stale cached content (old sidebar), especially after logout/login which triggers a full page reload.
 
-The plan from the previous round is fully signed off with two minor implementation notes incorporated:
+## Solution
+Inject a loading spinner into `#root` **before** the async cache cleanup runs, so users see a clean loading state instead of a flash of old bundle content. Once cleanup finishes, React mounts normally and replaces the spinner.
 
-1. **"New" badge**: Derive client-side from `created_at` — no DB column needed. `isNewCompetency(createdAt) = (now - createdAt) < 7 days`.
-2. **Reassess fuzzy matching**: Add explicit instruction to `competency-chat` system prompt to match user-provided names against `current_competencies` by ID, and ask for clarification if no confident match.
+## Changes
 
-## Implementation Order (14 steps)
+### File: `src/main.tsx`
+Add `root.innerHTML = '<loading spinner HTML>'` as the first line inside `bootstrap()`, before `await clearLegacyWebCaches()`. The spinner uses inline styles (centered flexbox, CSS animation) so it works independently of any bundled CSS. React's `createRoot().render()` will replace this innerHTML automatically.
 
-1. **DB migration** — `agent_competency_areas` + `agent_competency_updates` tables with RLS
-2. **`competencyLevels.ts`** — shared constant + `getLevelFromProgress()` + `isNewCompetency()`
-3. **`useAgentCompetencies` hook** — React Query CRUD, seeding from specializations, merge/redescribe gap fixes
-4. **`assess-agent-competencies` edge function** — AI assessment triggered on session complete, new competency, description change, reassess
-5. **`CompetencyDonut` + `CompetencyInlineSummary`** — replaces K&T card content (no avatar, donut + top 3 gaps + CTA)
-6. **`CompetencyDrawer` + `CompetencyProfilePanel` + `CompetencyDetailView`** — Sheet side="right" max-w-[720px], 3 tabs, list/detail views
-7. **`AddCompetencyDialog`** — centered dialog with "Save & Assess"
-8. **Wire drawer into `AgentProfileView`** — replace AgentTrainingStudio, pass userName prop
-9. **Wire assessment into `AgentTrainingStudio.completeSession`** — trigger edge function + discovery toast
-10. **Update `AgentTrainingDialog`** — remove History tab, train-only focus
-11. **Fix "All Pending" status** in Sessions tab
-12. **`competency-chat` edge function** — conversational AI with action types, fuzzy name matching
-13. **`CompetencyChat.tsx`** — Ask Fred tab with proposed change cards, reassess handler
-14. **Wire "Ask Fred" tab into `CompetencyDrawer`**
+This is a single-file, ~10-line change. The senior developer's Fix 1 is correct and sufficient — the async gap is the root cause, and a pre-React loading screen closes it completely.
 
-## Files
-
-**12 new**: Migration SQL, `competencyLevels.ts`, `CompetencyDonut.tsx`, `CompetencyInlineSummary.tsx`, `CompetencyDrawer.tsx`, `CompetencyProfilePanel.tsx`, `CompetencyDetailView.tsx`, `AddCompetencyDialog.tsx`, `CompetencyChat.tsx`, `useAgentCompetencies.ts`, `assess-agent-competencies/index.ts`, `competency-chat/index.ts`
-
-**3 modified**: `AgentProfileView.tsx`, `AgentTrainingStudio.tsx`, `AgentTrainingDialog.tsx`
-
-## Key Technical Details
-
-- **Schema**: Two tables with `trigger_type` on audit trail, `linked_session_ids uuid[]` on competencies, RLS for authenticated read / admin write
-- **Merge**: Inherits + deduplicates session IDs from both source rows
-- **Redescribe**: Two-step chain — update description then trigger reassessment
-- **Chat reassess**: `competency-chat` returns `action: { type: 'reassess', competency_id }`, client calls `assess-agent-competencies` directly
-- **Seeding**: From `agentProfiles.specializations` on first load when zero rows exist
-- **"New" badge**: Client-derived from `created_at`, no DB column
-- **Donut**: Recharts `PieChart` with `innerRadius`, 48px (inline) and 64px (drawer) variants
-
-Nothing changes in the training chat flow, file upload, agent header, About card, Performance section, governance model, or routing.
+**Note on Fix 2 (Cache-Control headers)**: This is a Lovable platform concern, not a code change. Vite already content-hashes JS bundles, so stale `index.html` serving is the only vector. After publishing, you should verify `index.html` returns `Cache-Control: no-store` in DevTools Network tab.
 
