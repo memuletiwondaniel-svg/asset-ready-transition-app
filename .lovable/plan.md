@@ -1,44 +1,92 @@
 
 
-# UX Polish & Data Fix — 7 Changes Across 6 Files
+# Pass 1: Assess-Agent-Competencies Edge Function + Auto-Sync + UI Status
 
-## 1. Colored Session Tags — `TrainingHistoryPanel.tsx`
-**Line 427**: Replace `variant="outline"` Badge with rotating color palette:
-```tsx
-const tagColors = [
-  'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800',
-  'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800',
-  'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800',
-  'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800',
-  'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800',
-];
-```
-Apply `tagColors[i % tagColors.length]` to each Badge className. Add `hover:shadow-md` to session cards (line 274, the non-expanded branch).
+## Root Cause Confirmed
 
-## 2. Manual Sync Button — `CompetencyProfilePanel.tsx` + `CompetencyDrawer.tsx`
-Add props `hasCompletedSessions: boolean` and `onSyncCompetencies: () => Promise<void>` to `CompetencyProfilePanel`. When `overallProgress === 0 && hasCompletedSessions`, show a "Sync from training history" button with loading state below the donut summary. Wire from `CompetencyDrawer` which has sessions data and supabase import. Also add `hover:shadow-md` to competency rows (line 97).
+The `assess-agent-competencies` edge function **does not exist** in `supabase/functions/`. The client calls it in 3 places but every invocation silently 404s. Fred has 8 competency areas all at 0%, 3 completed sessions with rich `key_learnings` and `extracted_tags`, and 0 rows in `agent_competency_updates`. The sync button in `CompetencyProfilePanel` is correctly coded but its action does nothing because the backend doesn't exist.
 
-## 3. "Open Workspace" CTA — `CompetencyInlineSummary.tsx`
-- Rename "Open Training Workspace →" to "Open Workspace →" (line 57)
-- Add CTA classes: `bg-primary/5 border border-primary/30 hover:bg-primary/10 text-primary font-medium`
-
-## 4. Tighter Progress Bars — `CompetencyInlineSummary.tsx`
-- Line 69: Remove `flex-1` from name span, add `max-w-[200px] truncate`
-- Line 67: Reduce row gap from `gap-2.5` to `gap-2`
-
-## 5. Remove "Agent Monitor" Sub-header — `AgentMonitorCard.tsx`
-- Delete lines 43-49 (CardTitle with duplicate Activity icon + "Agent Monitor" text)
-- Line 52: Change Activity tab icon to `Clock` (import Clock from lucide-react)
-
-## 6. Bolder Card Headers — `AgentProfileView.tsx`
-- Line 99: Change `text-[10px] font-semibold text-muted-foreground/60` → `text-[11px] font-bold text-muted-foreground/80`
-- Line 94: Add `bg-muted/15` to the header row base className
-
-## 7. Enhanced Hover — `CompetencyProfilePanel.tsx` + `TrainingHistoryPanel.tsx`
-- Competency rows (line 97): add `hover:shadow-md`
-- Session cards (line 279): add `hover:shadow-md`
+`ANTHROPIC_API_KEY` is already configured — no new secrets needed.
 
 ---
 
-**Files**: `TrainingHistoryPanel.tsx`, `CompetencyProfilePanel.tsx`, `CompetencyDrawer.tsx`, `CompetencyInlineSummary.tsx`, `AgentMonitorCard.tsx`, `AgentProfileView.tsx`
+## Deliverables (Pass 1 only — unblocks the 0% issue)
+
+### 1. New edge function: `assess-agent-competencies/index.ts`
+
+**What it does:**
+- Accepts `{ agent_code, trigger_type, target_competency_id?, mode? }`
+- `mode` defaults to `incremental`
+- Loads all completed sessions for the agent (key_learnings, extracted_tags, knowledge_card)
+- Loads all `agent_competency_areas` for the agent
+- Calls Claude (claude-sonnet-4-5 via Anthropic API) with a structured prompt:
+  - "Given these training sessions and their knowledge, assess each competency area on a 0-100 scale"
+  - Returns JSON: `{ assessments: [{ competency_id, progress, notes }] }`
+- For each competency: updates `progress`, `status` (derived from `getLevelFromProgress` logic), `ai_assessment_notes`, `last_assessed_at`, appends relevant session IDs to `linked_session_ids`
+- Inserts audit rows into `agent_competency_updates` for each change
+- If `target_competency_id` is set, only reassess that one competency (for description-change triggers)
+- Returns `{ success: true, updated: [...], timestamp }`
+
+**Pattern:** Follows `fred-performance-scorer` — service role client, CORS headers, Anthropic direct call.
+
+### 2. Auto-trigger on session completion: `agent-training-chat/index.ts`
+
+After the session is marked `completed` (line 470-485), add a non-blocking call:
+
+```typescript
+// Fire-and-forget competency reassessment
+fetch(`${supabaseUrl}/functions/v1/assess-agent-competencies`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
+  body: JSON.stringify({ agent_code, trigger_type: 'session_complete', mode: 'incremental' }),
+}).catch(() => {});
+```
+
+This uses the service role key (already available in the function) so no auth issues. Non-blocking so the training response isn't delayed.
+
+### 3. UI sync status row: `CompetencyProfilePanel.tsx`
+
+Replace the conditional sync button with a persistent status indicator:
+
+| State | Display |
+|---|---|
+| `isLoading` | "Loading..." |
+| All 0% + has completed sessions | Amber warning + "Sync from training history" button (existing) + "Reassess now" always available |
+| `last_assessed_at` exists | "Last reassessed X ago" in muted text |
+| Syncing in progress | Spinner + "Syncing learning updates..." |
+
+Add a small "Reassess now" secondary action (always visible, not just at 0%) in the summary header area.
+
+### 4. Fix silent failures in `CompetencyDrawer.tsx`
+
+The backfill `useEffect` (lines 65-85) swallows errors. Update to:
+- Check `response.error` from `supabase.functions.invoke`
+- Show toast on failure: "Competency sync failed — use Reassess now"
+- On success: call `refetch()` to refresh competency data immediately
+- Same fix for the `onSyncCompetencies` handler (line 199-203)
+
+### 5. Fix `useAgentCompetencies.ts` silent failure
+
+The `updateDescriptionAndReassess` mutation (line 176-190) calls `supabase.functions.invoke` but doesn't handle the response body. After the function exists, ensure the response is checked and competencies are refetched.
+
+---
+
+## Pass 2 (future, after Pass 1 is verified working)
+
+- `agent_competency_runs` queue table
+- DB trigger on `agent_training_sessions` for reliability
+- Nightly full reread via Supabase scheduled edge function (02:00 UTC default)
+- Session badge: "Applied to competencies"
+
+---
+
+## Files Modified/Created
+
+| File | Action |
+|---|---|
+| `supabase/functions/assess-agent-competencies/index.ts` | **Create** — the core edge function |
+| `supabase/functions/agent-training-chat/index.ts` | Edit line ~485 — add post-completion trigger |
+| `src/components/admin-tools/agents/training/CompetencyProfilePanel.tsx` | Edit — persistent status row + reassess button |
+| `src/components/admin-tools/agents/training/CompetencyDrawer.tsx` | Edit — fix silent failures, refetch on success |
+| `src/hooks/useAgentCompetencies.ts` | Edit — fix silent failure in `updateDescriptionAndReassess` |
 
