@@ -29,7 +29,7 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
   onSelectCompetency,
   onAddCompetency,
   agentName,
-  onOpenCompetenceChat,
+  onOpenTraining,
   hasCompletedSessions,
   onSyncCompetencies,
   isSyncing: isSyncingProp,
