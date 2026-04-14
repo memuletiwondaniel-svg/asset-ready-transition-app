@@ -561,8 +561,9 @@ ${JSON.stringify(transcript)}`;
         }
       }
 
+      const userGreeting = userName ? `The user's name is ${userName}. Address them by name naturally.\n` : "";
       systemPrompt = `${agentPrompt}
-${buildAnonymizationSection(anonymization_rules)}
+${buildAnonymizationSection(anonymization_rules)}${userGreeting}
 You are operating in TESTING MODE.
 You have previously been trained on: ${docName}${docType ? ` (${docType})` : ""}${docDomain ? `, domain: ${docDomain}` : ""}
 Your training summary: ${knowledgeSummary}
