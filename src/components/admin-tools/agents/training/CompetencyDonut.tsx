@@ -23,7 +23,7 @@ const CompetencyDonut: React.FC<CompetencyDonutProps> = ({ progress, size = 48 }
           cy={center}
           r={radius}
           fill="none"
-          stroke="hsl(var(--muted) / 0.3)"
+          stroke="hsl(var(--muted) / 0.5)"
           strokeWidth={strokeWidth}
         />
         {/* Progress arc */}
@@ -32,7 +32,7 @@ const CompetencyDonut: React.FC<CompetencyDonutProps> = ({ progress, size = 48 }
           cy={center}
           r={radius}
           fill="none"
-          stroke={level.chartColor}
+          stroke="hsl(230, 70%, 55%)"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
