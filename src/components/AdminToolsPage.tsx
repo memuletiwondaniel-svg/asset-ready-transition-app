@@ -635,7 +635,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         </div>
         {/* Content Skeleton â matches current sectioned design */}
         <div className="flex-1 overflow-auto">
-          <div className="container pt-4 md:pt-6 pb-20 md:pb-8 max-w-6xl mx-auto px-4 md:px-6">
+          <div className="container pt-4 md:pt-6 pb-20 md:pb-8 max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
             <div className="flex items-center justify-end mb-6 md:mb-8">
               <div className="w-full sm:w-80 h-9 bg-muted animate-pulse rounded-lg" />
             </div>
@@ -648,7 +648,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                     <div className="flex-1 h-px bg-border/40" />
                     <div className="h-3 w-4 bg-muted animate-pulse rounded" />
                   </div>
-                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {[1, 2, 3].map((c) => (
                       <div key={c} className="h-[72px] bg-muted/40 animate-pulse rounded-xl border border-border/20" />
                     ))}
@@ -672,7 +672,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                 <Sliders className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight truncate">
+                <h1 className="text-xl md:text-2xl xl:text-3xl font-bold text-foreground tracking-tight truncate">
                   {t.administration}
                 </h1>
                 <p className="text-xs md:text-sm text-muted-foreground mt-0.5 line-clamp-1">
@@ -685,7 +685,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
-          <div className="container pt-4 md:pt-6 pb-20 md:pb-8 max-w-6xl mx-auto px-4 md:px-6">
+          <div className="container pt-4 md:pt-6 pb-20 md:pb-8 max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
             {/* Search Bar */}
             <div className="flex items-center justify-end mb-6 md:mb-8">
               <div className="relative w-full sm:w-80">
@@ -712,7 +712,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                   <div className="flex-1 h-px bg-amber-300/30" />
                   <span className="text-[10px] text-amber-500/60 tabular-nums">{favoriteItems.length}</span>
                 </div>
-                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {favoriteItems.map((item) => {
                     const IconComponent = item.icon;
                     return (
@@ -791,7 +791,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
                           onAgentClick={(code) => navigate(`/admin/ai-agents/${code}`)}
                         />
                       ) : (
-                      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {section.items.map((item) => {
                           const IconComponent = item.icon;
                           const isFav = adminFavorites.includes(item.id);

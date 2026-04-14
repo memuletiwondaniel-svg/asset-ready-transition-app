@@ -11,7 +11,7 @@ interface AgentRosterGridProps {
 
 const AgentRosterGrid: React.FC<AgentRosterGridProps> = ({ onAgentClick, showHubCard, onHubClick }) => {
   return (
-    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {showHubCard && (
         <div
           className="group bg-card border border-border/40 rounded-xl p-4 cursor-pointer hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 hover:border-border/80 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] relative h-[72px] flex items-center"
