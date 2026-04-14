@@ -22,13 +22,24 @@ const clearLegacyWebCaches = async () => {
 }
 
 const bootstrap = async () => {
+  const root = document.getElementById("root")!;
+
+  // Inject loading screen immediately — covers the async cache-clearing gap
+  // so no stale cached bundle can flash through before React mounts
+  root.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0a0a0a">
+      <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.1);border-top-color:rgba(255,255,255,0.7);border-radius:50%;animation:spin .8s linear infinite"></div>
+    </div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  `;
+
   try {
-    await clearLegacyWebCaches()
+    await clearLegacyWebCaches();
   } catch (error) {
-    console.warn('[Boot] Startup cleanup failed', error)
+    console.warn('[Boot] Startup cleanup failed', error);
   }
 
-  createRoot(document.getElementById("root")!).render(
+  createRoot(root).render(
     <BackgroundThemeProvider>
       <App />
     </BackgroundThemeProvider>
