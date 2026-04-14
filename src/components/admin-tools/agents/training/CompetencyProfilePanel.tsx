@@ -16,7 +16,7 @@ interface CompetencyProfilePanelProps {
   onSelectCompetency: (competency: CompetencyArea) => void;
   onAddCompetency: () => void;
   agentName?: string;
-  onOpenCompetenceChat?: () => void;
+  onOpenTraining?: () => void;
   hasCompletedSessions?: boolean;
   onSyncCompetencies?: () => Promise<void>;
   isSyncing?: boolean;

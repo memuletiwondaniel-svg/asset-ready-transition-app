@@ -191,12 +191,9 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
         agent={agent}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
-        onOpenTraining={() => setTrainingDialogOpen(true)}
+        onOpenTraining={handleOpenTraining}
         sessions={sessions}
         sessionsLoading={sessionsLoading}
-        onRetrain={handleRetrain}
-        onTest={handleTest}
-        onOpenCompetenceChat={handleOpenCompetenceChat}
       />
 
       {/* Training Dialog (train-only, no history tab) */}
