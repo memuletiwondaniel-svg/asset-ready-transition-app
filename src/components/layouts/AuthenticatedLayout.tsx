@@ -95,7 +95,9 @@ export const AuthenticatedLayout: React.FC = () => {
         />
       </div>
       <AnimatedBackground className="flex-1 flex flex-col overflow-auto pb-16 md:pb-0">
-        <Outlet />
+        <div className="content-max flex-1 flex flex-col">
+          <Outlet />
+        </div>
       </AnimatedBackground>
       {/* Bottom nav — visible on mobile only */}
       <MobileBottomNav />
