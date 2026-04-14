@@ -73,7 +73,7 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
       {/* Summary header */}
       <div className="p-4 border-b border-border/40">
         <div className="flex items-center gap-4">
-          <div className="shrink-0 p-1">
+          <div className="shrink-0">
             <CompetencyDonut progress={overallProgress} size={80} />
           </div>
           <div className="flex-1 min-w-0">
@@ -186,7 +186,7 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5 shrink-0">
-                  <div className="w-28 h-2 rounded-full bg-muted/60 overflow-hidden">
+                  <div className="w-24 h-[6px] rounded-full bg-muted/50 overflow-hidden">
                     <div
                       className={cn('h-full rounded-full transition-all', level.color)}
                       style={{ width: `${comp.progress}%` }}
