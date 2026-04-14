@@ -1,8 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
-import { Check, X, Users, ChevronDown, BookOpen, Activity } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Users, ChevronDown, BookOpen, Activity } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { AgentProfile } from '@/data/agentProfiles';
 import { agentProfiles } from '@/data/agentProfiles';
@@ -14,6 +13,7 @@ import { useAgentCompetencies } from '@/hooks/useAgentCompetencies';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import type { CompetencyArea } from '@/hooks/useAgentCompetencies';
 
 interface AgentProfileViewProps {
   agent: AgentProfile;
@@ -22,46 +22,10 @@ interface AgentProfileViewProps {
 
 type SectionColor = 'blue' | 'amber' | 'emerald';
 
-const SPEC_VISIBLE = 6;
-const LIMIT_VISIBLE = 4;
-
-const sectionColorMap: Record<SectionColor, { bg: string; icon: string }> = {
-  blue:    { bg: 'bg-blue-500/10 group-hover:bg-blue-500/15',       icon: 'text-blue-600 dark:text-blue-400' },
-  amber:   { bg: 'bg-amber-500/10 group-hover:bg-amber-500/15',     icon: 'text-amber-600 dark:text-amber-400' },
-  emerald: { bg: 'bg-emerald-500/10 group-hover:bg-emerald-500/15', icon: 'text-emerald-600 dark:text-emerald-400' },
-};
-
-const SectionHeader: React.FC<{
-  label: string;
-  icon: React.ElementType;
-  isOpen: boolean;
-  onToggle: () => void;
-  count?: number;
-  color?: SectionColor;
-}> = ({ label, icon: Icon, isOpen, onToggle, count, color = 'blue' }) => {
-  const c = sectionColorMap[color];
-  return (
-  <button
-    onClick={onToggle}
-    className="group flex items-center gap-3 w-full py-3 cursor-pointer select-none"
-  >
-    <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center transition-colors", c.bg)}>
-      <Icon className={cn("h-3.5 w-3.5", c.icon)} />
-    </div>
-    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/50 group-hover:text-foreground transition-colors">
-      {label}
-    </span>
-    {count !== undefined && (
-      <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 ml-1">
-        {count}
-      </Badge>
-    )}
-    <div className="flex-1 border-t border-border/40 mx-2" />
-    <ChevronDown
-      className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-0' : '-rotate-90'}`}
-    />
-  </button>
-  );
+const sectionColorMap: Record<SectionColor, { icon: string }> = {
+  blue:    { icon: 'text-blue-600 dark:text-blue-400' },
+  amber:   { icon: 'text-amber-600 dark:text-amber-400' },
+  emerald: { icon: 'text-emerald-600 dark:text-emerald-400' },
 };
 
 const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick }) => {
@@ -69,12 +33,12 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
   const [trainingOpen, setTrainingOpen] = React.useState(true);
   const [performanceOpen, setPerformanceOpen] = React.useState(true);
   const [bioExpanded, setBioExpanded] = React.useState(false);
-  const [showAllSpecs, setShowAllSpecs] = React.useState(false);
-  const [showAllLimits, setShowAllLimits] = React.useState(false);
 
   // Competency + Drawer state
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [trainingDialogOpen, setTrainingDialogOpen] = React.useState(false);
+  const [competenceChatTitle, setCompetenceChatTitle] = React.useState<string | undefined>();
+  const [competenceChatContext, setCompetenceChatContext] = React.useState<CompetencyArea[] | undefined>();
 
   const { competencies, isLoading: compLoading, overallProgress } = useAgentCompetencies(agent.code, agent);
 
@@ -104,12 +68,6 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
     .map(code => agentProfiles.find(a => a.code === code))
     .filter(Boolean) as AgentProfile[];
 
-  const visibleSpecs = showAllSpecs ? agent.specializations : agent.specializations.slice(0, SPEC_VISIBLE);
-  const hiddenSpecCount = agent.specializations.length - SPEC_VISIBLE;
-
-  const visibleLimits = showAllLimits ? agent.limitations : agent.limitations.slice(0, LIMIT_VISIBLE);
-  const hiddenLimitCount = agent.limitations.length - LIMIT_VISIBLE;
-
   const handleRetrain = (session: any) => {
     setTrainingDialogOpen(true);
   };
@@ -118,23 +76,48 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
     setTrainingDialogOpen(true);
   };
 
+  const handleOpenCompetenceChat = (comps: CompetencyArea[]) => {
+    setDrawerOpen(false);
+    setCompetenceChatTitle('Competence Development');
+    setCompetenceChatContext(comps);
+    setTrainingDialogOpen(true);
+  };
+
+  const renderSectionHeader = (
+    label: string,
+    Icon: React.ElementType,
+    isOpen: boolean,
+    color: SectionColor,
+  ) => {
+    const c = sectionColorMap[color];
+    return (
+      <div className={cn(
+        "flex items-center gap-3 px-5 py-3 cursor-pointer select-none transition-colors hover:bg-muted/30",
+        isOpen && "border-b border-border/30"
+      )}>
+        <Icon className={cn("h-4 w-4", c.icon)} />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/60">
+          {label}
+        </span>
+        <div className="flex-1" />
+        <ChevronDown
+          className={cn('h-4 w-4 text-muted-foreground/40 transition-transform duration-200', isOpen ? 'rotate-0' : '-rotate-90')}
+        />
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-2 animate-fade-in">
       {/* ─── ABOUT [AGENT] ─── */}
       <Collapsible open={aboutOpen} onOpenChange={setAboutOpen}>
-        <CollapsibleTrigger asChild>
-          <div>
-            <SectionHeader
-              label={`About ${agent.name}`}
-              icon={Users}
-              isOpen={aboutOpen}
-              onToggle={() => setAboutOpen(o => !o)}
-              color="blue"
-            />
-          </div>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <Card className="border-border/40 shadow-sm bg-card/80 backdrop-blur-sm">
+        <Card className="border-border/40 shadow-sm bg-card/80 backdrop-blur-sm overflow-hidden">
+          <CollapsibleTrigger asChild>
+            <div>
+              {renderSectionHeader(`About ${agent.name}`, Users, aboutOpen, 'blue')}
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
             <CardContent className="p-5">
               <p className={cn(
                 "text-sm text-muted-foreground/80 leading-relaxed",
@@ -150,7 +133,7 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
               </button>
 
               {collaborators.length > 0 && (
-                <div className="flex items-center gap-3 flex-wrap mt-3 mb-3 pb-3 border-b border-border/30">
+                <div className="flex items-center gap-3 flex-wrap mt-3">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium shrink-0">
                     <Users className="h-3.5 w-3.5" />
                     Works with
@@ -169,129 +152,44 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
                   ))}
                 </div>
               )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-5 h-5 rounded-md bg-emerald-500/10 flex items-center justify-center">
-                      <Check className="h-3 w-3 text-emerald-600" />
-                    </div>
-                    <span className="text-xs font-semibold text-foreground">Specializations</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {visibleSpecs.map((spec) => (
-                      <Badge
-                        key={spec}
-                        variant="secondary"
-                        className="text-[10px] py-0.5 px-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 font-normal"
-                      >
-                        {spec}
-                      </Badge>
-                    ))}
-                  </div>
-                  {!showAllSpecs && hiddenSpecCount > 0 && (
-                    <button
-                      onClick={() => setShowAllSpecs(true)}
-                      className="text-[10px] text-muted-foreground/60 hover:text-foreground mt-1 transition-colors duration-150"
-                    >
-                      +{hiddenSpecCount} more
-                    </button>
-                  )}
-                  {showAllSpecs && hiddenSpecCount > 0 && (
-                    <button
-                      onClick={() => setShowAllSpecs(false)}
-                      className="text-[10px] text-muted-foreground/60 hover:text-foreground mt-1 transition-colors duration-150"
-                    >
-                      Show less
-                    </button>
-                  )}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-5 h-5 rounded-md bg-muted flex items-center justify-center">
-                      <X className="h-3 w-3 text-muted-foreground" />
-                    </div>
-                    <span className="text-xs font-semibold text-foreground">Limitations</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {visibleLimits.map((lim) => (
-                      <Badge
-                        key={lim}
-                        variant="outline"
-                        className="text-[10px] py-0.5 px-2 text-muted-foreground border-border/60 font-normal"
-                      >
-                        {lim}
-                      </Badge>
-                    ))}
-                  </div>
-                  {!showAllLimits && hiddenLimitCount > 0 && (
-                    <button
-                      onClick={() => setShowAllLimits(true)}
-                      className="text-[10px] text-muted-foreground/60 hover:text-foreground mt-1 transition-colors duration-150"
-                    >
-                      +{hiddenLimitCount} more
-                    </button>
-                  )}
-                  {showAllLimits && hiddenLimitCount > 0 && (
-                    <button
-                      onClick={() => setShowAllLimits(false)}
-                      className="text-[10px] text-muted-foreground/60 hover:text-foreground mt-1 transition-colors duration-150"
-                    >
-                      Show less
-                    </button>
-                  )}
-                </div>
-              </div>
             </CardContent>
-          </Card>
-        </CollapsibleContent>
+          </CollapsibleContent>
+        </Card>
       </Collapsible>
 
-      {/* ─── KNOWLEDGE & TRAINING ─── */}
+      {/* ─── COMPETENCE DEVELOPMENT ─── */}
       <Collapsible open={trainingOpen} onOpenChange={setTrainingOpen}>
-        <CollapsibleTrigger asChild>
-          <div>
-            <SectionHeader
-              label="Knowledge & Training"
-              icon={BookOpen}
-              isOpen={trainingOpen}
-              onToggle={() => setTrainingOpen(o => !o)}
-              color="amber"
+        <Card className="border-border/40 shadow-sm bg-card/80 backdrop-blur-sm overflow-hidden">
+          <CollapsibleTrigger asChild>
+            <div>
+              {renderSectionHeader('Competence Development', BookOpen, trainingOpen, 'amber')}
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CompetencyInlineSummary
+              competencies={competencies}
+              overallProgress={overallProgress}
+              sessionsCount={completedSessions.length}
+              lastSessionDate={lastSessionDate}
+              isLoading={compLoading}
+              onOpenWorkspace={() => setDrawerOpen(true)}
             />
-          </div>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <Card className="border-border/40 shadow-sm bg-card/80 backdrop-blur-sm">
-            <CardContent className="p-0">
-              <CompetencyInlineSummary
-                competencies={competencies}
-                overallProgress={overallProgress}
-                sessionsCount={completedSessions.length}
-                lastSessionDate={lastSessionDate}
-                isLoading={compLoading}
-                onOpenWorkspace={() => setDrawerOpen(true)}
-              />
-            </CardContent>
-          </Card>
-        </CollapsibleContent>
+          </CollapsibleContent>
+        </Card>
       </Collapsible>
 
       {/* ─── PERFORMANCE ─── */}
       <Collapsible open={performanceOpen} onOpenChange={setPerformanceOpen}>
-        <CollapsibleTrigger asChild>
-          <div>
-            <SectionHeader
-              label="Performance"
-              icon={Activity}
-              isOpen={performanceOpen}
-              onToggle={() => setPerformanceOpen(o => !o)}
-              color="emerald"
-            />
-          </div>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <AgentMonitorCard agent={agent} />
-        </CollapsibleContent>
+        <Card className="border-border/40 shadow-sm bg-card/80 backdrop-blur-sm overflow-hidden">
+          <CollapsibleTrigger asChild>
+            <div>
+              {renderSectionHeader('Performance', Activity, performanceOpen, 'emerald')}
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <AgentMonitorCard agent={agent} />
+          </CollapsibleContent>
+        </Card>
       </Collapsible>
 
       {/* Competency Drawer */}
@@ -304,13 +202,20 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
         sessionsLoading={sessionsLoading}
         onRetrain={handleRetrain}
         onTest={handleTest}
+        onOpenCompetenceChat={handleOpenCompetenceChat}
       />
 
       {/* Training Dialog (train-only, no history tab) */}
       <AgentTrainingStudio
         agent={agent}
         dialogOpen={trainingDialogOpen}
-        onDialogClose={() => setTrainingDialogOpen(false)}
+        onDialogClose={() => {
+          setTrainingDialogOpen(false);
+          setCompetenceChatTitle(undefined);
+          setCompetenceChatContext(undefined);
+        }}
+        initialSessionTitle={competenceChatTitle}
+        competencyContext={competenceChatContext}
       />
     </div>
   );

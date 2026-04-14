@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { FileText, Search, GraduationCap, RotateCcw, MoreHorizontal, Archive, Trash2, ChevronDown, AlertTriangle, ExternalLink, Loader2, ShieldCheck, ShieldAlert, Pencil, Flag, Undo2, CheckCircle2 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { FileText, Search, GraduationCap, RotateCcw, MoreHorizontal, Archive, Trash2, AlertTriangle, ExternalLink, Loader2, ShieldCheck, ShieldAlert, Pencil, Flag, Undo2, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,13 +42,12 @@ const ConfidenceDots: React.FC<{ level?: string; completenessScore?: number }> =
 
 // ─── Governance badges ───
 const GovernanceBadges: React.FC<{ session: any }> = ({ session }) => {
-  const badges: Array<{ label: string; color: string; icon?: React.ReactNode }> = [];
+  const badges: Array<{ label: string; color: string }> = [];
   const ks = session.knowledge_status;
   const corrections = session.correction_history || [];
   const contradictions = session.contradiction_flags || [];
   const isStale = session.stale_after && new Date(session.stale_after) < new Date();
 
-  // Priority order: Flagged > Conflict > Corrected > Stale > Pending > Verified
   if (ks === 'flagged') {
     badges.push({ label: '⚠ Flagged', color: 'border-red-500/30 text-red-600 dark:text-red-400 bg-red-500/5' });
   }
@@ -111,7 +110,6 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
       if (search && !s.document_name?.toLowerCase().includes(search.toLowerCase())) return false;
       if (domainFilter !== 'all' && s.document_domain !== domainFilter) return false;
       if (statusFilter === 'all') return true;
-      // Governance status filters
       if (['pending_review', 'verified', 'flagged'].includes(statusFilter)) {
         return s.knowledge_status === statusFilter;
       }
@@ -212,61 +210,6 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* P&ID Training Path (Fred & Ivan only) */}
-      {(agentCode === 'fred' || agentCode === 'ivan') && (() => {
-        const hasLegendSheet = sessions.some(s => (s as any).document_type === 'P&ID Legend Sheet' && s.status === 'completed');
-        const hasPID = sessions.some(s => (s as any).document_type === 'P&ID' && s.status === 'completed');
-        const hasLOSH = sessions.some(s => (s as any).document_type === 'LOSH Drawing' && s.status === 'completed');
-        const allComplete = hasLegendSheet && hasPID && (agentCode === 'ivan' || hasLOSH);
-
-        if (allComplete) return null;
-
-        return (
-          <details className="rounded-lg border border-border/40 bg-muted/20 overflow-hidden">
-            <summary className="px-3 py-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/40 transition-colors select-none">
-              P&ID Training Path
-            </summary>
-            <div className="px-3 pb-3 space-y-1">
-              <div className="flex items-center gap-2 text-xs">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                <span className="text-muted-foreground">Foundation knowledge</span>
-                <Badge variant="secondary" className="text-[8px] py-0 ml-auto">ready</Badge>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                {hasLegendSheet ? (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                ) : (
-                  <div className="h-3.5 w-3.5 rounded-full border border-muted-foreground/30 shrink-0" />
-                )}
-                <span className={hasLegendSheet ? 'text-muted-foreground' : 'text-foreground'}>Project legend sheet</span>
-                {!hasLegendSheet && hasPID && (
-                  <Badge variant="outline" className="text-[8px] py-0 ml-auto text-amber-600 border-amber-500/30 gap-0.5">
-                    <AlertTriangle className="h-2.5 w-2.5" />Upload before P&IDs
-                  </Badge>
-                )}
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                {hasPID ? (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                ) : (
-                  <div className="h-3.5 w-3.5 rounded-full border border-muted-foreground/30 shrink-0" />
-                )}
-                <span className={hasPID ? 'text-muted-foreground' : 'text-foreground'}>Process P&IDs</span>
-              </div>
-              {agentCode === 'fred' && (
-                <div className="flex items-center gap-2 text-xs">
-                  {hasLOSH ? (
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                  ) : (
-                    <div className="h-3.5 w-3.5 rounded-full border border-muted-foreground/30 shrink-0" />
-                  )}
-                  <span className={hasLOSH ? 'text-muted-foreground' : 'text-foreground'}>LOSH drawings</span>
-                </div>
-              )}
-            </div>
-          </details>
-        );
-      })()}
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
         <div className="relative flex-1 w-full sm:w-auto">
@@ -322,168 +265,148 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
           const isExpanded = expandedId === session.id;
           const stats = getKnowledgeStats(session.knowledge_card);
           const corrections: any[] = session.correction_history || [];
+          const metaParts = [session.document_domain, session.document_type].filter(Boolean).join(' · ');
 
           return (
-            <div key={session.id} className="border border-border/40 rounded-xl overflow-hidden transition-colors hover:bg-muted/20">
+            <div
+              key={session.id}
+              className={cn(
+                'border border-border/40 rounded-xl overflow-hidden transition-all duration-200 group',
+                isExpanded
+                  ? 'ring-1 ring-primary/20 bg-card shadow-sm'
+                  : expandedId
+                    ? 'opacity-50'
+                    : 'opacity-100 hover:bg-muted/20'
+              )}
+            >
               {/* Collapsed header */}
               <button
-                className="w-full text-left p-4 flex items-start justify-between gap-3"
+                className="w-full text-left p-4 flex items-center gap-3"
                 onClick={() => setExpandedId(isExpanded ? null : session.id)}
               >
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {session.document_name || 'Training session'}
-                      </p>
-                      <span className="text-[10px] text-muted-foreground">
-                        {format(new Date(session.created_at), 'MMM d, yyyy')}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {[session.document_domain, session.document_type].filter(Boolean).join(' · ') || 'No metadata'}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      {session.confidence_level && (
-                        <ConfidenceDots level={session.confidence_level} completenessScore={session.completeness_score} />
-                      )}
-                      {stats && (
-                        <span className="text-[10px] text-muted-foreground">
-                          {stats.facts} facts · {stats.procedures} procedures
-                        </span>
-                      )}
-                      {session.last_test_score != null && (
-                        <span className="text-[10px] text-muted-foreground">
-                          Test: {session.last_test_score}/100 ✓
-                        </span>
-                      )}
-                      <GovernanceBadges session={session} />
-                    </div>
-                  </div>
+                <div className="w-8 h-8 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {!readOnly && (
-                    <>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={(e) => { e.stopPropagation(); onRetrain?.(session); }}>
-                        <RotateCcw className="h-3 w-3" />
-                        Retrain
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={(e) => { e.stopPropagation(); onTest?.(session); }}>
-                        <GraduationCap className="h-3 w-3" />
-                        Test
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => e.stopPropagation()}>
-                            <MoreHorizontal className="h-3.5 w-3.5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleArchive(session.id)}>
-                            <Archive className="h-3.5 w-3.5 mr-2" />Archive
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(session.id)}>
-                            <Trash2 className="h-3.5 w-3.5 mr-2" />Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {session.document_name || 'Training session'}
+                    </p>
+                    <span className="text-[10px] text-muted-foreground">
+                      {format(new Date(session.created_at), 'MMM d, yyyy')}
+                    </span>
+                    {session.confidence_level && (
+                      <ConfidenceDots level={session.confidence_level} completenessScore={session.completeness_score} />
+                    )}
+                    {stats && (
+                      <span className="text-[10px] text-muted-foreground">
+                        {stats.facts} facts · {stats.procedures} proc
+                      </span>
+                    )}
+                    <GovernanceBadges session={session} />
+                  </div>
+                  {metaParts && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{metaParts}</p>
                   )}
-                  <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {!readOnly && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className="h-3.5 w-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => { onRetrain?.(session); }}>
+                          <RotateCcw className="h-3.5 w-3.5 mr-2" />Retrain
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { onTest?.(session); }}>
+                          <GraduationCap className="h-3.5 w-3.5 mr-2" />Test
+                        </DropdownMenuItem>
+                        {session.knowledge_status === 'pending_review' && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setVerificationModal(session)}>
+                              <ShieldCheck className="h-3.5 w-3.5 mr-2" />View & Verify
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setFlaggingId(session.id)}>
+                              <Flag className="h-3.5 w-3.5 mr-2" />Flag
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {session.knowledge_status === 'verified' && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleUnverify(session.id)}>
+                              <Undo2 className="h-3.5 w-3.5 mr-2" />Unverify
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {session.knowledge_status === 'flagged' && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleUnverify(session.id)}>
+                              <Undo2 className="h-3.5 w-3.5 mr-2" />Reset to pending
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleArchive(session.id)}>
+                          <Archive className="h-3.5 w-3.5 mr-2" />Archive
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(session.id)}>
+                          <Trash2 className="h-3.5 w-3.5 mr-2" />Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
               </button>
 
               {/* Expanded content */}
               {isExpanded && (
                 <div className="px-4 pb-4 pt-0 border-t border-border/30 space-y-4">
-                  {/* ─── Review banner ─── */}
-                  {session.knowledge_status === 'pending_review' && !readOnly && (
-                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3">
-                      {flaggingId === session.id ? (
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium text-foreground">Reason for flagging:</p>
-                          <Textarea
-                            value={flagReason}
-                            onChange={(e) => setFlagReason(e.target.value)}
-                            className="text-xs min-h-[60px]"
-                            placeholder="Describe the issue..."
-                            autoFocus
-                          />
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setFlaggingId(null); setFlagReason(''); }}>
-                              Cancel
-                            </Button>
-                            <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => handleFlag(session.id)} disabled={!flagReason.trim()}>
-                              Confirm Flag
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-xs font-medium text-foreground">○ Pending review</p>
-                            <p className="text-[10px] text-muted-foreground">
-                              This session's knowledge has not been verified by an admin.
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              className="h-7 text-xs gap-1"
-                              onClick={(e) => { e.stopPropagation(); setVerificationModal(session); }}
-                            >
-                              <ShieldCheck className="h-3 w-3" /> View & Verify
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 text-xs gap-1 text-red-600 dark:text-red-400 border-red-500/30"
-                              onClick={(e) => { e.stopPropagation(); setFlaggingId(session.id); }}
-                            >
-                              <Flag className="h-3 w-3" /> Flag
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* ─── Verified indicator ─── */}
-                  {session.knowledge_status === 'verified' && !readOnly && (
-                    <div className="flex items-center justify-between bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3">
-                      <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
-                        <ShieldCheck className="h-3.5 w-3.5" /> Verified
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 text-[10px] text-muted-foreground"
-                        onClick={() => handleUnverify(session.id)}
-                      >
-                        <Undo2 className="h-3 w-3 mr-1" /> Unverify
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* ─── Flagged indicator ─── */}
-                  {session.knowledge_status === 'flagged' && !readOnly && (
-                    <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-red-600 dark:text-red-400 font-medium flex items-center gap-1.5">
-                          <ShieldAlert className="h-3.5 w-3.5" /> Flagged
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 text-[10px] text-muted-foreground"
-                          onClick={() => handleUnverify(session.id)}
-                        >
-                          <Undo2 className="h-3 w-3 mr-1" /> Reset to pending
+                  {/* Flagging textarea (triggered from dropdown) */}
+                  {flaggingId === session.id && (
+                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 space-y-2">
+                      <p className="text-xs font-medium text-foreground">Reason for flagging:</p>
+                      <Textarea
+                        value={flagReason}
+                        onChange={(e) => setFlagReason(e.target.value)}
+                        className="text-xs min-h-[60px]"
+                        placeholder="Describe the issue..."
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setFlaggingId(null); setFlagReason(''); }}>
+                          Cancel
+                        </Button>
+                        <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => handleFlag(session.id)} disabled={!flagReason.trim()}>
+                          Confirm Flag
                         </Button>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Pending review — text-only indicator */}
+                  {session.knowledge_status === 'pending_review' && !readOnly && flaggingId !== session.id && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <ShieldAlert className="h-3.5 w-3.5 text-amber-500" />
+                      <span>Pending review — use ⋯ menu to verify or flag</span>
+                    </div>
+                  )}
+
+                  {/* Flagged indicator — text-only */}
+                  {session.knowledge_status === 'flagged' && !readOnly && (
+                    <div className="flex items-center gap-2 text-xs text-red-600 dark:text-red-400">
+                      <ShieldAlert className="h-3.5 w-3.5" />
+                      <span>Flagged — use ⋯ menu to reset</span>
                     </div>
                   )}
 
@@ -507,7 +430,7 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
                     </div>
                   )}
 
-                  {/* ─── Corrections audit trail ─── */}
+                  {/* Corrections audit trail */}
                   {corrections.length > 0 && (
                     <div>
                       <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -605,7 +528,6 @@ const TrainingHistoryPanel: React.FC<TrainingHistoryPanelProps> = ({
         onCorrection={(correction, updatedKC) => {
           if (knowledgeModal) {
             handleCorrection(knowledgeModal.id, correction, updatedKC);
-            // Update local state for immediate feedback
             setKnowledgeModal({ ...knowledgeModal, knowledge_card: updatedKC });
           }
         }}

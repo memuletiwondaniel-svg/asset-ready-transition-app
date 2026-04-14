@@ -4,7 +4,7 @@ import { getLevelFromProgress } from './competencyLevels';
 
 interface CompetencyDonutProps {
   progress: number;
-  size?: 48 | 64;
+  size?: 48 | 64 | 72 | 80;
 }
 
 const CompetencyDonut: React.FC<CompetencyDonutProps> = ({ progress, size = 48 }) => {
@@ -15,7 +15,8 @@ const CompetencyDonut: React.FC<CompetencyDonutProps> = ({ progress, size = 48 }
   ];
 
   const outerRadius = size / 2 - 2;
-  const innerRadius = outerRadius - (size === 64 ? 7 : 5);
+  const ringWidth = size >= 80 ? 9 : size >= 72 ? 8 : size === 64 ? 7 : 5;
+  const innerRadius = outerRadius - ringWidth;
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
@@ -35,7 +36,7 @@ const CompetencyDonut: React.FC<CompetencyDonutProps> = ({ progress, size = 48 }
           <Cell fill="hsl(var(--muted) / 0.5)" />
         </Pie>
       </PieChart>
-      <span className="absolute text-[10px] font-bold text-foreground">
+      <span className={`absolute font-bold text-foreground ${size >= 72 ? 'text-sm' : 'text-[10px]'}`}>
         {progress}%
       </span>
     </div>
