@@ -71,7 +71,7 @@ async function buildKnowledgeContext(
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
   currentAgentCode: string,
   documentContext: { document_domain?: string; document_name?: string; document_type?: string } | undefined,
-  maxTokens: number = 2000
+  maxTokens: number = 3000
 ): Promise<string> {
   // Load foundation knowledge (agent_code IS NULL = universal, or matches current agent)
   const { data: foundationKnowledge } = await supabaseAdmin
@@ -81,9 +81,10 @@ async function buildKnowledgeContext(
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
 
+  // Load ALL completed sessions for this agent (+ cross-agent for keyword matching)
   const { data: allSessions } = await supabaseAdmin
     .from("agent_training_sessions")
-    .select("id, agent_code, document_name, document_domain, key_learnings, extracted_tags, completed_at")
+    .select("id, agent_code, document_name, document_domain, document_type, key_learnings, extracted_tags, knowledge_card, completed_at")
     .eq("status", "completed")
     .order("completed_at", { ascending: false })
     .limit(100);
@@ -124,59 +125,59 @@ async function buildKnowledgeContext(
 
   if (!allSessions || allSessions.length === 0) return contextString;
 
-  if (currentDomainWords.length === 0) {
-    const recent = allSessions
-      .filter(s => s.agent_code === currentAgentCode && s.key_learnings)
-      .slice(0, 3);
-    if (recent.length > 0) {
-      const lines = recent.map(s => `- "${s.document_name || "Untitled"}": ${s.key_learnings}`).join("\n");
-      contextString += `\nYOUR PREVIOUS TRAINING (most recent):\n${lines}\n`;
+  // ALWAYS inject same-agent sessions — these are YOUR training history
+  const sameAgentSessions = allSessions.filter(s => s.agent_code === currentAgentCode && s.key_learnings);
+
+  if (sameAgentSessions.length > 0) {
+    contextString += `\nYOUR COMPLETED TRAINING SESSIONS (${sameAgentSessions.length} total — this is knowledge YOU already have):\n`;
+    let tokenCount = 0;
+    for (const session of sameAgentSessions) {
+      // Build a rich summary including knowledge card facts
+      const kc = session.knowledge_card || {};
+      const coreFacts = Array.isArray(kc.core_facts) ? kc.core_facts.slice(0, 5).map((f: any) => typeof f === "string" ? f : f.statement || f).join("; ") : "";
+      const facts = Array.isArray(kc.facts) ? kc.facts.slice(0, 5).map((f: any) => typeof f === "string" ? f : f.statement || f).join("; ") : "";
+      const procedures = Array.isArray(kc.procedures) ? kc.procedures.slice(0, 3).map((p: any) => typeof p === "string" ? p : p.name || p).join("; ") : "";
+      const tags = (session.extracted_tags || []).join(", ");
+      const allFacts = coreFacts || facts;
+
+      let line = `- "${session.document_name || "Untitled"}"${session.document_type ? ` (${session.document_type})` : ""}${session.document_domain ? `, domain: ${session.document_domain}` : ""}: ${session.key_learnings}`;
+      if (allFacts) line += `\n  Key facts: ${allFacts}`;
+      if (procedures) line += `\n  Procedures: ${procedures}`;
+      if (tags) line += `\n  Tags: ${tags}`;
+
+      const tokens = Math.ceil(line.length / 4);
+      if (tokenCount + tokens > maxTokens * 0.8) break;
+      contextString += line + "\n\n";
+      tokenCount += tokens;
     }
-    return contextString;
-  }
-
-  const scored = allSessions.map(session => {
-    const sessionText = [
-      session.document_domain ?? "",
-      session.document_name ?? "",
-      (session.extracted_tags ?? []).join(" "),
-    ].join(" ").toLowerCase();
-    const overlapScore = currentDomainWords.filter(word => sessionText.includes(word)).length;
-    return { ...session, overlapScore };
-  }).filter(s => s.overlapScore > 0)
-    .sort((a, b) => b.overlapScore - a.overlapScore);
-
-  const sameAgent = scored.filter(s => s.agent_code === currentAgentCode);
-  const crossAgent = scored.filter(s => s.agent_code !== currentAgentCode);
-
-  let tokenCount = 0;
-  const sameAgentLines: string[] = [];
-  for (const session of sameAgent) {
-    const line = `- "${session.document_name}" (${session.document_domain}): ${session.key_learnings}`;
-    const tokens = Math.ceil(line.length / 4);
-    if (tokenCount + tokens > maxTokens * 0.7) break;
-    sameAgentLines.push(line);
-    tokenCount += tokens;
-  }
-
-  const crossAgentLines: string[] = [];
-  for (const session of crossAgent.slice(0, 3)) {
-    const line = `- ${session.agent_code.toUpperCase()} trained on "${session.document_name}" (${session.document_domain}): ${session.key_learnings}`;
-    const tokens = Math.ceil(line.length / 4);
-    if (tokenCount + tokens > maxTokens) break;
-    crossAgentLines.push(line);
-    tokenCount += tokens;
-  }
-
-  if (sameAgentLines.length > 0) {
-    contextString += `\nYOUR PREVIOUS TRAINING (most relevant to this document):\n`;
-    contextString += sameAgentLines.join("\n") + "\n";
-    contextString += `\nIf the new document contradicts anything above, flag it:\n`;
+    contextString += `\nIMPORTANT: You completed these training sessions — this is YOUR knowledge. When a user references earlier training or asks you to connect new material to prior learning, draw on this context. Say "I recall from my training on [document name] that..." rather than claiming you don't have access.\n`;
+    contextString += `If the new document contradicts anything above, flag it:\n`;
     contextString += `⚠️ CONTRADICTION: This document states [X]. Previously I learned [Y] from [document name]. Please clarify.\n`;
   }
-  if (crossAgentLines.length > 0) {
-    contextString += `\nPEER AGENT KNOWLEDGE (reference only — do not modify or contradict without flagging):\n`;
-    contextString += crossAgentLines.join("\n") + "\n";
+
+  // Cross-agent knowledge (only keyword-matched, limited)
+  if (currentDomainWords.length > 0) {
+    const crossAgent = allSessions
+      .filter(s => s.agent_code !== currentAgentCode)
+      .map(session => {
+        const sessionText = [
+          session.document_domain ?? "",
+          session.document_name ?? "",
+          (session.extracted_tags ?? []).join(" "),
+        ].join(" ").toLowerCase();
+        const overlapScore = currentDomainWords.filter(word => sessionText.includes(word)).length;
+        return { ...session, overlapScore };
+      })
+      .filter(s => s.overlapScore > 0)
+      .sort((a, b) => b.overlapScore - a.overlapScore)
+      .slice(0, 3);
+
+    if (crossAgent.length > 0) {
+      contextString += `\nPEER AGENT KNOWLEDGE (reference only — do not modify or contradict without flagging):\n`;
+      for (const session of crossAgent) {
+        contextString += `- ${session.agent_code.toUpperCase()} trained on "${session.document_name}" (${session.document_domain}): ${session.key_learnings}\n`;
+      }
+    }
   }
 
   return contextString;
