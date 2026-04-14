@@ -70,7 +70,6 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
             {isSyncing ? 'Syncing...' : 'Sync from training history'}
           </Button>
         )}
-        </div>
       </div>
 
       {/* Search + filter */}
