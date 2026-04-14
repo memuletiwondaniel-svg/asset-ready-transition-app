@@ -49,13 +49,14 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
   const [selectedCompetency, setSelectedCompetency] = useState<CompetencyArea | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isAssessing, setIsAssessing] = useState(false);
-  const [isBackfilling, setIsBackfilling] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const backfillTriggered = useRef(false);
 
   const {
     competencies,
     isLoading,
     overallProgress,
+    refetch,
     createCompetency,
     deleteCompetency,
     updateDescriptionAndReassess,
@@ -71,18 +72,44 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
 
     if (allZero && hasCompleted) {
       backfillTriggered.current = true;
-      setIsBackfilling(true);
-      supabase.functions.invoke('assess-agent-competencies', {
-        body: { agent_code: agent.code, trigger_type: 'session_complete' },
-      }).then(() => {
-        toast.info(`Syncing ${agent.name}'s competency profile from training history...`);
-      }).catch(() => {
-        // Silent fail — user can manually reassess
-      }).finally(() => {
-        setIsBackfilling(false);
-      });
+      setIsSyncing(true);
+      triggerSync();
     }
   }, [open, competencies, sessions, isLoading, agent.code, agent.name]);
+
+  const triggerSync = async () => {
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('assess-agent-competencies', {
+        body: { agent_code: agent.code, trigger_type: 'manual_sync' },
+      });
+
+      if (error) {
+        console.error('Competency sync failed:', error);
+        toast.error(`Competency sync failed — use Reassess now to retry`, {
+          description: error.message || 'Edge function error',
+        });
+        return;
+      }
+
+      const result = data as any;
+      if (result?.success && result?.updated?.length > 0) {
+        toast.success(`Updated ${result.updated.length} competency area${result.updated.length !== 1 ? 's' : ''}`, {
+          description: `${agent.name}'s competency profile has been synced from training history.`,
+        });
+      } else if (result?.success) {
+        toast.info(`No competency changes detected.`);
+      }
+
+      // Refetch competency data to reflect updates
+      await refetch();
+    } catch (err) {
+      console.error('Competency sync error:', err);
+      toast.error(`Competency sync failed — use Reassess now to retry`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleAddCompetency = async (input: { name: string; description?: string }) => {
     setIsAssessing(true);
@@ -174,16 +201,6 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
             </Button>
           </div>
 
-          {/* Backfill indicator */}
-          {isBackfilling && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 border-b border-border/20">
-              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-              <span className="text-[10px] text-muted-foreground">
-                Syncing {agent.name}'s competency profile from training history...
-              </span>
-            </div>
-          )}
-
           {/* Body */}
           <div className="flex-1 min-h-0 overflow-hidden">
             {activeTab === 'competence' && !selectedCompetency && (
@@ -196,12 +213,8 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
                 agentName={agent.name}
                 onOpenCompetenceChat={() => onOpenCompetenceChat?.(competencies)}
                 hasCompletedSessions={sessions.some((s: any) => s.status === 'completed')}
-                onSyncCompetencies={async () => {
-                  await supabase.functions.invoke('assess-agent-competencies', {
-                    body: { agent_code: agent.code, trigger_type: 'session_complete' },
-                  });
-                  toast.info(`Syncing ${agent.name}'s competency profile from training history...`);
-                }}
+                isSyncing={isSyncing}
+                onSyncCompetencies={triggerSync}
               />
             )}
 

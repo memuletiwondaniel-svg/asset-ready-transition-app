@@ -484,6 +484,25 @@ ${JSON.stringify(transcript)}`;
         })
         .eq("id", session_id);
 
+      // Fire-and-forget competency reassessment
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supabaseUrl && serviceKey) {
+        fetch(`${supabaseUrl}/functions/v1/assess-agent-competencies`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({
+            agent_code: agent_code,
+            trigger_type: "session_complete",
+            mode: "incremental",
+          }),
+        }).catch((err) => console.error("Failed to trigger competency assessment:", err));
+        console.log(`🎯 Triggered competency reassessment for ${agent_code} after session completion`);
+      }
+
       return new Response(JSON.stringify({
         content: "Training session completed. Knowledge card extracted.",
         metadata: { completion_suggested: false, open_questions_count: 0, contradiction_detected: false, session_updated: true },

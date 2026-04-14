@@ -2,11 +2,12 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Plus, Search, MessageSquare, RefreshCw, Loader2 } from 'lucide-react';
+import { ChevronRight, Plus, Search, MessageSquare, RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getLevelFromProgress, isNewCompetency } from './competencyLevels';
 import CompetencyDonut from './CompetencyDonut';
 import type { CompetencyArea } from '@/hooks/useAgentCompetencies';
+import { formatDistanceToNow } from 'date-fns';
 
 interface CompetencyProfilePanelProps {
   competencies: CompetencyArea[];
@@ -18,6 +19,7 @@ interface CompetencyProfilePanelProps {
   onOpenCompetenceChat?: () => void;
   hasCompletedSessions?: boolean;
   onSyncCompetencies?: () => Promise<void>;
+  isSyncing?: boolean;
 }
 
 const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
@@ -30,10 +32,35 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
   onOpenCompetenceChat,
   hasCompletedSessions,
   onSyncCompetencies,
+  isSyncing: isSyncingProp,
 }) => {
-  const [isSyncing, setIsSyncing] = React.useState(false);
+  const [isSyncingLocal, setIsSyncingLocal] = React.useState(false);
   const [search, setSearch] = React.useState('');
   const [levelFilter, setLevelFilter] = React.useState<string>('all');
+
+  const isSyncing = isSyncingProp || isSyncingLocal;
+
+  // Derive last assessed time from competencies
+  const lastAssessedAt = React.useMemo(() => {
+    const assessed = competencies
+      .filter(c => c.last_assessed_at)
+      .map(c => new Date(c.last_assessed_at!).getTime());
+    if (assessed.length === 0) return null;
+    return new Date(Math.max(...assessed));
+  }, [competencies]);
+
+  const allZero = competencies.length > 0 && competencies.every(c => c.progress === 0);
+  const needsSync = allZero && hasCompletedSessions;
+
+  const handleReassess = async () => {
+    if (!onSyncCompetencies || isSyncing) return;
+    setIsSyncingLocal(true);
+    try {
+      await onSyncCompetencies();
+    } finally {
+      setIsSyncingLocal(false);
+    }
+  };
 
   const filtered = competencies.filter(c => {
     const matchesSearch = !search || c.name.toLowerCase().includes(search.toLowerCase());
@@ -52,24 +79,54 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
             <p className="text-xs text-muted-foreground mt-0.5">
               {competencies.length} competency area{competencies.length !== 1 ? 's' : ''} tracked
             </p>
+            {/* Sync status row */}
+            <div className="mt-1.5">
+              {isSyncing ? (
+                <div className="flex items-center gap-1.5 text-[10px] text-primary">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <span>Syncing learning updates…</span>
+                </div>
+              ) : needsSync ? (
+                <div className="flex items-center gap-1.5 text-[10px] text-amber-600 dark:text-amber-400">
+                  <AlertTriangle className="h-3 w-3" />
+                  <span>Competencies need syncing from training history</span>
+                </div>
+              ) : lastAssessedAt ? (
+                <p className="text-[10px] text-muted-foreground/60">
+                  Last reassessed {formatDistanceToNow(lastAssessedAt, { addSuffix: true })}
+                </p>
+              ) : null}
+            </div>
           </div>
         </div>
-        {/* Sync button when all competencies are 0% but sessions exist */}
-        {overallProgress === 0 && competencies.length > 0 && hasCompletedSessions && onSyncCompetencies && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full h-8 text-xs gap-1.5 mt-2 border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950"
-            disabled={isSyncing}
-            onClick={async () => {
-              setIsSyncing(true);
-              try { await onSyncCompetencies(); } finally { setIsSyncing(false); }
-            }}
-          >
-            {isSyncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-            {isSyncing ? 'Syncing...' : 'Sync from training history'}
-          </Button>
-        )}
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 mt-2">
+          {needsSync && onSyncCompetencies && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 h-8 text-xs gap-1.5 border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950"
+              disabled={isSyncing}
+              onClick={handleReassess}
+            >
+              {isSyncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              {isSyncing ? 'Syncing...' : 'Sync from training history'}
+            </Button>
+          )}
+          {onSyncCompetencies && !needsSync && competencies.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-[10px] gap-1 text-muted-foreground/60 hover:text-foreground px-2"
+              disabled={isSyncing}
+              onClick={handleReassess}
+            >
+              <RefreshCw className={cn("h-3 w-3", isSyncing && "animate-spin")} />
+              Reassess now
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Search + filter */}
