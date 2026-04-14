@@ -63,7 +63,16 @@ export const SOFReviewOverlay: React.FC<SOFReviewOverlayProps> = ({
   const handleExit = async () => {
     onOpenChange(false);
     await signOut();
-    navigate('/');
+    // Clear caches and hard reload for fresh bundle
+    if ('caches' in window) {
+      const names = await caches.keys();
+      await Promise.all(names.map(n => caches.delete(n)));
+    }
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    window.location.href = '/';
   };
 
   return (

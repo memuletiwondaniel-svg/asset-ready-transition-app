@@ -45,10 +45,20 @@ export const AuthenticatedLayout: React.FC = () => {
   const handleLogout = async () => {
     try {
       await signOut();
+      // Clear all browser caches before navigating
+      if ('caches' in window) {
+        const names = await caches.keys();
+        await Promise.all(names.map(n => caches.delete(n)));
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
     } catch (error) {
       console.error('Logout error:', error);
     }
-    navigate('/');
+    // Hard reload to force fresh bundle fetch
+    window.location.href = '/';
   };
 
   const handleNavigate = createSidebarNavigator(navigate);
