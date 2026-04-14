@@ -16,6 +16,8 @@ interface CompetencyProfilePanelProps {
   onAddCompetency: () => void;
   agentName?: string;
   onOpenCompetenceChat?: () => void;
+  hasCompletedSessions?: boolean;
+  onSyncCompetencies?: () => Promise<void>;
 }
 
 const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
@@ -26,7 +28,10 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
   onAddCompetency,
   agentName,
   onOpenCompetenceChat,
+  hasCompletedSessions,
+  onSyncCompetencies,
 }) => {
+  const [isSyncing, setIsSyncing] = React.useState(false);
   const [search, setSearch] = React.useState('');
   const [levelFilter, setLevelFilter] = React.useState<string>('all');
 
@@ -94,7 +99,7 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
               <button
                 key={comp.id}
                 onClick={() => onSelectCompetency(comp)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted/50 transition-colors duration-150 border-l-2 border-transparent hover:border-primary/30 border-b border-b-border/20 group text-left"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted/50 hover:shadow-md transition-all duration-150 border-l-2 border-transparent hover:border-primary/30 border-b border-b-border/20 group text-left"
               >
                 <div className={cn('h-2.5 w-2.5 rounded-full shrink-0', level.color)} />
                 <div className="flex-1 min-w-0">

@@ -52,9 +52,9 @@ const CompetencyInlineSummary: React.FC<CompetencyInlineSummaryProps> = ({
           onClick={onOpenWorkspace}
           variant="outline"
           size="sm"
-          className="h-7 text-xs shrink-0"
+          className="h-7 text-xs shrink-0 bg-primary/5 border-primary/30 hover:bg-primary/10 text-primary font-medium"
         >
-          Open Training Workspace →
+          Open Workspace →
         </Button>
       </div>
 
@@ -64,9 +64,9 @@ const CompetencyInlineSummary: React.FC<CompetencyInlineSummaryProps> = ({
           {gaps.map(gap => {
             const level = getLevelFromProgress(gap.progress);
             return (
-              <div key={gap.id} className="flex items-center gap-2.5">
+              <div key={gap.id} className="flex items-center gap-2">
                 <div className={cn('h-2 w-2 rounded-full shrink-0', level.color)} />
-                <span className="text-xs text-muted-foreground truncate flex-1">{gap.name}</span>
+                <span className="text-xs text-muted-foreground truncate max-w-[200px]">{gap.name}</span>
                 <div className="flex items-center gap-2">
                   <div className="w-28 h-1.5 rounded-full bg-muted overflow-hidden">
                     <div

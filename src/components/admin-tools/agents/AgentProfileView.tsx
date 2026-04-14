@@ -92,11 +92,11 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
     const c = sectionColorMap[color];
     return (
       <div className={cn(
-        "flex items-center gap-3 px-5 py-3 cursor-pointer select-none transition-colors hover:bg-muted/30",
+        "flex items-center gap-3 px-5 py-3 cursor-pointer select-none transition-colors hover:bg-muted/30 bg-muted/15",
         isOpen && "border-b border-border/30"
       )}>
         <Icon className={cn("h-4 w-4", c.icon)} />
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/60">
+        <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/80">
           {label}
         </span>
         <div className="flex-1" />
