@@ -72,11 +72,12 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
     <div className="flex flex-col h-full">
       {/* Summary header */}
       <div className="p-4 border-b border-border/40">
-        <div className="flex items-center gap-3">
-          <CompetencyDonut progress={overallProgress} size={80} />
+        <div className="flex items-center gap-4">
+          <div className="shrink-0 p-1">
+            <CompetencyDonut progress={overallProgress} size={80} />
+          </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground">{overallProgress}% Overall Competence</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground">
               {competencies.length} competency area{competencies.length !== 1 ? 's' : ''} tracked
             </p>
             {/* Sync status row */}
@@ -172,28 +173,27 @@ const CompetencyProfilePanel: React.FC<CompetencyProfilePanelProps> = ({
               <button
                 key={comp.id}
                 onClick={() => onSelectCompetency(comp)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted/50 hover:shadow-md transition-all duration-150 border-l-2 border-transparent hover:border-primary/30 border-b border-b-border/20 group text-left"
+                className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 hover:shadow-md transition-all duration-150 border-b border-b-border/20 group text-left"
               >
-                <div className={cn('h-2.5 w-2.5 rounded-full shrink-0', level.color)} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-medium text-foreground truncate">{comp.name}</span>
+                    <span className="text-sm font-medium text-foreground">{comp.name}</span>
                     {isNew && (
-                      <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 bg-primary/10 text-primary">
+                      <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 bg-primary/10 text-primary shrink-0">
                         New
                       </Badge>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <div className="w-28 h-2 rounded-full bg-muted/60 overflow-hidden">
                     <div
                       className={cn('h-full rounded-full transition-all', level.color)}
                       style={{ width: `${comp.progress}%` }}
                     />
                   </div>
-                  <span className="text-[10px] text-muted-foreground w-7 text-right">{comp.progress}%</span>
-                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-border/40 font-normal hidden sm:inline-flex">
+                  <span className="text-[11px] font-medium text-muted-foreground w-8 text-right">{comp.progress}%</span>
+                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-border/40 font-normal hidden sm:inline-flex w-20 justify-center">
                     {level.label}
                   </Badge>
                   <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
