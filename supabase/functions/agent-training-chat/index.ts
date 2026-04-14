@@ -331,6 +331,24 @@ serve(async (req) => {
     const supabaseAdmin = getSupabaseAdmin();
     const agentPrompt = agentDomainPrompts[agent_code] || agentDomainPrompts.bob;
 
+    // Resolve user's first name for personalization
+    let userName = "";
+    const authHeader = req.headers.get("authorization");
+    if (authHeader) {
+      try {
+        const token = authHeader.replace("Bearer ", "");
+        const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+        if (user?.id) {
+          const { data: profile } = await supabaseAdmin
+            .from("profiles")
+            .select("first_name")
+            .eq("id", user.id)
+            .maybeSingle();
+          userName = profile?.first_name || "";
+        }
+      } catch { /* non-critical — proceed without name */ }
+    }
+
     // ─── MODE: COMPLETE ───
     if (mode === "complete") {
       if (!session_id) {
