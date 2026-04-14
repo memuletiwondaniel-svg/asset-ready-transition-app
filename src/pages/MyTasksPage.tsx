@@ -57,7 +57,7 @@ const MyTasksPage: React.FC = () => {
               <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{t.myTasksPageTitle || 'My Tasks'}</h1>
+              <h1 className="text-2xl xl:text-3xl font-bold text-foreground">{t.myTasksPageTitle || 'My Tasks'}</h1>
               <p className="text-sm text-muted-foreground mt-1">{t.myTasksPageSubtitle || 'Your pending work across all modules'}</p>
             </div>
           </div>
@@ -78,7 +78,7 @@ const MyTasksPage: React.FC = () => {
             <CalendarCheck className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{t.myTasksPageTitle || 'My Tasks'}</h1>
+            <h1 className="text-lg sm:text-2xl xl:text-3xl font-bold text-foreground truncate">{t.myTasksPageTitle || 'My Tasks'}</h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 hidden sm:block">{t.myTasksPageSubtitle || 'Your pending work across all modules'}</p>
           </div>
         </div>
