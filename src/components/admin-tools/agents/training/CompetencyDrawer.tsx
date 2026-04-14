@@ -172,23 +172,25 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
               </SheetTitle>
             </div>
 
-            {/* Segmented tabs */}
-            <div className="flex items-center bg-muted/60 border border-border/50 rounded-xl p-1">
-              {tabs.map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => { setActiveTab(tab.key); setSelectedCompetency(null); }}
-                  className={cn(
-                    'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-150 cursor-pointer',
-                    activeTab === tab.key
-                      ? 'bg-primary/10 text-primary font-semibold'
-                      : 'text-muted-foreground/70 hover:text-foreground hover:bg-muted/50'
-                  )}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+            {/* Segmented tabs — hidden during competency detail view */}
+            {!selectedCompetency && (
+              <div className="flex items-center bg-muted/60 border border-border/50 rounded-xl p-1">
+                {tabs.map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => { setActiveTab(tab.key); setSelectedCompetency(null); }}
+                    className={cn(
+                      'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-150 cursor-pointer',
+                      activeTab === tab.key
+                        ? 'bg-primary/10 text-primary font-semibold'
+                        : 'text-muted-foreground/70 hover:text-foreground hover:bg-muted/50'
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Train button */}
             <Button
