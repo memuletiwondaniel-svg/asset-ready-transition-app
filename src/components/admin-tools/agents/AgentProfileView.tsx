@@ -68,18 +68,12 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
     .map(code => agentProfiles.find(a => a.code === code))
     .filter(Boolean) as AgentProfile[];
 
-  const handleRetrain = (session: any) => {
-    setTrainingDialogOpen(true);
-  };
-
-  const handleTest = (session: any) => {
-    setTrainingDialogOpen(true);
-  };
-
-  const handleOpenCompetenceChat = (comps: CompetencyArea[]) => {
+  const handleOpenTraining = (options?: { competencyContext?: CompetencyArea[] }) => {
     setDrawerOpen(false);
-    setCompetenceChatTitle('Competence Development');
-    setCompetenceChatContext(comps);
+    if (options?.competencyContext) {
+      setCompetenceChatContext(options.competencyContext);
+      setCompetenceChatTitle('Competence Development');
+    }
     setTrainingDialogOpen(true);
   };
 
