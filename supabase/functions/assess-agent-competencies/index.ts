@@ -217,7 +217,7 @@ Respond with ONLY valid JSON in this format:
         previous_progress: competency.progress,
         new_progress: newProgress,
         assessment_notes: assessment.notes || null,
-        session_id: relevantSessionIds[0] || null,
+        session_id: validSessionIds[0] || null,
       });
 
       updated.push({
