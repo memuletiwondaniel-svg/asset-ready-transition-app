@@ -671,8 +671,10 @@ IMPORTANT INSTRUCTIONS FOR THIS MODE:
       const agentPromptWithLens = agentPrompt + lensFragment;
       const responseFormat = TRAINING_RESPONSE_FORMAT + extractionFragment;
 
-      systemPrompt = `${agentPromptWithLens}
+      const userGreeting = userName ? `\nThe user's name is ${userName}. Address them by name naturally when appropriate.\n` : "";
 
+      systemPrompt = `${agentPromptWithLens}
+${userGreeting}
 You are operating in TRAINING MODE. A user is training you on a new document.
 Your role is to read the material carefully and extract structured knowledge from it.
 ${buildAnonymizationSection(anonymization_rules)}${existingKnowledge}${responseFormat}`;
