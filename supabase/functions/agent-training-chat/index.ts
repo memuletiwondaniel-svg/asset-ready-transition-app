@@ -331,6 +331,24 @@ serve(async (req) => {
     const supabaseAdmin = getSupabaseAdmin();
     const agentPrompt = agentDomainPrompts[agent_code] || agentDomainPrompts.bob;
 
+    // Resolve user's first name for personalization
+    let userName = "";
+    const authHeader = req.headers.get("authorization");
+    if (authHeader) {
+      try {
+        const token = authHeader.replace("Bearer ", "");
+        const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+        if (user?.id) {
+          const { data: profile } = await supabaseAdmin
+            .from("profiles")
+            .select("first_name")
+            .eq("id", user.id)
+            .maybeSingle();
+          userName = profile?.first_name || "";
+        }
+      } catch { /* non-critical — proceed without name */ }
+    }
+
     // ─── MODE: COMPLETE ───
     if (mode === "complete") {
       if (!session_id) {
@@ -543,8 +561,9 @@ ${JSON.stringify(transcript)}`;
         }
       }
 
+      const userGreeting = userName ? `The user's name is ${userName}. Address them by name naturally.\n` : "";
       systemPrompt = `${agentPrompt}
-${buildAnonymizationSection(anonymization_rules)}
+${buildAnonymizationSection(anonymization_rules)}${userGreeting}
 You are operating in TESTING MODE.
 You have previously been trained on: ${docName}${docType ? ` (${docType})` : ""}${docDomain ? `, domain: ${docDomain}` : ""}
 Your training summary: ${knowledgeSummary}
@@ -590,8 +609,11 @@ ${sessionSummaries}\n`;
         `- ${c.name}: ${c.progress}% (${c.status}) — ${c.description || "No description"}`
       ).join("\n");
 
+      const userGreeting = userName ? `The user's name is ${userName}. Address them by name naturally.` : "";
+
       systemPrompt = `${agentPrompt}
 ${buildAnonymizationSection(anonymization_rules)}
+${userGreeting}
 You are operating in COMPETENCY DISCUSSION MODE. The user wants to discuss your competency development, training progress, knowledge gaps, or ask questions that draw on everything you have learned.
 
 YOUR COMPETENCY PROFILE:
@@ -650,8 +672,10 @@ IMPORTANT INSTRUCTIONS FOR THIS MODE:
       const agentPromptWithLens = agentPrompt + lensFragment;
       const responseFormat = TRAINING_RESPONSE_FORMAT + extractionFragment;
 
-      systemPrompt = `${agentPromptWithLens}
+      const userGreeting = userName ? `\nThe user's name is ${userName}. Address them by name naturally when appropriate.\n` : "";
 
+      systemPrompt = `${agentPromptWithLens}
+${userGreeting}
 You are operating in TRAINING MODE. A user is training you on a new document.
 Your role is to read the material carefully and extract structured knowledge from it.
 ${buildAnonymizationSection(anonymization_rules)}${existingKnowledge}${responseFormat}`;
