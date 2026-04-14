@@ -1,72 +1,57 @@
 
 
-# Permanent Fix — Eliminate Stale Cache on Logout/Login
+# Desktop Responsiveness Overhaul — Final Plan
 
-## Diagnosis
+## Sr Developer's Conflict Resolution: Accepted
 
-The sidebar code is correct and modernized in the codebase. The `main.tsx` already has the loading screen and cache cleanup. The remaining issue: **the cache cleanup runs on page load, but stale assets can still be served from the browser's HTTP cache before the new JS even executes.**
+The `content-max` wrapper at `xl:max-w-[1400px]` would silently override `ProjectManagementPage`'s own `max-w-[1600px]`. Fix: drop the `xl:` step entirely, keep only `2xl:`:
 
-Three reinforcements will make this permanently bulletproof:
-
-## Changes
-
-### 1. Clear caches on sign-out (before navigation)
-**File: `src/components/layouts/AuthenticatedLayout.tsx`**
-
-The `handleLogout` function currently just calls `signOut()` then navigates. Add cache clearing **before** navigation so when the login page loads, there's nothing stale to serve:
-
-```ts
-const handleLogout = async () => {
-  try {
-    await signOut();
-    // Clear all browser caches before navigating
-    if ('caches' in window) {
-      const names = await caches.keys();
-      await Promise.all(names.map(n => caches.delete(n)));
-    }
-    if ('serviceWorker' in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
-    }
-  } catch (error) {
-    console.error('Logout error:', error);
-  }
-  navigate('/');
-};
+```css
+.content-max { @apply w-full 2xl:max-w-[1600px] mx-auto; }
 ```
 
-### 2. Add cache-busting meta tags to `index.html`
-**File: `index.html`**
+Pages handle their own `xl:` constraints. The layout wrapper only prevents ultrawide stretching at 1536px+. Zero cascade conflicts.
 
-Add these to `<head>` to instruct browsers not to serve cached versions of the HTML document:
+---
 
-```html
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
-```
+## 7 Files, All Changes Final
 
-### 3. Force hard reload on sign-out instead of client-side navigate
-**File: `src/components/layouts/AuthenticatedLayout.tsx`**
+### 1. `src/index.css` — Extend global utilities
+- `.mobile-padding`: add `lg:px-8 xl:px-10`
+- `.mobile-gap`: add `lg:gap-6 xl:gap-8`
+- `.dashboard-grid`: add `xl:grid-cols-4` and `xl:gap-6`
+- `.text-responsive-xl`: add `xl:text-3xl`
+- New `.content-max`: `@apply w-full 2xl:max-w-[1600px] mx-auto;` (no `xl:` step)
 
-Replace `navigate('/')` with `window.location.href = '/'` after sign-out. This forces the browser to do a full page fetch (not a client-side route change), which combined with the cache-busting headers guarantees the fresh bundle loads:
+### 2. `src/components/OrshSidebar.tsx` — Scale sidebar
+- Expanded: `w-48 xl:w-52 2xl:w-56`, collapsed stays `w-16`
 
-```ts
-// Instead of navigate('/') which reuses cached modules:
-window.location.href = '/';
-```
+### 3. `src/components/LandingPage.tsx` — Scale landing page
+- Outer padding: add `lg:p-8 xl:p-10`
+- Bob card: add `xl:max-w-4xl`, inner padding add `xl:p-20`, min-height add `xl:min-h-[320px]`
+- Greeting heading: add `xl:text-4xl`
+- Bob input: add `xl:max-w-2xl`
+- Favorites: add `xl:gap-4`, icon size add `xl:w-12 xl:h-12`
 
-Also apply the same pattern in `AuthProvider.tsx` `SIGNED_OUT` handler and `SOFReviewOverlay.tsx` / `DirectorSoFView.tsx` sign-out handlers.
+### 4. `src/components/AdminToolsPage.tsx` — Scale admin tools
+- Container: add `xl:max-w-7xl`
+- All card/favorites grids: add `xl:grid-cols-4`
+- Page heading: add `xl:text-3xl`
 
-## Files Modified
+### 5. `src/components/admin-tools/agents/AgentRosterGrid.tsx` — Match 4-col
+- Grid: add `xl:grid-cols-4`
 
-| File | Change |
-|------|--------|
-| `index.html` | Add 3 cache-busting meta tags |
-| `src/components/layouts/AuthenticatedLayout.tsx` | Clear caches + hard reload on logout |
-| `src/components/enhanced-auth/AuthProvider.tsx` | No change needed (auth state listener only) |
-| `src/components/sof/SOFReviewOverlay.tsx` | Hard reload on exit/signOut |
-| `src/components/tasks/DirectorSoFView.tsx` | Hard reload on exit/signOut |
+### 6. `src/components/layouts/AuthenticatedLayout.tsx` — Content cap
+- Wrap `<Outlet>` with `content-max` class (2xl-only constraint)
 
-This is a 5-file, small change. The combination of pre-mount loading screen (already done), cache clearing on logout, cache-busting meta tags, and hard reload ensures zero possibility of stale content surviving a logout/login cycle.
+### 7. `src/pages/MyTasksPage.tsx` — Heading only
+- Page heading: add `xl:text-3xl`
+
+### NOT Changed (verified correct)
+- `ExecutiveDashboardPage.tsx` — Recharts auto-scales, grids are data-dense
+- `ProjectManagementPage.tsx` — already has `max-w-[1600px]`
+- Mobile/tablet layouts, component logic, auth, themes
+
+### Permanence
+These are compiled Tailwind classes in the JS bundle — not cached state. The previous cache-busting fixes (meta tags, hard reload on logout, Cache API clearing) ensure no stale bundles survive login cycles.
 
