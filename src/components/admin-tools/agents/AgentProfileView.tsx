@@ -68,12 +68,18 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
     .map(code => agentProfiles.find(a => a.code === code))
     .filter(Boolean) as AgentProfile[];
 
-  const handleOpenTraining = (options?: { competencyContext?: CompetencyArea[] }) => {
+  const handleRetrain = (session: any) => {
+    setTrainingDialogOpen(true);
+  };
+
+  const handleTest = (session: any) => {
+    setTrainingDialogOpen(true);
+  };
+
+  const handleOpenCompetenceChat = (comps: CompetencyArea[]) => {
     setDrawerOpen(false);
-    if (options?.competencyContext) {
-      setCompetenceChatContext(options.competencyContext);
-      setCompetenceChatTitle('Competence Development');
-    }
+    setCompetenceChatTitle('Competence Development');
+    setCompetenceChatContext(comps);
     setTrainingDialogOpen(true);
   };
 
@@ -191,9 +197,12 @@ const AgentProfileView: React.FC<AgentProfileViewProps> = ({ agent, onAgentClick
         agent={agent}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
-        onOpenTraining={handleOpenTraining}
+        onOpenTraining={() => setTrainingDialogOpen(true)}
         sessions={sessions}
         sessionsLoading={sessionsLoading}
+        onRetrain={handleRetrain}
+        onTest={handleTest}
+        onOpenCompetenceChat={handleOpenCompetenceChat}
       />
 
       {/* Training Dialog (train-only, no history tab) */}

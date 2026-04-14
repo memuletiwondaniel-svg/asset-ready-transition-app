@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { BookOpen, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Sheet,
@@ -15,16 +15,22 @@ import { toast } from 'sonner';
 import CompetencyProfilePanel from './CompetencyProfilePanel';
 import CompetencyDetailView from './CompetencyDetailView';
 import AddCompetencyDialog from './AddCompetencyDialog';
+import TrainingHistoryPanel from './TrainingHistoryPanel';
 import type { CompetencyArea } from '@/hooks/useAgentCompetencies';
+
+type DrawerTab = 'competence' | 'sessions';
 
 interface CompetencyDrawerProps {
   agent: AgentProfile;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onOpenTraining: (options?: { competencyContext?: CompetencyArea[] }) => void;
+  onOpenTraining: () => void;
   sessions: any[];
   sessionsLoading: boolean;
+  onRetrain: (session: any) => void;
+  onTest: (session: any) => void;
   userName?: string;
+  onOpenCompetenceChat?: (competencies: CompetencyArea[]) => void;
 }
 
 const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
@@ -34,8 +40,12 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
   onOpenTraining,
   sessions,
   sessionsLoading,
+  onRetrain,
+  onTest,
   userName,
+  onOpenCompetenceChat,
 }) => {
+  const [activeTab, setActiveTab] = useState<DrawerTab>('competence');
   const [selectedCompetency, setSelectedCompetency] = useState<CompetencyArea | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isAssessing, setIsAssessing] = useState(false);
@@ -132,10 +142,10 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
     }
   };
 
-  const handleOpenTraining = (competencyContext?: CompetencyArea[]) => {
-    onOpenChange(false);
-    onOpenTraining({ competencyContext: competencyContext || competencies });
-  };
+  const tabs: { key: DrawerTab; label: string }[] = [
+    { key: 'competence', label: 'Competence' },
+    { key: 'sessions', label: 'Sessions' },
+  ];
 
   return (
     <>
@@ -146,7 +156,7 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
           overlayClassName="bg-black/60 backdrop-blur-sm"
         >
           <SheetDescription className="sr-only">
-            Competence development workspace for {agent.name}
+            Training workspace for {agent.name}
           </SheetDescription>
 
           {/* Header */}
@@ -158,14 +168,42 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
                 className="w-6 h-6 rounded-full object-cover border border-border/30 shrink-0"
               />
               <SheetTitle className="text-sm font-semibold text-foreground">
-                Competence Development
+                {agent.name} · Training Workspace
               </SheetTitle>
             </div>
+
+            {/* Segmented tabs */}
+            <div className="flex items-center bg-muted/60 border border-border/50 rounded-xl p-1">
+              {tabs.map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => { setActiveTab(tab.key); setSelectedCompetency(null); }}
+                  className={cn(
+                    'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-150 cursor-pointer',
+                    activeTab === tab.key
+                      ? 'bg-primary/10 text-primary font-semibold'
+                      : 'text-muted-foreground/70 hover:text-foreground hover:bg-muted/50'
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Train button */}
+            <Button
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              onClick={() => { onOpenChange(false); onOpenTraining(); }}
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              Train
+            </Button>
           </div>
 
           {/* Body */}
           <div className="flex-1 min-h-0 overflow-hidden">
-            {!selectedCompetency && (
+            {activeTab === 'competence' && !selectedCompetency && (
               <CompetencyProfilePanel
                 competencies={competencies}
                 overallProgress={overallProgress}
@@ -173,22 +211,36 @@ const CompetencyDrawer: React.FC<CompetencyDrawerProps> = ({
                 onSelectCompetency={setSelectedCompetency}
                 onAddCompetency={() => setAddDialogOpen(true)}
                 agentName={agent.name}
-                onOpenTraining={() => handleOpenTraining()}
+                onOpenCompetenceChat={() => onOpenCompetenceChat?.(competencies)}
                 hasCompletedSessions={sessions.some((s: any) => s.status === 'completed')}
                 isSyncing={isSyncing}
                 onSyncCompetencies={triggerSync}
               />
             )}
 
-            {selectedCompetency && (
+            {activeTab === 'competence' && selectedCompetency && (
               <CompetencyDetailView
                 competency={selectedCompetency}
                 onBack={() => setSelectedCompetency(null)}
                 onDelete={handleDeleteCompetency}
                 onUpdateDescription={handleUpdateDescription}
-                onTrain={() => handleOpenTraining([selectedCompetency])}
+                onTrain={() => { onOpenChange(false); onOpenTraining(); }}
                 isUpdating={updateDescriptionAndReassess.isPending}
               />
+            )}
+
+            {activeTab === 'sessions' && (
+              <div className="h-full overflow-y-auto p-4">
+                <TrainingHistoryPanel
+                  sessions={sessions}
+                  agentCode={agent.code}
+                  agentName={agent.name}
+                  readOnly={false}
+                  isLoading={sessionsLoading}
+                  onRetrain={onRetrain}
+                  onTest={onTest}
+                />
+              </div>
             )}
           </div>
         </SheetContent>
