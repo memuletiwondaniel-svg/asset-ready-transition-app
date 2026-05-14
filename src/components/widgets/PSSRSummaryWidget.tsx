@@ -172,7 +172,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const headerStatusClass = !p2aPlanByProject
     ? ''
     : p2aPlanByProject.status === 'COMPLETED'
-      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      ? 'bg-green-500/10 text-green-600 border-green-500/20'
       : p2aPlanByProject.status === 'ACTIVE'
         ? 'bg-amber-50 text-amber-700 border-amber-200'
         : 'bg-muted text-muted-foreground border-border';
