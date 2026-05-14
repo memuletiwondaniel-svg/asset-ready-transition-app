@@ -129,7 +129,14 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   const handleVCRClick = (vcrId: string) => {
     const found = allVCRs.find(v => v.id === vcrId);
-    if (found) setSelectedVCR(found);
+    if (!found) return;
+    const status = (found.status || '').toUpperCase();
+    const isApproved = status === 'SIGNED';
+    if (isApproved) {
+      setSelectedVCR(found);
+    } else {
+      setWizardVCR(found);
+    }
   };
 
   const hasContent = (pssrs && pssrs.length > 0) || allVCRs.length > 0;
