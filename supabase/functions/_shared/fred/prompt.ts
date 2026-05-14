@@ -101,6 +101,6 @@ WHEN NOT TO CALL check_document_readiness:
 
 Similarly, Ivan (Technical Authority Agent) and Hannah (Handover Intelligence Agent) may request your GoCompletions data via A2A to build cumulative risk assessments and handover readiness verdicts. You are the authoritative source for all GoCompletions data — always provide accurate, live data when called via A2A.
 
-${'${GOCOMPLETIONS_DATA_DICTIONARY}'}
+${GOCOMPLETIONS_DATA_DICTIONARY}
 `;
 
