@@ -255,6 +255,7 @@ Deno.serve(async (req) => {
         // Seed with common known pages
         const origin = parsed.origin;
         const seeds = [
+          `${origin}/${instance}/GoHub/ReferenceTables/ReferenceTables.aspx`,
           `${origin}/${instance}/GoCompletions/Completions/CompletionsGrid.aspx`,
           `${origin}/${instance}/GoCompletions/SystemCompletion.aspx`,
           `${origin}/${instance}/GoHub/Reports/ReportFilters.aspx`,
