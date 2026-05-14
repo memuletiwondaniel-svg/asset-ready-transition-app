@@ -300,7 +300,13 @@ Deno.serve(async (req) => {
           console.log(`  [${processed}/${maxPagesPerProject}] ${title || pageUrl.split("/").pop()} — ${tables.length} table(s), ${asmxEndpoints.length} asmx`);
 
           // enqueue new links (but cap)
-          for (const l of links) if (!visited.has(l) && queue.length < maxPagesPerProject * 2) queue.push(l);
+          for (const l of links) if (!visited.has(l) && queue.length < maxPagesPerProject * 3) queue.push(l);
+          // If this is the ReferenceTables index, expand every list page
+          if (/ReferenceTables/i.test(pageUrl)) {
+            const refs = extractReferenceListPaths(r.html, r.url);
+            for (const l of refs) if (!visited.has(l)) queue.push(l);
+            console.log(`     reference tables expanded: ${refs.length} list pages queued`);
+          }
 
           // probe asmx (deduped globally)
           if (probeAsmxFlag) {
