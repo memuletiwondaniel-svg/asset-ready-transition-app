@@ -31,6 +31,27 @@ interface SystemCounts {
   completion_percentage: number;
 }
 
+function buildProjectSearchTerms(projectFilter: string): string[] {
+  const raw = String(projectFilter || '').trim();
+  if (!raw) return [];
+
+  const upper = raw.toUpperCase();
+  const compact = upper.replace(/[^A-Z0-9]/g, '');
+  const dashed = compact.replace(/^([A-Z]+)(\d+)$/, '$1-$2');
+  const spaced = compact.replace(/^([A-Z]+)(\d+)$/, '$1 $2');
+
+  const aliases = new Set([upper, compact, dashed, spaced]);
+
+  if (compact === 'DP300') {
+    aliases.add('HM');
+    aliases.add('HAMMAR MISHRIF');
+    aliases.add('HM ADDITIONAL COMPRESSORS');
+    aliases.add('ADDITIONAL COMPRESSORS');
+  }
+
+  return [...aliases].filter(Boolean);
+}
+
 // ─── Extract counts from GoCompletions raw data ──────────────
 
 function parseSystemCounts(rawData: any[]): SystemCounts[] {
@@ -377,7 +398,7 @@ Deno.serve(async (req) => {
           currentCookies = result.cookies;
 
           if (result.rawData.length > 0) {
-            const filterUpper = projectFilter.toUpperCase();
+            const searchTerms = buildProjectSearchTerms(projectFilter);
 
             // Flatten SubSystem trees so nested systems are searchable
             const flat: any[] = [];
@@ -392,7 +413,7 @@ Deno.serve(async (req) => {
             walk(result.rawData);
 
             const matchString = (v: any) =>
-              v != null && String(v).toUpperCase().includes(filterUpper);
+              v != null && searchTerms.some((term) => String(v).toUpperCase().includes(term));
 
             const matching = flat.filter((item: any) =>
               matchString(item.Number) ||
@@ -429,8 +450,8 @@ Deno.serve(async (req) => {
       const pickerResult = await fetchSubSystemsByFilter(currentCookies, finalPortalUrl, projectFilter);
       currentCookies = pickerResult.cookies;
       if (pickerResult.rawData.length > 0) {
-        const filterUpper = projectFilter.toUpperCase();
-        const matchString = (v: any) => v != null && String(v).toUpperCase().includes(filterUpper);
+        const searchTerms = buildProjectSearchTerms(projectFilter);
+        const matchString = (v: any) => v != null && searchTerms.some((term) => String(v).toUpperCase().includes(term));
         const matching = pickerResult.rawData.filter((item: any) =>
           matchString(item.SubSystem) || matchString(item.SubSystemNumber) ||
           matchString(item.Number) || matchString(item.Name) ||
