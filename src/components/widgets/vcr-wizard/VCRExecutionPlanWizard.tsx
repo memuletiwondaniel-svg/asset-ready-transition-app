@@ -253,20 +253,33 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     ? ID_BADGE_PALETTE[hashCode(shortVcrId) % ID_BADGE_PALETTE.length]
     : ID_BADGE_PALETTE[0];
 
+  const statusLabel = (() => {
+    const s = (vcr.status || '').toUpperCase();
+    if (s === 'SIGNED') return { label: 'Approved', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+    if (s === 'READY') return { label: 'Submitted', cls: 'bg-amber-50 text-amber-700 border-amber-200' };
+    if (s === 'IN_PROGRESS') return { label: 'In Progress', cls: 'bg-blue-50 text-blue-700 border-blue-200' };
+    return { label: 'Draft', cls: 'bg-muted text-muted-foreground border-border' };
+  })();
+
   const headerContent = (
     <div className="flex flex-col gap-2 min-w-0">
-      {shortVcrId && (
-        <Badge
-          className={cn(
-            "self-start text-[11px] font-mono font-semibold border-0 px-2.5 py-0.5",
-            idColors.bg, idColors.text
-          )}
-        >
-          {shortVcrId}
+      <div className="flex items-center gap-2 flex-wrap">
+        {shortVcrId && (
+          <Badge
+            className={cn(
+              "text-[11px] font-mono font-semibold border-0 px-2.5 py-0.5",
+              idColors.bg, idColors.text
+            )}
+          >
+            {shortVcrId}
+          </Badge>
+        )}
+        <Badge variant="outline" className={cn("text-[10px] h-5 px-2", statusLabel.cls)}>
+          {statusLabel.label}
         </Badge>
-      )}
+      </div>
       <h2 className="text-sm font-black line-clamp-2 leading-tight text-foreground">{vcr.name}</h2>
-      <p className="text-[10px] text-muted-foreground">Develop VCR Plan</p>
+      <p className="text-[10px] text-muted-foreground">Create VCR Plan</p>
     </div>
   );
 
