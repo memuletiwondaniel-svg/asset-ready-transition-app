@@ -200,14 +200,30 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId }) => {
 
   const handleSync = async () => {
     if (!planId) return;
+    const config = getAPIConfig('gocompletions');
+    if (!config || config.status !== 'configured' || !config.rpaCredentials) {
+      toast.error('GoCompletions not configured. Go to Administration > APIs.');
+      return;
+    }
+    const { portalUrl, username, password } = config.rpaCredentials;
+    if (!username || !password) {
+      toast.error('GoCompletions credentials incomplete.');
+      return;
+    }
     setSyncing(true);
     try {
-      const { error } = await supabase.functions.invoke('gohub-sync-counts', {
-        body: { handover_plan_id: planId },
+      const systemIdList = (rows || []).map(r => r.system_id);
+      const cleanProjectCode = (projectCode || '').replace(/-/g, '');
+      const { data, error } = await supabase.functions.invoke('gohub-sync-counts', {
+        body: { portalUrl, username, password, projectFilter: cleanProjectCode, systemIds: systemIdList },
       });
       if (error) throw error;
-      toast.success('Synced with GoCompletions');
-      queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
+      if (data?.success) {
+        toast.success(`Synced ${data.total_updated || 0} systems from GoCompletions`);
+        queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
+      } else {
+        toast.error(data?.error || 'Sync failed');
+      }
     } catch (e: any) {
       toast.error(e?.message || 'Sync failed');
     } finally {
