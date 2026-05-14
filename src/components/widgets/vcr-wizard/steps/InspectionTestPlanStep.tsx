@@ -186,7 +186,10 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
             <ShieldAlert className="w-7 h-7 text-orange-500" />
           </div>
           <h3 className="font-medium">No Systems Mapped</h3>
-          <p className="text-xs text-muted-foreground mt-1">Map systems from the VCR workspace first.</p>
+          <p className="text-xs text-muted-foreground mt-1 mb-4">Map systems from the Systems step first.</p>
+          <Button size="sm" disabled className="gap-1.5" title="Map systems first">
+            <Plus className="w-3.5 h-3.5" /> Add Activity
+          </Button>
         </CardContent>
       </Card>
     );

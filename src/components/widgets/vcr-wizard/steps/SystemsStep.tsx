@@ -266,14 +266,23 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
             {hcCount} HC
           </Badge>
         )}
-        <Button size="sm" variant="outline" onClick={handleSync} disabled={syncing} className="gap-1.5">
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={handleSync}
+          disabled={syncing}
+          title="Sync GoCompletions"
+          aria-label="Sync GoCompletions"
+          className="h-8 w-8"
+        >
           <RefreshCw className={cn("w-3.5 h-3.5", syncing && "animate-spin")} />
-          Sync GoCompletions
         </Button>
-        <Button size="sm" onClick={() => setPickerOpen(true)} className="gap-1.5">
-          <Plus className="w-3.5 h-3.5" />
-          Add System
-        </Button>
+        {rows.length > 0 && (
+          <Button size="sm" onClick={() => setPickerOpen(true)} className="gap-1.5">
+            <Plus className="w-3.5 h-3.5" />
+            Add System
+          </Button>
+        )}
       </div>
 
       {rows.length === 0 ? (

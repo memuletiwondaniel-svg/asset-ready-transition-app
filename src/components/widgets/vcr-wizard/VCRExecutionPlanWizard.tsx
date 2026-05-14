@@ -43,8 +43,7 @@ import { VCRItemsStep } from './steps/VCRItemsStep';
 import { TrainingStep } from './steps/TrainingStep';
 import { ProceduresStep } from './steps/ProceduresStep';
 import { CriticalDocumentsStep } from './steps/CriticalDocumentsStep';
-import { OperationalRegistersStep } from './steps/OperationalRegistersStep';
-import { LogsheetsStep } from './steps/LogsheetsStep';
+import { RegistersLogsheetsStep } from './steps/RegistersLogsheetsStep';
 import { InspectionTestPlanStep } from './steps/InspectionTestPlanStep';
 import { ApproversStep } from './steps/ApproversStep';
 import { Layers } from 'lucide-react';
@@ -62,8 +61,7 @@ const STEPS: WizardShellStep[] = [
   { id: 'training', label: 'Training', icon: GraduationCap, color: 'text-blue-500' },
   { id: 'procedures', label: 'Procedures', icon: BookOpen, color: 'text-emerald-500' },
   { id: 'critical-docs', label: 'Critical Documents', icon: FileText, color: 'text-amber-500' },
-  { id: 'registers', label: 'Op. Registers', icon: ClipboardList, color: 'text-cyan-500' },
-  { id: 'logsheets', label: 'Logsheets', icon: ScrollText, color: 'text-indigo-500' },
+  { id: 'registers-logsheets', label: 'Registers & Logsheets', icon: ClipboardList, color: 'text-cyan-500' },
   { id: 'itp', label: 'Inspection Test Plan', icon: ClipboardList, color: 'text-orange-500' },
   { id: 'approvers', label: 'Approvers', icon: UserCheck, color: 'text-primary' },
 ];
@@ -178,8 +176,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         2: training.count || 0,
         3: procedures.count || 0,
         4: criticalDocs.count || 0,
-        5: registers.count || 0,
-        6: logsheets.count || 0,
+        5: (registers.count || 0) + (logsheets.count || 0),
       } as Record<number, number>;
     },
     enabled: open,
@@ -187,8 +184,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
-    // VCR Items (1), ITP (7), Approvers (8) — completion based on visit
-    if (idx === 1 || idx === 7 || idx === 8) return visitedSteps.has(idx);
+    // VCR Items (1), ITP (6), Approvers (7) — completion based on visit
+    if (idx === 1 || idx === 6 || idx === 7) return visitedSteps.has(idx);
     return (stepCounts[idx] || 0) > 0;
   };
 
@@ -232,10 +229,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 2: return <TrainingStep vcrId={vcr.id} />;
       case 3: return <ProceduresStep vcrId={vcr.id} />;
       case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 5: return <OperationalRegistersStep vcrId={vcr.id} />;
-      case 6: return <LogsheetsStep vcrId={vcr.id} />;
-      case 7: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 8: return <ApproversStep vcrId={vcr.id} />;
+      case 5: return <RegistersLogsheetsStep vcrId={vcr.id} />;
+      case 6: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 7: return <ApproversStep vcrId={vcr.id} />;
       default: return null;
     }
   };
