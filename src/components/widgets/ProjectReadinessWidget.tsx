@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Users, Target, FileText, UserCircle, Building2 } from 'lucide-react';
+import { Users, Target, FileText, UserCircle, Building2, Edit, ChevronDown, ChevronUp } from 'lucide-react';
 import { useProjects, useProjectTeamMembers } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
@@ -20,9 +20,11 @@ import { MilestonesTimeline } from './MilestonesTimeline';
 interface ProjectReadinessWidgetProps {
   projectId: string;
   onViewDetails?: () => void;
+  onEdit?: () => void;
 }
 
-export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onViewDetails }) => {
+export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onViewDetails, onEdit }) => {
+  const [teamExpanded, setTeamExpanded] = useState(false);
   const { projects } = useProjects();
   const { plants } = usePlants();
   const { stations } = useStations();
@@ -227,6 +229,9 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
         });
         
         const assignedCount = roleDisplayData.filter(r => r.member).length;
+        const lead = roleDisplayData[0]; // Project Hub Lead
+        const others = roleDisplayData.slice(1);
+        const visibleRoles = teamExpanded ? roleDisplayData : [lead];
         
         return (
           <div className="space-y-3">
@@ -240,7 +245,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
               </Badge>
             </h3>
             <div className="space-y-2 pl-1">
-              {roleDisplayData.map((data) => (
+              {visibleRoles.map((data) => (
                 <div 
                   key={data.role} 
                   className={cn(
@@ -279,6 +284,37 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                   </div>
                 </div>
               ))}
+              {others.length > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setTeamExpanded(v => !v); }}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-border/40 hover:border-primary/30 hover:bg-muted/30 transition-all text-xs font-medium text-muted-foreground hover:text-foreground"
+                >
+                  {teamExpanded ? (
+                    <>
+                      <ChevronUp className="h-3.5 w-3.5" /> Show less
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex -space-x-2">
+                        {others.slice(0, 3).map((o) => (
+                          <Avatar key={o.role} className="h-6 w-6 ring-2 ring-background">
+                            {o.profile?.avatar_url ? (
+                              <AvatarImage src={getAvatarUrl(o.profile.avatar_url)} alt={o.profile?.full_name} />
+                            ) : (
+                              <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                {o.profile?.full_name ? o.profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2) : '?'}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                        ))}
+                      </div>
+                      +{others.length} other{others.length > 1 ? 's' : ''}
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         );
@@ -324,9 +360,20 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
               glowFrom="from-blue-500/40"
               glowTo="to-cyan-500/40"
             />
-            <span className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+            <span className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors flex-1 min-w-0 truncate">
               Project Overview
             </span>
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 px-2 text-xs gap-1.5"
+                title="Edit project"
+              >
+                <Edit className="h-3.5 w-3.5" /> Edit
+              </Button>
+            )}
           </div>
           
           {/* Location Labels */}

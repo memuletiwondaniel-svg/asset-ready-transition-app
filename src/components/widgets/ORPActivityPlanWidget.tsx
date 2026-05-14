@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings2, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, ChevronRight, ChevronDown, Trash2, CalendarRange, Activity, CircleDot } from 'lucide-react';
+import { Settings2, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, ChevronRight, ChevronDown, Trash2, CalendarRange, Activity, CircleDot, Plus } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectORPPlans, ProjectORPActivity } from '@/hooks/useProjectORPPlans';
 import { useORPPlans } from '@/hooks/useORPPlans';
@@ -43,30 +43,28 @@ const getActivityStatus = (activity: { end_date: string | null; status: string }
 };
 
 const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolean; onClick?: () => void }> = ({ activity, isCompleted, onClick }) => {
-  const actStatus = getActivityStatus(activity);
+  const actStatus = isCompleted ? 'completed' : getActivityStatus(activity);
+  const Icon =
+    actStatus === 'completed' ? CheckCircle2 :
+    actStatus === 'overdue' ? AlertTriangle :
+    actStatus === 'in-progress' ? CircleDot :
+    Clock;
+  const iconColor =
+    actStatus === 'completed' ? 'text-green-600' :
+    actStatus === 'overdue' ? 'text-destructive' :
+    actStatus === 'in-progress' ? 'text-amber-500' :
+    'text-green-600';
   return (
-    <div className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer" onClick={onClick}>
-      {isCompleted ? (
-        <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" />
-      ) : actStatus === 'overdue' ? (
-        <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
-      ) : actStatus === 'in-progress' ? (
-        <CircleDot className="h-3 w-3 text-amber-500 shrink-0" />
-      ) : (
-        <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
-      )}
-      <span className={cn(
-        "truncate flex-1",
-        isCompleted && "text-muted-foreground",
-        actStatus === 'overdue' && !isCompleted && "text-destructive font-medium"
-      )}>
+    <div
+      className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/70 transition-colors cursor-pointer"
+      onClick={onClick}
+    >
+      <Icon className={cn("h-3.5 w-3.5 shrink-0", iconColor)} />
+      <span className={cn("truncate flex-1 text-foreground/90", isCompleted && "text-muted-foreground line-through")}>
         {activity.name}
       </span>
       {activity.end_date && (
-        <span className={cn(
-          "text-[10px] shrink-0",
-          actStatus === 'overdue' && !isCompleted ? "text-destructive" : "text-muted-foreground"
-        )}>
+        <span className="text-[10px] shrink-0 text-muted-foreground">
           {format(parseISO(activity.end_date), 'MMM d')}
         </span>
       )}
@@ -84,9 +82,11 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   isReadOnly = false,
 }) => {
   const [overlayOpen, setOverlayOpen] = useState(false);
+  const [highlightCode, setHighlightCode] = useState<string | undefined>(undefined);
   const [approversOpen, setApproversOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [ongoingOpen, setOngoingOpen] = useState(true);
   const [upcomingOpen, setUpcomingOpen] = useState(true);
   const [completedOpen, setCompletedOpen] = useState(false);
   const { data: plans = [], isLoading } = useProjectORPPlans(projectId);
@@ -101,8 +101,23 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   const inProgressCount = primaryPlan?.in_progress_count || 0;
   const notStartedCount = primaryPlan?.not_started_count || 0;
   const overallProgress = primaryPlan?.overall_progress || 0;
-  const upcomingActivities = primaryPlan?.upcoming_activities || [];
+  const rawUpcoming = primaryPlan?.upcoming_activities || [];
   const completedActivities = primaryPlan?.completed_activities || [];
+
+  // Split into Ongoing (in-progress or overdue) vs Upcoming (future / not started)
+  const ongoingActivities = rawUpcoming.filter(a => {
+    const s = getActivityStatus(a);
+    return s === 'in-progress' || s === 'overdue' || s === 'due-today';
+  });
+  const upcomingActivities = rawUpcoming.filter(a => {
+    const s = getActivityStatus(a);
+    return s === 'upcoming';
+  });
+
+  const openActivityOverlay = (code?: string) => {
+    setHighlightCode(code);
+    setOverlayOpen(true);
+  };
 
   const isDraft = planStatus === 'DRAFT';
 
@@ -213,6 +228,18 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
               <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
               <span className="truncate">ORA Activity Plan</span>
             </button>
+            {!isReadOnly && (
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); openActivityOverlay(); }}
+                title="Add activity"
+                className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-1 h-6 px-2 rounded-md bg-primary/10 text-primary text-[11px] font-medium hover:bg-primary/20 relative z-10"
+              >
+                <Plus className="h-3 w-3" /> Add Activity
+              </button>
+            )}
             {statusConfig && (
               <button
                 type="button"
@@ -242,7 +269,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           )}
 
           {/* Section 2: Progress Summary */}
-          <div className="flex-shrink-0 rounded-lg border border-border bg-muted/30 p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setOverlayOpen(true)}>
+          <div className="flex-shrink-0 rounded-lg border border-border bg-muted/30 p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => openActivityOverlay()}>
             <div className="flex items-center justify-between text-xs mb-2">
               <span className="text-muted-foreground font-medium">Overall Progress</span>
               <span className="font-bold text-sm">{overallProgress}%</span>
@@ -259,53 +286,55 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
 
           {/* Scrollable activity sections */}
           <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pr-1">
-            {/* Section 3: Ongoing / Upcoming */}
-            {upcomingActivities.length > 0 && (
-              <Collapsible open={upcomingOpen} onOpenChange={setUpcomingOpen}>
+            {/* Ongoing */}
+            {ongoingActivities.length > 0 && (
+              <Collapsible open={ongoingOpen} onOpenChange={setOngoingOpen}>
                 <CollapsibleTrigger className="flex items-center justify-between w-full py-1.5 group/trigger hover:opacity-80 transition-opacity">
                   <div className="flex items-center gap-2">
-                    {upcomingOpen ? (
-                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                    )}
-                    <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-                      Upcoming
-                    </span>
-                    <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-medium">
-                      {upcomingActivities.length}
-                    </Badge>
+                    {ongoingOpen ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Ongoing</span>
+                    <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-medium">{ongoingActivities.length}</Badge>
                   </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-1 mt-1">
-                  {upcomingActivities.map((activity) => (
-                    <ActivityRow key={activity.id} activity={activity} onClick={() => setOverlayOpen(true)} />
+                  {ongoingActivities.map((activity) => (
+                    <ActivityRow key={activity.id} activity={activity} onClick={() => openActivityOverlay(activity.activity_code)} />
                   ))}
                 </CollapsibleContent>
               </Collapsible>
             )}
 
-            {/* Section 4: Completed */}
+            {/* Upcoming */}
+            {upcomingActivities.length > 0 && (
+              <Collapsible open={upcomingOpen} onOpenChange={setUpcomingOpen}>
+                <CollapsibleTrigger className="flex items-center justify-between w-full py-1.5 group/trigger hover:opacity-80 transition-opacity">
+                  <div className="flex items-center gap-2">
+                    {upcomingOpen ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Upcoming</span>
+                    <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-medium">{upcomingActivities.length}</Badge>
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-1 mt-1">
+                  {upcomingActivities.map((activity) => (
+                    <ActivityRow key={activity.id} activity={activity} onClick={() => openActivityOverlay(activity.activity_code)} />
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+
+            {/* Completed (collapsed by default) */}
             {completedActivities.length > 0 && (
               <Collapsible open={completedOpen} onOpenChange={setCompletedOpen}>
                 <CollapsibleTrigger className="flex items-center justify-between w-full py-1.5 group/trigger hover:opacity-80 transition-opacity">
                   <div className="flex items-center gap-2">
-                    {completedOpen ? (
-                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                    )}
-                    <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-                      Completed
-                    </span>
-                    <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-medium">
-                      {completedActivities.length}
-                    </Badge>
+                    {completedOpen ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Completed</span>
+                    <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-medium">{completedActivities.length}</Badge>
                   </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-1 mt-1">
                   {completedActivities.map((activity) => (
-                    <ActivityRow key={activity.id} activity={activity} isCompleted onClick={() => setOverlayOpen(true)} />
+                    <ActivityRow key={activity.id} activity={activity} isCompleted onClick={() => openActivityOverlay(activity.activity_code)} />
                   ))}
                 </CollapsibleContent>
               </Collapsible>
@@ -316,7 +345,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
 
       <ORPGanttOverlay
         open={overlayOpen}
-        onOpenChange={setOverlayOpen}
+        onOpenChange={(o) => { setOverlayOpen(o); if (!o) setHighlightCode(undefined); }}
         planId={primaryPlan.id}
         planStatus={planStatus}
         overallProgress={overallProgress}
@@ -329,6 +358,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         projectCode={projectCode}
         projectName={projectName}
         isReadOnly={isReadOnly}
+        highlightActivityCode={highlightCode}
       />
 
       <ORAActivityPlanWizard

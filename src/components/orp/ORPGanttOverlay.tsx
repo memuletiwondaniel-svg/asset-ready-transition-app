@@ -34,6 +34,8 @@ interface ORPGanttOverlayProps {
   projectCode?: string;
   projectName?: string;
   isReadOnly?: boolean;
+  /** When set, gantt auto-expands and opens the activity sheet for this code */
+  highlightActivityCode?: string;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
@@ -60,6 +62,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
   projectCode,
   projectName,
   isReadOnly: externalReadOnly,
+  highlightActivityCode,
 }) => {
   const [approvalsOpen, setApprovalsOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -258,6 +261,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                 planId={planId}
                 deliverables={planDetails.deliverables}
                 readOnly={isStatusReadOnly}
+                highlightActivityCode={highlightActivityCode}
               />
             ) : (
               <div className="text-center py-16 text-muted-foreground">
