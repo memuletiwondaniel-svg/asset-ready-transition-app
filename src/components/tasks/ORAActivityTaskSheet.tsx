@@ -106,6 +106,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [progressPct, setProgressPct] = useState(0);
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [editName, setEditName] = useState('');
   const [originalName, setOriginalName] = useState('');
 
