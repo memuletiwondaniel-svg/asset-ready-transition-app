@@ -336,6 +336,15 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         onOpenChange={setWizardOpen}
         projectId={projectId}
       />
+
+      <Dialog open={approversOpen} onOpenChange={setApproversOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>ORA Activity Plan — Approvers</DialogTitle>
+          </DialogHeader>
+          <ORAApprovalsPanel planId={primaryPlan.id} />
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
