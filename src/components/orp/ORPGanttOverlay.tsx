@@ -36,6 +36,8 @@ interface ORPGanttOverlayProps {
   isReadOnly?: boolean;
   /** When set, gantt auto-expands and opens the activity sheet for this code */
   highlightActivityCode?: string;
+  /** When true, automatically open the "Add from Catalog" dialog on mount */
+  autoOpenAddActivity?: boolean;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
