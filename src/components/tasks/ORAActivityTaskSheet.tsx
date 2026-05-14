@@ -1741,6 +1741,24 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
       </SheetContent>
     </Sheet>
 
+    <AlertDialog open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Mark activity as Completed?</AlertDialogTitle>
+          <AlertDialogDescription>
+            You've reached 100% progress. Confirm to mark this activity as Completed, or cancel to keep editing.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => { setProgressPct(95); setStatus('IN_PROGRESS'); }}>
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={() => { setStatus('COMPLETED'); setProgressPct(100); }}>
+            Confirm Completion
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 };
