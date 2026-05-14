@@ -1238,12 +1238,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       if (isReadOnly) return;
                       const newPct = val[0];
                       setProgressPct(newPct);
-                      // Auto-promote/demote status based on progress
+                      // Auto-promote/demote status based on progress (no confirm dialog here)
                       setStatus((prev) => {
-                        if (newPct === 100) {
-                          setShowCompleteConfirm(true);
-                          return 'COMPLETED';
-                        }
+                        if (newPct === 100) return 'COMPLETED';
                         if (newPct > 0 && prev === 'NOT_STARTED') return 'IN_PROGRESS';
                         if (newPct === 0 && prev === 'IN_PROGRESS') return 'NOT_STARTED';
                         return prev;
@@ -1714,7 +1711,13 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                         : "bg-green-600 hover:bg-green-700 text-white"
                       : ""
                   )}
-                  onClick={handleSave}
+                  onClick={() => {
+                    if (status === 'COMPLETED' && !hasReviewers) {
+                      setShowCompleteConfirm(true);
+                    } else {
+                      handleSave();
+                    }
+                  }}
                   disabled={saving || (status === 'COMPLETED' && hasReviewers && !submissionComment.trim())}
                 >
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -1742,18 +1745,16 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
     </Sheet>
 
     <AlertDialog open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
-      <AlertDialogContent>
+      <AlertDialogContent className="z-[100]">
         <AlertDialogHeader>
           <AlertDialogTitle>Mark activity as Completed?</AlertDialogTitle>
           <AlertDialogDescription>
-            You've reached 100% progress. Confirm to mark this activity as Completed, or cancel to keep editing.
+            Confirm to mark this activity as Completed, or cancel to keep editing.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => { setProgressPct(95); setStatus('IN_PROGRESS'); }}>
-            Cancel
-          </AlertDialogCancel>
-          <AlertDialogAction onClick={() => { setStatus('COMPLETED'); setProgressPct(100); }}>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={() => { setShowCompleteConfirm(false); handleSave(); }}>
             Confirm Completion
           </AlertDialogAction>
         </AlertDialogFooter>

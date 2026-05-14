@@ -53,14 +53,14 @@ const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolea
     actStatus === 'completed' ? 'text-green-600' :
     actStatus === 'overdue' ? 'text-destructive' :
     actStatus === 'in-progress' ? 'text-amber-500' :
-    'text-green-600';
+    'text-muted-foreground';
   return (
     <div
       className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/70 transition-colors cursor-pointer"
       onClick={onClick}
     >
       <Icon className={cn("h-3.5 w-3.5 shrink-0", iconColor)} />
-      <span className={cn("truncate flex-1 text-foreground/90", isCompleted && "text-muted-foreground line-through")}>
+      <span className={cn("truncate flex-1 text-foreground/90", isCompleted && "text-muted-foreground")}>
         {activity.name}
       </span>
       {activity.end_date && (
@@ -83,6 +83,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
 }) => {
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [highlightCode, setHighlightCode] = useState<string | undefined>(undefined);
+  const [autoOpenAdd, setAutoOpenAdd] = useState(false);
   const [approversOpen, setApproversOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -116,6 +117,13 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
 
   const openActivityOverlay = (code?: string) => {
     setHighlightCode(code);
+    setAutoOpenAdd(false);
+    setOverlayOpen(true);
+  };
+
+  const openAddActivity = () => {
+    setHighlightCode(undefined);
+    setAutoOpenAdd(true);
     setOverlayOpen(true);
   };
 
@@ -233,7 +241,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                 type="button"
                 onPointerDown={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => { e.stopPropagation(); openActivityOverlay(); }}
+                onClick={(e) => { e.stopPropagation(); openAddActivity(); }}
                 title="Add activity"
                 className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-1 h-6 px-2 rounded-md bg-primary/10 text-primary text-[11px] font-medium hover:bg-primary/20 relative z-10"
               >
@@ -345,7 +353,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
 
       <ORPGanttOverlay
         open={overlayOpen}
-        onOpenChange={(o) => { setOverlayOpen(o); if (!o) setHighlightCode(undefined); }}
+        onOpenChange={(o) => { setOverlayOpen(o); if (!o) { setHighlightCode(undefined); setAutoOpenAdd(false); } }}
         planId={primaryPlan.id}
         planStatus={planStatus}
         overallProgress={overallProgress}
@@ -359,6 +367,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         projectName={projectName}
         isReadOnly={isReadOnly}
         highlightActivityCode={highlightCode}
+        autoOpenAddActivity={autoOpenAdd}
       />
 
       <ORAActivityPlanWizard

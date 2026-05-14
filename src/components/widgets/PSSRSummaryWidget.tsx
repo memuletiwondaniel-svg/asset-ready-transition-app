@@ -198,6 +198,18 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               />
               <span className="truncate">P2A Plan</span>
             </button>
+            {showVCRList && canCreateVCR && (
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); setShowCreateVCR(true); }}
+                title="Add VCR"
+                className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-1 h-6 px-2 rounded-md bg-primary/10 text-primary text-[11px] font-medium hover:bg-primary/20 relative z-10"
+              >
+                <Plus className="h-3 w-3" /> Add VCR
+              </button>
+            )}
             {headerStatusLabel && (
               <button
                 type="button"
@@ -234,17 +246,6 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                     onClick={handleVCRClick}
                   />
                 ))}
-                {canCreateVCR && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-3 text-xs border-dashed border-foreground/20 hover:border-primary/40 hover:bg-primary/5 transition-all rounded-xl h-9"
-                    onClick={() => setShowCreateVCR(true)}
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1.5" />
-                    Add VCR
-                  </Button>
-                )}
               </div>
             ) : p2aPlanByProject ? (
               <div className="text-center py-10 text-muted-foreground">

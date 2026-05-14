@@ -38,6 +38,8 @@ interface ORPGanttChartProps {
   readOnly?: boolean;
   /** Activity code to auto-scroll to and highlight (from URL ?highlight param) */
   highlightActivityCode?: string;
+  /** When true, opens the "Add from Catalog" dialog on mount */
+  autoOpenAddActivity?: boolean;
 }
 
 const ZOOM_LEVELS = [0.15, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
@@ -320,7 +322,7 @@ function computeCriticalPath(rows: FlatRow[], getBarPos: (s: string, e: string) 
   return criticalSet;
 }
 
-export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar = false, readOnly = false, highlightActivityCode }) => {
+export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar = false, readOnly = false, highlightActivityCode, autoOpenAddActivity }) => {
   const isMobile = useIsMobile();
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showCatalogDialog, setShowCatalogDialog] = useState(false);
@@ -1337,6 +1339,16 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       setTimeout(() => openActivitySheet(row.deliverable), 300);
     }
   }, [highlightActivityCode, visibleRows, expandedCodes, toggleExpand, openActivitySheet]);
+
+  // Auto-open Add From Catalog dialog when requested by parent
+  const autoAddHandledRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenAddActivity && !autoAddHandledRef.current && !readOnly) {
+      autoAddHandledRef.current = true;
+      setShowCatalogDialog(true);
+    }
+    if (!autoOpenAddActivity) autoAddHandledRef.current = false;
+  }, [autoOpenAddActivity, readOnly]);
 
   // Mobile: render card-based timeline list instead of Gantt grid
   if (isMobile) {
