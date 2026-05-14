@@ -184,8 +184,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
-    // VCR Items (1), ITP (7), Approvers (8) — completion based on visit
-    if (idx === 1 || idx === 7 || idx === 8) return visitedSteps.has(idx);
+    // VCR Items (1), ITP (6), Approvers (7) — completion based on visit
+    if (idx === 1 || idx === 6 || idx === 7) return visitedSteps.has(idx);
     return (stepCounts[idx] || 0) > 0;
   };
 
@@ -229,10 +229,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 2: return <TrainingStep vcrId={vcr.id} />;
       case 3: return <ProceduresStep vcrId={vcr.id} />;
       case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 5: return <OperationalRegistersStep vcrId={vcr.id} />;
-      case 6: return <LogsheetsStep vcrId={vcr.id} />;
-      case 7: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 8: return <ApproversStep vcrId={vcr.id} />;
+      case 5: return <RegistersLogsheetsStep vcrId={vcr.id} />;
+      case 6: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 7: return <ApproversStep vcrId={vcr.id} />;
       default: return null;
     }
   };
