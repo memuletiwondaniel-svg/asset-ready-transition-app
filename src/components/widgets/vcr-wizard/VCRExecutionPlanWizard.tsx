@@ -287,7 +287,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     <WizardShell
       open={open}
       onOpenChange={onOpenChange}
-      dialogTitle="VCR Plan Wizard"
+      dialogTitle="Create VCR Plan"
       steps={STEPS}
       currentStep={currentStep}
       onStepChange={goToStep}
