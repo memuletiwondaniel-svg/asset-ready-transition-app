@@ -124,31 +124,14 @@ export const SidebarContent = memo<SidebarContentProps>(({
   return (
     <div className="flex flex-col h-full select-none [&_button]:hover:!scale-100 [&_button]:active:!scale-100 [&_button]:active:!rotate-0 [&_svg]:stroke-[1.75]">
       {/* Header */}
-      <div className="p-4 sm:p-6 border-b border-border/40 flex-shrink-0">
-        <div className="flex items-center justify-center mb-4">
-          {!isCollapsed ? <OrshLogo size="medium" /> : <OrshLogo size="small" />}
-        </div>
-        
-        {isCollapsed ? (
-          <div 
-            role="button" 
-            tabIndex={0} 
-            onClick={onProfileClick}
-            onKeyDown={(e) => e.key === 'Enter' && onProfileClick()}
-            className="w-full p-3 h-auto flex items-center justify-center hover:bg-muted/50 rounded-md cursor-pointer transition-colors"
-          >
-            {isProfileLoading ? (
-              <Skeleton className="h-10 w-10 rounded-full" />
-            ) : (
-              <Avatar className="h-10 w-10 flex-shrink-0">
-                <AvatarImage src={displayAvatar} alt={displayName} />
-                <AvatarFallback delayMs={600} className="bg-gradient-to-br from-primary to-accent text-white">
-                  {displayName.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            )}
+      <div className={cn("border-b border-border/40 flex-shrink-0", isCollapsed ? "p-2" : "p-4 sm:p-6")}>
+        {!isCollapsed && (
+          <div className="flex items-center justify-center mb-4">
+            <OrshLogo size="medium" />
           </div>
-        ) : (
+        )}
+        
+        {isCollapsed ? null : (
           <>
             <Button 
               variant="ghost" 
