@@ -137,7 +137,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
             <CardTitle className="text-lg flex items-center gap-3">
               <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
-              <span>ORA Activity Plan</span>
+              <span>ORA Activities</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -165,7 +165,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
             <CardTitle className="text-lg flex items-center gap-3">
               <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
-              <span>ORA Activity Plan</span>
+              <span>ORA Activities</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -234,7 +234,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
               className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity cursor-pointer relative z-10"
             >
               <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
-              <span className="truncate">ORA Activity Plan</span>
+              <span className="truncate">ORA Activities</span>
             </button>
             {!isReadOnly && (
               <button
@@ -379,7 +379,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
       <Dialog open={approversOpen} onOpenChange={setApproversOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>ORA Activity Plan — Approvers</DialogTitle>
+            <DialogTitle>ORA Activities — Approvers</DialogTitle>
           </DialogHeader>
           <ORAApprovalsPanel planId={primaryPlan.id} />
         </DialogContent>
