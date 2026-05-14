@@ -952,7 +952,7 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                 placeholder="Add a description for this activity..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="min-h-[80px] resize-none text-sm border-primary/20 focus-visible:ring-primary/30"
+                className="min-h-[160px] text-sm border-primary/20 focus-visible:ring-primary/30 leading-relaxed"
                 disabled={isReadOnly}
               />
             </div>
@@ -1239,6 +1239,10 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       setProgressPct(newPct);
                       // Auto-promote/demote status based on progress
                       setStatus((prev) => {
+                        if (newPct === 100) {
+                          setShowCompleteConfirm(true);
+                          return 'COMPLETED';
+                        }
                         if (newPct > 0 && prev === 'NOT_STARTED') return 'IN_PROGRESS';
                         if (newPct === 0 && prev === 'IN_PROGRESS') return 'NOT_STARTED';
                         return prev;
