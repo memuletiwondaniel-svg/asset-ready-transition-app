@@ -111,7 +111,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
             <CardTitle className="text-lg flex items-center gap-3">
               <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
-              <span>ORA Activities</span>
+              <span>ORA Activity Plan</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -139,7 +139,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
             <CardTitle className="text-lg flex items-center gap-3">
               <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
-              <span>ORA Activities</span>
+              <span>ORA Activity Plan</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -256,7 +256,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                       <ChevronRight className="h-3 w-3 text-muted-foreground" />
                     )}
                     <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-                      Ongoing & Upcoming
+                      Upcoming
                     </span>
                     <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-medium">
                       {upcomingActivities.length}
@@ -271,7 +271,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
               </Collapsible>
             )}
 
-            {/* Section 4: Recently Completed */}
+            {/* Section 4: Completed */}
             {completedActivities.length > 0 && (
               <Collapsible open={completedOpen} onOpenChange={setCompletedOpen}>
                 <CollapsibleTrigger className="flex items-center justify-between w-full py-1.5 group/trigger hover:opacity-80 transition-opacity">
@@ -282,7 +282,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                       <ChevronRight className="h-3 w-3 text-muted-foreground" />
                     )}
                     <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-                      Recently Completed
+                      Completed
                     </span>
                     <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-medium">
                       {completedActivities.length}
