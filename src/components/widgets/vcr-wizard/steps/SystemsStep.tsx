@@ -44,7 +44,7 @@ interface SystemRow {
   subsystems: SubsystemRow[];
 }
 
-export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId }) => {
+export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
