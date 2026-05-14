@@ -1711,7 +1711,13 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                         : "bg-green-600 hover:bg-green-700 text-white"
                       : ""
                   )}
-                  onClick={handleSave}
+                  onClick={() => {
+                    if (status === 'COMPLETED' && !hasReviewers) {
+                      setShowCompleteConfirm(true);
+                    } else {
+                      handleSave();
+                    }
+                  }}
                   disabled={saving || (status === 'COMPLETED' && hasReviewers && !submissionComment.trim())}
                 >
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
