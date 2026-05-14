@@ -277,7 +277,7 @@ export default function ProjectDetailsPage() {
           {/* Project Widgets Dashboard */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             {/* Left Column - Overview Widget */}
-            <div className="lg:row-span-3 lg:h-[calc(100vh-180px)] lg:sticky lg:top-6">
+            <div className="lg:row-span-3 lg:h-[calc((100vh-180px)*1.1)] lg:sticky lg:top-6">
               <ProjectReadinessWidget
                   projectId={id || ''} 
                   onViewDetails={() => setViewModalOpen(true)}
