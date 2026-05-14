@@ -110,7 +110,22 @@ function extractAllTables(html: string): { headers: string[]; sampleRows: Record
       if (headers.length >= 2) out.push({ headers, sampleRows: [] });
     }
   }
-  return out;
+  return out.filter(t => !isNoiseTable(t.headers));
+}
+
+/** Pull `/<instance>/List/*.aspx` URLs out of a ReferenceTables grid. */
+function extractReferenceListPaths(html: string, baseUrl: string): string[] {
+  const set = new Set<string>();
+  const re = /href=["']([^"']*\/List\/[A-Za-z0-9_]+\.aspx)["']/gi;
+  for (const m of html.matchAll(re)) {
+    try { set.add(new URL(decodeHtmlEntities(m[1]), baseUrl).toString()); } catch (_) { /* ignore */ }
+  }
+  // Also harvest absolute paths printed in the ListActionPath column
+  const re2 = /\/[A-Za-z0-9_]+\/List\/[A-Za-z0-9_]+\.aspx/g;
+  for (const m of html.matchAll(re2)) {
+    try { set.add(new URL(m[0], baseUrl).toString()); } catch (_) { /* ignore */ }
+  }
+  return [...set];
 }
 
 function extractAsmxEndpoints(html: string, baseUrl: string): string[] {
