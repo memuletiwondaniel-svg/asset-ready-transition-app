@@ -211,9 +211,18 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
               <span className="truncate">ORA Activity Plan</span>
             </button>
             {statusConfig && (
-              <Badge variant="outline" className={cn("text-[10px] h-5 px-2 shrink-0", statusConfig.className)}>
-                {statusConfig.label}
-              </Badge>
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); setApproversOpen(true); }}
+                className="shrink-0 cursor-pointer relative z-10"
+                title="View approvers"
+              >
+                <Badge variant="outline" className={cn("text-[10px] h-5 px-2 hover:opacity-80 transition-opacity", statusConfig.className)}>
+                  {statusConfig.label}
+                </Badge>
+              </button>
             )}
           </CardTitle>
         </CardHeader>
