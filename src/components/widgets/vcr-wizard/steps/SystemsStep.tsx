@@ -318,9 +318,6 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
                       />
                       Hydrocarbon
                     </label>
-                    {sys.systemAssignmentId && (
-                      <Badge variant="secondary" className="text-[10px] shrink-0">Whole system</Badge>
-                    )}
                     {(sys.systemAssignmentId || sys.subsystems.some(s => s.assignmentId)) && (
                       <button
                         onClick={() => {
