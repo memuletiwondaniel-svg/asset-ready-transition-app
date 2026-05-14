@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings2, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, ChevronRight, ChevronDown, Trash2, CalendarRange, Activity, CircleDot } from 'lucide-react';
+import { Settings2, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, ChevronRight, ChevronDown, Trash2, CalendarRange, Activity, CircleDot, Plus } from 'lucide-react';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectORPPlans, ProjectORPActivity } from '@/hooks/useProjectORPPlans';
 import { useORPPlans } from '@/hooks/useORPPlans';
@@ -43,30 +43,28 @@ const getActivityStatus = (activity: { end_date: string | null; status: string }
 };
 
 const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolean; onClick?: () => void }> = ({ activity, isCompleted, onClick }) => {
-  const actStatus = getActivityStatus(activity);
+  const actStatus = isCompleted ? 'completed' : getActivityStatus(activity);
+  const Icon =
+    actStatus === 'completed' ? CheckCircle2 :
+    actStatus === 'overdue' ? AlertTriangle :
+    actStatus === 'in-progress' ? CircleDot :
+    Clock;
+  const iconColor =
+    actStatus === 'completed' ? 'text-green-600' :
+    actStatus === 'overdue' ? 'text-destructive' :
+    actStatus === 'in-progress' ? 'text-amber-500' :
+    'text-green-600';
   return (
-    <div className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer" onClick={onClick}>
-      {isCompleted ? (
-        <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" />
-      ) : actStatus === 'overdue' ? (
-        <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
-      ) : actStatus === 'in-progress' ? (
-        <CircleDot className="h-3 w-3 text-amber-500 shrink-0" />
-      ) : (
-        <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
-      )}
-      <span className={cn(
-        "truncate flex-1",
-        isCompleted && "text-muted-foreground",
-        actStatus === 'overdue' && !isCompleted && "text-destructive font-medium"
-      )}>
+    <div
+      className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/70 transition-colors cursor-pointer"
+      onClick={onClick}
+    >
+      <Icon className={cn("h-3.5 w-3.5 shrink-0", iconColor)} />
+      <span className={cn("truncate flex-1 text-foreground/90", isCompleted && "text-muted-foreground line-through")}>
         {activity.name}
       </span>
       {activity.end_date && (
-        <span className={cn(
-          "text-[10px] shrink-0",
-          actStatus === 'overdue' && !isCompleted ? "text-destructive" : "text-muted-foreground"
-        )}>
+        <span className="text-[10px] shrink-0 text-muted-foreground">
           {format(parseISO(activity.end_date), 'MMM d')}
         </span>
       )}
