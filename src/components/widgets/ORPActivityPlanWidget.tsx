@@ -82,6 +82,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   isReadOnly = false,
 }) => {
   const [overlayOpen, setOverlayOpen] = useState(false);
+  const [approversOpen, setApproversOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [upcomingOpen, setUpcomingOpen] = useState(true);
