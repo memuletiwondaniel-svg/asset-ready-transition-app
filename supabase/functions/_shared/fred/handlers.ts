@@ -586,7 +586,91 @@ export async function executeFredTool(
       return handleLookupITRForEquipment(args, supabaseClient, userId);
     case "check_document_readiness":
       return handleCheckDocumentReadiness(args, supabaseClient, userId);
+    case "search_systems_subsystems":
+      return handleSearchSystemsSubsystems(args, supabaseClient, userId);
     default:
       return { error: `Unknown Fred tool: ${toolName}` };
   }
 }
+
+// ─── Tool: search_systems_subsystems ─────────────────────────
+
+export async function handleSearchSystemsSubsystems(
+  args: any,
+  supabaseClient: any,
+  userId?: string
+): Promise<any> {
+  const start = Date.now();
+  const filter = String(args.filter || "").trim();
+  const maxResults = Math.min(Number(args.max_results) || 100, 500);
+
+  if (!filter) {
+    return { found: false, error: "filter is required" };
+  }
+
+  try {
+    // No projectCode — picker spans every tile in the BGC instance
+    const session = await getSession(supabaseClient, "");
+    const rows = await session.searchSubSystems(filter);
+
+    if (!rows.length) {
+      await logFredMetric(supabaseClient, {
+        user_id: userId,
+        query_text: filter,
+        tool_used: "search_systems_subsystems",
+        outcome: "no_results",
+        latency_ms: Date.now() - start,
+      });
+      return {
+        found: false,
+        filter,
+        message: `No systems or subsystems matched "${filter}" via the GoHub Reports SubSystem picker.`,
+      };
+    }
+
+    const f = filter.toUpperCase();
+    const norm = (v: any) => (v == null ? "" : String(v));
+    const matchString = (v: any) => norm(v).toUpperCase().includes(f);
+    const matched = rows.filter((r: any) =>
+      matchString(r.SubSystem) || matchString(r.SubSystemNumber) ||
+      matchString(r.Number) || matchString(r.Name) ||
+      matchString(r.System) || matchString(r.SystemNumber) ||
+      matchString(r.Description) || matchString(r.SubSystemDescription)
+    );
+    const finalRows = (matched.length ? matched : rows).slice(0, maxResults);
+
+    await logFredMetric(supabaseClient, {
+      user_id: userId,
+      query_text: filter,
+      tool_used: "search_systems_subsystems",
+      outcome: "success",
+      result_count: finalRows.length,
+      latency_ms: Date.now() - start,
+    });
+
+    return {
+      found: true,
+      filter,
+      total_available: matched.length || rows.length,
+      returned: finalRows.length,
+      truncated: (matched.length || rows.length) > finalRows.length,
+      subsystems: finalRows.map((r: any) => ({
+        sub_system: r.SubSystem || r.SubSystemNumber || r.Number || r.Name,
+        system: r.System || r.SystemNumber || r.ParentSystem,
+        description: r.Description || r.SubSystemDescription || r.Name || "",
+        raw: r,
+      })),
+    };
+  } catch (err: any) {
+    await logFredMetric(supabaseClient, {
+      user_id: userId,
+      query_text: filter,
+      tool_used: "search_systems_subsystems",
+      outcome: "error",
+      latency_ms: Date.now() - start,
+      error_details: err.message,
+    });
+    return { found: false, filter, error: err.message };
+  }
+}
+
