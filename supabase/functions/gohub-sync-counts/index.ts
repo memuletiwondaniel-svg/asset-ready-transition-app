@@ -187,6 +187,84 @@ async function fetchSystemsViaAsmx(
   return { rawData: [], cookies };
 }
 
+// ─── Fallback: SubSystem picker (Reports/ReportFilters) ──────
+// The Sub-Systems lookup modal in GoHub Reports searches ALL subsystems
+// in the BGC instance (e.g. C017-DP300-100-01) regardless of project tile.
+async function fetchSubSystemsByFilter(
+  cookies: Record<string, string>,
+  portalUrl: string,
+  filterText: string,
+): Promise<{ rawData: any[]; cookies: Record<string, string> }> {
+  const parsed = new URL(portalUrl);
+  const origin = parsed.origin;
+  const pathParts = parsed.pathname.split("/").filter(Boolean);
+  const instanceName = pathParts[0] || "BGC";
+
+  const candidateUrls = [
+    `${origin}/${instanceName}/GoHub/Reports/ReportFilters.aspx/GetSubSystems`,
+    `${origin}/${instanceName}/GoHub/Reports/ReportFilters.aspx/SearchSubSystems`,
+    `${origin}/${instanceName}/GoHub/Controls/SubSystemPicker.asmx/GetSubSystems`,
+    `${origin}/${instanceName}/Controls/SubSystemPicker.asmx/GetSubSystems`,
+    `${origin}/${instanceName}/GoHub/Reports/ReportFilters.asmx/GetSubSystems`,
+    `${origin}/${instanceName}/GoCompletions/Controls/SubSystemPicker.asmx/GetSubSystems`,
+  ];
+
+  const referer = `${origin}/${instanceName}/GoHub/Reports/ReportFilters.aspx`;
+
+  const payloads: Record<string, unknown>[] = [
+    { filter: filterText, pageSize: 500, pageNumber: 1 },
+    { filter: filterText, pageSize: 500, page: 1 },
+    { filter: filterText, PageSize: 500, PageNumber: 1 },
+    { searchText: filterText, pageSize: 500, pageNumber: 1 },
+    { Filter: filterText, PageSize: 500, PageNumber: 1 },
+    { filter: filterText },
+  ];
+
+  for (const url of candidateUrls) {
+    for (const payload of payloads) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            Cookie: formatCookies(cookies),
+            "User-Agent": BROWSER_UA,
+            "X-Requested-With": "XMLHttpRequest",
+            Accept: "application/json, text/javascript, */*; q=0.01",
+            Referer: referer,
+            Origin: origin,
+          },
+          body: JSON.stringify(payload),
+        });
+        const text = await response.text();
+        cookies = parseCookiesFromResponse(response, cookies);
+
+        if (response.status !== 200 || text.length < 20) continue;
+
+        let data: any;
+        try { data = JSON.parse(text); } catch { continue; }
+        if (data?.d !== undefined) {
+          data = typeof data.d === "string" ? JSON.parse(data.d) : data.d;
+        }
+        if (!Array.isArray(data)) {
+          for (const key of ["Items", "data", "results", "SubSystems", "Rows", "Data"]) {
+            if (data?.[key] && Array.isArray(data[key])) { data = data[key]; break; }
+          }
+        }
+        if (Array.isArray(data) && data.length > 0) {
+          console.log(`SyncCounts[picker]: ${data.length} subsystems from ${url} payload=${Object.keys(payload).join(",")}`);
+          console.log(`SyncCounts[picker]: sample = ${JSON.stringify(data[0]).substring(0, 500)}`);
+          return { rawData: data, cookies };
+        }
+      } catch (e) {
+        // try next combination
+      }
+    }
+  }
+  console.log(`SyncCounts[picker]: no endpoint returned subsystems for "${filterText}"`);
+  return { rawData: [], cookies };
+}
+
 // ─── Main Handler ────────────────────────────────────────────
 
 Deno.serve(async (req) => {
