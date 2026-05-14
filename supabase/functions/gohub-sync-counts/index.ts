@@ -9,6 +9,7 @@ import {
   formatCookies,
   BROWSER_UA,
   parseCookiesFromResponse,
+  getGoCompletionsCredentials,
 } from "../_shared/gocompletions-auth.ts";
 
 const corsHeaders = {
@@ -219,10 +220,23 @@ Deno.serve(async (req) => {
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    const body = await req.json();
-    const { portalUrl, username, password, projectFilter, systemIds } = body;
+    let body: Record<string, unknown> = {};
+    try {
+      const rawBody = await req.text();
+      body = rawBody ? JSON.parse(rawBody) : {};
+    } catch (_) {
+      body = {};
+    }
 
-    if (!username || !password) {
+    const { projectFilter, systemIds } = body as {
+      projectFilter?: string;
+      systemIds?: string[];
+    };
+
+    let credentials;
+    try {
+      credentials = await getGoCompletionsCredentials(adminClient);
+    } catch (_) {
       return new Response(
         JSON.stringify({ success: false, error: "GoCompletions credentials are required" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -236,7 +250,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const finalPortalUrl = portalUrl || "https://goc.gotechnology.online/BGC/GoHub/Home.aspx";
+    const { portalUrl: finalPortalUrl, username, password } = credentials;
     console.log(`SyncCounts: Starting sync for project=${projectFilter}, systems=${(systemIds || []).length}`);
 
     // Step 1: Login (using shared module)
