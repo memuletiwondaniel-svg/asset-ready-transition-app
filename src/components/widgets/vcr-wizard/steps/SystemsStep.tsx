@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { getAPIConfig } from '@/lib/api-config-storage';
 
 interface SystemsStepProps {
   vcrId: string;
@@ -200,22 +199,12 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
 
   const handleSync = async () => {
     if (!planId) return;
-    const config = getAPIConfig('gocompletions');
-    if (!config || config.status !== 'configured' || !config.rpaCredentials) {
-      toast.error('GoCompletions not configured. Go to Administration > APIs.');
-      return;
-    }
-    const { portalUrl, username, password } = config.rpaCredentials;
-    if (!username || !password) {
-      toast.error('GoCompletions credentials incomplete.');
-      return;
-    }
     setSyncing(true);
     try {
       const systemIdList = (rows || []).map(r => r.system_id);
       const cleanProjectCode = (projectCode || '').replace(/-/g, '');
       const { data, error } = await supabase.functions.invoke('gohub-sync-counts', {
-        body: { portalUrl, username, password, projectFilter: cleanProjectCode, systemIds: systemIdList },
+        body: { projectFilter: cleanProjectCode, systemIds: systemIdList },
       });
       if (error) throw error;
       if (data?.success) {
