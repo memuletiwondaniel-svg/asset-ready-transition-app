@@ -1340,6 +1340,16 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     }
   }, [highlightActivityCode, visibleRows, expandedCodes, toggleExpand, openActivitySheet]);
 
+  // Auto-open Add From Catalog dialog when requested by parent
+  const autoAddHandledRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenAddActivity && !autoAddHandledRef.current && !readOnly) {
+      autoAddHandledRef.current = true;
+      setShowCatalogDialog(true);
+    }
+    if (!autoOpenAddActivity) autoAddHandledRef.current = false;
+  }, [autoOpenAddActivity, readOnly]);
+
   // Mobile: render card-based timeline list instead of Gantt grid
   if (isMobile) {
     return (
