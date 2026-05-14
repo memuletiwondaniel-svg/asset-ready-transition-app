@@ -83,6 +83,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
 }) => {
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [highlightCode, setHighlightCode] = useState<string | undefined>(undefined);
+  const [autoOpenAdd, setAutoOpenAdd] = useState(false);
   const [approversOpen, setApproversOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -116,6 +117,13 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
 
   const openActivityOverlay = (code?: string) => {
     setHighlightCode(code);
+    setAutoOpenAdd(false);
+    setOverlayOpen(true);
+  };
+
+  const openAddActivity = () => {
+    setHighlightCode(undefined);
+    setAutoOpenAdd(true);
     setOverlayOpen(true);
   };
 
