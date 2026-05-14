@@ -120,6 +120,21 @@ export const FRED_GOCOMPLETIONS_TOOLS = [
       },
     },
   },
+  {
+    type: "function" as const,
+    function: {
+      name: "search_systems_subsystems",
+      description: "Search the GoCompletions Systems and Sub-Systems tables across the entire BGC instance by free-text filter (e.g. 'DP300', 'C017-DP300-100', 'Feed Gas'). Spans every project tile — use this whenever the user asks about a specific system/subsystem and you don't know which project it belongs to, or when get_completion_status returns nothing. Returns subsystem code, parent system, description, and any progress fields exposed by the picker.",
+      parameters: {
+        type: "object",
+        properties: {
+          filter: { type: "string", description: "Free-text filter to match against subsystem code, system code, or description (case-insensitive contains-match)." },
+          max_results: { type: "number", description: "Max rows to return (default 100, max 500)." },
+        },
+        required: ["filter"],
+      },
+    },
+  },
 ];
 
 /** Tool names for TOOL_AGENT_MAP and SPECIALIST_TOOL_NAMES */
@@ -130,4 +145,6 @@ export const FRED_GOC_TOOL_NAMES = [
   'get_handover_certificate_status',
   'lookup_itr_for_equipment',
   'check_document_readiness',
+  'search_systems_subsystems',
 ];
+

@@ -647,4 +647,74 @@ export class GocSessionManager {
   }
 
   getCookies(): Record<string, string> { return this.cookies; }
+
+  /**
+   * Search the GoHub Reports SubSystem picker by free-text filter.
+   * Same modal that returns e.g. 115 records when typing "DP300" — spans
+   * every project tile in the BGC instance, so use it whenever the
+   * CompletionsGrid rollup misses a system/subsystem.
+   */
+  async searchSubSystems(filterText: string): Promise<any[]> {
+    await this.ensureSession();
+    this.queryCount++;
+    const parsed = new URL(this.portalUrl);
+    const origin = parsed.origin;
+    const pathParts = parsed.pathname.split("/").filter(Boolean);
+    const instance = pathParts[0] || "BGC";
+    const referer = `${origin}/${instance}/GoHub/Reports/ReportFilters.aspx`;
+
+    const urls = [
+      `${origin}/${instance}/GoHub/Reports/ReportFilters.aspx/GetSubSystems`,
+      `${origin}/${instance}/GoHub/Reports/ReportFilters.aspx/SearchSubSystems`,
+      `${origin}/${instance}/GoHub/Controls/SubSystemPicker.asmx/GetSubSystems`,
+      `${origin}/${instance}/Controls/SubSystemPicker.asmx/GetSubSystems`,
+      `${origin}/${instance}/GoHub/Reports/ReportFilters.asmx/GetSubSystems`,
+    ];
+    const payloads: Record<string, unknown>[] = [
+      { filter: filterText, pageSize: 500, pageNumber: 1 },
+      { filter: filterText, PageSize: 500, PageNumber: 1 },
+      { searchText: filterText, pageSize: 500, pageNumber: 1 },
+      { Filter: filterText, PageSize: 500, PageNumber: 1 },
+      { filter: filterText },
+    ];
+
+    for (const url of urls) {
+      for (const payload of payloads) {
+        try {
+          const resp = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json; charset=utf-8",
+              Cookie: formatCookies(this.cookies),
+              "User-Agent": BROWSER_UA,
+              "X-Requested-With": "XMLHttpRequest",
+              Accept: "application/json, text/javascript, */*; q=0.01",
+              Referer: referer,
+              Origin: origin,
+            },
+            body: JSON.stringify(payload),
+          });
+          const text = await resp.text();
+          this.cookies = parseCookiesFromResponse(resp, this.cookies);
+          if (resp.status !== 200 || text.length < 20) continue;
+          let data: any;
+          try { data = JSON.parse(text); } catch { continue; }
+          if (data?.d !== undefined) {
+            data = typeof data.d === "string" ? JSON.parse(data.d) : data.d;
+          }
+          if (!Array.isArray(data)) {
+            for (const k of ["Items", "data", "results", "SubSystems", "Rows", "Data"]) {
+              if (data?.[k] && Array.isArray(data[k])) { data = data[k]; break; }
+            }
+          }
+          if (Array.isArray(data) && data.length > 0) {
+            console.log(`[GocSession] searchSubSystems "${filterText}": ${data.length} via ${url}`);
+            return data;
+          }
+        } catch (_) { /* try next combination */ }
+      }
+    }
+    return [];
+  }
 }
+
