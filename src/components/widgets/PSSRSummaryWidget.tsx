@@ -176,8 +176,10 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
           <CardTitle className="text-lg flex items-center gap-3">
             <button
               type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => { e.stopPropagation(); handleP2AHeaderClick(); }}
-              className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity cursor-pointer"
+              className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity cursor-pointer relative z-10"
             >
               <StyledWidgetIcon 
                 Icon={Key}
