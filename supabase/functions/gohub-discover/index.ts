@@ -302,11 +302,11 @@ Deno.serve(async (req) => {
 
           // enqueue new links (but cap)
           for (const l of links) if (!visited.has(l) && queue.length < maxPagesPerProject * 3) queue.push(l);
-          // If this is the ReferenceTables index, expand every list page
+          // If this is the ReferenceTables index, expand every list page (PRIORITY)
           if (/ReferenceTables/i.test(pageUrl)) {
             const refs = extractReferenceListPaths(r.html, r.url);
-            for (const l of refs) if (!visited.has(l)) queue.push(l);
-            console.log(`     reference tables expanded: ${refs.length} list pages queued`);
+            for (const l of refs.reverse()) if (!visited.has(l)) queue.unshift(l);
+            console.log(`     reference tables expanded: ${refs.length} list pages prioritized`);
           }
 
           // probe asmx (deduped globally)
