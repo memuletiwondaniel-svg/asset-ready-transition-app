@@ -38,6 +38,7 @@ function hashCode(str: string): number {
 }
 
 import { WizardShell, WizardShellStep } from '../shared/WizardShell';
+import { SystemsStep } from './steps/SystemsStep';
 import { VCRItemsStep } from './steps/VCRItemsStep';
 import { TrainingStep } from './steps/TrainingStep';
 import { ProceduresStep } from './steps/ProceduresStep';
@@ -46,6 +47,7 @@ import { OperationalRegistersStep } from './steps/OperationalRegistersStep';
 import { LogsheetsStep } from './steps/LogsheetsStep';
 import { InspectionTestPlanStep } from './steps/InspectionTestPlanStep';
 import { ApproversStep } from './steps/ApproversStep';
+import { Layers } from 'lucide-react';
 
 interface VCRExecutionPlanWizardProps {
   open: boolean;
@@ -55,6 +57,7 @@ interface VCRExecutionPlanWizardProps {
 }
 
 const STEPS: WizardShellStep[] = [
+  { id: 'systems', label: 'Systems', icon: Layers, color: 'text-orange-500' },
   { id: 'items', label: 'VCR Items', icon: ClipboardCheck, color: 'text-violet-500' },
   { id: 'training', label: 'Training', icon: GraduationCap, color: 'text-blue-500' },
   { id: 'procedures', label: 'Procedures', icon: BookOpen, color: 'text-emerald-500' },
@@ -158,11 +161,12 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     })();
   }, [open, user?.id, vcr.id, queryClient]);
 
-  // Query step data counts for completion
+  // Query step data counts for completion (now Systems is index 0)
   const { data: stepCounts = {} } = useQuery({
     queryKey: ['vcr-wizard-step-counts', vcr.id],
     queryFn: async () => {
-      const [training, procedures, criticalDocs, registers, logsheets] = await Promise.all([
+      const [systems, training, procedures, criticalDocs, registers, logsheets] = await Promise.all([
+        (supabase as any).from('p2a_handover_point_systems').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
@@ -170,11 +174,12 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         (supabase as any).from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
       ]);
       return {
-        1: training.count || 0,
-        2: procedures.count || 0,
-        3: criticalDocs.count || 0,
-        4: registers.count || 0,
-        5: logsheets.count || 0,
+        0: systems.count || 0,
+        2: training.count || 0,
+        3: procedures.count || 0,
+        4: criticalDocs.count || 0,
+        5: registers.count || 0,
+        6: logsheets.count || 0,
       } as Record<number, number>;
     },
     enabled: open,
@@ -182,7 +187,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
-    if (idx === 0 || idx === 6 || idx === 7) return visitedSteps.has(idx);
+    // VCR Items (1), ITP (7), Approvers (8) — completion based on visit
+    if (idx === 1 || idx === 7 || idx === 8) return visitedSteps.has(idx);
     return (stepCounts[idx] || 0) > 0;
   };
 
@@ -221,14 +227,15 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   const renderStep = () => {
     switch (currentStep) {
-      case 0: return <VCRItemsStep vcrId={vcr.id} />;
-      case 1: return <TrainingStep vcrId={vcr.id} />;
-      case 2: return <ProceduresStep vcrId={vcr.id} />;
-      case 3: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 4: return <OperationalRegistersStep vcrId={vcr.id} />;
-      case 5: return <LogsheetsStep vcrId={vcr.id} />;
-      case 6: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 7: return <ApproversStep vcrId={vcr.id} />;
+      case 0: return <SystemsStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 1: return <VCRItemsStep vcrId={vcr.id} />;
+      case 2: return <TrainingStep vcrId={vcr.id} />;
+      case 3: return <ProceduresStep vcrId={vcr.id} />;
+      case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 5: return <OperationalRegistersStep vcrId={vcr.id} />;
+      case 6: return <LogsheetsStep vcrId={vcr.id} />;
+      case 7: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 8: return <ApproversStep vcrId={vcr.id} />;
       default: return null;
     }
   };
@@ -246,20 +253,33 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     ? ID_BADGE_PALETTE[hashCode(shortVcrId) % ID_BADGE_PALETTE.length]
     : ID_BADGE_PALETTE[0];
 
+  const statusLabel = (() => {
+    const s = (vcr.status || '').toUpperCase();
+    if (s === 'SIGNED') return { label: 'Approved', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+    if (s === 'READY') return { label: 'Submitted', cls: 'bg-amber-50 text-amber-700 border-amber-200' };
+    if (s === 'IN_PROGRESS') return { label: 'In Progress', cls: 'bg-blue-50 text-blue-700 border-blue-200' };
+    return { label: 'Draft', cls: 'bg-muted text-muted-foreground border-border' };
+  })();
+
   const headerContent = (
     <div className="flex flex-col gap-2 min-w-0">
-      {shortVcrId && (
-        <Badge
-          className={cn(
-            "self-start text-[11px] font-mono font-semibold border-0 px-2.5 py-0.5",
-            idColors.bg, idColors.text
-          )}
-        >
-          {shortVcrId}
+      <div className="flex items-center gap-2 flex-wrap">
+        {shortVcrId && (
+          <Badge
+            className={cn(
+              "text-[11px] font-mono font-semibold border-0 px-2.5 py-0.5",
+              idColors.bg, idColors.text
+            )}
+          >
+            {shortVcrId}
+          </Badge>
+        )}
+        <Badge variant="outline" className={cn("text-[10px] h-5 px-2", statusLabel.cls)}>
+          {statusLabel.label}
         </Badge>
-      )}
+      </div>
       <h2 className="text-sm font-black line-clamp-2 leading-tight text-foreground">{vcr.name}</h2>
-      <p className="text-[10px] text-muted-foreground">Develop VCR Plan</p>
+      <p className="text-[10px] text-muted-foreground">Create VCR Plan</p>
     </div>
   );
 
@@ -267,7 +287,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     <WizardShell
       open={open}
       onOpenChange={onOpenChange}
-      dialogTitle="VCR Plan Wizard"
+      dialogTitle="Create VCR Plan"
       steps={STEPS}
       currentStep={currentStep}
       onStepChange={goToStep}

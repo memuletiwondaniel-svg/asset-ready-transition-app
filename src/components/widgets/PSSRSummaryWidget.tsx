@@ -17,6 +17,7 @@ import { P2AWorkspaceOverlay } from './P2AWorkspaceOverlay';
 import { P2APlanSummaryDialog } from './P2APlanSummaryDialog';
 import { P2APlanCreationWizard } from './p2a-wizard/P2APlanCreationWizard';
 import { VCRDetailOverlayWidget } from './VCRDetailOverlay';
+import { VCRExecutionPlanWizard } from './vcr-wizard/VCRExecutionPlanWizard';
 import { cn } from '@/lib/utils';
 import { useCanCreateVCRPermission } from '@/hooks/usePermissions';
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
@@ -96,6 +97,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const [showP2APlanWizard, setShowP2APlanWizard] = useState(false);
   const [showP2ASummary, setShowP2ASummary] = useState(false);
   const [selectedVCR, setSelectedVCR] = useState<ProjectVCR | null>(null);
+  const [wizardVCR, setWizardVCR] = useState<ProjectVCR | null>(null);
 
   // Get the first (active) ORA plan for this project
   const oraPlanId = orpPlans?.[0]?.id || '';
@@ -127,7 +129,14 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   const handleVCRClick = (vcrId: string) => {
     const found = allVCRs.find(v => v.id === vcrId);
-    if (found) setSelectedVCR(found);
+    if (!found) return;
+    const status = (found.status || '').toUpperCase();
+    const isApproved = status === 'SIGNED';
+    if (isApproved) {
+      setSelectedVCR(found);
+    } else {
+      setWizardVCR(found);
+    }
   };
 
   const hasContent = (pssrs && pssrs.length > 0) || allVCRs.length > 0;
@@ -380,6 +389,15 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
           onOpenChange={(open) => { if (!open) setSelectedVCR(null); }}
           vcr={selectedVCR}
           projectName={projectName}
+          projectCode={projectCode}
+        />
+      )}
+
+      {wizardVCR && (
+        <VCRExecutionPlanWizard
+          open={!!wizardVCR}
+          onOpenChange={(open) => { if (!open) setWizardVCR(null); }}
+          vcr={wizardVCR}
           projectCode={projectCode}
         />
       )}
