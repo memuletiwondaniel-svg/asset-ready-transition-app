@@ -286,7 +286,7 @@ export default function ProjectDetailsPage() {
               </div>
               
               {/* Right Column - Draggable Widgets */}
-              <div className="lg:col-span-2 lg:h-[calc((100vh-180px)*1.1)] flex flex-col">
+              <div className="lg:col-span-2 lg:h-[calc((100vh-180px)*1.045)] flex flex-col">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
