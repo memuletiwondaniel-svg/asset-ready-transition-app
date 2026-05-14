@@ -61,8 +61,7 @@ const STEPS: WizardShellStep[] = [
   { id: 'training', label: 'Training', icon: GraduationCap, color: 'text-blue-500' },
   { id: 'procedures', label: 'Procedures', icon: BookOpen, color: 'text-emerald-500' },
   { id: 'critical-docs', label: 'Critical Documents', icon: FileText, color: 'text-amber-500' },
-  { id: 'registers', label: 'Op. Registers', icon: ClipboardList, color: 'text-cyan-500' },
-  { id: 'logsheets', label: 'Logsheets', icon: ScrollText, color: 'text-indigo-500' },
+  { id: 'registers-logsheets', label: 'Registers & Logsheets', icon: ClipboardList, color: 'text-cyan-500' },
   { id: 'itp', label: 'Inspection Test Plan', icon: ClipboardList, color: 'text-orange-500' },
   { id: 'approvers', label: 'Approvers', icon: UserCheck, color: 'text-primary' },
 ];
