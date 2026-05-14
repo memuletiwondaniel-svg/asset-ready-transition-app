@@ -148,9 +148,17 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
     }
     if (p2aPlanByProject.status === 'DRAFT') {
       setShowP2APlanWizard(true);
+    } else if (p2aPlanByProject.status === 'COMPLETED') {
+      // Approved → go straight into workspace
+      setShowP2AWorkspace(true);
     } else {
       setShowP2ASummary(true);
     }
+  };
+
+  const handleP2AStatusClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (p2aPlanByProject) setShowP2ASummary(true);
   };
 
   const headerStatusLabel = !p2aPlanByProject
@@ -191,9 +199,18 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               <span className="truncate">P2A Plan</span>
             </button>
             {headerStatusLabel && (
-              <Badge variant="outline" className={cn("text-[10px] h-5 px-2 shrink-0", headerStatusClass)}>
-                {headerStatusLabel}
-              </Badge>
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={handleP2AStatusClick}
+                className="shrink-0 cursor-pointer relative z-10"
+                title="View approvers"
+              >
+                <Badge variant="outline" className={cn("text-[10px] h-5 px-2 hover:opacity-80 transition-opacity", headerStatusClass)}>
+                  {headerStatusLabel}
+                </Badge>
+              </button>
             )}
           </CardTitle>
         </CardHeader>

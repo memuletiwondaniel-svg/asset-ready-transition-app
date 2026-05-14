@@ -11,6 +11,8 @@ import { ORPGanttOverlay } from '@/components/orp/ORPGanttOverlay';
 import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ORAApprovalsPanel } from '@/components/ora/ORAApprovalsPanel';
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -82,6 +84,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   isReadOnly = false,
 }) => {
   const [overlayOpen, setOverlayOpen] = useState(false);
+  const [approversOpen, setApproversOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [upcomingOpen, setUpcomingOpen] = useState(true);
@@ -211,9 +214,18 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
               <span className="truncate">ORA Activity Plan</span>
             </button>
             {statusConfig && (
-              <Badge variant="outline" className={cn("text-[10px] h-5 px-2 shrink-0", statusConfig.className)}>
-                {statusConfig.label}
-              </Badge>
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); setApproversOpen(true); }}
+                className="shrink-0 cursor-pointer relative z-10"
+                title="View approvers"
+              >
+                <Badge variant="outline" className={cn("text-[10px] h-5 px-2 hover:opacity-80 transition-opacity", statusConfig.className)}>
+                  {statusConfig.label}
+                </Badge>
+              </button>
             )}
           </CardTitle>
         </CardHeader>
@@ -324,6 +336,15 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         onOpenChange={setWizardOpen}
         projectId={projectId}
       />
+
+      <Dialog open={approversOpen} onOpenChange={setApproversOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>ORA Activity Plan — Approvers</DialogTitle>
+          </DialogHeader>
+          <ORAApprovalsPanel planId={primaryPlan.id} />
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
