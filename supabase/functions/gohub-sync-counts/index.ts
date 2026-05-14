@@ -300,14 +300,42 @@ Deno.serve(async (req) => {
 
           if (result.rawData.length > 0) {
             const filterUpper = projectFilter.toUpperCase();
-            const matching = result.rawData.filter((item: any) => {
-              const id = String(item.Number || item.SystemNumber || item.Name || item.SystemId || item.Id || "");
-              return id.toUpperCase().includes(filterUpper);
-            });
+
+            // Flatten SubSystem trees so nested systems are searchable
+            const flat: any[] = [];
+            const walk = (nodes: any[]) => {
+              for (const n of nodes || []) {
+                if (!n || typeof n !== "object") continue;
+                flat.push(n);
+                const kids = n.SubSystem || n.SubSystems || n.Children || n.children;
+                if (Array.isArray(kids) && kids.length) walk(kids);
+              }
+            };
+            walk(result.rawData);
+
+            const matchString = (v: any) =>
+              v != null && String(v).toUpperCase().includes(filterUpper);
+
+            const matching = flat.filter((item: any) =>
+              matchString(item.Number) ||
+              matchString(item.SystemNumber) ||
+              matchString(item.Name) ||
+              matchString(item.SystemId) ||
+              matchString(item.Id) ||
+              matchString(item.Description) ||
+              matchString(item.SubSystemNumber) ||
+              matchString(item.SubSystemName) ||
+              matchString(item.SubSystemDescription)
+            );
+
+            console.log(`SyncCounts: Tile "${tile.name}" - flattened ${flat.length} nodes, ${matching.length} match "${projectFilter}"`);
+            if (matching.length === 0 && flat.length > 0) {
+              const sampleNumbers = flat.slice(0, 5).map(x => x.Number || x.SystemNumber || x.Name).join(" | ");
+              console.log(`SyncCounts:   sample numbers: ${sampleNumbers}`);
+            }
 
             if (matching.length > 0) {
               allRawData.push(...matching);
-              console.log(`SyncCounts: Found ${matching.length} matching systems in "${tile.name}"`);
             }
           }
         } catch (e) {
