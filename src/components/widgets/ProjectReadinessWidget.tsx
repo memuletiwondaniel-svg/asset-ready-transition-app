@@ -360,9 +360,20 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
               glowFrom="from-blue-500/40"
               glowTo="to-cyan-500/40"
             />
-            <span className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+            <span className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors flex-1 min-w-0 truncate">
               Project Overview
             </span>
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 px-2 text-xs gap-1.5"
+                title="Edit project"
+              >
+                <Edit className="h-3.5 w-3.5" /> Edit
+              </Button>
+            )}
           </div>
           
           {/* Location Labels */}

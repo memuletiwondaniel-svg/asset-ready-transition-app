@@ -281,6 +281,7 @@ export default function ProjectDetailsPage() {
               <ProjectReadinessWidget
                   projectId={id || ''} 
                   onViewDetails={() => setViewModalOpen(true)}
+                  onEdit={() => setEditModalOpen(true)}
                 />
               </div>
               
