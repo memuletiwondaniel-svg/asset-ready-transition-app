@@ -353,7 +353,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
 
       <ORPGanttOverlay
         open={overlayOpen}
-        onOpenChange={(o) => { setOverlayOpen(o); if (!o) setHighlightCode(undefined); }}
+        onOpenChange={(o) => { setOverlayOpen(o); if (!o) { setHighlightCode(undefined); setAutoOpenAdd(false); } }}
         planId={primaryPlan.id}
         planStatus={planStatus}
         overallProgress={overallProgress}
@@ -364,9 +364,10 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         p2aProgress={primaryPlan?.p2a_progress || 0}
         vcrCount={primaryPlan?.vcr_count || 0}
         projectCode={projectCode}
-        projectName={projectName}
+        projectName={project?.project_title ?? projectName}
         isReadOnly={isReadOnly}
         highlightActivityCode={highlightCode}
+        autoOpenAddActivity={autoOpenAdd}
       />
 
       <ORAActivityPlanWizard
