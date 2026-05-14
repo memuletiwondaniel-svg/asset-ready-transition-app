@@ -10,6 +10,7 @@ import {
   parseCookiesFromResponse,
   BROWSER_UA,
   decodeHtmlEntities,
+  getGoCompletionsCredentials,
   type ProjectTile,
 } from "../_shared/gocompletions-auth.ts";
 
@@ -575,8 +576,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    const body = await req.json();
-    const { portalUrl, username, password, projectFilter } = body;
+    let body: Record<string, unknown> = {};
+    try {
+      const rawBody = await req.text();
+      body = rawBody ? JSON.parse(rawBody) : {};
+    } catch (_) {
+      body = {};
+    }
+    const { projectFilter } = body as { projectFilter?: string };
 
     if (!projectFilter) {
       return new Response(
@@ -585,14 +592,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    const finalPortalUrl = portalUrl || "https://goc.gotechnology.online/BGC/GoHub/Home.aspx";
-
-    if (!username || !password) {
+    let credentials;
+    try {
+      credentials = await getGoCompletionsCredentials();
+    } catch (_) {
       return new Response(
         JSON.stringify({ success: false, error: "GoHub credentials required", setup_required: true }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const { portalUrl: finalPortalUrl, username, password } = credentials;
 
     console.log(`GoHub import: portal=${finalPortalUrl}, filter=${projectFilter}`);
 

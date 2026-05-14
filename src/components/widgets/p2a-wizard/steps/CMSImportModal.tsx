@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Database, Loader2, CheckCircle2, AlertTriangle, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { WizardSystem, WizardSubsystem } from './SystemsImportStep';
-import { getAPIConfig } from '@/lib/api-config-storage';
 
 interface CMSImportModalProps {
   open: boolean;
@@ -21,8 +20,6 @@ interface CMSImportModalProps {
 }
 
 type ImportStatus = 'idle' | 'connecting' | 'success' | 'error';
-
-const DEFAULT_PORTAL_URL = 'https://goc.gotechnology.online/BGC/GoHub/Home.aspx';
 
 export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   open,
@@ -43,22 +40,6 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   }, [open]);
 
   const handleImport = async () => {
-    const config = getAPIConfig('gocompletions');
-
-    if (!config || config.status !== 'configured' || !config.rpaCredentials) {
-      setErrorMessage('GoCompletions is not configured. Please configure it in Administration > APIs first.');
-      setStatus('error');
-      return;
-    }
-
-    const { portalUrl, username, password } = config.rpaCredentials;
-
-    if (!username || !password) {
-      setErrorMessage('GoCompletions credentials are incomplete. Please reconfigure in Administration > APIs.');
-      setStatus('error');
-      return;
-    }
-
     setIsLoading(true);
     setStatus('connecting');
     setErrorMessage('');
@@ -75,9 +56,6 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
 
       const response = await supabase.functions.invoke('gohub-import', {
         body: {
-          portalUrl: portalUrl || DEFAULT_PORTAL_URL,
-          username,
-          password,
           projectFilter: cleanProjectCode,
         },
         headers: {

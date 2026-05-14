@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getAPIConfig } from '@/lib/api-config-storage';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { MultiViewDatePicker } from '@/components/ui/multi-view-date-picker';
 import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, type DragEndEvent } from '@dnd-kit/core';
@@ -845,19 +844,6 @@ const VCRSystemsPanel: React.FC<{ vcrId: string; projectCode?: string }> = ({ vc
   const [viewMode, setViewMode] = React.useState<'card' | 'table'>('card');
 
   const handleSyncFromGoCompletions = async () => {
-    const config = getAPIConfig('gocompletions');
-
-    if (!config || config.status !== 'configured' || !config.rpaCredentials) {
-      setSyncResult({ success: false, message: 'GoCompletions not configured. Go to Administration > APIs.' });
-      return;
-    }
-
-    const { portalUrl, username, password } = config.rpaCredentials;
-    if (!username || !password) {
-      setSyncResult({ success: false, message: 'GoCompletions credentials incomplete.' });
-      return;
-    }
-
     setSyncing(true);
     setSyncResult(null);
 
@@ -870,9 +856,6 @@ const VCRSystemsPanel: React.FC<{ vcrId: string; projectCode?: string }> = ({ vc
 
       const { data, error } = await supabase.functions.invoke('gohub-sync-counts', {
         body: {
-          portalUrl,
-          username,
-          password,
           projectFilter: cleanProjectCode,
           systemIds: systemIdList,
         },
