@@ -82,9 +82,11 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   isReadOnly = false,
 }) => {
   const [overlayOpen, setOverlayOpen] = useState(false);
+  const [highlightCode, setHighlightCode] = useState<string | undefined>(undefined);
   const [approversOpen, setApproversOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [ongoingOpen, setOngoingOpen] = useState(true);
   const [upcomingOpen, setUpcomingOpen] = useState(true);
   const [completedOpen, setCompletedOpen] = useState(false);
   const { data: plans = [], isLoading } = useProjectORPPlans(projectId);
@@ -99,8 +101,23 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   const inProgressCount = primaryPlan?.in_progress_count || 0;
   const notStartedCount = primaryPlan?.not_started_count || 0;
   const overallProgress = primaryPlan?.overall_progress || 0;
-  const upcomingActivities = primaryPlan?.upcoming_activities || [];
+  const rawUpcoming = primaryPlan?.upcoming_activities || [];
   const completedActivities = primaryPlan?.completed_activities || [];
+
+  // Split into Ongoing (in-progress or overdue) vs Upcoming (future / not started)
+  const ongoingActivities = rawUpcoming.filter(a => {
+    const s = getActivityStatus(a);
+    return s === 'in-progress' || s === 'overdue' || s === 'due-today';
+  });
+  const upcomingActivities = rawUpcoming.filter(a => {
+    const s = getActivityStatus(a);
+    return s === 'upcoming';
+  });
+
+  const openActivityOverlay = (code?: string) => {
+    setHighlightCode(code);
+    setOverlayOpen(true);
+  };
 
   const isDraft = planStatus === 'DRAFT';
 
