@@ -148,9 +148,17 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
     }
     if (p2aPlanByProject.status === 'DRAFT') {
       setShowP2APlanWizard(true);
+    } else if (p2aPlanByProject.status === 'COMPLETED') {
+      // Approved → go straight into workspace
+      setShowP2AWorkspace(true);
     } else {
       setShowP2ASummary(true);
     }
+  };
+
+  const handleP2AStatusClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (p2aPlanByProject) setShowP2ASummary(true);
   };
 
   const headerStatusLabel = !p2aPlanByProject
