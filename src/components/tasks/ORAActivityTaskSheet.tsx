@@ -1238,12 +1238,9 @@ export const ORAActivityTaskSheet: React.FC<ORAActivityTaskSheetProps> = ({
                       if (isReadOnly) return;
                       const newPct = val[0];
                       setProgressPct(newPct);
-                      // Auto-promote/demote status based on progress
+                      // Auto-promote/demote status based on progress (no confirm dialog here)
                       setStatus((prev) => {
-                        if (newPct === 100) {
-                          setShowCompleteConfirm(true);
-                          return 'COMPLETED';
-                        }
+                        if (newPct === 100) return 'COMPLETED';
                         if (newPct > 0 && prev === 'NOT_STARTED') return 'IN_PROGRESS';
                         if (newPct === 0 && prev === 'IN_PROGRESS') return 'NOT_STARTED';
                         return prev;
