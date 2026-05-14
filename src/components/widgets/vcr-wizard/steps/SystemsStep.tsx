@@ -401,7 +401,7 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
 
       {/* Add System Picker */}
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-        <DialogContent className="max-w-lg z-[100]">
+        <DialogContent className="max-w-lg z-[110]" overlayClassName="z-[105]">
           <DialogHeader>
             <DialogTitle>Add Systems to VCR</DialogTitle>
           </DialogHeader>
