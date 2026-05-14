@@ -57,6 +57,7 @@ interface VCRExecutionPlanWizardProps {
 }
 
 const STEPS: WizardShellStep[] = [
+  { id: 'systems', label: 'Systems', icon: Layers, color: 'text-orange-500' },
   { id: 'items', label: 'VCR Items', icon: ClipboardCheck, color: 'text-violet-500' },
   { id: 'training', label: 'Training', icon: GraduationCap, color: 'text-blue-500' },
   { id: 'procedures', label: 'Procedures', icon: BookOpen, color: 'text-emerald-500' },
