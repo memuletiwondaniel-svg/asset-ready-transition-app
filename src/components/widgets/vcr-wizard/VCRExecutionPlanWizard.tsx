@@ -161,11 +161,12 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     })();
   }, [open, user?.id, vcr.id, queryClient]);
 
-  // Query step data counts for completion
+  // Query step data counts for completion (now Systems is index 0)
   const { data: stepCounts = {} } = useQuery({
     queryKey: ['vcr-wizard-step-counts', vcr.id],
     queryFn: async () => {
-      const [training, procedures, criticalDocs, registers, logsheets] = await Promise.all([
+      const [systems, training, procedures, criticalDocs, registers, logsheets] = await Promise.all([
+        (supabase as any).from('p2a_handover_point_systems').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
@@ -173,11 +174,12 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         (supabase as any).from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
       ]);
       return {
-        1: training.count || 0,
-        2: procedures.count || 0,
-        3: criticalDocs.count || 0,
-        4: registers.count || 0,
-        5: logsheets.count || 0,
+        0: systems.count || 0,
+        2: training.count || 0,
+        3: procedures.count || 0,
+        4: criticalDocs.count || 0,
+        5: registers.count || 0,
+        6: logsheets.count || 0,
       } as Record<number, number>;
     },
     enabled: open,
@@ -185,7 +187,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
-    if (idx === 0 || idx === 6 || idx === 7) return visitedSteps.has(idx);
+    // VCR Items (1), ITP (7), Approvers (8) — completion based on visit
+    if (idx === 1 || idx === 7 || idx === 8) return visitedSteps.has(idx);
     return (stepCounts[idx] || 0) > 0;
   };
 
