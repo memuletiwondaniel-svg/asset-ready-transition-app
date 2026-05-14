@@ -261,8 +261,11 @@ export default function ProjectDetailsPage() {
           {/* Header - standardized design */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-foreground">
-                {getProjectId()}: {project.project_title}
+              <h1 className="text-2xl font-bold flex items-baseline gap-3 flex-wrap">
+                <span className="text-sm font-mono font-medium uppercase tracking-wider text-muted-foreground bg-muted px-2 py-1 rounded-md">
+                  {getProjectId()}
+                </span>
+                <span className="text-foreground">{project.project_title}</span>
               </h1>
               <p className="text-sm text-muted-foreground mt-1">Project Dashboard</p>
             </div>
