@@ -61,6 +61,18 @@ function extractTitle(html: string): string {
   return m ? decodeHtmlEntities(m[1]).trim() : "";
 }
 
+const NOISE_HEADERS = new Set(["RadDatePicker", "M", "T", "W", "F", "S", ""]);
+function isNoiseTable(headers: string[]): boolean {
+  if (headers.length < 2) return true;
+  const first = headers[0]?.replace(/&nbsp;/g, "").trim();
+  if (first === "RadDatePicker" || first === "" || /^\d+$/.test(first)) {
+    // check if mostly day letters / numbers
+    const noisy = headers.filter(h => NOISE_HEADERS.has(h.trim()) || /^\d{1,2}$/.test(h.trim()) || h.includes("Title and navigation")).length;
+    if (noisy >= headers.length / 2) return true;
+  }
+  return false;
+}
+
 function extractAllTables(html: string): { headers: string[]; sampleRows: Record<string, string>[] }[] {
   const out: { headers: string[]; sampleRows: Record<string, string>[] }[] = [];
   // RadGrid tables
