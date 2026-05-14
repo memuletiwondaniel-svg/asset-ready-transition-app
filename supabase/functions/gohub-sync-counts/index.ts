@@ -443,10 +443,13 @@ Deno.serve(async (req) => {
     }
 
     if (allRawData.length === 0) {
+      const tileNames = (allTiles || []).map(t => t.name).filter(Boolean);
+      const tileList = tileNames.length ? tileNames.join(", ") : "none";
       return new Response(
         JSON.stringify({
           success: false,
-          error: `No systems found matching "${projectFilter}" in GoCompletions`,
+          error: `No systems found matching "${projectFilter}" in GoCompletions. Available GoCompletions projects: ${tileList}. This Lovable project may not be linked to a GoCompletions tile — verify the project code or map it under Admin → Integrations.`,
+          available_projects: tileNames,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
