@@ -245,76 +245,62 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
               </Badge>
             </h3>
             <div className="space-y-2 pl-1">
-              {visibleRoles.map((data) => (
-                <div 
-                  key={data.role} 
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-xl border transition-all duration-200",
-                    data.member 
-                      ? "bg-muted/30 border-border/40 hover:bg-muted/50 hover:border-primary/20" 
-                      : "bg-muted/10 border-dashed border-border/30"
-                  )}
-                >
-                  <Avatar className={cn(
-                    "h-10 w-10 ring-2 ring-background shadow-md",
-                    data.member?.is_lead && "ring-primary/30"
-                  )}>
-                    {data.profile?.avatar_url ? (
-                      <AvatarImage src={getAvatarUrl(data.profile.avatar_url)} alt={data.profile?.full_name} />
-                    ) : (
-                      <AvatarFallback className={cn(
-                        "text-sm font-medium",
-                        data.member ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                      )}>
-                        {data.profile?.full_name 
-                          ? data.profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)
-                          : <UserCircle className="h-5 w-5" />
-                        }
-                      </AvatarFallback>
+              {visibleRoles.map((data, idx) => {
+                const isLeadRow = idx === 0;
+                return (
+                  <div
+                    key={data.role}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-xl border transition-all duration-200",
+                      data.member
+                        ? "bg-muted/30 border-border/40 hover:bg-muted/50 hover:border-primary/20"
+                        : "bg-muted/10 border-dashed border-border/30"
                     )}
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "text-sm font-medium truncate",
-                      !data.member && "text-muted-foreground/60 italic"
+                  >
+                    <Avatar className={cn(
+                      "h-10 w-10 ring-2 ring-background shadow-md",
+                      data.member?.is_lead && "ring-primary/30"
                     )}>
-                      {data.profile?.full_name || 'Unassigned'}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">{data.role}</p>
+                      {data.profile?.avatar_url ? (
+                        <AvatarImage src={getAvatarUrl(data.profile.avatar_url)} alt={data.profile?.full_name} />
+                      ) : (
+                        <AvatarFallback className={cn(
+                          "text-sm font-medium",
+                          data.member ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        )}>
+                          {data.profile?.full_name
+                            ? data.profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)
+                            : <UserCircle className="h-5 w-5" />
+                          }
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        "text-sm font-medium truncate",
+                        !data.member && "text-muted-foreground/60 italic"
+                      )}>
+                        {data.profile?.full_name || 'Unassigned'}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{data.role}</p>
+                    </div>
+                    {isLeadRow && others.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setTeamExpanded(v => !v); }}
+                        className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border/50 hover:border-primary/40 hover:bg-muted/50 transition-all text-[11px] font-medium text-muted-foreground hover:text-foreground"
+                        title={teamExpanded ? 'Show less' : `Show ${others.length} other${others.length > 1 ? 's' : ''}`}
+                      >
+                        {teamExpanded ? (
+                          <>Show less <ChevronUp className="h-3 w-3" /></>
+                        ) : (
+                          <>+{others.length} other{others.length > 1 ? 's' : ''} <ChevronDown className="h-3 w-3" /></>
+                        )}
+                      </button>
+                    )}
                   </div>
-                </div>
-              ))}
-              {others.length > 0 && (
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setTeamExpanded(v => !v); }}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-border/40 hover:border-primary/30 hover:bg-muted/30 transition-all text-xs font-medium text-muted-foreground hover:text-foreground"
-                >
-                  {teamExpanded ? (
-                    <>
-                      <ChevronUp className="h-3.5 w-3.5" /> Show less
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex -space-x-2">
-                        {others.slice(0, 3).map((o) => (
-                          <Avatar key={o.role} className="h-6 w-6 ring-2 ring-background">
-                            {o.profile?.avatar_url ? (
-                              <AvatarImage src={getAvatarUrl(o.profile.avatar_url)} alt={o.profile?.full_name} />
-                            ) : (
-                              <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                                {o.profile?.full_name ? o.profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2) : '?'}
-                              </AvatarFallback>
-                            )}
-                          </Avatar>
-                        ))}
-                      </div>
-                      +{others.length} other{others.length > 1 ? 's' : ''}
-                      <ChevronDown className="h-3.5 w-3.5" />
-                    </>
-                  )}
-                </button>
-              )}
+                );
+              })}
             </div>
           </div>
         );
