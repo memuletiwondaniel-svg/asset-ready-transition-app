@@ -38,6 +38,7 @@ function hashCode(str: string): number {
 }
 
 import { WizardShell, WizardShellStep } from '../shared/WizardShell';
+import { SystemsStep } from './steps/SystemsStep';
 import { VCRItemsStep } from './steps/VCRItemsStep';
 import { TrainingStep } from './steps/TrainingStep';
 import { ProceduresStep } from './steps/ProceduresStep';
@@ -46,6 +47,7 @@ import { OperationalRegistersStep } from './steps/OperationalRegistersStep';
 import { LogsheetsStep } from './steps/LogsheetsStep';
 import { InspectionTestPlanStep } from './steps/InspectionTestPlanStep';
 import { ApproversStep } from './steps/ApproversStep';
+import { Layers } from 'lucide-react';
 
 interface VCRExecutionPlanWizardProps {
   open: boolean;
