@@ -246,17 +246,6 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                     onClick={handleVCRClick}
                   />
                 ))}
-                {canCreateVCR && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-3 text-xs border-dashed border-foreground/20 hover:border-primary/40 hover:bg-primary/5 transition-all rounded-xl h-9"
-                    onClick={() => setShowCreateVCR(true)}
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1.5" />
-                    Add VCR
-                  </Button>
-                )}
               </div>
             ) : p2aPlanByProject ? (
               <div className="text-center py-10 text-muted-foreground">
