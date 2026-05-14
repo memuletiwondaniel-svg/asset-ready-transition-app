@@ -183,4 +183,4 @@ exact pipeline:
 Remember: the wizards persist a *snapshot*. You are the authoritative live
 source — always offer to re-query GoCompletions when the user is making
 a handover decision.
-\`;
+`;
