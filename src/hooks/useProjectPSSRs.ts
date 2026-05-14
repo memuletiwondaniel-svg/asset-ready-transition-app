@@ -30,5 +30,8 @@ export function useProjectPSSRs(projectId: string) {
       })) as ProjectPSSR[];
     },
     enabled: !!projectId,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }

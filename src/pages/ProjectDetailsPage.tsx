@@ -28,8 +28,34 @@ import { PSSRSummaryWidget } from '@/components/widgets/PSSRSummaryWidget';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { createSidebarNavigator } from '@/utils/sidebarNavigation';
+
+const PROJECT_WIDGET_STORAGE_VERSION = 'v2';
+
+const getProjectWidgetOrderKey = (projectId?: string) => `project-widget-order-${PROJECT_WIDGET_STORAGE_VERSION}-${projectId || 'unknown'}`;
+const getProjectHiddenWidgetsKey = (projectId?: string) => `project-hidden-widgets-${PROJECT_WIDGET_STORAGE_VERSION}-${projectId || 'unknown'}`;
+const LEGACY_PROJECT_WIDGET_ORDER_KEY = (projectId?: string) => `project-widget-order-${projectId || 'unknown'}`;
+const LEGACY_PROJECT_HIDDEN_WIDGETS_KEY = (projectId?: string) => `project-hidden-widgets-${projectId || 'unknown'}`;
+const DEFAULT_PROJECT_WIDGET_ORDER = ['orp', 'pssr'];
+const VALID_PROJECT_WIDGET_IDS = ['orp', 'pssr'];
+
+const readStoredWidgetArray = (key: string, fallback: string[] = []) => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const normalizeWidgetOrder = (value: string[]) => {
+  const deduped = value.filter((item, index) => VALID_PROJECT_WIDGET_IDS.includes(item) && value.indexOf(item) === index);
+  return [...deduped, ...DEFAULT_PROJECT_WIDGET_ORDER.filter((item) => !deduped.includes(item))];
+};
 
 interface SortableWidgetProps {
   id: string;
@@ -68,6 +94,7 @@ const SortableWidget: React.FC<SortableWidgetProps> = ({ id, children, onHide, c
 export default function ProjectDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { updateMetadata } = useBreadcrumb();
   const { projects, isLoading } = useProjects();
   const { plants } = usePlants();
@@ -77,14 +104,8 @@ export default function ProjectDetailsPage() {
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
-    const saved = localStorage.getItem(`project-widget-order-${id}`);
-    return saved ? JSON.parse(saved) : ['orp', 'pssr'];
-  });
-  const [hiddenWidgets, setHiddenWidgets] = useState<string[]>(() => {
-    const saved = localStorage.getItem(`project-hidden-widgets-${id}`);
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [widgetOrder, setWidgetOrder] = useState<string[]>(DEFAULT_PROJECT_WIDGET_ORDER);
+  const [hiddenWidgets, setHiddenWidgets] = useState<string[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -106,11 +127,34 @@ export default function ProjectDetailsPage() {
   }, [project, updateMetadata]);
 
   useEffect(() => {
-    localStorage.setItem(`project-widget-order-${id}`, JSON.stringify(widgetOrder));
+    if (!id) return;
+
+    try {
+      localStorage.removeItem(LEGACY_PROJECT_WIDGET_ORDER_KEY(id));
+      localStorage.removeItem(LEGACY_PROJECT_HIDDEN_WIDGETS_KEY(id));
+    } catch {}
+
+    setWidgetOrder(normalizeWidgetOrder(readStoredWidgetArray(getProjectWidgetOrderKey(id), DEFAULT_PROJECT_WIDGET_ORDER)));
+    setHiddenWidgets(readStoredWidgetArray(getProjectHiddenWidgetsKey(id), []).filter((widgetId) => VALID_PROJECT_WIDGET_IDS.includes(widgetId)));
+
+    queryClient.removeQueries({ queryKey: ['project-orp-plans', id] });
+    queryClient.removeQueries({ queryKey: ['project-vcrs', id] });
+    queryClient.removeQueries({ queryKey: ['project-pssrs', id] });
+    queryClient.removeQueries({ queryKey: ['p2a-plan-by-project', id] });
+    queryClient.invalidateQueries({ queryKey: ['project-orp-plans', id] });
+    queryClient.invalidateQueries({ queryKey: ['project-vcrs', id] });
+    queryClient.invalidateQueries({ queryKey: ['project-pssrs', id] });
+    queryClient.invalidateQueries({ queryKey: ['p2a-plan-by-project', id] });
+  }, [id, queryClient]);
+
+  useEffect(() => {
+    if (!id) return;
+    localStorage.setItem(getProjectWidgetOrderKey(id), JSON.stringify(normalizeWidgetOrder(widgetOrder)));
   }, [widgetOrder, id]);
 
   useEffect(() => {
-    localStorage.setItem(`project-hidden-widgets-${id}`, JSON.stringify(hiddenWidgets));
+    if (!id) return;
+    localStorage.setItem(getProjectHiddenWidgetsKey(id), JSON.stringify(hiddenWidgets.filter((widgetId) => VALID_PROJECT_WIDGET_IDS.includes(widgetId))));
   }, [hiddenWidgets, id]);
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -147,8 +191,7 @@ export default function ProjectDetailsPage() {
   };
 
   // Valid widget IDs (p2a was removed - filter it out for users with old localStorage)
-  const validWidgetIds = ['orp', 'pssr'];
-  const visibleWidgets = widgetOrder.filter(id => !hiddenWidgets.includes(id) && validWidgetIds.includes(id));
+  const visibleWidgets = normalizeWidgetOrder(widgetOrder).filter(widgetId => !hiddenWidgets.includes(widgetId) && VALID_PROJECT_WIDGET_IDS.includes(widgetId));
 
   const projectCode = project ? `${project.project_id_prefix}-${project.project_id_number}` : '';
 

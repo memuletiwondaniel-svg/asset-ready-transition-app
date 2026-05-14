@@ -231,7 +231,9 @@ export const useProjectORPPlans = (projectId: string) => {
       return plansWithProgress;
     },
     enabled: !!projectId,
-    staleTime: 60000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 };
 

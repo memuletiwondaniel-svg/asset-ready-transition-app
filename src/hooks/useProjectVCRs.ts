@@ -102,5 +102,8 @@ export function useProjectVCRs(projectId: string) {
       return vcrsWithProgress;
     },
     enabled: !!projectId,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }
