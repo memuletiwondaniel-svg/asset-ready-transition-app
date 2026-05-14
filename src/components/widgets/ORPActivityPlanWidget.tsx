@@ -11,6 +11,8 @@ import { ORPGanttOverlay } from '@/components/orp/ORPGanttOverlay';
 import { ORAActivityPlanWizard } from '@/components/ora/wizard/ORAActivityPlanWizard';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ORAApprovalsPanel } from '@/components/ora/ORAApprovalsPanel';
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 
