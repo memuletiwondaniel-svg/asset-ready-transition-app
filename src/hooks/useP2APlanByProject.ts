@@ -37,5 +37,8 @@ export function useP2APlanByProject(projectId: string) {
       return data as P2APlanSummary | null;
     },
     enabled: !!projectId,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }
