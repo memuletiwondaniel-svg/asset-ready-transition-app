@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { getAPIConfig } from '@/lib/api-config-storage';
 
 interface SystemsStepProps {
   vcrId: string;
@@ -43,7 +44,7 @@ interface SystemRow {
   subsystems: SubsystemRow[];
 }
 
-export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId }) => {
+export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -199,14 +200,30 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId }) => {
 
   const handleSync = async () => {
     if (!planId) return;
+    const config = getAPIConfig('gocompletions');
+    if (!config || config.status !== 'configured' || !config.rpaCredentials) {
+      toast.error('GoCompletions not configured. Go to Administration > APIs.');
+      return;
+    }
+    const { portalUrl, username, password } = config.rpaCredentials;
+    if (!username || !password) {
+      toast.error('GoCompletions credentials incomplete.');
+      return;
+    }
     setSyncing(true);
     try {
-      const { error } = await supabase.functions.invoke('gohub-sync-counts', {
-        body: { handover_plan_id: planId },
+      const systemIdList = (rows || []).map(r => r.system_id);
+      const cleanProjectCode = (projectCode || '').replace(/-/g, '');
+      const { data, error } = await supabase.functions.invoke('gohub-sync-counts', {
+        body: { portalUrl, username, password, projectFilter: cleanProjectCode, systemIds: systemIdList },
       });
       if (error) throw error;
-      toast.success('Synced with GoCompletions');
-      queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
+      if (data?.success) {
+        toast.success(`Synced ${data.total_updated || 0} systems from GoCompletions`);
+        queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
+      } else {
+        toast.error(data?.error || 'Sync failed');
+      }
     } catch (e: any) {
       toast.error(e?.message || 'Sync failed');
     } finally {
@@ -301,9 +318,6 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId }) => {
                       />
                       Hydrocarbon
                     </label>
-                    {sys.systemAssignmentId && (
-                      <Badge variant="secondary" className="text-[10px] shrink-0">Whole system</Badge>
-                    )}
                     {(sys.systemAssignmentId || sys.subsystems.some(s => s.assignmentId)) && (
                       <button
                         onClick={() => {
@@ -387,7 +401,7 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId }) => {
 
       {/* Add System Picker */}
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg z-[110]" overlayClassName="z-[105]">
           <DialogHeader>
             <DialogTitle>Add Systems to VCR</DialogTitle>
           </DialogHeader>
@@ -427,7 +441,7 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId }) => {
       </Dialog>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[110]">
           <AlertDialogHeader>
             <AlertDialogTitle>Remove System</AlertDialogTitle>
             <AlertDialogDescription>
