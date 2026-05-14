@@ -266,16 +266,6 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         </CardHeader>
         
         <CardContent className="flex-1 flex flex-col gap-3 overflow-hidden pt-0">
-          {/* Date range */}
-          {primaryPlan.plan_start_date && primaryPlan.plan_end_date && (
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground flex-shrink-0">
-              <CalendarRange className="h-3 w-3" />
-              <span>
-                {format(parseISO(primaryPlan.plan_start_date), 'MMM d, yyyy')} — {format(parseISO(primaryPlan.plan_end_date), 'MMM d, yyyy')}
-              </span>
-            </div>
-          )}
-
           {/* Section 2: Progress Summary */}
           <div className="flex-shrink-0 rounded-lg border border-border bg-muted/30 p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => openActivityOverlay()}>
             <div className="flex items-center justify-between text-xs mb-2">
