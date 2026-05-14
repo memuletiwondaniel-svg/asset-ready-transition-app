@@ -97,6 +97,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const [showP2APlanWizard, setShowP2APlanWizard] = useState(false);
   const [showP2ASummary, setShowP2ASummary] = useState(false);
   const [selectedVCR, setSelectedVCR] = useState<ProjectVCR | null>(null);
+  const [wizardVCR, setWizardVCR] = useState<ProjectVCR | null>(null);
 
   // Get the first (active) ORA plan for this project
   const oraPlanId = orpPlans?.[0]?.id || '';
