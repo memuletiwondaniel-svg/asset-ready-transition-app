@@ -7279,6 +7279,7 @@ You NEVER fabricate data — always use tool results. Format responses with mark
       get_punchlist_details: 'Loading punchlist details...',
       get_handover_certificate_status: 'Checking certificate status...',
       lookup_itr_for_equipment: 'Looking up ITR allocation...',
+      search_systems_subsystems: 'Searching Systems & Sub-Systems...',
     };
     // Real-time streaming controller — set inside ReadableStream start()
     let streamController: ReadableStreamDefaultController<Uint8Array> | null = null;
