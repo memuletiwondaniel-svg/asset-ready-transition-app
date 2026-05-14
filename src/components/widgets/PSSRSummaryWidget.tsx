@@ -196,7 +196,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 glowFrom="from-orange-500/40"
                 glowTo="to-amber-500/40"
               />
-              <span className="truncate">P2A Plan</span>
+              <span className="truncate">P2A Handover</span>
             </button>
             {showVCRList && canCreateVCR && (
               <button
