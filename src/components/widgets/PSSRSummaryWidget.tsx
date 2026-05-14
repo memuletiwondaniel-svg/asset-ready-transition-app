@@ -392,6 +392,15 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
           projectCode={projectCode}
         />
       )}
+
+      {wizardVCR && (
+        <VCRExecutionPlanWizard
+          open={!!wizardVCR}
+          onOpenChange={(open) => { if (!open) setWizardVCR(null); }}
+          vcr={wizardVCR}
+          projectCode={projectCode}
+        />
+      )}
     </>
   );
 };
