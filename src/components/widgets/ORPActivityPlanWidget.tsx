@@ -243,7 +243,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => { e.stopPropagation(); openAddActivity(); }}
                 title="Add activity"
-                className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-1 h-6 px-2 rounded-md bg-primary/10 text-primary text-[11px] font-medium hover:bg-primary/20 relative z-10"
+                className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-1 h-5 px-2 rounded-full bg-primary/10 text-primary text-[10px] font-medium hover:bg-primary/20 relative z-10"
               >
                 <Plus className="h-3 w-3" /> Add Activity
               </button>
@@ -266,16 +266,6 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         </CardHeader>
         
         <CardContent className="flex-1 flex flex-col gap-3 overflow-hidden pt-0">
-          {/* Date range */}
-          {primaryPlan.plan_start_date && primaryPlan.plan_end_date && (
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground flex-shrink-0">
-              <CalendarRange className="h-3 w-3" />
-              <span>
-                {format(parseISO(primaryPlan.plan_start_date), 'MMM d, yyyy')} — {format(parseISO(primaryPlan.plan_end_date), 'MMM d, yyyy')}
-              </span>
-            </div>
-          )}
-
           {/* Section 2: Progress Summary */}
           <div className="flex-shrink-0 rounded-lg border border-border bg-muted/30 p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => openActivityOverlay()}>
             <div className="flex items-center justify-between text-xs mb-2">
