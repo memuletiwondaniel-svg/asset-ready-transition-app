@@ -423,6 +423,26 @@ Deno.serve(async (req) => {
     }
 
     if (allRawData.length === 0) {
+      // Fallback: query the SubSystem picker used by GoHub Reports filters.
+      // This searches all subsystems in the BGC instance (e.g. C017-DP300-100-01).
+      console.log(`SyncCounts: No matches via CompletionsGrid — trying SubSystem picker for "${projectFilter}"`);
+      const pickerResult = await fetchSubSystemsByFilter(currentCookies, finalPortalUrl, projectFilter);
+      currentCookies = pickerResult.cookies;
+      if (pickerResult.rawData.length > 0) {
+        const filterUpper = projectFilter.toUpperCase();
+        const matchString = (v: any) => v != null && String(v).toUpperCase().includes(filterUpper);
+        const matching = pickerResult.rawData.filter((item: any) =>
+          matchString(item.SubSystem) || matchString(item.SubSystemNumber) ||
+          matchString(item.Number) || matchString(item.Name) ||
+          matchString(item.System) || matchString(item.SystemNumber) ||
+          matchString(item.Description)
+        );
+        console.log(`SyncCounts[picker]: ${matching.length}/${pickerResult.rawData.length} match "${projectFilter}"`);
+        allRawData = matching.length > 0 ? matching : pickerResult.rawData;
+      }
+    }
+
+    if (allRawData.length === 0) {
       return new Response(
         JSON.stringify({
           success: false,
