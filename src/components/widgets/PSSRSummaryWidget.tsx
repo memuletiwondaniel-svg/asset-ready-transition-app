@@ -132,19 +132,58 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   const hasContent = (pssrs && pssrs.length > 0) || allVCRs.length > 0;
 
+  const handleP2AHeaderClick = () => {
+    if (!p2aPlanByProject) {
+      if (oraApproved && canCreateVCR) setShowP2APlanWizard(true);
+      return;
+    }
+    if (p2aPlanByProject.status === 'DRAFT') {
+      setShowP2APlanWizard(true);
+    } else {
+      setShowP2ASummary(true);
+    }
+  };
+
+  const headerStatusLabel = !p2aPlanByProject
+    ? null
+    : p2aPlanByProject.status === 'COMPLETED'
+      ? 'Approved'
+      : p2aPlanByProject.status === 'ACTIVE'
+        ? 'In Review'
+        : 'Draft';
+
+  const headerStatusClass = !p2aPlanByProject
+    ? ''
+    : p2aPlanByProject.status === 'COMPLETED'
+      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      : p2aPlanByProject.status === 'ACTIVE'
+        ? 'bg-amber-50 text-amber-700 border-amber-200'
+        : 'bg-muted text-muted-foreground border-border';
+
   return (
     <>
       <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-red-500/20 group">
         <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing pb-3">
           <CardTitle className="text-lg flex items-center gap-3">
-            <StyledWidgetIcon 
-              Icon={Key}
-              gradientFrom="from-orange-500"
-              gradientTo="to-amber-500"
-              glowFrom="from-orange-500/40"
-              glowTo="to-amber-500/40"
-            />
-            <span>P2A Plan</span>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); handleP2AHeaderClick(); }}
+              className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <StyledWidgetIcon 
+                Icon={Key}
+                gradientFrom="from-orange-500"
+                gradientTo="to-amber-500"
+                glowFrom="from-orange-500/40"
+                glowTo="to-amber-500/40"
+              />
+              <span className="truncate">P2A Plan</span>
+            </button>
+            {headerStatusLabel && (
+              <Badge variant="outline" className={cn("text-[10px] h-5 px-2 shrink-0", headerStatusClass)}>
+                {headerStatusLabel}
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col space-y-3 pt-2">
@@ -171,43 +210,19 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full mt-3 text-xs border-dashed border-foreground/10 hover:border-foreground/20 hover:bg-muted/40 transition-all rounded-xl h-9"
+                    className="w-full mt-3 text-xs border-dashed border-foreground/20 hover:border-primary/40 hover:bg-primary/5 transition-all rounded-xl h-9"
                     onClick={() => setShowCreateVCR(true)}
                   >
                     <Plus className="h-3.5 w-3.5 mr-1.5" />
-                    New VCR
+                    Add VCR
                   </Button>
                 )}
               </div>
             ) : p2aPlanByProject ? (
-              // Plan exists — show different UI based on status
               <div className="text-center py-10 text-muted-foreground">
-                <p 
-                  className={cn(
-                    "text-sm font-medium mb-1",
-                    p2aPlanByProject.status !== 'DRAFT' && "cursor-pointer hover:text-foreground hover:underline transition-colors"
-                  )}
-                  onClick={() => {
-                    if (p2aPlanByProject.status !== 'DRAFT') {
-                      setShowP2ASummary(true);
-                    }
-                  }}
-                >
-                  P2A Plan
-                </p>
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    "mb-3 text-[10px] px-2 py-0.5",
-                    p2aPlanByProject.status === 'DRAFT' && "bg-muted text-muted-foreground border-border",
-                    p2aPlanByProject.status === 'ACTIVE' && "bg-amber-50 text-amber-700 border-amber-200",
-                    p2aPlanByProject.status === 'COMPLETED' && "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  )}
-                >
-                  {p2aPlanByProject.status === 'ACTIVE' ? 'In Review' : p2aPlanByProject.status === 'COMPLETED' ? 'Approved' : 'Draft'}
-                </Badge>
                 {p2aPlanByProject.status === 'DRAFT' ? (
                   <>
+                    <p className="text-sm font-medium mb-1 text-foreground">Draft in Progress</p>
                     <p className="text-xs opacity-70 mb-5">Continue setting up your handover plan</p>
                     {canCreateVCR && (
                       <Button
@@ -272,26 +287,6 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               </div>
             )}
           </div>
-
-          {/* View Handover Plan Button - Show when plan exists and is approved */}
-          {hasPlan && planIsApproved && (
-            <div className="flex items-center gap-2 mt-auto pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 text-xs"
-                onClick={() => setShowP2ASummary(true)}
-              >
-                P2A Plan
-                <Badge 
-                  variant="outline" 
-                  className="ml-2 text-[9px] px-1.5 py-0 bg-emerald-50 text-emerald-700 border-emerald-200"
-                >
-                  Approved
-                </Badge>
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
 
