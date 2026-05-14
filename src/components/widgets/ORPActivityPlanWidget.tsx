@@ -53,14 +53,14 @@ const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolea
     actStatus === 'completed' ? 'text-green-600' :
     actStatus === 'overdue' ? 'text-destructive' :
     actStatus === 'in-progress' ? 'text-amber-500' :
-    'text-green-600';
+    'text-muted-foreground';
   return (
     <div
       className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/70 transition-colors cursor-pointer"
       onClick={onClick}
     >
       <Icon className={cn("h-3.5 w-3.5 shrink-0", iconColor)} />
-      <span className={cn("truncate flex-1 text-foreground/90", isCompleted && "text-muted-foreground line-through")}>
+      <span className={cn("truncate flex-1 text-foreground/90", isCompleted && "text-muted-foreground")}>
         {activity.name}
       </span>
       {activity.end_date && (
