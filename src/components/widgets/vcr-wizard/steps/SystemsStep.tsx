@@ -441,7 +441,7 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
       </Dialog>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[110]">
           <AlertDialogHeader>
             <AlertDialogTitle>Remove System</AlertDialogTitle>
             <AlertDialogDescription>
