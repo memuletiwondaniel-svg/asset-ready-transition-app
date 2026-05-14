@@ -304,6 +304,10 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         onSubmit: currentStep === STEPS.length - 1 ? handleDone : undefined,
       }}
     >
+      <div className="px-4 sm:px-6 pt-4 sm:pt-5 pb-2 border-b bg-background sticky top-0 z-10">
+        <h1 className="text-base sm:text-lg font-semibold text-foreground">Create VCR Plan</h1>
+        <p className="text-[11px] text-muted-foreground mt-0.5">{STEPS[currentStep]?.label}</p>
+      </div>
       <div className="p-3 sm:p-6">
         {renderStep()}
       </div>
