@@ -17,6 +17,7 @@ import { P2AWorkspaceOverlay } from './P2AWorkspaceOverlay';
 import { P2APlanSummaryDialog } from './P2APlanSummaryDialog';
 import { P2APlanCreationWizard } from './p2a-wizard/P2APlanCreationWizard';
 import { VCRDetailOverlayWidget } from './VCRDetailOverlay';
+import { VCRExecutionPlanWizard } from './vcr-wizard/VCRExecutionPlanWizard';
 import { cn } from '@/lib/utils';
 import { useCanCreateVCRPermission } from '@/hooks/usePermissions';
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
