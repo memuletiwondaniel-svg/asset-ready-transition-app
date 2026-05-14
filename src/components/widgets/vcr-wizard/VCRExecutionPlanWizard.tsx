@@ -176,8 +176,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         2: training.count || 0,
         3: procedures.count || 0,
         4: criticalDocs.count || 0,
-        5: registers.count || 0,
-        6: logsheets.count || 0,
+        5: (registers.count || 0) + (logsheets.count || 0),
       } as Record<number, number>;
     },
     enabled: open,
