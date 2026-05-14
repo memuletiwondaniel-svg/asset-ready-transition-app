@@ -111,7 +111,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
             <CardTitle className="text-lg flex items-center gap-3">
               <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
-              <span>ORA Activities</span>
+              <span>ORA Activity Plan</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -139,7 +139,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing">
             <CardTitle className="text-lg flex items-center gap-3">
               <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
-              <span>ORA Activities</span>
+              <span>ORA Activity Plan</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -200,42 +200,32 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
       <Card className="h-full flex flex-col transition-all duration-300 group overflow-hidden">
         <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing flex-shrink-0 pb-3">
           <CardTitle className="text-lg flex items-center gap-3">
-            <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
-            <span>ORA Activities</span>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setOverlayOpen(true); }}
+              className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
+              <span className="truncate">ORA Activity Plan</span>
+            </button>
+            {statusConfig && (
+              <Badge variant="outline" className={cn("text-[10px] h-5 px-2 shrink-0", statusConfig.className)}>
+                {statusConfig.label}
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         
         <CardContent className="flex-1 flex flex-col gap-3 overflow-hidden pt-0">
-          {/* Section 1: ORA Plan CTA with Status */}
-          <div className="flex-shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-between text-xs h-9"
-              onClick={() => setOverlayOpen(true)}
-            >
-              <span className="flex items-center gap-1.5 font-medium">
-                ORA Plan
+          {/* Date range */}
+          {primaryPlan.plan_start_date && primaryPlan.plan_end_date && (
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground flex-shrink-0">
+              <CalendarRange className="h-3 w-3" />
+              <span>
+                {format(parseISO(primaryPlan.plan_start_date), 'MMM d, yyyy')} — {format(parseISO(primaryPlan.plan_end_date), 'MMM d, yyyy')}
               </span>
-              <span className="flex items-center gap-1.5">
-                {statusConfig && (
-                  <Badge variant="outline" className={cn("text-[9px] gap-0.5 h-5 px-1.5", statusConfig.className)}>
-                    <statusConfig.icon className="h-2.5 w-2.5" />
-                    {statusConfig.label}
-                  </Badge>
-                )}
-                <ChevronRight className="h-3 w-3 text-muted-foreground" />
-              </span>
-            </Button>
-            {primaryPlan.plan_start_date && primaryPlan.plan_end_date && (
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-1.5">
-                <CalendarRange className="h-3 w-3" />
-                <span>
-                  {format(parseISO(primaryPlan.plan_start_date), 'MMM d, yyyy')} — {format(parseISO(primaryPlan.plan_end_date), 'MMM d, yyyy')}
-                </span>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Section 2: Progress Summary */}
           <div className="flex-shrink-0 rounded-lg border border-border bg-muted/30 p-3 cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setOverlayOpen(true)}>
@@ -266,7 +256,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                       <ChevronRight className="h-3 w-3 text-muted-foreground" />
                     )}
                     <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-                      Ongoing & Upcoming
+                      Upcoming
                     </span>
                     <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-medium">
                       {upcomingActivities.length}
@@ -281,7 +271,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
               </Collapsible>
             )}
 
-            {/* Section 4: Recently Completed */}
+            {/* Section 4: Completed */}
             {completedActivities.length > 0 && (
               <Collapsible open={completedOpen} onOpenChange={setCompletedOpen}>
                 <CollapsibleTrigger className="flex items-center justify-between w-full py-1.5 group/trigger hover:opacity-80 transition-opacity">
@@ -292,7 +282,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                       <ChevronRight className="h-3 w-3 text-muted-foreground" />
                     )}
                     <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-                      Recently Completed
+                      Completed
                     </span>
                     <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-medium">
                       {completedActivities.length}

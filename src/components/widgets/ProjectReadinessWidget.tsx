@@ -154,14 +154,14 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
 
   const widgetContent = (
     <div className="space-y-6">
-      {/* Project Scope */}
+      {/* Scope */}
       {project?.project_scope && (
-        <div className="space-y-3">
-          <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
-            Project Scope
-          </h3>
-          <div className="pl-1 space-y-2">
-            <div className="p-4 rounded-xl bg-muted/30 border border-border/40">
+        <div className="pl-1">
+          <div className="p-4 rounded-xl bg-muted/30 border border-border/40 space-y-2">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Scope
+            </h3>
+            <div>
               <p className={`text-xs text-foreground/90 leading-relaxed ${!isScopeExpanded ? 'line-clamp-4' : ''}`}>
                 {project.project_scope}
               </p>
@@ -332,6 +332,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           {/* Location Labels */}
           {project && (plant || station) && (
             <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground/70">Location:</span>{' '}
               {[plant?.name, station?.name].filter(Boolean).join(' · ')}
             </p>
           )}
