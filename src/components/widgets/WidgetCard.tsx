@@ -127,7 +127,7 @@ export const WidgetCard: React.FC<WidgetCardProps> = ({
           )}
         </div>
       </CardHeader>
-      <CardContent className="p-4 flex-1 min-h-0 overflow-auto">
+      <CardContent className="p-4 flex-1 min-h-0 overflow-auto scrollbar-auto-hide">
         {children}
       </CardContent>
     </Card>
