@@ -15,47 +15,50 @@ const shortCode = (code?: string) => {
   return code.replace(/^VCR-[A-Z0-9]+-/, 'VCR-');
 };
 
-const Doughnut: React.FC<{ value: number; stroke: string; textColor: string }> = ({
+const Doughnut: React.FC<{ value: number; stroke: string; textColor: string; mutedText?: boolean }> = ({
   value,
   stroke,
   textColor,
+  mutedText,
 }) => {
-  const size = 64;
-  const strokeWidth = 5;
-  const r = (size - strokeWidth) / 2 - 1;
-  const c = 2 * Math.PI * r;
+  const c = 2 * Math.PI * 42;
   const offset = c - (value / 100) * c;
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
+    <div className="relative shrink-0 w-[72px] h-[72px]">
+      <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
         <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          strokeWidth={strokeWidth}
-          className="text-muted/60"
+          cx="50"
+          cy="50"
+          r="42"
+          fill="transparent"
+          strokeWidth={4}
+          className="text-muted/50"
           stroke="currentColor"
         />
         <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          strokeWidth={strokeWidth}
+          cx="50"
+          cy="50"
+          r="42"
+          fill="transparent"
+          strokeWidth={6}
           strokeDasharray={c}
           strokeDashoffset={offset}
           strokeLinecap="round"
           stroke={stroke}
-          style={{ transition: 'stroke-dashoffset 0.6s ease-out' }}
+          style={{ transition: 'stroke-dashoffset 0.8s ease-out' }}
         />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
+      <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
         <span
-          className="text-[12px] font-bold tabular-nums"
-          style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: textColor }}
+          className="text-[14px] font-extrabold tabular-nums"
+          style={{ color: textColor }}
         >
-          {value}%
+          {value}
+        </span>
+        <span
+          className={cn('text-[8px] font-bold mt-0.5', mutedText ? 'text-muted-foreground/40' : 'text-muted-foreground')}
+        >
+          %
         </span>
       </div>
     </div>
@@ -69,113 +72,84 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
   const isInProgress = progress > 0 && progress < 100;
   const displayCode = shortCode(vcr.vcr_code);
 
-  // Color tokens — emerald takes over when complete
-  const accent = isComplete ? 'hsl(160, 84%, 39%)' : vcrColor?.border ?? 'hsl(var(--primary))';
-  const accentSoft = isComplete
-    ? 'hsl(160, 84%, 39%, 0.06)'
-    : vcrColor
-    ? `hsl(${vcrColor.hue}, ${vcrColor.saturation}%, 50%, 0.05)`
-    : 'hsl(var(--muted) / 0.4)';
+  const accent = isComplete
+    ? 'hsl(160, 84%, 39%)'
+    : isInProgress
+    ? vcrColor?.border ?? 'hsl(var(--primary))'
+    : 'hsl(var(--muted-foreground) / 0.3)';
+
   const ringTextColor = isComplete
     ? 'hsl(160, 84%, 30%)'
     : isInProgress
-    ? accent
-    : 'hsl(var(--muted-foreground))';
+    ? 'hsl(var(--foreground))'
+    : 'hsl(var(--muted-foreground) / 0.5)';
 
   const status = isComplete ? 'Finalized' : isInProgress ? 'In Progress' : 'Draft';
+
+  const statusPillClass = isComplete
+    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+    : isInProgress
+    ? 'text-foreground'
+    : 'bg-muted/60 text-muted-foreground italic';
+
+  const statusPillStyle: React.CSSProperties = isInProgress
+    ? { backgroundColor: `${accent}14`, color: accent }
+    : {};
 
   return (
     <button
       onClick={() => onClick(vcr.id)}
       className={cn(
-        'group/vcr w-full text-left bg-card border border-border rounded-2xl overflow-hidden',
-        'shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer'
+        'group/vcr w-full text-left bg-card border border-border/60 rounded-2xl px-4 py-4',
+        'shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_-12px_rgba(0,0,0,0.12)]',
+        'hover:-translate-y-0.5 transition-all duration-300 cursor-pointer'
       )}
-      style={
-        {
-          // accent border on hover via CSS var
-          ['--vcr-accent' as any]: accent,
-        } as React.CSSProperties
-      }
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = accent;
+        if (!isComplete && !isInProgress) return;
+        e.currentTarget.style.borderColor = `${accent}59`;
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = '';
       }}
     >
-      <div className="flex items-stretch">
-        {/* Left column: header + separator + footer */}
-        <div className="flex-1 min-w-0 flex flex-col">
-          {/* Header */}
-          <div className="px-3 pt-2.5 pb-2.5 min-w-0">
-            <span
-              className="block text-[9px] uppercase tracking-widest font-bold text-muted-foreground"
-              style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
-            >
-              {displayCode}
-            </span>
-            <h3 className="text-sm font-semibold text-foreground leading-tight truncate mt-0.5">
-              {vcr.name}
-            </h3>
-          </div>
-
-          {/* Separator + footer */}
-          <div
-            className="px-3 py-2 flex items-center gap-1.5 border-t border-border mt-auto"
-            style={{ backgroundColor: accentSoft }}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col min-w-0 flex-1">
+          <span
+            className="block text-[9px] uppercase tracking-[0.18em] font-extrabold text-muted-foreground/70 mb-1"
+            style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
           >
-            {isComplete ? (
-              <span className="px-2 py-0.5 rounded-md bg-emerald-600 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
-                {status}
-              </span>
-            ) : isInProgress ? (
-              <span
-                className="px-2 py-0.5 rounded-md border bg-card text-[9px] font-bold uppercase tracking-wider"
-                style={{ borderColor: accent, color: accent }}
-              >
-                {status}
-              </span>
-            ) : (
-              <span className="px-2 py-0.5 rounded-md border border-border bg-card text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
-                {status}
+            {displayCode}
+          </span>
+          <h3 className="text-[15px] font-bold text-foreground leading-tight truncate mb-2.5">
+            {vcr.name}
+          </h3>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span
+              className={cn(
+                'px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide',
+                statusPillClass
+              )}
+              style={statusPillStyle}
+            >
+              {status}
+            </span>
+            {vcr.has_hydrocarbon && (
+              <span className="text-[9px] font-bold text-muted-foreground/60 tracking-[0.15em] uppercase">
+                SoF
               </span>
             )}
-
-            <div className="flex gap-1">
-              {vcr.has_hydrocarbon && (
-                <span
-                  className={cn(
-                    'px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter border',
-                    isComplete
-                      ? 'bg-white border-emerald-200 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-400'
-                      : 'bg-card border-border text-muted-foreground'
-                  )}
-                >
-                  SoF
-                </span>
-              )}
-              <span
-                className={cn(
-                  'px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter border',
-                  isComplete
-                    ? 'bg-white border-emerald-200 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-400'
-                    : 'bg-card border-border text-muted-foreground'
-                )}
-              >
-                PAC
-              </span>
-            </div>
+            <span className="text-[9px] font-bold text-muted-foreground/60 tracking-[0.15em] uppercase">
+              PAC
+            </span>
           </div>
         </div>
 
-        {/* Right column: doughnut spans full card height */}
-        <div
-          className="shrink-0 flex items-center justify-center px-4 border-l border-border"
-          style={{ backgroundColor: accentSoft }}
-        >
-          <Doughnut value={progress} stroke={accent} textColor={ringTextColor} />
-        </div>
+        <Doughnut
+          value={progress}
+          stroke={accent}
+          textColor={ringTextColor}
+          mutedText={!isInProgress && !isComplete}
+        />
       </div>
     </button>
   );
