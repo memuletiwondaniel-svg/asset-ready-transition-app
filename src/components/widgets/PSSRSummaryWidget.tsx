@@ -15,6 +15,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CreateVCRWizard } from './vcr-wizard/CreateVCRWizard';
 import { P2AWorkspaceOverlay } from './P2AWorkspaceOverlay';
 import { P2APlanSummaryDialog } from './P2APlanSummaryDialog';
+import { P2AApprovalsPanel } from './P2AApprovalsPanel';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { P2APlanCreationWizard } from './p2a-wizard/P2APlanCreationWizard';
 import { VCRDetailOverlayWidget } from './VCRDetailOverlay';
 import { VCRExecutionPlanWizard } from './vcr-wizard/VCRExecutionPlanWizard';
@@ -96,6 +98,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
   const [showP2APlanWizard, setShowP2APlanWizard] = useState(false);
   const [showP2ASummary, setShowP2ASummary] = useState(false);
+  const [showP2AApprovals, setShowP2AApprovals] = useState(false);
   const [selectedVCR, setSelectedVCR] = useState<ProjectVCR | null>(null);
   const [wizardVCR, setWizardVCR] = useState<ProjectVCR | null>(null);
 
@@ -158,7 +161,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   const handleP2AStatusClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (p2aPlanByProject) setShowP2ASummary(true);
+    if (p2aPlanByProject) setShowP2AApprovals(true);
   };
 
   const headerStatusLabel = !p2aPlanByProject
@@ -384,6 +387,18 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
             setShowP2AWorkspace(true);
           }}
         />
+      )}
+
+      {/* P2A Approvals Dialog (opened by clicking the status badge) */}
+      {p2aPlanByProject && (
+        <Dialog open={showP2AApprovals} onOpenChange={setShowP2AApprovals}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>P2A Handover — Approvers</DialogTitle>
+            </DialogHeader>
+            <P2AApprovalsPanel planId={p2aPlanByProject.id} />
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* P2A Plan Creation Wizard */}
