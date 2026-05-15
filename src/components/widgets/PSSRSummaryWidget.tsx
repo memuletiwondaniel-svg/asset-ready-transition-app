@@ -219,7 +219,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 onPointerDown={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={handleP2AStatusClick}
-                className="shrink-0 cursor-pointer relative z-10"
+                className="shrink-0 cursor-pointer relative z-10 opacity-0 group-hover:opacity-100 transition-opacity"
                 title="View approvers"
               >
                 <Badge variant="outline" className={cn("text-[10px] h-5 px-2 hover:opacity-80 transition-opacity", headerStatusClass)}>
