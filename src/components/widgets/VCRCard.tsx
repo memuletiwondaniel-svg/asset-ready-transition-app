@@ -20,8 +20,8 @@ const Doughnut: React.FC<{ value: number; stroke: string; textColor: string }> =
   stroke,
   textColor,
 }) => {
-  const size = 44;
-  const strokeWidth = 4;
+  const size = 64;
+  const strokeWidth = 5;
   const r = (size - strokeWidth) / 2 - 1;
   const c = 2 * Math.PI * r;
   const offset = c - (value / 100) * c;
@@ -52,7 +52,7 @@ const Doughnut: React.FC<{ value: number; stroke: string; textColor: string }> =
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
         <span
-          className="text-[10px] font-bold tabular-nums"
+          className="text-[12px] font-bold tabular-nums"
           style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: textColor }}
         >
           {value}%
@@ -104,67 +104,77 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
         e.currentTarget.style.borderColor = '';
       }}
     >
-      {/* Header: title + doughnut */}
-      <div className="px-3 py-2.5 flex justify-between items-center gap-3">
-        <div className="min-w-0 flex flex-col gap-0.5">
-          <span
-            className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground"
-            style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
-          >
-            {displayCode}
-          </span>
-          <h3 className="text-sm font-semibold text-foreground leading-tight truncate">
-            {vcr.name}
-          </h3>
-        </div>
-        <Doughnut value={progress} stroke={accent} textColor={ringTextColor} />
-      </div>
-
-      {/* Footer: separator + metadata */}
-      <div
-        className="px-3 py-2 flex items-center gap-2 border-t border-border"
-        style={{ backgroundColor: accentSoft }}
-      >
-        {isComplete ? (
-          <span className="px-2.5 py-0.5 rounded-md bg-emerald-600 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm">
-            {status}
-          </span>
-        ) : isInProgress ? (
-          <span
-            className="px-2.5 py-0.5 rounded-md border bg-card text-[10px] font-bold uppercase tracking-wider"
-            style={{ borderColor: accent, color: accent }}
-          >
-            {status}
-          </span>
-        ) : (
-          <span className="px-2.5 py-0.5 rounded-md border border-border bg-card text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-            {status}
-          </span>
-        )}
-
-        <div className="flex gap-1 ml-auto">
-          {vcr.has_hydrocarbon && (
+      <div className="flex items-stretch">
+        {/* Left column: header + separator + footer */}
+        <div className="flex-1 min-w-0 flex flex-col">
+          {/* Header */}
+          <div className="px-3 pt-2.5 pb-2.5 min-w-0">
             <span
-              className={cn(
-                'px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter border',
-                isComplete
-                  ? 'bg-white border-emerald-200 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-400'
-                  : 'bg-card border-border text-muted-foreground'
-              )}
+              className="block text-[9px] uppercase tracking-widest font-bold text-muted-foreground"
+              style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
             >
-              SoF
+              {displayCode}
             </span>
-          )}
-          <span
-            className={cn(
-              'px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter border',
-              isComplete
-                ? 'bg-white border-emerald-200 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-400'
-                : 'bg-card border-border text-muted-foreground'
-            )}
+            <h3 className="text-sm font-semibold text-foreground leading-tight truncate mt-0.5">
+              {vcr.name}
+            </h3>
+          </div>
+
+          {/* Separator + footer */}
+          <div
+            className="px-3 py-2 flex items-center gap-1.5 border-t border-border mt-auto"
+            style={{ backgroundColor: accentSoft }}
           >
-            PAC
-          </span>
+            {isComplete ? (
+              <span className="px-2 py-0.5 rounded-md bg-emerald-600 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
+                {status}
+              </span>
+            ) : isInProgress ? (
+              <span
+                className="px-2 py-0.5 rounded-md border bg-card text-[9px] font-bold uppercase tracking-wider"
+                style={{ borderColor: accent, color: accent }}
+              >
+                {status}
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded-md border border-border bg-card text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
+                {status}
+              </span>
+            )}
+
+            <div className="flex gap-1">
+              {vcr.has_hydrocarbon && (
+                <span
+                  className={cn(
+                    'px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter border',
+                    isComplete
+                      ? 'bg-white border-emerald-200 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-400'
+                      : 'bg-card border-border text-muted-foreground'
+                  )}
+                >
+                  SoF
+                </span>
+              )}
+              <span
+                className={cn(
+                  'px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter border',
+                  isComplete
+                    ? 'bg-white border-emerald-200 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-400'
+                    : 'bg-card border-border text-muted-foreground'
+                )}
+              >
+                PAC
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right column: doughnut spans full card height */}
+        <div
+          className="shrink-0 flex items-center justify-center px-4 border-l border-border"
+          style={{ backgroundColor: accentSoft }}
+        >
+          <Doughnut value={progress} stroke={accent} textColor={ringTextColor} />
         </div>
       </div>
     </button>
