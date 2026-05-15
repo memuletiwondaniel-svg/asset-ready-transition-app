@@ -98,6 +98,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
   const [showP2APlanWizard, setShowP2APlanWizard] = useState(false);
   const [showP2ASummary, setShowP2ASummary] = useState(false);
+  const [showP2AApprovals, setShowP2AApprovals] = useState(false);
   const [selectedVCR, setSelectedVCR] = useState<ProjectVCR | null>(null);
   const [wizardVCR, setWizardVCR] = useState<ProjectVCR | null>(null);
 
