@@ -1,6 +1,4 @@
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { ChevronRight } from 'lucide-react';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { cn } from '@/lib/utils';
@@ -17,42 +15,49 @@ const shortCode = (code?: string) => {
   return code.replace(/^VCR-[A-Z0-9]+-/, 'VCR-');
 };
 
-const ProgressWheel: React.FC<{ value: number; color?: string }> = ({ value, color }) => {
-  const size = 52;
-  const strokeWidth = 4;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const offset = circumference - (value / 100) * circumference;
-
+const Doughnut: React.FC<{ value: number; stroke: string; textColor: string }> = ({
+  value,
+  stroke,
+  textColor,
+}) => {
+  const size = 64;
+  const strokeWidth = 5;
+  const r = (size - strokeWidth) / 2 - 1;
+  const c = 2 * Math.PI * r;
+  const offset = c - (value / 100) * c;
   return (
-    <div className="relative inline-flex items-center justify-center">
-      <svg width={size} height={size} className="transform -rotate-90">
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
         <circle
           cx={size / 2}
           cy={size / 2}
-          r={radius}
+          r={r}
           fill="none"
           strokeWidth={strokeWidth}
-          className="text-foreground/[0.06] dark:text-foreground/[0.12]"
+          className="text-muted/60"
           stroke="currentColor"
         />
         <circle
           cx={size / 2}
           cy={size / 2}
-          r={radius}
+          r={r}
           fill="none"
           strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
+          strokeDasharray={c}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          stroke={color || 'currentColor'}
-          className={cn(!color && 'text-primary')}
-          style={{ transition: 'stroke-dashoffset 0.5s ease-out' }}
+          stroke={stroke}
+          style={{ transition: 'stroke-dashoffset 0.6s ease-out' }}
         />
       </svg>
-      <span className="vcr-progress-text absolute text-[11px] font-bold tabular-nums">
-        {value}%
-      </span>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span
+          className="text-[13px] font-bold tabular-nums"
+          style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: textColor }}
+        >
+          {value}%
+        </span>
+      </div>
     </div>
   );
 };
@@ -61,75 +66,105 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
   const vcrColor = getVCRColor(vcr.vcr_code);
   const progress = vcr.progress;
   const isComplete = progress === 100;
+  const isInProgress = progress > 0 && progress < 100;
   const displayCode = shortCode(vcr.vcr_code);
 
-  const cardStyle: React.CSSProperties = vcrColor
-    ? ({
-        '--vcr-bg-light': vcrColor.background,
-        '--vcr-bg-dark': vcrColor.backgroundDark,
-        '--vcr-border-light': vcrColor.accent,
-        '--vcr-border-dark': vcrColor.accentDark,
-        '--vcr-accent-light': vcrColor.accent,
-        '--vcr-accent-dark': vcrColor.accentDark,
-        '--vcr-color-light': vcrColor.border,
-        '--vcr-color-dark': vcrColor.borderDark,
-        '--vcr-bar-light': vcrColor.border,
-        '--vcr-bar-dark': vcrColor.borderDark,
-      } as React.CSSProperties)
-    : {};
+  // Color tokens — emerald takes over when complete
+  const accent = isComplete ? 'hsl(160, 84%, 39%)' : vcrColor?.border ?? 'hsl(var(--primary))';
+  const accentSoft = isComplete
+    ? 'hsl(160, 84%, 39%, 0.06)'
+    : vcrColor
+    ? `hsl(${vcrColor.hue}, ${vcrColor.saturation}%, 50%, 0.05)`
+    : 'hsl(var(--muted) / 0.4)';
+  const ringTextColor = isComplete
+    ? 'hsl(160, 84%, 30%)'
+    : isInProgress
+    ? accent
+    : 'hsl(var(--muted-foreground))';
+
+  const status = isComplete ? 'Finalized' : isInProgress ? 'In Progress' : 'Draft';
 
   return (
     <button
       onClick={() => onClick(vcr.id)}
       className={cn(
-        "vcr-card w-full text-left rounded-2xl border px-4 py-3 transition-all duration-300",
-        "hover:shadow-md hover:-translate-y-0.5 active:translate-y-0",
-        "group/vcr cursor-pointer relative overflow-hidden"
+        'group/vcr w-full text-left bg-card border border-border rounded-2xl overflow-hidden',
+        'shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer'
       )}
-      style={cardStyle}
+      style={
+        {
+          // accent border on hover via CSS var
+          ['--vcr-accent' as any]: accent,
+        } as React.CSSProperties
+      }
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = accent;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = '';
+      }}
     >
-      <div className="relative z-10 flex gap-3">
-        {/* Left: text content */}
-        <div className="flex-1 min-w-0">
-          {/* ID badge + status */}
-          <div className="flex items-center gap-2 mb-3">
-            <span className="vcr-id-badge text-[9px] font-extrabold font-mono tracking-wider px-2 py-0.5 rounded-md shadow-sm">
-              {displayCode}
-            </span>
-            <Badge
-              variant="outline"
-              className="text-[9px] px-1.5 py-0 h-4 border-border bg-background/60 text-muted-foreground"
-            >
-              {vcr.status === 'PENDING' ? 'Draft' : vcr.status}
-            </Badge>
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground ml-auto opacity-0 group-hover/vcr:opacity-100 transition-all duration-200" />
-          </div>
-
-          {/* VCR Name */}
-          <div className="text-sm font-semibold text-foreground leading-snug line-clamp-2">
+      {/* Header: title + doughnut */}
+      <div className="p-5 flex justify-between items-center gap-4">
+        <div className="min-w-0 flex flex-col gap-1">
+          <span
+            className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground"
+            style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
+          >
+            {displayCode}
+          </span>
+          <h3 className="text-xl font-bold text-foreground leading-tight truncate">
             {vcr.name}
-          </div>
+          </h3>
         </div>
+        <Doughnut value={progress} stroke={accent} textColor={ringTextColor} />
+      </div>
 
-        {/* Right: progress wheel + cert badges stacked */}
-        <div className="flex items-center shrink-0 gap-4 mr-4">
-          <ProgressWheel value={progress} color={vcrColor?.border} />
-          <div className="flex flex-col items-center gap-1.5">
-            {vcr.has_hydrocarbon && (
-              <span className={cn(
-                "text-[8px] font-semibold px-1.5 py-0.5 rounded-full",
-                isComplete ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" : "vcr-cert-badge"
-              )}>
-                SoF
-              </span>
-            )}
-            <span className={cn(
-              "text-[8px] font-semibold px-1.5 py-0.5 rounded-full",
-              isComplete ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" : "vcr-cert-badge"
-            )}>
-              PAC
+      {/* Footer: separator + metadata */}
+      <div
+        className="px-5 py-3.5 flex items-center gap-3 border-t border-border"
+        style={{ backgroundColor: accentSoft }}
+      >
+        {isComplete ? (
+          <span className="px-2.5 py-0.5 rounded-md bg-emerald-600 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm">
+            {status}
+          </span>
+        ) : isInProgress ? (
+          <span
+            className="px-2.5 py-0.5 rounded-md border bg-card text-[10px] font-bold uppercase tracking-wider"
+            style={{ borderColor: accent, color: accent }}
+          >
+            {status}
+          </span>
+        ) : (
+          <span className="px-2.5 py-0.5 rounded-md border border-border bg-card text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            {status}
+          </span>
+        )}
+
+        <div className="flex gap-1 ml-auto">
+          {vcr.has_hydrocarbon && (
+            <span
+              className={cn(
+                'px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter border',
+                isComplete
+                  ? 'bg-white border-emerald-200 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-400'
+                  : 'bg-card border-border text-muted-foreground'
+              )}
+            >
+              SoF
             </span>
-          </div>
+          )}
+          <span
+            className={cn(
+              'px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter border',
+              isComplete
+                ? 'bg-white border-emerald-200 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-400'
+                : 'bg-card border-border text-muted-foreground'
+            )}
+          >
+            PAC
+          </span>
         </div>
       </div>
     </button>
