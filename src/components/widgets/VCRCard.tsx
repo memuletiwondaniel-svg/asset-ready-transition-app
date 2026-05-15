@@ -52,7 +52,7 @@ const Doughnut: React.FC<{ value: number; stroke: string; textColor: string }> =
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
         <span
-          className="text-[13px] font-bold tabular-nums"
+          className="text-[10px] font-bold tabular-nums"
           style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: textColor }}
         >
           {value}%
