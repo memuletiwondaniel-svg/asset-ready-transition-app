@@ -100,7 +100,7 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
     <button
       onClick={() => onClick(vcr.id)}
       className={cn(
-        'group/vcr w-full text-left bg-card border border-border/60 rounded-2xl px-4 py-4',
+        'group/vcr w-full text-left bg-card border border-border/60 rounded-2xl px-4 py-2.5',
         'shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_-12px_rgba(0,0,0,0.12)]',
         'hover:-translate-y-0.5 transition-all duration-300 cursor-pointer'
       )}
