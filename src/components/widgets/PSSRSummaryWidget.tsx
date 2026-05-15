@@ -389,6 +389,18 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
         />
       )}
 
+      {/* P2A Approvals Dialog (opened by clicking the status badge) */}
+      {p2aPlanByProject && (
+        <Dialog open={showP2AApprovals} onOpenChange={setShowP2AApprovals}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>P2A Handover — Approvers</DialogTitle>
+            </DialogHeader>
+            <P2AApprovalsPanel planId={p2aPlanByProject.id} />
+          </DialogContent>
+        </Dialog>
+      )}
+
       {/* P2A Plan Creation Wizard */}
       <P2APlanCreationWizard
         open={showP2APlanWizard}
