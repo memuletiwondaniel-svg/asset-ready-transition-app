@@ -161,7 +161,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   const handleP2AStatusClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (p2aPlanByProject) setShowP2ASummary(true);
+    if (p2aPlanByProject) setShowP2AApprovals(true);
   };
 
   const headerStatusLabel = !p2aPlanByProject
