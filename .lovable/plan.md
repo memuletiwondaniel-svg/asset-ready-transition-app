@@ -1,38 +1,41 @@
+## Plan: Modern VCR Card Redesign (P2A Handover)
 
+Rebuild `src/components/dashboard/VCRCard.tsx` to match the approved direction: title + doughnut on top, thin separator, metadata row (status pill + cert chips) below. Keep accent color per VCR (from `getVCRColor`) but only on the ring stroke, hover border, and a soft tinted footer — no full card background tints.
 
-# Competency Inline Summary — Visual Polish
+### Card structure
 
-## Issues from Screenshot
-1. **Competency name too long** — "Completions Management System integration (GoCompletions)" needs renaming in DB
-2. **Donut is green** (uses emerald at 71%) — clashes with green progress bars; needs a distinct, modern color
-3. **Wide gap** between competency names and progress bars — bars too far right
-4. **Progress bar track too faint** — uncompleted portion barely visible
-5. **No visual structure** for competency list items — needs subtle left indicators
+```text
+┌─────────────────────────────────────────┐
+│  VCR-01                          ╭──╮   │
+│  Power & Utilities               │0%│   │   ← title + doughnut (color stroke)
+│                                  ╰──╯   │
+├─────────────────────────────────────────┤   ← thin separator
+│  [Draft]                    [SoF][PAC]  │   ← soft tinted footer
+└─────────────────────────────────────────┘
+```
 
-## Plan
+### Visual spec (per selected prototype)
 
-### 1. Rename competency in DB
-Run a SQL update to rename "Completions Management System integration (GoCompletions)" → "Completions Management System integration" in `agent_competency_areas`.
+- Card: `bg-card border border-border rounded-2xl shadow-sm`, hover lifts (`-translate-y-0.5`), hover border uses VCR accent, hover shadow `shadow-xl`, `transition-all duration-300`.
+- Header zone (`p-5`): VCR-ID eyebrow (mono, `text-[10px]`, tracking-widest, muted), title (`text-xl font-bold`).
+- Doughnut: 64px, stroke-width 5, neutral track + accent stroke, `stroke-linecap=round`. Percent label uses **JetBrains Mono `text-[13px] font-bold`** (slightly larger per user direction).
+- Separator: `border-t border-border` (or accent-tinted on complete).
+- Footer (`px-5 py-3.5`): subtle accent-tinted background (e.g., `bg-{accent}/5`), status pill on left, cert chips (SoF / PAC) on right.
 
-### 2. Modernize donut color — use a neutral/blue-purple gradient approach
-Change `CompetencyDonut.tsx` to use a **fixed modern indigo/blue tone** (`hsl(230, 70%, 55%)`) instead of inheriting the level's chartColor. This makes the donut visually distinct from the horizontal bars and feels more dashboard-like. The track (background circle) gets a slightly more visible tint.
+### Status states
 
-### 3. Tighten layout in `CompetencyInlineSummary.tsx`
-- Reduce progress bar container from `w-32` → `w-24`
-- Add left padding/indent to competency names (`pl-3`) with a subtle left dot indicator using a `before:` pseudo-element or a small colored dot `<span>` — a tiny 4px circle in the level's color acts as a status dot, replacing bullet points (cleaner than bullets, conveys meaning)
-- Remove `truncate` from names so they wrap naturally (user wants "fully shown")
-- Increase track background from `bg-muted/40` → `bg-muted/60` for stronger uncompleted portion
+| State | Pill | Ring | Footer tint |
+|-------|------|------|-------------|
+| 0% Draft | neutral outline pill "Draft" | accent stroke at 0 | accent/5 |
+| In progress | accent outline pill "In Progress" | accent stroke at % | accent/5 |
+| 100% Complete | solid emerald pill "Finalized" | emerald ring full | emerald/5, emerald separator |
 
-### 4. Update `competencyLevels.ts` donut chartColor
-No change needed here — the donut will use its own fixed color independent of level.
+### Out of scope
 
-## Files Changed
-| File | Change |
-|------|--------|
-| `CompetencyDonut.tsx` | Use fixed indigo stroke color + stronger track |
-| `CompetencyInlineSummary.tsx` | Tighten gap, add status dots, unwrap names, stronger track |
-| DB migration/exec | Rename the competency |
+- P2A Handover header, icon, column wrapper, "Add VCR" button, ORA Activities, `vcrColors.ts`, parent `PSSRSummaryWidget.tsx`.
 
-## No Impact On
-- Side menu, drawer, `CompetencyProfilePanel`, responsive layout — none touched
+### Technical notes
 
+- Use design tokens (`bg-card`, `border-border`, `text-muted-foreground`) plus existing accent from `getVCRColor(vcr.shortCode)`.
+- Fonts already loaded in project (Outfit / JetBrains Mono); add Google Fonts link to `index.html` if missing.
+- No new dependencies, no schema changes.
