@@ -267,7 +267,6 @@ export default function ProjectDetailsPage() {
                 </span>
                 <span className="text-foreground">{project.project_title}</span>
               </h1>
-              <p className="text-sm text-muted-foreground mt-1">Project Dashboard</p>
             </div>
             {hiddenWidgets.length > 0 && (
               <Button onClick={() => setHiddenWidgets([])} variant="outline" size="sm">
