@@ -20,8 +20,8 @@ const Doughnut: React.FC<{ value: number; stroke: string; textColor: string }> =
   stroke,
   textColor,
 }) => {
-  const size = 44;
-  const strokeWidth = 4;
+  const size = 64;
+  const strokeWidth = 5;
   const r = (size - strokeWidth) / 2 - 1;
   const c = 2 * Math.PI * r;
   const offset = c - (value / 100) * c;
