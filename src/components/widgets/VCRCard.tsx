@@ -20,8 +20,8 @@ const Doughnut: React.FC<{ value: number; stroke: string; textColor: string }> =
   stroke,
   textColor,
 }) => {
-  const size = 64;
-  const strokeWidth = 5;
+  const size = 44;
+  const strokeWidth = 4;
   const r = (size - strokeWidth) / 2 - 1;
   const c = 2 * Math.PI * r;
   const offset = c - (value / 100) * c;
@@ -52,7 +52,7 @@ const Doughnut: React.FC<{ value: number; stroke: string; textColor: string }> =
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
         <span
-          className="text-[13px] font-bold tabular-nums"
+          className="text-[10px] font-bold tabular-nums"
           style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: textColor }}
         >
           {value}%
@@ -105,15 +105,15 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
       }}
     >
       {/* Header: title + doughnut */}
-      <div className="p-5 flex justify-between items-center gap-4">
-        <div className="min-w-0 flex flex-col gap-1">
+      <div className="px-3 py-2.5 flex justify-between items-center gap-3">
+        <div className="min-w-0 flex flex-col gap-0.5">
           <span
-            className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground"
+            className="text-[9px] uppercase tracking-widest font-bold text-muted-foreground"
             style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
           >
             {displayCode}
           </span>
-          <h3 className="text-xl font-bold text-foreground leading-tight truncate">
+          <h3 className="text-sm font-semibold text-foreground leading-tight truncate">
             {vcr.name}
           </h3>
         </div>
@@ -122,7 +122,7 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
 
       {/* Footer: separator + metadata */}
       <div
-        className="px-5 py-3.5 flex items-center gap-3 border-t border-border"
+        className="px-3 py-2 flex items-center gap-2 border-t border-border"
         style={{ backgroundColor: accentSoft }}
       >
         {isComplete ? (
