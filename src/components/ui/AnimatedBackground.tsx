@@ -10,7 +10,7 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({ children
   return (
     <div className={cn('h-full bg-background relative', className)}>
       {/* Dynamic Multicolor Animated Background - Full screen movement */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         {/* Primary orb - Purple/Magenta - Starts top-left */}
         <div 
           className="absolute top-0 left-0 w-[600px] h-[600px] rounded-full opacity-[0.08] dark:opacity-[0.04] will-change-transform animate-journey-tl"
