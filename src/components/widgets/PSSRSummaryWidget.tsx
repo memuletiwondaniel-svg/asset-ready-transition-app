@@ -229,8 +229,8 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
             )}
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col space-y-3 pt-2">
-          <div className="flex-1">
+        <CardContent className="flex-1 flex flex-col space-y-3 pt-2 min-h-0">
+          <div className="flex-1 flex flex-col min-h-0">
             {isLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
