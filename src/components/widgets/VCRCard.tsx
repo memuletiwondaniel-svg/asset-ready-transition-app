@@ -100,7 +100,7 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
     <button
       onClick={() => onClick(vcr.id)}
       className={cn(
-        'group/vcr w-full text-left bg-card border border-border/60 rounded-2xl px-4 py-4',
+        'group/vcr w-full text-left bg-card border border-border/60 rounded-2xl px-4 py-2.5',
         'shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_-12px_rgba(0,0,0,0.12)]',
         'hover:-translate-y-0.5 transition-all duration-300 cursor-pointer'
       )}
@@ -115,12 +115,12 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-col min-w-0 flex-1">
           <span
-            className="block text-[9px] uppercase tracking-[0.18em] font-extrabold text-muted-foreground/70 mb-1"
+            className="block text-[9px] uppercase tracking-[0.18em] font-extrabold text-muted-foreground/70 mb-0.5"
             style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
           >
             {displayCode}
           </span>
-          <h3 className="text-[15px] font-bold text-foreground leading-tight truncate mb-2.5">
+          <h3 className="text-[14px] font-bold text-foreground leading-tight truncate mb-1.5">
             {vcr.name}
           </h3>
           <div className="flex items-center gap-1.5 flex-wrap">
