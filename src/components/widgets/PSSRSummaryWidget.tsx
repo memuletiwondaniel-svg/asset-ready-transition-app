@@ -15,6 +15,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CreateVCRWizard } from './vcr-wizard/CreateVCRWizard';
 import { P2AWorkspaceOverlay } from './P2AWorkspaceOverlay';
 import { P2APlanSummaryDialog } from './P2APlanSummaryDialog';
+import { P2AApprovalsPanel } from './P2AApprovalsPanel';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { P2APlanCreationWizard } from './p2a-wizard/P2APlanCreationWizard';
 import { VCRDetailOverlayWidget } from './VCRDetailOverlay';
 import { VCRExecutionPlanWizard } from './vcr-wizard/VCRExecutionPlanWizard';
