@@ -51,11 +51,29 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
   const queryClient = useQueryClient();
 
   const filteredProjects = useMemo(() => {
-    const list = (projects ?? []).filter(project =>
-      project.project_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      `${project.project_id_prefix}${project.project_id_number}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.plant_name?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const q = searchQuery.trim().toLowerCase();
+    const list = (projects ?? []).filter((project) => {
+      if (!q) return true;
+      const code = `${project.project_id_prefix}-${project.project_id_number}`.toLowerCase();
+      const codeNoDash = `${project.project_id_prefix}${project.project_id_number}`.toLowerCase();
+      const loc = formatProjectLocation({ plant_name: project.plant_name, station_name: project.station_name }).toLowerCase();
+      const haystack = [
+        project.project_title,
+        code,
+        codeNoDash,
+        loc,
+        project.plant_name,
+        project.station_name,
+        project.hub_name,
+        project.team_lead_name,
+        project.project_scope,
+        project.next_milestone_name,
+      ]
+        .filter(Boolean)
+        .join(' \u00b7 ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
     return [...list].sort((a, b) => {
       if (a.is_favorite && !b.is_favorite) return -1;
       if (!a.is_favorite && b.is_favorite) return 1;
@@ -65,6 +83,17 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
 
   const visibleProjectIds = useMemo(() => filteredProjects.map(p => p.id), [filteredProjects]);
   const { data: progressMap } = useProjectsP2AProgress(visibleProjectIds);
+
+  // Merge mock progress for demo projects (DP-317, DP-385) so the UI shows
+  // meaningful progress + qualification counts without DB seeding.
+  const mergedProgressMap = useMemo(() => {
+    const out = { ...(progressMap ?? {}) };
+    filteredProjects.forEach((p) => {
+      const mock = getMockProgress(projectCode(p));
+      if (mock) out[p.id] = mock;
+    });
+    return out;
+  }, [progressMap, filteredProjects]);
 
   const handleProjectClick = (projectId: string) => {
     navigate(`/project/${projectId}`);
