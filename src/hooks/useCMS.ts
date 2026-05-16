@@ -9,7 +9,7 @@ export type ActivityType = 'vendor_training'|'ojt'|'assessment'|'certification'|
 export type ActivityRecordStatus = 'planned'|'in_progress'|'completed'|'failed';
 export type CompetenceActivity = { id: string; competency_id: string; title: string; description: string | null; activity_type: ActivityType; provider: string | null; duration_hours: number | null; target_completion_date: string | null; weight: number; sequence_order: number; is_sequence_strict: boolean };
 export type PersonActivityRecord = { id: string; activity_id: string; person_id: string; status: ActivityRecordStatus; completed_at: string | null; score: number | null; notes: string | null };
-export type CMSPerson = { id: string; first_name: string; last_name: string; staff_id: string; plant_id: string | null; job_title: string | null; profile_id: string | null };
+export type CMSPerson = { id: string; first_name: string; last_name: string; staff_id: string; plant_id: string | null; field_id: string | null; station_id: string | null; job_title: string | null; profile_id: string | null };
 export type PersonProgress = { id: string; person_id: string; competency_id: string; progress: number; status: string; last_assessed_at: string | null; notes: string | null };
 export type OverallProgress = { person_id: string; profile_id: string | null; overall_progress: number; total_competencies: number; competent_count: number };
 
