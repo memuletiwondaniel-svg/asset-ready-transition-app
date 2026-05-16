@@ -108,22 +108,24 @@ export const CMSLandingPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-6 md:p-8">
+      <div className="p-3 sm:p-6 md:p-8">
         <Tabs defaultValue="people" className="w-full">
-          <TabsList className="bg-muted/50 backdrop-blur p-1 h-auto rounded-xl border border-border/40 shadow-sm">
-            <TabsTrigger value="people" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-4 py-2">
-              <Users className="h-3.5 w-3.5" /> People
-            </TabsTrigger>
-            <TabsTrigger value="profiles" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-4 py-2">
-              <Layers className="h-3.5 w-3.5" /> Profiles
-            </TabsTrigger>
-            <TabsTrigger value="competencies" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-4 py-2">
-              <BookOpen className="h-3.5 w-3.5" /> Competencies
-            </TabsTrigger>
-            <TabsTrigger value="activities" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-4 py-2">
-              <Target className="h-3.5 w-3.5" /> Activities
-            </TabsTrigger>
-          </TabsList>
+          <div className="-mx-3 sm:mx-0 overflow-x-auto scrollbar-thin px-3 sm:px-0">
+            <TabsList className="bg-muted/50 backdrop-blur p-1 h-auto rounded-xl border border-border/40 shadow-sm inline-flex w-max">
+              <TabsTrigger value="people" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm">
+                <Users className="h-3.5 w-3.5" /> People
+              </TabsTrigger>
+              <TabsTrigger value="profiles" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm">
+                <Layers className="h-3.5 w-3.5" /> Profiles
+              </TabsTrigger>
+              <TabsTrigger value="competencies" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm">
+                <BookOpen className="h-3.5 w-3.5" /> Competencies
+              </TabsTrigger>
+              <TabsTrigger value="activities" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm">
+                <Target className="h-3.5 w-3.5" /> Activities
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <div className="mt-5">
             <TabsContent value="people" className="mt-0">
