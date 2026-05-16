@@ -73,7 +73,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
   };
 
   return (
-    <div className={cn("flex items-center gap-1.5 sm:gap-3 overflow-x-auto min-w-0", className)}>
+    <div className={cn("flex items-center gap-1 sm:gap-2 overflow-x-auto min-w-0 text-muted-foreground/70", className)}>
       {/* Back/Forward Navigation Buttons */}
       <TooltipProvider>
         <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
@@ -91,7 +91,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
                       }
                     }}
                     disabled={!canGoBack}
-                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg disabled:opacity-30"
+                    className="h-6 w-6 sm:h-7 sm:w-7 rounded-md disabled:opacity-25 text-muted-foreground/70 hover:text-foreground"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -139,7 +139,7 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
                       }
                     }}
                     disabled={!canGoForward}
-                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg disabled:opacity-30"
+                    className="h-6 w-6 sm:h-7 sm:w-7 rounded-md disabled:opacity-25 text-muted-foreground/70 hover:text-foreground"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -176,28 +176,28 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
       </TooltipProvider>
 
       {/* Vertical Separator */}
-      <div className="h-5 sm:h-6 w-px bg-border shrink-0" />
+      <div className="h-4 sm:h-5 w-px bg-border/60 shrink-0" />
 
       {/* Breadcrumb Trail */}
       <Breadcrumb className="min-w-0">
-        <BreadcrumbList className="text-[10px] sm:text-xs flex-nowrap">
+        <BreadcrumbList className="text-[10px] sm:text-[11px] flex-nowrap gap-1 sm:gap-1.5">
           {crumbsToShow.map((crumb, index) => (
             <span key={`crumb-${index}`} className="contents">
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <span 
+                  <span
                     onClick={crumb.onClick}
-                    className="cursor-pointer hover:text-foreground transition-colors text-[10px] sm:text-xs whitespace-nowrap"
+                    className="cursor-pointer text-muted-foreground/60 hover:text-foreground transition-colors text-[10px] sm:text-[11px] whitespace-nowrap font-normal"
                   >
                     {crumb.label}
                   </span>
                 </BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbSeparator className="text-xs" />
+              <BreadcrumbSeparator className="text-[10px] sm:text-[11px] text-muted-foreground/40 [&>svg]:size-3" />
             </span>
           ))}
           <BreadcrumbItem>
-            <BreadcrumbPage className="font-semibold text-foreground text-[10px] sm:text-xs whitespace-nowrap">
+            <BreadcrumbPage className="font-medium text-foreground/80 text-[10px] sm:text-[11px] whitespace-nowrap">
               {currentPageLabel}
             </BreadcrumbPage>
           </BreadcrumbItem>
@@ -213,15 +213,15 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={() => toggleFavorite(effectiveFavoritePath, currentPageLabel)}
-                className="h-7 w-7 rounded-lg ml-1"
+                className="h-6 w-6 rounded-md ml-0.5"
               >
-                <Star 
+                <Star
                   className={cn(
-                    "h-3.5 w-3.5 transition-colors",
-                    isCurrentFavorite 
-                      ? "fill-amber-400 text-amber-400" 
-                      : "text-muted-foreground hover:text-amber-400"
-                  )} 
+                    "h-3 w-3 transition-colors",
+                    isCurrentFavorite
+                      ? "fill-amber-400 text-amber-400"
+                      : "text-muted-foreground/60 hover:text-amber-400"
+                  )}
                 />
               </Button>
             </TooltipTrigger>
