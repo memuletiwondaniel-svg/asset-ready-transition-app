@@ -404,13 +404,14 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
             <div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
               {/* Table Header */}
               <div className="flex items-center gap-4 px-5 py-3 bg-muted/40 border-b border-border/60 text-[11px] font-medium text-muted-foreground/80 uppercase tracking-[0.08em]">
+                <div className="w-8 shrink-0" />
                 <div className="w-20 shrink-0">ID</div>
                 <div className="w-[360px] shrink-0">Project Title</div>
                 {columnVisibility.scope && <div className="w-[240px] shrink-0">Scope</div>}
                 {columnVisibility.milestone && <div className="w-52 shrink-0">Milestone</div>}
                 <div className="w-40 shrink-0">Location</div>
+                <div className="w-12 shrink-0" />
                 <div className="w-56 shrink-0">P2A Progress</div>
-                <div className="w-10 shrink-0" />
               </div>
 
               {/* Table Body */}
@@ -435,6 +436,44 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-muted/30 group"
                       onClick={() => handleProjectClick(project.id)}
                     >
+                      {/* Row actions — leading position */}
+                      <div className="w-8 shrink-0">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 -ml-1 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-48" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem
+                              onClick={(e) => handleToggleFavorite(e as any, project.id, project.is_favorite)}
+                            >
+                              <Star className={cn('h-4 w-4 mr-2', project.is_favorite && 'fill-yellow-400 text-yellow-400')} />
+                              {project.is_favorite ? 'Remove favorite' : 'Mark as favorite'}
+                            </DropdownMenuItem>
+                            {canPerformActions && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setProjectToDelete({ id: project.id, title: project.project_title });
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete project
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
                       {/* ID badge */}
                       <div className="w-20 shrink-0">
                         <Badge
@@ -495,6 +534,9 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                         <span className="text-sm text-foreground truncate">{location}</span>
                       </div>
 
+                      {/* spacer to separate Location from Progress */}
+                      <div className="w-12 shrink-0" />
+
                       {/* P2A Progress — single bar + avg % + VCR count chip */}
                       <div className="w-56 shrink-0">
                         {vcrs.length === 0 ? (
@@ -514,44 +556,6 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                             )}
                           </div>
                         )}
-                      </div>
-
-                      {/* Row actions */}
-                      <div className="w-10 shrink-0 flex justify-end">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenuItem
-                              onClick={(e) => handleToggleFavorite(e as any, project.id, project.is_favorite)}
-                            >
-                              <Star className={cn('h-4 w-4 mr-2', project.is_favorite && 'fill-yellow-400 text-yellow-400')} />
-                              {project.is_favorite ? 'Remove favorite' : 'Mark as favorite'}
-                            </DropdownMenuItem>
-                            {canPerformActions && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setProjectToDelete({ id: project.id, title: project.project_title });
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete project
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </div>
                     </div>
                   );
