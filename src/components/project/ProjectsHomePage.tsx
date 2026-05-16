@@ -562,6 +562,8 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                     </div>
                   );
                 })}
+                  </div>
+                </div>
               </div>
             </div>
           )}
