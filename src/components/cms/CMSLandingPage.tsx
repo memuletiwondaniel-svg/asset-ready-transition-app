@@ -301,12 +301,7 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="flex-1 min-w-[40px] h-2 rounded-full bg-muted/60 overflow-hidden">
-                      <div
-                        className={cn('h-full rounded-full bg-gradient-to-r transition-all duration-700 group-hover:brightness-110', tone.bar)}
-                        style={{ width: `${val}%` }}
-                      />
-                    </div>
+                    <MilestoneBar value={val} className="flex-1 min-w-[60px]" />
                     <span className={cn('text-xs sm:text-sm font-bold tabular-nums w-9 sm:w-10 text-right', tone.text)}>{val}%</span>
                   </div>
                 </TableCell>
