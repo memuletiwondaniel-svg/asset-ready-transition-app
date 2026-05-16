@@ -433,7 +433,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                   return (
                     <div
                       key={project.id}
-                      className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-muted/30 group"
+                      className="group relative flex items-center gap-4 px-5 py-4 cursor-pointer transition-all duration-200 ease-out hover:bg-gradient-to-r hover:from-primary/[0.04] hover:via-muted/40 hover:to-transparent hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
                       onClick={() => handleProjectClick(project.id)}
                     >
                       {/* Row actions — leading position */}
@@ -443,7 +443,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 w-7 p-0 -ml-1 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                              className="h-7 w-7 p-0 -ml-1 rounded-md opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 data-[state=open]:opacity-100 data-[state=open]:translate-x-0 transition-all duration-200 ease-out hover:bg-primary/10 hover:text-primary"
                             >
                               <MoreVertical className="h-4 w-4" />
                             </Button>
@@ -478,7 +478,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       <div className="w-20 shrink-0">
                         <Badge
                           variant="outline"
-                          className="text-xs font-semibold px-2.5 py-1 text-white border-0 inline-flex items-center justify-center leading-none"
+                          className="text-xs font-semibold px-2.5 py-1 text-white border-0 inline-flex items-center justify-center leading-none transition-all duration-200 ease-out group-hover:shadow-md group-hover:-translate-y-0.5"
                           style={{ background: `linear-gradient(to right, ${projectColor.bgStart}, ${projectColor.bgEnd})` }}
                         >
                           {project.project_id_prefix}-{project.project_id_number}
