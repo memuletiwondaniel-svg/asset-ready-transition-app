@@ -30,6 +30,9 @@ import { ProjectsTable } from '@/components/project/ProjectsTable';
 import { P2AHeatmap } from '@/components/p2a/P2AHeatmap';
 import { ProjectQualificationsSheet } from '@/components/p2a/ProjectQualificationsSheet';
 import type { Project } from '@/hooks/useProjects';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { formatProjectLocation } from '@/utils/projectLocation';
+import { getMockProgress, projectCode } from '@/lib/p2aMockData';
 
 interface ProjectsHomePageProps {
   onBack?: () => void;
@@ -48,11 +51,29 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
   const queryClient = useQueryClient();
 
   const filteredProjects = useMemo(() => {
-    const list = (projects ?? []).filter(project =>
-      project.project_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      `${project.project_id_prefix}${project.project_id_number}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.plant_name?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const q = searchQuery.trim().toLowerCase();
+    const list = (projects ?? []).filter((project) => {
+      if (!q) return true;
+      const code = `${project.project_id_prefix}-${project.project_id_number}`.toLowerCase();
+      const codeNoDash = `${project.project_id_prefix}${project.project_id_number}`.toLowerCase();
+      const loc = formatProjectLocation({ plant_name: project.plant_name, station_name: project.station_name }).toLowerCase();
+      const haystack = [
+        project.project_title,
+        code,
+        codeNoDash,
+        loc,
+        project.plant_name,
+        project.station_name,
+        project.hub_name,
+        project.team_lead_name,
+        project.project_scope,
+        project.next_milestone_name,
+      ]
+        .filter(Boolean)
+        .join(' \u00b7 ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
     return [...list].sort((a, b) => {
       if (a.is_favorite && !b.is_favorite) return -1;
       if (!a.is_favorite && b.is_favorite) return 1;
@@ -62,6 +83,17 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
 
   const visibleProjectIds = useMemo(() => filteredProjects.map(p => p.id), [filteredProjects]);
   const { data: progressMap } = useProjectsP2AProgress(visibleProjectIds);
+
+  // Merge mock progress for demo projects (DP-317, DP-385) so the UI shows
+  // meaningful progress + qualification counts without DB seeding.
+  const mergedProgressMap = useMemo(() => {
+    const out = { ...(progressMap ?? {}) };
+    filteredProjects.forEach((p) => {
+      const mock = getMockProgress(projectCode(p));
+      if (mock) out[p.id] = mock;
+    });
+    return out;
+  }, [progressMap, filteredProjects]);
 
   const handleProjectClick = (projectId: string) => {
     navigate(`/project/${projectId}`);
@@ -116,36 +148,48 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex gap-1 bg-muted/30 p-1 rounded-lg border border-border/30">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode('heatmap')}
-                    className={cn(
-                      'h-8 px-2.5',
-                      viewMode === 'heatmap'
-                        ? 'bg-background shadow-sm text-foreground'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                    title="Heatmap view"
-                  >
-                    <Grid className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode('list')}
-                    className={cn(
-                      'h-8 px-2.5',
-                      viewMode === 'list'
-                        ? 'bg-background shadow-sm text-foreground'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                    title="List view"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </div>
+                <TooltipProvider delayDuration={200}>
+                  <div className="flex gap-1 bg-muted/30 p-1 rounded-lg border border-border/30">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setViewMode('heatmap')}
+                          className={cn(
+                            'h-8 px-2.5',
+                            viewMode === 'heatmap'
+                              ? 'bg-background shadow-sm text-foreground'
+                              : 'text-muted-foreground hover:text-foreground'
+                          )}
+                          aria-label="Heatmap view"
+                        >
+                          <Grid className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">Heatmap view</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setViewMode('list')}
+                          className={cn(
+                            'h-8 px-2.5',
+                            viewMode === 'list'
+                              ? 'bg-background shadow-sm text-foreground'
+                              : 'text-muted-foreground hover:text-foreground'
+                          )}
+                          aria-label="List view"
+                        >
+                          <List className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">List view</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TooltipProvider>
 
                 {canPerformActions && (
                   <Button
@@ -189,7 +233,7 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
             {!isLoading && filteredProjects.length > 0 && viewMode === 'list' && (
               <ProjectsTable
                 projects={filteredProjects}
-                progressMap={progressMap}
+                progressMap={mergedProgressMap}
                 canPerformActions={canPerformActions}
                 onProjectClick={handleProjectClick}
                 onToggleFavorite={handleToggleFavorite}
@@ -236,8 +280,7 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
       <ProjectQualificationsSheet
         open={!!qualProject}
         onOpenChange={(o) => !o && setQualProject(null)}
-        projectId={qualProject?.id ?? null}
-        projectTitle={qualProject?.project_title}
+        project={qualProject}
       />
     </div>
   );

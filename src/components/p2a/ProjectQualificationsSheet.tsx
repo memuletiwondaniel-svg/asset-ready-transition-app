@@ -9,12 +9,13 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useProjectQualificationsById, type ProjectQualification } from '@/hooks/useProjectQualificationsById';
 import { QualificationDetailSheet } from '@/components/p2a-workspace/handover-points/QualificationDetailSheet';
+import { getMockQualifications, projectCode } from '@/lib/p2aMockData';
+import type { Project } from '@/hooks/useProjects';
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectId: string | null;
-  projectTitle?: string;
+  project: Project | null;
 }
 
 const statusMeta = (s: ProjectQualification['status']) => {
@@ -25,8 +26,16 @@ const statusMeta = (s: ProjectQualification['status']) => {
   }
 };
 
-export function ProjectQualificationsSheet({ open, onOpenChange, projectId, projectTitle }: Props) {
-  const { data: quals = [], isLoading } = useProjectQualificationsById(open ? projectId : null);
+export function ProjectQualificationsSheet({ open, onOpenChange, project }: Props) {
+  const code = projectCode(project);
+  const mockQuals = useMemo(() => getMockQualifications(code), [code]);
+  const projectId = project?.id ?? null;
+  const projectTitle = project?.project_title;
+  const { data: liveQuals = [], isLoading: isLiveLoading } = useProjectQualificationsById(
+    open && !mockQuals ? projectId : null
+  );
+  const quals = mockQuals ?? liveQuals;
+  const isLoading = mockQuals ? false : isLiveLoading;
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<ProjectQualification | null>(null);
 
