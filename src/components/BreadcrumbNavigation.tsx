@@ -176,28 +176,28 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
       </TooltipProvider>
 
       {/* Vertical Separator */}
-      <div className="h-5 sm:h-6 w-px bg-border shrink-0" />
+      <div className="h-4 sm:h-5 w-px bg-border/60 shrink-0" />
 
       {/* Breadcrumb Trail */}
       <Breadcrumb className="min-w-0">
-        <BreadcrumbList className="text-[10px] sm:text-xs flex-nowrap">
+        <BreadcrumbList className="text-[10px] sm:text-[11px] flex-nowrap gap-1 sm:gap-1.5">
           {crumbsToShow.map((crumb, index) => (
             <span key={`crumb-${index}`} className="contents">
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <span 
+                  <span
                     onClick={crumb.onClick}
-                    className="cursor-pointer hover:text-foreground transition-colors text-[10px] sm:text-xs whitespace-nowrap"
+                    className="cursor-pointer text-muted-foreground/60 hover:text-foreground transition-colors text-[10px] sm:text-[11px] whitespace-nowrap font-normal"
                   >
                     {crumb.label}
                   </span>
                 </BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbSeparator className="text-xs" />
+              <BreadcrumbSeparator className="text-[10px] sm:text-[11px] text-muted-foreground/40 [&>svg]:size-3" />
             </span>
           ))}
           <BreadcrumbItem>
-            <BreadcrumbPage className="font-semibold text-foreground text-[10px] sm:text-xs whitespace-nowrap">
+            <BreadcrumbPage className="font-medium text-foreground/80 text-[10px] sm:text-[11px] whitespace-nowrap">
               {currentPageLabel}
             </BreadcrumbPage>
           </BreadcrumbItem>
