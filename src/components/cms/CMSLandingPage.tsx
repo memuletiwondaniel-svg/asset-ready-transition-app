@@ -183,11 +183,12 @@ const KPI: React.FC<{ icon: React.ReactNode; label: string; value: React.ReactNo
 // ============ PEOPLE TAB ============
 const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, competencyMap, links, activities }) => {
   const { addPerson } = useCMSMutations();
+  const { plants, getFieldsByPlant, getStationsByField } = useLocations();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<CMSPerson | null>(null);
   const [profileFilter, setProfileFilter] = useState<string>('all');
-  const [form, setForm] = useState({ first_name: '', last_name: '', staff_id: '', job_title: '', profile_id: '' });
+  const [form, setForm] = useState({ first_name: '', last_name: '', staff_id: '', job_title: '', profile_id: '', plant_id: '', field_id: '', station_id: '' });
 
   const filtered = people.filter((p: CMSPerson) => {
     if (profileFilter !== 'all' && p.profile_id !== profileFilter) return false;
