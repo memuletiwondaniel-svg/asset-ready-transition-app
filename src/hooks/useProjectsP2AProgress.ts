@@ -73,15 +73,17 @@ export function useProjectsP2AProgress(projectIds: string[]) {
         if (!projectId) return;
         const stat = prereqByPoint.get(pt.id) ?? { total: 0, completed: 0 };
         const progress = stat.total > 0 ? Math.round((stat.completed / stat.total) * 100) : 0;
-        const entry = result[projectId] ?? { vcrs: [], avg: 0 };
+        const entry = result[projectId] ?? { vcrs: [], avg: 0, completed: 0, total: 0 };
         entry.vcrs.push({ id: pt.id, vcr_code: pt.vcr_code, progress });
+        entry.completed += stat.completed;
+        entry.total += stat.total;
         result[projectId] = entry;
       });
 
       Object.values(result).forEach((entry) => {
         entry.vcrs.sort((a, b) => a.vcr_code.localeCompare(b.vcr_code));
-        entry.avg = entry.vcrs.length
-          ? Math.round(entry.vcrs.reduce((sum, v) => sum + v.progress, 0) / entry.vcrs.length)
+        entry.avg = entry.total > 0
+          ? Math.round((entry.completed / entry.total) * 100)
           : 0;
       });
 
