@@ -197,11 +197,15 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                   </div>
                 </TooltipProvider>
 
+                {viewMode === 'list' && (
+                  <ProjectColumnsMenu prefs={tablePrefs} setPrefs={setTablePrefs} reset={resetTablePrefs} />
+                )}
+
                 {canPerformActions && (
                   <Button
                     size="sm"
                     onClick={() => setIsAddModalOpen(true)}
-                    className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm"
+                    className="gap-2 h-9 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm"
                   >
                     <Plus className="h-4 w-4" />
                     <span className="hidden sm:inline">New Project</span>
