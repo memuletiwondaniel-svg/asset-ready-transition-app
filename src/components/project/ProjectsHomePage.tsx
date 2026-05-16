@@ -56,50 +56,38 @@ interface ProjectsHomePageProps {
 const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
   const navigate = useNavigate();
   const { translations: t } = useLanguage();
-  const { projects, isLoading } = useProjects();
+  const { projects, isLoading, deleteProject, isDeleting } = useProjects();
   const { canPerformActions } = useCanPerformActionsPermission();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
-    portfolio: false,
-    hub: true,
-    plant: true,
-    team: true,
-    milestone: true,
     scope: false,
+    milestone: false,
   });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<{ id: string; title: string } | null>(null);
   const queryClient = useQueryClient();
 
-  // Define pinned project order: DP-300, DP-354, DP-385, DP-217, then rest
-  const pinnedOrder = ['DP-300', 'DP-354', 'DP-385', 'DP-217'];
-  
   const getProjectCode = (project: any) => `${project.project_id_prefix}-${project.project_id_number}`;
-  
-  // Filter and sort projects with custom pinned order
-  const filteredProjects = (projects?.filter(project => 
-    project.project_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    `${project.project_id_prefix}${project.project_id_number}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.plant_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || []).sort((a, b) => {
-    const aCode = getProjectCode(a);
-    const bCode = getProjectCode(b);
-    const aIndex = pinnedOrder.indexOf(aCode);
-    const bIndex = pinnedOrder.indexOf(bCode);
-    
-    // If both are pinned, sort by pinned order
-    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-    // If only a is pinned, a comes first
-    if (aIndex !== -1) return -1;
-    // If only b is pinned, b comes first
-    if (bIndex !== -1) return 1;
-    
-    // Then sort by favorites
-    if (a.is_favorite && !b.is_favorite) return -1;
-    if (!a.is_favorite && b.is_favorite) return 1;
-    
-    return 0;
-  });
+
+  // Filter projects, then sort: favorites first (persisted server-side), preserve API order otherwise.
+  const filteredProjects = useMemo(() => {
+    const list = (projects ?? []).filter(project =>
+      project.project_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      `${project.project_id_prefix}${project.project_id_number}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.plant_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    return [...list].sort((a, b) => {
+      if (a.is_favorite && !b.is_favorite) return -1;
+      if (!a.is_favorite && b.is_favorite) return 1;
+      return 0;
+    });
+  }, [projects, searchQuery]);
+
+  // Batch-fetch P2A progress for the visible rows.
+  const visibleProjectIds = useMemo(() => filteredProjects.map(p => p.id), [filteredProjects]);
+  const { data: progressMap } = useProjectsP2AProgress(visibleProjectIds);
+
 
   const handleProjectClick = (projectId: string) => {
     navigate(`/project/${projectId}`);
