@@ -582,10 +582,39 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
       </div>
 
       {/* Add Project Modal */}
-      <AddProjectWizard 
-        open={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
+      <AddProjectWizard
+        open={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
       />
+
+      {/* Delete Project Confirmation */}
+      <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this project?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {projectToDelete ? (
+                <>This will remove <span className="font-medium text-foreground">{projectToDelete.title}</span> from the P2A Handover list. You can restore it from project administration if needed.</>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (projectToDelete) {
+                  deleteProject(projectToDelete.id);
+                  setProjectToDelete(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
