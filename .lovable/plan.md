@@ -1,130 +1,81 @@
-# Competence Management System (CMS)
+# CMS Competency Milestones, Weighting & Sequencing
 
-A new standalone module accessible from the main sidebar as **Competence Management** (separate top-level item, not nested under OR Maintenance).
+Extend the Competency Management System so progress towards "closing" a competency is driven by weighted, optionally sequenced activities, and visualised against three milestones: **Knowledge → Skill → Mastery**.
 
-## 1. Database (Supabase)
+## 1. Milestones model
 
-All tables protected by RLS: authenticated users can read; users with `admin` or `manager` role can write (uses existing `has_role()` security-definer pattern).
+Three fixed milestones per competency, with default thresholds (overridable per competency):
 
-### `competence_profiles`
-- name (e.g. "Control Room Operator")
-- code (short, e.g. "CRO")
-- description
+- **Knowledge** — default 50%
+- **Skill** — default 75%
+- **Mastery** — default 100%
 
-### `competencies`
-- title
-- description
-- created_by
+The numbers the user mentioned (50 / 70 / 90) are kept as suggested defaults but made editable per competency, since different competencies may need different cut-offs.
 
-### `competence_profile_competencies` (join)
-- profile_id → competence_profiles
-- competency_id → competencies
-- weight (default 1)
-- required_level (1–5, optional)
-- UNIQUE(profile_id, competency_id)
+Stored on `competencies`:
+- `knowledge_threshold` (int, default 50)
+- `skill_threshold` (int, default 75)
+- `mastery_threshold` (int, default 100)
 
-### `competence_activities`
-- competency_id → competencies
-- title
-- description
-- activity_type ENUM: `vendor_training`, `ojt`, `assessment`, `certification`, `e_learning`, `mentoring`, `other`
-- duration_hours, provider, target_completion_date (optional)
+A person's current milestone is derived from their `person_competency_progress.progress` value.
 
-### `cms_people`
-- first_name, last_name
-- staff_id (UNIQUE)
-- plant_id (FK), job_title
-- profile_id → competence_profiles (assigned profile)
-- user_id (optional link to auth.users)
+## 2. Activity weighting
 
-### `person_competency_progress`
-- person_id → cms_people
-- competency_id → competencies
-- progress (0–100)
-- status ENUM: `not_started`, `in_progress`, `assessed`, `competent`, `expired`
-- last_assessed_at, assessor_id, notes
-- UNIQUE(person_id, competency_id)
+Each `competence_activities` row gets a `weight` (int, percentage points). The sum of weights for a competency's active activities should equal 100. We will:
 
-### `person_activity_records`
-- person_id, activity_id
-- status: `planned`, `in_progress`, `completed`, `failed`
-- completed_at, score, evidence_url
+- Add `weight` column (default 0, must be 0–100).
+- Add a validation trigger that warns (not blocks) if a competency's activity weights don't sum to 100.
+- Recompute `person_competency_progress.progress` as the sum of weights of completed activities, via a trigger on `person_activity_records`.
+- Recompute `status` from progress vs. the competency's thresholds (`not_started` → `in_progress` → `assessed` at Knowledge → `competent` at Mastery).
 
-**Overall progress per person** = weighted average of `progress` across competencies belonging to the assigned profile. Exposed via SQL view `v_person_overall_progress` for fast reads.
+Example: 10 activities — first worth 20, next two worth 10, etc. Completing the first jumps the bar by 20%.
 
-## 2. UI/UX
+## 3. Sequencing
 
-### Navigation
-- Add **Competence Management** as a new top-level item in `SidebarContent.tsx` (its own icon, e.g. `GraduationCap`).
-- New route: `/competence-management` in `App.tsx`.
-- Register in `sidebarNavigation.ts`.
+Add `sequence_order` (int) and `is_sequence_strict` (bool) to `competence_activities`:
 
-### Pages
+- `sequence_order` defines the **recommended** order (smaller = earlier). Used purely for display ordering when `is_sequence_strict = false` (default).
+- When `is_sequence_strict = true`, the UI prevents marking a later activity as `in_progress`/`completed` until all earlier ones are `completed`. Enforced both client-side (disabled buttons + tooltip) and via a DB trigger on `person_activity_records`.
 
-**`CMSLandingPage.tsx`** — header + KPI cards (total people, avg readiness %, # competencies, # profiles) + tabs:
+## 4. UI changes (`CMSLandingPage.tsx` + new `CompetencyDetailDrawer`)
 
-1. **People** (default)
-   - Searchable table: Name, Staff ID, Plant, Job Title, Assigned Profile, Overall Progress (bar + %).
-   - Click progress bar → **PersonProgressSheet** (side overlay) with breakdown per competency: mini bars, status badges, last assessment date, linked activity records.
-   - "Add Person" dialog.
+- **Readiness bar** in the People table gets three milestone tick marks (K/S/M) with labels and a coloured fill that changes hue as it crosses each threshold (amber → blue → emerald).
+- New **Competency detail drawer** opened by clicking a person's competency row:
+  - Header: competency name, current % and milestone badge.
+  - Milestone ruler with the three thresholds.
+  - Ordered activity list showing: sequence #, title, type, **weight chip**, status, "Mark complete" button. Locked rows show a lock icon + "Complete previous activities first" tooltip when sequencing is strict.
+  - Footer summary: "X of Y activities complete · Z% progress · next milestone: Skill (need 15% more)".
+- Mobile: drawer becomes a full-screen sheet; activity rows collapse to two lines with the weight chip on the right.
 
-2. **Competence Profiles**
-   - Card grid with competency count + people count per profile.
-   - "Add Profile" dialog.
-   - Click → **ProfileDetailSheet**: list/add competencies (multi-select existing or create new), set weight.
+## 5. Technical details
 
-3. **Competencies**
-   - Table: Title, Description, # Profiles using, # Activities.
-   - "Add Competency" dialog.
-   - Click row → **CompetencyDetailSheet**: full description + linked activities tab.
+```text
+competencies
+  + knowledge_threshold  int  default 50
+  + skill_threshold      int  default 75
+  + mastery_threshold    int  default 100
 
-4. **Activities**
-   - Table grouped by competency: Title, Type badge, Provider, Duration.
-   - Filter by activity type and competency.
-   - "Add Activity" dialog with type selector.
+competence_activities
+  + weight               int  default 0   (0..100)
+  + sequence_order       int  default 0
+  + is_sequence_strict   bool default false   -- per-activity gate flag
 
-### Components
-```
-src/components/cms/
-  CMSLandingPage.tsx
-  PeopleTab.tsx
-  ProfilesTab.tsx
-  CompetenciesTab.tsx
-  ActivitiesTab.tsx
-  PersonProgressSheet.tsx
-  ProfileDetailSheet.tsx
-  CompetencyDetailSheet.tsx
-  dialogs/AddPersonDialog.tsx
-  dialogs/AddProfileDialog.tsx
-  dialogs/AddCompetencyDialog.tsx
-  dialogs/AddActivityDialog.tsx
-
-src/hooks/
-  useCompetenceProfiles.ts
-  useCompetencies.ts
-  useCompetenceActivities.ts
-  useCMSPeople.ts
-  usePersonProgress.ts
+triggers
+  trg_recalc_progress  AFTER INS/UPD/DEL on person_activity_records
+    → recompute person_competency_progress.progress and status
+  trg_enforce_sequence BEFORE INS/UPD on person_activity_records
+    → if activity.is_sequence_strict, block unless all lower sequence_order
+      activities for same person+competency are completed
+  trg_validate_weights AFTER INS/UPD/DEL on competence_activities
+    → raise NOTICE (not exception) if SUM(weight) <> 100 for competency
 ```
 
-### Design
-- Semantic tokens only (no hardcoded colors).
-- Progress bars match the gradient style used in P2A handover.
-- Status badges reuse `competencyLevels.ts` color tiers.
-- Side sheets follow `ProjectQualificationsSheet.tsx` pattern.
+Existing mock data: backfill `weight` evenly across each competency's activities and `sequence_order` by insertion order so the UI has something to show immediately.
 
-## 3. Routing & Sidebar wiring
-- `App.tsx`: `<Route path="/competence-management" element={<CMSLandingPage />} />`.
-- `SidebarContent.tsx`: add top-level entry with `GraduationCap` icon.
-- `sidebarNavigation.ts`: register `'competence-management': '/competence-management'`.
+## 6. Open questions (assumptions if not answered)
 
-## 4. Seed data
-Sample profiles (CRO, Field Operator, Shift Engineer/Supervisor), ~6 competencies, a few activities per competency, and 4–5 demo people with varied progress.
+- Thresholds editable per competency? **Assumed yes**, with global defaults 50/75/100.
+- Strict sequencing default? **Assumed off** — recommended order only, opt-in per activity.
+- "Closed" competency = reaches Mastery (100%) by default.
 
-## Out of scope (for now)
-- CSV bulk import of people
-- Auto-grading from assessments
-- Expiry notifications / reminders
-- Activity completion approval workflows
-
-Confirm and I will implement.
+Approve and I'll run the migration and build the UI.

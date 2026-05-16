@@ -2,10 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export type CompetenceProfile = { id: string; name: string; code: string | null; description: string | null; created_at: string };
-export type Competency = { id: string; title: string; description: string | null; created_at: string };
+export type Competency = { id: string; title: string; description: string | null; created_at: string; knowledge_threshold: number; skill_threshold: number; mastery_threshold: number };
 export type ProfileCompetencyLink = { id: string; profile_id: string; competency_id: string; weight: number; required_level: number | null };
 export type ActivityType = 'vendor_training'|'ojt'|'assessment'|'certification'|'e_learning'|'mentoring'|'other';
-export type CompetenceActivity = { id: string; competency_id: string; title: string; description: string | null; activity_type: ActivityType; provider: string | null; duration_hours: number | null; target_completion_date: string | null };
+export type ActivityRecordStatus = 'planned'|'in_progress'|'completed'|'failed';
+export type CompetenceActivity = { id: string; competency_id: string; title: string; description: string | null; activity_type: ActivityType; provider: string | null; duration_hours: number | null; target_completion_date: string | null; weight: number; sequence_order: number; is_sequence_strict: boolean };
+export type PersonActivityRecord = { id: string; activity_id: string; person_id: string; status: ActivityRecordStatus; completed_at: string | null; score: number | null; notes: string | null };
 export type CMSPerson = { id: string; first_name: string; last_name: string; staff_id: string; plant_id: string | null; job_title: string | null; profile_id: string | null };
 export type PersonProgress = { id: string; person_id: string; competency_id: string; progress: number; status: string; last_assessed_at: string | null; notes: string | null };
 export type OverallProgress = { person_id: string; profile_id: string | null; overall_progress: number; total_competencies: number; competent_count: number };
@@ -49,9 +51,21 @@ export function useActivities() {
   return useQuery({
     queryKey: ['cms','activities'],
     queryFn: async () => {
-      const { data, error } = await t('competence_activities').select('*').order('created_at', { ascending: false });
+      const { data, error } = await t('competence_activities').select('*').order('sequence_order', { ascending: true });
       if (error) throw error;
       return (data ?? []) as unknown as CompetenceActivity[];
+    },
+  });
+}
+
+export function usePersonActivityRecords(personId: string | null) {
+  return useQuery({
+    queryKey: ['cms','person-activity-records', personId],
+    enabled: !!personId,
+    queryFn: async () => {
+      const { data, error } = await t('person_activity_records').select('*').eq('person_id', personId!);
+      if (error) throw error;
+      return (data ?? []) as unknown as PersonActivityRecord[];
     },
   });
 }
@@ -104,7 +118,7 @@ export function useCMSMutations() {
   });
 
   const addCompetency = useMutation({
-    mutationFn: async (input: { title: string; description?: string }) => {
+    mutationFn: async (input: { title: string; description?: string; knowledge_threshold?: number; skill_threshold?: number; mastery_threshold?: number }) => {
       const { error } = await t('competencies').insert(input as any);
       if (error) throw error;
     },
@@ -128,7 +142,7 @@ export function useCMSMutations() {
   });
 
   const addActivity = useMutation({
-    mutationFn: async (input: { competency_id: string; title: string; activity_type: ActivityType; description?: string; provider?: string; duration_hours?: number }) => {
+    mutationFn: async (input: { competency_id: string; title: string; activity_type: ActivityType; description?: string; provider?: string; duration_hours?: number; weight?: number; sequence_order?: number; is_sequence_strict?: boolean }) => {
       const { error } = await t('competence_activities').insert(input as any);
       if (error) throw error;
     },
@@ -143,15 +157,29 @@ export function useCMSMutations() {
     onSuccess: invalidate,
   });
 
-  const upsertProgress = useMutation({
-    mutationFn: async (input: { person_id: string; competency_id: string; progress: number; status: string }) => {
-      const { error } = await t('person_competency_progress').upsert(input as any, { onConflict: 'person_id,competency_id' });
-      if (error) throw error;
+  const setActivityStatus = useMutation({
+    mutationFn: async (input: { person_id: string; activity_id: string; status: ActivityRecordStatus; existing_id?: string | null }) => {
+      const payload: any = {
+        person_id: input.person_id,
+        activity_id: input.activity_id,
+        status: input.status,
+        completed_at: input.status === 'completed' ? new Date().toISOString() : null,
+      };
+      if (input.existing_id) {
+        const { error } = await t('person_activity_records').update(payload).eq('id', input.existing_id);
+        if (error) throw error;
+      } else {
+        const { error } = await t('person_activity_records').insert(payload);
+        if (error) throw error;
+      }
     },
-    onSuccess: invalidate,
+    onSuccess: (_d, _v, _c) => {
+      qc.invalidateQueries({ queryKey: ['cms'] });
+    },
   });
 
-  return { addProfile, addCompetency, linkCompetency, unlinkCompetency, addActivity, addPerson, upsertProgress };
+
+  return { addProfile, addCompetency, linkCompetency, unlinkCompetency, addActivity, addPerson, setActivityStatus };
 }
 
 export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {

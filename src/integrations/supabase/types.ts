@@ -1088,10 +1088,13 @@ export type Database = {
           description: string | null
           duration_hours: number | null
           id: string
+          is_sequence_strict: boolean
           provider: string | null
+          sequence_order: number
           target_completion_date: string | null
           title: string
           updated_at: string
+          weight: number
         }
         Insert: {
           activity_type?: Database["public"]["Enums"]["cms_activity_type"]
@@ -1101,10 +1104,13 @@ export type Database = {
           description?: string | null
           duration_hours?: number | null
           id?: string
+          is_sequence_strict?: boolean
           provider?: string | null
+          sequence_order?: number
           target_completion_date?: string | null
           title: string
           updated_at?: string
+          weight?: number
         }
         Update: {
           activity_type?: Database["public"]["Enums"]["cms_activity_type"]
@@ -1114,10 +1120,13 @@ export type Database = {
           description?: string | null
           duration_hours?: number | null
           id?: string
+          is_sequence_strict?: boolean
           provider?: string | null
+          sequence_order?: number
           target_completion_date?: string | null
           title?: string
           updated_at?: string
+          weight?: number
         }
         Relationships: [
           {
@@ -1207,6 +1216,9 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          knowledge_threshold: number
+          mastery_threshold: number
+          skill_threshold: number
           title: string
           updated_at: string
         }
@@ -1215,6 +1227,9 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          knowledge_threshold?: number
+          mastery_threshold?: number
+          skill_threshold?: number
           title: string
           updated_at?: string
         }
@@ -1223,6 +1238,9 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          knowledge_threshold?: number
+          mastery_threshold?: number
+          skill_threshold?: number
           title?: string
           updated_at?: string
         }
@@ -13388,6 +13406,10 @@ export type Database = {
       }
       cleanup_expired_password_reset_tokens: { Args: never; Returns: number }
       cleanup_old_api_request_logs: { Args: never; Returns: number }
+      cms_recalc_competency_progress: {
+        Args: { p_competency_id: string; p_person_id: string }
+        Returns: undefined
+      }
       create_password_reset_token: {
         Args: { target_user_id: string }
         Returns: string
