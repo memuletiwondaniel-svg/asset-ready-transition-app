@@ -436,6 +436,44 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-muted/30 group"
                       onClick={() => handleProjectClick(project.id)}
                     >
+                      {/* Row actions — leading position */}
+                      <div className="w-8 shrink-0">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 -ml-1 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-48" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem
+                              onClick={(e) => handleToggleFavorite(e as any, project.id, project.is_favorite)}
+                            >
+                              <Star className={cn('h-4 w-4 mr-2', project.is_favorite && 'fill-yellow-400 text-yellow-400')} />
+                              {project.is_favorite ? 'Remove favorite' : 'Mark as favorite'}
+                            </DropdownMenuItem>
+                            {canPerformActions && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setProjectToDelete({ id: project.id, title: project.project_title });
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete project
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
                       {/* ID badge */}
                       <div className="w-20 shrink-0">
                         <Badge
