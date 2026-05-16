@@ -15,19 +15,17 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Star, MoreVertical, Trash2, GripVertical, AlertTriangle, FileText, Target, Settings2, RotateCcw } from 'lucide-react';
+import { Star, MoreVertical, Trash2, GripVertical, AlertTriangle, FileText, Target } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuCheckboxItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Project } from '@/hooks/useProjects';
-import { useTablePreferences } from '@/hooks/useTablePreferences';
+import { useTablePreferences, type TablePreferences } from '@/hooks/useTablePreferences';
 import { formatProjectLocation } from '@/utils/projectLocation';
 import type { ProjectsP2AProgressMap } from '@/hooks/useProjectsP2AProgress';
 
