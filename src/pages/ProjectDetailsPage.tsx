@@ -10,6 +10,7 @@ import { ArrowLeft, FileText, Calendar, Users, MapPin, Building, Target, FileChe
 
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
+import { getProjectColor } from '@/utils/projectColors';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
 import { useProjects } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
