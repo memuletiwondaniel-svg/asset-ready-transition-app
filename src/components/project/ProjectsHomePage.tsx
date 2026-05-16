@@ -534,6 +534,9 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                         <span className="text-sm text-foreground truncate">{location}</span>
                       </div>
 
+                      {/* spacer to separate Location from Progress */}
+                      <div className="w-12 shrink-0" />
+
                       {/* P2A Progress — single bar + avg % + VCR count chip */}
                       <div className="w-56 shrink-0">
                         {vcrs.length === 0 ? (
@@ -553,44 +556,6 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                             )}
                           </div>
                         )}
-                      </div>
-
-                      {/* Row actions */}
-                      <div className="w-10 shrink-0 flex justify-end">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenuItem
-                              onClick={(e) => handleToggleFavorite(e as any, project.id, project.is_favorite)}
-                            >
-                              <Star className={cn('h-4 w-4 mr-2', project.is_favorite && 'fill-yellow-400 text-yellow-400')} />
-                              {project.is_favorite ? 'Remove favorite' : 'Mark as favorite'}
-                            </DropdownMenuItem>
-                            {canPerformActions && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setProjectToDelete({ id: project.id, title: project.project_title });
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete project
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </div>
                     </div>
                   );
