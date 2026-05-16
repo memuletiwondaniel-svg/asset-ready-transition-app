@@ -22,15 +22,13 @@ export function formatProjectLocation({ plant_name, station_name }: LocationInpu
   }
 
   if (plantUpper === 'UQ') {
-    const s = station.toLowerCase();
-    if (/sweet|\bst\b|-st\b/.test(s)) return 'UQ-ST';
-    if (/murjan|\bmt\b|-mt\b/.test(s)) return 'UQ-MT';
-    return 'UQ';
+    if (!station) return 'UQ';
+    return `UQ - ${station}`;
   }
 
   if (plantUpper === 'CS') {
     return station || 'CS';
   }
 
-  return plant;
+  return station ? `${plant} - ${station}` : plant;
 }
