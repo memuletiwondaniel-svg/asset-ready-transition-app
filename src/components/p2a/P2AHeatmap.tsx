@@ -168,9 +168,18 @@ export function P2AHeatmap({ projects, onProjectClick }: Props) {
                       onClick={() => onProjectClick?.(project.id)}
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <Badge variant="outline" className="text-[10px] font-mono shrink-0">
-                          {project.project_id_prefix}-{project.project_id_number}
-                        </Badge>
+                        {(() => {
+                          const c = getProjectColor(project.project_id_prefix, project.project_id_number);
+                          return (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-semibold px-2 py-0.5 text-white border-0 shrink-0 leading-none"
+                              style={{ background: `linear-gradient(to right, ${c.bgStart}, ${c.bgEnd})` }}
+                            >
+                              {project.project_id_prefix}-{project.project_id_number}
+                            </Badge>
+                          );
+                        })()}
                         <span className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
                           {project.project_title}
                         </span>
