@@ -148,36 +148,48 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex gap-1 bg-muted/30 p-1 rounded-lg border border-border/30">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode('heatmap')}
-                    className={cn(
-                      'h-8 px-2.5',
-                      viewMode === 'heatmap'
-                        ? 'bg-background shadow-sm text-foreground'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                    title="Heatmap view"
-                  >
-                    <Grid className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewMode('list')}
-                    className={cn(
-                      'h-8 px-2.5',
-                      viewMode === 'list'
-                        ? 'bg-background shadow-sm text-foreground'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                    title="List view"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </div>
+                <TooltipProvider delayDuration={200}>
+                  <div className="flex gap-1 bg-muted/30 p-1 rounded-lg border border-border/30">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setViewMode('heatmap')}
+                          className={cn(
+                            'h-8 px-2.5',
+                            viewMode === 'heatmap'
+                              ? 'bg-background shadow-sm text-foreground'
+                              : 'text-muted-foreground hover:text-foreground'
+                          )}
+                          aria-label="Heatmap view"
+                        >
+                          <Grid className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">Heatmap view</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setViewMode('list')}
+                          className={cn(
+                            'h-8 px-2.5',
+                            viewMode === 'list'
+                              ? 'bg-background shadow-sm text-foreground'
+                              : 'text-muted-foreground hover:text-foreground'
+                          )}
+                          aria-label="List view"
+                        >
+                          <List className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">List view</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TooltipProvider>
 
                 {canPerformActions && (
                   <Button
