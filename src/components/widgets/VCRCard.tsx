@@ -99,20 +99,29 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
   return (
     <button
       onClick={() => onClick(vcr.id)}
+      style={{ ['--vcr-accent' as string]: accent }}
       className={cn(
-        'group/vcr w-full text-left bg-card border border-border/60 rounded-2xl px-4 py-2.5',
-        'shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_-12px_rgba(0,0,0,0.12)]',
-        'hover:-translate-y-0.5 transition-all duration-300 cursor-pointer'
+        'group/vcr relative w-full text-left bg-card border border-border/60 rounded-2xl px-4 py-2.5 overflow-hidden',
+        'shadow-[0_1px_2px_rgba(0,0,0,0.03)]',
+        'transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out cursor-pointer',
+        'hover:-translate-y-[3px] hover:border-[color:var(--vcr-accent)]/50',
+        'hover:shadow-[0_18px_40px_-18px_var(--vcr-accent)]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--vcr-accent)]/40'
       )}
-      onMouseEnter={(e) => {
-        if (!isComplete && !isInProgress) return;
-        e.currentTarget.style.borderColor = `${accent}59`;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = '';
-      }}
     >
-      <div className="flex items-center justify-between gap-3">
+      {/* Left accent bar */}
+      <span
+        aria-hidden
+        className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full opacity-0 -translate-x-1 group-hover/vcr:opacity-100 group-hover/vcr:translate-x-0 transition-all duration-300"
+        style={{ backgroundColor: accent }}
+      />
+      {/* Soft gradient wash on hover */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-0 group-hover/vcr:opacity-100 transition-opacity duration-300"
+        style={{ background: `linear-gradient(135deg, ${accent}0D 0%, transparent 60%)` }}
+      />
+      <div className="relative flex items-center justify-between gap-3">
         <div className="flex flex-col min-w-0 flex-1">
           <span
             className="block text-[9px] uppercase tracking-[0.18em] font-extrabold text-muted-foreground/70 mb-0.5"
