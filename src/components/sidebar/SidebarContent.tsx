@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import OrshLogo from '@/components/ui/OrshLogo';
 import { Home, Settings, ChevronDown, ChevronLeft, ChevronRight, Languages, Check, Bell, LogOut, Clock, History, LayoutGrid, Moon, Sun, FolderKanban, MessageSquare, Key, Wrench, ListChecks, Gauge, ClipboardList, ClipboardCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -121,7 +122,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
     return (t as any)[labelKey] || labelKey;
   };
 
-  return (
+  const content = (
     <div className="flex flex-col h-full select-none [&_button]:hover:!scale-100 [&_button]:active:!scale-100 [&_button]:active:!rotate-0 [&_svg]:stroke-[1.75]">
       {/* Header */}
       <div className={cn("border-b border-border/40 flex-shrink-0", isCollapsed ? "p-2" : "p-4 sm:p-6")}>
@@ -229,8 +230,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
               {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentPage === item.section;
-                
-                return (
+                const button = (
                   <Button
                     key={item.section}
                     variant="ghost"
@@ -238,11 +238,10 @@ export const SidebarContent = memo<SidebarContentProps>(({
                     onClick={() => onNavigate(item.section || '', false)}
                     className={cn(
                       "w-full h-8 relative transition-colors duration-150",
-                      isActive 
-                        ? "bg-primary/10 text-primary rounded-lg hover:bg-primary/20 hover:text-primary" 
+                      isActive
+                        ? "bg-primary/10 text-primary rounded-lg hover:bg-primary/20 hover:text-primary"
                         : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
                     )}
-                    title={getLabel(item.labelKey)}
                   >
                     <Icon className={cn(
                       "h-4 w-4 transition-colors",
@@ -259,6 +258,12 @@ export const SidebarContent = memo<SidebarContentProps>(({
                       </span>
                     )}
                   </Button>
+                );
+                return (
+                  <Tooltip key={item.section}>
+                    <TooltipTrigger asChild>{button}</TooltipTrigger>
+                    <TooltipContent side="right">{getLabel(item.labelKey)}</TooltipContent>
+                  </Tooltip>
                 );
               })}
             </div>
