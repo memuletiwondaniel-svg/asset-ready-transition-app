@@ -197,13 +197,27 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
     return p.first_name.toLowerCase().includes(s) || p.last_name.toLowerCase().includes(s) || p.staff_id.toLowerCase().includes(s) || (p.job_title || '').toLowerCase().includes(s);
   });
 
+  const availableFields = form.plant_id ? getFieldsByPlant(form.plant_id) : [];
+  const availableStations = form.field_id ? getStationsByField(form.field_id) : [];
+  const selectedPlant = plants.find(p => p.id === form.plant_id);
+  const requiresStation = !!selectedPlant && availableFields.length > 0;
+
   const submit = async () => {
     if (!form.first_name || !form.last_name || !form.staff_id) return;
     try {
-      await addPerson.mutateAsync({ ...form, profile_id: form.profile_id || undefined } as any);
+      await addPerson.mutateAsync({
+        first_name: form.first_name,
+        last_name: form.last_name,
+        staff_id: form.staff_id,
+        job_title: form.job_title || undefined,
+        profile_id: form.profile_id || undefined,
+        plant_id: form.plant_id || null,
+        field_id: form.field_id || null,
+        station_id: form.station_id || null,
+      });
       toast({ title: 'Person added' });
       setOpen(false);
-      setForm({ first_name: '', last_name: '', staff_id: '', job_title: '', profile_id: '' });
+      setForm({ first_name: '', last_name: '', staff_id: '', job_title: '', profile_id: '', plant_id: '', field_id: '', station_id: '' });
     } catch (e: any) { toast({ title: 'Failed', description: e.message, variant: 'destructive' }); }
   };
 
