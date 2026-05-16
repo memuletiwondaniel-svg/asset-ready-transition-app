@@ -160,7 +160,7 @@ export function useCMSMutations() {
   });
 
   const addPerson = useMutation({
-    mutationFn: async (input: { first_name: string; last_name: string; staff_id: string; job_title?: string; profile_id?: string }) => {
+    mutationFn: async (input: { first_name: string; last_name: string; staff_id: string; job_title?: string; profile_id?: string; plant_id?: string | null; field_id?: string | null; station_id?: string | null }) => {
       const { error } = await t('cms_people').insert(input as any);
       if (error) throw error;
     },
