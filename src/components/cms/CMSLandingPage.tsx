@@ -323,22 +323,72 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
       </Table>
       </div>
 
-      <PersonProgressSheet
-        person={selected}
-        onClose={() => setSelected(null)}
-        links={links}
-        competencyMap={competencyMap}
-        activities={activities}
-        profileMap={profileMap}
-      />
-    </Card>
+// ============ MILESTONES ============
+const MILESTONE_META = {
+  knowledge: { label: 'Knowledge', short: 'K', icon: Brain,  color: 'amber'   as const },
+  skill:     { label: 'Skill',     short: 'S', icon: Wrench, color: 'blue'    as const },
+  mastery:   { label: 'Mastery',   short: 'M', icon: Trophy, color: 'emerald' as const },
+};
+type MilestoneKey = keyof typeof MILESTONE_META;
+
+const milestoneFor = (value: number, k: number, s: number, m: number): MilestoneKey | null => {
+  if (value >= m) return 'mastery';
+  if (value >= s) return 'skill';
+  if (value >= k) return 'knowledge';
+  return null;
+};
+
+const milestoneTone = (key: MilestoneKey | null) => {
+  if (key === 'mastery')   return { bar: 'from-emerald-500 to-green-400', text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30' };
+  if (key === 'skill')     return { bar: 'from-blue-500 to-cyan-400',    text: 'text-blue-600 dark:text-blue-400',       bg: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30' };
+  if (key === 'knowledge') return { bar: 'from-amber-500 to-orange-400', text: 'text-amber-600 dark:text-amber-400',     bg: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30' };
+  return { bar: 'from-slate-400 to-slate-300', text: 'text-slate-500', bg: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-300/40' };
+};
+
+const MilestoneBar: React.FC<{
+  value: number;
+  knowledge?: number;
+  skill?: number;
+  mastery?: number;
+  showLabels?: boolean;
+  className?: string;
+}> = ({ value, knowledge = 50, skill = 75, mastery = 100, showLabels, className }) => {
+  const ms = milestoneFor(value, knowledge, skill, mastery);
+  const tone = milestoneTone(ms);
+  return (
+    <div className={cn('relative', className)}>
+      <div className="relative h-2 rounded-full bg-muted/60 overflow-hidden">
+        <div
+          className={cn('h-full rounded-full bg-gradient-to-r transition-all duration-700', tone.bar)}
+          style={{ width: `${Math.min(100, value)}%` }}
+        />
+        {[knowledge, skill, mastery].map((t, i) => (
+          t < 100 && (
+            <div
+              key={i}
+              className="absolute top-0 bottom-0 w-px bg-background/80"
+              style={{ left: `${t}%` }}
+            />
+          )
+        ))}
+      </div>
+      {showLabels && (
+        <div className="relative h-3 mt-1 text-[9px] uppercase tracking-wider text-muted-foreground">
+          <span className="absolute -translate-x-1/2" style={{ left: `${knowledge}%` }}>K</span>
+          <span className="absolute -translate-x-1/2" style={{ left: `${skill}%` }}>S</span>
+          <span className="absolute -translate-x-1/2 -translate-x-full" style={{ left: `100%` }}>M</span>
+        </div>
+      )}
+    </div>
   );
 };
 
 // ============ PERSON PROGRESS SHEET ============
 const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competencyMap, activities, profileMap }) => {
   const { data: progress = [] } = usePersonProgress(person?.id ?? null);
-  const { upsertProgress } = useCMSMutations();
+  const { data: actRecords = [] } = usePersonActivityRecords(person?.id ?? null);
+  const { setActivityStatus } = useCMSMutations();
+  const [openCompetency, setOpenCompetency] = useState<string | null>(null);
 
   if (!person) return null;
   const profile = person.profile_id ? profileMap[person.profile_id] : null;
@@ -351,11 +401,11 @@ const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competency
     : 0;
   const tone = readinessTone(overall);
 
-  const competentCount = profileLinks.filter((l: any) => (progressMap[l.competency_id]?.progress || 0) >= 85).length;
-
-  const updateProgress = (competency_id: string, value: number) => {
-    upsertProgress.mutate({ person_id: person.id, competency_id, progress: value, status: statusFromProgress(value) });
-  };
+  const competentCount = profileLinks.filter((l: any) => {
+    const c = competencyMap[l.competency_id];
+    const pr = progressMap[l.competency_id]?.progress || 0;
+    return pr >= (c?.mastery_threshold ?? 100);
+  }).length;
 
   // SVG ring constants
   const R = 42, C = 2 * Math.PI * R;
@@ -401,7 +451,7 @@ const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competency
               </div>
               <div className="flex-1 grid grid-cols-3 gap-3">
                 <MiniStat label="Competencies" value={profileLinks.length} />
-                <MiniStat label="Competent" value={competentCount} tone="emerald" />
+                <MiniStat label="Mastered" value={competentCount} tone="emerald" />
                 <MiniStat label="Gap" value={profileLinks.length - competentCount} tone="amber" />
               </div>
             </div>
@@ -421,44 +471,53 @@ const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competency
           <div className="space-y-2">
             {profileLinks.map((l: any) => {
               const comp = competencyMap[l.competency_id];
+              if (!comp) return null;
               const pr = progressMap[l.competency_id];
               const val = pr?.progress || 0;
-              const t = readinessTone(val);
-              const meta = STATUS_META[pr?.status || 'not_started'];
-              const acts = activities.filter((a: any) => a.competency_id === l.competency_id);
+              const kT = comp.knowledge_threshold ?? 50;
+              const sT = comp.skill_threshold ?? 75;
+              const mT = comp.mastery_threshold ?? 100;
+              const ms = milestoneFor(val, kT, sT, mT);
+              const mtone = milestoneTone(ms);
+              const acts = (activities as CompetenceActivity[])
+                .filter(a => a.competency_id === l.competency_id)
+                .sort((a, b) => a.sequence_order - b.sequence_order);
+              const isOpen = openCompetency === l.competency_id;
               return (
-                <Card key={l.id} className="p-3 border-border/50 transition-all hover:shadow-md hover:border-primary/30 group">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium leading-tight">{comp?.title}</p>
-                      {comp?.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{comp.description}</p>}
-                    </div>
-                    <Badge variant="outline" className={cn('gap-1 text-[10px] font-medium border', meta.badge)}>
-                      {meta.icon}
-                      {meta.label}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 rounded-full bg-muted/60 overflow-hidden">
-                      <div className={cn('h-full rounded-full bg-gradient-to-r transition-all duration-500', t.bar)} style={{ width: `${val}%` }} />
-                    </div>
-                    <Input
-                      type="number" min={0} max={100} value={val}
-                      onChange={(e) => updateProgress(l.competency_id, Math.min(100, Math.max(0, Number(e.target.value))))}
-                      className="w-16 h-7 text-xs text-center font-mono"
-                    />
-                  </div>
-                  {acts.length > 0 && (
-                    <div className="pt-2 mt-2 border-t border-border/40">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Gap Closure</p>
-                      <div className="flex flex-wrap gap-1">
-                        {acts.map((a: any) => (
-                          <Badge key={a.id} variant="outline" className="text-[10px] font-normal bg-muted/40">
-                            {ACTIVITY_TYPE_LABELS[a.activity_type as ActivityType]} · {a.title}
-                          </Badge>
-                        ))}
+                <Card key={l.id} className="border-border/50 overflow-hidden transition-all">
+                  <button
+                    onClick={() => setOpenCompetency(isOpen ? null : l.competency_id)}
+                    className="w-full text-left p-3 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-tight">{comp.title}</p>
+                        {comp.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{comp.description}</p>}
                       </div>
+                      <Badge variant="outline" className={cn('gap-1 text-[10px] font-medium border shrink-0', mtone.bg)}>
+                        {ms ? (() => { const Icon = MILESTONE_META[ms].icon; return <Icon className="h-3 w-3" />; })() : <AlertCircle className="h-3 w-3" />}
+                        {ms ? MILESTONE_META[ms].label : 'Not started'}
+                      </Badge>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <MilestoneBar value={val} knowledge={kT} skill={sT} mastery={mT} className="flex-1" />
+                      <span className={cn('text-xs font-bold tabular-nums w-10 text-right', mtone.text)}>{val}%</span>
+                      <ChevronRight className={cn('h-4 w-4 text-muted-foreground transition-transform', isOpen && 'rotate-90')} />
+                    </div>
+                  </button>
+                  {isOpen && (
+                    <ActivityChecklist
+                      personId={person.id}
+                      activities={acts}
+                      records={actRecords as PersonActivityRecord[]}
+                      onSet={(activity_id, status, existing_id) =>
+                        setActivityStatus.mutate(
+                          { person_id: person.id, activity_id, status, existing_id },
+                          { onError: (e: any) => toast({ title: 'Action blocked', description: e.message, variant: 'destructive' }) }
+                        )
+                      }
+                      knowledge={kT} skill={sT} mastery={mT} value={val}
+                    />
                   )}
                 </Card>
               );
@@ -467,6 +526,104 @@ const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competency
         </div>
       </SheetContent>
     </Sheet>
+  );
+};
+
+const ActivityChecklist: React.FC<{
+  personId: string;
+  activities: CompetenceActivity[];
+  records: PersonActivityRecord[];
+  onSet: (activity_id: string, status: ActivityRecordStatus, existing_id: string | null) => void;
+  knowledge: number; skill: number; mastery: number; value: number;
+}> = ({ activities, records, onSet, knowledge, skill, mastery, value }) => {
+  const recordsByActivity = useMemo(
+    () => Object.fromEntries(records.map(r => [r.activity_id, r])),
+    [records]
+  );
+  const sumWeights = activities.reduce((s, a) => s + (a.weight || 0), 0);
+  const nextThreshold = value < knowledge ? knowledge : value < skill ? skill : value < mastery ? mastery : null;
+  const nextLabel = nextThreshold === knowledge ? 'Knowledge' : nextThreshold === skill ? 'Skill' : nextThreshold === mastery ? 'Mastery' : null;
+  const completedCount = activities.filter(a => recordsByActivity[a.id]?.status === 'completed').length;
+
+  return (
+    <div className="border-t border-border/40 bg-muted/20 p-3 space-y-2">
+      {activities.length === 0 && (
+        <p className="text-xs text-muted-foreground text-center py-3">No activities defined for this competency.</p>
+      )}
+      {activities.map((a, idx) => {
+        const rec = recordsByActivity[a.id];
+        const isCompleted = rec?.status === 'completed';
+        const isInProgress = rec?.status === 'in_progress';
+        // Sequence lock: locked if strict AND any earlier (lower seq) activity not completed
+        const earlier = activities.slice(0, idx);
+        const locked = a.is_sequence_strict && earlier.some(e => recordsByActivity[e.id]?.status !== 'completed');
+        return (
+          <TooltipProvider key={a.id} delayDuration={150}>
+            <div className={cn(
+              'group relative flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg border bg-background/60 transition-all',
+              isCompleted ? 'border-emerald-500/30' : 'border-border/40',
+              locked && 'opacity-60'
+            )}>
+              <div className={cn(
+                'h-7 w-7 rounded-md flex items-center justify-center text-[11px] font-bold shrink-0',
+                isCompleted ? 'bg-emerald-500 text-white' : isInProgress ? 'bg-amber-500 text-white' : 'bg-muted text-muted-foreground'
+              )}>
+                {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : (a.sequence_order || idx + 1)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className={cn('text-xs sm:text-sm font-medium leading-tight truncate', isCompleted && 'line-through text-muted-foreground')}>{a.title}</p>
+                  {a.is_sequence_strict && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
+                      </TooltipTrigger>
+                      <TooltipContent>Strict order: earlier steps required</TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                  <Badge variant="outline" className={cn('text-[9px] py-0 h-4', ACTIVITY_TONE[a.activity_type])}>
+                    {ACTIVITY_TYPE_LABELS[a.activity_type]}
+                  </Badge>
+                  <Badge variant="outline" className="text-[9px] py-0 h-4 font-mono bg-primary/5 border-primary/20 text-primary">
+                    +{a.weight}%
+                  </Badge>
+                </div>
+              </div>
+              <div className="shrink-0">
+                {locked ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="sm" variant="ghost" disabled className="h-7 px-2 text-[11px]">
+                        <Lock className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Complete previous activities first</TooltipContent>
+                  </Tooltip>
+                ) : isCompleted ? (
+                  <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]"
+                    onClick={() => onSet(a.id, 'in_progress', rec?.id ?? null)}>
+                    <RotateCcw className="h-3 w-3 mr-1" />Reopen
+                  </Button>
+                ) : (
+                  <Button size="sm" variant={isInProgress ? 'default' : 'outline'} className="h-7 px-2.5 text-[11px]"
+                    onClick={() => onSet(a.id, 'completed', rec?.id ?? null)}>
+                    <CheckCircle2 className="h-3 w-3 mr-1" />Complete
+                  </Button>
+                )}
+              </div>
+            </div>
+          </TooltipProvider>
+        );
+      })}
+      <div className="flex items-center justify-between pt-2 mt-1 border-t border-border/40 text-[11px] text-muted-foreground">
+        <span>{completedCount}/{activities.length} done · weights {sumWeights}%</span>
+        {nextLabel && nextThreshold !== null && (
+          <span>Next: <span className="font-medium text-foreground">{nextLabel}</span> in {Math.max(0, nextThreshold - value)}%</span>
+        )}
+      </div>
+    </div>
   );
 };
 
