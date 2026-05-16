@@ -25,6 +25,7 @@ import { ORMDetailsPage } from "@/components/orm/ORMDetailsPage";
 import { ORMAnalyticsDashboard } from "@/components/orm/ORMAnalyticsDashboard";
 import { ORMResourceCapacityDashboard } from "@/components/orm/ORMResourceCapacityDashboard";
 import { ORMNotificationPreferences } from "@/components/orm/ORMNotificationPreferences";
+import { CMSLandingPage } from "@/components/cms/CMSLandingPage";
 import ProjectManagementPage from "@/components/project/ProjectManagementPage";
 import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
 import PSSRApproverDashboard from "@/pages/PSSRApproverDashboard";
