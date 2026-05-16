@@ -144,7 +144,8 @@ export function P2AHeatmap({ projects, onProjectClick }: Props) {
             </thead>
             <tbody>
               {projects.map((project) => {
-                const row = matrix[project.id] || {};
+                const mockRow = getMockHeatmapRow(projectCode(project), categories);
+                const row = mockRow ?? matrix[project.id] ?? {};
                 return (
                   <tr key={project.id} className="group hover:bg-muted/20 transition-colors">
                     <td
