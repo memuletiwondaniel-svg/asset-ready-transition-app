@@ -15,19 +15,17 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Star, MoreVertical, Trash2, GripVertical, AlertTriangle, FileText, Target, Settings2, RotateCcw } from 'lucide-react';
+import { Star, MoreVertical, Trash2, GripVertical, AlertTriangle, FileText, Target } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuCheckboxItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Project } from '@/hooks/useProjects';
-import { useTablePreferences } from '@/hooks/useTablePreferences';
+import { useTablePreferences, type TablePreferences } from '@/hooks/useTablePreferences';
 import { formatProjectLocation } from '@/utils/projectLocation';
 import type { ProjectsP2AProgressMap } from '@/hooks/useProjectsP2AProgress';
 
@@ -41,17 +39,27 @@ export interface ColumnDef {
   icon?: React.ComponentType<{ className?: string }>;
 }
 
-const COLUMNS: ColumnDef[] = [
+export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
   { id: 'id', label: 'ID', defaultWidth: 96, reorderable: false, hideable: false },
   { id: 'title', label: 'Project Title', defaultWidth: 240, hideable: false },
   { id: 'scope', label: 'Scope', defaultWidth: 240, hideable: true, icon: FileText },
   { id: 'milestone', label: 'Milestone', defaultWidth: 208, hideable: true, icon: Target },
   { id: 'location', label: 'Location', defaultWidth: 160, hideable: true },
   { id: 'qualifications', label: 'Qualifications', defaultWidth: 120, hideable: false, icon: AlertTriangle },
-  { id: 'progress', label: 'P2A Progress', defaultWidth: 180, hideable: false },
+  { id: 'progress', label: 'P2A Progress', defaultWidth: 140, hideable: false },
 ];
+const COLUMNS = PROJECTS_TABLE_COLUMNS;
 
-const DEFAULT_HIDDEN = ['scope', 'milestone'];
+export const PROJECTS_TABLE_DEFAULT_HIDDEN = ['scope', 'milestone'];
+const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
+
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v1';
+export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
+  order: COLUMNS.map((c) => c.id),
+  widths: Object.fromEntries(COLUMNS.map((c) => [c.id, c.defaultWidth])),
+  hidden: DEFAULT_HIDDEN,
+};
+
 
 function getProjectColor(prefix: string, num: string) {
   const str = `${prefix}${num}`;
@@ -134,6 +142,8 @@ interface ProjectsTableProps {
   onToggleFavorite: (e: React.MouseEvent, id: string, current: boolean | null) => void;
   onDelete: (project: { id: string; title: string }) => void;
   onOpenQualifications: (project: Project) => void;
+  prefs?: TablePreferences;
+  setPrefs?: React.Dispatch<React.SetStateAction<TablePreferences>>;
 }
 
 export function ProjectsTable({
@@ -144,13 +154,17 @@ export function ProjectsTable({
   onToggleFavorite,
   onDelete,
   onOpenQualifications,
+  prefs: externalPrefs,
+  setPrefs: externalSetPrefs,
 }: ProjectsTableProps) {
   const defaults = useMemo(() => ({
     order: COLUMNS.map(c => c.id),
     widths: Object.fromEntries(COLUMNS.map(c => [c.id, c.defaultWidth])),
     hidden: DEFAULT_HIDDEN,
   }), []);
-  const { prefs, setPrefs, reset } = useTablePreferences('p2a-projects-v1', defaults);
+  const internal = useTablePreferences(PROJECTS_TABLE_PREFS_KEY, defaults);
+  const prefs = externalPrefs ?? internal.prefs;
+  const setPrefs = externalSetPrefs ?? internal.setPrefs;
 
   const orderedColumns = useMemo(() => {
     const map = new Map(COLUMNS.map(c => [c.id, c]));
@@ -180,43 +194,8 @@ export function ProjectsTable({
     setPrefs(p => ({ ...p, widths: { ...p.widths, [id]: w } }));
   }, [setPrefs]);
 
-  const toggleHidden = (id: string) => {
-    setPrefs(p => ({
-      ...p,
-      hidden: p.hidden.includes(id) ? p.hidden.filter(x => x !== id) : [...p.hidden, id],
-    }));
-  };
-
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="flex justify-end mb-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-1.5">
-              <Settings2 className="h-3.5 w-3.5" />
-              <span className="text-xs">Columns</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuLabel className="text-xs">Toggle Columns</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {COLUMNS.filter(c => c.hideable).map(c => (
-              <DropdownMenuCheckboxItem
-                key={c.id}
-                checked={!prefs.hidden.includes(c.id)}
-                onCheckedChange={() => toggleHidden(c.id)}
-              >
-                {c.icon && <c.icon className="h-3.5 w-3.5 mr-2" />}
-                {c.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={reset} className="text-xs">
-              <RotateCcw className="h-3.5 w-3.5 mr-2" /> Reset layout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
       <div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -360,9 +339,8 @@ export function ProjectsTable({
                                     <button
                                       type="button"
                                       onClick={(e) => { e.stopPropagation(); onOpenQualifications(project); }}
-                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-sm font-semibold tabular-nums transition-colors"
+                                      className="inline-flex items-center justify-center min-w-[2rem] px-2 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-sm font-semibold tabular-nums transition-colors"
                                     >
-                                      <AlertTriangle className="h-3.5 w-3.5" />
                                       {qualCount}
                                     </button>
                                   </TooltipTrigger>
@@ -379,27 +357,22 @@ export function ProjectsTable({
                               {vcrs.length === 0 ? (
                                 <span className="text-xs text-muted-foreground italic">No VCRs</span>
                               ) : (
-                                <div className="space-y-1.5">
-                                  <div className="flex items-baseline justify-between gap-2">
-                                    <div className="flex items-baseline gap-1.5 min-w-0">
-                                      <span className="text-sm font-semibold text-foreground tabular-nums">{avg}%</span>
-                                      {total > 0 && (
-                                        <span className="text-[10px] text-muted-foreground tabular-nums truncate">
-                                          {completed}/{total}
-                                        </span>
-                                      )}
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <Progress value={avg} className="h-1.5 flex-1 min-w-0" indicatorClassName={barColor} />
+                                      <span className="text-sm font-semibold text-foreground tabular-nums shrink-0">{avg}%</span>
                                     </div>
-                                    {vcrs.length > 1 && (
-                                      <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-                                        {vcrs.length} VCR
-                                      </span>
-                                    )}
-                                  </div>
-                                  <Progress value={avg} className="h-1.5 w-full" indicatorClassName={barColor} />
-                                </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    {total > 0 ? `${completed} of ${total} delivered` : 'No deliverables'}
+                                    {vcrs.length > 0 ? ` \u00b7 ${vcrs.length} VCR${vcrs.length === 1 ? '' : 's'}` : ''}
+                                  </TooltipContent>
+                                </Tooltip>
                               )}
                             </div>
                           );
+
                         default:
                           return null;
                       }

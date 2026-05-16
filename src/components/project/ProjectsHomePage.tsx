@@ -26,7 +26,9 @@ import {
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useProjectsP2AProgress } from '@/hooks/useProjectsP2AProgress';
-import { ProjectsTable } from '@/components/project/ProjectsTable';
+import { ProjectsTable, PROJECTS_TABLE_PREFS_KEY, PROJECTS_TABLE_DEFAULTS } from '@/components/project/ProjectsTable';
+import { ProjectColumnsMenu } from '@/components/project/ProjectColumnsMenu';
+import { useTablePreferences } from '@/hooks/useTablePreferences';
 import { P2AHeatmap } from '@/components/p2a/P2AHeatmap';
 import { ProjectQualificationsSheet } from '@/components/p2a/ProjectQualificationsSheet';
 import type { Project } from '@/hooks/useProjects';
@@ -49,6 +51,10 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
   const [projectToDelete, setProjectToDelete] = useState<{ id: string; title: string } | null>(null);
   const [qualProject, setQualProject] = useState<Project | null>(null);
   const queryClient = useQueryClient();
+  const { prefs: tablePrefs, setPrefs: setTablePrefs, reset: resetTablePrefs } = useTablePreferences(
+    PROJECTS_TABLE_PREFS_KEY,
+    PROJECTS_TABLE_DEFAULTS,
+  );
 
   const filteredProjects = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -191,11 +197,15 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                   </div>
                 </TooltipProvider>
 
+                {viewMode === 'list' && (
+                  <ProjectColumnsMenu prefs={tablePrefs} setPrefs={setTablePrefs} reset={resetTablePrefs} />
+                )}
+
                 {canPerformActions && (
                   <Button
                     size="sm"
                     onClick={() => setIsAddModalOpen(true)}
-                    className="gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm"
+                    className="gap-2 h-9 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm"
                   >
                     <Plus className="h-4 w-4" />
                     <span className="hidden sm:inline">New Project</span>
@@ -239,6 +249,8 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                 onToggleFavorite={handleToggleFavorite}
                 onDelete={setProjectToDelete}
                 onOpenQualifications={setQualProject}
+                prefs={tablePrefs}
+                setPrefs={setTablePrefs}
               />
             )}
           </div>
