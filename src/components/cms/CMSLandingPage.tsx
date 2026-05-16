@@ -993,39 +993,52 @@ const ActivitiesTab: React.FC<any> = ({ activities, competencies, competencyMap 
         </Dialog>
       </div>
 
+      <TooltipProvider>
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent border-border/40">
+            <TableHead className="text-[11px] uppercase tracking-wider w-12">Seq</TableHead>
             <TableHead className="text-[11px] uppercase tracking-wider">Title</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-wider">Competency</TableHead>
+            <TableHead className="text-[11px] uppercase tracking-wider hidden md:table-cell">Competency</TableHead>
             <TableHead className="text-[11px] uppercase tracking-wider">Type</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-wider">Provider</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-wider text-right">Hours</TableHead>
+            <TableHead className="text-[11px] uppercase tracking-wider text-right">Weight</TableHead>
+            <TableHead className="text-[11px] uppercase tracking-wider text-right hidden sm:table-cell">Hours</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filtered.map((a: any) => (
             <TableRow key={a.id} className="border-border/40 hover:bg-muted/40 transition-colors">
+              <TableCell className="font-mono text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  {a.sequence_order || '—'}
+                  {a.is_sequence_strict && <Lock className="h-3 w-3 text-amber-500" />}
+                </div>
+              </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-lg bg-accent/10 text-accent-foreground flex items-center justify-center shrink-0">
                     <Target className="h-4 w-4" />
                   </div>
-                  <span className="font-medium text-sm">{a.title}</span>
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">{a.title}</p>
+                    <p className="text-[11px] text-muted-foreground md:hidden truncate">{competencyMap[a.competency_id]?.title || '—'}</p>
+                  </div>
                 </div>
               </TableCell>
-              <TableCell className="text-muted-foreground text-xs">{competencyMap[a.competency_id]?.title || '—'}</TableCell>
+              <TableCell className="text-muted-foreground text-xs hidden md:table-cell">{competencyMap[a.competency_id]?.title || '—'}</TableCell>
               <TableCell>
                 <Badge variant="outline" className={cn('text-[10px] font-medium', ACTIVITY_TONE[a.activity_type] || '')}>
                   {ACTIVITY_TYPE_LABELS[a.activity_type as ActivityType]}
                 </Badge>
               </TableCell>
-              <TableCell className="text-muted-foreground text-xs">{a.provider || '—'}</TableCell>
-              <TableCell className="text-right text-xs font-mono">{a.duration_hours ? `${a.duration_hours}h` : '—'}</TableCell>
+              <TableCell className="text-right">
+                <Badge variant="outline" className="font-mono text-[10px] bg-primary/5 border-primary/20 text-primary">+{a.weight}%</Badge>
+              </TableCell>
+              <TableCell className="text-right text-xs font-mono hidden sm:table-cell">{a.duration_hours ? `${a.duration_hours}h` : '—'}</TableCell>
             </TableRow>
           ))}
           {!filtered.length && (
-            <TableRow><TableCell colSpan={5} className="text-center py-16">
+            <TableRow><TableCell colSpan={6} className="text-center py-16">
               <div className="flex flex-col items-center gap-2 text-muted-foreground">
                 <Target className="h-8 w-8 opacity-30" />
                 <p className="text-sm">No activities</p>
@@ -1034,6 +1047,7 @@ const ActivitiesTab: React.FC<any> = ({ activities, competencies, competencyMap 
           )}
         </TableBody>
       </Table>
+      </TooltipProvider>
     </Card>
   );
 };
