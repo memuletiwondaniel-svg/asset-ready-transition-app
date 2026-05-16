@@ -78,33 +78,28 @@ export const CMSLandingPage: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.08] via-transparent to-accent/[0.06]" />
         <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
-        <div className="relative p-6 md:p-8">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-2xl blur-md opacity-60 group-hover:opacity-90 transition-opacity" />
-                <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                  <GraduationCap className="h-7 w-7" />
-                </div>
+        <div className="relative p-4 sm:p-6 md:p-8">
+          <div className="flex items-start gap-3">
+            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shrink-0">
+              <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+                  Competence Management
+                </h1>
+                <Badge variant="outline" className="hidden sm:inline-flex gap-1 text-[10px] bg-background/60 backdrop-blur">
+                  <Sparkles className="h-2.5 w-2.5" /> Live
+                </Badge>
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                    Competence Management
-                  </h1>
-                  <Badge variant="outline" className="hidden sm:inline-flex gap-1 text-[10px] bg-background/60 backdrop-blur">
-                    <Sparkles className="h-2.5 w-2.5" /> Live
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-                  Build profiles, map competencies, close gaps and track every individual's readiness in one place.
-                </p>
-              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-xl">
+                Build profiles, map competencies, close gaps and track every individual's readiness in one place.
+              </p>
             </div>
           </div>
 
           {/* KPIs */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-7">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mt-5 sm:mt-7">
             <KPI tone="violet" icon={<Users className="h-4 w-4" />} label="People" value={people.length} hint={`${profiles.length} profiles`} />
             <KPI tone="emerald" icon={<TrendingUp className="h-4 w-4" />} label="Avg Readiness" value={`${avgReadiness}%`} progress={avgReadiness} />
             <KPI tone="blue" icon={<Award className="h-4 w-4" />} label="Competent" value={competent} hint={`${inProgress} in progress`} />
@@ -113,22 +108,24 @@ export const CMSLandingPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-6 md:p-8">
+      <div className="p-3 sm:p-6 md:p-8">
         <Tabs defaultValue="people" className="w-full">
-          <TabsList className="bg-muted/50 backdrop-blur p-1 h-auto rounded-xl border border-border/40 shadow-sm">
-            <TabsTrigger value="people" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-4 py-2">
-              <Users className="h-3.5 w-3.5" /> People
-            </TabsTrigger>
-            <TabsTrigger value="profiles" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-4 py-2">
-              <Layers className="h-3.5 w-3.5" /> Profiles
-            </TabsTrigger>
-            <TabsTrigger value="competencies" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-4 py-2">
-              <BookOpen className="h-3.5 w-3.5" /> Competencies
-            </TabsTrigger>
-            <TabsTrigger value="activities" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-4 py-2">
-              <Target className="h-3.5 w-3.5" /> Activities
-            </TabsTrigger>
-          </TabsList>
+          <div className="-mx-3 sm:mx-0 overflow-x-auto scrollbar-thin px-3 sm:px-0">
+            <TabsList className="bg-muted/50 backdrop-blur p-1 h-auto rounded-xl border border-border/40 shadow-sm inline-flex w-max">
+              <TabsTrigger value="people" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm">
+                <Users className="h-3.5 w-3.5" /> People
+              </TabsTrigger>
+              <TabsTrigger value="profiles" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm">
+                <Layers className="h-3.5 w-3.5" /> Profiles
+              </TabsTrigger>
+              <TabsTrigger value="competencies" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm">
+                <BookOpen className="h-3.5 w-3.5" /> Competencies
+              </TabsTrigger>
+              <TabsTrigger value="activities" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm">
+                <Target className="h-3.5 w-3.5" /> Activities
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <div className="mt-5">
             <TabsContent value="people" className="mt-0">
@@ -214,7 +211,7 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
             <Input placeholder="Search people..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-background/60 border-border/60 focus-visible:ring-primary/30" />
           </div>
           <Select value={profileFilter} onValueChange={setProfileFilter}>
-            <SelectTrigger className="w-[170px] bg-background/60 border-border/60"><Filter className="h-3.5 w-3.5 mr-1 text-muted-foreground" /><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[130px] sm:w-[170px] bg-background/60 border-border/60 shrink-0"><Filter className="h-3.5 w-3.5 mr-1 text-muted-foreground shrink-0" /><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All profiles</SelectItem>
               {profiles.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
@@ -247,14 +244,15 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
         </Dialog>
       </div>
 
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent border-border/40">
             <TableHead className="text-[11px] uppercase tracking-wider">Person</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-wider">Staff ID</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-wider">Profile</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-wider w-[320px]">Readiness</TableHead>
-            <TableHead className="w-12"></TableHead>
+            <TableHead className="text-[11px] uppercase tracking-wider hidden md:table-cell">Staff ID</TableHead>
+            <TableHead className="text-[11px] uppercase tracking-wider hidden sm:table-cell">Profile</TableHead>
+            <TableHead className="text-[11px] uppercase tracking-wider w-[140px] sm:w-[320px]">Readiness</TableHead>
+            <TableHead className="w-8 sm:w-12"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -269,19 +267,27 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
                 onClick={() => setSelected(p)}
                 className="cursor-pointer group border-border/40 transition-colors hover:bg-muted/40"
               >
-                <TableCell>
+                <TableCell className="py-3">
                   <div className="flex items-center gap-3">
-                    <div className={cn('h-9 w-9 rounded-full bg-gradient-to-br text-white flex items-center justify-center text-xs font-semibold shadow-sm ring-2 ring-background', avatarGradient(p.staff_id))}>
+                    <div className={cn('h-9 w-9 rounded-full bg-gradient-to-br text-white flex items-center justify-center text-xs font-semibold shadow-sm ring-2 ring-background shrink-0', avatarGradient(p.staff_id))}>
                       {initials(p.first_name, p.last_name)}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-sm leading-tight">{p.first_name} {p.last_name}</p>
+                      <p className="font-medium text-sm leading-tight truncate">{p.first_name} {p.last_name}</p>
                       <p className="text-xs text-muted-foreground truncate">{p.job_title || '—'}</p>
+                      <div className="flex items-center gap-2 mt-1 sm:hidden">
+                        <span className="font-mono text-[10px] text-muted-foreground">{p.staff_id}</span>
+                        {prof && (
+                          <Badge variant="secondary" className="text-[10px] py-0 h-4 bg-primary/10 text-primary border border-primary/20">
+                            {prof.code || prof.name}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">{p.staff_id}</TableCell>
-                <TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground hidden md:table-cell">{p.staff_id}</TableCell>
+                <TableCell className="hidden sm:table-cell">
                   {prof ? (
                     <Badge variant="secondary" className="font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15">
                       {prof.code || prof.name}
@@ -291,14 +297,14 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-2 rounded-full bg-muted/60 overflow-hidden">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex-1 min-w-[40px] h-2 rounded-full bg-muted/60 overflow-hidden">
                       <div
                         className={cn('h-full rounded-full bg-gradient-to-r transition-all duration-700 group-hover:brightness-110', tone.bar)}
                         style={{ width: `${val}%` }}
                       />
                     </div>
-                    <span className={cn('text-sm font-bold tabular-nums w-10 text-right', tone.text)}>{val}%</span>
+                    <span className={cn('text-xs sm:text-sm font-bold tabular-nums w-9 sm:w-10 text-right', tone.text)}>{val}%</span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -317,6 +323,7 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
           )}
         </TableBody>
       </Table>
+      </div>
 
       <PersonProgressSheet
         person={selected}
