@@ -488,7 +488,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       </div>
 
                       {/* Title */}
-                      <div className="w-[360px] shrink-0 flex items-center gap-2">
+                      <div className="w-[260px] shrink-0 flex items-center gap-2">
                         <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
                           {project.project_title}
                         </h3>
