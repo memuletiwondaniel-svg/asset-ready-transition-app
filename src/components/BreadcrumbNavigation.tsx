@@ -213,15 +213,15 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={() => toggleFavorite(effectiveFavoritePath, currentPageLabel)}
-                className="h-7 w-7 rounded-lg ml-1"
+                className="h-6 w-6 rounded-md ml-0.5"
               >
-                <Star 
+                <Star
                   className={cn(
-                    "h-3.5 w-3.5 transition-colors",
-                    isCurrentFavorite 
-                      ? "fill-amber-400 text-amber-400" 
-                      : "text-muted-foreground hover:text-amber-400"
-                  )} 
+                    "h-3 w-3 transition-colors",
+                    isCurrentFavorite
+                      ? "fill-amber-400 text-amber-400"
+                      : "text-muted-foreground/60 hover:text-amber-400"
+                  )}
                 />
               </Button>
             </TooltipTrigger>
