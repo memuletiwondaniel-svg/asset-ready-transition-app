@@ -124,7 +124,7 @@ export const OrshSidebar: React.FC<OrshSidebarProps> = ({
 
       {/* Mobile Sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-72 p-0 bg-white/70 dark:bg-zinc-900/80 backdrop-blur-xl border-r border-white/20 dark:border-white/10">
+        <SheetContent side="left" className="w-72 p-0 bg-background border-r border-border">
           <SidebarContent
             isMobile={true}
             isCollapsed={false}
