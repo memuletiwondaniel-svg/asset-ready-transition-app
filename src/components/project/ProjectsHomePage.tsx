@@ -280,8 +280,7 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
       <ProjectQualificationsSheet
         open={!!qualProject}
         onOpenChange={(o) => !o && setQualProject(null)}
-        projectId={qualProject?.id ?? null}
-        projectTitle={qualProject?.project_title}
+        project={qualProject}
       />
     </div>
   );
