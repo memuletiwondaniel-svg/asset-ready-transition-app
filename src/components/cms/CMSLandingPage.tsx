@@ -422,15 +422,23 @@ const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competency
   const progressMap: Record<string, any> = Object.fromEntries(progress.map((p: any) => [p.competency_id, p]));
 
   const totalWeight = profileLinks.reduce((s: number, l: any) => s + l.weight, 0) || 1;
+  // Compute readiness per competency normalized to its required milestone target
+  const perCompReadiness = (l: any) => {
+    const comp = competencyMap[l.competency_id];
+    const target = milestoneThreshold(l.required_milestone || 'mastery', comp);
+    const v = progressMap[l.competency_id]?.progress || 0;
+    return Math.min(100, target > 0 ? (v / target) * 100 : 0);
+  };
   const overall = profileLinks.length
-    ? Math.round(profileLinks.reduce((s: number, l: any) => s + ((progressMap[l.competency_id]?.progress || 0) * l.weight), 0) / totalWeight)
+    ? Math.round(profileLinks.reduce((s: number, l: any) => s + (perCompReadiness(l) * l.weight), 0) / totalWeight)
     : 0;
   const tone = readinessTone(overall);
 
   const competentCount = profileLinks.filter((l: any) => {
     const c = competencyMap[l.competency_id];
+    const target = milestoneThreshold(l.required_milestone || 'mastery', c);
     const pr = progressMap[l.competency_id]?.progress || 0;
-    return pr >= (c?.mastery_threshold ?? 100);
+    return pr >= target;
   }).length;
 
   // SVG ring constants
