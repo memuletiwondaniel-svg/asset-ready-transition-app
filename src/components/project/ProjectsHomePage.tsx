@@ -541,23 +541,32 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       {/* spacer to separate Location from Progress */}
                       <div className="w-12 shrink-0" />
 
-                      {/* P2A Progress — single bar + avg % + VCR count chip */}
+                      {/* P2A Progress — % + chip on top, full-width bar below */}
                       <div className="w-56 shrink-0">
                         {vcrs.length === 0 ? (
                           <span className="text-xs text-muted-foreground italic">No VCRs</span>
                         ) : (
-                          <div className="flex items-center gap-2">
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-baseline gap-1.5">
+                                <span className="text-sm font-semibold text-foreground tabular-nums">{avg}%</span>
+                                {total > 0 && (
+                                  <span className="text-[11px] text-muted-foreground tabular-nums">
+                                    {completed}/{total} ready
+                                  </span>
+                                )}
+                              </div>
+                              {vcrs.length > 1 && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-medium shrink-0">
+                                  {vcrs.length} VCRs
+                                </Badge>
+                              )}
+                            </div>
                             <Progress
                               value={avg}
-                              className="h-2 flex-1"
+                              className="h-1.5 w-full"
                               indicatorClassName={barColor}
                             />
-                            <span className="text-xs font-medium text-foreground tabular-nums w-9 text-right">{avg}%</span>
-                            {vcrs.length > 1 && (
-                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 font-medium">
-                                {vcrs.length} VCRs
-                              </Badge>
-                            )}
                           </div>
                         )}
                       </div>
