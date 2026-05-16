@@ -11,15 +11,18 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import {
   GraduationCap, Users, BookOpen, Layers, Sparkles, Plus, Search,
   TrendingUp, Award, Target, ChevronRight, Filter, MoreHorizontal,
-  CheckCircle2, Clock, AlertCircle, Activity,
+  CheckCircle2, Clock, AlertCircle, Activity, Lock, Play, RotateCcw, Brain, Wrench, Trophy,
 } from 'lucide-react';
 import {
   useCompetenceProfiles, useCompetencies, useProfileLinks, useActivities, usePeople,
-  useOverallProgress, usePersonProgress, useCMSMutations, ACTIVITY_TYPE_LABELS, statusFromProgress,
-  type CMSPerson, type ActivityType,
+  useOverallProgress, usePersonProgress, usePersonActivityRecords, useCMSMutations,
+  ACTIVITY_TYPE_LABELS, statusFromProgress,
+  type CMSPerson, type ActivityType, type CompetenceActivity, type PersonActivityRecord, type ActivityRecordStatus,
 } from '@/hooks/useCMS';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
