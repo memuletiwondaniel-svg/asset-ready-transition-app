@@ -772,7 +772,10 @@ const ProfilesTab: React.FC<any> = ({ profiles, competencies, links, people }) =
         onClose={() => setSelectedProfile(null)}
         competencies={competencies}
         links={links}
-        onLink={(competency_id: string) => linkCompetency.mutate({ profile_id: selectedProfile.id, competency_id })}
+        onLink={(competency_id: string, required_milestone: 'knowledge'|'skill'|'mastery') =>
+          linkCompetency.mutate({ profile_id: selectedProfile.id, competency_id, required_milestone })}
+        onUpdate={(id: string, required_milestone: 'knowledge'|'skill'|'mastery') =>
+          updateProfileCompetency.mutate({ id, required_milestone })}
         onUnlink={(id: string) => unlinkCompetency.mutate(id)}
       />
     </div>
