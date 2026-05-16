@@ -24,6 +24,7 @@ import {
   ACTIVITY_TYPE_LABELS, statusFromProgress,
   type CMSPerson, type ActivityType, type CompetenceActivity, type PersonActivityRecord, type ActivityRecordStatus,
 } from '@/hooks/useCMS';
+import { useLocations } from '@/hooks/useLocations';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
