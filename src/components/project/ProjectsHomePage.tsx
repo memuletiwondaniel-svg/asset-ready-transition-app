@@ -51,6 +51,10 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
   const [projectToDelete, setProjectToDelete] = useState<{ id: string; title: string } | null>(null);
   const [qualProject, setQualProject] = useState<Project | null>(null);
   const queryClient = useQueryClient();
+  const { prefs: tablePrefs, setPrefs: setTablePrefs, reset: resetTablePrefs } = useTablePreferences(
+    PROJECTS_TABLE_PREFS_KEY,
+    PROJECTS_TABLE_DEFAULTS,
+  );
 
   const filteredProjects = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
