@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 
 export type CompetenceProfile = { id: string; name: string; code: string | null; description: string | null; created_at: string };
 export type Competency = { id: string; title: string; description: string | null; created_at: string; knowledge_threshold: number; skill_threshold: number; mastery_threshold: number };
-export type ProfileCompetencyLink = { id: string; profile_id: string; competency_id: string; weight: number; required_level: number | null };
+export type RequiredMilestone = 'knowledge' | 'skill' | 'mastery';
+export type ProfileCompetencyLink = { id: string; profile_id: string; competency_id: string; weight: number; required_level: number | null; required_milestone: RequiredMilestone };
 export type ActivityType = 'vendor_training'|'ojt'|'assessment'|'certification'|'e_learning'|'mentoring'|'other';
 export type ActivityRecordStatus = 'planned'|'in_progress'|'completed'|'failed';
 export type CompetenceActivity = { id: string; competency_id: string; title: string; description: string | null; activity_type: ActivityType; provider: string | null; duration_hours: number | null; target_completion_date: string | null; weight: number; sequence_order: number; is_sequence_strict: boolean };
