@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Grid, List, Key, Plus, Star, Settings2, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Search, Grid, List, Key, Plus, Star, Settings2, MoreVertical, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
