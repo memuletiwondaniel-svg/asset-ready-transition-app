@@ -39,17 +39,27 @@ export interface ColumnDef {
   icon?: React.ComponentType<{ className?: string }>;
 }
 
-const COLUMNS: ColumnDef[] = [
+export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
   { id: 'id', label: 'ID', defaultWidth: 96, reorderable: false, hideable: false },
   { id: 'title', label: 'Project Title', defaultWidth: 240, hideable: false },
   { id: 'scope', label: 'Scope', defaultWidth: 240, hideable: true, icon: FileText },
   { id: 'milestone', label: 'Milestone', defaultWidth: 208, hideable: true, icon: Target },
   { id: 'location', label: 'Location', defaultWidth: 160, hideable: true },
   { id: 'qualifications', label: 'Qualifications', defaultWidth: 120, hideable: false, icon: AlertTriangle },
-  { id: 'progress', label: 'P2A Progress', defaultWidth: 180, hideable: false },
+  { id: 'progress', label: 'P2A Progress', defaultWidth: 140, hideable: false },
 ];
+const COLUMNS = PROJECTS_TABLE_COLUMNS;
 
-const DEFAULT_HIDDEN = ['scope', 'milestone'];
+export const PROJECTS_TABLE_DEFAULT_HIDDEN = ['scope', 'milestone'];
+const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
+
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v1';
+export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
+  order: COLUMNS.map((c) => c.id),
+  widths: Object.fromEntries(COLUMNS.map((c) => [c.id, c.defaultWidth])),
+  hidden: DEFAULT_HIDDEN,
+};
+
 
 function getProjectColor(prefix: string, num: string) {
   const str = `${prefix}${num}`;
