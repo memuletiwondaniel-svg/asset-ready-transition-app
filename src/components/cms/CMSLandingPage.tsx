@@ -968,6 +968,24 @@ const ActivitiesTab: React.FC<any> = ({ activities, competencies, competencyMap 
                 <div><Label>Provider</Label><Input value={form.provider} onChange={e => setForm({ ...form, provider: e.target.value })} /></div>
                 <div><Label>Duration (hrs)</Label><Input type="number" value={form.duration_hours} onChange={e => setForm({ ...form, duration_hours: e.target.value })} /></div>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="flex items-center gap-1">Weight (%)
+                    <Tooltip><TooltipTrigger><AlertCircle className="h-3 w-3 text-muted-foreground" /></TooltipTrigger>
+                      <TooltipContent>How much this activity contributes to closing the competency. All activity weights for a competency should sum to 100.</TooltipContent>
+                    </Tooltip>
+                  </Label>
+                  <Input type="number" min={0} max={100} value={form.weight} onChange={e => setForm({ ...form, weight: e.target.value })} />
+                </div>
+                <div><Label>Sequence #</Label><Input type="number" min={1} value={form.sequence_order} onChange={e => setForm({ ...form, sequence_order: e.target.value })} /></div>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-border/50 p-3 bg-muted/30">
+                <div className="space-y-0.5 pr-3">
+                  <Label className="text-sm">Strict sequence</Label>
+                  <p className="text-[11px] text-muted-foreground">Block this activity until earlier sequence steps are complete.</p>
+                </div>
+                <Switch checked={form.is_sequence_strict} onCheckedChange={(v) => setForm({ ...form, is_sequence_strict: v })} />
+              </div>
               <div><Label>Description</Label><Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
             </div>
             <DialogFooter><Button onClick={submit} disabled={addActivity.isPending}>Save</Button></DialogFooter>
