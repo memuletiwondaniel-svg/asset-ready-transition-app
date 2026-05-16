@@ -142,6 +142,8 @@ interface ProjectsTableProps {
   onToggleFavorite: (e: React.MouseEvent, id: string, current: boolean | null) => void;
   onDelete: (project: { id: string; title: string }) => void;
   onOpenQualifications: (project: Project) => void;
+  prefs?: TablePreferences;
+  setPrefs?: React.Dispatch<React.SetStateAction<TablePreferences>>;
 }
 
 export function ProjectsTable({
@@ -152,13 +154,17 @@ export function ProjectsTable({
   onToggleFavorite,
   onDelete,
   onOpenQualifications,
+  prefs: externalPrefs,
+  setPrefs: externalSetPrefs,
 }: ProjectsTableProps) {
   const defaults = useMemo(() => ({
     order: COLUMNS.map(c => c.id),
     widths: Object.fromEntries(COLUMNS.map(c => [c.id, c.defaultWidth])),
     hidden: DEFAULT_HIDDEN,
   }), []);
-  const { prefs, setPrefs, reset } = useTablePreferences('p2a-projects-v1', defaults);
+  const internal = useTablePreferences(PROJECTS_TABLE_PREFS_KEY, defaults);
+  const prefs = externalPrefs ?? internal.prefs;
+  const setPrefs = externalSetPrefs ?? internal.setPrefs;
 
   const orderedColumns = useMemo(() => {
     const map = new Map(COLUMNS.map(c => [c.id, c]));
@@ -188,43 +194,8 @@ export function ProjectsTable({
     setPrefs(p => ({ ...p, widths: { ...p.widths, [id]: w } }));
   }, [setPrefs]);
 
-  const toggleHidden = (id: string) => {
-    setPrefs(p => ({
-      ...p,
-      hidden: p.hidden.includes(id) ? p.hidden.filter(x => x !== id) : [...p.hidden, id],
-    }));
-  };
-
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="flex justify-end mb-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-1.5">
-              <Settings2 className="h-3.5 w-3.5" />
-              <span className="text-xs">Columns</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuLabel className="text-xs">Toggle Columns</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {COLUMNS.filter(c => c.hideable).map(c => (
-              <DropdownMenuCheckboxItem
-                key={c.id}
-                checked={!prefs.hidden.includes(c.id)}
-                onCheckedChange={() => toggleHidden(c.id)}
-              >
-                {c.icon && <c.icon className="h-3.5 w-3.5 mr-2" />}
-                {c.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={reset} className="text-xs">
-              <RotateCcw className="h-3.5 w-3.5 mr-2" /> Reset layout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
       <div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
