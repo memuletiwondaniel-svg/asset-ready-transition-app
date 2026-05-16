@@ -362,11 +362,13 @@ const MilestoneBar: React.FC<{
   knowledge?: number;
   skill?: number;
   mastery?: number;
+  target?: number;
   showLabels?: boolean;
   className?: string;
-}> = ({ value, knowledge = 50, skill = 75, mastery = 100, showLabels, className }) => {
+}> = ({ value, knowledge = 50, skill = 75, mastery = 100, target, showLabels, className }) => {
   const ms = milestoneFor(value, knowledge, skill, mastery);
   const tone = milestoneTone(ms);
+  const reachedTarget = target != null && value >= target;
   return (
     <div className={cn('relative', className)}>
       <div className="relative h-2 rounded-full bg-muted/60 overflow-hidden">
@@ -383,6 +385,12 @@ const MilestoneBar: React.FC<{
             />
           )
         ))}
+        {target != null && target < 100 && (
+          <div
+            className={cn('absolute -top-0.5 -bottom-0.5 w-0.5 rounded-full', reachedTarget ? 'bg-emerald-500' : 'bg-primary')}
+            style={{ left: `calc(${target}% - 1px)` }}
+          />
+        )}
       </div>
       {showLabels && (
         <div className="relative h-3 mt-1 text-[9px] uppercase tracking-wider text-muted-foreground">
@@ -393,6 +401,12 @@ const MilestoneBar: React.FC<{
       )}
     </div>
   );
+};
+
+const milestoneThreshold = (m: 'knowledge' | 'skill' | 'mastery', c: any) => {
+  if (m === 'knowledge') return c?.knowledge_threshold ?? 50;
+  if (m === 'skill') return c?.skill_threshold ?? 75;
+  return c?.mastery_threshold ?? 100;
 };
 
 // ============ PERSON PROGRESS SHEET ============
@@ -408,15 +422,23 @@ const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competency
   const progressMap: Record<string, any> = Object.fromEntries(progress.map((p: any) => [p.competency_id, p]));
 
   const totalWeight = profileLinks.reduce((s: number, l: any) => s + l.weight, 0) || 1;
+  // Compute readiness per competency normalized to its required milestone target
+  const perCompReadiness = (l: any) => {
+    const comp = competencyMap[l.competency_id];
+    const target = milestoneThreshold(l.required_milestone || 'mastery', comp);
+    const v = progressMap[l.competency_id]?.progress || 0;
+    return Math.min(100, target > 0 ? (v / target) * 100 : 0);
+  };
   const overall = profileLinks.length
-    ? Math.round(profileLinks.reduce((s: number, l: any) => s + ((progressMap[l.competency_id]?.progress || 0) * l.weight), 0) / totalWeight)
+    ? Math.round(profileLinks.reduce((s: number, l: any) => s + (perCompReadiness(l) * l.weight), 0) / totalWeight)
     : 0;
   const tone = readinessTone(overall);
 
   const competentCount = profileLinks.filter((l: any) => {
     const c = competencyMap[l.competency_id];
+    const target = milestoneThreshold(l.required_milestone || 'mastery', c);
     const pr = progressMap[l.competency_id]?.progress || 0;
-    return pr >= (c?.mastery_threshold ?? 100);
+    return pr >= target;
   }).length;
 
   // SVG ring constants
@@ -495,25 +517,40 @@ const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competency
                 .filter(a => a.competency_id === l.competency_id)
                 .sort((a, b) => a.sequence_order - b.sequence_order);
               const isOpen = openCompetency === l.competency_id;
+              const requiredM: 'knowledge'|'skill'|'mastery' = l.required_milestone || 'mastery';
+              const targetT = milestoneThreshold(requiredM, comp);
+              const reached = val >= targetT;
+              const reqMeta = MILESTONE_META[requiredM];
+              const ReqIcon = reqMeta.icon;
+              const reqTone = milestoneTone(requiredM);
               return (
-                <Card key={l.id} className="border-border/50 overflow-hidden transition-all">
+                <Card key={l.id} className={cn('border-border/50 overflow-hidden transition-all', reached && 'border-emerald-500/40')}>
                   <button
                     onClick={() => setOpenCompetency(isOpen ? null : l.competency_id)}
                     className="w-full text-left p-3 hover:bg-muted/30 transition-colors"
                   >
-                    <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium leading-tight">{comp.title}</p>
                         {comp.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{comp.description}</p>}
                       </div>
-                      <Badge variant="outline" className={cn('gap-1 text-[10px] font-medium border shrink-0', mtone.bg)}>
-                        {ms ? (() => { const Icon = MILESTONE_META[ms].icon; return <Icon className="h-3 w-3" />; })() : <AlertCircle className="h-3 w-3" />}
-                        {ms ? MILESTONE_META[ms].label : 'Not started'}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <Badge variant="outline" className={cn('gap-1 text-[10px] font-medium border', mtone.bg)}>
+                          {ms ? (() => { const Icon = MILESTONE_META[ms].icon; return <Icon className="h-3 w-3" />; })() : <AlertCircle className="h-3 w-3" />}
+                          {ms ? MILESTONE_META[ms].label : 'Not started'}
+                        </Badge>
+                        <Badge variant="outline" className={cn('gap-1 text-[9px] font-medium border', reqTone.bg)}>
+                          <Target className="h-2.5 w-2.5" />
+                          <ReqIcon className="h-2.5 w-2.5" />
+                          Required: {reqMeta.label}
+                        </Badge>
+                      </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <MilestoneBar value={val} knowledge={kT} skill={sT} mastery={mT} className="flex-1" />
-                      <span className={cn('text-xs font-bold tabular-nums w-10 text-right', mtone.text)}>{val}%</span>
+                      <MilestoneBar value={val} knowledge={kT} skill={sT} mastery={mT} target={targetT} className="flex-1" />
+                      <span className={cn('text-xs font-bold tabular-nums w-14 text-right', reached ? 'text-emerald-600' : mtone.text)}>
+                        {val}<span className="text-muted-foreground font-normal">/{targetT}</span>
+                      </span>
                       <ChevronRight className={cn('h-4 w-4 text-muted-foreground transition-transform', isOpen && 'rotate-90')} />
                     </div>
                   </button>
@@ -651,7 +688,7 @@ const MiniStat: React.FC<{ label: string; value: number; tone?: 'emerald' | 'amb
 
 // ============ PROFILES TAB ============
 const ProfilesTab: React.FC<any> = ({ profiles, competencies, links, people }) => {
-  const { addProfile, linkCompetency, unlinkCompetency } = useCMSMutations();
+  const { addProfile, linkCompetency, unlinkCompetency, updateProfileCompetency } = useCMSMutations();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: '', code: '', description: '' });
   const [selectedProfile, setSelectedProfile] = useState<any | null>(null);
@@ -735,18 +772,30 @@ const ProfilesTab: React.FC<any> = ({ profiles, competencies, links, people }) =
         onClose={() => setSelectedProfile(null)}
         competencies={competencies}
         links={links}
-        onLink={(competency_id: string) => linkCompetency.mutate({ profile_id: selectedProfile.id, competency_id })}
+        onLink={(competency_id: string, required_milestone: 'knowledge'|'skill'|'mastery') =>
+          linkCompetency.mutate({ profile_id: selectedProfile.id, competency_id, required_milestone })}
+        onUpdate={(id: string, required_milestone: 'knowledge'|'skill'|'mastery') =>
+          updateProfileCompetency.mutate({ id, required_milestone })}
         onUnlink={(id: string) => unlinkCompetency.mutate(id)}
       />
     </div>
   );
 };
 
-const ProfileDetailSheet: React.FC<any> = ({ profile, onClose, competencies, links, onLink, onUnlink }) => {
+const ProfileDetailSheet: React.FC<any> = ({ profile, onClose, competencies, links, onLink, onUpdate, onUnlink }) => {
+  const [pickedCompetency, setPickedCompetency] = useState<string>('');
+  const [pickedLevel, setPickedLevel] = useState<'knowledge'|'skill'|'mastery'>('mastery');
   if (!profile) return null;
   const linked = links.filter((l: any) => l.profile_id === profile.id);
   const linkedIds = new Set(linked.map((l: any) => l.competency_id));
   const available = competencies.filter((c: any) => !linkedIds.has(c.id));
+
+  const addNow = () => {
+    if (!pickedCompetency) return;
+    onLink(pickedCompetency, pickedLevel);
+    setPickedCompetency('');
+    setPickedLevel('mastery');
+  };
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
@@ -758,7 +807,7 @@ const ProfileDetailSheet: React.FC<any> = ({ profile, onClose, competencies, lin
             </div>
             {profile.name}
           </SheetTitle>
-          <SheetDescription>{profile.description || 'Manage competencies for this profile.'}</SheetDescription>
+          <SheetDescription>{profile.description || 'Set the required level for each competency in this profile.'}</SheetDescription>
         </SheetHeader>
         <div className="mt-6 space-y-5">
           <div>
@@ -769,27 +818,67 @@ const ProfileDetailSheet: React.FC<any> = ({ profile, onClose, competencies, lin
             <div className="space-y-2">
               {linked.map((l: any) => {
                 const c = competencies.find((x: any) => x.id === l.competency_id);
+                const req: 'knowledge'|'skill'|'mastery' = l.required_milestone || 'mastery';
+                const meta = MILESTONE_META[req];
+                const tone = milestoneTone(req);
+                const ReqIcon = meta.icon;
                 return (
-                  <Card key={l.id} className="p-3 flex items-center justify-between border-border/50 hover:border-primary/30 transition-colors">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">{c?.title}</p>
-                      {c?.description && <p className="text-xs text-muted-foreground line-clamp-1">{c.description}</p>}
+                  <Card key={l.id} className="p-3 border-border/50 hover:border-primary/30 transition-colors">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium">{c?.title}</p>
+                        {c?.description && <p className="text-xs text-muted-foreground line-clamp-1">{c.description}</p>}
+                      </div>
+                      <Button size="sm" variant="ghost" onClick={() => onUnlink(l.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 h-7 px-2">Remove</Button>
                     </div>
-                    <Button size="sm" variant="ghost" onClick={() => onUnlink(l.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10">Remove</Button>
+                    <div className="mt-2 flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className={cn('gap-1 text-[10px] font-medium border', tone.bg)}>
+                        <Target className="h-2.5 w-2.5" /><ReqIcon className="h-2.5 w-2.5" /> Required: {meta.label}
+                      </Badge>
+                      <Select value={req} onValueChange={(v: any) => onUpdate(l.id, v)}>
+                        <SelectTrigger className="h-7 w-[150px] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="knowledge">Knowledge</SelectItem>
+                          <SelectItem value="skill">Skill</SelectItem>
+                          <SelectItem value="mastery">Mastery</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </Card>
                 );
               })}
               {!linked.length && <p className="text-sm text-muted-foreground text-center py-6 border border-dashed rounded-lg">No competencies linked yet.</p>}
             </div>
           </div>
-          <div>
+          <div className="border-t border-border/40 pt-4">
             <h3 className="text-sm font-semibold mb-2">Add Competency</h3>
-            <Select onValueChange={(v) => onLink(v)}>
-              <SelectTrigger><SelectValue placeholder="Pick a competency to add" /></SelectTrigger>
-              <SelectContent>
-                {available.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <div>
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Competency</Label>
+                <Select value={pickedCompetency} onValueChange={setPickedCompetency}>
+                  <SelectTrigger><SelectValue placeholder="Pick a competency" /></SelectTrigger>
+                  <SelectContent>
+                    {available.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Required Level</Label>
+                <Select value={pickedLevel} onValueChange={(v: any) => setPickedLevel(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="knowledge">Knowledge — minimum awareness</SelectItem>
+                    <SelectItem value="skill">Skill — able to perform</SelectItem>
+                    <SelectItem value="mastery">Mastery — expert level</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button size="sm" onClick={addNow} disabled={!pickedCompetency} className="w-full mt-1">
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add to profile
+              </Button>
+            </div>
           </div>
         </div>
       </SheetContent>
