@@ -1,77 +1,91 @@
-## Redesign P2A Handover Table
+## P2A Handover — Phase 2 redesign
 
-Target file: `src/components/project/ProjectsHomePage.tsx` (list view at `/projects`).
+Seven changes, grouped to minimise risk.
 
-### New column set (left → right)
+### 1. Tighter progress column
 
-| # | Column | Default | Notes |
-|---|---|---|---|
-| 1 | **ID** | Visible | Keep gradient code badge (DP-300 etc.) |
-| 2 | **Project Title** | Visible | Bigger, primary weight; subtle hover underline |
-| 3 | **Scope** | Hidden | Toggle from Columns menu |
-| 4 | **Milestone** | Hidden | Toggle from Columns menu |
-| 5 | **Location** | Visible | Custom formatting (see rules) |
-| 6 | **P2A Progress** | Visible | Progress bar + % (multi-VCR aware) |
-| 7 | **⋯** | On hover | Row actions: Favorite, Delete |
+Shrink `P2A Progress` from `w-56` → `w-40`. Keep the stacked layout (% + `X/Y ready` on top, full-width bar below). The bar becomes punchier and stops hogging the row.
 
-Remove from default view: Portfolio, Hub, Plant, Team, Fav star column (favorite moves into ⋯ menu).
+### 2. Add **Qualifications** column (always visible)
 
-### Location formatting rules
+- Single clickable number: total count of `p2a_vcr_qualifications` rows attached to all prerequisites of the project's plan. Rendered as a subtle pill/link with hover underline; muted "—" when zero.
+- Column sits between **Location** and **P2A Progress** in default order.
+- Always visible — not toggleable in the Columns menu and not draggable out (still reorderable in position).
+- **Click** opens a right-side `Sheet` overlay listing every qualification for that project:
+  - Header: project title + total count + small status legend (Pending / Approved / Rejected).
+  - Search input at the top — filters across reason, mitigation, action owner name, and prerequisite summary (case-insensitive, debounced).
+  - Each row reuses the same visual pattern as `VCRQualificationsTab` (status badge, reason snippet, owner, target date, chevron).
+  - Clicking a row opens the existing `QualificationDetailSheet` stacked on top.
+- Data: extend `useProjectsP2AProgress` to also batch-fetch qualification *counts* per project in the same round-trip (one extra `.in('vcr_prerequisite_id', allPrereqIds)` query, group client-side). The full list is fetched on demand when the overlay opens via a new `useProjectQualifications(projectId)` hook.
 
-Derived from `plant_name` + `station_name`:
+### 3. Reorderable + resizable columns
 
-- Plant `BNGL`, `KAZ`, `NRNGL` → display plant code only (`BNGL`, `KAZ`, `NRNGL`).
-- Plant `UQ` → display `UQ-ST` or `UQ-MT` (inferred from station_name keyword: "Sweet" → `UQ-ST`, "Murjan"/"MT" → `UQ-MT`; fallback to `UQ`).
-- Plant `CS` → display station only (e.g. `Hammar Mishrif (HM)`, `CS6`, `Rafidyah`), drop the `CS` prefix.
-- Anything else → fall back to `plant_name`.
-- No plant → `—`.
+Adopt **TanStack Table v8** (`@tanstack/react-table` — add dep) for the list view only. Grid/heatmap view stays separate.
 
-Implement as a small helper `formatProjectLocation(project)` in the same file (or `src/utils/projectLocation.ts`).
+- Define columns with `enableResizing`, `enableHiding`, `enableReordering`.
+- **Drag-to-reorder**: header cells become `useSortable` (`@dnd-kit/sortable` already installed). Grab cursor on hover, lift effect during drag, drop indicator line between columns.
+- **Resize**: right-edge handle on each header (1px line that thickens on hover, primary color on drag). Min 80px, max 600px.
+- **Persistence**: save `{ columnOrder, columnSizing, columnVisibility }` per user to `localStorage` under `p2a-table-prefs-v1`.
+- ID column locked (`enableReordering: false`, `enableHiding: false`); Qualifications is locked-visible but reorderable.
+- "Reset layout" button in the Columns dropdown footer.
 
-### P2A Progress column
+### 4. Subtitle rename
 
-For each project, fetch its plan + VCRs and compute progress.
+`"Browse and manage Project-to-Asset (P2A) deliverables and Verification Certificate of Readiness (VCRs)"`
+→ `"Manage Project-to-Asset (P2A) Handover & Deliverables"`
 
-- **0 VCRs**: show muted `No VCRs` text.
-- **1 VCR**: single progress bar + `NN%`.
-- **>1 VCR**: show **average %** as the main bar and `NN%` label, with a small chip `N VCRs` next to it. Render the bar as a **segmented stack** (one slice per VCR, colored by its own %) so users see each VCR's progress at a glance without tooltips/popovers. Hovering shows native browser title attr only (no custom popover) — kept minimal per the no-overlay rule.
+### 5. P2A Handover icon refresh
 
-Color thresholds (reusing existing convention from `AllTasksTable`):
-- `>= 75%` green, `25–74%` amber, `< 25%` red, `0%` muted.
+Match PSSR-page pattern (`p-2 sm:p-3 rounded-xl bg-gradient-to-br ...`):
 
-Data source: new hook `useProjectsP2AProgress(projectIds)` that batch-queries `p2a_handover_plans` joined with `p2a_handover_points` + prerequisite progress, returning `{ projectId: { vcrs: [{id, code, progress}], avg } }`. Single round-trip keyed by project IDs to avoid N+1.
+- Icon: swap `Key` for `KeyRound`.
+- Gradient: `from-teal-500 to-cyan-600` (distinct from PSSR violet, ORA purple, OWL amber).
+- Add `shadow-lg shadow-teal-500/20` for depth, white icon inside.
 
-### Row hover action menu (⋯)
+### 6. Sidebar icon tooltips
 
-- Three-dot button appears only on row hover (`opacity-0 group-hover:opacity-100`), right-aligned.
-- `DropdownMenu` with:
-  - **Mark as favorite / Remove favorite** — toggles `is_favorite` (already in DB → already persists across logout). Favorites auto-sort to top (replacing current hardcoded `pinnedOrder`).
-  - **Delete project** — confirmation dialog → soft delete (`is_active = false`) using existing pattern.
+Wrap each `OrshSidebar` nav button with shadcn `<Tooltip>` showing the page name on hover (right side, 200ms delay). Add `TooltipProvider` at the layout root if not already present.
 
-### Sorting
+### 7. Replace grid/card view with **P2A Heatmap**
 
-Replace hardcoded `pinnedOrder` array with: favorites first (by title), then the rest by current order. This naturally retains a user's pinned rows across sessions because `is_favorite` is stored server-side per project.
+Toggle button keeps the grid icon; route renders `<P2AHeatmap />` instead of project cards.
 
-### Visual polish (modern/professional)
+Layout: matrix table
+- **Rows** = projects (sticky left: ID badge + title).
+- **Columns** = active `p2a_deliverable_categories` ordered by `display_order` (CMMS, Procedures, Documents, Training, Registers & Logsheets, System Readiness, 2Y Spares, SUOP, PSSR/SoF, PAC, FAC, OWL, …).
+- **Cells** = colored tile showing `completed/total` (e.g. `5/12`). Color follows the same threshold (red < 25%, amber 25–74%, green ≥ 75%, muted if 0).
 
-- Increase row height to `py-4`, add `hover:bg-muted/40` and subtle left-border accent on hover (`group-hover:border-l-2 group-hover:border-primary`).
-- Header: lighter background, `text-[11px] tracking-[0.08em] uppercase text-muted-foreground/80`.
-- Card wrapper: `rounded-xl border-border/60 shadow-sm` instead of current flat look.
-- Use `tabular-nums` for the % label so bars align cleanly.
-- Sticky table header inside the card for long lists.
-- Keep all styling on semantic tokens (no raw colors).
+Behaviour:
+- **Hover** → floating card with a 2-sentence executive summary: `"5 of 12 CMMS items delivered (42%). 2 in progress, 1 behind schedule."` + status breakdown chips. Generated client-side from `p2a_handover_deliverables`.
+- **Click** → side `Sheet` overlay listing every deliverable in that cell with name, delivering party, status, completion date. Each row links to its VCR.
 
-### Files to touch
+Data source:
+- Query `p2a_handover_deliverables` joined via `p2a_handover_plans → project_id`, plus `p2a_deliverable_categories(name)`. One batch query for all visible projects.
+- New hook: `useP2AHeatmapData()` returning `Record<projectId, Record<categoryId, { total, byStatus }>>`.
 
-1. `src/components/project/ProjectsHomePage.tsx` — column set, header, row, hover menu, sort logic, default `columnVisibility`.
-2. `src/hooks/useProjectsP2AProgress.ts` *(new)* — batched progress fetch.
-3. `src/utils/projectLocation.ts` *(new)* — `formatProjectLocation` helper.
-4. (Optional) extract row into `src/components/project/P2AHandoverRow.tsx` if `ProjectsHomePage.tsx` grows past ~650 lines.
+Empty cells render as a hatched/diagonal-stripe muted tile to distinguish from "0% done".
 
-No backend/schema changes required — `is_favorite`, `is_active`, plan/VCR tables already exist.
+### Files
+
+**New**
+- `src/components/p2a/P2AHeatmap.tsx`
+- `src/components/p2a/P2AHeatmapCell.tsx`
+- `src/components/p2a/P2ADeliverableCellSheet.tsx`
+- `src/components/p2a/ProjectQualificationsSheet.tsx` — searchable overlay for the Qualifications column
+- `src/components/project/ProjectsTable.tsx` — TanStack-Table-based list view
+- `src/components/project/DraggableTableHeader.tsx` — sortable + resizable header cell
+- `src/hooks/useProjectQualifications.ts` — full qualifications list for one project (lazy)
+- `src/hooks/useTablePreferences.ts` — localStorage persistence
+
+**Modified**
+- `src/components/project/ProjectsHomePage.tsx` — subtitle, icon, swap grid for heatmap, render `ProjectsTable` in list view
+- `src/hooks/useProjectsP2AProgress.ts` — also return qualification counts per project
+- `src/components/OrshSidebar.tsx` — wrap nav items in `Tooltip`
+- `package.json` — add `@tanstack/react-table`
+- `src/hooks/useP2AHeatmapData.ts` — already scaffolded; ensure it returns the per-category aggregation described above
 
 ### Out of scope
 
-- Grid/card view (untouched).
-- Filters panel changes.
-- Any non-presentation logic beyond the favorite/delete actions already supported by the data model.
+- Per-VCR drilldown inside the heatmap cell sheet beyond a link out to the existing VCR detail page.
+- Server-side persistence of table layout (localStorage is sufficient per browser).
+- Modifying other pages' icons.
