@@ -26,7 +26,9 @@ import {
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useProjectsP2AProgress } from '@/hooks/useProjectsP2AProgress';
-import { ProjectsTable } from '@/components/project/ProjectsTable';
+import { ProjectsTable, PROJECTS_TABLE_PREFS_KEY, PROJECTS_TABLE_DEFAULTS } from '@/components/project/ProjectsTable';
+import { ProjectColumnsMenu } from '@/components/project/ProjectColumnsMenu';
+import { useTablePreferences } from '@/hooks/useTablePreferences';
 import { P2AHeatmap } from '@/components/p2a/P2AHeatmap';
 import { ProjectQualificationsSheet } from '@/components/p2a/ProjectQualificationsSheet';
 import type { Project } from '@/hooks/useProjects';
