@@ -543,7 +543,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                               size="sm"
                               className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity"
                             >
-                              <MoreHorizontal className="h-4 w-4" />
+                              <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
