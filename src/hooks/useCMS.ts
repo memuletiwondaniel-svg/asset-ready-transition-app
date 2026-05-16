@@ -118,7 +118,7 @@ export function useCMSMutations() {
   });
 
   const addCompetency = useMutation({
-    mutationFn: async (input: { title: string; description?: string }) => {
+    mutationFn: async (input: { title: string; description?: string; knowledge_threshold?: number; skill_threshold?: number; mastery_threshold?: number }) => {
       const { error } = await t('competencies').insert(input as any);
       if (error) throw error;
     },
@@ -142,7 +142,7 @@ export function useCMSMutations() {
   });
 
   const addActivity = useMutation({
-    mutationFn: async (input: { competency_id: string; title: string; activity_type: ActivityType; description?: string; provider?: string; duration_hours?: number }) => {
+    mutationFn: async (input: { competency_id: string; title: string; activity_type: ActivityType; description?: string; provider?: string; duration_hours?: number; weight?: number; sequence_order?: number; is_sequence_strict?: boolean }) => {
       const { error } = await t('competence_activities').insert(input as any);
       if (error) throw error;
     },
@@ -157,13 +157,27 @@ export function useCMSMutations() {
     onSuccess: invalidate,
   });
 
-  const upsertProgress = useMutation({
-    mutationFn: async (input: { person_id: string; competency_id: string; progress: number; status: string }) => {
-      const { error } = await t('person_competency_progress').upsert(input as any, { onConflict: 'person_id,competency_id' });
-      if (error) throw error;
+  const setActivityStatus = useMutation({
+    mutationFn: async (input: { person_id: string; activity_id: string; status: ActivityRecordStatus; existing_id?: string | null }) => {
+      const payload: any = {
+        person_id: input.person_id,
+        activity_id: input.activity_id,
+        status: input.status,
+        completed_at: input.status === 'completed' ? new Date().toISOString() : null,
+      };
+      if (input.existing_id) {
+        const { error } = await t('person_activity_records').update(payload).eq('id', input.existing_id);
+        if (error) throw error;
+      } else {
+        const { error } = await t('person_activity_records').insert(payload);
+        if (error) throw error;
+      }
     },
-    onSuccess: invalidate,
+    onSuccess: (_d, _v, _c) => {
+      qc.invalidateQueries({ queryKey: ['cms'] });
+    },
   });
+
 
   return { addProfile, addCompetency, linkCompetency, unlinkCompetency, addActivity, addPerson, upsertProgress };
 }
