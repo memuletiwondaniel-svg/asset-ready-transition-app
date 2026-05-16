@@ -244,14 +244,15 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
         </Dialog>
       </div>
 
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent border-border/40">
             <TableHead className="text-[11px] uppercase tracking-wider">Person</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-wider">Staff ID</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-wider">Profile</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-wider w-[320px]">Readiness</TableHead>
-            <TableHead className="w-12"></TableHead>
+            <TableHead className="text-[11px] uppercase tracking-wider hidden md:table-cell">Staff ID</TableHead>
+            <TableHead className="text-[11px] uppercase tracking-wider hidden sm:table-cell">Profile</TableHead>
+            <TableHead className="text-[11px] uppercase tracking-wider w-[140px] sm:w-[320px]">Readiness</TableHead>
+            <TableHead className="w-8 sm:w-12"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -266,19 +267,27 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
                 onClick={() => setSelected(p)}
                 className="cursor-pointer group border-border/40 transition-colors hover:bg-muted/40"
               >
-                <TableCell>
+                <TableCell className="py-3">
                   <div className="flex items-center gap-3">
-                    <div className={cn('h-9 w-9 rounded-full bg-gradient-to-br text-white flex items-center justify-center text-xs font-semibold shadow-sm ring-2 ring-background', avatarGradient(p.staff_id))}>
+                    <div className={cn('h-9 w-9 rounded-full bg-gradient-to-br text-white flex items-center justify-center text-xs font-semibold shadow-sm ring-2 ring-background shrink-0', avatarGradient(p.staff_id))}>
                       {initials(p.first_name, p.last_name)}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-sm leading-tight">{p.first_name} {p.last_name}</p>
+                      <p className="font-medium text-sm leading-tight truncate">{p.first_name} {p.last_name}</p>
                       <p className="text-xs text-muted-foreground truncate">{p.job_title || '—'}</p>
+                      <div className="flex items-center gap-2 mt-1 sm:hidden">
+                        <span className="font-mono text-[10px] text-muted-foreground">{p.staff_id}</span>
+                        {prof && (
+                          <Badge variant="secondary" className="text-[10px] py-0 h-4 bg-primary/10 text-primary border border-primary/20">
+                            {prof.code || prof.name}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">{p.staff_id}</TableCell>
-                <TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground hidden md:table-cell">{p.staff_id}</TableCell>
+                <TableCell className="hidden sm:table-cell">
                   {prof ? (
                     <Badge variant="secondary" className="font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15">
                       {prof.code || prof.name}
@@ -288,14 +297,14 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-2 rounded-full bg-muted/60 overflow-hidden">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex-1 min-w-[40px] h-2 rounded-full bg-muted/60 overflow-hidden">
                       <div
                         className={cn('h-full rounded-full bg-gradient-to-r transition-all duration-700 group-hover:brightness-110', tone.bar)}
                         style={{ width: `${val}%` }}
                       />
                     </div>
-                    <span className={cn('text-sm font-bold tabular-nums w-10 text-right', tone.text)}>{val}%</span>
+                    <span className={cn('text-xs sm:text-sm font-bold tabular-nums w-9 sm:w-10 text-right', tone.text)}>{val}%</span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -314,6 +323,7 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
           )}
         </TableBody>
       </Table>
+      </div>
 
       <PersonProgressSheet
         person={selected}
