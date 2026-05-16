@@ -517,25 +517,40 @@ const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competency
                 .filter(a => a.competency_id === l.competency_id)
                 .sort((a, b) => a.sequence_order - b.sequence_order);
               const isOpen = openCompetency === l.competency_id;
+              const requiredM: 'knowledge'|'skill'|'mastery' = l.required_milestone || 'mastery';
+              const targetT = milestoneThreshold(requiredM, comp);
+              const reached = val >= targetT;
+              const reqMeta = MILESTONE_META[requiredM];
+              const ReqIcon = reqMeta.icon;
+              const reqTone = milestoneTone(requiredM);
               return (
-                <Card key={l.id} className="border-border/50 overflow-hidden transition-all">
+                <Card key={l.id} className={cn('border-border/50 overflow-hidden transition-all', reached && 'border-emerald-500/40')}>
                   <button
                     onClick={() => setOpenCompetency(isOpen ? null : l.competency_id)}
                     className="w-full text-left p-3 hover:bg-muted/30 transition-colors"
                   >
-                    <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium leading-tight">{comp.title}</p>
                         {comp.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{comp.description}</p>}
                       </div>
-                      <Badge variant="outline" className={cn('gap-1 text-[10px] font-medium border shrink-0', mtone.bg)}>
-                        {ms ? (() => { const Icon = MILESTONE_META[ms].icon; return <Icon className="h-3 w-3" />; })() : <AlertCircle className="h-3 w-3" />}
-                        {ms ? MILESTONE_META[ms].label : 'Not started'}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <Badge variant="outline" className={cn('gap-1 text-[10px] font-medium border', mtone.bg)}>
+                          {ms ? (() => { const Icon = MILESTONE_META[ms].icon; return <Icon className="h-3 w-3" />; })() : <AlertCircle className="h-3 w-3" />}
+                          {ms ? MILESTONE_META[ms].label : 'Not started'}
+                        </Badge>
+                        <Badge variant="outline" className={cn('gap-1 text-[9px] font-medium border', reqTone.bg)}>
+                          <Target className="h-2.5 w-2.5" />
+                          <ReqIcon className="h-2.5 w-2.5" />
+                          Required: {reqMeta.label}
+                        </Badge>
+                      </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <MilestoneBar value={val} knowledge={kT} skill={sT} mastery={mT} className="flex-1" />
-                      <span className={cn('text-xs font-bold tabular-nums w-10 text-right', mtone.text)}>{val}%</span>
+                      <MilestoneBar value={val} knowledge={kT} skill={sT} mastery={mT} target={targetT} className="flex-1" />
+                      <span className={cn('text-xs font-bold tabular-nums w-14 text-right', reached ? 'text-emerald-600' : mtone.text)}>
+                        {val}<span className="text-muted-foreground font-normal">/{targetT}</span>
+                      </span>
                       <ChevronRight className={cn('h-4 w-4 text-muted-foreground transition-transform', isOpen && 'rotate-90')} />
                     </div>
                   </button>
