@@ -362,11 +362,13 @@ const MilestoneBar: React.FC<{
   knowledge?: number;
   skill?: number;
   mastery?: number;
+  target?: number;
   showLabels?: boolean;
   className?: string;
-}> = ({ value, knowledge = 50, skill = 75, mastery = 100, showLabels, className }) => {
+}> = ({ value, knowledge = 50, skill = 75, mastery = 100, target, showLabels, className }) => {
   const ms = milestoneFor(value, knowledge, skill, mastery);
   const tone = milestoneTone(ms);
+  const reachedTarget = target != null && value >= target;
   return (
     <div className={cn('relative', className)}>
       <div className="relative h-2 rounded-full bg-muted/60 overflow-hidden">
@@ -383,6 +385,12 @@ const MilestoneBar: React.FC<{
             />
           )
         ))}
+        {target != null && target < 100 && (
+          <div
+            className={cn('absolute -top-0.5 -bottom-0.5 w-0.5 rounded-full', reachedTarget ? 'bg-emerald-500' : 'bg-primary')}
+            style={{ left: `calc(${target}% - 1px)` }}
+          />
+        )}
       </div>
       {showLabels && (
         <div className="relative h-3 mt-1 text-[9px] uppercase tracking-wider text-muted-foreground">
@@ -393,6 +401,12 @@ const MilestoneBar: React.FC<{
       )}
     </div>
   );
+};
+
+const milestoneThreshold = (m: 'knowledge' | 'skill' | 'mastery', c: any) => {
+  if (m === 'knowledge') return c?.knowledge_threshold ?? 50;
+  if (m === 'skill') return c?.skill_threshold ?? 75;
+  return c?.mastery_threshold ?? 100;
 };
 
 // ============ PERSON PROGRESS SHEET ============
