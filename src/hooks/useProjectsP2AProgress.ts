@@ -12,6 +12,7 @@ export interface ProjectP2AProgress {
   avg: number;
   completed: number;
   total: number;
+  qualificationCount: number;
 }
 
 export type ProjectsP2AProgressMap = Record<string, ProjectP2AProgress>;
@@ -52,11 +53,33 @@ export function useProjectsP2AProgress(projectIds: string[]) {
       if (pointIds.length) {
         const { data, error } = await client
           .from('p2a_vcr_prerequisites')
-          .select('handover_point_id, status')
+          .select('id, handover_point_id, status')
           .in('handover_point_id', pointIds);
         if (error) throw error;
         prereqs = data || [];
       }
+
+      // Batch-fetch qualifications and group by project via prereq -> point -> plan -> project
+      const prereqIds = prereqs.map((p: any) => p.id);
+      let quals: any[] = [];
+      if (prereqIds.length) {
+        const { data, error } = await client
+          .from('p2a_vcr_qualifications')
+          .select('vcr_prerequisite_id')
+          .in('vcr_prerequisite_id', prereqIds);
+        if (error) throw error;
+        quals = data || [];
+      }
+      const prereqToPoint = new Map<string, string>(prereqs.map((p: any) => [p.id, p.handover_point_id]));
+      const pointToPlan = new Map<string, string>((points || []).map((p: any) => [p.id, p.handover_plan_id]));
+      const qualCountByProject = new Map<string, number>();
+      quals.forEach((q: any) => {
+        const pointId = prereqToPoint.get(q.vcr_prerequisite_id);
+        const planId = pointId ? pointToPlan.get(pointId) : undefined;
+        const projectId = planId ? planToProject.get(planId) : undefined;
+        if (!projectId) return;
+        qualCountByProject.set(projectId, (qualCountByProject.get(projectId) || 0) + 1);
+      });
 
       // Aggregate prereqs per point
       const prereqByPoint = new Map<string, { total: number; completed: number }>();
@@ -73,11 +96,17 @@ export function useProjectsP2AProgress(projectIds: string[]) {
         if (!projectId) return;
         const stat = prereqByPoint.get(pt.id) ?? { total: 0, completed: 0 };
         const progress = stat.total > 0 ? Math.round((stat.completed / stat.total) * 100) : 0;
-        const entry = result[projectId] ?? { vcrs: [], avg: 0, completed: 0, total: 0 };
+        const entry = result[projectId] ?? { vcrs: [], avg: 0, completed: 0, total: 0, qualificationCount: 0 };
         entry.vcrs.push({ id: pt.id, vcr_code: pt.vcr_code, progress });
         entry.completed += stat.completed;
         entry.total += stat.total;
         result[projectId] = entry;
+      });
+
+      // Make sure projects with zero VCRs still get an entry if they have qualifications.
+      qualCountByProject.forEach((count, projectId) => {
+        result[projectId] = result[projectId] ?? { vcrs: [], avg: 0, completed: 0, total: 0, qualificationCount: 0 };
+        result[projectId].qualificationCount = count;
       });
 
       Object.values(result).forEach((entry) => {
