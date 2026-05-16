@@ -179,7 +179,7 @@ export function useCMSMutations() {
   });
 
 
-  return { addProfile, addCompetency, linkCompetency, unlinkCompetency, addActivity, addPerson, upsertProgress };
+  return { addProfile, addCompetency, linkCompetency, unlinkCompetency, addActivity, addPerson, setActivityStatus };
 }
 
 export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
