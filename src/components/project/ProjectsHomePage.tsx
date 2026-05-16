@@ -249,6 +249,8 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                 onToggleFavorite={handleToggleFavorite}
                 onDelete={setProjectToDelete}
                 onOpenQualifications={setQualProject}
+                prefs={tablePrefs}
+                setPrefs={setTablePrefs}
               />
             )}
           </div>
