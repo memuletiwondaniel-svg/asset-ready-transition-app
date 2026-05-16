@@ -405,7 +405,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
               {/* Table Header */}
               <div className="flex items-center gap-4 px-5 py-3 bg-muted/40 border-b border-border/60 text-[11px] font-medium text-muted-foreground/80 uppercase tracking-[0.08em]">
                 <div className="w-20 shrink-0">ID</div>
-                <div className="flex-1 min-w-[220px]">Project Title</div>
+                <div className="w-[360px] shrink-0">Project Title</div>
                 {columnVisibility.scope && <div className="w-[240px] shrink-0">Scope</div>}
                 {columnVisibility.milestone && <div className="w-52 shrink-0">Milestone</div>}
                 <div className="w-40 shrink-0">Location</div>
@@ -447,7 +447,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       </div>
 
                       {/* Title */}
-                      <div className="flex-1 min-w-[220px] flex items-center gap-2">
+                      <div className="w-[360px] shrink-0 flex items-center gap-2">
                         <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
                           {project.project_title}
                         </h3>
