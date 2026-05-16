@@ -688,7 +688,7 @@ const MiniStat: React.FC<{ label: string; value: number; tone?: 'emerald' | 'amb
 
 // ============ PROFILES TAB ============
 const ProfilesTab: React.FC<any> = ({ profiles, competencies, links, people }) => {
-  const { addProfile, linkCompetency, unlinkCompetency } = useCMSMutations();
+  const { addProfile, linkCompetency, unlinkCompetency, updateProfileCompetency } = useCMSMutations();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: '', code: '', description: '' });
   const [selectedProfile, setSelectedProfile] = useState<any | null>(null);
