@@ -181,6 +181,29 @@ interface CategoryLike { id: string; name: string; }
 
 const HEATMAP_RECIPES: Record<MockProjectCode, Record<CategoryName, Array<{ name: string; status: string; party?: string; date?: string; comments?: string }>>> = {
   'DP-317': {
+    'MECH COMP (MC)': [
+      { name: 'Mechanical completion walkdowns', status: 'COMPLETED', party: 'Construction', date: '2026-02-12' },
+      { name: 'Punchlist A items cleared', status: 'IN_PROGRESS', party: 'Construction' },
+      { name: 'MC certificates issued', status: 'IN_PROGRESS', party: 'Project' },
+      { name: 'Loop folders handed to commissioning', status: 'BEHIND_SCHEDULE', party: 'Construction', comments: '12 loops pending field verification.' },
+    ],
+    RFSU: [
+      { name: 'Pre-RFSU walkdown', status: 'IN_PROGRESS', party: 'Commissioning' },
+      { name: 'RFSU dossier compiled', status: 'NOT_STARTED', party: 'Commissioning' },
+      { name: 'RFSU certificate signed', status: 'NOT_STARTED', party: 'Operations' },
+    ],
+    Resourcing: [
+      { name: 'Operations team mobilized', status: 'COMPLETED', party: 'HR', date: '2026-01-20' },
+      { name: 'Maintenance team mobilized', status: 'IN_PROGRESS', party: 'HR' },
+      { name: 'Control room shift roster', status: 'IN_PROGRESS', party: 'Operations' },
+      { name: 'Specialist vendor coverage', status: 'BEHIND_SCHEDULE', party: 'Procurement', comments: 'Vibration analyst contract pending.' },
+    ],
+    Documents: [
+      { name: 'IFC drawings transmitted', status: 'COMPLETED', party: 'Engineering', date: '2026-02-28' },
+      { name: 'Vendor data books filed', status: 'IN_PROGRESS', party: 'Engineering' },
+      { name: 'As-built handover pack', status: 'IN_PROGRESS', party: 'Engineering' },
+      { name: 'Document control sign-off', status: 'NOT_STARTED', party: 'Document Control' },
+    ],
     CMMS: [
       { name: 'Asset hierarchy loaded into CMMS', status: 'COMPLETED', party: 'Maintenance', date: '2026-03-10' },
       { name: 'Preventive maintenance schedules built', status: 'IN_PROGRESS', party: 'Maintenance' },
@@ -221,6 +244,26 @@ const HEATMAP_RECIPES: Record<MockProjectCode, Record<CategoryName, Array<{ name
     ],
   },
   'DP-385': {
+    'MECH COMP (MC)': [
+      { name: 'Mechanical completion walkdowns', status: 'COMPLETED', party: 'Construction', date: '2026-02-28' },
+      { name: 'Punchlist A items cleared', status: 'COMPLETED', party: 'Construction', date: '2026-03-05' },
+      { name: 'MC certificates issued', status: 'COMPLETED', party: 'Project', date: '2026-03-08' },
+    ],
+    RFSU: [
+      { name: 'Pre-RFSU walkdown', status: 'COMPLETED', party: 'Commissioning', date: '2026-03-18' },
+      { name: 'RFSU dossier compiled', status: 'COMPLETED', party: 'Commissioning', date: '2026-03-20' },
+      { name: 'RFSU certificate signed', status: 'IN_PROGRESS', party: 'Operations' },
+    ],
+    Resourcing: [
+      { name: 'Operations team mobilized', status: 'COMPLETED', party: 'HR', date: '2026-02-05' },
+      { name: 'Maintenance team mobilized', status: 'COMPLETED', party: 'HR', date: '2026-02-10' },
+      { name: 'Control room shift roster', status: 'COMPLETED', party: 'Operations', date: '2026-02-15' },
+    ],
+    Documents: [
+      { name: 'IFC drawings transmitted', status: 'COMPLETED', party: 'Engineering', date: '2026-02-20' },
+      { name: 'Vendor data books filed', status: 'COMPLETED', party: 'Engineering', date: '2026-03-10' },
+      { name: 'As-built handover pack', status: 'IN_PROGRESS', party: 'Engineering' },
+    ],
     CMMS: [
       { name: 'Asset register validated', status: 'COMPLETED', party: 'Maintenance', date: '2026-03-25' },
       { name: 'PM schedules activated', status: 'COMPLETED', party: 'Maintenance', date: '2026-03-28' },
