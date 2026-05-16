@@ -339,9 +339,8 @@ export function ProjectsTable({
                                     <button
                                       type="button"
                                       onClick={(e) => { e.stopPropagation(); onOpenQualifications(project); }}
-                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-sm font-semibold tabular-nums transition-colors"
+                                      className="inline-flex items-center justify-center min-w-[2rem] px-2 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-sm font-semibold tabular-nums transition-colors"
                                     >
-                                      <AlertTriangle className="h-3.5 w-3.5" />
                                       {qualCount}
                                     </button>
                                   </TooltipTrigger>
@@ -358,27 +357,22 @@ export function ProjectsTable({
                               {vcrs.length === 0 ? (
                                 <span className="text-xs text-muted-foreground italic">No VCRs</span>
                               ) : (
-                                <div className="space-y-1.5">
-                                  <div className="flex items-baseline justify-between gap-2">
-                                    <div className="flex items-baseline gap-1.5 min-w-0">
-                                      <span className="text-sm font-semibold text-foreground tabular-nums">{avg}%</span>
-                                      {total > 0 && (
-                                        <span className="text-[10px] text-muted-foreground tabular-nums truncate">
-                                          {completed}/{total}
-                                        </span>
-                                      )}
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <Progress value={avg} className="h-1.5 flex-1 min-w-0" indicatorClassName={barColor} />
+                                      <span className="text-sm font-semibold text-foreground tabular-nums shrink-0">{avg}%</span>
                                     </div>
-                                    {vcrs.length > 1 && (
-                                      <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-                                        {vcrs.length} VCR
-                                      </span>
-                                    )}
-                                  </div>
-                                  <Progress value={avg} className="h-1.5 w-full" indicatorClassName={barColor} />
-                                </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    {total > 0 ? `${completed} of ${total} delivered` : 'No deliverables'}
+                                    {vcrs.length > 0 ? ` \u00b7 ${vcrs.length} VCR${vcrs.length === 1 ? '' : 's'}` : ''}
+                                  </TooltipContent>
+                                </Tooltip>
                               )}
                             </div>
                           );
+
                         default:
                           return null;
                       }
