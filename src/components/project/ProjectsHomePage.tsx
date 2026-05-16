@@ -183,32 +183,18 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                     <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuCheckboxItem
-                      checked={columnVisibility.hub}
-                      onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, hub: checked }))}
+                      checked={columnVisibility.scope}
+                      onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, scope: checked }))}
                     >
-                      <Building2 className="h-4 w-4 mr-2" />
-                      Project Hub
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem
-                      checked={columnVisibility.plant}
-                      onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, plant: checked }))}
-                    >
-                      <MapPin className="h-4 w-4 mr-2" />
-                      Plant
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem
-                      checked={columnVisibility.team}
-                      onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, team: checked }))}
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      Team
+                      <FileText className="h-4 w-4 mr-2" />
+                      Scope
                     </DropdownMenuCheckboxItem>
                     <DropdownMenuCheckboxItem
                       checked={columnVisibility.milestone}
                       onCheckedChange={(checked) => setColumnVisibility(prev => ({ ...prev, milestone: checked }))}
                     >
                       <Target className="h-4 w-4 mr-2" />
-                      Milestones
+                      Milestone
                     </DropdownMenuCheckboxItem>
                     <DropdownMenuCheckboxItem
                       checked={columnVisibility.scope}
