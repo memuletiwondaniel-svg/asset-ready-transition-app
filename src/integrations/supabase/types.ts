@@ -1005,6 +1005,53 @@ export type Database = {
           },
         ]
       }
+      cms_people: {
+        Row: {
+          created_at: string
+          first_name: string
+          id: string
+          job_title: string | null
+          last_name: string
+          plant_id: string | null
+          profile_id: string | null
+          staff_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          first_name: string
+          id?: string
+          job_title?: string | null
+          last_name: string
+          plant_id?: string | null
+          profile_id?: string | null
+          staff_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          first_name?: string
+          id?: string
+          job_title?: string | null
+          last_name?: string
+          plant_id?: string | null
+          profile_id?: string | null
+          staff_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cms_people_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "competence_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commission: {
         Row: {
           created_at: string
@@ -1028,6 +1075,155 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      competence_activities: {
+        Row: {
+          activity_type: Database["public"]["Enums"]["cms_activity_type"]
+          competency_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_hours: number | null
+          id: string
+          provider: string | null
+          target_completion_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          activity_type?: Database["public"]["Enums"]["cms_activity_type"]
+          competency_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          provider?: string | null
+          target_completion_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          activity_type?: Database["public"]["Enums"]["cms_activity_type"]
+          competency_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_hours?: number | null
+          id?: string
+          provider?: string | null
+          target_completion_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competence_activities_competency_id_fkey"
+            columns: ["competency_id"]
+            isOneToOne: false
+            referencedRelation: "competencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competence_profile_competencies: {
+        Row: {
+          competency_id: string
+          created_at: string
+          id: string
+          profile_id: string
+          required_level: number | null
+          weight: number
+        }
+        Insert: {
+          competency_id: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          required_level?: number | null
+          weight?: number
+        }
+        Update: {
+          competency_id?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          required_level?: number | null
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competence_profile_competencies_competency_id_fkey"
+            columns: ["competency_id"]
+            isOneToOne: false
+            referencedRelation: "competencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competence_profile_competencies_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "competence_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competence_profiles: {
+        Row: {
+          code: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      competencies: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          title?: string
           updated_at?: string
         }
         Relationships: []
@@ -7867,6 +8063,128 @@ export type Database = {
           },
         ]
       }
+      person_activity_records: {
+        Row: {
+          activity_id: string
+          completed_at: string | null
+          created_at: string
+          evidence_url: string | null
+          id: string
+          notes: string | null
+          person_id: string
+          score: number | null
+          status: Database["public"]["Enums"]["cms_activity_record_status"]
+          updated_at: string
+        }
+        Insert: {
+          activity_id: string
+          completed_at?: string | null
+          created_at?: string
+          evidence_url?: string | null
+          id?: string
+          notes?: string | null
+          person_id: string
+          score?: number | null
+          status?: Database["public"]["Enums"]["cms_activity_record_status"]
+          updated_at?: string
+        }
+        Update: {
+          activity_id?: string
+          completed_at?: string | null
+          created_at?: string
+          evidence_url?: string | null
+          id?: string
+          notes?: string | null
+          person_id?: string
+          score?: number | null
+          status?: Database["public"]["Enums"]["cms_activity_record_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "person_activity_records_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "competence_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "person_activity_records_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "cms_people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "person_activity_records_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "v_person_overall_progress"
+            referencedColumns: ["person_id"]
+          },
+        ]
+      }
+      person_competency_progress: {
+        Row: {
+          assessor_id: string | null
+          competency_id: string
+          created_at: string
+          id: string
+          last_assessed_at: string | null
+          notes: string | null
+          person_id: string
+          progress: number
+          status: Database["public"]["Enums"]["cms_progress_status"]
+          updated_at: string
+        }
+        Insert: {
+          assessor_id?: string | null
+          competency_id: string
+          created_at?: string
+          id?: string
+          last_assessed_at?: string | null
+          notes?: string | null
+          person_id: string
+          progress?: number
+          status?: Database["public"]["Enums"]["cms_progress_status"]
+          updated_at?: string
+        }
+        Update: {
+          assessor_id?: string | null
+          competency_id?: string
+          created_at?: string
+          id?: string
+          last_assessed_at?: string | null
+          notes?: string | null
+          person_id?: string
+          progress?: number
+          status?: Database["public"]["Enums"]["cms_progress_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "person_competency_progress_competency_id_fkey"
+            columns: ["competency_id"]
+            isOneToOne: false
+            referencedRelation: "competencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "person_competency_progress_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "cms_people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "person_competency_progress_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "v_person_overall_progress"
+            referencedColumns: ["person_id"]
+          },
+        ]
+      }
       personal_backlog: {
         Row: {
           completed_at: string | null
@@ -13020,6 +13338,24 @@ export type Database = {
           },
         ]
       }
+      v_person_overall_progress: {
+        Row: {
+          competent_count: number | null
+          overall_progress: number | null
+          person_id: string | null
+          profile_id: string | null
+          total_competencies: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cms_people_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "competence_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       approve_user_account: {
@@ -13347,6 +13683,25 @@ export type Database = {
         | "manage_p2a"
         | "manage_orm"
         | "create_p2a_plan"
+      cms_activity_record_status:
+        | "planned"
+        | "in_progress"
+        | "completed"
+        | "failed"
+      cms_activity_type:
+        | "vendor_training"
+        | "ojt"
+        | "assessment"
+        | "certification"
+        | "e_learning"
+        | "mentoring"
+        | "other"
+      cms_progress_status:
+        | "not_started"
+        | "in_progress"
+        | "assessed"
+        | "competent"
+        | "expired"
       dependency_type: "blocks" | "gates" | "informs" | "requires"
       fred_knowledge_type:
         | "procedure"
@@ -13660,6 +14015,28 @@ export const Constants = {
         "manage_p2a",
         "manage_orm",
         "create_p2a_plan",
+      ],
+      cms_activity_record_status: [
+        "planned",
+        "in_progress",
+        "completed",
+        "failed",
+      ],
+      cms_activity_type: [
+        "vendor_training",
+        "ojt",
+        "assessment",
+        "certification",
+        "e_learning",
+        "mentoring",
+        "other",
+      ],
+      cms_progress_status: [
+        "not_started",
+        "in_progress",
+        "assessed",
+        "competent",
+        "expired",
       ],
       dependency_type: ["blocks", "gates", "informs", "requires"],
       fred_knowledge_type: [

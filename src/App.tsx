@@ -25,6 +25,7 @@ import { ORMDetailsPage } from "@/components/orm/ORMDetailsPage";
 import { ORMAnalyticsDashboard } from "@/components/orm/ORMAnalyticsDashboard";
 import { ORMResourceCapacityDashboard } from "@/components/orm/ORMResourceCapacityDashboard";
 import { ORMNotificationPreferences } from "@/components/orm/ORMNotificationPreferences";
+import { CMSLandingPage } from "@/components/cms/CMSLandingPage";
 import ProjectManagementPage from "@/components/project/ProjectManagementPage";
 import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
 import PSSRApproverDashboard from "@/pages/PSSRApproverDashboard";
@@ -101,6 +102,7 @@ const App = () => (
                       <Route path="/or-maintenance/resources" element={<ORMResourceCapacityDashboard />} />
                       <Route path="/or-maintenance/notifications" element={<ORMNotificationPreferences />} />
                       <Route path="/or-maintenance/:id" element={<ORMDetailsPage />} />
+                      <Route path="/competence-management" element={<CMSLandingPage />} />
                       <Route path="/admin/selma-validation" element={
                         <React.Suspense fallback={<div className="flex items-center justify-center h-screen"><span className="text-muted-foreground">Loading...</span></div>}>
                           <SelmaValidation />

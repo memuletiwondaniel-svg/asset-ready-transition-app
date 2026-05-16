@@ -30,6 +30,7 @@ export const AuthenticatedLayout: React.FC = () => {
     if (path.startsWith('/operation-readiness')) return 'operation-readiness';
     
     if (path.startsWith('/or-maintenance')) return 'or-maintenance';
+    if (path.startsWith('/competence-management')) return 'competence-management';
     if (path.startsWith('/pssr')) return 'pssr';
     if (path.startsWith('/my-tasks')) return 'my-tasks';
     if (path.startsWith('/executive-dashboard')) return 'executive-dashboard';
