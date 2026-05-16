@@ -323,6 +323,18 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
       </Table>
       </div>
 
+      <PersonProgressSheet
+        person={selected}
+        onClose={() => setSelected(null)}
+        links={links}
+        competencyMap={competencyMap}
+        activities={activities}
+        profileMap={profileMap}
+      />
+    </Card>
+  );
+};
+
 // ============ MILESTONES ============
 const MILESTONE_META = {
   knowledge: { label: 'Knowledge', short: 'K', icon: Brain,  color: 'amber'   as const },
