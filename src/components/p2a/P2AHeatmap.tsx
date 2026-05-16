@@ -9,6 +9,20 @@ import { P2ADeliverableCellSheet } from './P2ADeliverableCellSheet';
 import { getMockHeatmapRow, projectCode } from '@/lib/p2aMockData';
 import type { Project } from '@/hooks/useProjects';
 
+function getProjectColor(prefix: string, num: string) {
+  const str = `${prefix}${num}`;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = (str.charCodeAt(i) + ((hash << 5) - hash)) & 0xffffffff;
+  const hue = Math.abs(hash) % 360;
+  const s = 25 + (Math.abs(hash >> 8) % 15);
+  const l = 55 + (Math.abs(hash >> 16) % 10);
+  return {
+    bgStart: `hsl(${hue}, ${s}%, ${l}%)`,
+    bgEnd: `hsl(${hue}, ${s + 5}%, ${l - 8}%)`,
+  };
+}
+
+
 interface Category { id: string; name: string; display_order: number; }
 interface Deliverable {
   id: string;
