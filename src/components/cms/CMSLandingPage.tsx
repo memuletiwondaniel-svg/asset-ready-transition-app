@@ -905,8 +905,8 @@ const ACTIVITY_TONE: Record<string, string> = {
 const ActivitiesTab: React.FC<any> = ({ activities, competencies, competencyMap }) => {
   const { addActivity } = useCMSMutations();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<{ title: string; competency_id: string; activity_type: ActivityType; provider: string; duration_hours: string; description: string }>({
-    title: '', competency_id: '', activity_type: 'vendor_training', provider: '', duration_hours: '', description: '',
+  const [form, setForm] = useState<{ title: string; competency_id: string; activity_type: ActivityType; provider: string; duration_hours: string; description: string; weight: string; sequence_order: string; is_sequence_strict: boolean }>({
+    title: '', competency_id: '', activity_type: 'vendor_training', provider: '', duration_hours: '', description: '', weight: '10', sequence_order: '1', is_sequence_strict: false,
   });
   const [filterType, setFilterType] = useState<string>('all');
 
@@ -920,10 +920,13 @@ const ActivitiesTab: React.FC<any> = ({ activities, competencies, competencyMap 
         provider: form.provider || undefined,
         duration_hours: form.duration_hours ? Number(form.duration_hours) : undefined,
         description: form.description || undefined,
+        weight: form.weight ? Number(form.weight) : 0,
+        sequence_order: form.sequence_order ? Number(form.sequence_order) : 0,
+        is_sequence_strict: form.is_sequence_strict,
       });
       toast({ title: 'Activity added' });
       setOpen(false);
-      setForm({ title: '', competency_id: '', activity_type: 'vendor_training', provider: '', duration_hours: '', description: '' });
+      setForm({ title: '', competency_id: '', activity_type: 'vendor_training', provider: '', duration_hours: '', description: '', weight: '10', sequence_order: '1', is_sequence_strict: false });
     } catch (e: any) { toast({ title: 'Failed', description: e.message, variant: 'destructive' }); }
   };
 
