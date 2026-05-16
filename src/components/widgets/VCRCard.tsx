@@ -121,7 +121,7 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick }) => {
         className="pointer-events-none absolute inset-0 opacity-0 group-hover/vcr:opacity-100 transition-opacity duration-300"
         style={{ background: `linear-gradient(135deg, ${accent}0D 0%, transparent 60%)` }}
       />
-      <div className="flex items-center justify-between gap-3">
+      <div className="relative flex items-center justify-between gap-3">
         <div className="flex flex-col min-w-0 flex-1">
           <span
             className="block text-[9px] uppercase tracking-[0.18em] font-extrabold text-muted-foreground/70 mb-0.5"
