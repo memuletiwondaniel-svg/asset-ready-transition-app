@@ -127,8 +127,17 @@ export function useCMSMutations() {
   });
 
   const linkCompetency = useMutation({
-    mutationFn: async (input: { profile_id: string; competency_id: string; weight?: number }) => {
+    mutationFn: async (input: { profile_id: string; competency_id: string; weight?: number; required_milestone?: RequiredMilestone }) => {
       const { error } = await t('competence_profile_competencies').insert(input as any);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
+  const updateProfileCompetency = useMutation({
+    mutationFn: async (input: { id: string; weight?: number; required_milestone?: RequiredMilestone }) => {
+      const { id, ...patch } = input;
+      const { error } = await t('competence_profile_competencies').update(patch as any).eq('id', id);
       if (error) throw error;
     },
     onSuccess: invalidate,
