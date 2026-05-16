@@ -233,7 +233,7 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
             {!isLoading && filteredProjects.length > 0 && viewMode === 'list' && (
               <ProjectsTable
                 projects={filteredProjects}
-                progressMap={progressMap}
+                progressMap={mergedProgressMap}
                 canPerformActions={canPerformActions}
                 onProjectClick={handleProjectClick}
                 onToggleFavorite={handleToggleFavorite}
