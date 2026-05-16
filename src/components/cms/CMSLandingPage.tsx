@@ -801,7 +801,7 @@ const ProfileDetailSheet: React.FC<any> = ({ profile, onClose, competencies, lin
 const CompetenciesTab: React.FC<any> = ({ competencies, links, activities }) => {
   const { addCompetency } = useCMSMutations();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '' });
+  const [form, setForm] = useState({ title: '', description: '', knowledge_threshold: 50, skill_threshold: 75, mastery_threshold: 100 });
 
   const submit = async () => {
     if (!form.title) return;
@@ -809,7 +809,7 @@ const CompetenciesTab: React.FC<any> = ({ competencies, links, activities }) => 
       await addCompetency.mutateAsync(form);
       toast({ title: 'Competency added' });
       setOpen(false);
-      setForm({ title: '', description: '' });
+      setForm({ title: '', description: '', knowledge_threshold: 50, skill_threshold: 75, mastery_threshold: 100 });
     } catch (e: any) { toast({ title: 'Failed', description: e.message, variant: 'destructive' }); }
   };
 
@@ -825,6 +825,23 @@ const CompetenciesTab: React.FC<any> = ({ competencies, links, activities }) => 
             <div className="space-y-3">
               <div><Label>Title</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
               <div><Label>Description</Label><Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
+              <div className="pt-1">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Milestone thresholds (%)</Label>
+                <div className="grid grid-cols-3 gap-2 mt-1.5">
+                  <div>
+                    <Label className="text-[10px] flex items-center gap-1"><Brain className="h-3 w-3 text-amber-500" />Knowledge</Label>
+                    <Input type="number" min={0} max={100} value={form.knowledge_threshold} onChange={e => setForm({ ...form, knowledge_threshold: Number(e.target.value) })} />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] flex items-center gap-1"><Wrench className="h-3 w-3 text-blue-500" />Skill</Label>
+                    <Input type="number" min={0} max={100} value={form.skill_threshold} onChange={e => setForm({ ...form, skill_threshold: Number(e.target.value) })} />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] flex items-center gap-1"><Trophy className="h-3 w-3 text-emerald-500" />Mastery</Label>
+                    <Input type="number" min={0} max={100} value={form.mastery_threshold} onChange={e => setForm({ ...form, mastery_threshold: Number(e.target.value) })} />
+                  </div>
+                </div>
+              </div>
             </div>
             <DialogFooter><Button onClick={submit} disabled={addCompetency.isPending}>Save</Button></DialogFooter>
           </DialogContent>
