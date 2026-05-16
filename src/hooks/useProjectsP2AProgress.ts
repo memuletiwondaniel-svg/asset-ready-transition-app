@@ -10,6 +10,8 @@ export interface ProjectVCRProgress {
 export interface ProjectP2AProgress {
   vcrs: ProjectVCRProgress[];
   avg: number;
+  completed: number;
+  total: number;
 }
 
 export type ProjectsP2AProgressMap = Record<string, ProjectP2AProgress>;
