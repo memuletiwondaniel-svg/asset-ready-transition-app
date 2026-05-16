@@ -250,6 +250,39 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
               </div>
               <div><Label>Staff ID</Label><Input value={form.staff_id} onChange={e => setForm({ ...form, staff_id: e.target.value })} /></div>
               <div><Label>Job Title</Label><Input value={form.job_title} onChange={e => setForm({ ...form, job_title: e.target.value })} /></div>
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <Label>Plant</Label>
+                  <Select value={form.plant_id} onValueChange={v => setForm({ ...form, plant_id: v, field_id: '', station_id: '' })}>
+                    <SelectTrigger><SelectValue placeholder="Select plant" /></SelectTrigger>
+                    <SelectContent>
+                      {plants.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {requiresStation && (
+                  <div>
+                    <Label>{selectedPlant?.name?.toUpperCase() === 'UQ' ? 'Terminal' : 'Field / Area'}</Label>
+                    <Select value={form.field_id} onValueChange={v => setForm({ ...form, field_id: v, station_id: '' })}>
+                      <SelectTrigger><SelectValue placeholder={`Select ${selectedPlant?.name?.toUpperCase() === 'UQ' ? 'terminal' : 'field'}`} /></SelectTrigger>
+                      <SelectContent>
+                        {availableFields.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {form.field_id && availableStations.length > 0 && (
+                  <div>
+                    <Label>Station</Label>
+                    <Select value={form.station_id} onValueChange={v => setForm({ ...form, station_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select station" /></SelectTrigger>
+                      <SelectContent>
+                        {availableStations.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
               <div>
                 <Label>Competence Profile</Label>
                 <Select value={form.profile_id} onValueChange={v => setForm({ ...form, profile_id: v })}>
