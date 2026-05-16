@@ -24,6 +24,7 @@ import {
   ACTIVITY_TYPE_LABELS, statusFromProgress,
   type CMSPerson, type ActivityType, type CompetenceActivity, type PersonActivityRecord, type ActivityRecordStatus,
 } from '@/hooks/useCMS';
+import { useLocations } from '@/hooks/useLocations';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -182,11 +183,12 @@ const KPI: React.FC<{ icon: React.ReactNode; label: string; value: React.ReactNo
 // ============ PEOPLE TAB ============
 const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, competencyMap, links, activities }) => {
   const { addPerson } = useCMSMutations();
+  const { plants, getFieldsByPlant, getStationsByField } = useLocations();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<CMSPerson | null>(null);
   const [profileFilter, setProfileFilter] = useState<string>('all');
-  const [form, setForm] = useState({ first_name: '', last_name: '', staff_id: '', job_title: '', profile_id: '' });
+  const [form, setForm] = useState({ first_name: '', last_name: '', staff_id: '', job_title: '', profile_id: '', plant_id: '', field_id: '', station_id: '' });
 
   const filtered = people.filter((p: CMSPerson) => {
     if (profileFilter !== 'all' && p.profile_id !== profileFilter) return false;
@@ -195,13 +197,27 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
     return p.first_name.toLowerCase().includes(s) || p.last_name.toLowerCase().includes(s) || p.staff_id.toLowerCase().includes(s) || (p.job_title || '').toLowerCase().includes(s);
   });
 
+  const availableFields = form.plant_id ? getFieldsByPlant(form.plant_id) : [];
+  const availableStations = form.field_id ? getStationsByField(form.field_id) : [];
+  const selectedPlant = plants.find(p => p.id === form.plant_id);
+  const requiresStation = !!selectedPlant && availableFields.length > 0;
+
   const submit = async () => {
     if (!form.first_name || !form.last_name || !form.staff_id) return;
     try {
-      await addPerson.mutateAsync({ ...form, profile_id: form.profile_id || undefined } as any);
+      await addPerson.mutateAsync({
+        first_name: form.first_name,
+        last_name: form.last_name,
+        staff_id: form.staff_id,
+        job_title: form.job_title || undefined,
+        profile_id: form.profile_id || undefined,
+        plant_id: form.plant_id || null,
+        field_id: form.field_id || null,
+        station_id: form.station_id || null,
+      });
       toast({ title: 'Person added' });
       setOpen(false);
-      setForm({ first_name: '', last_name: '', staff_id: '', job_title: '', profile_id: '' });
+      setForm({ first_name: '', last_name: '', staff_id: '', job_title: '', profile_id: '', plant_id: '', field_id: '', station_id: '' });
     } catch (e: any) { toast({ title: 'Failed', description: e.message, variant: 'destructive' }); }
   };
 
@@ -234,6 +250,39 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
               </div>
               <div><Label>Staff ID</Label><Input value={form.staff_id} onChange={e => setForm({ ...form, staff_id: e.target.value })} /></div>
               <div><Label>Job Title</Label><Input value={form.job_title} onChange={e => setForm({ ...form, job_title: e.target.value })} /></div>
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <Label>Plant</Label>
+                  <Select value={form.plant_id} onValueChange={v => setForm({ ...form, plant_id: v, field_id: '', station_id: '' })}>
+                    <SelectTrigger><SelectValue placeholder="Select plant" /></SelectTrigger>
+                    <SelectContent>
+                      {plants.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {requiresStation && (
+                  <div>
+                    <Label>{selectedPlant?.name?.toUpperCase() === 'UQ' ? 'Terminal' : 'Field / Area'}</Label>
+                    <Select value={form.field_id} onValueChange={v => setForm({ ...form, field_id: v, station_id: '' })}>
+                      <SelectTrigger><SelectValue placeholder={`Select ${selectedPlant?.name?.toUpperCase() === 'UQ' ? 'terminal' : 'field'}`} /></SelectTrigger>
+                      <SelectContent>
+                        {availableFields.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {form.field_id && availableStations.length > 0 && (
+                  <div>
+                    <Label>Station</Label>
+                    <Select value={form.station_id} onValueChange={v => setForm({ ...form, station_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select station" /></SelectTrigger>
+                      <SelectContent>
+                        {availableStations.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
               <div>
                 <Label>Competence Profile</Label>
                 <Select value={form.profile_id} onValueChange={v => setForm({ ...form, profile_id: v })}>

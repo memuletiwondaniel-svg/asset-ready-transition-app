@@ -1008,6 +1008,7 @@ export type Database = {
       cms_people: {
         Row: {
           created_at: string
+          field_id: string | null
           first_name: string
           id: string
           job_title: string | null
@@ -1015,11 +1016,13 @@ export type Database = {
           plant_id: string | null
           profile_id: string | null
           staff_id: string
+          station_id: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           created_at?: string
+          field_id?: string | null
           first_name: string
           id?: string
           job_title?: string | null
@@ -1027,11 +1030,13 @@ export type Database = {
           plant_id?: string | null
           profile_id?: string | null
           staff_id: string
+          station_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           created_at?: string
+          field_id?: string | null
           first_name?: string
           id?: string
           job_title?: string | null
@@ -1039,15 +1044,30 @@ export type Database = {
           plant_id?: string | null
           profile_id?: string | null
           staff_id?: string
+          station_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Relationships: [
           {
+            foreignKeyName: "cms_people_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "field"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "cms_people_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "competence_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cms_people_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "station"
             referencedColumns: ["id"]
           },
         ]
