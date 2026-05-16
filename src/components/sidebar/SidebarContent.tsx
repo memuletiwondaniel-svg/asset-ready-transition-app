@@ -449,6 +449,8 @@ export const SidebarContent = memo<SidebarContentProps>(({
       </div>
     </div>
   );
+
+  return <TooltipProvider delayDuration={200}>{content}</TooltipProvider>;
 });
 
 SidebarContent.displayName = 'SidebarContent';
