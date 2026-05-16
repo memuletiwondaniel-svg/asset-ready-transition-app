@@ -427,6 +427,8 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                   const p2a = progressMap?.[project.id];
                   const vcrs = p2a?.vcrs ?? [];
                   const avg = p2a?.avg ?? 0;
+                  const completed = p2a?.completed ?? 0;
+                  const total = p2a?.total ?? 0;
                   const barColor =
                     avg >= 75 ? 'bg-emerald-500' :
                     avg >= 25 ? 'bg-amber-500' :
