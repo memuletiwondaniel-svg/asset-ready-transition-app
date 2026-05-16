@@ -401,143 +401,77 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
 
           {/* Table/List View */}
           {!isLoading && filteredProjects.length > 0 && viewMode === 'list' && (
-            <div className="rounded-lg border border-border bg-card overflow-hidden">
+            <div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
               {/* Table Header */}
-              <div className="flex items-center gap-4 px-4 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <div className="flex items-center gap-4 px-5 py-3 bg-muted/40 border-b border-border/60 text-[11px] font-medium text-muted-foreground/80 uppercase tracking-[0.08em]">
                 <div className="w-20 shrink-0">ID</div>
-                <div className={cn("min-w-[200px]", columnVisibility.scope ? "w-[280px]" : "flex-1")}>Project Title</div>
-                {columnVisibility.scope && <div className="flex-1 min-w-[200px]">Scope</div>}
-                {columnVisibility.hub && <div className="w-32 shrink-0">Hub</div>}
-                {columnVisibility.plant && <div className="w-36 shrink-0">Plant</div>}
-                {columnVisibility.team && <div className="w-48 shrink-0">Team</div>}
+                <div className="flex-1 min-w-[220px]">Project Title</div>
+                {columnVisibility.scope && <div className="w-[240px] shrink-0">Scope</div>}
                 {columnVisibility.milestone && <div className="w-52 shrink-0">Milestone</div>}
-                <div className="w-12 shrink-0 text-right">Fav</div>
+                <div className="w-40 shrink-0">Location</div>
+                <div className="w-56 shrink-0">P2A Progress</div>
+                <div className="w-10 shrink-0" />
               </div>
-              
+
               {/* Table Body */}
-              <div className="divide-y divide-border">
+              <div className="divide-y divide-border/60">
                 {filteredProjects.map((project) => {
                   const projectColor = getProjectColor(project.project_id_prefix, project.project_id_number);
-                  
+                  const location = formatProjectLocation({
+                    plant_name: project.plant_name,
+                    station_name: project.station_name,
+                  });
+                  const p2a = progressMap?.[project.id];
+                  const vcrs = p2a?.vcrs ?? [];
+                  const avg = p2a?.avg ?? 0;
+                  const barColor =
+                    avg >= 75 ? 'bg-emerald-500' :
+                    avg >= 25 ? 'bg-amber-500' :
+                    avg > 0   ? 'bg-rose-500'   : 'bg-muted-foreground/30';
+
                   return (
-                    <div 
+                    <div
                       key={project.id}
-                      className="flex items-start gap-4 px-4 py-3 cursor-pointer transition-colors hover:bg-muted/30 group"
+                      className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-muted/30 group"
                       onClick={() => handleProjectClick(project.id)}
                     >
-                      {/* Project ID */}
-                      <div className="w-20 shrink-0 pt-0.5">
-                        <Badge 
-                          variant="outline" 
+                      {/* ID badge */}
+                      <div className="w-20 shrink-0">
+                        <Badge
+                          variant="outline"
                           className="text-xs font-semibold px-2.5 py-1 text-white border-0 inline-flex items-center justify-center leading-none"
                           style={{ background: `linear-gradient(to right, ${projectColor.bgStart}, ${projectColor.bgEnd})` }}
                         >
                           {project.project_id_prefix}-{project.project_id_number}
                         </Badge>
                       </div>
-                      
-                      {/* Project Title - always fully visible */}
-                      <div className={cn("min-w-[200px]", columnVisibility.scope ? "w-[280px] shrink-0" : "flex-1")}>
-                        <h3 className="text-xs text-foreground group-hover:text-primary transition-colors whitespace-nowrap truncate">
+
+                      {/* Title */}
+                      <div className="flex-1 min-w-[220px] flex items-center gap-2">
+                        <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
                           {project.project_title}
                         </h3>
+                        {project.is_favorite && (
+                          <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0" />
+                        )}
                       </div>
 
-                      {/* Scope - next to title, wraps to multiple lines */}
+                      {/* Scope (optional) */}
                       {columnVisibility.scope && (
-                        <div className="flex-1 min-w-[200px]">
-                          <p className="text-xs text-muted-foreground leading-relaxed">
-                            {project.project_scope || '-'}
+                        <div className="w-[240px] shrink-0">
+                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                            {project.project_scope || '—'}
                           </p>
                         </div>
                       )}
 
-                      {/* Hub */}
-                      {columnVisibility.hub && (
-                        <div className="w-32 shrink-0">
-                          <p className="text-xs text-foreground truncate">
-                            {project.hub_name || '-'}
-                          </p>
-                        </div>
-                      )}
-                      
-                      {/* Plant */}
-                      {columnVisibility.plant && (
-                        <div className="w-36 shrink-0 min-w-0">
-                          <p className="text-xs text-foreground truncate">
-                            {project.plant_name || 'Not assigned'}
-                          </p>
-                          {project.station_name && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              {project.station_name}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                      
-                      {/* Team - with lead image and count */}
-                      {columnVisibility.team && (
-                        <div className="w-48 shrink-0">
-                          {project.team_count && project.team_count > 0 ? (
-                            <div className="flex items-center gap-2">
-                              {/* Stacked avatars - lead in front, others behind */}
-                              <div className="flex items-center shrink-0">
-                                {/* Background stacked avatars for additional members */}
-                                {project.team_count > 1 && (
-                                  <div className="flex -mr-3">
-                                    {Array.from({ length: Math.min(project.team_count - 1, 2) }).map((_, i) => (
-                                      <div 
-                                        key={i} 
-                                        className="h-7 w-7 rounded-full bg-muted border-2 border-background"
-                                        style={{ marginLeft: i > 0 ? '-10px' : '0', zIndex: 2 - i }}
-                                      />
-                                    ))}
-                                  </div>
-                                )}
-                                {/* Lead avatar in front */}
-                                {project.team_lead_name && (
-                                  <Avatar className="h-8 w-8 border-2 border-background shrink-0 relative z-10 ring-2 ring-primary/20">
-                                    <AvatarImage
-                                      src={
-                                        project.team_lead_avatar
-                                          ? supabase.storage
-                                              .from('user-avatars')
-                                              .getPublicUrl(project.team_lead_avatar).data.publicUrl
-                                          : undefined
-                                      }
-                                    />
-                                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-medium">
-                                      {project.team_lead_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs font-medium text-foreground truncate">
-                                  {project.team_lead_name || 'No lead'}
-                                </p>
-                                {project.team_count > 1 && (
-                                  <p className="text-xs text-muted-foreground">
-                                    +{project.team_count - 1} Members
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground italic">No team</span>
-                          )}
-                        </div>
-                      )}
-                      
-                      {/* Upcoming Milestone - no icon, golden badge if scorecard */}
+                      {/* Milestone (optional) */}
                       {columnVisibility.milestone && (
                         <div className="w-52 shrink-0">
                           {project.next_milestone_name ? (
                             <div className="space-y-0.5">
                               <div className="flex items-center gap-2">
-                                <p className="text-xs text-foreground truncate">
-                                  {project.next_milestone_name}
-                                </p>
+                                <p className="text-xs text-foreground truncate">{project.next_milestone_name}</p>
                                 {project.is_scorecard && (
                                   <Badge className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700">
                                     Scorecard
@@ -545,7 +479,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                                 )}
                               </div>
                               {project.next_milestone_date && (
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-[11px] text-muted-foreground">
                                   {format(new Date(project.next_milestone_date), 'MMM d, yyyy')}
                                 </p>
                               )}
@@ -555,24 +489,87 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                           )}
                         </div>
                       )}
-                      
-                      {/* Favorite */}
-                      <div className="w-12 shrink-0 text-right">
-                        <button
-                          type="button"
-                          onClick={(e) => handleToggleFavorite(e, project.id, project.is_favorite)}
-                          className={`h-8 w-8 inline-flex items-center justify-center rounded-full transition-all duration-200 hover:bg-yellow-500/20 ${
-                            project.is_favorite ? 'opacity-100' : 'opacity-30 group-hover:opacity-100'
-                          }`}
-                        >
-                          <Star
-                            className={`h-4 w-4 transition-all duration-200 ${
-                              project.is_favorite
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-muted-foreground hover:text-yellow-400'
-                            }`}
-                          />
-                        </button>
+
+                      {/* Location */}
+                      <div className="w-40 shrink-0">
+                        <span className="text-sm text-foreground truncate">{location}</span>
+                      </div>
+
+                      {/* P2A Progress */}
+                      <div className="w-56 shrink-0">
+                        {vcrs.length === 0 ? (
+                          <span className="text-xs text-muted-foreground italic">No VCRs</span>
+                        ) : vcrs.length === 1 ? (
+                          <div className="flex items-center gap-2">
+                            <Progress
+                              value={avg}
+                              className="h-2 flex-1"
+                              indicatorClassName={barColor}
+                            />
+                            <span className="text-xs font-medium text-foreground tabular-nums w-9 text-right">{avg}%</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="h-2 flex-1 rounded-full bg-muted/60 overflow-hidden flex gap-0.5"
+                              title={vcrs.map(v => `${v.vcr_code}: ${v.progress}%`).join('  •  ')}
+                            >
+                              {vcrs.map((v) => {
+                                const seg =
+                                  v.progress >= 75 ? 'bg-emerald-500' :
+                                  v.progress >= 25 ? 'bg-amber-500' :
+                                  v.progress > 0   ? 'bg-rose-500'   : 'bg-muted-foreground/20';
+                                return (
+                                  <div key={v.id} className="h-full flex-1 bg-muted-foreground/10 relative overflow-hidden">
+                                    <div className={cn('h-full', seg)} style={{ width: `${v.progress}%` }} />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <span className="text-xs font-medium text-foreground tabular-nums w-9 text-right">{avg}%</span>
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                              {vcrs.length} VCRs
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Row actions */}
+                      <div className="w-10 shrink-0 flex justify-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem
+                              onClick={(e) => handleToggleFavorite(e as any, project.id, project.is_favorite)}
+                            >
+                              <Star className={cn('h-4 w-4 mr-2', project.is_favorite && 'fill-yellow-400 text-yellow-400')} />
+                              {project.is_favorite ? 'Remove favorite' : 'Mark as favorite'}
+                            </DropdownMenuItem>
+                            {canPerformActions && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setProjectToDelete({ id: project.id, title: project.project_title });
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete project
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   );
