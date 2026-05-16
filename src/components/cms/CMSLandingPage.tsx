@@ -782,11 +782,20 @@ const ProfilesTab: React.FC<any> = ({ profiles, competencies, links, people }) =
   );
 };
 
-const ProfileDetailSheet: React.FC<any> = ({ profile, onClose, competencies, links, onLink, onUnlink }) => {
+const ProfileDetailSheet: React.FC<any> = ({ profile, onClose, competencies, links, onLink, onUpdate, onUnlink }) => {
+  const [pickedCompetency, setPickedCompetency] = useState<string>('');
+  const [pickedLevel, setPickedLevel] = useState<'knowledge'|'skill'|'mastery'>('mastery');
   if (!profile) return null;
   const linked = links.filter((l: any) => l.profile_id === profile.id);
   const linkedIds = new Set(linked.map((l: any) => l.competency_id));
   const available = competencies.filter((c: any) => !linkedIds.has(c.id));
+
+  const addNow = () => {
+    if (!pickedCompetency) return;
+    onLink(pickedCompetency, pickedLevel);
+    setPickedCompetency('');
+    setPickedLevel('mastery');
+  };
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
@@ -798,7 +807,7 @@ const ProfileDetailSheet: React.FC<any> = ({ profile, onClose, competencies, lin
             </div>
             {profile.name}
           </SheetTitle>
-          <SheetDescription>{profile.description || 'Manage competencies for this profile.'}</SheetDescription>
+          <SheetDescription>{profile.description || 'Set the required level for each competency in this profile.'}</SheetDescription>
         </SheetHeader>
         <div className="mt-6 space-y-5">
           <div>
@@ -809,27 +818,67 @@ const ProfileDetailSheet: React.FC<any> = ({ profile, onClose, competencies, lin
             <div className="space-y-2">
               {linked.map((l: any) => {
                 const c = competencies.find((x: any) => x.id === l.competency_id);
+                const req: 'knowledge'|'skill'|'mastery' = l.required_milestone || 'mastery';
+                const meta = MILESTONE_META[req];
+                const tone = milestoneTone(req);
+                const ReqIcon = meta.icon;
                 return (
-                  <Card key={l.id} className="p-3 flex items-center justify-between border-border/50 hover:border-primary/30 transition-colors">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">{c?.title}</p>
-                      {c?.description && <p className="text-xs text-muted-foreground line-clamp-1">{c.description}</p>}
+                  <Card key={l.id} className="p-3 border-border/50 hover:border-primary/30 transition-colors">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium">{c?.title}</p>
+                        {c?.description && <p className="text-xs text-muted-foreground line-clamp-1">{c.description}</p>}
+                      </div>
+                      <Button size="sm" variant="ghost" onClick={() => onUnlink(l.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 h-7 px-2">Remove</Button>
                     </div>
-                    <Button size="sm" variant="ghost" onClick={() => onUnlink(l.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10">Remove</Button>
+                    <div className="mt-2 flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className={cn('gap-1 text-[10px] font-medium border', tone.bg)}>
+                        <Target className="h-2.5 w-2.5" /><ReqIcon className="h-2.5 w-2.5" /> Required: {meta.label}
+                      </Badge>
+                      <Select value={req} onValueChange={(v: any) => onUpdate(l.id, v)}>
+                        <SelectTrigger className="h-7 w-[150px] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="knowledge">Knowledge</SelectItem>
+                          <SelectItem value="skill">Skill</SelectItem>
+                          <SelectItem value="mastery">Mastery</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </Card>
                 );
               })}
               {!linked.length && <p className="text-sm text-muted-foreground text-center py-6 border border-dashed rounded-lg">No competencies linked yet.</p>}
             </div>
           </div>
-          <div>
+          <div className="border-t border-border/40 pt-4">
             <h3 className="text-sm font-semibold mb-2">Add Competency</h3>
-            <Select onValueChange={(v) => onLink(v)}>
-              <SelectTrigger><SelectValue placeholder="Pick a competency to add" /></SelectTrigger>
-              <SelectContent>
-                {available.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <div>
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Competency</Label>
+                <Select value={pickedCompetency} onValueChange={setPickedCompetency}>
+                  <SelectTrigger><SelectValue placeholder="Pick a competency" /></SelectTrigger>
+                  <SelectContent>
+                    {available.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Required Level</Label>
+                <Select value={pickedLevel} onValueChange={(v: any) => setPickedLevel(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="knowledge">Knowledge — minimum awareness</SelectItem>
+                    <SelectItem value="skill">Skill — able to perform</SelectItem>
+                    <SelectItem value="mastery">Mastery — expert level</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button size="sm" onClick={addNow} disabled={!pickedCompetency} className="w-full mt-1">
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add to profile
+              </Button>
+            </div>
           </div>
         </div>
       </SheetContent>
