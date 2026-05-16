@@ -78,33 +78,28 @@ export const CMSLandingPage: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.08] via-transparent to-accent/[0.06]" />
         <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
-        <div className="relative p-6 md:p-8">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-2xl blur-md opacity-60 group-hover:opacity-90 transition-opacity" />
-                <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                  <GraduationCap className="h-7 w-7" />
-                </div>
+        <div className="relative p-4 sm:p-6 md:p-8">
+          <div className="flex items-start gap-3">
+            <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shrink-0">
+              <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+                  Competence Management
+                </h1>
+                <Badge variant="outline" className="hidden sm:inline-flex gap-1 text-[10px] bg-background/60 backdrop-blur">
+                  <Sparkles className="h-2.5 w-2.5" /> Live
+                </Badge>
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                    Competence Management
-                  </h1>
-                  <Badge variant="outline" className="hidden sm:inline-flex gap-1 text-[10px] bg-background/60 backdrop-blur">
-                    <Sparkles className="h-2.5 w-2.5" /> Live
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-                  Build profiles, map competencies, close gaps and track every individual's readiness in one place.
-                </p>
-              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-xl">
+                Build profiles, map competencies, close gaps and track every individual's readiness in one place.
+              </p>
             </div>
           </div>
 
           {/* KPIs */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-7">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mt-5 sm:mt-7">
             <KPI tone="violet" icon={<Users className="h-4 w-4" />} label="People" value={people.length} hint={`${profiles.length} profiles`} />
             <KPI tone="emerald" icon={<TrendingUp className="h-4 w-4" />} label="Avg Readiness" value={`${avgReadiness}%`} progress={avgReadiness} />
             <KPI tone="blue" icon={<Award className="h-4 w-4" />} label="Competent" value={competent} hint={`${inProgress} in progress`} />
