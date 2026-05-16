@@ -85,16 +85,14 @@ export const AuthenticatedLayout: React.FC = () => {
 
   return (
     <div className="h-[100dvh] flex w-full overflow-hidden">
-      {/* Sidebar — hidden on mobile, visible on md+ */}
-      <div className="hidden md:block">
-        <OrshSidebar
-          currentPage={currentPage}
-          language={language}
-          onLanguageChange={setLanguage}
-          onNavigate={handleNavigate}
-          onLogout={handleLogout}
-        />
-      </div>
+      {/* Sidebar — desktop aside is inside OrshSidebar (hidden on mobile); mobile uses Sheet trigger */}
+      <OrshSidebar
+        currentPage={currentPage}
+        language={language}
+        onLanguageChange={setLanguage}
+        onNavigate={handleNavigate}
+        onLogout={handleLogout}
+      />
       <AnimatedBackground className="flex-1 flex flex-col overflow-auto pb-16 md:pb-0">
         <div className="content-max flex-1 flex flex-col">
           <Outlet />
