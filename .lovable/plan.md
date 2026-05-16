@@ -1,91 +1,130 @@
-## P2A Handover — Phase 2 redesign
+# Competence Management System (CMS)
 
-Seven changes, grouped to minimise risk.
+A new standalone module accessible from the main sidebar as **Competence Management** (separate top-level item, not nested under OR Maintenance).
 
-### 1. Tighter progress column
+## 1. Database (Supabase)
 
-Shrink `P2A Progress` from `w-56` → `w-40`. Keep the stacked layout (% + `X/Y ready` on top, full-width bar below). The bar becomes punchier and stops hogging the row.
+All tables protected by RLS: authenticated users can read; users with `admin` or `manager` role can write (uses existing `has_role()` security-definer pattern).
 
-### 2. Add **Qualifications** column (always visible)
+### `competence_profiles`
+- name (e.g. "Control Room Operator")
+- code (short, e.g. "CRO")
+- description
 
-- Single clickable number: total count of `p2a_vcr_qualifications` rows attached to all prerequisites of the project's plan. Rendered as a subtle pill/link with hover underline; muted "—" when zero.
-- Column sits between **Location** and **P2A Progress** in default order.
-- Always visible — not toggleable in the Columns menu and not draggable out (still reorderable in position).
-- **Click** opens a right-side `Sheet` overlay listing every qualification for that project:
-  - Header: project title + total count + small status legend (Pending / Approved / Rejected).
-  - Search input at the top — filters across reason, mitigation, action owner name, and prerequisite summary (case-insensitive, debounced).
-  - Each row reuses the same visual pattern as `VCRQualificationsTab` (status badge, reason snippet, owner, target date, chevron).
-  - Clicking a row opens the existing `QualificationDetailSheet` stacked on top.
-- Data: extend `useProjectsP2AProgress` to also batch-fetch qualification *counts* per project in the same round-trip (one extra `.in('vcr_prerequisite_id', allPrereqIds)` query, group client-side). The full list is fetched on demand when the overlay opens via a new `useProjectQualifications(projectId)` hook.
+### `competencies`
+- title
+- description
+- created_by
 
-### 3. Reorderable + resizable columns
+### `competence_profile_competencies` (join)
+- profile_id → competence_profiles
+- competency_id → competencies
+- weight (default 1)
+- required_level (1–5, optional)
+- UNIQUE(profile_id, competency_id)
 
-Adopt **TanStack Table v8** (`@tanstack/react-table` — add dep) for the list view only. Grid/heatmap view stays separate.
+### `competence_activities`
+- competency_id → competencies
+- title
+- description
+- activity_type ENUM: `vendor_training`, `ojt`, `assessment`, `certification`, `e_learning`, `mentoring`, `other`
+- duration_hours, provider, target_completion_date (optional)
 
-- Define columns with `enableResizing`, `enableHiding`, `enableReordering`.
-- **Drag-to-reorder**: header cells become `useSortable` (`@dnd-kit/sortable` already installed). Grab cursor on hover, lift effect during drag, drop indicator line between columns.
-- **Resize**: right-edge handle on each header (1px line that thickens on hover, primary color on drag). Min 80px, max 600px.
-- **Persistence**: save `{ columnOrder, columnSizing, columnVisibility }` per user to `localStorage` under `p2a-table-prefs-v1`.
-- ID column locked (`enableReordering: false`, `enableHiding: false`); Qualifications is locked-visible but reorderable.
-- "Reset layout" button in the Columns dropdown footer.
+### `cms_people`
+- first_name, last_name
+- staff_id (UNIQUE)
+- plant_id (FK), job_title
+- profile_id → competence_profiles (assigned profile)
+- user_id (optional link to auth.users)
 
-### 4. Subtitle rename
+### `person_competency_progress`
+- person_id → cms_people
+- competency_id → competencies
+- progress (0–100)
+- status ENUM: `not_started`, `in_progress`, `assessed`, `competent`, `expired`
+- last_assessed_at, assessor_id, notes
+- UNIQUE(person_id, competency_id)
 
-`"Browse and manage Project-to-Asset (P2A) deliverables and Verification Certificate of Readiness (VCRs)"`
-→ `"Manage Project-to-Asset (P2A) Handover & Deliverables"`
+### `person_activity_records`
+- person_id, activity_id
+- status: `planned`, `in_progress`, `completed`, `failed`
+- completed_at, score, evidence_url
 
-### 5. P2A Handover icon refresh
+**Overall progress per person** = weighted average of `progress` across competencies belonging to the assigned profile. Exposed via SQL view `v_person_overall_progress` for fast reads.
 
-Match PSSR-page pattern (`p-2 sm:p-3 rounded-xl bg-gradient-to-br ...`):
+## 2. UI/UX
 
-- Icon: swap `Key` for `KeyRound`.
-- Gradient: `from-teal-500 to-cyan-600` (distinct from PSSR violet, ORA purple, OWL amber).
-- Add `shadow-lg shadow-teal-500/20` for depth, white icon inside.
+### Navigation
+- Add **Competence Management** as a new top-level item in `SidebarContent.tsx` (its own icon, e.g. `GraduationCap`).
+- New route: `/competence-management` in `App.tsx`.
+- Register in `sidebarNavigation.ts`.
 
-### 6. Sidebar icon tooltips
+### Pages
 
-Wrap each `OrshSidebar` nav button with shadcn `<Tooltip>` showing the page name on hover (right side, 200ms delay). Add `TooltipProvider` at the layout root if not already present.
+**`CMSLandingPage.tsx`** — header + KPI cards (total people, avg readiness %, # competencies, # profiles) + tabs:
 
-### 7. Replace grid/card view with **P2A Heatmap**
+1. **People** (default)
+   - Searchable table: Name, Staff ID, Plant, Job Title, Assigned Profile, Overall Progress (bar + %).
+   - Click progress bar → **PersonProgressSheet** (side overlay) with breakdown per competency: mini bars, status badges, last assessment date, linked activity records.
+   - "Add Person" dialog.
 
-Toggle button keeps the grid icon; route renders `<P2AHeatmap />` instead of project cards.
+2. **Competence Profiles**
+   - Card grid with competency count + people count per profile.
+   - "Add Profile" dialog.
+   - Click → **ProfileDetailSheet**: list/add competencies (multi-select existing or create new), set weight.
 
-Layout: matrix table
-- **Rows** = projects (sticky left: ID badge + title).
-- **Columns** = active `p2a_deliverable_categories` ordered by `display_order` (CMMS, Procedures, Documents, Training, Registers & Logsheets, System Readiness, 2Y Spares, SUOP, PSSR/SoF, PAC, FAC, OWL, …).
-- **Cells** = colored tile showing `completed/total` (e.g. `5/12`). Color follows the same threshold (red < 25%, amber 25–74%, green ≥ 75%, muted if 0).
+3. **Competencies**
+   - Table: Title, Description, # Profiles using, # Activities.
+   - "Add Competency" dialog.
+   - Click row → **CompetencyDetailSheet**: full description + linked activities tab.
 
-Behaviour:
-- **Hover** → floating card with a 2-sentence executive summary: `"5 of 12 CMMS items delivered (42%). 2 in progress, 1 behind schedule."` + status breakdown chips. Generated client-side from `p2a_handover_deliverables`.
-- **Click** → side `Sheet` overlay listing every deliverable in that cell with name, delivering party, status, completion date. Each row links to its VCR.
+4. **Activities**
+   - Table grouped by competency: Title, Type badge, Provider, Duration.
+   - Filter by activity type and competency.
+   - "Add Activity" dialog with type selector.
 
-Data source:
-- Query `p2a_handover_deliverables` joined via `p2a_handover_plans → project_id`, plus `p2a_deliverable_categories(name)`. One batch query for all visible projects.
-- New hook: `useP2AHeatmapData()` returning `Record<projectId, Record<categoryId, { total, byStatus }>>`.
+### Components
+```
+src/components/cms/
+  CMSLandingPage.tsx
+  PeopleTab.tsx
+  ProfilesTab.tsx
+  CompetenciesTab.tsx
+  ActivitiesTab.tsx
+  PersonProgressSheet.tsx
+  ProfileDetailSheet.tsx
+  CompetencyDetailSheet.tsx
+  dialogs/AddPersonDialog.tsx
+  dialogs/AddProfileDialog.tsx
+  dialogs/AddCompetencyDialog.tsx
+  dialogs/AddActivityDialog.tsx
 
-Empty cells render as a hatched/diagonal-stripe muted tile to distinguish from "0% done".
+src/hooks/
+  useCompetenceProfiles.ts
+  useCompetencies.ts
+  useCompetenceActivities.ts
+  useCMSPeople.ts
+  usePersonProgress.ts
+```
 
-### Files
+### Design
+- Semantic tokens only (no hardcoded colors).
+- Progress bars match the gradient style used in P2A handover.
+- Status badges reuse `competencyLevels.ts` color tiers.
+- Side sheets follow `ProjectQualificationsSheet.tsx` pattern.
 
-**New**
-- `src/components/p2a/P2AHeatmap.tsx`
-- `src/components/p2a/P2AHeatmapCell.tsx`
-- `src/components/p2a/P2ADeliverableCellSheet.tsx`
-- `src/components/p2a/ProjectQualificationsSheet.tsx` — searchable overlay for the Qualifications column
-- `src/components/project/ProjectsTable.tsx` — TanStack-Table-based list view
-- `src/components/project/DraggableTableHeader.tsx` — sortable + resizable header cell
-- `src/hooks/useProjectQualifications.ts` — full qualifications list for one project (lazy)
-- `src/hooks/useTablePreferences.ts` — localStorage persistence
+## 3. Routing & Sidebar wiring
+- `App.tsx`: `<Route path="/competence-management" element={<CMSLandingPage />} />`.
+- `SidebarContent.tsx`: add top-level entry with `GraduationCap` icon.
+- `sidebarNavigation.ts`: register `'competence-management': '/competence-management'`.
 
-**Modified**
-- `src/components/project/ProjectsHomePage.tsx` — subtitle, icon, swap grid for heatmap, render `ProjectsTable` in list view
-- `src/hooks/useProjectsP2AProgress.ts` — also return qualification counts per project
-- `src/components/OrshSidebar.tsx` — wrap nav items in `Tooltip`
-- `package.json` — add `@tanstack/react-table`
-- `src/hooks/useP2AHeatmapData.ts` — already scaffolded; ensure it returns the per-category aggregation described above
+## 4. Seed data
+Sample profiles (CRO, Field Operator, Shift Engineer/Supervisor), ~6 competencies, a few activities per competency, and 4–5 demo people with varied progress.
 
-### Out of scope
+## Out of scope (for now)
+- CSV bulk import of people
+- Auto-grading from assessments
+- Expiry notifications / reminders
+- Activity completion approval workflows
 
-- Per-VCR drilldown inside the heatmap cell sheet beyond a link out to the existing VCR detail page.
-- Server-side persistence of table layout (localStorage is sufficient per browser).
-- Modifying other pages' icons.
+Confirm and I will implement.
