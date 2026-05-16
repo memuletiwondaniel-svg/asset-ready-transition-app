@@ -211,7 +211,7 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
             <Input placeholder="Search people..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-background/60 border-border/60 focus-visible:ring-primary/30" />
           </div>
           <Select value={profileFilter} onValueChange={setProfileFilter}>
-            <SelectTrigger className="w-[170px] bg-background/60 border-border/60"><Filter className="h-3.5 w-3.5 mr-1 text-muted-foreground" /><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[130px] sm:w-[170px] bg-background/60 border-border/60 shrink-0"><Filter className="h-3.5 w-3.5 mr-1 text-muted-foreground shrink-0" /><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All profiles</SelectItem>
               {profiles.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
