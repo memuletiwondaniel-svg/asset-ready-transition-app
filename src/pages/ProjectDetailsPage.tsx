@@ -261,12 +261,24 @@ export default function ProjectDetailsPage() {
 
           {/* Header - standardized design */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
-            <div className="min-w-0">
-              <h1 className="text-2xl font-bold flex items-baseline gap-3 flex-wrap">
-                <span className="text-sm font-mono font-medium uppercase tracking-wider text-muted-foreground bg-muted px-2 py-1 rounded-md">
-                  {getProjectId()}
-                </span>
-                <span className="text-foreground">{project.project_title}</span>
+            <div className="min-w-0 flex items-center gap-3">
+              {(() => {
+                const { bgStart, bgEnd, borderColor } = getProjectColor(project.project_id_prefix, project.project_id_number);
+                return (
+                  <span
+                    className="shrink-0 inline-flex items-center text-[11px] font-mono font-semibold tracking-wider text-white px-2.5 py-1 rounded-md shadow-sm border"
+                    style={{
+                      background: `linear-gradient(135deg, ${bgStart}, ${bgEnd})`,
+                      borderColor,
+                    }}
+                    title="Project ID"
+                  >
+                    {getProjectId()}
+                  </span>
+                );
+              })()}
+              <h1 className="text-2xl font-bold text-foreground truncate">
+                {project.project_title}
               </h1>
             </div>
             {hiddenWidgets.length > 0 && (
