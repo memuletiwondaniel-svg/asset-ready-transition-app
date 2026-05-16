@@ -51,9 +51,21 @@ export function useActivities() {
   return useQuery({
     queryKey: ['cms','activities'],
     queryFn: async () => {
-      const { data, error } = await t('competence_activities').select('*').order('created_at', { ascending: false });
+      const { data, error } = await t('competence_activities').select('*').order('sequence_order', { ascending: true });
       if (error) throw error;
       return (data ?? []) as unknown as CompetenceActivity[];
+    },
+  });
+}
+
+export function usePersonActivityRecords(personId: string | null) {
+  return useQuery({
+    queryKey: ['cms','person-activity-records', personId],
+    enabled: !!personId,
+    queryFn: async () => {
+      const { data, error } = await t('person_activity_records').select('*').eq('person_id', personId!);
+      if (error) throw error;
+      return (data ?? []) as unknown as PersonActivityRecord[];
     },
   });
 }
