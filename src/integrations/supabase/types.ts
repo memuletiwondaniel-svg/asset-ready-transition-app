@@ -1145,6 +1145,7 @@ export type Database = {
           id: string
           profile_id: string
           required_level: number | null
+          required_milestone: string
           weight: number
         }
         Insert: {
@@ -1153,6 +1154,7 @@ export type Database = {
           id?: string
           profile_id: string
           required_level?: number | null
+          required_milestone?: string
           weight?: number
         }
         Update: {
@@ -1161,6 +1163,7 @@ export type Database = {
           id?: string
           profile_id?: string
           required_level?: number | null
+          required_milestone?: string
           weight?: number
         }
         Relationships: [
