@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Grid, List, Key, Plus, Star, Settings2, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Search, Grid, List, Key, Plus, Star, Settings2, MoreVertical, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -405,7 +405,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
               {/* Table Header */}
               <div className="flex items-center gap-4 px-5 py-3 bg-muted/40 border-b border-border/60 text-[11px] font-medium text-muted-foreground/80 uppercase tracking-[0.08em]">
                 <div className="w-20 shrink-0">ID</div>
-                <div className="flex-1 min-w-[220px]">Project Title</div>
+                <div className="w-[360px] shrink-0">Project Title</div>
                 {columnVisibility.scope && <div className="w-[240px] shrink-0">Scope</div>}
                 {columnVisibility.milestone && <div className="w-52 shrink-0">Milestone</div>}
                 <div className="w-40 shrink-0">Location</div>
@@ -447,7 +447,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       </div>
 
                       {/* Title */}
-                      <div className="flex-1 min-w-[220px] flex items-center gap-2">
+                      <div className="w-[360px] shrink-0 flex items-center gap-2">
                         <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
                           {project.project_title}
                         </h3>
@@ -495,11 +495,11 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                         <span className="text-sm text-foreground truncate">{location}</span>
                       </div>
 
-                      {/* P2A Progress */}
+                      {/* P2A Progress — single bar + avg % + VCR count chip */}
                       <div className="w-56 shrink-0">
                         {vcrs.length === 0 ? (
                           <span className="text-xs text-muted-foreground italic">No VCRs</span>
-                        ) : vcrs.length === 1 ? (
+                        ) : (
                           <div className="flex items-center gap-2">
                             <Progress
                               value={avg}
@@ -507,29 +507,11 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                               indicatorClassName={barColor}
                             />
                             <span className="text-xs font-medium text-foreground tabular-nums w-9 text-right">{avg}%</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="h-2 flex-1 rounded-full bg-muted/60 overflow-hidden flex gap-0.5"
-                              title={vcrs.map(v => `${v.vcr_code}: ${v.progress}%`).join('  •  ')}
-                            >
-                              {vcrs.map((v) => {
-                                const seg =
-                                  v.progress >= 75 ? 'bg-emerald-500' :
-                                  v.progress >= 25 ? 'bg-amber-500' :
-                                  v.progress > 0   ? 'bg-rose-500'   : 'bg-muted-foreground/20';
-                                return (
-                                  <div key={v.id} className="h-full flex-1 bg-muted-foreground/10 relative overflow-hidden">
-                                    <div className={cn('h-full', seg)} style={{ width: `${v.progress}%` }} />
-                                  </div>
-                                );
-                              })}
-                            </div>
-                            <span className="text-xs font-medium text-foreground tabular-nums w-9 text-right">{avg}%</span>
-                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
-                              {vcrs.length} VCRs
-                            </Badge>
+                            {vcrs.length > 1 && (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 font-medium">
+                                {vcrs.length} VCRs
+                              </Badge>
+                            )}
                           </div>
                         )}
                       </div>
@@ -543,7 +525,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                               size="sm"
                               className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity"
                             >
-                              <MoreHorizontal className="h-4 w-4" />
+                              <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48" onClick={(e) => e.stopPropagation()}>
