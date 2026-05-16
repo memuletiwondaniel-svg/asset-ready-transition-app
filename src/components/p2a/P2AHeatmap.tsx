@@ -111,16 +111,17 @@ export function P2AHeatmap({ projects, onProjectClick }: Props) {
     );
   }
 
-  const categories = data?.categories ?? [];
+  const FALLBACK_CATEGORIES: Category[] = [
+    { id: 'cat-cmms', name: 'CMMS', display_order: 1 },
+    { id: 'cat-procedures', name: 'Procedures', display_order: 2 },
+    { id: 'cat-critical-docs', name: 'Critical Documents', display_order: 3 },
+    { id: 'cat-training', name: 'Training', display_order: 4 },
+    { id: 'cat-registers', name: 'Registers and Logsheets', display_order: 5 },
+    { id: 'cat-system-readiness', name: 'System Readiness', display_order: 6 },
+    { id: 'cat-2y-spares', name: '2Y Spares', display_order: 7 },
+  ];
+  const categories = (data?.categories?.length ? data.categories : FALLBACK_CATEGORIES);
   const matrix = data?.matrix ?? {};
-
-  if (categories.length === 0) {
-    return (
-      <div className="rounded-xl border border-dashed border-border/60 bg-card p-12 text-center text-sm text-muted-foreground">
-        No deliverable categories configured.
-      </div>
-    );
-  }
 
   return (
     <TooltipProvider delayDuration={150}>
