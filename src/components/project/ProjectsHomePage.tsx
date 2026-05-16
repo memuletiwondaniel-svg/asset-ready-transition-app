@@ -402,20 +402,22 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
           {/* Table/List View */}
           {!isLoading && filteredProjects.length > 0 && viewMode === 'list' && (
             <div className="rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden">
-              {/* Table Header */}
-              <div className="flex items-center gap-4 px-5 py-3 bg-muted/40 border-b border-border/60 text-[11px] font-medium text-muted-foreground/80 uppercase tracking-[0.08em]">
-                <div className="w-8 shrink-0" />
-                <div className="w-20 shrink-0">ID</div>
-                <div className="w-[360px] shrink-0">Project Title</div>
-                {columnVisibility.scope && <div className="w-[240px] shrink-0">Scope</div>}
-                {columnVisibility.milestone && <div className="w-52 shrink-0">Milestone</div>}
-                <div className="w-40 shrink-0">Location</div>
-                <div className="w-12 shrink-0" />
-                <div className="w-56 shrink-0">P2A Progress</div>
-              </div>
+              <div className="overflow-x-auto">
+                <div className="min-w-max">
+                  {/* Table Header */}
+                  <div className="flex items-center gap-4 px-5 py-3 bg-muted/40 border-b border-border/60 text-[11px] font-medium text-muted-foreground/80 uppercase tracking-[0.08em]">
+                    <div className="w-8 shrink-0" />
+                    <div className="w-20 shrink-0">ID</div>
+                    <div className="w-[260px] shrink-0">Project Title</div>
+                    {columnVisibility.scope && <div className="w-[240px] shrink-0">Scope</div>}
+                    {columnVisibility.milestone && <div className="w-52 shrink-0">Milestone</div>}
+                    <div className="w-40 shrink-0">Location</div>
+                    <div className="w-12 shrink-0" />
+                    <div className="w-56 shrink-0">P2A Progress</div>
+                  </div>
 
-              {/* Table Body */}
-              <div className="divide-y divide-border/60">
+                  {/* Table Body */}
+                  <div className="divide-y divide-border/60">
                 {filteredProjects.map((project) => {
                   const projectColor = getProjectColor(project.project_id_prefix, project.project_id_number);
                   const location = formatProjectLocation({
@@ -486,7 +488,7 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                       </div>
 
                       {/* Title */}
-                      <div className="w-[360px] shrink-0 flex items-center gap-2">
+                      <div className="w-[260px] shrink-0 flex items-center gap-2">
                         <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
                           {project.project_title}
                         </h3>
@@ -560,6 +562,8 @@ const ProjectsHomePage = ({ onBack }: ProjectsHomePageProps) => {
                     </div>
                   );
                 })}
+                  </div>
+                </div>
               </div>
             </div>
           )}
