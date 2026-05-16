@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { P2ADeliverableCellSheet } from './P2ADeliverableCellSheet';
+import { getMockHeatmapRow, projectCode } from '@/lib/p2aMockData';
 import type { Project } from '@/hooks/useProjects';
 
 interface Category { id: string; name: string; display_order: number; }
