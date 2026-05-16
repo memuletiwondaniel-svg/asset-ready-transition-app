@@ -30,6 +30,9 @@ import { ProjectsTable } from '@/components/project/ProjectsTable';
 import { P2AHeatmap } from '@/components/p2a/P2AHeatmap';
 import { ProjectQualificationsSheet } from '@/components/p2a/ProjectQualificationsSheet';
 import type { Project } from '@/hooks/useProjects';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { formatProjectLocation } from '@/utils/projectLocation';
+import { getMockProgress, projectCode } from '@/lib/p2aMockData';
 
 interface ProjectsHomePageProps {
   onBack?: () => void;
