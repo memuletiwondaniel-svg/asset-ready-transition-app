@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Grid, List, Key, Plus, Star, Settings2 } from 'lucide-react';
+import { Search, Grid, List, Key, Plus, Star, Settings2, MoreHorizontal, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import { useProjects } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AddProjectWizard } from '@/components/project/AddProjectWizard';
@@ -18,25 +19,34 @@ import { useCanPerformActionsPermission } from '@/hooks/usePermissions';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuCheckboxItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 import { BreadcrumbNavigation } from '@/components/BreadcrumbNavigation';
 import { format } from 'date-fns';
 import { Users, Calendar, FileText, Building2, MapPin, Target } from 'lucide-react';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { formatProjectLocation } from '@/utils/projectLocation';
+import { useProjectsP2AProgress } from '@/hooks/useProjectsP2AProgress';
 
-// Column visibility configuration
+// Column visibility configuration — only Scope & Milestone are toggleable now.
 interface ColumnVisibility {
-  portfolio: boolean;
-  hub: boolean;
-  plant: boolean;
-  team: boolean;
-  milestone: boolean;
   scope: boolean;
+  milestone: boolean;
 }
 
 interface ProjectsHomePageProps {
