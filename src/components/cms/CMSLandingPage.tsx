@@ -241,14 +241,12 @@ const KPI: React.FC<{ icon: React.ReactNode; label: string; value: React.ReactNo
 };
 
 // ============ PEOPLE TAB ============
-const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, competencyMap, links, activities }) => {
+const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, competencyMap, links, activities, profileFilters, setProfileFilters, plantFilters, setPlantFilters }) => {
   const { addPerson } = useCMSMutations();
   const { plants, getFieldsByPlant, getStationsByField } = useLocations();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<CMSPerson | null>(null);
-  const [profileFilters, setProfileFilters] = useState<string[]>([]);
-  const [plantFilters, setPlantFilters] = useState<string[]>([]);
   const [form, setForm] = useState({ first_name: '', last_name: '', staff_id: '', job_title: '', profile_id: '', plant_id: '', field_id: '', station_id: '' });
 
   const toggleIn = (list: string[], v: string) => list.includes(v) ? list.filter(x => x !== v) : [...list, v];
