@@ -434,8 +434,8 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
             const val = o?.overall_progress || 0;
             // Quiet monochrome bar everywhere; green only at 100%.
             const isComplete = val >= 100;
-            const barClass = isComplete ? 'bg-emerald-500' : val > 0 ? 'bg-foreground/70' : 'bg-transparent';
-            const textClass = isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground/80';
+            const barClass = isComplete ? 'bg-emerald-500' : val > 0 ? 'bg-muted-foreground/40' : 'bg-transparent';
+            const textClass = isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground';
             const prof = p.profile_id ? profileMap[p.profile_id] : null;
             return (
               <TableRow
