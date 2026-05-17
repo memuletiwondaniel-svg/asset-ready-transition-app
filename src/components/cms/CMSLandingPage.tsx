@@ -105,11 +105,35 @@ export const CMSLandingPage: React.FC = () => {
   const profileMap = useMemo(() => Object.fromEntries(profiles.map(p => [p.id, p])), [profiles]);
   const competencyMap = useMemo(() => Object.fromEntries(competencies.map(c => [c.id, c])), [competencies]);
 
-  const avgReadiness = overall.length
-    ? Math.round(overall.reduce((s, o) => s + (o.overall_progress || 0), 0) / overall.length)
+  // Filters lifted up so KPI cards reflect People-tab pill filters
+  const [profileFilters, setProfileFilters] = useState<string[]>([]);
+  const [plantFilters, setPlantFilters] = useState<string[]>([]);
+
+  const filteredPeople = useMemo(() => people.filter((p: any) => {
+    if (profileFilters.length && (!p.profile_id || !profileFilters.includes(p.profile_id))) return false;
+    if (plantFilters.length && (!p.plant_id || !plantFilters.includes(p.plant_id))) return false;
+    return true;
+  }), [people, profileFilters, plantFilters]);
+
+  const hasKpiFilters = profileFilters.length > 0 || plantFilters.length > 0;
+  const personIdSet = useMemo(() => new Set(filteredPeople.map((p: any) => p.id)), [filteredPeople]);
+  const scopedOverall = hasKpiFilters ? overall.filter(o => personIdSet.has(o.person_id)) : overall;
+
+  const avgReadiness = scopedOverall.length
+    ? Math.round(scopedOverall.reduce((s, o) => s + (o.overall_progress || 0), 0) / scopedOverall.length)
     : 0;
-  const competent = overall.filter(o => (o.overall_progress || 0) >= 85).length;
-  const inProgress = overall.filter(o => { const v = o.overall_progress || 0; return v > 0 && v < 85; }).length;
+  const competent = scopedOverall.filter(o => (o.overall_progress || 0) >= 85).length;
+  const inProgress = scopedOverall.filter(o => { const v = o.overall_progress || 0; return v > 0 && v < 85; }).length;
+
+  // Scope competencies count by selected profiles (if any)
+  const scopedCompetencies = profileFilters.length
+    ? Array.from(new Set(links.filter((l: any) => profileFilters.includes(l.profile_id)).map((l: any) => l.competency_id)))
+    : competencies.map((c: any) => c.id);
+  const scopedCompetencyIdSet = new Set(scopedCompetencies);
+  const scopedActivitiesCount = profileFilters.length
+    ? activities.filter((a: any) => scopedCompetencyIdSet.has(a.competency_id)).length
+    : activities.length;
+  const scopedProfilesCount = profileFilters.length || profiles.length;
 
   return (
     <div className="flex-1 min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -140,10 +164,10 @@ export const CMSLandingPage: React.FC = () => {
 
           {/* KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mt-5 sm:mt-7">
-            <KPI tone="violet" icon={<Users className="h-4 w-4" />} label="People" value={people.length} hint={`${profiles.length} profiles`} />
+            <KPI tone="violet" icon={<Users className="h-4 w-4" />} label="People" value={filteredPeople.length} hint={`${scopedProfilesCount} profile${scopedProfilesCount === 1 ? '' : 's'}`} />
             <KPI tone="emerald" icon={<TrendingUp className="h-4 w-4" />} label="Avg Readiness" value={`${avgReadiness}%`} progress={avgReadiness} />
             <KPI tone="blue" icon={<Award className="h-4 w-4" />} label="Competent" value={competent} hint={`${inProgress} in progress`} />
-            <KPI tone="amber" icon={<BookOpen className="h-4 w-4" />} label="Competencies" value={competencies.length} hint={`${activities.length} activities`} />
+            <KPI tone="amber" icon={<BookOpen className="h-4 w-4" />} label="Competencies" value={scopedCompetencies.length} hint={`${scopedActivitiesCount} activities`} />
           </div>
         </div>
       </div>
@@ -169,7 +193,7 @@ export const CMSLandingPage: React.FC = () => {
 
           <div className="mt-5">
             <TabsContent value="people" className="mt-0">
-              <PeopleTab people={people} profiles={profiles} overallMap={overallMap} profileMap={profileMap} competencyMap={competencyMap} links={links} activities={activities} />
+              <PeopleTab people={people} profiles={profiles} overallMap={overallMap} profileMap={profileMap} competencyMap={competencyMap} links={links} activities={activities} profileFilters={profileFilters} setProfileFilters={setProfileFilters} plantFilters={plantFilters} setPlantFilters={setPlantFilters} />
             </TabsContent>
             <TabsContent value="profiles" className="mt-0">
               <ProfilesTab profiles={profiles} competencies={competencies} links={links} people={people} />
@@ -217,14 +241,12 @@ const KPI: React.FC<{ icon: React.ReactNode; label: string; value: React.ReactNo
 };
 
 // ============ PEOPLE TAB ============
-const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, competencyMap, links, activities }) => {
+const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, competencyMap, links, activities, profileFilters, setProfileFilters, plantFilters, setPlantFilters }) => {
   const { addPerson } = useCMSMutations();
   const { plants, getFieldsByPlant, getStationsByField } = useLocations();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<CMSPerson | null>(null);
-  const [profileFilters, setProfileFilters] = useState<string[]>([]);
-  const [plantFilters, setPlantFilters] = useState<string[]>([]);
   const [form, setForm] = useState({ first_name: '', last_name: '', staff_id: '', job_title: '', profile_id: '', plant_id: '', field_id: '', station_id: '' });
 
   const toggleIn = (list: string[], v: string) => list.includes(v) ? list.filter(x => x !== v) : [...list, v];
