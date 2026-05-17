@@ -334,7 +334,7 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
         <div className="flex flex-col gap-2">
           {plants.length > 0 && (
             <div className="flex items-start gap-2 flex-wrap">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mt-1.5 shrink-0 w-14">Plans</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mt-1.5 shrink-0 w-14">Plants</span>
               <div className="flex flex-wrap gap-1.5">
                 {plants.map(pl => {
                   const active = plantFilters.includes(pl.id);
