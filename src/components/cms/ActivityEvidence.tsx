@@ -3,7 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import { Paperclip, Upload, Download, Trash2, FileText, Loader2 } from 'lucide-react';
+import { Paperclip, Upload, Download, Trash2, FileText, Loader2, Eye, EyeOff, ExternalLink } from 'lucide-react';
+
+const isImage = (mime?: string | null, name?: string) =>
+  (mime?.startsWith('image/') ?? false) || /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(name ?? '');
+const isPdf = (mime?: string | null, name?: string) =>
+  mime === 'application/pdf' || /\.pdf$/i.test(name ?? '');
+const isPreviewable = (mime?: string | null, name?: string) => isImage(mime, name) || isPdf(mime, name);
 
 export type EvidenceItem = {
   id: string;
