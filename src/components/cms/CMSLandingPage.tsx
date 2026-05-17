@@ -432,7 +432,23 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
           {filtered.map((p: CMSPerson) => {
             const o = overallMap[p.id];
             const val = o?.overall_progress || 0;
-            const tone = readinessTone(val);
+            // List view: monochrome bar by default; semantic color only for at-risk / ready.
+            // Avatar already encodes identity, so we keep the bar quiet to make status scannable.
+            const isComplete = val >= 100;
+            const isReady = val >= 85;
+            const isAtRisk = val > 0 && val < 50;
+            const barClass = isComplete || isReady
+              ? 'bg-emerald-500'
+              : isAtRisk
+              ? 'bg-amber-500'
+              : val > 0
+              ? 'bg-foreground/70'
+              : 'bg-transparent';
+            const textClass = isComplete || isReady
+              ? 'text-emerald-600 dark:text-emerald-400'
+              : isAtRisk
+              ? 'text-amber-600 dark:text-amber-400'
+              : 'text-foreground/80';
             const prof = p.profile_id ? profileMap[p.profile_id] : null;
             return (
               <TableRow
@@ -470,10 +486,19 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="relative h-2 flex-1 min-w-[60px] rounded-full bg-muted/60 overflow-hidden">
-                      <div className={cn('h-full rounded-full bg-gradient-to-r transition-all duration-700', tone.bar)} style={{ width: `${Math.min(100, val)}%` }} />
-                    </div>
-                    <span className={cn('text-xs sm:text-sm font-bold tabular-nums w-9 sm:w-10 text-right', tone.text)}>{val}%</span>
+                    {isComplete ? (
+                      <div className="flex-1 min-w-[60px] flex items-center gap-1.5">
+                        <div className="relative h-1.5 flex-1 rounded-full bg-emerald-500/15 overflow-hidden">
+                          <div className="h-full w-full rounded-full bg-emerald-500" />
+                        </div>
+                        <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" strokeWidth={3} />
+                      </div>
+                    ) : (
+                      <div className="relative h-1.5 flex-1 min-w-[60px] rounded-full bg-muted/50 overflow-hidden">
+                        <div className={cn('h-full rounded-full transition-all duration-700', barClass)} style={{ width: `${Math.min(100, val)}%` }} />
+                      </div>
+                    )}
+                    <span className={cn('text-xs sm:text-sm font-semibold tabular-nums w-9 sm:w-10 text-right', textClass)}>{val}%</span>
                   </div>
                 </TableCell>
                 <TableCell>
