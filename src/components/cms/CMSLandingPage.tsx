@@ -36,10 +36,13 @@ const STATUS_META: Record<string, { label: string; badge: string; dot: string; i
   expired:     { label: 'Expired',     badge: 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400 border-red-200/60 dark:border-red-900/60', dot: 'bg-red-500', icon: <AlertCircle className="h-3 w-3" /> },
 };
 
+// Unified readiness palette:
+//   100% → green  (target met)
+//    >0% → amber  (in progress, gap remains)
+//     0% → slate  (not started)
 const readinessTone = (v: number) => {
-  if (v >= 85) return { bar: 'from-emerald-500 to-green-400', text: 'text-emerald-600 dark:text-emerald-400', ring: 'stroke-emerald-500' };
-  if (v >= 60) return { bar: 'from-blue-500 to-cyan-400', text: 'text-blue-600 dark:text-blue-400', ring: 'stroke-blue-500' };
-  if (v >= 30) return { bar: 'from-amber-500 to-orange-400', text: 'text-amber-600 dark:text-amber-400', ring: 'stroke-amber-500' };
+  if (v >= 100) return { bar: 'from-emerald-500 to-green-400', text: 'text-emerald-600 dark:text-emerald-400', ring: 'stroke-emerald-500' };
+  if (v > 0)    return { bar: 'from-amber-500 to-orange-400', text: 'text-amber-600 dark:text-amber-400',     ring: 'stroke-amber-500' };
   return { bar: 'from-slate-400 to-slate-300', text: 'text-slate-500', ring: 'stroke-slate-400' };
 };
 
