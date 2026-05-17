@@ -892,6 +892,7 @@ const ProfilesTab: React.FC<any> = ({ profiles, competencies, links, people }) =
 const ProfileDetailSheet: React.FC<any> = ({ profile, onClose, competencies, links, onLink, onUpdate, onUnlink }) => {
   const [pickedCompetency, setPickedCompetency] = useState<string>('');
   const [pickedLevel, setPickedLevel] = useState<'knowledge'|'skill'|'mastery'>('mastery');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   if (!profile) return null;
   const linked = links.filter((l: any) => l.profile_id === profile.id);
   const linkedIds = new Set(linked.map((l: any) => l.competency_id));
