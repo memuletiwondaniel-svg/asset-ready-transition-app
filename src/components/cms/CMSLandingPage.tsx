@@ -613,8 +613,8 @@ const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competency
                           style={{ width: `${targetT > 0 ? Math.min(100, (val / targetT) * 100) : 0}%` }}
                         />
                       </div>
-                      <span className={cn('text-xs font-bold tabular-nums w-14 text-right', reached ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground')}>
-                        {val}<span className="text-muted-foreground font-normal">/{targetT}</span>
+                      <span className={cn('text-xs font-bold tabular-nums w-12 text-right', reached ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground')}>
+                        {targetT > 0 ? Math.min(100, Math.round((val / targetT) * 100)) : 0}%
                       </span>
                       <ChevronRight className={cn('h-4 w-4 text-muted-foreground transition-transform', isOpen && 'rotate-90')} />
                     </div>
