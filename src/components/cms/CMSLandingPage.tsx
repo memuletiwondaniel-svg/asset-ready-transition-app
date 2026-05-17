@@ -1300,34 +1300,17 @@ const CompetenciesTab: React.FC<any> = ({ competencies, links, activities }) => 
             <TableHead className="text-[11px] uppercase tracking-wider">Description</TableHead>
             <TableHead className="text-[11px] uppercase tracking-wider text-right">Profiles</TableHead>
             <TableHead className="text-[11px] uppercase tracking-wider text-right">Activities</TableHead>
+            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {competencies.map((c: any) => {
             const profileCount = links.filter((l: any) => l.competency_id === c.id).length;
             const actCount = activities.filter((a: any) => a.competency_id === c.id).length;
-            return (
-              <TableRow key={c.id} className="border-border/40 hover:bg-muted/40 transition-colors">
-                <TableCell className="pr-2 align-top w-[280px]">
-                  <div className="flex items-start gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                      <BookOpen className="h-4 w-4" />
-                    </div>
-                    <span className="font-medium text-sm leading-tight pt-1.5">{c.title}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="pl-2 text-muted-foreground text-xs leading-relaxed align-top whitespace-pre-wrap">{c.description || '—'}</TableCell>
-                <TableCell className="text-right">
-                  <Badge variant="outline" className="font-mono">{profileCount}</Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Badge variant="outline" className="font-mono">{actCount}</Badge>
-                </TableCell>
-              </TableRow>
-            );
+            return <CompetencyRow key={c.id} c={c} profileCount={profileCount} actCount={actCount} />;
           })}
           {!competencies.length && (
-            <TableRow><TableCell colSpan={4} className="text-center py-16">
+            <TableRow><TableCell colSpan={5} className="text-center py-16">
               <div className="flex flex-col items-center gap-2 text-muted-foreground">
                 <BookOpen className="h-8 w-8 opacity-30" />
                 <p className="text-sm">No competencies yet</p>
