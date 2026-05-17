@@ -563,7 +563,8 @@ const milestoneThreshold = (m: 'knowledge' | 'skill' | 'mastery', c: any) => {
 const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competencyMap, activities, profileMap }) => {
   const { data: progress = [] } = usePersonProgress(person?.id ?? null);
   const { data: actRecords = [] } = usePersonActivityRecords(person?.id ?? null);
-  const { setActivityStatus } = useCMSMutations();
+  const { setActivityStatus, updatePerson } = useCMSMutations();
+  const { plants, getFieldsByPlant, getStationsByField } = useLocations();
   const [openCompetency, setOpenCompetency] = useState<string | null>(null);
 
   if (!person) return null;
@@ -638,6 +639,55 @@ const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competency
                 <MiniStat label="Mastered" value={competentCount} tone="emerald" />
                 <MiniStat label="Gap" value={profileLinks.length - competentCount} tone="amber" />
               </div>
+            </div>
+
+            {/* Plant / Location assignment */}
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Plant</Label>
+                <Select
+                  value={person.plant_id || 'none'}
+                  onValueChange={(v) => updatePerson.mutate({ id: person.id, plant_id: v === 'none' ? null : v, field_id: null, station_id: null })}
+                >
+                  <SelectTrigger className="h-9 mt-1 bg-background/60"><SelectValue placeholder="Unassigned" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Unassigned</SelectItem>
+                    {plants.map(pl => <SelectItem key={pl.id} value={pl.id}>{pl.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              {person.plant_id && getFieldsByPlant(person.plant_id).length > 0 && (
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {plants.find(p => p.id === person.plant_id)?.name?.toUpperCase() === 'UQ' ? 'Terminal' : 'Field / Area'}
+                  </Label>
+                  <Select
+                    value={person.field_id || 'none'}
+                    onValueChange={(v) => updatePerson.mutate({ id: person.id, field_id: v === 'none' ? null : v, station_id: null })}
+                  >
+                    <SelectTrigger className="h-9 mt-1 bg-background/60"><SelectValue placeholder="Unassigned" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Unassigned</SelectItem>
+                      {getFieldsByPlant(person.plant_id).map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {person.field_id && getStationsByField(person.field_id).length > 0 && (
+                <div>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Station</Label>
+                  <Select
+                    value={person.station_id || 'none'}
+                    onValueChange={(v) => updatePerson.mutate({ id: person.id, station_id: v === 'none' ? null : v })}
+                  >
+                    <SelectTrigger className="h-9 mt-1 bg-background/60"><SelectValue placeholder="Unassigned" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Unassigned</SelectItem>
+                      {getStationsByField(person.field_id).map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </div>
         </div>
