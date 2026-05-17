@@ -172,36 +172,87 @@ export const ActivityEvidence: React.FC<{ personId: string; activityId: string }
         </p>
       ) : (
         <ul className="space-y-1.5">
-          {items.map((it) => (
-            <li key={it.id} className="flex items-center gap-2 rounded border border-border/40 bg-background/60 px-2 py-1.5">
-              <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <div className="min-w-0 flex-1">
-                <button
-                  type="button"
-                  onClick={() => download(it)}
-                  className="text-[11px] font-medium truncate text-left hover:underline block w-full"
-                >
-                  {it.file_name}
-                </button>
-                <p className="text-[10px] text-muted-foreground">
-                  {formatBytes(it.file_size)} · {new Date(it.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => download(it)}>
-                <Download className="h-3 w-3" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                onClick={() => {
-                  if (confirm(`Remove ${it.file_name}?`)) remove.mutate(it);
-                }}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </li>
-          ))}
+          {items.map((it) => {
+            const previewable = isPreviewable(it.mime_type, it.file_name);
+            const isOpen = previewId === it.id;
+            return (
+              <li key={it.id} className="rounded border border-border/40 bg-background/60">
+                <div className="flex items-center gap-2 px-2 py-1.5">
+                  <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={() => (previewable ? togglePreview(it) : download(it))}
+                      className="text-[11px] font-medium truncate text-left hover:underline block w-full"
+                    >
+                      {it.file_name}
+                    </button>
+                    <p className="text-[10px] text-muted-foreground">
+                      {formatBytes(it.file_size)} · {new Date(it.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  {previewable && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 w-6 p-0"
+                      title={isOpen ? 'Hide preview' : 'Preview'}
+                      onClick={() => togglePreview(it)}
+                    >
+                      {isOpen ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                    </Button>
+                  )}
+                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0" title="Download" onClick={() => download(it)}>
+                    <Download className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                    title="Remove"
+                    onClick={() => {
+                      if (confirm(`Remove ${it.file_name}?`)) remove.mutate(it);
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+                {isOpen && (
+                  <div className="border-t border-border/40 p-2 bg-muted/30">
+                    {previewLoading || !previewUrl ? (
+                      <div className="flex items-center justify-center h-32 text-[11px] text-muted-foreground">
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Loading preview…
+                      </div>
+                    ) : isImage(it.mime_type, it.file_name) ? (
+                      <img
+                        src={previewUrl}
+                        alt={it.file_name}
+                        className="max-h-80 w-full object-contain rounded bg-background"
+                      />
+                    ) : isPdf(it.mime_type, it.file_name) ? (
+                      <div className="space-y-1.5">
+                        <iframe
+                          src={previewUrl}
+                          title={it.file_name}
+                          className="w-full h-80 rounded border border-border/40 bg-background"
+                        />
+                        <a
+                          href={previewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                        >
+                          <ExternalLink className="h-3 w-3" /> Open in new tab
+                        </a>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground">Preview not available.</p>
+                    )}
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
