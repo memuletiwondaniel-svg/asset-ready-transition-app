@@ -167,6 +167,15 @@ export function useCMSMutations() {
     onSuccess: invalidate,
   });
 
+  const updatePerson = useMutation({
+    mutationFn: async (input: { id: string; first_name?: string; last_name?: string; staff_id?: string; job_title?: string | null; profile_id?: string | null; plant_id?: string | null; field_id?: string | null; station_id?: string | null }) => {
+      const { id, ...patch } = input;
+      const { error } = await t('cms_people').update(patch as any).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   const setActivityStatus = useMutation({
     mutationFn: async (input: { person_id: string; activity_id: string; status: ActivityRecordStatus; existing_id?: string | null }) => {
       const payload: any = {
@@ -189,7 +198,7 @@ export function useCMSMutations() {
   });
 
 
-  return { addProfile, addCompetency, linkCompetency, updateProfileCompetency, unlinkCompetency, addActivity, addPerson, setActivityStatus };
+  return { addProfile, addCompetency, linkCompetency, updateProfileCompetency, unlinkCompetency, addActivity, addPerson, updatePerson, setActivityStatus };
 }
 
 export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
