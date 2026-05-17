@@ -334,7 +334,7 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
         <div className="flex flex-col gap-2">
           {plants.length > 0 && (
             <div className="flex items-start gap-2 flex-wrap">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mt-1.5 shrink-0 w-14">Plans</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mt-1.5 shrink-0 w-14">Plants</span>
               <div className="flex flex-wrap gap-1.5">
                 {plants.map(pl => {
                   const active = plantFilters.includes(pl.id);
@@ -400,7 +400,7 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
         <TableHeader>
           <TableRow className="hover:bg-transparent border-border/40">
             <TableHead className="text-[11px] uppercase tracking-wider">Person</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-wider hidden md:table-cell">Staff ID</TableHead>
+            
             <TableHead className="text-[11px] uppercase tracking-wider hidden sm:table-cell">Profile</TableHead>
             <TableHead className="text-[11px] uppercase tracking-wider w-[140px] sm:w-[320px]">Readiness</TableHead>
             <TableHead className="w-8 sm:w-12"></TableHead>
@@ -426,18 +426,17 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
                     <div className="min-w-0">
                       <p className="font-medium text-sm leading-tight truncate">{p.first_name} {p.last_name}</p>
                       <p className="text-xs text-muted-foreground truncate">{p.job_title || '—'}</p>
-                      <div className="flex items-center gap-2 mt-1 sm:hidden">
-                        <span className="font-mono text-[10px] text-muted-foreground">{p.staff_id}</span>
-                        {prof && (
+                      {prof && (
+                        <div className="flex items-center gap-2 mt-1 sm:hidden">
                           <Badge variant="secondary" className="text-[10px] py-0 h-4 bg-primary/10 text-primary border border-primary/20">
                             {prof.code || prof.name}
                           </Badge>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground hidden md:table-cell">{p.staff_id}</TableCell>
+                
                 <TableCell className="hidden sm:table-cell">
                   {prof ? (
                     <Badge variant="secondary" className="font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15">
