@@ -595,7 +595,7 @@ const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competency
                             : 'bg-muted text-muted-foreground border-border'
                         )}
                       >
-                        {reached ? <CheckCircle2 className="h-3 w-3" /> : <ReqIcon className="h-3 w-3" />}
+                        {reached && <CheckCircle2 className="h-3 w-3" />}
                         {reqMeta.label}
                       </Badge>
                     </div>
