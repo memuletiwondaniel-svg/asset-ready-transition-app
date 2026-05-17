@@ -828,7 +828,7 @@ const ProfilesTab: React.FC<any> = ({ profiles, competencies, links, people }) =
                 <div className="relative">
                   <div className="flex items-start justify-between gap-2">
                     <div className={cn('h-10 w-10 rounded-xl bg-gradient-to-br text-white flex items-center justify-center shadow-sm', grad)}>
-                      <Layers className="h-5 w-5" />
+                      <ProfileIcon className="h-5 w-5" />
                     </div>
                     {p.code && <Badge variant="outline" className="text-[10px] font-mono">{p.code}</Badge>}
                   </div>
