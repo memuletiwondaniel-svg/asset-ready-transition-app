@@ -892,6 +892,7 @@ const ProfilesTab: React.FC<any> = ({ profiles, competencies, links, people }) =
 const ProfileDetailSheet: React.FC<any> = ({ profile, onClose, competencies, links, onLink, onUpdate, onUnlink }) => {
   const [pickedCompetency, setPickedCompetency] = useState<string>('');
   const [pickedLevel, setPickedLevel] = useState<'knowledge'|'skill'|'mastery'>('mastery');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   if (!profile) return null;
   const linked = links.filter((l: any) => l.profile_id === profile.id);
   const linkedIds = new Set(linked.map((l: any) => l.competency_id));
@@ -929,34 +930,61 @@ const ProfileDetailSheet: React.FC<any> = ({ profile, onClose, competencies, lin
                 const meta = MILESTONE_META[req];
                 const tone = milestoneTone(req);
                 const ReqIcon = meta.icon;
+                const isOpen = expandedId === l.id;
+                const descLines = (c?.description || '').split(/\n+/).map((s: string) => s.trim()).filter(Boolean);
                 return (
-                  <Card key={l.id} className="p-3 border-border/50 hover:border-primary/30 transition-colors">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium">{c?.title}</p>
-                        {c?.description && <p className="text-xs text-muted-foreground line-clamp-1">{c.description}</p>}
-                      </div>
-                      <Button size="sm" variant="ghost" onClick={() => onUnlink(l.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 h-7 px-2">Remove</Button>
-                    </div>
-                    <div className="mt-2 flex items-center gap-2 flex-wrap">
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Required</span>
-                      <Select value={req} onValueChange={(v: any) => onUpdate(l.id, v)}>
-                        <SelectTrigger
-                          className={cn(
-                            'h-7 w-auto gap-1.5 px-2.5 rounded-full text-[11px] font-medium border',
-                            tone.bg
+                  <Card key={l.id} className="border-border/50 hover:border-primary/30 transition-colors overflow-hidden">
+                    <div className="p-3">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedId(isOpen ? null : l.id)}
+                        className="w-full text-left flex items-start justify-between gap-2 group"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <ChevronRight className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform shrink-0', isOpen && 'rotate-90')} />
+                            <p className="text-sm font-medium group-hover:text-primary transition-colors">{c?.title}</p>
+                          </div>
+                          {c?.description && !isOpen && (
+                            <p className="text-xs text-muted-foreground line-clamp-1 pl-5">{c.description}</p>
                           )}
-                        >
-                          <ReqIcon className="h-3 w-3" />
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="knowledge">Knowledge</SelectItem>
-                          <SelectItem value="skill">Skill</SelectItem>
-                          <SelectItem value="mastery">Mastery</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        </div>
+                        <Button asChild size="sm" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 h-7 px-2">
+                          <span onClick={(e) => { e.stopPropagation(); onUnlink(l.id); }}>Remove</span>
+                        </Button>
+                      </button>
+                      <div className="mt-2 flex items-center gap-2 flex-wrap pl-5">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Required</span>
+                        <Select value={req} onValueChange={(v: any) => onUpdate(l.id, v)}>
+                          <SelectTrigger
+                            className={cn(
+                              'h-7 w-auto gap-1.5 px-2.5 rounded-full text-[11px] font-medium border',
+                              tone.bg
+                            )}
+                          >
+                            <ReqIcon className="h-3 w-3" />
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="knowledge">Knowledge</SelectItem>
+                            <SelectItem value="skill">Skill</SelectItem>
+                            <SelectItem value="mastery">Mastery</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
+                    {isOpen && (
+                      <div className="border-t border-border/40 bg-muted/30 px-4 py-3 pl-9 space-y-2">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Description</p>
+                        {descLines.length > 1 ? (
+                          <ul className="list-disc pl-4 space-y-1 text-xs text-foreground/80">
+                            {descLines.map((line: string, i: number) => <li key={i}>{line.replace(/^[-•*]\s*/, '')}</li>)}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-foreground/80 leading-relaxed">{c?.description || 'No description provided.'}</p>
+                        )}
+                      </div>
+                    )}
                   </Card>
                 );
               })}
