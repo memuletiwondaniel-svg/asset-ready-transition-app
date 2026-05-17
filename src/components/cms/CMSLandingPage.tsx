@@ -50,6 +50,21 @@ const readinessTone = (v: number) => {
   return { bar: 'from-slate-400 to-slate-300', text: 'text-slate-500', ring: 'stroke-slate-400' };
 };
 
+// Map profile code/name to a relatable icon
+const getProfileIcon = (profile?: { code?: string | null; name?: string | null } | null) => {
+  const key = `${profile?.code ?? ''} ${profile?.name ?? ''}`.toLowerCase();
+  if (/\bcro\b|control\s*room/.test(key)) return Headphones;
+  if (/\bfo\b|field\s*operator/.test(key)) return HardHat;
+  if (/\bse\b|shift|supervisor|engineer/.test(key)) return ClipboardCheck;
+  if (/safety|hse/.test(key)) return ShieldCheck;
+  if (/maintenance|mech|technician/.test(key)) return Wrench;
+  if (/lab|chem|analyst/.test(key)) return FlaskConical;
+  if (/logistic|driver|transport/.test(key)) return Truck;
+  if (/process|operator/.test(key)) return Cog;
+  if (/manager|lead/.test(key)) return Settings;
+  return Layers;
+};
+
 const initials = (a?: string, b?: string) => `${(a?.[0] || '').toUpperCase()}${(b?.[0] || '').toUpperCase()}`;
 const avatarGradient = (seed: string) => {
   const grads = [
