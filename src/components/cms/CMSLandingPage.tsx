@@ -17,7 +17,7 @@ import {
   GraduationCap, Users, BookOpen, Layers, Sparkles, Plus, Search,
   TrendingUp, Award, Target, ChevronRight, Filter, MoreHorizontal,
   CheckCircle2, Clock, AlertCircle, Activity, Lock, Play, RotateCcw, Brain, Wrench, Trophy,
-  MonitorCheck, HardHat, ClipboardCheck, ShieldCheck, Settings, FlaskConical, Truck, Cog,
+  MonitorCheck, HardHat, ClipboardCheck, ShieldCheck, Settings, FlaskConical, Truck, Cog, Check,
 } from 'lucide-react';
 import {
   useCompetenceProfiles, useCompetencies, useProfileLinks, useActivities, usePeople,
