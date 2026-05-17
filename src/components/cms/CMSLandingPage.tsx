@@ -265,77 +265,134 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
 
   return (
     <Card className="border-border/40 shadow-sm overflow-hidden">
-      <div className="p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-border/40 bg-muted/20">
-        <div className="flex items-center gap-2 flex-1">
+      <div className="p-4 flex flex-col gap-3 border-b border-border/40 bg-muted/20">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <Input placeholder="Search people..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-background/60 border-border/60 focus-visible:ring-primary/30" />
           </div>
-          <Select value={profileFilter} onValueChange={setProfileFilter}>
-            <SelectTrigger className="w-[130px] sm:w-[170px] bg-background/60 border-border/60 shrink-0"><Filter className="h-3.5 w-3.5 mr-1 text-muted-foreground shrink-0" /><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All profiles</SelectItem>
-              {profiles.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="shadow-md shadow-primary/20 bg-gradient-to-r from-primary to-primary/90"><Plus className="h-4 w-4 mr-1" />Add Person</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Add Person</DialogTitle></DialogHeader>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>First Name</Label><Input value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></div>
-                <div><Label>Last Name</Label><Input value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></div>
-              </div>
-              <div><Label>Staff ID</Label><Input value={form.staff_id} onChange={e => setForm({ ...form, staff_id: e.target.value })} /></div>
-              <div><Label>Job Title</Label><Input value={form.job_title} onChange={e => setForm({ ...form, job_title: e.target.value })} /></div>
-              <div className="grid grid-cols-1 gap-3">
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="shadow-md shadow-primary/20 bg-gradient-to-r from-primary to-primary/90"><Plus className="h-4 w-4 mr-1" />Add Person</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Add Person</DialogTitle></DialogHeader>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>First Name</Label><Input value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} /></div>
+                  <div><Label>Last Name</Label><Input value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} /></div>
+                </div>
+                <div><Label>Staff ID</Label><Input value={form.staff_id} onChange={e => setForm({ ...form, staff_id: e.target.value })} /></div>
+                <div><Label>Job Title</Label><Input value={form.job_title} onChange={e => setForm({ ...form, job_title: e.target.value })} /></div>
+                <div className="grid grid-cols-1 gap-3">
+                  <div>
+                    <Label>Plant</Label>
+                    <Select value={form.plant_id} onValueChange={v => setForm({ ...form, plant_id: v, field_id: '', station_id: '' })}>
+                      <SelectTrigger><SelectValue placeholder="Select plant" /></SelectTrigger>
+                      <SelectContent>
+                        {plants.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {requiresStation && (
+                    <div>
+                      <Label>{selectedPlant?.name?.toUpperCase() === 'UQ' ? 'Terminal' : 'Field / Area'}</Label>
+                      <Select value={form.field_id} onValueChange={v => setForm({ ...form, field_id: v, station_id: '' })}>
+                        <SelectTrigger><SelectValue placeholder={`Select ${selectedPlant?.name?.toUpperCase() === 'UQ' ? 'terminal' : 'field'}`} /></SelectTrigger>
+                        <SelectContent>
+                          {availableFields.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {form.field_id && availableStations.length > 0 && (
+                    <div>
+                      <Label>Station</Label>
+                      <Select value={form.station_id} onValueChange={v => setForm({ ...form, station_id: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select station" /></SelectTrigger>
+                        <SelectContent>
+                          {availableStations.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
                 <div>
-                  <Label>Plant</Label>
-                  <Select value={form.plant_id} onValueChange={v => setForm({ ...form, plant_id: v, field_id: '', station_id: '' })}>
-                    <SelectTrigger><SelectValue placeholder="Select plant" /></SelectTrigger>
-                    <SelectContent>
-                      {plants.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                    </SelectContent>
+                  <Label>Competence Profile</Label>
+                  <Select value={form.profile_id} onValueChange={v => setForm({ ...form, profile_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select profile" /></SelectTrigger>
+                    <SelectContent>{profiles.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                {requiresStation && (
-                  <div>
-                    <Label>{selectedPlant?.name?.toUpperCase() === 'UQ' ? 'Terminal' : 'Field / Area'}</Label>
-                    <Select value={form.field_id} onValueChange={v => setForm({ ...form, field_id: v, station_id: '' })}>
-                      <SelectTrigger><SelectValue placeholder={`Select ${selectedPlant?.name?.toUpperCase() === 'UQ' ? 'terminal' : 'field'}`} /></SelectTrigger>
-                      <SelectContent>
-                        {availableFields.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                {form.field_id && availableStations.length > 0 && (
-                  <div>
-                    <Label>Station</Label>
-                    <Select value={form.station_id} onValueChange={v => setForm({ ...form, station_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Select station" /></SelectTrigger>
-                      <SelectContent>
-                        {availableStations.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
               </div>
-              <div>
-                <Label>Competence Profile</Label>
-                <Select value={form.profile_id} onValueChange={v => setForm({ ...form, profile_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select profile" /></SelectTrigger>
-                  <SelectContent>{profiles.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
-                </Select>
+              <DialogFooter><Button onClick={submit} disabled={addPerson.isPending}>Save</Button></DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Pill filters */}
+        <div className="flex flex-col gap-2">
+          {plants.length > 0 && (
+            <div className="flex items-start gap-2 flex-wrap">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mt-1.5 shrink-0 w-14">Plans</span>
+              <div className="flex flex-wrap gap-1.5">
+                {plants.map(pl => {
+                  const active = plantFilters.includes(pl.id);
+                  return (
+                    <button
+                      key={pl.id}
+                      type="button"
+                      onClick={() => setPlantFilters(prev => toggleIn(prev, pl.id))}
+                      className={cn(
+                        'px-2.5 py-1 rounded-full text-xs font-medium border transition-all',
+                        active
+                          ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                          : 'bg-background/60 text-muted-foreground border-border/60 hover:border-primary/40 hover:text-foreground'
+                      )}
+                    >
+                      {pl.name}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <DialogFooter><Button onClick={submit} disabled={addPerson.isPending}>Save</Button></DialogFooter>
-          </DialogContent>
-        </Dialog>
+          )}
+          {profiles.length > 0 && (
+            <div className="flex items-start gap-2 flex-wrap">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mt-1.5 shrink-0 w-14">Profiles</span>
+              <div className="flex flex-wrap gap-1.5">
+                {profiles.map((pr: any) => {
+                  const active = profileFilters.includes(pr.id);
+                  const grad = getProfileGradient(pr);
+                  return (
+                    <button
+                      key={pr.id}
+                      type="button"
+                      onClick={() => setProfileFilters(prev => toggleIn(prev, pr.id))}
+                      className={cn(
+                        'px-2.5 py-1 rounded-full text-xs font-medium border transition-all',
+                        active
+                          ? cn('text-white border-transparent shadow-sm bg-gradient-to-r', grad || 'from-primary to-primary/80')
+                          : 'bg-background/60 text-muted-foreground border-border/60 hover:border-primary/40 hover:text-foreground'
+                      )}
+                    >
+                      {pr.code || pr.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={() => { setProfileFilters([]); setPlantFilters([]); }}
+              className="self-start text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="overflow-x-auto">
