@@ -164,10 +164,10 @@ export const CMSLandingPage: React.FC = () => {
 
           {/* KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mt-5 sm:mt-7">
-            <KPI tone="violet" icon={<Users className="h-4 w-4" />} label="People" value={people.length} hint={`${profiles.length} profiles`} />
+            <KPI tone="violet" icon={<Users className="h-4 w-4" />} label="People" value={filteredPeople.length} hint={`${scopedProfilesCount} profile${scopedProfilesCount === 1 ? '' : 's'}`} />
             <KPI tone="emerald" icon={<TrendingUp className="h-4 w-4" />} label="Avg Readiness" value={`${avgReadiness}%`} progress={avgReadiness} />
             <KPI tone="blue" icon={<Award className="h-4 w-4" />} label="Competent" value={competent} hint={`${inProgress} in progress`} />
-            <KPI tone="amber" icon={<BookOpen className="h-4 w-4" />} label="Competencies" value={competencies.length} hint={`${activities.length} activities`} />
+            <KPI tone="amber" icon={<BookOpen className="h-4 w-4" />} label="Competencies" value={scopedCompetencies.length} hint={`${scopedActivitiesCount} activities`} />
           </div>
         </div>
       </div>
