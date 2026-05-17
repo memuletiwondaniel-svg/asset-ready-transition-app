@@ -40,7 +40,7 @@ const SOF_ONLY_DIRECTOR_ROLES = [
 
 export const useCurrentUserRole = () => {
   return useQuery({
-    queryKey: ['current-user-role'],
+    queryKey: ['current-user-role', 'active-session'],
     staleTime: 300000, // Cache for 5 minutes
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -77,6 +77,7 @@ export const useCurrentUserRole = () => {
         position: profile?.position || null,
       };
     },
+    refetchOnMount: 'always',
   });
 };
 

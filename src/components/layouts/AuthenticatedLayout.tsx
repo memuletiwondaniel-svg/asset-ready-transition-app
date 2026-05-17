@@ -94,7 +94,7 @@ export const AuthenticatedLayout: React.FC = () => {
         onLogout={handleLogout}
       />
       <AnimatedBackground className="flex-1 flex flex-col overflow-auto pb-16 md:pb-0">
-        <div className="content-max flex-1 flex flex-col">
+        <div key={session.user.id} className="content-max flex-1 flex flex-col">
           <Outlet />
         </div>
       </AnimatedBackground>

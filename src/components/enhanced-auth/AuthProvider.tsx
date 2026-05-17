@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -33,13 +34,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [pending2FA, setPending2FA] = useState(false);
+  const queryClient = useQueryClient();
+  const lastResolvedUserId = useRef<string | null>(null);
+
+  const syncResolvedSession = useCallback(async (nextSession: Session | null) => {
+    const nextUserId = nextSession?.user?.id ?? null;
+    const shouldResetClientState = lastResolvedUserId.current !== nextUserId;
+
+    if (shouldResetClientState) {
+      setLoading(true);
+      setPending2FA(false);
+      await queryClient.cancelQueries();
+      queryClient.clear();
+    }
+
+    setSession(nextSession);
+    setUser(nextSession?.user ?? null);
+    lastResolvedUserId.current = nextUserId;
+    setLoading(false);
+  }, [queryClient]);
 
   useEffect(() => {
+    let isMounted = true;
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+        if (!isMounted) return;
+
+        await syncResolvedSession(session);
         
         // Track login activity
         if (event === 'SIGNED_IN' && session?.user) {
@@ -86,30 +109,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }, 0);
         }
         
-        setLoading(false);
       }
     );
 
     // Check for existing session and handle remember me preference
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!isMounted) return;
+
       // Check if there's a session but no rememberMe flag in sessionStorage
       const rememberMeFlag = sessionStorage.getItem('rememberMe');
       
       if (session && rememberMeFlag === 'false') {
         // User didn't check remember me, so sign them out on new browser session
         await supabase.auth.signOut();
-        setSession(null);
-        setUser(null);
+        if (!isMounted) return;
+        await syncResolvedSession(null);
       } else {
-        setSession(session);
-        setUser(session?.user ?? null);
+        await syncResolvedSession(session);
       }
-      
-      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [syncResolvedSession]);
 
   const complete2FA = () => {
     setPending2FA(false);
