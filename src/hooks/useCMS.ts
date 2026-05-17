@@ -126,6 +126,15 @@ export function useCMSMutations() {
     onSuccess: invalidate,
   });
 
+  const updateCompetency = useMutation({
+    mutationFn: async (input: { id: string; title?: string; description?: string; knowledge_threshold?: number; skill_threshold?: number; mastery_threshold?: number }) => {
+      const { id, ...patch } = input;
+      const { error } = await t('competencies').update(patch as any).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   const linkCompetency = useMutation({
     mutationFn: async (input: { profile_id: string; competency_id: string; weight?: number; required_milestone?: RequiredMilestone }) => {
       const { error } = await t('competence_profile_competencies').insert(input as any);
@@ -198,7 +207,7 @@ export function useCMSMutations() {
   });
 
 
-  return { addProfile, addCompetency, linkCompetency, updateProfileCompetency, unlinkCompetency, addActivity, addPerson, updatePerson, setActivityStatus };
+  return { addProfile, addCompetency, updateCompetency, linkCompetency, updateProfileCompetency, unlinkCompetency, addActivity, addPerson, updatePerson, setActivityStatus };
 }
 
 export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
