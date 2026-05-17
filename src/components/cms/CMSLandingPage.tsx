@@ -426,14 +426,13 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
                     <div className="min-w-0">
                       <p className="font-medium text-sm leading-tight truncate">{p.first_name} {p.last_name}</p>
                       <p className="text-xs text-muted-foreground truncate">{p.job_title || '—'}</p>
-                      <div className="flex items-center gap-2 mt-1 sm:hidden">
-                        <span className="font-mono text-[10px] text-muted-foreground">{p.staff_id}</span>
-                        {prof && (
+                      {prof && (
+                        <div className="flex items-center gap-2 mt-1 sm:hidden">
                           <Badge variant="secondary" className="text-[10px] py-0 h-4 bg-primary/10 text-primary border border-primary/20">
                             {prof.code || prof.name}
                           </Badge>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </TableCell>
