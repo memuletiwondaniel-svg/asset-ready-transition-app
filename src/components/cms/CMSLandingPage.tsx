@@ -649,94 +649,106 @@ const ActivityChecklist: React.FC<{
   records: PersonActivityRecord[];
   onSet: (activity_id: string, status: ActivityRecordStatus, existing_id: string | null) => void;
   knowledge: number; skill: number; mastery: number; value: number;
-}> = ({ activities, records, onSet, knowledge, skill, mastery, value }) => {
+}> = ({ activities, records, onSet }) => {
   const recordsByActivity = useMemo(
     () => Object.fromEntries(records.map(r => [r.activity_id, r])),
     [records]
   );
-  const sumWeights = activities.reduce((s, a) => s + (a.weight || 0), 0);
-  const nextThreshold = value < knowledge ? knowledge : value < skill ? skill : value < mastery ? mastery : null;
-  const nextLabel = nextThreshold === knowledge ? 'Knowledge' : nextThreshold === skill ? 'Skill' : nextThreshold === mastery ? 'Mastery' : null;
-  const completedCount = activities.filter(a => recordsByActivity[a.id]?.status === 'completed').length;
+  const [openId, setOpenId] = useState<string | null>(null);
+  const openActivity = openId ? activities.find(a => a.id === openId) ?? null : null;
+  const openRecord = openActivity ? recordsByActivity[openActivity.id] : null;
 
   return (
-    <div className="border-t border-border/40 bg-muted/20 p-3 space-y-2">
+    <div className="border-t border-border/40 bg-muted/20 p-3 space-y-1.5">
       {activities.length === 0 && (
         <p className="text-xs text-muted-foreground text-center py-3">No activities defined for this competency.</p>
       )}
-      {activities.map((a, idx) => {
+      {activities.map((a) => {
         const rec = recordsByActivity[a.id];
         const isCompleted = rec?.status === 'completed';
-        const isInProgress = rec?.status === 'in_progress';
-        // Sequence lock: locked if strict AND any earlier (lower seq) activity not completed
-        const earlier = activities.slice(0, idx);
-        const locked = a.is_sequence_strict && earlier.some(e => recordsByActivity[e.id]?.status !== 'completed');
         return (
-          <TooltipProvider key={a.id} delayDuration={150}>
-            <div className={cn(
-              'group relative flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg border bg-background/60 transition-all',
-              isCompleted ? 'border-emerald-500/30' : 'border-border/40',
-              locked && 'opacity-60'
-            )}>
-              <div className={cn(
-                'h-7 w-7 rounded-md flex items-center justify-center text-[11px] font-bold shrink-0',
-                isCompleted ? 'bg-emerald-500 text-white' : isInProgress ? 'bg-amber-500 text-white' : 'bg-muted text-muted-foreground'
-              )}>
-                {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : (a.sequence_order || idx + 1)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <p className={cn('text-xs sm:text-sm font-medium leading-tight truncate', isCompleted && 'line-through text-muted-foreground')}>{a.title}</p>
-                  {a.is_sequence_strict && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
-                      </TooltipTrigger>
-                      <TooltipContent>Strict order: earlier steps required</TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                  <Badge variant="outline" className={cn('text-[9px] py-0 h-4', ACTIVITY_TONE[a.activity_type])}>
-                    {ACTIVITY_TYPE_LABELS[a.activity_type]}
-                  </Badge>
-                  <Badge variant="outline" className="text-[9px] py-0 h-4 font-mono bg-primary/5 border-primary/20 text-primary">
-                    +{a.weight}%
-                  </Badge>
-                </div>
-              </div>
-              <div className="shrink-0">
-                {locked ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button size="sm" variant="ghost" disabled className="h-7 px-2 text-[11px]">
-                        <Lock className="h-3 w-3" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Complete previous activities first</TooltipContent>
-                  </Tooltip>
-                ) : isCompleted ? (
-                  <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]"
-                    onClick={() => onSet(a.id, 'in_progress', rec?.id ?? null)}>
-                    <RotateCcw className="h-3 w-3 mr-1" />Reopen
-                  </Button>
-                ) : (
-                  <Button size="sm" variant={isInProgress ? 'default' : 'outline'} className="h-7 px-2.5 text-[11px]"
-                    onClick={() => onSet(a.id, 'completed', rec?.id ?? null)}>
-                    <CheckCircle2 className="h-3 w-3 mr-1" />Complete
-                  </Button>
-                )}
-              </div>
+          <button
+            key={a.id}
+            type="button"
+            onClick={() => setOpenId(a.id)}
+            className={cn(
+              'w-full flex items-center gap-3 p-2.5 rounded-lg border bg-background/60 text-left transition-colors hover:bg-background',
+              isCompleted ? 'border-emerald-500/30' : 'border-border/40'
+            )}
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium leading-tight truncate">{a.title}</p>
+              <Badge variant="outline" className={cn('mt-1 text-[9px] py-0 h-4', ACTIVITY_TONE[a.activity_type])}>
+                {ACTIVITY_TYPE_LABELS[a.activity_type]}
+              </Badge>
             </div>
-          </TooltipProvider>
+            <div className="shrink-0 flex items-center gap-1.5">
+              {isCompleted ? (
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Completed
+                </span>
+              ) : (
+                <span className="text-[11px] text-muted-foreground">Not completed</span>
+              )}
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+          </button>
         );
       })}
-      <div className="flex items-center justify-between pt-2 mt-1 border-t border-border/40 text-[11px] text-muted-foreground">
-        <span>{completedCount}/{activities.length} done · weights {sumWeights}%</span>
-        {nextLabel && nextThreshold !== null && (
-          <span>Next: <span className="font-medium text-foreground">{nextLabel}</span> in {Math.max(0, nextThreshold - value)}%</span>
-        )}
-      </div>
+
+      <Dialog open={!!openActivity} onOpenChange={(o) => !o && setOpenId(null)}>
+        <DialogContent className="max-w-md">
+          {openActivity && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-base">{openActivity.title}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className={cn('text-[10px] py-0 h-5', ACTIVITY_TONE[openActivity.activity_type])}>
+                    {ACTIVITY_TYPE_LABELS[openActivity.activity_type]}
+                  </Badge>
+                  {openRecord?.status === 'completed' ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Completed
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Not completed</span>
+                  )}
+                </div>
+                {openActivity.description && (
+                  <p className="text-xs text-muted-foreground leading-relaxed">{openActivity.description}</p>
+                )}
+                {openRecord?.completed_at && (
+                  <p className="text-xs text-muted-foreground">
+                    Completed on {new Date(openRecord.completed_at).toLocaleDateString()}
+                  </p>
+                )}
+                {openRecord?.score !== null && openRecord?.score !== undefined && (
+                  <p className="text-xs"><span className="text-muted-foreground">Score:</span> <span className="font-medium">{openRecord.score}</span></p>
+                )}
+                {openRecord?.notes && (
+                  <p className="text-xs"><span className="text-muted-foreground">Notes:</span> {openRecord.notes}</p>
+                )}
+                <div className="rounded-md border border-dashed border-border/60 p-3 text-[11px] text-muted-foreground">
+                  Supporting evidence (certificates, assessment sheets, attendance) will appear here.
+                </div>
+              </div>
+              <DialogFooter className="gap-2 sm:gap-2">
+                {openRecord?.status === 'completed' ? (
+                  <Button size="sm" variant="outline" onClick={() => { onSet(openActivity.id, 'in_progress', openRecord?.id ?? null); setOpenId(null); }}>
+                    <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reopen
+                  </Button>
+                ) : (
+                  <Button size="sm" onClick={() => { onSet(openActivity.id, 'completed', openRecord?.id ?? null); setOpenId(null); }}>
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark completed
+                  </Button>
+                )}
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
