@@ -832,7 +832,7 @@ const ProfilesTab: React.FC<any> = ({ profiles, competencies, links, people }) =
         {profiles.map((p: any, idx: number) => {
           const compCount = links.filter((l: any) => l.profile_id === p.id).length;
           const peopleCount = people.filter((per: any) => per.profile_id === p.id).length;
-          const grad = avatarGradient(p.id);
+          const grad = getProfileGradient(p) ?? avatarGradient(p.id);
           const ProfileIcon = getProfileIcon(p);
           return (
             <button key={p.id} onClick={() => setSelectedProfile(p)} className="text-left group">
