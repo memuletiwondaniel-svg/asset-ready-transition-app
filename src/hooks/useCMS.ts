@@ -207,7 +207,7 @@ export function useCMSMutations() {
   });
 
 
-  return { addProfile, addCompetency, linkCompetency, updateProfileCompetency, unlinkCompetency, addActivity, addPerson, updatePerson, setActivityStatus };
+  return { addProfile, addCompetency, updateCompetency, linkCompetency, updateProfileCompetency, unlinkCompetency, addActivity, addPerson, updatePerson, setActivityStatus };
 }
 
 export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
