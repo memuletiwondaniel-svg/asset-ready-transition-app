@@ -432,23 +432,10 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
           {filtered.map((p: CMSPerson) => {
             const o = overallMap[p.id];
             const val = o?.overall_progress || 0;
-            // List view: monochrome bar by default; semantic color only for at-risk / ready.
-            // Avatar already encodes identity, so we keep the bar quiet to make status scannable.
+            // Quiet monochrome bar everywhere; green only at 100%.
             const isComplete = val >= 100;
-            const isReady = val >= 85;
-            const isAtRisk = val > 0 && val < 50;
-            const barClass = isComplete || isReady
-              ? 'bg-emerald-500'
-              : isAtRisk
-              ? 'bg-amber-500'
-              : val > 0
-              ? 'bg-foreground/70'
-              : 'bg-transparent';
-            const textClass = isComplete || isReady
-              ? 'text-emerald-600 dark:text-emerald-400'
-              : isAtRisk
-              ? 'text-amber-600 dark:text-amber-400'
-              : 'text-foreground/80';
+            const barClass = isComplete ? 'bg-emerald-500' : val > 0 ? 'bg-foreground/70' : 'bg-transparent';
+            const textClass = isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground/80';
             const prof = p.profile_id ? profileMap[p.profile_id] : null;
             return (
               <TableRow
