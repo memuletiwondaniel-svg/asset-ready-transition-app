@@ -65,6 +65,20 @@ const getProfileIcon = (profile?: { code?: string | null; name?: string | null }
   return Layers;
 };
 
+// Stable, distinct gradient per known profile (falls back to seeded random)
+const getProfileGradient = (profile?: { code?: string | null; name?: string | null } | null): string | null => {
+  const key = `${profile?.code ?? ''} ${profile?.name ?? ''}`.toLowerCase();
+  if (/\bcro\b|control\s*room|hmi|monitor/.test(key)) return 'from-blue-500 to-cyan-500';
+  if (/\bfo\b|field\s*operator/.test(key)) return 'from-amber-500 to-orange-500';
+  if (/\bse\b|shift|supervisor|engineer/.test(key)) return 'from-violet-500 to-fuchsia-500';
+  if (/safety|hse/.test(key)) return 'from-rose-500 to-pink-500';
+  if (/maintenance|mech|technician/.test(key)) return 'from-slate-500 to-zinc-500';
+  if (/lab|chem|analyst/.test(key)) return 'from-emerald-500 to-teal-500';
+  if (/logistic|driver|transport/.test(key)) return 'from-indigo-500 to-purple-500';
+  if (/manager|lead/.test(key)) return 'from-fuchsia-500 to-pink-500';
+  return null;
+};
+
 const initials = (a?: string, b?: string) => `${(a?.[0] || '').toUpperCase()}${(b?.[0] || '').toUpperCase()}`;
 const avatarGradient = (seed: string) => {
   const grads = [
