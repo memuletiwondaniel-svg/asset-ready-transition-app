@@ -98,8 +98,6 @@ export const AuthenticatedLayout: React.FC = () => {
           <Outlet />
         </div>
       </AnimatedBackground>
-      {/* Bottom nav — visible on mobile only */}
-      <MobileBottomNav />
     </div>
   );
 };
