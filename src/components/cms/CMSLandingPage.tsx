@@ -730,9 +730,7 @@ const ActivityChecklist: React.FC<{
                 {openRecord?.notes && (
                   <p className="text-xs"><span className="text-muted-foreground">Notes:</span> {openRecord.notes}</p>
                 )}
-                <div className="rounded-md border border-dashed border-border/60 p-3 text-[11px] text-muted-foreground">
-                  Supporting evidence (certificates, assessment sheets, attendance) will appear here.
-                </div>
+                <ActivityEvidence personId={personId} activityId={openActivity.id} />
               </div>
               <DialogFooter className="gap-2 sm:gap-2">
                 {openRecord?.status === 'completed' ? (
