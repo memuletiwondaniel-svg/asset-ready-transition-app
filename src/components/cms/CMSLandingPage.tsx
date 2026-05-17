@@ -436,7 +436,7 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground hidden md:table-cell">{p.staff_id}</TableCell>
+                
                 <TableCell className="hidden sm:table-cell">
                   {prof ? (
                     <Badge variant="secondary" className="font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15">
