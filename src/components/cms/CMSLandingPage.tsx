@@ -650,7 +650,7 @@ const ActivityChecklist: React.FC<{
   records: PersonActivityRecord[];
   onSet: (activity_id: string, status: ActivityRecordStatus, existing_id: string | null) => void;
   knowledge: number; skill: number; mastery: number; value: number;
-}> = ({ activities, records, onSet }) => {
+}> = ({ personId, activities, records, onSet }) => {
   const recordsByActivity = useMemo(
     () => Object.fromEntries(records.map(r => [r.activity_id, r])),
     [records]
