@@ -105,11 +105,35 @@ export const CMSLandingPage: React.FC = () => {
   const profileMap = useMemo(() => Object.fromEntries(profiles.map(p => [p.id, p])), [profiles]);
   const competencyMap = useMemo(() => Object.fromEntries(competencies.map(c => [c.id, c])), [competencies]);
 
-  const avgReadiness = overall.length
-    ? Math.round(overall.reduce((s, o) => s + (o.overall_progress || 0), 0) / overall.length)
+  // Filters lifted up so KPI cards reflect People-tab pill filters
+  const [profileFilters, setProfileFilters] = useState<string[]>([]);
+  const [plantFilters, setPlantFilters] = useState<string[]>([]);
+
+  const filteredPeople = useMemo(() => people.filter((p: any) => {
+    if (profileFilters.length && (!p.profile_id || !profileFilters.includes(p.profile_id))) return false;
+    if (plantFilters.length && (!p.plant_id || !plantFilters.includes(p.plant_id))) return false;
+    return true;
+  }), [people, profileFilters, plantFilters]);
+
+  const hasKpiFilters = profileFilters.length > 0 || plantFilters.length > 0;
+  const personIdSet = useMemo(() => new Set(filteredPeople.map((p: any) => p.id)), [filteredPeople]);
+  const scopedOverall = hasKpiFilters ? overall.filter(o => personIdSet.has(o.person_id)) : overall;
+
+  const avgReadiness = scopedOverall.length
+    ? Math.round(scopedOverall.reduce((s, o) => s + (o.overall_progress || 0), 0) / scopedOverall.length)
     : 0;
-  const competent = overall.filter(o => (o.overall_progress || 0) >= 85).length;
-  const inProgress = overall.filter(o => { const v = o.overall_progress || 0; return v > 0 && v < 85; }).length;
+  const competent = scopedOverall.filter(o => (o.overall_progress || 0) >= 85).length;
+  const inProgress = scopedOverall.filter(o => { const v = o.overall_progress || 0; return v > 0 && v < 85; }).length;
+
+  // Scope competencies count by selected profiles (if any)
+  const scopedCompetencies = profileFilters.length
+    ? Array.from(new Set(links.filter((l: any) => profileFilters.includes(l.profile_id)).map((l: any) => l.competency_id)))
+    : competencies.map((c: any) => c.id);
+  const scopedCompetencyIdSet = new Set(scopedCompetencies);
+  const scopedActivitiesCount = profileFilters.length
+    ? activities.filter((a: any) => scopedCompetencyIdSet.has(a.competency_id)).length
+    : activities.length;
+  const scopedProfilesCount = profileFilters.length || profiles.length;
 
   return (
     <div className="flex-1 min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
