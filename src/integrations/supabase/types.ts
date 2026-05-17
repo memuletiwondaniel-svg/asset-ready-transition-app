@@ -8104,6 +8104,45 @@ export type Database = {
           },
         ]
       }
+      person_activity_evidence: {
+        Row: {
+          activity_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          label: string | null
+          mime_type: string | null
+          person_id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          label?: string | null
+          mime_type?: string | null
+          person_id: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          label?: string | null
+          mime_type?: string | null
+          person_id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       person_activity_records: {
         Row: {
           activity_id: string
