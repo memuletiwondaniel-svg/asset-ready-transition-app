@@ -105,13 +105,36 @@ export const ActivityEvidence: React.FC<{ personId: string; activityId: string }
     }
   };
 
-  const download = async (item: EvidenceItem) => {
-    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(item.file_path, 60);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  const getSignedUrl = async (item: EvidenceItem, expires = 300) => {
+    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(item.file_path, expires);
     if (error || !data?.signedUrl) {
-      toast({ title: 'Download failed', description: error?.message, variant: 'destructive' });
+      toast({ title: 'Failed to load file', description: error?.message, variant: 'destructive' });
+      return null;
+    }
+    return data.signedUrl;
+  };
+
+  const download = async (item: EvidenceItem) => {
+    const url = await getSignedUrl(item, 60);
+    if (url) window.open(url, '_blank', 'noopener');
+  };
+
+  const togglePreview = async (item: EvidenceItem) => {
+    if (previewId === item.id) {
+      setPreviewId(null);
+      setPreviewUrl(null);
       return;
     }
-    window.open(data.signedUrl, '_blank', 'noopener');
+    setPreviewId(item.id);
+    setPreviewUrl(null);
+    setPreviewLoading(true);
+    const url = await getSignedUrl(item, 300);
+    setPreviewUrl(url);
+    setPreviewLoading(false);
   };
 
   return (
