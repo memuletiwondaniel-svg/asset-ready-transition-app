@@ -563,7 +563,8 @@ const milestoneThreshold = (m: 'knowledge' | 'skill' | 'mastery', c: any) => {
 const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competencyMap, activities, profileMap }) => {
   const { data: progress = [] } = usePersonProgress(person?.id ?? null);
   const { data: actRecords = [] } = usePersonActivityRecords(person?.id ?? null);
-  const { setActivityStatus } = useCMSMutations();
+  const { setActivityStatus, updatePerson } = useCMSMutations();
+  const { plants, getFieldsByPlant, getStationsByField } = useLocations();
   const [openCompetency, setOpenCompetency] = useState<string | null>(null);
 
   if (!person) return null;
