@@ -583,21 +583,30 @@ const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competency
                         <p className="text-sm font-medium leading-tight">{comp.title}</p>
                         {comp.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{comp.description}</p>}
                       </div>
-                      <div className="flex flex-col items-end gap-1 shrink-0">
-                        <Badge variant="outline" className={cn('gap-1 text-[10px] font-medium border', mtone.bg)}>
-                          {ms ? (() => { const Icon = MILESTONE_META[ms].icon; return <Icon className="h-3 w-3" />; })() : <AlertCircle className="h-3 w-3" />}
-                          {ms ? MILESTONE_META[ms].label : 'Not started'}
-                        </Badge>
-                        <Badge variant="outline" className={cn('gap-1 text-[9px] font-medium border', reqTone.bg)}>
-                          <Target className="h-2.5 w-2.5" />
-                          <ReqIcon className="h-2.5 w-2.5" />
-                          Required: {reqMeta.label}
-                        </Badge>
-                      </div>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          'gap-1 text-[10px] font-medium border shrink-0',
+                          reached
+                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40'
+                            : 'bg-muted text-muted-foreground border-border'
+                        )}
+                      >
+                        {reached ? <CheckCircle2 className="h-3 w-3" /> : <ReqIcon className="h-3 w-3" />}
+                        {reqMeta.label}
+                      </Badge>
                     </div>
                     <div className="flex items-center gap-3">
-                      <MilestoneBar value={val} knowledge={kT} skill={sT} mastery={mT} target={targetT} className="flex-1" />
-                      <span className={cn('text-xs font-bold tabular-nums w-14 text-right', reached ? 'text-emerald-600' : mtone.text)}>
+                      <div className="relative h-2 flex-1 rounded-full bg-muted/60 overflow-hidden">
+                        <div
+                          className={cn(
+                            'h-full rounded-full bg-gradient-to-r transition-all duration-700',
+                            reached ? 'from-emerald-500 to-green-400' : 'from-slate-400 to-slate-300 dark:from-slate-500 dark:to-slate-400'
+                          )}
+                          style={{ width: `${targetT > 0 ? Math.min(100, (val / targetT) * 100) : 0}%` }}
+                        />
+                      </div>
+                      <span className={cn('text-xs font-bold tabular-nums w-14 text-right', reached ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground')}>
                         {val}<span className="text-muted-foreground font-normal">/{targetT}</span>
                       </span>
                       <ChevronRight className={cn('h-4 w-4 text-muted-foreground transition-transform', isOpen && 'rotate-90')} />
