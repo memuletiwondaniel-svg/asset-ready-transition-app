@@ -1175,6 +1175,74 @@ const ProfileDetailSheet: React.FC<any> = ({ profile, onClose, competencies, lin
   );
 };
 
+const CompetencyRow: React.FC<{ c: any; profileCount: number; actCount: number }> = ({ c, profileCount, actCount }) => {
+  const { updateCompetency } = useCMSMutations();
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ title: c.title, description: c.description || '' });
+
+  React.useEffect(() => {
+    if (editOpen) setEditForm({ title: c.title, description: c.description || '' });
+  }, [editOpen, c.title, c.description]);
+
+  const saveEdit = async () => {
+    if (!editForm.title.trim()) return;
+    try {
+      await updateCompetency.mutateAsync({ id: c.id, title: editForm.title.trim(), description: editForm.description });
+      toast({ title: 'Competency updated' });
+      setEditOpen(false);
+    } catch (e: any) { toast({ title: 'Failed', description: e.message, variant: 'destructive' }); }
+  };
+
+  return (
+    <TableRow className="group border-border/40 hover:bg-muted/40 transition-colors">
+      <TableCell className="pr-2 align-top w-[280px]">
+        <div className="flex items-start gap-2">
+          <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <BookOpen className="h-4 w-4" />
+          </div>
+          <span className="font-medium text-sm leading-tight pt-1.5">{c.title}</span>
+        </div>
+      </TableCell>
+      <TableCell className="pl-2 text-muted-foreground text-xs leading-relaxed align-top whitespace-pre-wrap">{c.description || '—'}</TableCell>
+      <TableCell className="text-right align-top">
+        <Badge variant="outline" className="font-mono">{profileCount}</Badge>
+      </TableCell>
+      <TableCell className="text-right align-top">
+        <Badge variant="outline" className="font-mono">{actCount}</Badge>
+      </TableCell>
+      <TableCell className="w-10 align-top p-1">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 transition-opacity"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+              <Pencil className="h-3.5 w-3.5 mr-2" /> Edit competence
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Edit Competency</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div><Label>Title</Label><Input value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} /></div>
+              <div><Label>Description</Label><Textarea rows={8} value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} /></div>
+            </div>
+            <DialogFooter><Button onClick={saveEdit} disabled={updateCompetency.isPending}>Save</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </TableCell>
+    </TableRow>
+  );
+};
+
 // ============ COMPETENCIES TAB ============
 const CompetenciesTab: React.FC<any> = ({ competencies, links, activities }) => {
   const { addCompetency } = useCMSMutations();
