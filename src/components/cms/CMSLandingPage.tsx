@@ -819,6 +819,7 @@ const ProfilesTab: React.FC<any> = ({ profiles, competencies, links, people }) =
           const compCount = links.filter((l: any) => l.profile_id === p.id).length;
           const peopleCount = people.filter((per: any) => per.profile_id === p.id).length;
           const grad = avatarGradient(p.id);
+          const ProfileIcon = getProfileIcon(p);
           return (
             <button key={p.id} onClick={() => setSelectedProfile(p)} className="text-left group">
               <Card className="relative overflow-hidden p-5 h-full border-border/40 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/40">
