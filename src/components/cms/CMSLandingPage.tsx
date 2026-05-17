@@ -939,11 +939,15 @@ const ProfileDetailSheet: React.FC<any> = ({ profile, onClose, competencies, lin
                       <Button size="sm" variant="ghost" onClick={() => onUnlink(l.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 h-7 px-2">Remove</Button>
                     </div>
                     <div className="mt-2 flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className={cn('gap-1 text-[10px] font-medium border', tone.bg)}>
-                        <Target className="h-2.5 w-2.5" /><ReqIcon className="h-2.5 w-2.5" /> Required: {meta.label}
-                      </Badge>
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Required</span>
                       <Select value={req} onValueChange={(v: any) => onUpdate(l.id, v)}>
-                        <SelectTrigger className="h-7 w-[150px] text-xs">
+                        <SelectTrigger
+                          className={cn(
+                            'h-7 w-auto gap-1.5 px-2.5 rounded-full text-[11px] font-medium border',
+                            tone.bg
+                          )}
+                        >
+                          <ReqIcon className="h-3 w-3" />
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
