@@ -53,7 +53,7 @@ const readinessTone = (v: number) => {
 // Map profile code/name to a relatable icon
 const getProfileIcon = (profile?: { code?: string | null; name?: string | null } | null) => {
   const key = `${profile?.code ?? ''} ${profile?.name ?? ''}`.toLowerCase();
-  if (/\bcro\b|control\s*room/.test(key)) return Headphones;
+  if (/\bcro\b|control\s*room|hmi|monitor/.test(key)) return MonitorCheck;
   if (/\bfo\b|field\s*operator/.test(key)) return HardHat;
   if (/\bse\b|shift|supervisor|engineer/.test(key)) return ClipboardCheck;
   if (/safety|hse/.test(key)) return ShieldCheck;
