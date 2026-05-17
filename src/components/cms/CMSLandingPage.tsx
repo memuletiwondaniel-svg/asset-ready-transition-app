@@ -27,6 +27,7 @@ import {
 import { useLocations } from '@/hooks/useLocations';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { ActivityEvidence } from './ActivityEvidence';
 
 const STATUS_META: Record<string, { label: string; badge: string; dot: string; icon: React.ReactNode }> = {
   not_started: { label: 'Not started', badge: 'bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-400 border-slate-200/60 dark:border-slate-700/60', dot: 'bg-slate-400', icon: <AlertCircle className="h-3 w-3" /> },
@@ -649,7 +650,7 @@ const ActivityChecklist: React.FC<{
   records: PersonActivityRecord[];
   onSet: (activity_id: string, status: ActivityRecordStatus, existing_id: string | null) => void;
   knowledge: number; skill: number; mastery: number; value: number;
-}> = ({ activities, records, onSet }) => {
+}> = ({ personId, activities, records, onSet }) => {
   const recordsByActivity = useMemo(
     () => Object.fromEntries(records.map(r => [r.activity_id, r])),
     [records]
@@ -730,9 +731,7 @@ const ActivityChecklist: React.FC<{
                 {openRecord?.notes && (
                   <p className="text-xs"><span className="text-muted-foreground">Notes:</span> {openRecord.notes}</p>
                 )}
-                <div className="rounded-md border border-dashed border-border/60 p-3 text-[11px] text-muted-foreground">
-                  Supporting evidence (certificates, assessment sheets, attendance) will appear here.
-                </div>
+                <ActivityEvidence personId={personId} activityId={openActivity.id} />
               </div>
               <DialogFooter className="gap-2 sm:gap-2">
                 {openRecord?.status === 'completed' ? (
