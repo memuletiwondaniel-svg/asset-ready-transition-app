@@ -223,15 +223,21 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<CMSPerson | null>(null);
-  const [profileFilter, setProfileFilter] = useState<string>('all');
+  const [profileFilters, setProfileFilters] = useState<string[]>([]);
+  const [plantFilters, setPlantFilters] = useState<string[]>([]);
   const [form, setForm] = useState({ first_name: '', last_name: '', staff_id: '', job_title: '', profile_id: '', plant_id: '', field_id: '', station_id: '' });
 
+  const toggleIn = (list: string[], v: string) => list.includes(v) ? list.filter(x => x !== v) : [...list, v];
+
   const filtered = people.filter((p: CMSPerson) => {
-    if (profileFilter !== 'all' && p.profile_id !== profileFilter) return false;
+    if (profileFilters.length && (!p.profile_id || !profileFilters.includes(p.profile_id))) return false;
+    if (plantFilters.length && (!p.plant_id || !plantFilters.includes(p.plant_id))) return false;
     if (!search) return true;
     const s = search.toLowerCase();
     return p.first_name.toLowerCase().includes(s) || p.last_name.toLowerCase().includes(s) || p.staff_id.toLowerCase().includes(s) || (p.job_title || '').toLowerCase().includes(s);
   });
+
+  const hasFilters = profileFilters.length > 0 || plantFilters.length > 0;
 
   const availableFields = form.plant_id ? getFieldsByPlant(form.plant_id) : [];
   const availableStations = form.field_id ? getStationsByField(form.field_id) : [];
