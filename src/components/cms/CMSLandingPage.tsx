@@ -559,7 +559,9 @@ const milestoneThreshold = (m: 'knowledge' | 'skill' | 'mastery', c: any) => {
 };
 
 // ============ PERSON PROGRESS SHEET ============
-const PersonProgressSheet: React.FC<any> = ({ person, onClose, links, competencyMap, activities, profileMap }) => {
+const PersonProgressSheet: React.FC<any> = ({ person: personProp, onClose, links, competencyMap, activities, profileMap }) => {
+  const { data: people = [] } = usePeople();
+  const person = personProp ? (people.find((p: any) => p.id === personProp.id) || personProp) : null;
   const { data: progress = [] } = usePersonProgress(person?.id ?? null);
   const { data: actRecords = [] } = usePersonActivityRecords(person?.id ?? null);
   const { setActivityStatus, updatePerson } = useCMSMutations();
