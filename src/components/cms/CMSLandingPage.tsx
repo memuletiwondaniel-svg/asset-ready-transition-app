@@ -17,6 +17,7 @@ import {
   GraduationCap, Users, BookOpen, Layers, Sparkles, Plus, Search,
   TrendingUp, Award, Target, ChevronRight, Filter, MoreHorizontal,
   CheckCircle2, Clock, AlertCircle, Activity, Lock, Play, RotateCcw, Brain, Wrench, Trophy,
+  Headphones, HardHat, ClipboardCheck, ShieldCheck, Settings, FlaskConical, Truck, Cog,
 } from 'lucide-react';
 import {
   useCompetenceProfiles, useCompetencies, useProfileLinks, useActivities, usePeople,
@@ -47,6 +48,21 @@ const readinessTone = (v: number) => {
   if (v >= 70)  return { bar: 'from-blue-500 to-cyan-400',     text: 'text-blue-600 dark:text-blue-400',       ring: 'stroke-blue-500' };
   if (v > 0)    return { bar: 'from-amber-500 to-orange-400',  text: 'text-amber-600 dark:text-amber-400',     ring: 'stroke-amber-500' };
   return { bar: 'from-slate-400 to-slate-300', text: 'text-slate-500', ring: 'stroke-slate-400' };
+};
+
+// Map profile code/name to a relatable icon
+const getProfileIcon = (profile?: { code?: string | null; name?: string | null } | null) => {
+  const key = `${profile?.code ?? ''} ${profile?.name ?? ''}`.toLowerCase();
+  if (/\bcro\b|control\s*room/.test(key)) return Headphones;
+  if (/\bfo\b|field\s*operator/.test(key)) return HardHat;
+  if (/\bse\b|shift|supervisor|engineer/.test(key)) return ClipboardCheck;
+  if (/safety|hse/.test(key)) return ShieldCheck;
+  if (/maintenance|mech|technician/.test(key)) return Wrench;
+  if (/lab|chem|analyst/.test(key)) return FlaskConical;
+  if (/logistic|driver|transport/.test(key)) return Truck;
+  if (/process|operator/.test(key)) return Cog;
+  if (/manager|lead/.test(key)) return Settings;
+  return Layers;
 };
 
 const initials = (a?: string, b?: string) => `${(a?.[0] || '').toUpperCase()}${(b?.[0] || '').toUpperCase()}`;
@@ -803,6 +819,7 @@ const ProfilesTab: React.FC<any> = ({ profiles, competencies, links, people }) =
           const compCount = links.filter((l: any) => l.profile_id === p.id).length;
           const peopleCount = people.filter((per: any) => per.profile_id === p.id).length;
           const grad = avatarGradient(p.id);
+          const ProfileIcon = getProfileIcon(p);
           return (
             <button key={p.id} onClick={() => setSelectedProfile(p)} className="text-left group">
               <Card className="relative overflow-hidden p-5 h-full border-border/40 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/40">
@@ -811,7 +828,7 @@ const ProfilesTab: React.FC<any> = ({ profiles, competencies, links, people }) =
                 <div className="relative">
                   <div className="flex items-start justify-between gap-2">
                     <div className={cn('h-10 w-10 rounded-xl bg-gradient-to-br text-white flex items-center justify-center shadow-sm', grad)}>
-                      <Layers className="h-5 w-5" />
+                      <ProfileIcon className="h-5 w-5" />
                     </div>
                     {p.code && <Badge variant="outline" className="text-[10px] font-mono">{p.code}</Badge>}
                   </div>
