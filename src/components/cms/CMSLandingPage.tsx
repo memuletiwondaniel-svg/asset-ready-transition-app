@@ -1238,15 +1238,15 @@ const CompetenciesTab: React.FC<any> = ({ competencies, links, activities }) => 
             const actCount = activities.filter((a: any) => a.competency_id === c.id).length;
             return (
               <TableRow key={c.id} className="border-border/40 hover:bg-muted/40 transition-colors">
-                <TableCell>
-                  <div className="flex items-center gap-2">
+                <TableCell className="pr-2 align-top w-[280px]">
+                  <div className="flex items-start gap-2">
                     <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                       <BookOpen className="h-4 w-4" />
                     </div>
-                    <span className="font-medium text-sm">{c.title}</span>
+                    <span className="font-medium text-sm leading-tight pt-1.5">{c.title}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-muted-foreground text-xs max-w-md truncate">{c.description || '—'}</TableCell>
+                <TableCell className="pl-2 text-muted-foreground text-xs leading-relaxed align-top whitespace-pre-wrap">{c.description || '—'}</TableCell>
                 <TableCell className="text-right">
                   <Badge variant="outline" className="font-mono">{profileCount}</Badge>
                 </TableCell>
