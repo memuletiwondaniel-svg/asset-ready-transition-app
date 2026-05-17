@@ -193,7 +193,7 @@ export const CMSLandingPage: React.FC = () => {
 
           <div className="mt-5">
             <TabsContent value="people" className="mt-0">
-              <PeopleTab people={people} profiles={profiles} overallMap={overallMap} profileMap={profileMap} competencyMap={competencyMap} links={links} activities={activities} />
+              <PeopleTab people={people} profiles={profiles} overallMap={overallMap} profileMap={profileMap} competencyMap={competencyMap} links={links} activities={activities} profileFilters={profileFilters} setProfileFilters={setProfileFilters} plantFilters={plantFilters} setPlantFilters={setPlantFilters} />
             </TabsContent>
             <TabsContent value="profiles" className="mt-0">
               <ProfilesTab profiles={profiles} competencies={competencies} links={links} people={people} />
