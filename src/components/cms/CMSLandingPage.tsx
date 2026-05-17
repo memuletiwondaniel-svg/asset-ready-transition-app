@@ -400,7 +400,7 @@ const PeopleTab: React.FC<any> = ({ people, profiles, overallMap, profileMap, co
         <TableHeader>
           <TableRow className="hover:bg-transparent border-border/40">
             <TableHead className="text-[11px] uppercase tracking-wider">Person</TableHead>
-            <TableHead className="text-[11px] uppercase tracking-wider hidden md:table-cell">Staff ID</TableHead>
+            
             <TableHead className="text-[11px] uppercase tracking-wider hidden sm:table-cell">Profile</TableHead>
             <TableHead className="text-[11px] uppercase tracking-wider w-[140px] sm:w-[320px]">Readiness</TableHead>
             <TableHead className="w-8 sm:w-12"></TableHead>
