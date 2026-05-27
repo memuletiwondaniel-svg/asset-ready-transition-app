@@ -696,9 +696,15 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         }
       }
 
-      // Create review tasks for ALL selected approvers using security-definer RPC
-      // (Direct inserts are blocked by RLS when creating tasks for other users)
-      for (const approver of approvers) {
+      // SEQUENTIAL APPROVAL GATING:
+      // Stage 1: ORA Lead reviews first.
+      // Stage 2: Once ORA Lead approves, Project Hub Lead + Deputy Plant Director
+      //          receive their tasks in parallel.
+      // Here at submit-time we only create the Stage-1 task (ORA Lead).
+      const stage1Approvers = approvers.filter(a => /ora\s*lead/i.test(a.role_label));
+      const initialApprovers = stage1Approvers.length > 0 ? stage1Approvers : approvers.slice(0, 1);
+
+      for (const approver of initialApprovers) {
         // Check if a pending review task already exists for this user + plan
         const { data: existingTask } = await supabase
           .from('user_tasks')
@@ -725,6 +731,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
             project_code: projectCode,
             project_name: projectTitle,
             approver_role: approver.role_label,
+            approval_stage: 1,
             action: 'review_ora_plan',
           },
         });
