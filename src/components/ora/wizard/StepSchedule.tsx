@@ -1206,9 +1206,11 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                     </PopoverContent>
                   </Popover>
                 </div>
+              </div>
 
-                {/* Footer: Delete (left) + Smart Save (right) */}
-                <div className="flex items-center justify-between pt-3 border-t">
+              {/* Sticky Footer: Delete (left) + Smart Save (right) */}
+              <div className="shrink-0 flex items-center justify-between px-6 py-3 border-t bg-background">
+
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
