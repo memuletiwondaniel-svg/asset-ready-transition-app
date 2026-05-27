@@ -25,9 +25,9 @@ interface WizardStepProjectInfoProps {
 }
 
 const prefixOptions = [
-  { value: 'DP', label: 'DP - Development Project' },
-  { value: 'ST', label: 'ST - Study' },
-  { value: 'MoC', label: 'MoC - Management of Change' }
+  { value: 'DP', label: 'DP' },
+  { value: 'ST', label: 'ST' },
+  { value: 'MoC', label: 'MoC' }
 ];
 
 const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
