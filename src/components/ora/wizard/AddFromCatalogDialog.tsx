@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { WizardActivity, catalogToWizardActivity } from './types';
-import { useORAActivityCatalog } from '@/hooks/useORAActivityCatalog';
+import { useORAActivityCatalog, useORPPhases } from '@/hooks/useORAActivityCatalog';
 import { AddCustomActivityDialog } from './AddCustomActivityDialog';
+import { cn } from '@/lib/utils';
 
 interface Props {
   open: boolean;
@@ -17,14 +17,51 @@ interface Props {
   phase?: string;
 }
 
+const PHASE_FILTERS = [
+  { key: 'ALL', label: 'All', letter: null as string | null },
+  { key: 'ASSESS', label: 'Assess', letter: 'A' },
+  { key: 'SELECT', label: 'Select', letter: 'S' },
+  { key: 'DEFINE', label: 'Define', letter: 'D' },
+  { key: 'EXECUTE', label: 'Execute', letter: 'E' },
+];
+
+const LETTER_TO_PHASE_LABEL: Record<string, string> = {
+  A: 'Assess', S: 'Select', D: 'Define', E: 'Execute', I: 'Identify', O: 'Operate',
+};
+
 export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, existingIds, onAdd, phase = '' }) => {
   const { activities: catalogActivities } = useORAActivityCatalog();
+  const { phases } = useORPPhases();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
+  const [phaseFilter, setPhaseFilter] = useState<string>('ALL');
   const [showCustom, setShowCustom] = useState(false);
 
-  const available = catalogActivities.filter(a => !existingIds.includes(a.id));
-  const filtered = available.filter(a => a.activity.toLowerCase().includes(search.toLowerCase()));
+  const phaseById = useMemo(() => {
+    const m = new Map<string, string>();
+    phases.forEach(p => m.set(p.id, p.label));
+    return m;
+  }, [phases]);
+
+  const filtered = useMemo(() => {
+    const available = catalogActivities.filter(a => !existingIds.includes(a.id));
+    const q = search.trim().toLowerCase();
+    return available.filter(a => {
+      const letter = a.activity_code.split(/[.\-]/)[0];
+      if (phaseFilter !== 'ALL') {
+        const wantLetter = PHASE_FILTERS.find(p => p.key === phaseFilter)?.letter;
+        if (wantLetter && letter !== wantLetter) return false;
+      }
+      if (!q) return true;
+      const phaseLabel = (a.phase_id && phaseById.get(a.phase_id)) || LETTER_TO_PHASE_LABEL[letter] || '';
+      return (
+        a.activity.toLowerCase().includes(q) ||
+        a.activity_code.toLowerCase().includes(q) ||
+        (a.pcap_control_point_number?.toLowerCase().includes(q) ?? false) ||
+        phaseLabel.toLowerCase().includes(q)
+      );
+    });
+  }, [catalogActivities, existingIds, search, phaseFilter, phaseById]);
 
   const toggleSelect = (id: string) => {
     setSelected(prev => {
@@ -43,35 +80,99 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg max-h-[70vh] flex flex-col">
+        <DialogContent className="max-w-xl max-h-[78vh] flex flex-col gap-3">
           <DialogHeader>
             <DialogTitle>Add Activity</DialogTitle>
           </DialogHeader>
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search catalog..." className="pl-9" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, code, PCAP #, or phase..."
+              className="pl-9 h-10 rounded-lg"
+            />
           </div>
-          <ScrollArea className="flex-1 max-h-[40vh]">
-            <div className="space-y-1 pr-3">
-              {filtered.map(a => (
-                <div key={a.id} className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer" onClick={() => toggleSelect(a.id)}>
-                  <Checkbox checked={selected.has(a.id)} />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium truncate">{a.activity}</span>
-                    <span className="text-xs text-muted-foreground ml-2">{a.activity_code}</span>
-                  </div>
+
+          {/* Phase filter chips */}
+          <div className="flex flex-wrap gap-1.5">
+            {PHASE_FILTERS.map(p => {
+              const active = phaseFilter === p.key;
+              return (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => setPhaseFilter(p.key)}
+                  className={cn(
+                    'px-3 py-1 rounded-full text-xs font-medium border transition-colors',
+                    active
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                  )}
+                >
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <ScrollArea className="flex-1 max-h-[45vh] -mx-1">
+            <div className="space-y-1.5 px-1">
+              {filtered.length === 0 && (
+                <div className="text-center text-sm text-muted-foreground py-8">
+                  No activities found
                 </div>
-              ))}
+              )}
+              {filtered.map(a => {
+                const isSel = selected.has(a.id);
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => toggleSelect(a.id)}
+                    className={cn(
+                      'group w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-all',
+                      isSel
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-border bg-background hover:border-primary/40 hover:bg-muted/40'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'flex items-center justify-center w-5 h-5 rounded-md border-2 shrink-0 transition-colors',
+                        isSel
+                          ? 'bg-primary border-primary text-primary-foreground'
+                          : 'border-muted-foreground/30 group-hover:border-primary/60'
+                      )}
+                    >
+                      {isSel && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
+                    </div>
+                    <span className="text-xs font-mono font-semibold text-muted-foreground tabular-nums w-12 shrink-0">
+                      {a.activity_code}
+                    </span>
+                    <span className="text-sm font-medium flex-1 min-w-0">
+                      {a.activity}
+                      {a.pcap_control_point_number && (
+                        <span className="ml-1.5 text-destructive font-semibold">
+                          ({a.pcap_control_point_number})
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </ScrollArea>
-          <DialogFooter className="flex sm:justify-between gap-2">
+
+          <DialogFooter className="flex sm:justify-between gap-2 pt-1">
             <Button variant="ghost" onClick={() => setShowCustom(true)} className="text-xs">
               <Plus className="w-3.5 h-3.5 mr-1" /> Add Custom Activity
             </Button>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button onClick={handleAdd} disabled={selected.size === 0}>
-                Add {selected.size} Activities
+                Add {selected.size} {selected.size === 1 ? 'Activity' : 'Activities'}
               </Button>
             </div>
           </DialogFooter>
