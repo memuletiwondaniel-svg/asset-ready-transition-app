@@ -140,8 +140,8 @@ export const StepActivities: React.FC<Props> = ({ activities, phase, onActivitie
 
   return (
     <div className="space-y-3 p-1">
-      <div className="space-y-0.5 pb-1">
-        <h3 className="text-sm font-semibold">Select activities & deliverables</h3>
+      <div className="text-center space-y-1">
+        <h3 className="text-base font-semibold">Select activities & deliverables</h3>
         <p className="text-xs text-muted-foreground">
           {activities.length} total · <span className="text-primary font-medium">{selectedCount} selected</span>
         </p>
