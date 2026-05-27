@@ -31,6 +31,9 @@ interface FormData {
   project_title: string;
   region_id: string;
   hub_id: string;
+  plant_id: string;
+  field_id: string;
+  station_id: string;
 }
 
 interface TeamMember {
