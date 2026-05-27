@@ -158,13 +158,28 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
         return true;
       case 2:
         return true; // Scope is optional
-      case 3:
+      case 3: {
         const validMembers = teamMembers.filter(m => m.user_id && m.user_id.trim() !== '');
         if (validMembers.length === 0) {
           toast.error('Please assign at least one team member');
           return false;
         }
+        const norm = (r: string) => (r || '').toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim();
+        const hasHubLead = validMembers.some(m => norm(m.role) === 'project hub lead');
+        const hasOraEngr = validMembers.some(m => {
+          const r = norm(m.role);
+          return r === 'ora engr' || r === 'ora engineer' || r === 'snr ora engr' || r === 'senior ora engr' || r === 'senior ora engineer';
+        });
+        if (!hasHubLead) {
+          toast.error('Project Hub Lead must be assigned');
+          return false;
+        }
+        if (!hasOraEngr) {
+          toast.error('ORA Engineer (or Snr. ORA Engr.) must be assigned');
+          return false;
+        }
         return true;
+      }
       case 4:
         return true; // Milestones and documents are optional
       default:
