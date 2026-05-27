@@ -64,7 +64,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
     const available = catalogActivities.filter(a => !existingIds.includes(a.id));
     const q = search.trim().toLowerCase();
     return available.filter(a => {
-      const letter = a.activity_code.split(/[.\-]/)[0];
+      const letter = getLetter(a.activity_code);
       if (phaseFilter !== 'ALL') {
         const wantLetter = PHASE_FILTERS.find(p => p.key === phaseFilter)?.letter;
         if (wantLetter && letter !== wantLetter) return false;
