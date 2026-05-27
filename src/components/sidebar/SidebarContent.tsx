@@ -73,7 +73,7 @@ const navigationItems: (NavigationItem & { requiresLeadership?: boolean })[] = [
   { labelKey: 'navPSSR', icon: ClipboardCheck, path: '/pssr', section: 'pssr' },
   { labelKey: 'navMyTasks', icon: ListChecks, path: '/my-tasks', section: 'my-tasks' },
   
-  { labelKey: 'navExecutiveDashboard', icon: Gauge, path: '/executive-dashboard', section: 'executive-dashboard', requiresLeadership: true },
+  
   { labelKey: 'navORMaintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance', requiresLeadership: true },
   { labelKey: 'navCompetenceManagement', icon: GraduationCap, path: '/competence-management', section: 'competence-management' },
 
