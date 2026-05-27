@@ -2,11 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Plus, Check } from 'lucide-react';
+import { Search, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { WizardActivity, catalogToWizardActivity } from './types';
 import { useORAActivityCatalog, useORPPhases } from '@/hooks/useORAActivityCatalog';
-import { AddCustomActivityDialog } from './AddCustomActivityDialog';
 import { cn } from '@/lib/utils';
 
 interface Props {
