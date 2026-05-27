@@ -1039,7 +1039,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                 </SheetTitle>
               </SheetHeader>
 
-              <div className="space-y-5 pt-4">
+              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
                 {/* Editable Description */}
                 <div>
                   <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">Description</label>
