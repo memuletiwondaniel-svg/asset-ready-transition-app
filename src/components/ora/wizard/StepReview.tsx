@@ -105,6 +105,35 @@ export const StepReview: React.FC<Props> = ({ phase, projectType, activities, ap
           )}
         </div>
       </div>
+
+      {showActivities && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-semibold">Activities</h4>
+            <Badge variant="outline" className="text-[10px]">{selectedActivities.length} selected</Badge>
+          </div>
+          <ScrollArea className="max-h-[260px]">
+            <div className="space-y-1.5 pr-2">
+              {selectedActivities.map((a) => (
+                <div
+                  key={a.id}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg border bg-card"
+                >
+                  <span className="text-[11px] font-mono font-semibold text-muted-foreground tabular-nums w-12 shrink-0">
+                    {a.activityCode}
+                  </span>
+                  <span className="text-sm flex-1 min-w-0 truncate">{a.activity}</span>
+                </div>
+              ))}
+              {selectedActivities.length === 0 && (
+                <div className="text-center py-6 text-xs text-muted-foreground border border-dashed rounded-lg">
+                  No activities selected.
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
     </div>
   );
 };
