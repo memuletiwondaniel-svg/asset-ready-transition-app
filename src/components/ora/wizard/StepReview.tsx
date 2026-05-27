@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { WizardActivity, PROJECT_PHASES, PROJECT_TYPES } from './types';
 import { WizardApprover } from './StepApprovers';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +30,7 @@ export const StepReview: React.FC<Props> = ({ phase, projectType, activities, ap
   const selectedActivities = activities.filter(a => a.selected);
   const phaseLabel = PROJECT_PHASES.find(p => p.value === phase)?.label || phase;
   const typeInfo = PROJECT_TYPES.find(t => t.value === projectType);
+  const [showActivities, setShowActivities] = useState(false);
 
   return (
     <div className="space-y-4 p-1">
@@ -51,10 +54,19 @@ export const StepReview: React.FC<Props> = ({ phase, projectType, activities, ap
             <p className="font-semibold mt-0.5 text-sm">{typeInfo?.label}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-3 pb-3">
-            <p className="text-xs text-muted-foreground">Activities</p>
-            <p className="font-semibold mt-0.5 text-sm">{selectedActivities.length}</p>
+        <Card
+          className={cn(
+            "cursor-pointer transition-all hover:border-primary/50",
+            showActivities && "border-primary bg-primary/5"
+          )}
+          onClick={() => setShowActivities(v => !v)}
+        >
+          <CardContent className="pt-3 pb-3 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">Activities</p>
+              <p className="font-semibold mt-0.5 text-sm">{selectedActivities.length}</p>
+            </div>
+            <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", showActivities && "rotate-180")} />
           </CardContent>
         </Card>
       </div>
@@ -93,6 +105,35 @@ export const StepReview: React.FC<Props> = ({ phase, projectType, activities, ap
           )}
         </div>
       </div>
+
+      {showActivities && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-semibold">Activities</h4>
+            <Badge variant="outline" className="text-[10px]">{selectedActivities.length} selected</Badge>
+          </div>
+          <ScrollArea className="max-h-[260px]">
+            <div className="space-y-1.5 pr-2">
+              {selectedActivities.map((a) => (
+                <div
+                  key={a.id}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg border bg-card"
+                >
+                  <span className="text-[11px] font-mono font-semibold text-muted-foreground tabular-nums w-12 shrink-0">
+                    {a.activityCode}
+                  </span>
+                  <span className="text-sm flex-1 min-w-0 truncate">{a.activity}</span>
+                </div>
+              ))}
+              {selectedActivities.length === 0 && (
+                <div className="text-center py-6 text-xs text-muted-foreground border border-dashed rounded-lg">
+                  No activities selected.
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
     </div>
   );
 };
