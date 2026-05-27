@@ -1,12 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
-import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { useProjectRegions } from '@/hooks/useProjectRegions';
 import { useProjectHierarchy } from '@/hooks/useProjectHierarchy';
 import { useHubs } from '@/hooks/useHubs';
+import { usePlants } from '@/hooks/usePlants';
+import { useFields } from '@/hooks/useFields';
 import { useStations } from '@/hooks/useStations';
 
 interface WizardStepProjectInfoProps {
@@ -16,10 +17,11 @@ interface WizardStepProjectInfoProps {
     project_title: string;
     region_id: string;
     hub_id: string;
+    plant_id: string;
+    field_id: string;
+    station_id: string;
   };
-  selectedLocationIds: string[];
   onFormDataChange: (updates: Partial<WizardStepProjectInfoProps['formData']>) => void;
-  onLocationIdsChange: (ids: string[]) => void;
 }
 
 const prefixOptions = [
@@ -30,25 +32,69 @@ const prefixOptions = [
 
 const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
   formData,
-  selectedLocationIds,
   onFormDataChange,
-  onLocationIdsChange,
 }) => {
   const { regions } = useProjectRegions();
   const { regions: hierarchyRegions } = useProjectHierarchy();
   const { data: hubs = [], createHub } = useHubs();
-  const { stations } = useStations();
+  const { plants } = usePlants();
+  const { allFields } = useFields() as any;
+  const { allStations } = useStations() as any;
 
-  // Get hubs filtered by selected region
   const filteredHubs = useMemo(() => {
     if (!formData.region_id) return hubs;
-    
     const selectedRegion = hierarchyRegions.find(r => r.id === formData.region_id);
     if (!selectedRegion) return hubs;
-    
     const hubIdsInRegion = selectedRegion.hubs.map(h => h.id);
     return hubs.filter(hub => hubIdsInRegion.includes(hub.id));
   }, [formData.region_id, hierarchyRegions, hubs]);
+
+  // Fields filtered by selected plant
+  const fieldsForPlant = useMemo(() => {
+    if (!formData.plant_id || !allFields) return [] as any[];
+    return (allFields as any[]).filter((f: any) => f.plant_id === formData.plant_id);
+  }, [allFields, formData.plant_id]);
+
+  // Stations filtered by selected field (or by plant if no fields exist for that plant)
+  const stationsForField = useMemo(() => {
+    if (!allStations) return [] as any[];
+    if (formData.field_id) {
+      return (allStations as any[]).filter((s: any) => s.field_id === formData.field_id);
+    }
+    // If a plant is selected but it has no fields, allow direct station selection by plant
+    if (formData.plant_id && fieldsForPlant.length === 0) {
+      const plant = plants.find(p => p.id === formData.plant_id);
+      return (allStations as any[]).filter((s: any) => s.plant_name === plant?.name);
+    }
+    return [];
+  }, [allStations, formData.field_id, formData.plant_id, fieldsForPlant.length, plants]);
+
+  const selectedPlant = plants.find(p => p.id === formData.plant_id);
+  const hasFields = fieldsForPlant.length > 0;
+  const hasStations = stationsForField.length > 0;
+
+  // Sub-area label adapts to the plant context
+  const subAreaLabel = useMemo(() => {
+    if (!selectedPlant) return 'Sub-area';
+    const name = selectedPlant.name.toUpperCase();
+    if (name === 'CS') return 'Major Zone';
+    if (name === 'KAZ') return 'Unit / Area';
+    if (name === 'UQ') return 'Terminal';
+    return 'Sub-area';
+  }, [selectedPlant]);
+
+  // Clear downstream selections when parent changes
+  useEffect(() => {
+    if (formData.field_id && !fieldsForPlant.find((f: any) => f.id === formData.field_id)) {
+      onFormDataChange({ field_id: '' });
+    }
+  }, [formData.plant_id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (formData.station_id && !stationsForField.find((s: any) => s.id === formData.station_id)) {
+      onFormDataChange({ station_id: '' });
+    }
+  }, [formData.field_id, formData.plant_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-6">
@@ -66,7 +112,7 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
           <EnhancedCombobox
             options={prefixOptions}
             value={formData.project_id_prefix}
-            onValueChange={(value) => 
+            onValueChange={(value) =>
               onFormDataChange({ project_id_prefix: value as 'DP' | 'ST' | 'MoC' })
             }
             placeholder="Prefix"
@@ -101,8 +147,8 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
         />
       </div>
 
-      {/* Portfolio, Hub, and Locations */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+      {/* Portfolio + Hub */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="region">Portfolio (Region)</Label>
           <EnhancedCombobox
@@ -124,24 +170,62 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
             options={filteredHubs.map(hub => ({ value: hub.id, label: hub.name }))}
             value={formData.hub_id}
             onValueChange={(value) => onFormDataChange({ hub_id: value })}
-            onCreateNew={async (name) => {
-              await createHub(name);
-            }}
+            onCreateNew={async (name) => { await createHub(name); }}
             placeholder="Select or create hub"
             emptyText="No hubs found"
             createText="Create hub"
             className="w-full"
           />
         </div>
+      </div>
+
+      {/* Plant → Sub-area → Station */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+        <div className="space-y-2">
+          <Label htmlFor="plant">Plant</Label>
+          <EnhancedCombobox
+            options={plants.map(p => ({ value: p.id, label: p.name }))}
+            value={formData.plant_id}
+            onValueChange={(value) =>
+              onFormDataChange({ plant_id: value, field_id: '', station_id: '' })
+            }
+            placeholder="Select plant"
+            emptyText="No plants found"
+            allowCreate={false}
+            className="w-full"
+          />
+        </div>
 
         <div className="space-y-2">
-          <Label htmlFor="locations">Locations (Stations)</Label>
-          <MultiSelectCombobox
-            options={stations.map(station => ({ value: station.id, label: station.name }))}
-            selectedValues={selectedLocationIds}
-            onValueChange={onLocationIdsChange}
-            placeholder="Select locations"
-            emptyText="No locations found"
+          <Label htmlFor="field">{subAreaLabel}</Label>
+          <EnhancedCombobox
+            options={fieldsForPlant.map((f: any) => ({ value: f.id, label: f.name }))}
+            value={formData.field_id}
+            onValueChange={(value) => onFormDataChange({ field_id: value, station_id: '' })}
+            placeholder={hasFields ? `Select ${subAreaLabel.toLowerCase()}` : 'Not applicable'}
+            emptyText={formData.plant_id ? `No ${subAreaLabel.toLowerCase()}s found` : 'Select a plant first'}
+            allowCreate={false}
+            disabled={!formData.plant_id || !hasFields}
+            className="w-full"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="station">Station</Label>
+          <EnhancedCombobox
+            options={stationsForField.map((s: any) => ({ value: s.id, label: s.name }))}
+            value={formData.station_id}
+            onValueChange={(value) => onFormDataChange({ station_id: value })}
+            placeholder={hasStations ? 'Select station' : 'Not applicable'}
+            emptyText={
+              !formData.plant_id
+                ? 'Select a plant first'
+                : hasFields && !formData.field_id
+                  ? `Select a ${subAreaLabel.toLowerCase()} first`
+                  : 'No stations found'
+            }
+            allowCreate={false}
+            disabled={!hasStations}
             className="w-full"
           />
         </div>
