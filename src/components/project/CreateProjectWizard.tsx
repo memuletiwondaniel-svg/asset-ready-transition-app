@@ -31,6 +31,9 @@ interface FormData {
   project_title: string;
   region_id: string;
   hub_id: string;
+  plant_id: string;
+  field_id: string;
+  station_id: string;
 }
 
 interface TeamMember {
@@ -91,8 +94,10 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     project_title: '',
     region_id: '',
     hub_id: '',
+    plant_id: '',
+    field_id: '',
+    station_id: '',
   });
-  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
   const [scopeDescription, setScopeDescription] = useState('');
   const [scopeAttachments, setScopeAttachments] = useState<Attachment[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -119,8 +124,10 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
       project_title: '',
       region_id: '',
       hub_id: '',
+      plant_id: '',
+      field_id: '',
+      station_id: '',
     });
-    setSelectedLocationIds([]);
     setScopeDescription('');
     setScopeAttachments([]);
     setTeamMembers([]);
@@ -221,15 +228,17 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
           project_scope: scopeDescription || null,
           region_id: formData.region_id || null,
           hub_id: formData.hub_id || null,
+          plant_id: formData.plant_id || null,
+          station_id: formData.station_id || null,
         }])
         .select()
         .single();
 
       if (projectError) throw projectError;
 
-      // Save project locations
-      if (selectedLocationIds.length > 0) {
-        await saveLocations({ projectId: newProject.id, stationIds: selectedLocationIds });
+      // Save project location (single deepest station, if any)
+      if (formData.station_id) {
+        await saveLocations({ projectId: newProject.id, stationIds: [formData.station_id] });
       }
 
       // Save team members
@@ -337,9 +346,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
         return (
           <WizardStepProjectInfo
             formData={formData}
-            selectedLocationIds={selectedLocationIds}
             onFormDataChange={handleFormDataChange}
-            onLocationIdsChange={setSelectedLocationIds}
           />
         );
       case 2:
@@ -374,7 +381,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
         return (
           <WizardStepProjectReview
             formData={formData}
-            selectedLocationIds={selectedLocationIds}
+            selectedLocationIds={formData.station_id ? [formData.station_id] : []}
             scopeDescription={scopeDescription}
             scopeAttachments={scopeAttachments}
             teamMembers={teamMembers}
