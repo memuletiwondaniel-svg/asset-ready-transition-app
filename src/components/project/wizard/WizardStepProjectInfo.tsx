@@ -25,9 +25,9 @@ interface WizardStepProjectInfoProps {
 }
 
 const prefixOptions = [
-  { value: 'DP', label: 'DP - Development Project' },
-  { value: 'ST', label: 'ST - Study' },
-  { value: 'MoC', label: 'MoC - Management of Change' }
+  { value: 'DP', label: 'DP' },
+  { value: 'ST', label: 'ST' },
+  { value: 'MoC', label: 'MoC' }
 ];
 
 const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
@@ -131,7 +131,7 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
         </div>
         {formData.project_id_prefix && formData.project_id_number && (
           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            {formData.project_id_prefix}{formData.project_id_number}
+            {formData.project_id_prefix}-{formData.project_id_number}
           </Badge>
         )}
       </div>
