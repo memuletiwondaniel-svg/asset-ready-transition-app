@@ -812,20 +812,23 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
 
           {/* Progress Indicator - hidden in review mode */}
           {!isReviewMode && (
-            <div className="mt-4 space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">Step {currentStep} of {STEPS.length}</span>
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-foreground/80">
+                  Step {currentStep} of {STEPS.length}
+                  {phase && <span className="ml-2 text-muted-foreground font-normal">· {phase}{projectType && ` · ${projectType.replace('_', ' ')}`}</span>}
+                </span>
                 <span className="text-muted-foreground">{STEPS[currentStep - 1].title}</span>
               </div>
-              <Progress value={progressPercentage} className="h-2" />
-              
-              {/* Step Indicators */}
-              <div className="flex justify-between mt-2">
-                {STEPS.map((step) => {
+
+              {/* Modern segmented step indicator */}
+              <div className="flex items-center gap-1.5">
+                {STEPS.map((step, idx) => {
                   const isActive = step.id === currentStep;
                   const isVisited = visitedSteps.has(step.id);
                   const isComplete = step.id < currentStep || (isVisited && isStepComplete(step.id));
                   const isClickable = isVisited || step.id <= currentStep;
+                  const isLast = idx === STEPS.length - 1;
 
                   return (
                     <button
@@ -833,33 +836,37 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
                       type="button"
                       onClick={() => handleStepClick(step.id)}
                       disabled={!isClickable}
+                      title={step.title}
                       className={cn(
-                        "flex flex-col items-center flex-1 transition-colors",
-                        isClickable ? "cursor-pointer" : "cursor-default",
-                        isActive
-                          ? "text-primary"
-                          : isComplete
-                            ? "text-primary/60"
-                            : "text-muted-foreground"
+                        "group flex items-center gap-1.5",
+                        isLast ? "" : "flex-1 min-w-0",
+                        isClickable ? "cursor-pointer" : "cursor-default"
                       )}
                     >
                       <div
                         className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-colors",
+                          "shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold transition-all",
                           isActive
-                            ? "border-primary bg-primary text-primary-foreground"
+                            ? "bg-primary text-primary-foreground ring-2 ring-primary/20"
                             : isComplete
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-muted-foreground/30 bg-muted/30"
+                              ? "bg-primary/15 text-primary"
+                              : "bg-muted text-muted-foreground/60"
                         )}
                       >
-                        {isComplete ? (
-                          <Check className="h-4 w-4" />
+                        {isComplete && !isActive ? (
+                          <Check className="h-3 w-3" strokeWidth={3} />
                         ) : (
                           step.id
                         )}
                       </div>
-                      <span className="text-xs mt-1 text-center hidden sm:block">{step.title}</span>
+                      {!isLast && (
+                        <div
+                          className={cn(
+                            "flex-1 h-0.5 rounded-full transition-colors hidden sm:block",
+                            isComplete || isActive ? "bg-primary/60" : "bg-muted"
+                          )}
+                        />
+                      )}
                     </button>
                   );
                 })}
@@ -867,27 +874,6 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
             </div>
           )}
         </DialogHeader>
-
-        {/* Phase context banner - shown from Step 2 onwards */}
-        {!isReviewMode && currentStep >= 2 && phase && (
-          <div className="mx-1 mb-0 px-4 py-2.5 rounded-lg bg-muted/60 border border-border/50">
-            <div className="flex items-center gap-3">
-              <div>
-                <p className="text-xs text-muted-foreground font-medium">Phase</p>
-                <p className="text-sm font-semibold text-foreground/90">{phase}</p>
-              </div>
-              {projectType && currentStep >= 3 && (
-                <>
-                  <div className="w-px h-8 bg-border" />
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium">Type</p>
-                    <p className="text-sm font-semibold text-foreground/90">{projectType.replace('_', ' ')}</p>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Step content */}
         <div className="flex-1 overflow-auto py-2">

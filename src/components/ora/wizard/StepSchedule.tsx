@@ -3,7 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { CalendarDays, ZoomIn, ZoomOut, ChevronRight, ChevronDown, Columns3, ChevronsUpDown, GitBranch, Trash2, Plus, Library, PenLine, X, Link2, Check } from 'lucide-react';
+import { CalendarDays, ZoomIn, ZoomOut, ChevronRight, ChevronDown, Columns3, ChevronsUpDown, ChevronsDownUp, GitBranch, Trash2, Plus, Library, PenLine, X, Link2, Check } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -503,52 +504,42 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
 
   const isColVisible = (col: ColKey) => visibleCols.has(col);
 
+  // Determine if anything is expanded — single toggle button
+  const anyExpanded = expandedIds.size > 0;
+  const toggleExpandAll = () => (anyExpanded ? collapseAll() : expandAll());
+
+  // Active zoom preset (closest match)
+  const activeZoomPreset = useMemo(() => {
+    if (!scrollContainerRef.current) return null;
+    const cw = scrollContainerRef.current.clientWidth;
+    const currentDays = cw / dayWidth;
+    let closest = ZOOM_PRESETS[0];
+    let diff = Math.abs(currentDays - closest.days);
+    for (const p of ZOOM_PRESETS) {
+      const d = Math.abs(currentDays - p.days);
+      if (d < diff) { diff = d; closest = p; }
+    }
+    return closest.label;
+  }, [dayWidth, zoomLevel]);
+
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="space-y-3 p-1">
       {!isReviewMode && (
-        <div className="text-center space-y-2 pb-1">
-          <div className="mx-auto w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <CalendarDays className="w-5 h-5 text-primary" />
-          </div>
-          <h3 className="text-base font-semibold">Schedule & Timeline</h3>
+        <div className="space-y-0.5 pb-1">
+          <h3 className="text-sm font-semibold">Schedule & timeline</h3>
           <p className="text-xs text-muted-foreground">Click dates to pick from calendar. Click activity rows for details.</p>
         </div>
       )}
 
       {/* Toolbar */}
       <div className={cn("flex items-center justify-between", isReviewMode && "sticky top-0 z-10 bg-background py-1")}>
-
         <div className="flex items-center gap-1">
-          {ZOOM_PRESETS.map(p => (
-            <Button key={p.label} variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium" onClick={() => setZoomToFitDays(p.days)}>
-              {p.label}
-            </Button>
-          ))}
-          <div className="w-px h-4 bg-border mx-1" />
-          <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium gap-1" onClick={expandAll}>
-            <ChevronsUpDown className="w-3 h-3" /> Expand
-          </Button>
-          <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium" onClick={collapseAll}>
-            Collapse
-          </Button>
-          <div className="w-px h-4 bg-border mx-1" />
-          <Button
-            variant={showRelationships ? 'secondary' : 'outline'}
-            size="sm"
-            className={cn(
-              "h-6 px-2 text-[10px] font-medium gap-1",
-              showRelationships && "border-primary text-primary bg-primary/10 ring-1 ring-primary/30"
-            )}
-            onClick={() => setShowRelationships(!showRelationships)}
-          >
-            <GitBranch className="w-3 h-3" />
-            Relations
-          </Button>
-          <div className="w-px h-4 bg-border mx-1" />
+          {/* Primary CTA: Add Activity (left-most, prominent) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium gap-1 border-primary/30 text-primary hover:bg-primary/10">
-                <Plus className="w-3 h-3" /> Add Activity
+              <Button size="sm" className="h-7 px-2.5 text-[11px] font-medium gap-1">
+                <Plus className="w-3.5 h-3.5" /> Add Activity
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48">
@@ -561,13 +552,43 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-7 px-2 text-[10px] gap-1">
-                <Columns3 className="w-3 h-3" /> Columns
+
+        <div className="flex items-center gap-1">
+          {/* View controls — icon-only with tooltips, collocated */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={toggleExpandAll}>
+                {anyExpanded ? <ChevronsDownUp className="w-3.5 h-3.5" /> : <ChevronsUpDown className="w-3.5 h-3.5" />}
               </Button>
-            </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>{anyExpanded ? 'Collapse all' : 'Expand all'}</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn("h-7 w-7 p-0", showRelationships && "text-primary bg-primary/10")}
+                onClick={() => setShowRelationships(!showRelationships)}
+              >
+                <GitBranch className="w-3.5 h-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Relations</TooltipContent>
+          </Tooltip>
+
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                    <Columns3 className="w-3.5 h-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Columns</TooltipContent>
+            </Tooltip>
             <DropdownMenuContent align="end" className="w-40">
               {ALL_COLS.filter(k => !COL_DEFS[k].alwaysVisible).map(col => (
                 <DropdownMenuCheckboxItem key={col} checked={visibleCols.has(col)} onCheckedChange={() => toggleCol(col)} className="text-xs">
@@ -576,17 +597,43 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setZoomLevel(z => Math.max(0.1, z - 0.15))} disabled={zoomLevel <= 0.1}>
-              <ZoomOut className="w-3.5 h-3.5" />
-            </Button>
-            <span className="text-[10px] text-muted-foreground font-mono w-8 text-center">{Math.round(zoomLevel * 100)}%</span>
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setZoomLevel(z => Math.min(4, z + 0.15))} disabled={zoomLevel >= 4}>
-              <ZoomIn className="w-3.5 h-3.5" />
-            </Button>
-          </div>
+
+          <div className="w-px h-4 bg-border mx-1" />
+
+          {/* Zoom: range dropdown + in/out */}
+          <Select value={activeZoomPreset || '12M'} onValueChange={(v) => {
+            const preset = ZOOM_PRESETS.find(p => p.label === v);
+            if (preset) setZoomToFitDays(preset.days);
+          }}>
+            <SelectTrigger className="h-7 w-[60px] text-[10px] px-2 gap-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ZOOM_PRESETS.map(p => (
+                <SelectItem key={p.label} value={p.label} className="text-xs">{p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setZoomLevel(z => Math.max(0.1, z - 0.15))} disabled={zoomLevel <= 0.1}>
+                <ZoomOut className="w-3.5 h-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Zoom out</TooltipContent>
+          </Tooltip>
+          <span className="text-[10px] text-muted-foreground font-mono w-9 text-center">{Math.round(zoomLevel * 100)}%</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setZoomLevel(z => Math.min(4, z + 0.15))} disabled={zoomLevel >= 4}>
+                <ZoomIn className="w-3.5 h-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Zoom in</TooltipContent>
+          </Tooltip>
         </div>
       </div>
+
 
       {/* Gantt chart */}
       <div className="border rounded-lg overflow-hidden bg-background">
@@ -1269,5 +1316,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
         onAdd={handleAddFromCatalog}
       />
     </div>
+    </TooltipProvider>
   );
 };
+

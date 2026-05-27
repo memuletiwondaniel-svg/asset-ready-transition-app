@@ -3,12 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Users, Plus, X, Loader2, UserCheck } from 'lucide-react';
+import { Plus, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getRegionKeywords } from '@/utils/hubRegionMapping';
 
 const getFullAvatarUrl = (avatarUrl: string | null): string | undefined => {
   if (!avatarUrl) return undefined;
@@ -21,7 +20,7 @@ export interface WizardApprover {
   full_name: string;
   position: string | null;
   avatar_url: string | null;
-  role_label: string; // e.g. 'ORA Lead', 'Project Hub Lead'
+  role_label: string;
 }
 
 interface Props {
@@ -30,70 +29,96 @@ interface Props {
   projectId: string;
 }
 
-const DEFAULT_ROLES = ['ORA Lead', 'Project Hub Lead'];
-
 function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
 export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, projectId }) => {
-  // Resolve default approvers from profiles
+  // Resolve project location → plant + hub
+  const { data: projectCtx } = useQuery({
+    queryKey: ['ora-plan-project-ctx', projectId],
+    queryFn: async () => {
+      const { data: project } = await supabase
+        .from('projects')
+        .select('plant_id, hub_id')
+        .eq('id', projectId)
+        .maybeSingle();
+      if (!project) return null;
+      const [plantRes, hubRes] = await Promise.all([
+        project.plant_id ? supabase.from('plant').select('name').eq('id', project.plant_id).maybeSingle() : Promise.resolve({ data: null }),
+        project.hub_id ? supabase.from('hubs').select('name').eq('id', project.hub_id).maybeSingle() : Promise.resolve({ data: null }),
+      ]);
+      return {
+        plantId: project.plant_id,
+        hubId: project.hub_id,
+        plantName: (plantRes.data as any)?.name || null,
+        hubName: (hubRes.data as any)?.name || null,
+      };
+    },
+  });
+
+  // Resolve the 3 default approvers
   const { data: resolvedDefaults, isLoading } = useQuery({
-    queryKey: ['ora-plan-approver-resolution', projectId],
+    queryKey: ['ora-plan-default-approvers', projectId, projectCtx?.plantId, projectCtx?.hubId],
+    enabled: !!projectCtx,
     queryFn: async () => {
       const results: WizardApprover[] = [];
+      const plantName = (projectCtx?.plantName || '').toLowerCase();
+      const hubName = (projectCtx?.hubName || '').toLowerCase();
+      const hubKeywords = hubName ? getRegionKeywords(hubName) : [];
 
-      for (const role of DEFAULT_ROLES) {
-        // First try project team members
-        const { data: teamMembers } = await supabase
-          .from('project_team_members')
-          .select('user_id, role')
-          .eq('project_id', projectId)
-          .ilike('role', `%${role}%`);
+      // 1) Deputy Plant Director — match by plant
+      const { data: dpdCandidates } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, position, avatar_url')
+        .eq('is_active', true)
+        .or('position.ilike.%Dep%Plant Director%,position.ilike.%Deputy Plant Director%');
+      const dpd = (dpdCandidates || []).find(p => {
+        const pos = (p.position || '').toLowerCase();
+        if (!plantName) return true;
+        return pos.includes(plantName) || plantName.split(' ').some(t => t.length > 2 && pos.includes(t));
+      }) || (dpdCandidates || [])[0];
+      if (dpd) results.push({
+        user_id: dpd.user_id, full_name: dpd.full_name || 'Unknown',
+        position: dpd.position, avatar_url: dpd.avatar_url,
+        role_label: 'Deputy Plant Director',
+      });
 
-        if (teamMembers && teamMembers.length > 0) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, avatar_url, position')
-            .eq('user_id', teamMembers[0].user_id)
-            .single();
+      // 2) Project Hub Lead — match by hub
+      const { data: hlCandidates } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, position, avatar_url, hub')
+        .eq('is_active', true)
+        .or('position.ilike.%Hub Lead%,position.ilike.%Project Hub Lead%');
+      const hl = (hlCandidates || []).find(p => {
+        if (projectCtx?.hubId && (p as any).hub === projectCtx.hubId) return true;
+        const pos = (p.position || '').toLowerCase();
+        return hubKeywords.some(kw => pos.includes(kw));
+      }) || (hlCandidates || [])[0];
+      if (hl) results.push({
+        user_id: hl.user_id, full_name: hl.full_name || 'Unknown',
+        position: hl.position, avatar_url: hl.avatar_url,
+        role_label: 'Project Hub Lead',
+      });
 
-          if (profile) {
-            results.push({
-              user_id: profile.user_id,
-              full_name: profile.full_name || 'Unknown',
-              position: profile.position,
-              avatar_url: profile.avatar_url,
-              role_label: role,
-            });
-            continue;
-          }
-        }
-
-        // Fallback: resolve from profiles by position
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, avatar_url, position')
-          .eq('is_active', true)
-          .ilike('position', `%${role.replace(' Lead', '').replace('Project Hub', 'Hub')}%`)
-          .limit(5);
-
-        if (profiles && profiles.length > 0) {
-          const best = profiles[0];
-          results.push({
-            user_id: best.user_id,
-            full_name: best.full_name || 'Unknown',
-            position: best.position,
-            avatar_url: best.avatar_url,
-            role_label: role,
-          });
-        }
-      }
+      // 3) ORA Lead — single ORA Lead (Roaa). Match exact "ORA Lead" position, exclude Snr/Sr
+      const { data: oraCandidates } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, position, avatar_url')
+        .eq('is_active', true)
+        .ilike('position', '%ORA Lead%');
+      const ora = (oraCandidates || []).find(p => {
+        const pos = (p.position || '').toLowerCase().trim();
+        // Exclude Snr ORA Engr / Sr ORA Engr / Senior
+        if (pos.includes('engr') || pos.includes('engineer')) return false;
+        if (pos.includes('snr') || pos.includes('sr ') || pos.includes('senior')) return false;
+        return pos.includes('ora lead');
+      }) || (oraCandidates || []).find(p => (p.full_name || '').toLowerCase().includes('roaa'));
+      if (ora) results.push({
+        user_id: ora.user_id, full_name: ora.full_name || 'Unknown',
+        position: ora.position, avatar_url: ora.avatar_url,
+        role_label: 'ORA Lead',
+      });
 
       return results;
     },
@@ -101,12 +126,12 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
 
   // Auto-populate on first load
   useEffect(() => {
-    if (resolvedDefaults && approvers.length === 0) {
+    if (resolvedDefaults && approvers.length === 0 && resolvedDefaults.length > 0) {
       onApproversChange(resolvedDefaults);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedDefaults]);
 
-  // Fetch all active profiles for "Add Approver" popover
   const { data: allProfiles } = useQuery({
     queryKey: ['all-active-profiles-for-approvers'],
     queryFn: async () => {
@@ -142,64 +167,65 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
   );
 
   return (
-    <div className="space-y-5 p-1">
-      <div className="text-center space-y-2 pb-2">
-        <div className="mx-auto w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-          <UserCheck className="w-5 h-5 text-primary" />
-        </div>
-        <h3 className="text-base font-semibold">Plan Approvers</h3>
-        <p className="text-sm text-muted-foreground">
-          Select who will review and approve this ORA Plan.
+    <div className="space-y-3 p-1">
+      <div className="space-y-0.5 pb-1">
+        <h3 className="text-sm font-semibold">Select approvers</h3>
+        <p className="text-xs text-muted-foreground">
+          We've pre-populated the default approval chain. Add or remove as needed.
         </p>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          <span className="ml-2 text-sm text-muted-foreground">Resolving approvers...</span>
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-xs text-muted-foreground">Resolving approvers…</span>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {approvers.map((approver) => (
-            <Card key={approver.user_id} className="p-3">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={getFullAvatarUrl(approver.avatar_url)} alt={approver.full_name} />
-                  <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
-                    {getInitials(approver.full_name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{approver.full_name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{approver.position || 'No position'}</p>
+            <div
+              key={approver.user_id}
+              className="group flex items-center gap-2.5 px-3 py-2 rounded-lg border bg-card hover:bg-accent/30 transition-colors"
+            >
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarImage src={getFullAvatarUrl(approver.avatar_url)} alt={approver.full_name} />
+                <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-semibold">
+                  {getInitials(approver.full_name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-2">
+                  <p className="text-xs font-semibold truncate">{approver.full_name}</p>
+                  <span className="text-[10px] text-primary/80 font-medium shrink-0">{approver.role_label}</span>
                 </div>
-                <button
-                  onClick={() => removeApprover(approver.user_id)}
-                  className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <p className="text-[10px] text-muted-foreground truncate">{approver.position || 'No position'}</p>
               </div>
-            </Card>
+              <button
+                onClick={() => removeApprover(approver.user_id)}
+                className="shrink-0 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-60 hover:opacity-100"
+                aria-label="Remove approver"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
           ))}
 
           {approvers.length === 0 && (
-            <div className="text-center py-8 text-sm text-muted-foreground border-2 border-dashed rounded-lg">
+            <div className="text-center py-6 text-xs text-muted-foreground border border-dashed rounded-lg">
               No approvers selected. Add at least one approver.
             </div>
           )}
 
-          {/* Add Approver */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="w-full gap-2 border-dashed">
-                <Plus className="w-4 h-4" />
+              <Button variant="outline" size="sm" className="w-full gap-1.5 border-dashed h-8 text-xs">
+                <Plus className="w-3.5 h-3.5" />
                 Add Approver
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80 p-0" align="center">
-              <div className="p-3 border-b">
-                <p className="text-sm font-medium">Select a person</p>
+              <div className="p-2 border-b">
+                <p className="text-xs font-medium">Select a person</p>
               </div>
               <ScrollArea className="h-60">
                 <div className="p-1">
@@ -216,13 +242,13 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate">{profile.full_name}</p>
+                        <p className="text-xs truncate">{profile.full_name}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{profile.position || '—'}</p>
                       </div>
                     </button>
                   ))}
                   {availableProfiles.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-4">No more profiles available</p>
+                    <p className="text-xs text-muted-foreground text-center py-4">No more profiles available</p>
                   )}
                 </div>
               </ScrollArea>
