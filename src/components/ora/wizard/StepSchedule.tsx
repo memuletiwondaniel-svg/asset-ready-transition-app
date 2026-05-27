@@ -775,18 +775,10 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                     )}
 
                     {isColVisible('duration') && (
-                      <div className="px-0.5" style={{ width: COL_DEFS.duration.width }} onClick={e => e.stopPropagation()}>
-                        {!isParent ? (
-                          <Input
-                            type="number" min={1}
-                            value={activity.durationDays ?? ''}
-                            onChange={(e) => updateActivity(activity.id, { durationDays: parseInt(e.target.value) || null })}
-                            className="h-6 text-[10px] px-1 text-center border-dashed"
-                            placeholder="—"
-                          />
-                        ) : (
-                          <span className="text-[10px] text-muted-foreground/50 px-1 block text-center">—</span>
-                        )}
+                      <div className="px-0.5 flex items-center justify-center" style={{ width: COL_DEFS.duration.width }}>
+                        <span className="text-[10px] text-muted-foreground/60 whitespace-nowrap">
+                          {!isParent && activity.durationDays ? activity.durationDays : '—'}
+                        </span>
                       </div>
                     )}
 
