@@ -1019,7 +1019,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
         <SheetContent className="w-[400px] sm:w-[450px] p-0 flex flex-col">
           {selectedActivity && (
             <>
-              <SheetHeader className="pb-4 border-b">
+              <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
                 <div className="flex items-center gap-2">
                   <span className={cn(
                     "inline-flex items-center rounded px-2 py-1 text-xs font-mono font-semibold whitespace-nowrap",
