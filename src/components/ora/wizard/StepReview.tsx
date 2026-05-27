@@ -30,6 +30,7 @@ export const StepReview: React.FC<Props> = ({ phase, projectType, activities, ap
   const selectedActivities = activities.filter(a => a.selected);
   const phaseLabel = PROJECT_PHASES.find(p => p.value === phase)?.label || phase;
   const typeInfo = PROJECT_TYPES.find(t => t.value === projectType);
+  const [showActivities, setShowActivities] = useState(false);
 
   return (
     <div className="space-y-4 p-1">
@@ -53,10 +54,19 @@ export const StepReview: React.FC<Props> = ({ phase, projectType, activities, ap
             <p className="font-semibold mt-0.5 text-sm">{typeInfo?.label}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-3 pb-3">
-            <p className="text-xs text-muted-foreground">Activities</p>
-            <p className="font-semibold mt-0.5 text-sm">{selectedActivities.length}</p>
+        <Card
+          className={cn(
+            "cursor-pointer transition-all hover:border-primary/50",
+            showActivities && "border-primary bg-primary/5"
+          )}
+          onClick={() => setShowActivities(v => !v)}
+        >
+          <CardContent className="pt-3 pb-3 flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">Activities</p>
+              <p className="font-semibold mt-0.5 text-sm">{selectedActivities.length}</p>
+            </div>
+            <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", showActivities && "rotate-180")} />
           </CardContent>
         </Card>
       </div>
