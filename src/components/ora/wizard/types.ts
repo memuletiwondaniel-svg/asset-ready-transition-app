@@ -1,7 +1,6 @@
 import { ORAActivity } from '@/hooks/useORAActivityCatalog';
 
 export const PROJECT_PHASES = [
-  { value: 'IDENTIFY', label: 'Identify' },
   { value: 'ASSESS', label: 'Assess' },
   { value: 'SELECT', label: 'Select' },
   { value: 'DEFINE', label: 'Define' },
