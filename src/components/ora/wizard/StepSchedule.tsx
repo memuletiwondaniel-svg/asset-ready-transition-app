@@ -1047,7 +1047,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                     placeholder="Add a description for this activity..."
                     value={selectedActivity.description || ''}
                     onChange={(e) => updateActivity(selectedActivity.id, { description: e.target.value })}
-                    className="mt-1.5 min-h-[140px] resize-none text-sm border-primary/30 focus:border-primary"
+                    className="mt-1.5 min-h-[200px] resize-none text-xs leading-relaxed border-primary/30 focus:border-primary"
                   />
                 </div>
 
@@ -1122,45 +1122,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                       </div>
                     </div>
 
-                    {/* Inline range calendar */}
-                    <div className="text-[10px] text-muted-foreground text-center">
-                      {!selectedActivity.startDate 
-                        ? 'Click a date to set start' 
-                        : !selectedActivity.endDate 
-                          ? 'Click another date to set end' 
-                          : 'Click to change start date, then end date'}
-                    </div>
-                    <div className="border rounded-lg flex justify-center">
-                      <DrillDownCalendar
-                        mode="range"
-                        selected={
-                          selectedActivity.startDate
-                            ? {
-                                from: parseISO(selectedActivity.startDate),
-                                to: selectedActivity.endDate ? parseISO(selectedActivity.endDate) : undefined,
-                              }
-                            : undefined
-                        }
-                        onSelect={(range) => {
-                          if (!range) return;
-                          const updates: Partial<WizardActivity> = {};
-                          if (range.from) {
-                            updates.startDate = format(range.from, 'yyyy-MM-dd');
-                          }
-                          if (range.from && range.to) {
-                            updates.endDate = format(range.to, 'yyyy-MM-dd');
-                            updates.durationDays = differenceInDays(range.to, range.from);
-                          } else if (range.from && !range.to && selectedActivity.durationDays) {
-                            const computedEnd = addDays(range.from, selectedActivity.durationDays);
-                            updates.endDate = format(computedEnd, 'yyyy-MM-dd');
-                          }
-                          updateActivity(selectedActivity.id, updates);
-                        }}
-                        numberOfMonths={1}
-                        initialFocus
-                        className="scale-[0.88] origin-top"
-                      />
-                    </div>
+
+
 
                     {/* Status */}
                     <div className="flex items-center justify-between">
