@@ -436,9 +436,9 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
         {/* Add Milestone */}
         <div className="p-4 rounded-lg bg-muted/30 border border-border/40">
           <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2 mb-4">Add New Milestone</h4>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-muted-foreground">Milestone Type</Label>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+            <div className="space-y-1.5 md:col-span-5">
+              <Label className="text-xs font-medium text-muted-foreground">Milestone Type</Label>
               <EnhancedSearchableCombobox
                 options={milestoneOptions}
                 value={newMilestone.milestone_type_id}
@@ -451,19 +451,8 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
               />
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-muted-foreground">Description/Comments</Label>
-              <Textarea
-                value={newMilestone.milestone_description}
-                onChange={(e) => setNewMilestone(prev => ({ ...prev, milestone_description: e.target.value }))}
-                placeholder="Additional comments..."
-                className="h-10 min-h-[40px] resize-none bg-background"
-                rows={1}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-muted-foreground">Milestone Date</Label>
+            <div className="space-y-1.5 md:col-span-4">
+              <Label className="text-xs font-medium text-muted-foreground">Milestone Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -473,12 +462,12 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
                       !newMilestone.milestone_date && "text-muted-foreground"
                     )}
                   >
-                    <CalendarDays className="mr-2 h-4 w-4" />
-                    {newMilestone.milestone_date ? (
-                      format(newMilestone.milestone_date, "do MMMM yyyy")
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
+                    <CalendarDays className="mr-2 h-4 w-4 shrink-0" />
+                    <span className="truncate">
+                      {newMilestone.milestone_date
+                        ? format(newMilestone.milestone_date, "dd MMM yyyy")
+                        : "Pick a date"}
+                    </span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -493,9 +482,9 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
               </Popover>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-muted-foreground">Scorecard</Label>
-              <div className="flex items-center space-x-2 h-10">
+            <div className="space-y-1.5 md:col-span-3">
+              <Label className="text-xs font-medium text-muted-foreground">Scorecard</Label>
+              <div className="flex items-center space-x-2 h-10 px-3 rounded-md border border-input bg-background">
                 <Switch
                   checked={newMilestone.is_scorecard_project}
                   onCheckedChange={(checked) => setNewMilestone(prev => ({ ...prev, is_scorecard_project: checked }))}
@@ -506,17 +495,31 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
               </div>
             </div>
 
-            <Button 
-              type="button"
-              onClick={addMilestone}
-              disabled={!newMilestone.milestone_name || !newMilestone.milestone_date || isCreating}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Milestone
-            </Button>
+            <div className="space-y-1.5 md:col-span-9">
+              <Label className="text-xs font-medium text-muted-foreground">Description / Comments</Label>
+              <Textarea
+                value={newMilestone.milestone_description}
+                onChange={(e) => setNewMilestone(prev => ({ ...prev, milestone_description: e.target.value }))}
+                placeholder="Optional notes about this milestone..."
+                className="min-h-[40px] resize-none bg-background"
+                rows={2}
+              />
+            </div>
+
+            <div className="md:col-span-3 flex items-end">
+              <Button
+                type="button"
+                onClick={addMilestone}
+                disabled={!newMilestone.milestone_name || !newMilestone.milestone_date || isCreating}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Milestone
+              </Button>
+            </div>
           </div>
         </div>
+
 
         {/* Milestones List */}
         {milestones.length > 0 && (
