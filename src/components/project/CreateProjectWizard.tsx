@@ -94,8 +94,10 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     project_title: '',
     region_id: '',
     hub_id: '',
+    plant_id: '',
+    field_id: '',
+    station_id: '',
   });
-  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
   const [scopeDescription, setScopeDescription] = useState('');
   const [scopeAttachments, setScopeAttachments] = useState<Attachment[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
