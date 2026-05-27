@@ -2,11 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Plus, Check } from 'lucide-react';
+import { Search, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { WizardActivity, catalogToWizardActivity } from './types';
 import { useORAActivityCatalog, useORPPhases } from '@/hooks/useORAActivityCatalog';
-import { AddCustomActivityDialog } from './AddCustomActivityDialog';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -18,24 +17,30 @@ interface Props {
 }
 
 const PHASE_FILTERS = [
-  { key: 'ALL', label: 'All', letter: null as string | null },
-  { key: 'ASSESS', label: 'Assess', letter: 'A' },
-  { key: 'SELECT', label: 'Select', letter: 'S' },
-  { key: 'DEFINE', label: 'Define', letter: 'D' },
-  { key: 'EXECUTE', label: 'Execute', letter: 'E' },
+  { key: 'ALL', label: 'All', letter: null as string | null, active: 'bg-slate-600 text-white border-slate-600', dot: 'bg-slate-400' },
+  { key: 'ASSESS', label: 'Assess', letter: 'A', active: 'bg-amber-500 text-white border-amber-500', dot: 'bg-amber-500' },
+  { key: 'SELECT', label: 'Select', letter: 'S', active: 'bg-purple-500 text-white border-purple-500', dot: 'bg-purple-500' },
+  { key: 'DEFINE', label: 'Define', letter: 'D', active: 'bg-teal-500 text-white border-teal-500', dot: 'bg-teal-500' },
+  { key: 'EXECUTE', label: 'Execute', letter: 'E', active: 'bg-emerald-500 text-white border-emerald-500', dot: 'bg-emerald-500' },
 ];
+
+const LETTER_COLOR: Record<string, string> = {
+  A: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30',
+  S: 'text-purple-600 bg-purple-50 dark:bg-purple-950/30',
+  D: 'text-teal-600 bg-teal-50 dark:bg-teal-950/30',
+  E: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30',
+};
 
 const LETTER_TO_PHASE_LABEL: Record<string, string> = {
   A: 'Assess', S: 'Select', D: 'Define', E: 'Execute', I: 'Identify', O: 'Operate',
 };
 
-export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, existingIds, onAdd, phase = '' }) => {
+export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, existingIds, onAdd }) => {
   const { activities: catalogActivities } = useORAActivityCatalog();
   const { phases } = useORPPhases();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [phaseFilter, setPhaseFilter] = useState<string>('ALL');
-  const [showCustom, setShowCustom] = useState(false);
 
   const phaseById = useMemo(() => {
     const m = new Map<string, string>();
@@ -80,7 +85,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-xl max-h-[78vh] flex flex-col gap-3">
+        <DialogContent className="max-w-xl flex flex-col gap-3 sm:h-[640px] sm:max-h-[85vh]">
           <DialogHeader>
             <DialogTitle>Add Activity</DialogTitle>
           </DialogHeader>
@@ -107,7 +112,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                   className={cn(
                     'px-3 py-1 rounded-full text-xs font-medium border transition-colors',
                     active
-                      ? 'bg-primary text-primary-foreground border-primary'
+                      ? p.active
                       : 'bg-background text-muted-foreground border-border hover:bg-muted'
                   )}
                 >
@@ -117,7 +122,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
             })}
           </div>
 
-          <ScrollArea className="flex-1 max-h-[45vh] -mx-1">
+          <ScrollArea className="flex-1 min-h-0 -mx-1">
             <div className="space-y-1.5 px-1">
               {filtered.length === 0 && (
                 <div className="text-center text-sm text-muted-foreground py-8">
@@ -126,6 +131,8 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
               )}
               {filtered.map(a => {
                 const isSel = selected.has(a.id);
+                const letter = a.activity_code.split(/[.\-]/)[0];
+                const codeColor = LETTER_COLOR[letter] || 'text-muted-foreground bg-muted';
                 return (
                   <button
                     key={a.id}
@@ -148,7 +155,10 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                     >
                       {isSel && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
                     </div>
-                    <span className="text-xs font-mono font-semibold text-muted-foreground tabular-nums w-12 shrink-0">
+                    <span className={cn(
+                      'text-[11px] font-mono font-semibold tabular-nums px-2 py-0.5 rounded shrink-0',
+                      codeColor
+                    )}>
                       {a.activity_code}
                     </span>
                     <span className="text-sm font-medium flex-1 min-w-0">
@@ -165,29 +175,14 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
             </div>
           </ScrollArea>
 
-          <DialogFooter className="flex sm:justify-between gap-2 pt-1">
-            <Button variant="ghost" onClick={() => setShowCustom(true)} className="text-xs">
-              <Plus className="w-3.5 h-3.5 mr-1" /> Add Custom Activity
+          <DialogFooter className="flex sm:justify-end gap-2 pt-1">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button onClick={handleAdd} disabled={selected.size === 0}>
+              Add {selected.size} {selected.size === 1 ? 'Activity' : 'Activities'}
             </Button>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button onClick={handleAdd} disabled={selected.size === 0}>
-                Add {selected.size} {selected.size === 1 ? 'Activity' : 'Activities'}
-              </Button>
-            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <AddCustomActivityDialog
-        open={showCustom}
-        onOpenChange={setShowCustom}
-        phase={phase}
-        onAdd={(activity) => {
-          onAdd([activity]);
-          setShowCustom(false);
-        }}
-      />
     </>
   );
 };

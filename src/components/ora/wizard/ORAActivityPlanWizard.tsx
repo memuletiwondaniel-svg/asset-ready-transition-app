@@ -817,11 +817,10 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
                 <span className="font-medium text-foreground/80">
                   Step {currentStep} of {STEPS.length}
                 </span>
-                <span className="text-muted-foreground">{STEPS[currentStep - 1].title}</span>
               </div>
 
-              {/* Numbered step indicator with connector lines */}
-              <div className="flex items-center gap-2">
+              {/* Numbered step indicator with connector lines and labels */}
+              <div className="flex items-start gap-2">
                 {STEPS.map((step, idx) => {
                   const isActive = step.id === currentStep;
                   const isVisited = visitedSteps.has(step.id);
@@ -830,27 +829,35 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
 
                   return (
                     <React.Fragment key={step.id}>
-                      <button
-                        type="button"
-                        onClick={() => handleStepClick(step.id)}
-                        disabled={!isClickable}
-                        title={step.title}
-                        className={cn(
-                          "shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-all border",
-                          isActive
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : isVisited
-                              ? "bg-background text-foreground/70 border-border hover:border-primary/50"
-                              : "bg-background text-muted-foreground/60 border-border",
-                          isClickable ? "cursor-pointer" : "cursor-default"
-                        )}
-                      >
-                        {step.id}
-                      </button>
+                      <div className="flex flex-col items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleStepClick(step.id)}
+                          disabled={!isClickable}
+                          title={step.title}
+                          className={cn(
+                            "shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-all border",
+                            isActive
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : isVisited
+                                ? "bg-background text-foreground/70 border-border hover:border-primary/50"
+                                : "bg-background text-muted-foreground/60 border-border",
+                            isClickable ? "cursor-pointer" : "cursor-default"
+                          )}
+                        >
+                          {step.id}
+                        </button>
+                        <span className={cn(
+                          "text-[10px] font-medium leading-tight",
+                          isActive ? "text-foreground" : "text-muted-foreground/60"
+                        )}>
+                          {step.title}
+                        </span>
+                      </div>
                       {!isLast && (
                         <div
                           className={cn(
-                            "flex-1 h-px transition-colors",
+                            "flex-1 h-px mt-3.5 transition-colors",
                             step.id < currentStep ? "bg-primary/60" : "bg-border"
                           )}
                         />

@@ -75,14 +75,14 @@ export const StepPhaseSelection: React.FC<Props> = ({ phase, onPhaseChange }) =>
               type="button"
               onClick={() => onPhaseChange(p.value)}
               className={cn(
-                "group/phase w-full flex items-center gap-4 px-4 py-3 rounded-lg border text-left transition-all duration-200",
+                "group/phase w-full flex items-center gap-4 px-4 py-5 min-h-[88px] rounded-lg border text-left transition-all duration-200",
                 isSelected
                   ? cn(selected.bg, selected.border)
                   : cn("border-border", config.hoverBg, config.hoverBorder)
               )}
             >
               <div className={cn(
-                "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200",
+                "w-11 h-11 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200",
                 isSelected
                   ? selected.icon
                   : cn("bg-muted/60 text-muted-foreground", config.hoverIcon)
@@ -91,7 +91,7 @@ export const StepPhaseSelection: React.FC<Props> = ({ phase, onPhaseChange }) =>
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-semibold">{p.label}</span>
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {config.description}
                 </p>
               </div>
