@@ -143,7 +143,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
               )}
               {filtered.map(a => {
                 const isSel = selected.has(a.id);
-                const letter = a.activity_code.split(/[.\-]/)[0];
+                const letter = getLetter(a.activity_code);
                 const codeColor = LETTER_COLOR[letter] || 'text-muted-foreground bg-muted';
                 return (
                   <button
