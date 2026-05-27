@@ -140,17 +140,13 @@ export const StepActivities: React.FC<Props> = ({ activities, phase, onActivitie
 
   return (
     <div className="space-y-3 p-1">
-      <div className="text-center space-y-1.5 pb-1">
-        <div className="mx-auto w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-          <ListChecks className="w-5 h-5 text-primary" />
-        </div>
-        <h3 className="text-base font-semibold">Select Activities & Deliverables</h3>
-        <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
-          <span>{activities.length} total</span>
-          <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
-          <span className="text-primary font-medium">{selectedCount} selected</span>
-        </div>
+      <div className="space-y-0.5 pb-1">
+        <h3 className="text-sm font-semibold">Select activities & deliverables</h3>
+        <p className="text-xs text-muted-foreground">
+          {activities.length} total · <span className="text-primary font-medium">{selectedCount} selected</span>
+        </p>
       </div>
+
 
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
