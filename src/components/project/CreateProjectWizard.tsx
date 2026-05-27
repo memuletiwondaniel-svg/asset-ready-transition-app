@@ -381,7 +381,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
         return (
           <WizardStepProjectReview
             formData={formData}
-            selectedLocationIds={selectedLocationIds}
+            selectedLocationIds={formData.station_id ? [formData.station_id] : []}
             scopeDescription={scopeDescription}
             scopeAttachments={scopeAttachments}
             teamMembers={teamMembers}
