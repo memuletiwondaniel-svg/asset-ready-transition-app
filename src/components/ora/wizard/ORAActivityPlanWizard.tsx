@@ -871,7 +871,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
         </DialogHeader>
 
         {/* Step content */}
-        <div className="flex-1 overflow-auto py-2">
+        <div className={cn("flex-1 py-2 min-h-0", currentStep === 4 ? "overflow-hidden flex flex-col" : "overflow-auto")}>
           {isReviewMode ? (
             <StepSchedule activities={activities} onActivitiesChange={setActivities} isReviewMode />
           ) : (
