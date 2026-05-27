@@ -34,9 +34,9 @@ const PHASE_CONFIG: Record<string, {
   EXECUTE: {
     icon: <Rocket className="w-5 h-5" />,
     description: 'Execute the plan and manage operational readiness activities',
-    hoverBg: 'hover:bg-emerald-50 dark:hover:bg-emerald-950/30',
-    hoverBorder: 'hover:border-emerald-300 dark:hover:border-emerald-700',
-    hoverIcon: 'group-hover/phase:bg-emerald-100 group-hover/phase:text-emerald-600 dark:group-hover/phase:bg-emerald-900/50 dark:group-hover/phase:text-emerald-400',
+    hoverBg: 'hover:bg-blue-50 dark:hover:bg-blue-950/30',
+    hoverBorder: 'hover:border-blue-300 dark:hover:border-blue-700',
+    hoverIcon: 'group-hover/phase:bg-blue-100 group-hover/phase:text-blue-600 dark:group-hover/phase:bg-blue-900/50 dark:group-hover/phase:text-blue-400',
   },
 };
 
@@ -45,7 +45,7 @@ const SELECTED_STYLES: Record<string, { bg: string; border: string; icon: string
   ASSESS: { bg: 'bg-amber-50 dark:bg-amber-950/40', border: 'border-amber-400 dark:border-amber-600 ring-1 ring-amber-200 dark:ring-amber-800', icon: 'bg-amber-500 text-white' },
   SELECT: { bg: 'bg-purple-50 dark:bg-purple-950/40', border: 'border-purple-400 dark:border-purple-600 ring-1 ring-purple-200 dark:ring-purple-800', icon: 'bg-purple-500 text-white' },
   DEFINE: { bg: 'bg-teal-50 dark:bg-teal-950/40', border: 'border-teal-400 dark:border-teal-600 ring-1 ring-teal-200 dark:ring-teal-800', icon: 'bg-teal-500 text-white' },
-  EXECUTE: { bg: 'bg-emerald-50 dark:bg-emerald-950/40', border: 'border-emerald-400 dark:border-emerald-600 ring-1 ring-emerald-200 dark:ring-emerald-800', icon: 'bg-emerald-500 text-white' },
+  EXECUTE: { bg: 'bg-blue-50 dark:bg-blue-950/40', border: 'border-blue-400 dark:border-blue-600 ring-1 ring-blue-200 dark:ring-blue-800', icon: 'bg-blue-500 text-white' },
 };
 
 interface Props {
