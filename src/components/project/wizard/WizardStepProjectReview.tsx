@@ -96,7 +96,7 @@ const WizardStepProjectReview: React.FC<WizardStepProjectReviewProps> = ({
                 <div>
                   <p className="text-sm text-muted-foreground">Project ID</p>
                   <Badge variant="outline" className="mt-1 bg-primary/10 text-primary">
-                    {formData.project_id_prefix}{formData.project_id_number || '---'}
+                    {formData.project_id_prefix}-{formData.project_id_number || '---'}
                   </Badge>
                 </div>
                 <div>
