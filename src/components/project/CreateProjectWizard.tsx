@@ -193,8 +193,16 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
         return !!(formData.project_id_prefix && formData.project_id_number && formData.project_title);
       case 2:
         return true;
-      case 3:
-        return teamMembers.filter(m => m.user_id && m.user_id.trim() !== '').length > 0;
+      case 3: {
+        const valid = teamMembers.filter(m => m.user_id && m.user_id.trim() !== '');
+        const norm = (r: string) => (r || '').toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim();
+        const hasHubLead = valid.some(m => norm(m.role) === 'project hub lead');
+        const hasOraEngr = valid.some(m => {
+          const r = norm(m.role);
+          return r === 'ora engr' || r === 'ora engineer' || r === 'snr ora engr' || r === 'senior ora engr' || r === 'senior ora engineer';
+        });
+        return valid.length > 0 && hasHubLead && hasOraEngr;
+      }
       case 4:
         return true;
       default:
