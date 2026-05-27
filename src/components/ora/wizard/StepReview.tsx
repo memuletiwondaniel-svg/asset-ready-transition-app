@@ -77,7 +77,7 @@ export const StepReview: React.FC<Props> = ({ phase, projectType, activities, ap
           <Badge variant="outline" className="text-[10px]">{approvers.length} {approvers.length === 1 ? 'approver' : 'approvers'}</Badge>
         </div>
         <div className="space-y-2">
-          {approvers.map((approver, idx) => (
+          {sortApprovers(approvers).map((approver, idx) => (
             <div
               key={approver.user_id}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg border bg-card"
