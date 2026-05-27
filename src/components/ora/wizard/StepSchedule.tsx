@@ -636,7 +636,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
 
 
       {/* Gantt chart */}
-      <div className="border rounded-lg overflow-hidden bg-background">
+      <div className="border rounded-lg overflow-hidden bg-background flex-1 flex flex-col min-h-0">
         <div className="flex">
           <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
             <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
