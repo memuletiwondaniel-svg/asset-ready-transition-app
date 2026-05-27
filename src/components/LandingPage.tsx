@@ -25,6 +25,8 @@ import { arrayMove, SortableContext, rectSortingStrategy, useSortable } from '@d
 import { CSS } from '@dnd-kit/utilities';
 import { processUserInput, getBlockedResponse } from '@/lib/security';
 import { useFavoritePages } from '@/hooks/useFavoritePages';
+import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+
 import { useNewTaskCount } from '@/hooks/useNewTaskCount';
 import { useTenantSetupStatus } from '@/hooks/useTenantSetupStatus';
 
