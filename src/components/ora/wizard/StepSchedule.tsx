@@ -134,6 +134,16 @@ function getIdBadgeClasses(code: string) {
   return PHASE_COLORS[prefix] || { bg: 'bg-muted', text: 'text-foreground' };
 }
 
+// Convert internal codes like "EXE-01" / "ASS-04.1" to display format "E.01" / "A.04.1"
+const PHASE_LETTER: Record<string, string> = { ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E' };
+function formatActivityCode(code: string): string {
+  if (!code) return code;
+  const m = code.match(/^([A-Za-z]+)[-.](.+)$/);
+  if (!m) return code;
+  const letter = PHASE_LETTER[m[1].toUpperCase()] || m[1];
+  return `${letter}.${m[2]}`;
+}
+
 // Hierarchy helpers
 function buildChildrenMap(activities: WizardActivity[]): Map<string | null, WizardActivity[]> {
   const map = new Map<string | null, WizardActivity[]>();
@@ -707,7 +717,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                           "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-mono font-semibold whitespace-nowrap",
                           idColors.bg, idColors.text
                         )}>
-                          {activity.activityCode}
+                          {formatActivityCode(activity.activityCode)}
                         </span>
                       </div>
                     )}
