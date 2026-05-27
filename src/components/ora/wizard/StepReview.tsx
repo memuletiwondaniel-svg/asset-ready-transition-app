@@ -90,11 +90,8 @@ export const StepReview: React.FC<Props> = ({ phase, projectType, activities, ap
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-2">
-                  <p className="text-sm font-semibold truncate">{approver.full_name}</p>
-                  <span className="text-[10px] text-primary font-medium shrink-0">{approver.role_label}</span>
-                </div>
-                <p className="text-xs text-muted-foreground truncate">{approver.position || 'No position'}</p>
+                <p className="text-sm font-semibold truncate">{approver.full_name}</p>
+                <p className="text-xs text-primary font-medium truncate">{approver.position || approver.role_label}</p>
               </div>
             </div>
           ))}
