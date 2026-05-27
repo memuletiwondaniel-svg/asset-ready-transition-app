@@ -35,6 +35,18 @@ const LETTER_TO_PHASE_LABEL: Record<string, string> = {
   A: 'Assess', S: 'Select', D: 'Define', E: 'Execute', I: 'Identify', O: 'Operate',
 };
 
+const PREFIX_TO_LETTER: Record<string, string> = { IDN: 'I', ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', OPR: 'O' };
+function getLetter(code: string): string {
+  const prefix = code.split(/[.\-]/)[0].toUpperCase();
+  return PREFIX_TO_LETTER[prefix] || prefix.charAt(0);
+}
+function formatActivityCode(code: string): string {
+  const m = code.match(/^([A-Za-z]+)[-.](.+)$/);
+  if (!m) return code;
+  const letter = PREFIX_TO_LETTER[m[1].toUpperCase()] || m[1];
+  return `${letter}.${m[2]}`;
+}
+
 export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, existingIds, onAdd }) => {
   const { activities: catalogActivities } = useORAActivityCatalog();
   const { phases } = useORPPhases();
