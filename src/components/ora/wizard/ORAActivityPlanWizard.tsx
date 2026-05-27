@@ -516,7 +516,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
       // Check if ALL approvers have approved → update plan status
       const { data: allApprovals } = await supabase
         .from('orp_approvals')
-        .select('status')
+        .select('approver_user_id, approver_role, status')
         .eq('orp_plan_id', draftPlanId);
 
       const allApproved = allApprovals?.every((a: any) => a.status === 'APPROVED');
@@ -535,6 +535,67 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
           .from('orp_plans')
           .update({ status: 'APPROVED' })
           .eq('id', draftPlanId);
+      } else if (decision === 'APPROVED') {
+        // SEQUENTIAL GATING: If the ORA Lead just approved, create stage-2 tasks
+        // for Project Hub Lead + Deputy Plant Director (parallel).
+        const myRow = (allApprovals || []).find((a: any) => a.approver_user_id === user.user.id);
+        const justApprovedByOraLead = myRow && /ora\s*lead/i.test(myRow.approver_role || '');
+
+        if (justApprovedByOraLead) {
+          // Fetch plan + project context for task description
+          const { data: planRow } = await supabase
+            .from('orp_plans')
+            .select('project_id')
+            .eq('id', draftPlanId)
+            .maybeSingle();
+          const projId = (planRow as any)?.project_id;
+          let projectName = projId || '';
+          if (projId) {
+            const { data: p } = await supabase
+              .from('projects')
+              .select('project_id_prefix, project_id_number, project_title')
+              .eq('id', projId)
+              .maybeSingle();
+            if (p) {
+              const code = `${p.project_id_prefix || ''}-${p.project_id_number || ''}`.trim();
+              projectName = code ? `${code} - ${p.project_title || ''}` : (p.project_title || projId);
+            }
+          }
+
+          const stage2Rows = (allApprovals || []).filter(
+            (a: any) => !/ora\s*lead/i.test(a.approver_role || '') && a.status === 'PENDING'
+          );
+
+          for (const row of stage2Rows) {
+            const { data: existingTask } = await supabase
+              .from('user_tasks')
+              .select('id')
+              .eq('user_id', row.approver_user_id)
+              .eq('type', 'ora_plan_review')
+              .filter('metadata->>plan_id', 'eq', draftPlanId)
+              .not('status', 'in', '("completed","cancelled")')
+              .limit(1);
+            if (existingTask && existingTask.length > 0) continue;
+
+            await supabase.rpc('create_user_task', {
+              p_user_id: row.approver_user_id,
+              p_title: `Review ORA Plan – ${projectName}`,
+              p_description: `The ORA Lead has approved this plan. You have been assigned as ${row.approver_role} to review and approve the ORA Plan for project ${projectName}.`,
+              p_type: 'ora_plan_review',
+              p_status: 'pending',
+              p_priority: 'High',
+              p_metadata: {
+                source: 'ora_workflow',
+                project_id: projId,
+                plan_id: draftPlanId,
+                project_name: projectName,
+                approver_role: row.approver_role,
+                approval_stage: 2,
+                action: 'review_ora_plan',
+              },
+            });
+          }
+        }
       }
 
       // Mark the reviewer's task as completed
