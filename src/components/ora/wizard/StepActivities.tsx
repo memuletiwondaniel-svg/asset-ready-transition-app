@@ -157,10 +157,7 @@ export const StepActivities: React.FC<Props> = ({ activities, phase, onActivitie
           {activities.every(a => a.selected) ? 'Deselect All' : 'Select All'}
         </Button>
         <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowAddFromCatalog(true)}>
-          <Plus className="w-3.5 h-3.5 mr-1" /> Catalog
-        </Button>
-        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setShowAddCustom(true)}>
-          <Plus className="w-3.5 h-3.5 mr-1" /> Custom
+          <Plus className="w-3.5 h-3.5 mr-1" /> Add Activity
         </Button>
       </div>
 
