@@ -353,22 +353,20 @@ export function ProjectsTable({
                         case 'progress':
                           return (
                             <div key={col.id} style={style} className="shrink-0">
-                              {vcrs.length === 0 ? (
-                                <span className="text-xs text-muted-foreground italic">No VCRs</span>
-                              ) : (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <Progress value={avg} className="h-1.5 flex-1 min-w-0" indicatorClassName={barColor} />
-                                      <span className="text-sm font-semibold text-foreground tabular-nums shrink-0">{avg}%</span>
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top">
-                                    {total > 0 ? `${completed} of ${total} delivered` : 'No deliverables'}
-                                    {vcrs.length > 0 ? ` \u00b7 ${vcrs.length} VCR${vcrs.length === 1 ? '' : 's'}` : ''}
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <Progress value={avg} className="h-1.5 flex-1 min-w-0" indicatorClassName={barColor} />
+                                    <span className="text-sm font-semibold text-foreground tabular-nums shrink-0">{avg}%</span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  {vcrs.length === 0
+                                    ? 'No VCRs'
+                                    : `${total > 0 ? `${completed} of ${total} delivered` : 'No deliverables'} \u00b7 ${vcrs.length} VCR${vcrs.length === 1 ? '' : 's'}`}
+                                </TooltipContent>
+                              </Tooltip>
+
                             </div>
                           );
 
