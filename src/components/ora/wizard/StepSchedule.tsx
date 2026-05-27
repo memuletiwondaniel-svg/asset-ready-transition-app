@@ -1016,10 +1016,10 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
 
       {/* Activity Detail Sheet */}
       <Sheet open={!!selectedActivityId} onOpenChange={(open) => { if (!open) setSelectedActivityId(null); }}>
-        <SheetContent className="w-[400px] sm:w-[450px] overflow-y-auto">
+        <SheetContent className="w-[400px] sm:w-[450px] p-0 flex flex-col">
           {selectedActivity && (
             <>
-              <SheetHeader className="pb-4 border-b">
+              <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
                 <div className="flex items-center gap-2">
                   <span className={cn(
                     "inline-flex items-center rounded px-2 py-1 text-xs font-mono font-semibold whitespace-nowrap",
@@ -1039,7 +1039,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                 </SheetTitle>
               </SheetHeader>
 
-              <div className="space-y-5 pt-4">
+              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
                 {/* Editable Description */}
                 <div>
                   <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">Description</label>
@@ -1047,7 +1047,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                     placeholder="Add a description for this activity..."
                     value={selectedActivity.description || ''}
                     onChange={(e) => updateActivity(selectedActivity.id, { description: e.target.value })}
-                    className="mt-1.5 min-h-[200px] resize-none text-xs leading-relaxed border-primary/30 focus:border-primary"
+                    className="mt-1.5 min-h-[200px] resize-none text-sm leading-relaxed border-primary/30 focus:border-primary"
                   />
                 </div>
 
@@ -1206,9 +1206,11 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                     </PopoverContent>
                   </Popover>
                 </div>
+              </div>
 
-                {/* Footer: Delete (left) + Smart Save (right) */}
-                <div className="flex items-center justify-between pt-3 border-t">
+              {/* Sticky Footer: Delete (left) + Smart Save (right) */}
+              <div className="shrink-0 flex items-center justify-between px-6 py-3 border-t bg-background">
+
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
@@ -1265,8 +1267,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                     </Button>
                   </div>
                 </div>
-              </div>
             </>
+
           )}
         </SheetContent>
       </Sheet>
