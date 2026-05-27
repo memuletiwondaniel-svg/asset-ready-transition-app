@@ -963,46 +963,44 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
               ) : (
                 <>
                   <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center mb-4">{t.quickActions || 'Quick Actions'}</h2>
-                  <div className="flex flex-wrap justify-center gap-2 sm:gap-3 xl:gap-4">
-                    <button
-                      onClick={() => onNavigate('pssr')}
-                      className="group flex flex-col items-center gap-2 sm:gap-2.5 p-4 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 min-w-[80px] sm:min-w-[100px] min-h-[72px] touch-manipulation"
-                    >
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center bg-primary transition-transform duration-200 group-hover:scale-110">
-                        <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
+                  {(() => {
+                    const quickActionDefs = [
+                      { id: 'create-pssr', label: t.createAPSSR || 'Create PSSR', icon: Zap, bg: 'bg-primary', iconColor: 'text-primary-foreground', onClick: () => onNavigate('pssr') },
+                      { id: 'approve-pssr', label: t.approveAPSSR || 'Approve PSSR', icon: CheckCircle, bg: 'bg-emerald-500', iconColor: 'text-white', onClick: () => onNavigate('pssr') },
+                      { id: 'add-project', label: t.addNewProject || 'Add Project', icon: Key, bg: 'bg-violet-500', iconColor: 'text-white', onClick: () => onNavigate('projects') },
+                      { id: 'my-tasks', label: t.myTasks || 'My Tasks', icon: ListChecks, bg: 'bg-amber-500', iconColor: 'text-white', onClick: () => onNavigate('my-tasks') },
+                    ].filter(a => !hiddenQuickActions.includes(a.id));
+                    return (
+                      <div className="flex flex-wrap justify-center gap-2 sm:gap-3 xl:gap-4">
+                        {quickActionDefs.map(action => {
+                          const Icon = action.icon;
+                          return (
+                            <div
+                              key={action.id}
+                              className="group/qa relative flex flex-col items-center gap-2 sm:gap-2.5 p-4 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 min-w-[80px] sm:min-w-[100px] min-h-[72px] touch-manipulation"
+                            >
+                              <button
+                                onClick={(e) => { e.stopPropagation(); hideQuickAction(action.id); }}
+                                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover/qa:opacity-100 transition-opacity duration-150 hover:scale-110 z-20"
+                                title="Remove quick action"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                              <button onClick={action.onClick} className="flex flex-col items-center gap-2.5 w-full">
+                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${action.bg} transition-transform duration-200 group-hover/qa:scale-110`}>
+                                  <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${action.iconColor}`} />
+                                </div>
+                                <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover/qa:text-foreground transition-colors">{action.label}</span>
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.createAPSSR || 'Create PSSR'}</span>
-                    </button>
-                    <button
-                      onClick={() => onNavigate('pssr')}
-                      className="group flex flex-col items-center gap-2 sm:gap-2.5 p-4 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 min-w-[80px] sm:min-w-[100px] min-h-[72px] touch-manipulation"
-                    >
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center bg-emerald-500 transition-transform duration-200 group-hover:scale-110">
-                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                      </div>
-                      <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.approveAPSSR || 'Approve PSSR'}</span>
-                    </button>
-                    <button
-                      onClick={() => onNavigate('projects')}
-                      className="group flex flex-col items-center gap-2 sm:gap-2.5 p-4 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 min-w-[80px] sm:min-w-[100px] min-h-[72px] touch-manipulation"
-                    >
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center bg-violet-500 transition-transform duration-200 group-hover:scale-110">
-                        <Key className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                      </div>
-                      <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.addNewProject || 'Add Project'}</span>
-                    </button>
-                    <button
-                      onClick={() => onNavigate('my-tasks')}
-                      className="group flex flex-col items-center gap-2 sm:gap-2.5 p-4 sm:p-4 rounded-xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 min-w-[80px] sm:min-w-[100px] min-h-[72px] touch-manipulation"
-                    >
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center bg-amber-500 transition-transform duration-200 group-hover:scale-110">
-                        <ListChecks className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                      </div>
-                      <span className="text-[10px] sm:text-xs font-medium text-foreground/80 group-hover:text-foreground transition-colors">{t.myTasks || 'My Tasks'}</span>
-                    </button>
-                  </div>
+                    );
+                  })()}
                 </>
               )}
+
             </div>
 
             {/* Bottom spacer for vertical centering */}
