@@ -1016,7 +1016,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
 
       {/* Activity Detail Sheet */}
       <Sheet open={!!selectedActivityId} onOpenChange={(open) => { if (!open) setSelectedActivityId(null); }}>
-        <SheetContent className="w-[400px] sm:w-[450px] overflow-y-auto">
+        <SheetContent className="w-[400px] sm:w-[450px] p-0 flex flex-col">
           {selectedActivity && (
             <>
               <SheetHeader className="pb-4 border-b">
