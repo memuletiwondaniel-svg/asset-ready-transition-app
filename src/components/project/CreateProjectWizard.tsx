@@ -228,15 +228,17 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
           project_scope: scopeDescription || null,
           region_id: formData.region_id || null,
           hub_id: formData.hub_id || null,
+          plant_id: formData.plant_id || null,
+          station_id: formData.station_id || null,
         }])
         .select()
         .single();
 
       if (projectError) throw projectError;
 
-      // Save project locations
-      if (selectedLocationIds.length > 0) {
-        await saveLocations({ projectId: newProject.id, stationIds: selectedLocationIds });
+      // Save project location (single deepest station, if any)
+      if (formData.station_id) {
+        await saveLocations({ projectId: newProject.id, stationIds: [formData.station_id] });
       }
 
       // Save team members
