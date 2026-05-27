@@ -1316,5 +1316,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
         onAdd={handleAddFromCatalog}
       />
     </div>
+    </TooltipProvider>
   );
 };
+
