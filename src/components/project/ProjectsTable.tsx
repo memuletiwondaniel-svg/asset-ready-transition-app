@@ -110,22 +110,20 @@ function HeaderCell({ col, width, onResize }: HeaderCellProps) {
         transition,
         opacity: isDragging ? 0.5 : 1,
       }}
-      className="relative shrink-0 flex items-center gap-1 pr-3 group/header"
+      className="relative shrink-0 flex items-center pr-3 group/header"
     >
-      {col.reorderable !== false ? (
+      {col.reorderable !== false && (
         <button
           {...attributes}
           {...listeners}
           type="button"
-          className="opacity-0 group-hover/header:opacity-100 transition-opacity cursor-grab active:cursor-grabbing -ml-1 p-0.5 rounded hover:bg-muted"
+          className="absolute -left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover/header:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-muted"
           aria-label={`Reorder ${col.label}`}
         >
           <GripVertical className="h-3 w-3 text-muted-foreground" />
         </button>
-      ) : (
-        <span className="w-3" />
       )}
-      <span className="truncate">{col.label}</span>
+      <span className="truncate text-left">{col.label}</span>
       <div
         onPointerDown={startResize}
         className="absolute right-0 top-1/2 -translate-y-1/2 h-5 w-1 cursor-col-resize rounded-full bg-transparent hover:bg-primary/40 active:bg-primary transition-colors"
@@ -133,6 +131,7 @@ function HeaderCell({ col, width, onResize }: HeaderCellProps) {
     </div>
   );
 }
+
 
 interface ProjectsTableProps {
   projects: Project[];
