@@ -35,6 +35,18 @@ const LETTER_TO_PHASE_LABEL: Record<string, string> = {
   A: 'Assess', S: 'Select', D: 'Define', E: 'Execute', I: 'Identify', O: 'Operate',
 };
 
+const PREFIX_TO_LETTER: Record<string, string> = { IDN: 'I', ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', OPR: 'O' };
+function getLetter(code: string): string {
+  const prefix = code.split(/[.\-]/)[0].toUpperCase();
+  return PREFIX_TO_LETTER[prefix] || prefix.charAt(0);
+}
+function formatActivityCode(code: string): string {
+  const m = code.match(/^([A-Za-z]+)[-.](.+)$/);
+  if (!m) return code;
+  const letter = PREFIX_TO_LETTER[m[1].toUpperCase()] || m[1];
+  return `${letter}.${m[2]}`;
+}
+
 export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, existingIds, onAdd }) => {
   const { activities: catalogActivities } = useORAActivityCatalog();
   const { phases } = useORPPhases();
@@ -52,7 +64,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
     const available = catalogActivities.filter(a => !existingIds.includes(a.id));
     const q = search.trim().toLowerCase();
     return available.filter(a => {
-      const letter = a.activity_code.split(/[.\-]/)[0];
+      const letter = getLetter(a.activity_code);
       if (phaseFilter !== 'ALL') {
         const wantLetter = PHASE_FILTERS.find(p => p.key === phaseFilter)?.letter;
         if (wantLetter && letter !== wantLetter) return false;
@@ -131,7 +143,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
               )}
               {filtered.map(a => {
                 const isSel = selected.has(a.id);
-                const letter = a.activity_code.split(/[.\-]/)[0];
+                const letter = getLetter(a.activity_code);
                 const codeColor = LETTER_COLOR[letter] || 'text-muted-foreground bg-muted';
                 return (
                   <button
@@ -159,7 +171,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                       'text-[11px] font-mono font-semibold tabular-nums px-2 py-0.5 rounded shrink-0',
                       codeColor
                     )}>
-                      {a.activity_code}
+                      {formatActivityCode(a.activity_code)}
                     </span>
                     <span className="text-sm font-medium flex-1 min-w-0">
                       {a.activity}
