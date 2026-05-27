@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardActivity, PROJECT_PHASES, PROJECT_TYPES } from './types';
-import { WizardApprover } from './StepApprovers';
+import { WizardApprover, sortApprovers } from './StepApprovers';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Props {
@@ -77,7 +77,7 @@ export const StepReview: React.FC<Props> = ({ phase, projectType, activities, ap
           <Badge variant="outline" className="text-[10px]">{approvers.length} {approvers.length === 1 ? 'approver' : 'approvers'}</Badge>
         </div>
         <div className="space-y-2">
-          {approvers.map((approver, idx) => (
+          {sortApprovers(approvers).map((approver, idx) => (
             <div
               key={approver.user_id}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg border bg-card"
