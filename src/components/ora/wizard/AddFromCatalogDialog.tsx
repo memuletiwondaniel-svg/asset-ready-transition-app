@@ -86,7 +86,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-xl max-h-[78vh] flex flex-col gap-3">
+        <DialogContent className="max-w-xl flex flex-col gap-3 sm:h-[640px] sm:max-h-[85vh]">
           <DialogHeader>
             <DialogTitle>Add Activity</DialogTitle>
           </DialogHeader>
@@ -113,7 +113,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                   className={cn(
                     'px-3 py-1 rounded-full text-xs font-medium border transition-colors',
                     active
-                      ? 'bg-primary text-primary-foreground border-primary'
+                      ? p.active
                       : 'bg-background text-muted-foreground border-border hover:bg-muted'
                   )}
                 >
@@ -123,7 +123,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
             })}
           </div>
 
-          <ScrollArea className="flex-1 max-h-[45vh] -mx-1">
+          <ScrollArea className="flex-1 min-h-0 -mx-1">
             <div className="space-y-1.5 px-1">
               {filtered.length === 0 && (
                 <div className="text-center text-sm text-muted-foreground py-8">
@@ -132,6 +132,8 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
               )}
               {filtered.map(a => {
                 const isSel = selected.has(a.id);
+                const letter = a.activity_code.split(/[.\-]/)[0];
+                const codeColor = LETTER_COLOR[letter] || 'text-muted-foreground bg-muted';
                 return (
                   <button
                     key={a.id}
@@ -154,7 +156,10 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                     >
                       {isSel && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
                     </div>
-                    <span className="text-xs font-mono font-semibold text-muted-foreground tabular-nums w-12 shrink-0">
+                    <span className={cn(
+                      'text-[11px] font-mono font-semibold tabular-nums px-2 py-0.5 rounded shrink-0',
+                      codeColor
+                    )}>
                       {a.activity_code}
                     </span>
                     <span className="text-sm font-medium flex-1 min-w-0">
@@ -171,29 +176,14 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
             </div>
           </ScrollArea>
 
-          <DialogFooter className="flex sm:justify-between gap-2 pt-1">
-            <Button variant="ghost" onClick={() => setShowCustom(true)} className="text-xs">
-              <Plus className="w-3.5 h-3.5 mr-1" /> Add Custom Activity
+          <DialogFooter className="flex sm:justify-end gap-2 pt-1">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button onClick={handleAdd} disabled={selected.size === 0}>
+              Add {selected.size} {selected.size === 1 ? 'Activity' : 'Activities'}
             </Button>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button onClick={handleAdd} disabled={selected.size === 0}>
-                Add {selected.size} {selected.size === 1 ? 'Activity' : 'Activities'}
-              </Button>
-            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <AddCustomActivityDialog
-        open={showCustom}
-        onOpenChange={setShowCustom}
-        phase={phase}
-        onAdd={(activity) => {
-          onAdd([activity]);
-          setShowCustom(false);
-        }}
-      />
     </>
   );
 };
