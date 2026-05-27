@@ -58,10 +58,11 @@ interface UseORAActivityCatalogFilters {
 // Phase display order for sorting top-level activities
 const PHASE_PREFIX_ORDER: Record<string, number> = {
   I: 0, A: 1, S: 2, D: 3, E: 4, O: 5,
+  IDN: 0, ASS: 1, SEL: 2, DEF: 3, EXE: 4, OPR: 5,
 };
 
 function getPhaseOrder(code: string): number {
-  const prefix = code.split(/[.\-]/)[0];
+  const prefix = code.split(/[.\-]/)[0].toUpperCase();
   return PHASE_PREFIX_ORDER[prefix] ?? 99;
 }
 
