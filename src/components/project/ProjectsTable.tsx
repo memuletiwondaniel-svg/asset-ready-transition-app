@@ -110,22 +110,20 @@ function HeaderCell({ col, width, onResize }: HeaderCellProps) {
         transition,
         opacity: isDragging ? 0.5 : 1,
       }}
-      className="relative shrink-0 flex items-center gap-1 pr-3 group/header"
+      className="relative shrink-0 flex items-center pr-3 group/header"
     >
-      {col.reorderable !== false ? (
+      {col.reorderable !== false && (
         <button
           {...attributes}
           {...listeners}
           type="button"
-          className="opacity-0 group-hover/header:opacity-100 transition-opacity cursor-grab active:cursor-grabbing -ml-1 p-0.5 rounded hover:bg-muted"
+          className="absolute -left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover/header:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-muted"
           aria-label={`Reorder ${col.label}`}
         >
           <GripVertical className="h-3 w-3 text-muted-foreground" />
         </button>
-      ) : (
-        <span className="w-3" />
       )}
-      <span className="truncate">{col.label}</span>
+      <span className="truncate text-left">{col.label}</span>
       <div
         onPointerDown={startResize}
         className="absolute right-0 top-1/2 -translate-y-1/2 h-5 w-1 cursor-col-resize rounded-full bg-transparent hover:bg-primary/40 active:bg-primary transition-colors"
@@ -133,6 +131,7 @@ function HeaderCell({ col, width, onResize }: HeaderCellProps) {
     </div>
   );
 }
+
 
 interface ProjectsTableProps {
   projects: Project[];
@@ -354,22 +353,20 @@ export function ProjectsTable({
                         case 'progress':
                           return (
                             <div key={col.id} style={style} className="shrink-0">
-                              {vcrs.length === 0 ? (
-                                <span className="text-xs text-muted-foreground italic">No VCRs</span>
-                              ) : (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <Progress value={avg} className="h-1.5 flex-1 min-w-0" indicatorClassName={barColor} />
-                                      <span className="text-sm font-semibold text-foreground tabular-nums shrink-0">{avg}%</span>
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top">
-                                    {total > 0 ? `${completed} of ${total} delivered` : 'No deliverables'}
-                                    {vcrs.length > 0 ? ` \u00b7 ${vcrs.length} VCR${vcrs.length === 1 ? '' : 's'}` : ''}
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <Progress value={avg} className="h-1.5 flex-1 min-w-0" indicatorClassName={barColor} />
+                                    <span className="text-sm font-semibold text-foreground tabular-nums shrink-0">{avg}%</span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                  {vcrs.length === 0
+                                    ? 'No VCRs'
+                                    : `${total > 0 ? `${completed} of ${total} delivered` : 'No deliverables'} \u00b7 ${vcrs.length} VCR${vcrs.length === 1 ? '' : 's'}`}
+                                </TooltipContent>
+                              </Tooltip>
+
                             </div>
                           );
 
