@@ -346,9 +346,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
         return (
           <WizardStepProjectInfo
             formData={formData}
-            selectedLocationIds={selectedLocationIds}
             onFormDataChange={handleFormDataChange}
-            onLocationIdsChange={setSelectedLocationIds}
           />
         );
       case 2:
