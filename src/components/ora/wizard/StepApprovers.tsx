@@ -184,7 +184,7 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
         </div>
       ) : (
         <div className="space-y-2">
-          {approvers.map((approver) => (
+          {sortApprovers(approvers).map((approver) => (
             <div
               key={approver.user_id}
               className="group flex items-center gap-3 px-3.5 py-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors"
