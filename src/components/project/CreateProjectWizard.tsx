@@ -124,8 +124,10 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
       project_title: '',
       region_id: '',
       hub_id: '',
+      plant_id: '',
+      field_id: '',
+      station_id: '',
     });
-    setSelectedLocationIds([]);
     setScopeDescription('');
     setScopeAttachments([]);
     setTeamMembers([]);
