@@ -3178,6 +3178,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           parent_activity_id: string | null
+          pcap_control_point_number: string | null
           phase_id: string | null
           updated_at: string | null
         }
@@ -3194,6 +3195,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           parent_activity_id?: string | null
+          pcap_control_point_number?: string | null
           phase_id?: string | null
           updated_at?: string | null
         }
@@ -3210,6 +3212,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           parent_activity_id?: string | null
+          pcap_control_point_number?: string | null
           phase_id?: string | null
           updated_at?: string | null
         }
