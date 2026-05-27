@@ -13,13 +13,6 @@ const PHASE_CONFIG: Record<string, {
   ASSESS: {
     icon: <Search className="w-5 h-5" />,
     description: 'Opportunity Framing, Feasibility Studies and Functional Requirements',
-    hoverBg: 'hover:bg-blue-50 dark:hover:bg-blue-950/30',
-    hoverBorder: 'hover:border-blue-300 dark:hover:border-blue-700',
-    hoverIcon: 'group-hover/phase:bg-blue-100 group-hover/phase:text-blue-600 dark:group-hover/phase:bg-blue-900/50 dark:group-hover/phase:text-blue-400',
-  },
-  ASSESS: {
-    icon: <Search className="w-5 h-5" />,
-    description: 'Opportunity Framing, Feasibility Studies and Functional Requirements',
     hoverBg: 'hover:bg-amber-50 dark:hover:bg-amber-950/30',
     hoverBorder: 'hover:border-amber-300 dark:hover:border-amber-700',
     hoverIcon: 'group-hover/phase:bg-amber-100 group-hover/phase:text-amber-600 dark:group-hover/phase:bg-amber-900/50 dark:group-hover/phase:text-amber-400',
