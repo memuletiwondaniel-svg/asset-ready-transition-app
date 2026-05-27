@@ -171,7 +171,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                       'text-[11px] font-mono font-semibold tabular-nums px-2 py-0.5 rounded shrink-0',
                       codeColor
                     )}>
-                      {a.activity_code}
+                      {formatActivityCode(a.activity_code)}
                     </span>
                     <span className="text-sm font-medium flex-1 min-w-0">
                       {a.activity}
