@@ -230,7 +230,7 @@ export const ORAActivityCatalog = () => {
                   <TableRow key={a.id} className="group cursor-pointer hover:bg-muted/50" onClick={() => setSelectedActivity(a)}>
                     <TableCell>
                       <Badge variant="outline" className={`font-mono text-xs whitespace-nowrap ${getCodeColor(a.phase_id)}`}>
-                        {a.activity_code}
+                        {formatActivityCode(a.activity_code)}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-medium">
