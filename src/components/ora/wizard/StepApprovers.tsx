@@ -33,6 +33,17 @@ function getInitials(name: string): string {
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
+export function sortApprovers<T extends { role_label?: string; position?: string | null }>(arr: T[]): T[] {
+  const idx = (a: T) => {
+    const s = ((a.role_label || a.position || '') as string).toLowerCase();
+    if (s.includes('ora lead')) return 0;
+    if (s.includes('hub lead')) return 1;
+    if (s.includes('plant director')) return 2;
+    return 99;
+  };
+  return [...arr].sort((a, b) => idx(a) - idx(b));
+}
+
 export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, projectId }) => {
   // Resolve project location → plant + hub
   const { data: projectCtx } = useQuery({
