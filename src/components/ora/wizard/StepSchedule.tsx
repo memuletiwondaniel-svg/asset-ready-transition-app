@@ -675,7 +675,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
         </div>
 
         {/* Rows */}
-        <div className="max-h-[380px] overflow-y-auto" ref={scrollContainerRef}>
+        <div className="flex-1 min-h-0 overflow-y-auto" ref={scrollContainerRef}>
           <div className="flex">
             <div className="shrink-0 border-r" style={{ width: leftPanelWidth }}>
               {visibleRows.map((row, index) => {
