@@ -707,7 +707,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                           "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-mono font-semibold whitespace-nowrap",
                           idColors.bg, idColors.text
                         )}>
-                          {activity.activityCode}
+                          {formatActivityCode(activity.activityCode)}
                         </span>
                       </div>
                     )}
