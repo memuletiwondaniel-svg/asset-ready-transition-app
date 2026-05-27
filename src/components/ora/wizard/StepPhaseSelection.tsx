@@ -18,15 +18,15 @@ const PHASE_CONFIG: Record<string, {
     hoverIcon: 'group-hover/phase:bg-blue-100 group-hover/phase:text-blue-600 dark:group-hover/phase:bg-blue-900/50 dark:group-hover/phase:text-blue-400',
   },
   ASSESS: {
-    icon: <FileCheck className="w-5 h-5" />,
-    description: 'Assess risk levels and evaluate mitigation options',
+    icon: <Search className="w-5 h-5" />,
+    description: 'Opportunity Framing, Feasibility Studies and Functional Requirements',
     hoverBg: 'hover:bg-amber-50 dark:hover:bg-amber-950/30',
     hoverBorder: 'hover:border-amber-300 dark:hover:border-amber-700',
     hoverIcon: 'group-hover/phase:bg-amber-100 group-hover/phase:text-amber-600 dark:group-hover/phase:bg-amber-900/50 dark:group-hover/phase:text-amber-400',
   },
   SELECT: {
     icon: <ListFilter className="w-5 h-5" />,
-    description: 'Select preferred alternatives and risk treatment strategies',
+    description: 'Competitive Scoping, Transparent Value, Cost, Risk Trade-offs',
     hoverBg: 'hover:bg-purple-50 dark:hover:bg-purple-950/30',
     hoverBorder: 'hover:border-purple-300 dark:hover:border-purple-700',
     hoverIcon: 'group-hover/phase:bg-purple-100 group-hover/phase:text-purple-600 dark:group-hover/phase:bg-purple-900/50 dark:group-hover/phase:text-purple-400',
