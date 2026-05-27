@@ -112,7 +112,7 @@ export const StepReview: React.FC<Props> = ({ phase, projectType, activities, ap
             <h4 className="text-sm font-semibold">Activities</h4>
             <Badge variant="outline" className="text-[10px]">{selectedActivities.length} selected</Badge>
           </div>
-          <ScrollArea className="max-h-[260px]">
+          <ScrollArea className="h-[260px] rounded-lg border">
             <div className="space-y-1.5 pr-2">
               {selectedActivities.map((a) => (
                 <div
