@@ -257,7 +257,7 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
         </main>
       </div>
 
-      <AddProjectWizard open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      <CreateProjectWizard open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
 
       <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
         <AlertDialogContent>
