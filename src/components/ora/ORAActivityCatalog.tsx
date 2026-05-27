@@ -13,6 +13,16 @@ import { ActivityDetailSheet } from './ActivityDetailSheet';
 
 type ColumnKey = 'phase' | 'description' | 'parent' | 'high' | 'med' | 'low';
 
+// Convert internal codes like "ASS-01" / "EXE-04.1" to display format "A.01" / "E.04.1"
+const PHASE_LETTER: Record<string, string> = { IDN: 'I', ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', OPR: 'O' };
+function formatActivityCode(code: string): string {
+  if (!code) return code;
+  const m = code.match(/^([A-Za-z]+)[-.](.+)$/);
+  if (!m) return code;
+  const letter = PHASE_LETTER[m[1].toUpperCase()] || m[1];
+  return `${letter}.${m[2]}`;
+}
+
 const COLUMN_OPTIONS: { key: ColumnKey; label: string }[] = [
   { key: 'phase', label: 'Phase' },
   { key: 'description', label: 'Description' },
