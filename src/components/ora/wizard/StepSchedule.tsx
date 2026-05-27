@@ -607,7 +607,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
           }}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <SelectTrigger className="h-7 w-[60px] text-[10px] px-2 gap-1" title="Duration">
+                <SelectTrigger className="h-7 w-[52px] text-[10px] px-2 gap-1 [&>svg]:hidden" title="Duration">
                   <SelectValue />
                 </SelectTrigger>
               </TooltipTrigger>
