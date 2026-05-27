@@ -208,7 +208,7 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate">{approver.full_name}</p>
-                <p className="text-xs text-primary font-medium truncate mt-0.5">{approver.position || approver.role_label}</p>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">{approver.position || approver.role_label}</p>
               </div>
               <button
                 onClick={() => removeApprover(approver.user_id)}
