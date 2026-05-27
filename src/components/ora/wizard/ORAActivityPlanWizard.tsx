@@ -880,7 +880,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
 
           {/* Progress Indicator - hidden in review mode */}
           {!isReviewMode && (
-            <div className="mt-3 space-y-2">
+            <div className="mt-3 space-y-2 max-w-2xl">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-foreground/80">
                   Step {currentStep} of {STEPS.length}
