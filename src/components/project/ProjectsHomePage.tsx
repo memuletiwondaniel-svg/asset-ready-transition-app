@@ -155,7 +155,7 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
               </div>
               <div className="flex items-center gap-2">
                 <TooltipProvider delayDuration={200}>
-                  <div className="flex gap-1 bg-muted/30 p-1 rounded-lg border border-border/30">
+                  <div className="flex items-center gap-1">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -163,9 +163,9 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                           size="sm"
                           onClick={() => setViewMode('heatmap')}
                           className={cn(
-                            'h-8 px-2.5',
+                            'h-8 w-8 p-0',
                             viewMode === 'heatmap'
-                              ? 'bg-background shadow-sm text-foreground'
+                              ? 'text-foreground'
                               : 'text-muted-foreground hover:text-foreground'
                           )}
                           aria-label="Heatmap view"
@@ -182,9 +182,9 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                           size="sm"
                           onClick={() => setViewMode('list')}
                           className={cn(
-                            'h-8 px-2.5',
+                            'h-8 w-8 p-0',
                             viewMode === 'list'
-                              ? 'bg-background shadow-sm text-foreground'
+                              ? 'text-foreground'
                               : 'text-muted-foreground hover:text-foreground'
                           )}
                           aria-label="List view"
@@ -196,6 +196,7 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                     </Tooltip>
                   </div>
                 </TooltipProvider>
+
 
                 {viewMode === 'list' && (
                   <ProjectColumnsMenu prefs={tablePrefs} setPrefs={setTablePrefs} reset={resetTablePrefs} />
