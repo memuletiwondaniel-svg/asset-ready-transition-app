@@ -54,8 +54,8 @@ const MIN_BAR_WIDTH = 8;
 const ROW_HEIGHT = 40;
 
 const COL_DEFS = {
-  id: { key: 'id' as const, label: 'ID', width: 90, alwaysVisible: true },
-  name: { key: 'name' as const, label: 'Activity', width: 280, alwaysVisible: true },
+  id: { key: 'id' as const, label: 'ID', width: 60, alwaysVisible: true },
+  name: { key: 'name' as const, label: 'Activity', width: 310, alwaysVisible: true },
   start: { key: 'start' as const, label: 'Start', width: 100, alwaysVisible: false },
   end: { key: 'end' as const, label: 'End', width: 80, alwaysVisible: false },
   duration: { key: 'duration' as const, label: 'Days', width: 56, alwaysVisible: false },
@@ -655,8 +655,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
         <div className="flex">
           <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
             <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-              {isColVisible('id') && <div className="px-2 border-r border-border/40" style={{ width: COL_DEFS.id.width }}>ID</div>}
-              {isColVisible('name') && <div className="px-1.5 border-r border-border/40" style={{ width: COL_DEFS.name.width }}>Activity</div>}
+              {isColVisible('id') && <div className="px-2 text-center border-r border-border/40" style={{ width: COL_DEFS.id.width }}>ID</div>}
+              {isColVisible('name') && <div className="px-1.5 text-center border-r border-border/40" style={{ width: COL_DEFS.name.width }}>Activity</div>}
               {isColVisible('start') && <div className="px-1 text-center" style={{ width: COL_DEFS.start.width }}>Start</div>}
               {isColVisible('end') && <div className="px-1 text-center" style={{ width: COL_DEFS.end.width }}>End</div>}
               {isColVisible('duration') && <div className="px-1 text-center" style={{ width: COL_DEFS.duration.width }}>Days</div>}
