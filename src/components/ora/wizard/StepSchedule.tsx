@@ -605,9 +605,14 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
             const preset = ZOOM_PRESETS.find(p => p.label === v);
             if (preset) setZoomToFitDays(preset.days);
           }}>
-            <SelectTrigger className="h-7 w-[60px] text-[10px] px-2 gap-1">
-              <SelectValue />
-            </SelectTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <SelectTrigger className="h-7 w-[60px] text-[10px] px-2 gap-1" title="Duration">
+                  <SelectValue />
+                </SelectTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="top">Duration</TooltipContent>
+            </Tooltip>
             <SelectContent>
               {ZOOM_PRESETS.map(p => (
                 <SelectItem key={p.label} value={p.label} className="text-xs">{p.label}</SelectItem>
