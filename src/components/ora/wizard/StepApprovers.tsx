@@ -62,12 +62,11 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
     queryKey: ['ora-plan-default-approvers', projectId, projectCtx?.plantId, projectCtx?.hubId],
     enabled: !!projectCtx,
     queryFn: async () => {
-      const results: WizardApprover[] = [];
       const plantName = (projectCtx?.plantName || '').toLowerCase();
       const hubName = (projectCtx?.hubName || '').toLowerCase();
       const hubKeywords = hubName ? getRegionKeywords(hubName) : [];
 
-      // 1) Deputy Plant Director — match by plant
+      // Deputy Plant Director — match by plant
       const { data: dpdCandidates } = await supabase
         .from('profiles')
         .select('user_id, full_name, position, avatar_url')
@@ -78,13 +77,8 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
         if (!plantName) return true;
         return pos.includes(plantName) || plantName.split(' ').some(t => t.length > 2 && pos.includes(t));
       }) || (dpdCandidates || [])[0];
-      if (dpd) results.push({
-        user_id: dpd.user_id, full_name: dpd.full_name || 'Unknown',
-        position: dpd.position, avatar_url: dpd.avatar_url,
-        role_label: 'Deputy Plant Director',
-      });
 
-      // 2) Project Hub Lead — match by hub
+      // Project Hub Lead — match by hub
       const { data: hlCandidates } = await supabase
         .from('profiles')
         .select('user_id, full_name, position, avatar_url, hub')
@@ -95,13 +89,8 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
         const pos = (p.position || '').toLowerCase();
         return hubKeywords.some(kw => pos.includes(kw));
       }) || (hlCandidates || [])[0];
-      if (hl) results.push({
-        user_id: hl.user_id, full_name: hl.full_name || 'Unknown',
-        position: hl.position, avatar_url: hl.avatar_url,
-        role_label: 'Project Hub Lead',
-      });
 
-      // 3) ORA Lead — single ORA Lead (Roaa). Match exact "ORA Lead" position, exclude Snr/Sr
+      // ORA Lead — single ORA Lead (Roaa). Match exact "ORA Lead" position, exclude Snr/Sr
       const { data: oraCandidates } = await supabase
         .from('profiles')
         .select('user_id, full_name, position, avatar_url')
@@ -109,19 +98,32 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
         .ilike('position', '%ORA Lead%');
       const ora = (oraCandidates || []).find(p => {
         const pos = (p.position || '').toLowerCase().trim();
-        // Exclude Snr ORA Engr / Sr ORA Engr / Senior
         if (pos.includes('engr') || pos.includes('engineer')) return false;
         if (pos.includes('snr') || pos.includes('sr ') || pos.includes('senior')) return false;
         return pos.includes('ora lead');
       }) || (oraCandidates || []).find(p => (p.full_name || '').toLowerCase().includes('roaa'));
+
+      // Order: 1) ORA Lead, 2) Project Hub Lead, 3) Deputy Plant Director
+      const results: WizardApprover[] = [];
       if (ora) results.push({
         user_id: ora.user_id, full_name: ora.full_name || 'Unknown',
         position: ora.position, avatar_url: ora.avatar_url,
         role_label: 'ORA Lead',
       });
+      if (hl) results.push({
+        user_id: hl.user_id, full_name: hl.full_name || 'Unknown',
+        position: hl.position, avatar_url: hl.avatar_url,
+        role_label: 'Project Hub Lead',
+      });
+      if (dpd) results.push({
+        user_id: dpd.user_id, full_name: dpd.full_name || 'Unknown',
+        position: dpd.position, avatar_url: dpd.avatar_url,
+        role_label: 'Deputy Plant Director',
+      });
 
       return results;
     },
+
   });
 
   // Auto-populate on first load
