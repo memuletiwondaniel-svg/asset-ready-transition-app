@@ -196,11 +196,8 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-2">
-                  <p className="text-sm font-semibold truncate">{approver.full_name}</p>
-                  <span className="text-[11px] text-primary font-medium shrink-0">{approver.role_label}</span>
-                </div>
-                <p className="text-xs text-muted-foreground truncate mt-0.5">{approver.position || 'No position'}</p>
+                <p className="text-sm font-semibold truncate">{approver.full_name}</p>
+                <p className="text-xs text-primary font-medium truncate mt-0.5">{approver.position || approver.role_label}</p>
               </div>
               <button
                 onClick={() => removeApprover(approver.user_id)}
