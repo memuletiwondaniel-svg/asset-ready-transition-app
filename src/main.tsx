@@ -3,16 +3,20 @@ import App from './App.tsx'
 import './index.css'
 import { BackgroundThemeProvider } from '@/contexts/BackgroundThemeContext'
 import { startVersionCheck } from '@/lib/version-check'
+import { runResetIfNeeded } from '@/lib/app-reset'
 
-// Note: Service-worker / Cache Storage cleanup is handled by the inline
-// script in index.html <head> BEFORE this module loads. Doing it here is
-// too late — the stale bundle has already been parsed and executed.
+// One-shot destructive reset (keyed off APP_RESET_ID). If this device
+// hasn't seen the current reset id, wipe browser state and hard-reload
+// BEFORE booting React so we never render against stale storage.
+if (runResetIfNeeded()) {
+  // A hard reload is in flight; stop here.
+} else {
+  // Poll for new deploys and trigger the same reset path on mismatch.
+  startVersionCheck()
 
-// Poll for new deploys and auto-reload when a fresh build is detected.
-startVersionCheck()
-
-createRoot(document.getElementById('root')!).render(
-  <BackgroundThemeProvider>
-    <App />
-  </BackgroundThemeProvider>
-)
+  createRoot(document.getElementById('root')!).render(
+    <BackgroundThemeProvider>
+      <App />
+    </BackgroundThemeProvider>
+  )
+}
