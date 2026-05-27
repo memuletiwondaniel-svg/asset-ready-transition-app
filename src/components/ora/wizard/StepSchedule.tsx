@@ -655,8 +655,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
         <div className="flex">
           <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
             <div className="flex items-center h-9 border-b text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-              {isColVisible('id') && <div className="px-2 border-r border-border/40" style={{ width: COL_DEFS.id.width }}>ID</div>}
-              {isColVisible('name') && <div className="px-1.5 border-r border-border/40" style={{ width: COL_DEFS.name.width }}>Activity</div>}
+              {isColVisible('id') && <div className="px-2 text-center border-r border-border/40" style={{ width: COL_DEFS.id.width }}>ID</div>}
+              {isColVisible('name') && <div className="px-1.5 text-center border-r border-border/40" style={{ width: COL_DEFS.name.width }}>Activity</div>}
               {isColVisible('start') && <div className="px-1 text-center" style={{ width: COL_DEFS.start.width }}>Start</div>}
               {isColVisible('end') && <div className="px-1 text-center" style={{ width: COL_DEFS.end.width }}>End</div>}
               {isColVisible('duration') && <div className="px-1 text-center" style={{ width: COL_DEFS.duration.width }}>Days</div>}
