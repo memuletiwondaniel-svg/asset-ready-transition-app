@@ -165,7 +165,20 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   } = useLanguage();
   const [userInput, setUserInput] = useState('');
   const { favorites, toggleFavorite } = useFavoritePages();
+  const { user: authUser } = useAuth();
+  const quickActionStorageKey = `orsh-hidden-quick-actions-${authUser?.id || 'anon'}`;
+  const [hiddenQuickActions, setHiddenQuickActions] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(quickActionStorageKey);
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(quickActionStorageKey, JSON.stringify(hiddenQuickActions)); } catch {}
+  }, [hiddenQuickActions, quickActionStorageKey]);
+  const hideQuickAction = (id: string) => setHiddenQuickActions(prev => prev.includes(id) ? prev : [...prev, id]);
   const newTaskCount = useNewTaskCount();
+
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Array<{
     role: 'user' | 'assistant';
