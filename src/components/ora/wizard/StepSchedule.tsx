@@ -54,8 +54,8 @@ const MIN_BAR_WIDTH = 8;
 const ROW_HEIGHT = 40;
 
 const COL_DEFS = {
-  id: { key: 'id' as const, label: 'ID', width: 90, alwaysVisible: true },
-  name: { key: 'name' as const, label: 'Activity', width: 280, alwaysVisible: true },
+  id: { key: 'id' as const, label: 'ID', width: 60, alwaysVisible: true },
+  name: { key: 'name' as const, label: 'Activity', width: 310, alwaysVisible: true },
   start: { key: 'start' as const, label: 'Start', width: 100, alwaysVisible: false },
   end: { key: 'end' as const, label: 'End', width: 80, alwaysVisible: false },
   duration: { key: 'duration' as const, label: 'Days', width: 56, alwaysVisible: false },
