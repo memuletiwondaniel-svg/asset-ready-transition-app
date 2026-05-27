@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProjects } from '@/hooks/useProjects';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { AddProjectWizard } from '@/components/project/AddProjectWizard';
+import { CreateProjectWizard } from '@/components/project/CreateProjectWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -257,7 +257,7 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
         </main>
       </div>
 
-      <AddProjectWizard open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      <CreateProjectWizard open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
 
       <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
         <AlertDialogContent>
