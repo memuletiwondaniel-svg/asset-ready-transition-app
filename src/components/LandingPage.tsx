@@ -195,6 +195,52 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
   const [greetingSubtitle, setGreetingSubtitle] = useState<string>('');
   const [placeholderText, setPlaceholderText] = useState<string>('Message Bob...');
 
+  // Typewriter placeholder cycling through ORSH-relevant prompts
+  const typewriterPrompts = React.useMemo(() => [
+    'What is the status of my open PSSRs?',
+    'Show me overdue tasks across my projects',
+    'Summarize my latest P2A handover',
+    'Which documents are pending my review?',
+    'What is operational readiness for Project Alpha?',
+    'List my competence gaps',
+    'Create a new PSSR for unit 2',
+    'What changed in OR maintenance this week?',
+  ], []);
+  const [typedPlaceholder, setTypedPlaceholder] = useState<string>('');
+
+  useEffect(() => {
+    let promptIdx = 0;
+    let charIdx = 0;
+    let deleting = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      const current = typewriterPrompts[promptIdx % typewriterPrompts.length];
+      if (!deleting) {
+        charIdx++;
+        setTypedPlaceholder(current.slice(0, charIdx));
+        if (charIdx === current.length) {
+          deleting = true;
+          timer = setTimeout(tick, 1800);
+          return;
+        }
+        timer = setTimeout(tick, 45 + Math.random() * 50);
+      } else {
+        charIdx--;
+        setTypedPlaceholder(current.slice(0, charIdx));
+        if (charIdx === 0) {
+          deleting = false;
+          promptIdx++;
+          timer = setTimeout(tick, 350);
+          return;
+        }
+        timer = setTimeout(tick, 25);
+      }
+    };
+    timer = setTimeout(tick, 600);
+    return () => clearTimeout(timer);
+  }, [typewriterPrompts]);
+
+
   useEffect(() => {
     const loadContext = async () => {
       const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000));
@@ -782,7 +828,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     <div className="relative flex items-center gap-2 bg-background/50 border border-border/50 rounded-2xl p-2 shadow-inner">
                       <input
                         type="text"
-                        placeholder={placeholderText}
+                        placeholder={typedPlaceholder || placeholderText}
                         value={userInput}
                         onChange={(e) => setUserInput(e.target.value)}
                         onFocus={() => {
