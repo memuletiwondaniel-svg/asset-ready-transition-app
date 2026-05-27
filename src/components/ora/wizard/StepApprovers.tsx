@@ -185,27 +185,27 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
           {approvers.map((approver) => (
             <div
               key={approver.user_id}
-              className="group flex items-center gap-2.5 px-3 py-2 rounded-lg border bg-card hover:bg-accent/30 transition-colors"
+              className="group flex items-center gap-3 px-3.5 py-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors"
             >
-              <Avatar className="h-8 w-8 shrink-0">
+              <Avatar className="h-10 w-10 shrink-0">
                 <AvatarImage src={getFullAvatarUrl(approver.avatar_url)} alt={approver.full_name} />
-                <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-semibold">
+                <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
                   {getInitials(approver.full_name)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-2">
-                  <p className="text-xs font-semibold truncate">{approver.full_name}</p>
-                  <span className="text-[10px] text-primary/80 font-medium shrink-0">{approver.role_label}</span>
+                  <p className="text-sm font-semibold truncate">{approver.full_name}</p>
+                  <span className="text-[11px] text-primary font-medium shrink-0">{approver.role_label}</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground truncate">{approver.position || 'No position'}</p>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">{approver.position || 'No position'}</p>
               </div>
               <button
                 onClick={() => removeApprover(approver.user_id)}
-                className="shrink-0 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-60 hover:opacity-100"
+                className="shrink-0 p-1.5 rounded text-destructive hover:bg-destructive/10 transition-opacity opacity-0 group-hover:opacity-100"
                 aria-label="Remove approver"
               >
-                <X className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           ))}
