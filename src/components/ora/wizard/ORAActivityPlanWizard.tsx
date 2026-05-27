@@ -870,7 +870,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
         <DialogContent className={cn(
           "h-[85vh] max-h-[85vh] overflow-hidden flex flex-col",
-          isReviewMode ? "sm:max-w-7xl sm:w-[98vw]" : "sm:max-w-2xl"
+          (currentStep === 4 || isReviewMode) ? "sm:max-w-7xl sm:w-[98vw]" : "sm:max-w-2xl"
         )}>
         <DialogHeader className={cn("border-b pb-4", isReviewMode && "pb-2")}>
           <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
@@ -880,7 +880,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
 
           {/* Progress Indicator - hidden in review mode */}
           {!isReviewMode && (
-            <div className="mt-3 space-y-2">
+            <div className="mt-3 space-y-2 max-w-2xl">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-foreground/80">
                   Step {currentStep} of {STEPS.length}
