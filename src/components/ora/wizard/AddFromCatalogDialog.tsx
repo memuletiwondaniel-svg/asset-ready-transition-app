@@ -35,13 +35,12 @@ const LETTER_TO_PHASE_LABEL: Record<string, string> = {
   A: 'Assess', S: 'Select', D: 'Define', E: 'Execute', I: 'Identify', O: 'Operate',
 };
 
-export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, existingIds, onAdd, phase = '' }) => {
+export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, existingIds, onAdd }) => {
   const { activities: catalogActivities } = useORAActivityCatalog();
   const { phases } = useORPPhases();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [phaseFilter, setPhaseFilter] = useState<string>('ALL');
-  const [showCustom, setShowCustom] = useState(false);
 
   const phaseById = useMemo(() => {
     const m = new Map<string, string>();
