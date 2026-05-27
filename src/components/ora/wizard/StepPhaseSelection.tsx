@@ -34,9 +34,9 @@ const PHASE_CONFIG: Record<string, {
   EXECUTE: {
     icon: <Rocket className="w-5 h-5" />,
     description: 'Execute the plan and manage operational readiness activities',
-    hoverBg: 'hover:bg-emerald-50 dark:hover:bg-emerald-950/30',
-    hoverBorder: 'hover:border-emerald-300 dark:hover:border-emerald-700',
-    hoverIcon: 'group-hover/phase:bg-emerald-100 group-hover/phase:text-emerald-600 dark:group-hover/phase:bg-emerald-900/50 dark:group-hover/phase:text-emerald-400',
+    hoverBg: 'hover:bg-blue-50 dark:hover:bg-blue-950/30',
+    hoverBorder: 'hover:border-blue-300 dark:hover:border-blue-700',
+    hoverIcon: 'group-hover/phase:bg-blue-100 group-hover/phase:text-blue-600 dark:group-hover/phase:bg-blue-900/50 dark:group-hover/phase:text-blue-400',
   },
 };
 
