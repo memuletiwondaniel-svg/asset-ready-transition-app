@@ -91,7 +91,7 @@ export const StepReview: React.FC<Props> = ({ phase, projectType, activities, ap
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate">{approver.full_name}</p>
-                <p className="text-xs text-primary font-medium truncate">{approver.position || approver.role_label}</p>
+                <p className="text-xs text-muted-foreground truncate">{approver.position || approver.role_label}</p>
               </div>
             </div>
           ))}
