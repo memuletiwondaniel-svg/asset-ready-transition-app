@@ -17,12 +17,19 @@ interface Props {
 }
 
 const PHASE_FILTERS = [
-  { key: 'ALL', label: 'All', letter: null as string | null },
-  { key: 'ASSESS', label: 'Assess', letter: 'A' },
-  { key: 'SELECT', label: 'Select', letter: 'S' },
-  { key: 'DEFINE', label: 'Define', letter: 'D' },
-  { key: 'EXECUTE', label: 'Execute', letter: 'E' },
+  { key: 'ALL', label: 'All', letter: null as string | null, active: 'bg-slate-600 text-white border-slate-600', dot: 'bg-slate-400' },
+  { key: 'ASSESS', label: 'Assess', letter: 'A', active: 'bg-amber-500 text-white border-amber-500', dot: 'bg-amber-500' },
+  { key: 'SELECT', label: 'Select', letter: 'S', active: 'bg-purple-500 text-white border-purple-500', dot: 'bg-purple-500' },
+  { key: 'DEFINE', label: 'Define', letter: 'D', active: 'bg-teal-500 text-white border-teal-500', dot: 'bg-teal-500' },
+  { key: 'EXECUTE', label: 'Execute', letter: 'E', active: 'bg-emerald-500 text-white border-emerald-500', dot: 'bg-emerald-500' },
 ];
+
+const LETTER_COLOR: Record<string, string> = {
+  A: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30',
+  S: 'text-purple-600 bg-purple-50 dark:bg-purple-950/30',
+  D: 'text-teal-600 bg-teal-50 dark:bg-teal-950/30',
+  E: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30',
+};
 
 const LETTER_TO_PHASE_LABEL: Record<string, string> = {
   A: 'Assess', S: 'Select', D: 'Define', E: 'Execute', I: 'Identify', O: 'Operate',
