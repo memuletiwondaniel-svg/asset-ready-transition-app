@@ -524,7 +524,7 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
 
   return (
     <TooltipProvider delayDuration={200}>
-    <div className="space-y-3 p-1">
+    <div className="space-y-3 p-1 h-full flex flex-col min-h-0">
       {!isReviewMode && (
         <div className="text-center space-y-1">
           <h3 className="text-base font-semibold">Schedule & timeline</h3>
