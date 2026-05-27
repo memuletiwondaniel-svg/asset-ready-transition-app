@@ -31,7 +31,7 @@ export const StepReview: React.FC<Props> = ({ phase, projectType, activities, ap
 
   return (
     <div className="space-y-4 p-1">
-      <div className="space-y-1 pb-1">
+      <div className="text-center space-y-1">
         <h3 className="text-base font-semibold">Review &amp; Submit</h3>
         <p className="text-xs text-muted-foreground">
           Confirm the details below before submitting your ORA Plan.
