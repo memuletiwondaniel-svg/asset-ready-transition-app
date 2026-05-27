@@ -801,7 +801,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
     <>
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
         <DialogContent className={cn(
-          "max-h-full sm:max-h-[85vh] overflow-hidden flex flex-col",
+          "h-[85vh] max-h-[85vh] overflow-hidden flex flex-col",
           (currentStep === 4 || isReviewMode) ? "sm:max-w-7xl sm:w-[98vw]" : "sm:max-w-2xl"
         )}>
         <DialogHeader className={cn("border-b pb-4", isReviewMode && "pb-2")}>
@@ -816,58 +816,46 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-foreground/80">
                   Step {currentStep} of {STEPS.length}
-                  {phase && <span className="ml-2 text-muted-foreground font-normal">· {phase}{projectType && ` · ${projectType.replace('_', ' ')}`}</span>}
                 </span>
                 <span className="text-muted-foreground">{STEPS[currentStep - 1].title}</span>
               </div>
 
-              {/* Modern segmented step indicator */}
-              <div className="flex items-center gap-1.5">
+              {/* Numbered step indicator with connector lines */}
+              <div className="flex items-center gap-2">
                 {STEPS.map((step, idx) => {
                   const isActive = step.id === currentStep;
                   const isVisited = visitedSteps.has(step.id);
-                  const isComplete = step.id < currentStep || (isVisited && isStepComplete(step.id));
                   const isClickable = isVisited || step.id <= currentStep;
                   const isLast = idx === STEPS.length - 1;
 
                   return (
-                    <button
-                      key={step.id}
-                      type="button"
-                      onClick={() => handleStepClick(step.id)}
-                      disabled={!isClickable}
-                      title={step.title}
-                      className={cn(
-                        "group flex items-center gap-1.5",
-                        isLast ? "" : "flex-1 min-w-0",
-                        isClickable ? "cursor-pointer" : "cursor-default"
-                      )}
-                    >
-                      <div
+                    <React.Fragment key={step.id}>
+                      <button
+                        type="button"
+                        onClick={() => handleStepClick(step.id)}
+                        disabled={!isClickable}
+                        title={step.title}
                         className={cn(
-                          "shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold transition-all",
+                          "shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-all border",
                           isActive
-                            ? "bg-primary text-primary-foreground ring-2 ring-primary/20"
-                            : isComplete
-                              ? "bg-primary/15 text-primary"
-                              : "bg-muted text-muted-foreground/60"
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : isVisited
+                              ? "bg-background text-foreground/70 border-border hover:border-primary/50"
+                              : "bg-background text-muted-foreground/60 border-border",
+                          isClickable ? "cursor-pointer" : "cursor-default"
                         )}
                       >
-                        {isComplete && !isActive ? (
-                          <Check className="h-3 w-3" strokeWidth={3} />
-                        ) : (
-                          step.id
-                        )}
-                      </div>
+                        {step.id}
+                      </button>
                       {!isLast && (
                         <div
                           className={cn(
-                            "flex-1 h-0.5 rounded-full transition-colors hidden sm:block",
-                            isComplete || isActive ? "bg-primary/60" : "bg-muted"
+                            "flex-1 h-px transition-colors",
+                            step.id < currentStep ? "bg-primary/60" : "bg-border"
                           )}
                         />
                       )}
-                    </button>
+                    </React.Fragment>
                   );
                 })}
               </div>
@@ -895,7 +883,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
               )}
               {currentStep === 4 && <StepSchedule activities={activities} onActivitiesChange={setActivities} />}
               {currentStep === 5 && <StepApprovers approvers={approvers} onApproversChange={setApprovers} projectId={projectId} />}
-              {currentStep === 6 && <StepReview phase={phase} projectType={projectType} activities={activities} />}
+              {currentStep === 6 && <StepReview phase={phase} projectType={projectType} activities={activities} approvers={approvers} />}
             </>
           )}
         </div>
