@@ -8,7 +8,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Settings2, RotateCcw } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Columns, RotateCcw } from 'lucide-react';
 import { PROJECTS_TABLE_COLUMNS } from './ProjectsTable';
 import type { TablePreferences } from '@/hooks/useTablePreferences';
 
@@ -27,12 +28,18 @@ export function ProjectColumnsMenu({ prefs, setPrefs, reset }: Props) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9 gap-1.5">
-          <Settings2 className="h-3.5 w-3.5" />
-          <span className="text-xs">Columns</span>
-        </Button>
-      </DropdownMenuTrigger>
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground" aria-label="Columns">
+                <Columns className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Columns</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuLabel className="text-xs">Toggle Columns</DropdownMenuLabel>
         <DropdownMenuSeparator />
