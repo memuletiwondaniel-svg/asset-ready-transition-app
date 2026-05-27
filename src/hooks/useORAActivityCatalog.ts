@@ -13,6 +13,7 @@ export interface ORAActivity {
   duration_high: number | null;
   duration_med: number | null;
   duration_low: number | null;
+  pcap_control_point_number: string | null;
   is_active: boolean;
   display_order: number;
   created_at: string;
