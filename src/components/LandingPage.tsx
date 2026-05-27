@@ -828,7 +828,7 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
                     <div className="relative flex items-center gap-2 bg-background/50 border border-border/50 rounded-2xl p-2 shadow-inner">
                       <input
                         type="text"
-                        placeholder={placeholderText}
+                        placeholder={typedPlaceholder || placeholderText}
                         value={userInput}
                         onChange={(e) => setUserInput(e.target.value)}
                         onFocus={() => {
