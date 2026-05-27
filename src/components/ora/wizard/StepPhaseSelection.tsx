@@ -101,7 +101,7 @@ export const StepPhaseSelection: React.FC<Props> = ({ phase, onPhaseChange }) =>
               )}>
                 {isSelected && <div className={cn(
                   "w-2 h-2 rounded-full",
-                  p.value === 'IDENTIFY' ? 'bg-blue-500' : p.value === 'ASSESS' ? 'bg-amber-500' : p.value === 'SELECT' ? 'bg-purple-500' : p.value === 'DEFINE' ? 'bg-teal-500' : 'bg-emerald-500'
+                  p.value === 'ASSESS' ? 'bg-amber-500' : p.value === 'SELECT' ? 'bg-purple-500' : p.value === 'DEFINE' ? 'bg-teal-500' : 'bg-emerald-500'
                 )} />}
               </div>
             </button>
