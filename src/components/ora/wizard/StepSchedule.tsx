@@ -1267,8 +1267,8 @@ export const StepSchedule: React.FC<Props> = ({ activities, onActivitiesChange, 
                     </Button>
                   </div>
                 </div>
-              </div>
             </>
+
           )}
         </SheetContent>
       </Sheet>
