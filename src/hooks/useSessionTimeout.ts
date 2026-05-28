@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { performHardReset } from '@/lib/app-reset';
 
 interface SessionTimeoutConfig {
   timeout_minutes: number;
@@ -68,6 +69,7 @@ export const useSessionTimeout = () => {
     } catch { /* silent */ }
 
     await signOut();
+    await performHardReset();
   }, [clearAllTimers, signOut, user, config.timeout_minutes]);
 
   const resetTimers = useCallback(() => {
