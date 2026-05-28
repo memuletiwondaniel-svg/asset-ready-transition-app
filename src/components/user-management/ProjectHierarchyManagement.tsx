@@ -585,23 +585,17 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
                           {region.hubs.length > 0 ? (
                             isRegionExpanded ? (
-                              <ChevronDown className="h-4 w-4" />
+                              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/50" strokeWidth={1.5} />
                             ) : (
-                              <ChevronRight className="h-4 w-4" />
+                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" strokeWidth={1.5} />
                             )
                           ) : (
-                            <div className="w-4" />
+                            <div className="w-3.5" />
                           )}
                         </Button>
                       </CollapsibleTrigger>
                       <div className="flex items-center gap-2 flex-1 py-1.5 px-2 cursor-pointer" onClick={() => toggleRegion(region.id)}>
                         <span className="text-sm font-semibold uppercase tracking-wide text-foreground">{region.name}</span>
-                        <Badge variant="secondary" className="ml-1 text-xs">
-                          {region.hubs.length} hubs
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {totalProjects} projects
-                        </Badge>
                       </div>
                       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
                         <Button 
