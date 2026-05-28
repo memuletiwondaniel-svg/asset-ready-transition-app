@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Plus,
   Edit3,
@@ -34,7 +35,12 @@ import {
   Rocket,
   Layers,
   ClipboardList,
+  Table2,
+  LayoutGrid,
+  LayoutTemplate,
 } from 'lucide-react';
+import { ORAActivityCatalog } from '@/components/ora/ORAActivityCatalog';
+import { ORATemplateManagement } from '@/components/ora/ORATemplateManagement';
 import { cn } from '@/lib/utils';
 import { useORAActivityCatalog, useORPPhases, ORAActivity, ORAActivityInput } from '@/hooks/useORAActivityCatalog';
 import { supabase } from '@/integrations/supabase/client';
