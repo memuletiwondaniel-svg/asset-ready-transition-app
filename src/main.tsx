@@ -3,7 +3,7 @@ import App from './App.tsx'
 import './index.css'
 import { BackgroundThemeProvider } from '@/contexts/BackgroundThemeContext'
 import { startVersionCheck } from '@/lib/version-check'
-import { runResetIfNeeded } from '@/lib/app-reset'
+import { runResetIfNeeded, syncTabSessionEpoch } from '@/lib/app-reset'
 
 // One-shot destructive reset (keyed off APP_RESET_ID). If this device
 // hasn't seen the current reset id, wipe browser state and hard-reload
@@ -11,6 +11,7 @@ import { runResetIfNeeded } from '@/lib/app-reset'
 if (runResetIfNeeded()) {
   // A hard reload is in flight; stop here.
 } else {
+  syncTabSessionEpoch()
   // Poll for new deploys and trigger the same reset path on mismatch.
   startVersionCheck()
 
