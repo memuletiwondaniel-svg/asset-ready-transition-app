@@ -68,15 +68,16 @@ const categoryIcons: Record<string, React.ReactNode> = {
   'Operations': <Activity className="h-5 w-5" />,
 };
 
-const categoryColors: Record<string, string> = {
-  'Project': 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  'Engineering': 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
-  'Maintenance': 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
-  'Management': 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
-  'Technical': 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-  'Security': 'bg-red-500/10 text-red-600 dark:text-red-400',
-  'Safety': 'bg-lime-500/10 text-lime-600 dark:text-lime-400',
-  'Operations': 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
+// Icon-only accent color (always shown). Card background tint is applied on hover only.
+const categoryAccent: Record<string, { text: string; hoverBg: string }> = {
+  'Project':     { text: 'text-blue-600 dark:text-blue-400',     hoverBg: 'hover:bg-blue-500/10' },
+  'Engineering': { text: 'text-orange-600 dark:text-orange-400', hoverBg: 'hover:bg-orange-500/10' },
+  'Maintenance': { text: 'text-slate-600 dark:text-slate-400',   hoverBg: 'hover:bg-slate-500/10' },
+  'Management':  { text: 'text-purple-600 dark:text-purple-400', hoverBg: 'hover:bg-purple-500/10' },
+  'Technical':   { text: 'text-emerald-600 dark:text-emerald-400', hoverBg: 'hover:bg-emerald-500/10' },
+  'Security':    { text: 'text-red-600 dark:text-red-400',       hoverBg: 'hover:bg-red-500/10' },
+  'Safety':      { text: 'text-lime-600 dark:text-lime-400',     hoverBg: 'hover:bg-lime-500/10' },
+  'Operations':  { text: 'text-cyan-600 dark:text-cyan-400',     hoverBg: 'hover:bg-cyan-500/10' },
 };
 
 const FunctionsRolesManagement: React.FC = () => {
@@ -95,16 +96,18 @@ const FunctionsRolesManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   
+  // Combined Add dialog
+  const [addOpen, setAddOpen] = useState(false);
+  const [addType, setAddType] = useState<'function' | 'role'>('role');
+
   // Function dialogs
-  const [addFunctionOpen, setAddFunctionOpen] = useState(false);
   const [editFunctionOpen, setEditFunctionOpen] = useState(false);
   const [functionName, setFunctionName] = useState('');
   const [functionDescription, setFunctionDescription] = useState('');
   const [functionOrder, setFunctionOrder] = useState('1');
   const [editingFunction, setEditingFunction] = useState<RoleCategory | null>(null);
-  
+
   // Role dialogs
-  const [addRoleOpen, setAddRoleOpen] = useState(false);
   const [editRoleOpen, setEditRoleOpen] = useState(false);
   const [roleName, setRoleName] = useState('');
   const [roleDescription, setRoleDescription] = useState('');
@@ -148,8 +151,8 @@ const FunctionsRolesManagement: React.FC = () => {
     return categoryIcons[name] || <Folder className="h-5 w-5" />;
   };
 
-  const getCategoryColor = (name: string) => {
-    return categoryColors[name] || 'bg-muted text-muted-foreground';
+  const getCategoryAccent = (name: string) => {
+    return categoryAccent[name] || { text: 'text-muted-foreground', hoverBg: 'hover:bg-muted/50' };
   };
 
   // Function handlers
@@ -163,7 +166,7 @@ const FunctionsRolesManagement: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['role-categories'] });
       queryClient.invalidateQueries({ queryKey: ['categorized-roles'] });
       toast({ title: 'Success', description: 'Function added successfully' });
-      setAddFunctionOpen(false);
+      setAddOpen(false);
       resetFunctionForm();
     } catch (error) {
       console.error('Error adding function:', error);
@@ -229,7 +232,7 @@ const FunctionsRolesManagement: React.FC = () => {
       await addRole(roleName.trim(), roleDescription.trim(), selectedCategoryId);
       queryClient.invalidateQueries({ queryKey: ['categorized-roles'] });
       toast({ title: 'Success', description: 'Role added successfully' });
-      setAddRoleOpen(false);
+      setAddOpen(false);
       resetRoleForm();
     } catch (error: any) {
       console.error('Error adding role:', error);
@@ -294,63 +297,60 @@ const FunctionsRolesManagement: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold">Roles</h2>
-          <p className="text-muted-foreground">
-            {totalFunctions} functions, {totalRoles} roles
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setAddFunctionOpen(true)} variant="outline">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Function
-          </Button>
-          <Button onClick={() => setAddRoleOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Role
-          </Button>
-        </div>
+      <div>
+        <h2 className="text-2xl font-semibold">Roles</h2>
+        <p className="text-muted-foreground">
+          {totalFunctions} functions, {totalRoles} roles
+        </p>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search roles..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search + Add on the same row */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search roles..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Button onClick={() => { setAddType('role'); setAddOpen(true); }}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add
+        </Button>
       </div>
 
       {/* Hierarchical List */}
       <div className="space-y-3">
-        {filteredGroups?.map((group) => (
-          <Card key={group.category.id} className="overflow-hidden">
+        {filteredGroups?.map((group) => {
+          const accent = getCategoryAccent(group.category.name);
+          const isOpen = expandedCategories.has(group.category.id);
+          return (
+          <Card key={group.category.id} className="overflow-hidden group/card border-border/60">
             <Collapsible
-              open={expandedCategories.has(group.category.id)}
+              open={isOpen}
               onOpenChange={() => toggleCategory(group.category.id)}
             >
               <CardHeader className="p-0">
-                <div className={`flex items-center justify-between p-4 ${getCategoryColor(group.category.name)}`}>
+                <div className={`flex items-center justify-between p-4 transition-colors ${accent.hoverBg}`}>
                   <CollapsibleTrigger asChild>
                     <button className="flex items-center gap-3 flex-1 text-left">
-                      {expandedCategories.has(group.category.id) ? (
-                        <ChevronDown className="h-4 w-4" />
+                      {isOpen ? (
+                        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/50" />
                       ) : (
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
                       )}
                       <div className="flex items-center gap-2">
-                        {getCategoryIcon(group.category.name)}
-                        <span className="font-medium">{group.category.name}</span>
+                        <span className={accent.text}>{getCategoryIcon(group.category.name)}</span>
+                        <span className="font-medium text-foreground">{group.category.name}</span>
                       </div>
-                      <Badge variant="secondary" className="ml-2">
+                      <span className="ml-2 text-xs text-muted-foreground/60">
                         {group.roles.length} roles
-                      </Badge>
+                      </span>
                     </button>
                   </CollapsibleTrigger>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -388,10 +388,10 @@ const FunctionsRolesManagement: React.FC = () => {
                       {group.roles.map((role) => (
                         <div
                           key={role.id}
-                          className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                          className="group/role flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
                         >
                           <p className="font-medium flex-1">{role.name}</p>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 opacity-0 group-hover/role:opacity-100 transition-opacity">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -417,7 +417,8 @@ const FunctionsRolesManagement: React.FC = () => {
               </CollapsibleContent>
             </Collapsible>
           </Card>
-        ))}
+          );
+        })}
 
         {filteredGroups?.length === 0 && (
           <Card className="p-8 text-center text-muted-foreground">
@@ -426,50 +427,93 @@ const FunctionsRolesManagement: React.FC = () => {
         )}
       </div>
 
-      {/* Add Function Dialog */}
-      <Dialog open={addFunctionOpen} onOpenChange={setAddFunctionOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Function</DialogTitle>
-            <DialogDescription>
-              Create a new function to organize roles.
+      {/* Combined Add Dialog (Function or Role) */}
+      <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) { resetFunctionForm(); resetRoleForm(); } }}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
+            <DialogTitle className="text-xl font-semibold">Add New</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Add a function or a role to the organization.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+
+          <div className="px-6 pb-6 space-y-5 border-t border-border/60 pt-5">
             <div className="space-y-2">
-              <Label htmlFor="function-name">Name</Label>
-              <Input
-                id="function-name"
-                value={functionName}
-                onChange={(e) => setFunctionName(e.target.value)}
-                placeholder="e.g., Engineering"
-              />
+              <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                Type
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { key: 'function', label: 'Function', icon: <Folder className="h-5 w-5" /> },
+                  { key: 'role',     label: 'Role',     icon: <ShieldCheck className="h-5 w-5" /> },
+                ] as const).map(opt => {
+                  const active = addType === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setAddType(opt.key)}
+                      className={`flex flex-col items-center justify-center gap-1.5 rounded-lg border px-3 py-3 transition-all ${
+                        active
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-border bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                      }`}
+                    >
+                      {opt.icon}
+                      <span className="text-sm font-medium">{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="function-description">Description</Label>
-              <Textarea
-                id="function-description"
-                value={functionDescription}
-                onChange={(e) => setFunctionDescription(e.target.value)}
-                placeholder="Optional description..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="function-order">Display Order</Label>
-              <Input
-                id="function-order"
-                type="number"
-                value={functionOrder}
-                onChange={(e) => setFunctionOrder(e.target.value)}
-                min="1"
-              />
-            </div>
+
+            {addType === 'function' ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="function-name" className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Name</Label>
+                  <Input id="function-name" value={functionName} onChange={(e) => setFunctionName(e.target.value)} placeholder="e.g., Engineering" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="function-description" className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Description — optional</Label>
+                  <Textarea id="function-description" value={functionDescription} onChange={(e) => setFunctionDescription(e.target.value)} placeholder="Short label or full name" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="function-order" className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Display Order</Label>
+                  <Input id="function-order" type="number" value={functionOrder} onChange={(e) => setFunctionOrder(e.target.value)} min="1" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Function</Label>
+                  <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                    <SelectTrigger><SelectValue placeholder="Select a function" /></SelectTrigger>
+                    <SelectContent>
+                      {categories?.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role-name" className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Role Name</Label>
+                  <Input id="role-name" value={roleName} onChange={(e) => setRoleName(e.target.value)} placeholder="e.g., Senior Engineer" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role-description" className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Description — optional</Label>
+                  <Textarea id="role-description" value={roleDescription} onChange={(e) => setRoleDescription(e.target.value)} placeholder="Short label or full name" />
+                </div>
+              </>
+            )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setAddFunctionOpen(false); resetFunctionForm(); }}>
+
+          <DialogFooter className="px-6 py-4 border-t border-border/60 bg-muted/30">
+            <Button variant="outline" onClick={() => { setAddOpen(false); resetFunctionForm(); resetRoleForm(); }}>
               Cancel
             </Button>
-            <Button onClick={handleAddFunction}>Add Function</Button>
+            <Button onClick={addType === 'function' ? handleAddFunction : handleAddRole}>
+              {addType === 'function' ? 'Add Function' : 'Add Role'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -479,96 +523,25 @@ const FunctionsRolesManagement: React.FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Function</DialogTitle>
-            <DialogDescription>
-              Update function details.
-            </DialogDescription>
+            <DialogDescription>Update function details.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="edit-function-name">Name</Label>
-              <Input
-                id="edit-function-name"
-                value={functionName}
-                onChange={(e) => setFunctionName(e.target.value)}
-              />
+              <Input id="edit-function-name" value={functionName} onChange={(e) => setFunctionName(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-function-description">Description</Label>
-              <Textarea
-                id="edit-function-description"
-                value={functionDescription}
-                onChange={(e) => setFunctionDescription(e.target.value)}
-              />
+              <Textarea id="edit-function-description" value={functionDescription} onChange={(e) => setFunctionDescription(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-function-order">Display Order</Label>
-              <Input
-                id="edit-function-order"
-                type="number"
-                value={functionOrder}
-                onChange={(e) => setFunctionOrder(e.target.value)}
-                min="1"
-              />
+              <Input id="edit-function-order" type="number" value={functionOrder} onChange={(e) => setFunctionOrder(e.target.value)} min="1" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setEditFunctionOpen(false); resetFunctionForm(); }}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => { setEditFunctionOpen(false); resetFunctionForm(); }}>Cancel</Button>
             <Button onClick={handleUpdateFunction}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Role Dialog */}
-      <Dialog open={addRoleOpen} onOpenChange={setAddRoleOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Role</DialogTitle>
-            <DialogDescription>
-              Create a new role within a function.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="role-category">Function</Label>
-              <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a function" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories?.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="role-name">Role Name</Label>
-              <Input
-                id="role-name"
-                value={roleName}
-                onChange={(e) => setRoleName(e.target.value)}
-                placeholder="e.g., Senior Engineer"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="role-description">Description</Label>
-              <Textarea
-                id="role-description"
-                value={roleDescription}
-                onChange={(e) => setRoleDescription(e.target.value)}
-                placeholder="Optional description..."
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setAddRoleOpen(false); resetRoleForm(); }}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddRole}>Add Role</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
