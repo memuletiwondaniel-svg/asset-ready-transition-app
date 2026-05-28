@@ -76,7 +76,7 @@ const App = () => (
                     
                     {/* Authenticated routes with persistent sidebar layout */}
                     <Route element={<AuthenticatedLayout />}>
-                      <Route path="/home" element={<Navigate to="/my-tasks" replace />} />
+                      <Route path="/home" element={<HomePage />} />
                       <Route path="/pssr" element={<PssrRoutePage />} />
                       <Route path="/admin/users" element={<AdminUsersRoutePage />} />
                       <Route path="/admin-tools" element={<AdminToolsRoutePage />} />
