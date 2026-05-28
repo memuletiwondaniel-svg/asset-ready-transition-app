@@ -252,7 +252,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       label: 'USER MANAGEMENT',
       columns: 2 as const,
       items: [
-        { id: 'users', title: 'Users', description: 'Manage user accounts, invite team members', icon: Users, gradient: 'from-blue-500 to-blue-600', onClick: () => setActiveView('users') },
         { id: 'roles-permissions', title: 'Roles & Permissions', description: 'Access control, permission groups', icon: Shield, gradient: 'from-rose-500 to-pink-600', onClick: () => setActiveView('roles-permissions') },
         { id: 'user-offboarding', title: 'User Offboarding', description: 'Deactivate users, revoke access', icon: UserMinus, gradient: 'from-red-500 to-rose-600', onClick: () => setActiveView('user-offboarding') },
         { id: 'permission-review', title: 'Permission Reviews', description: 'Periodic access certification', icon: ClipboardCheck, gradient: 'from-indigo-500 to-violet-600', onClick: () => setActiveView('permission-review') },
@@ -264,12 +263,12 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       label: 'OPERATIONS & CONFIGURATION',
       columns: 3 as const,
       items: [
-        { id: 'projects', title: 'Projects', description: 'Manage projects, phases, teams', icon: Building2, gradient: 'from-purple-500 to-purple-600', onClick: () => navigate('/project-management') },
+        { id: 'users', title: 'Users', description: 'Manage user accounts, invite team members', icon: Users, gradient: 'from-blue-500 to-blue-600', onClick: () => setActiveView('users') },
         { id: 'handover-management', title: 'VCRs & PSSRs', description: 'Certificates, safety reviews', icon: Key, gradient: 'from-blue-500 to-cyan-500', onClick: () => setActiveView('handover-management') },
-        { id: 'ora-configuration', title: 'ORA Plan', description: 'Operational readiness activities', icon: LayoutTemplate, gradient: 'from-amber-500 to-amber-600', onClick: () => setActiveView('ora-configuration') },
         { id: 'document-management', title: 'Document Management', description: 'Types, categories, lifecycle', icon: Files, gradient: 'from-sky-500 to-blue-600', onClick: () => setActiveView('document-management') },
         { id: 'tenant-setup', title: 'Tenant Setup Wizard', description: 'Configure new organisation', icon: Compass, gradient: 'from-teal-500 to-cyan-600', onClick: () => setTenantSetupOpen(true) },
       ],
+
     },
     {
       label: 'AI AGENTS',
