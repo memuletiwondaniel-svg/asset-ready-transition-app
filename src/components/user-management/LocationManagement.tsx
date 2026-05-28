@@ -408,22 +408,31 @@ const LocationManagement: React.FC = () => {
     selectedId: string | null,
     onSelect?: (id: string | null, item?: Plant | Field | Station) => void,
     getParentName?: (item: Field | Station) => string | null,
-    getSubtitle?: (item: Plant | Field | Station) => string | null
+    getSubtitle?: (item: Plant | Field | Station) => string | null,
+    accentClass: string = 'text-primary bg-primary/10 ring-primary/20'
   ) => (
-    <Card className="flex-1 min-w-[280px]">
+    <Card className="group/col flex-1 min-w-[280px] border-border/60">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            {icon}
-            {title}
-            <Badge variant="secondary" className="ml-1">{items.length}</Badge>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-base flex items-center gap-2.5">
+            <span className={`flex h-8 w-8 items-center justify-center rounded-lg ring-1 ${accentClass}`}>
+              {icon}
+            </span>
+            <span className="text-[15px] font-bold tracking-tight uppercase">{title}</span>
+            <Badge variant="secondary" className="ml-0.5">{items.length}</Badge>
           </CardTitle>
-          <Button size="sm" onClick={() => openAddDialog(type)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => openAddDialog(type)}
+            className="h-8 opacity-0 group-hover/col:opacity-100 focus-visible:opacity-100 transition-opacity"
+          >
             <Plus className="h-4 w-4 mr-1" />
             Add
           </Button>
         </div>
       </CardHeader>
+
       <CardContent className="pt-0">
         {isLoading ? (
           <div className="space-y-2">
