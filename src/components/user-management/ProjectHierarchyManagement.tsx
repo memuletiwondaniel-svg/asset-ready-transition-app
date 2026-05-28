@@ -53,6 +53,7 @@ import { EditProjectModal } from '@/components/project/EditProjectModal';
 import { useHubs } from '@/hooks/useHubs';
 import { usePortfolioManagers } from '@/hooks/usePortfolioManagers';
 import { PortfolioDetailsModal } from './PortfolioDetailsModal';
+import BGCIcon from './BGCIcon';
 
 interface ProjectHierarchyManagementProps {
   selectedLanguage?: string;
@@ -112,6 +113,7 @@ const DraggableHub: React.FC<{
             </Button>
           </CollapsibleTrigger>
           <div className="flex items-center gap-2 flex-1 py-1 px-2 cursor-pointer" onClick={onToggle}>
+            <Building2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />
             <span className="text-sm font-medium text-foreground/80">{hub.name}</span>
           </div>
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
@@ -189,6 +191,7 @@ const DraggableProject: React.FC<{
       >
         <GripVertical className="h-3 w-3" />
       </div>
+      <FolderKanban className="h-3 w-3 text-amber-500 shrink-0 mr-2" />
       <span className="text-xs font-mono font-semibold text-primary mr-2">{projectId}</span>
       <span className="text-xs text-muted-foreground font-normal flex-1 truncate">{project.projectTitle}</span>
       <Button
@@ -465,7 +468,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
 
   const visibleRegions = useMemo(() => regions.filter(filterRegion), [regions, searchQuery]);
 
-  const [viewMode, setViewMode] = useState<'tree' | 'columns'>('columns');
+  const [viewMode, setViewMode] = useState<'tree' | 'columns'>('tree');
   const allHubIds = useMemo(() => regions.flatMap(r => r.hubs.map(h => h.id)), [regions]);
   const allExpanded = regions.length > 0 && expandedRegions.size === regions.length && expandedHubs.size === allHubIds.length;
 
@@ -595,6 +598,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                         </Button>
                       </CollapsibleTrigger>
                       <div className="flex items-center gap-2 flex-1 py-1.5 px-2 cursor-pointer" onClick={() => toggleRegion(region.id)}>
+                        <MapPin className="h-4 w-4 text-violet-500 shrink-0" />
                         <span className="text-sm font-semibold uppercase tracking-wide text-foreground">{region.name}</span>
                       </div>
                       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
@@ -1253,138 +1257,108 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
 
   return (
     <TooltipProvider delayDuration={150}>
-    <div className="space-y-4 p-4">
-      {/* Unified toolbar: search + view toggle + expand/collapse + refresh */}
-      <div className="flex items-center justify-end gap-2 flex-wrap">
-        <div className="relative w-72 max-w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by project ID or title..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-9 h-9"
-          />
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
-              onClick={() => setSearchQuery('')}
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          )}
-        </div>
-
-        <div className="flex items-center rounded-md border bg-background h-9 p-0.5">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={viewMode === 'tree' ? 'secondary' : 'ghost'}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setViewMode('tree')}
-                aria-label="Tree View"
-              >
-                <GitBranch className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Tree View</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={viewMode === 'columns' ? 'secondary' : 'ghost'}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setViewMode('columns')}
-                aria-label="Columns View"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Columns View</TooltipContent>
-          </Tooltip>
-          {onShowProjectList && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={onShowProjectList}
-                  aria-label="Project List"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Project List</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="outline" size="icon" className="h-9 w-9" onClick={toggleExpandCollapseAll} aria-label={allExpanded ? 'Collapse All' : 'Expand All'}>
-              {allExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{allExpanded ? 'Collapse All' : 'Expand All'}</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="outline" size="icon" className="h-9 w-9" onClick={refetch} aria-label="Refresh">
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Refresh</TooltipContent>
-        </Tooltip>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm" className="h-9">
-              <Plus className="h-4 w-4 mr-1" />
-              Add
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-popover">
-            <DropdownMenuItem onClick={() => setShowAddRegionDialog(true)}>
-              <MapPin className="h-4 w-4 mr-2 text-purple-500" />
-              Add Portfolio
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setShowAddHubDialog(true)}>
-              <Building2 className="h-4 w-4 mr-2 text-blue-500" />
-              Add Project Hub
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setShowAddProjectModal(true)}>
-              <FolderKanban className="h-4 w-4 mr-2 text-amber-500" />
-              Add Project
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {viewMode === 'tree' ? (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <GitBranch className="h-4 w-4" />
-              Project Organization
+    <div className="space-y-4">
+      <Card className="border-border/60 shadow-md ring-1 ring-primary/5 bg-gradient-to-b from-background to-muted/20">
+        <CardHeader className="pb-3 border-b border-border/40 bg-gradient-to-r from-primary/5 via-background to-background">
+          <div className="flex items-center justify-between gap-3 flex-wrap w-full">
+            {/* Brand */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background shadow-sm ring-1 ring-border/60 shrink-0">
+                <BGCIcon size={28} />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-base font-semibold tracking-tight truncate">Basrah Gas Company</span>
+                <span className="text-[11px] font-normal uppercase tracking-wider text-muted-foreground">Project Hierarchy</span>
+              </div>
               {searchQuery && (
-                <Badge variant="secondary" className="ml-2">
-                  Filtered
-                </Badge>
+                <Badge variant="secondary" className="ml-1">Filtered</Badge>
               )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TreeView />
-          </CardContent>
-        </Card>
-      ) : (
-        <ColumnsView />
-      )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative w-64 max-w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by project ID or title..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-9 h-9 bg-background/80"
+                />
+                {searchQuery && (
+                  <Button variant="ghost" size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
+                    onClick={() => setSearchQuery('')}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => setViewMode(viewMode === 'tree' ? 'columns' : 'tree')}
+                    aria-label={viewMode === 'tree' ? 'Switch to Columns View' : 'Switch to Tree View'}
+                  >
+                    {viewMode === 'tree' ? <LayoutGrid className="h-4 w-4" /> : <GitBranch className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {viewMode === 'tree' ? 'Switch to Columns View' : 'Switch to Tree View'}
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-9 w-9" onClick={toggleExpandCollapseAll} aria-label={allExpanded ? 'Collapse All' : 'Expand All'}>
+                    {allExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{allExpanded ? 'Collapse All' : 'Expand All'}</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-9 w-9" onClick={refetch} aria-label="Refresh">
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Refresh</TooltipContent>
+              </Tooltip>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" className="h-9">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-popover">
+                  <DropdownMenuItem onClick={() => setShowAddRegionDialog(true)}>
+                    <MapPin className="h-4 w-4 mr-2 text-violet-500" />
+                    Add Portfolio
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowAddHubDialog(true)}>
+                    <Building2 className="h-4 w-4 mr-2 text-blue-500" />
+                    Add Project Hub
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowAddProjectModal(true)}>
+                    <FolderKanban className="h-4 w-4 mr-2 text-amber-500" />
+                    Add Project
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4">
+          {viewMode === 'tree' ? <TreeView /> : <ColumnsView />}
+        </CardContent>
+      </Card>
+
 
       {/* Add Region Dialog */}
       <Dialog open={showAddRegionDialog} onOpenChange={setShowAddRegionDialog}>
