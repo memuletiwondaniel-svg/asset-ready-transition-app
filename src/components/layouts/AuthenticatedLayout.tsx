@@ -19,6 +19,7 @@ export const AuthenticatedLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut, session, loading } = useAuth();
+  const { language, setLanguage } = useLanguage();
   
   // Auto-redirect directors to their appropriate landing page
   // Returns isChecking to block render until redirect check completes
@@ -76,8 +77,6 @@ export const AuthenticatedLayout: React.FC = () => {
   if (!session) {
     return <Navigate to="/" replace />;
   }
-
-  const { language, setLanguage } = useLanguage();
 
   return (
     <div className="h-[100dvh] flex w-full overflow-hidden">
