@@ -578,52 +578,75 @@ const LocationManagement: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="columns" className="mt-0">
-            <div className="flex flex-col lg:flex-row gap-4">
-              {renderLocationCard(
-                'Plants',
-                <Building2 className="h-4 w-4" />,
-                columnPlants,
-                'plant',
-                selectedPlant,
-                (id) => { setSelectedPlant(id); setSelectedField(null); },
-                undefined,
-                (item) => getPlantFullName(item as Plant)
-              )}
+            <Card className="border-border/60 shadow-md ring-1 ring-primary/5 bg-gradient-to-b from-background to-muted/20">
+              <CardHeader className="pb-3 border-b border-border/40 bg-gradient-to-r from-primary/5 via-background to-background">
+                <CardTitle className="text-base flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background shadow-sm ring-1 ring-border/60">
+                    <BGCIcon size={26} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-base font-semibold tracking-tight">Basrah Gas Company</span>
+                    <span className="text-[11px] font-normal uppercase tracking-wider text-muted-foreground">BGC · Asset Hierarchy</span>
+                  </div>
+                  {searchQuery && (
+                    <Badge variant="secondary" className="ml-2">Filtered</Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="flex flex-col lg:flex-row gap-4">
+                  {renderLocationCard(
+                    'Plants',
+                    <Building2 className="h-4 w-4" />,
+                    columnPlants,
+                    'plant',
+                    selectedPlant,
+                    (id) => { setSelectedPlant(id); setSelectedField(null); },
+                    undefined,
+                    (item) => getPlantFullName(item as Plant),
+                    'text-blue-600 bg-blue-500/10 ring-blue-500/20 dark:text-blue-400'
+                  )}
 
-              {renderLocationCard(
-                'Fields',
-                <MapPin className="h-4 w-4" />,
-                columnFields,
-                'field',
-                selectedField,
-                (id, item) => {
-                  setSelectedField(id);
-                  if (id && item) {
-                    const f = item as Field;
-                    if (f.plant_id) setSelectedPlant(f.plant_id);
-                  }
-                },
-                (item) => {
-                  const field = item as Field;
-                  return plants.find(p => p.id === field.plant_id)?.name || null;
-                }
-                // No subtitle for fields — only the Parent line should show
-              )}
+                  {renderLocationCard(
+                    'Fields',
+                    <MapPin className="h-4 w-4" />,
+                    columnFields,
+                    'field',
+                    selectedField,
+                    (id, item) => {
+                      setSelectedField(id);
+                      if (id && item) {
+                        const f = item as Field;
+                        if (f.plant_id) setSelectedPlant(f.plant_id);
+                      }
+                    },
+                    (item) => {
+                      const field = item as Field;
+                      return plants.find(p => p.id === field.plant_id)?.name || null;
+                    },
+                    undefined,
+                    'text-emerald-600 bg-emerald-500/10 ring-emerald-500/20 dark:text-emerald-400'
+                  )}
 
-              {renderLocationCard(
-                'Stations',
-                <Factory className="h-4 w-4" />,
-                columnStations,
-                'station',
-                null,
-                undefined,
-                (item) => {
-                  const station = item as Station;
-                  return fields.find(f => f.id === station.field_id)?.name || null;
-                }
-              )}
-            </div>
+                  {renderLocationCard(
+                    'Stations',
+                    <Factory className="h-4 w-4" />,
+                    columnStations,
+                    'station',
+                    null,
+                    undefined,
+                    (item) => {
+                      const station = item as Station;
+                      return fields.find(f => f.id === station.field_id)?.name || null;
+                    },
+                    undefined,
+                    'text-amber-600 bg-amber-500/10 ring-amber-500/20 dark:text-amber-400'
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
+
         </Tabs>
 
         {/* Add/Edit Dialog (unified) */}
