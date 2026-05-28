@@ -245,6 +245,16 @@ export const ProjectMilestonesManagementTab = () => {
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">
+              <Label>Code</Label>
+              <Input
+                value={formData.code}
+                onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
+                placeholder="e.g., FEED_COMPLETE"
+                className="font-mono"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label>Name</Label>
               <Input
                 value={formData.name}
@@ -262,7 +272,24 @@ export const ProjectMilestonesManagementTab = () => {
                 rows={3}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <Select
+                value={formData.is_custom ? 'custom' : 'system'}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, is_custom: v === 'custom' }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system">System</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
 
           <DialogFooter>
             <Button variant="outline" onClick={handleCloseForm}>
