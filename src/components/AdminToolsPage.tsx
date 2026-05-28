@@ -669,7 +669,8 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
           <div className="flex items-center justify-between mt-2 md:mt-3">
             <div className="flex items-center gap-3 md:gap-4">
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-slate-600 to-gray-700 flex items-center justify-center shadow-lg shrink-0">
-                <Sliders className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                <Settings className="w-5 h-5 md:w-6 md:h-6 text-white" />
+
               </div>
               <div className="min-w-0">
                 <h1 className="text-xl md:text-2xl xl:text-3xl font-bold text-foreground tracking-tight truncate">
