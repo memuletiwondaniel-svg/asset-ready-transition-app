@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { checkOnce as checkAppVersion } from '@/lib/version-check';
+import { bumpSessionEpoch, syncTabSessionEpoch } from '@/lib/app-reset';
 
 interface AuthContextType {
   user: User | null;
@@ -67,6 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Track login activity
         if (event === 'SIGNED_IN' && session?.user) {
+          syncTabSessionEpoch();
           // Revalidate the app bundle on sign-in. If this tab has been
           // sitting on an old build (common after session timeout + re-login),
           // checkAppVersion will hard-reload to the current build.
@@ -98,6 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         if (event === 'SIGNED_OUT') {
+          bumpSessionEpoch();
           setTimeout(async () => {
             try {
               await supabase.functions.invoke('write-audit-log', {
@@ -126,10 +129,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (session && rememberMeFlag === 'false') {
         // User didn't check remember me, so sign them out on new browser session
+        bumpSessionEpoch();
         await supabase.auth.signOut();
         if (!isMounted) return;
         await syncResolvedSession(null);
       } else {
+        if (session) syncTabSessionEpoch();
         await syncResolvedSession(session);
       }
     });
@@ -147,6 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const cancel2FA = async () => {
     setPending2FA(false);
+    bumpSessionEpoch();
     await supabase.auth.signOut();
   };
 
@@ -291,6 +297,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
+      bumpSessionEpoch();
       const { error } = await supabase.auth.signOut();
       if (error) {
         toast.error(error.message);
