@@ -1264,7 +1264,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         <div className="relative w-72 max-w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search projects by ID (DP385) or title..."
+            placeholder="Search by project ID or title..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 pr-9 h-9"
