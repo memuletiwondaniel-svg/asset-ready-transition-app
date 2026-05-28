@@ -34,11 +34,17 @@ const COLUMN_OPTIONS: { key: ColumnKey; label: string }[] = [
 
 const DEFAULT_COLUMNS: ColumnKey[] = ['phase'];
 
-export const ORAActivityCatalog = () => {
+interface ORAActivityCatalogProps {
+  hideToolbar?: boolean;
+  externalSearch?: string;
+}
+
+export const ORAActivityCatalog: React.FC<ORAActivityCatalogProps> = ({ hideToolbar = false, externalSearch }) => {
   const [filters, setFilters] = useState({ phase_id: '', search: '' });
+  const effectiveSearch = externalSearch !== undefined ? externalSearch : filters.search;
   const { activities, treeActivities, isLoading, createActivity, updateActivity, deleteActivity, isCreating, isUpdating } = useORAActivityCatalog({
     phase_id: filters.phase_id || undefined,
-    search: filters.search || undefined
+    search: effectiveSearch || undefined
   });
   const { phases } = useORPPhases();
 
