@@ -308,7 +308,7 @@ const LocationManagement: React.FC = () => {
                   <div className="flex items-center group rounded-md hover:bg-accent/50 transition-colors">
                     <CollapsibleTrigger asChild>
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
-                        {hasChildren ? (isPlantExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />) : <div className="w-4" />}
+                        {hasChildren ? (isPlantExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground/40" /> : <ChevronRight className="h-4 w-4 text-muted-foreground/40" />) : <div className="w-4" />}
                       </Button>
                     </CollapsibleTrigger>
                     <div className="flex items-center gap-2 flex-1 py-1.5 px-2 cursor-pointer min-w-0" onClick={() => togglePlantExpanded(plant.id)}>
