@@ -121,62 +121,59 @@ export const ORATemplateManagement = () => {
           </div>
         </Card>
       ) : (
-        <div className="space-y-6">
-          {Object.entries(templatesByType).map(([projectType, typeTemplates]) => (
-            <div key={projectType}>
-              <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                <Layers className="h-4 w-4" />{projectType} Projects
-                <Badge variant="secondary" className="text-xs">{typeTemplates.length}</Badge>
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {typeTemplates.map((template) => (
-                  <div
-                    key={template.id}
-                    onClick={() => setViewingTemplate(template)}
-                    className={cn(
-                      "group relative rounded-lg border bg-card p-4 cursor-pointer transition-all hover:shadow-md hover:border-primary/40",
-                      !template.is_active && 'opacity-60'
-                    )}
-                  >
-                    {/* Hover-only action icons (top-right) */}
-                    <div className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity bg-background/95 backdrop-blur-sm rounded-md border shadow-sm p-0.5">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleOpenForm(template); }}>
-                        <Edit3 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleCopy(template); }}>
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(template.id); }}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredTemplates.map((template) => (
+            <div
+              key={template.id}
+              onClick={() => setViewingTemplate(template)}
+              className={cn(
+                "group relative h-52 flex flex-col rounded-lg border bg-card p-4 cursor-pointer transition-all duration-200",
+                "hover:shadow-lg hover:border-primary/50 hover:-translate-y-0.5",
+                !template.is_active && 'opacity-60'
+              )}
+            >
+              {/* Hover-only action icons (top-right) */}
+              <div className="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity bg-background/95 backdrop-blur-sm rounded-md border shadow-sm p-0.5 z-10">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleOpenForm(template); }}>
+                  <Edit3 className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleCopy(template); }}>
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(template.id); }}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
 
-                    {template.is_default && (
-                      <Star className="absolute top-3 left-3 h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
-                    )}
+              {/* Project type pill */}
+              <div className="flex items-center gap-1.5 mb-2">
+                {template.is_default && <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />}
+                <Badge variant="outline" className="text-[10px] uppercase tracking-wide font-medium px-1.5 py-0">
+                  <Layers className="h-2.5 w-2.5 mr-1" />{template.project_type}
+                </Badge>
+              </div>
 
-                    <div className={cn("pr-2", template.is_default && 'pl-5')}>
-                      <h4 className="font-semibold text-base truncate">{template.name}</h4>
-                      {template.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{template.description}</p>
-                      )}
-                      <div className="flex items-center gap-2 flex-wrap mt-3">
-                        <Badge variant="outline" className={getComplexityBadge(template.complexity)}>{template.complexity} complexity</Badge>
-                        {!template.is_active && <Badge variant="outline" className="bg-muted">Inactive</Badge>}
-                      </div>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {template.applicable_phases.map((p) => (
-                          <Badge key={p} variant="secondary" className="text-xs px-1.5 py-0">{p}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <h4 className="font-semibold text-base leading-snug line-clamp-1 pr-16">{template.name}</h4>
+              <p className="text-sm text-muted-foreground line-clamp-2 mt-1 flex-1">
+                {template.description || 'No description provided.'}
+              </p>
+
+              <div className="space-y-2 mt-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className={getComplexityBadge(template.complexity)}>{template.complexity}</Badge>
+                  {!template.is_active && <Badge variant="outline" className="bg-muted">Inactive</Badge>}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {template.applicable_phases.map((p) => (
+                    <Badge key={p} variant="secondary" className="text-[10px] px-1.5 py-0">{p}</Badge>
+                  ))}
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
+
 
       {/* View Template Modal */}
       <Dialog open={!!viewingTemplate} onOpenChange={(open) => !open && setViewingTemplate(null)}>
