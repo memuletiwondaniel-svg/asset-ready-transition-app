@@ -626,11 +626,10 @@ const LocationManagement: React.FC = () => {
                     'text-amber-600 bg-amber-500/10 ring-amber-500/20 dark:text-amber-400'
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            )}
+          </CardContent>
+        </Card>
 
-        </Tabs>
 
         {/* Add/Edit Dialog (unified) */}
         <Dialog open={addEditDialog.open} onOpenChange={(open) => !open && setAddEditDialog({ ...addEditDialog, open: false })}>
