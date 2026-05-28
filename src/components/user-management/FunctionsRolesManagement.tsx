@@ -297,63 +297,60 @@ const FunctionsRolesManagement: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold">Roles</h2>
-          <p className="text-muted-foreground">
-            {totalFunctions} functions, {totalRoles} roles
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setAddFunctionOpen(true)} variant="outline">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Function
-          </Button>
-          <Button onClick={() => setAddRoleOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Role
-          </Button>
-        </div>
+      <div>
+        <h2 className="text-2xl font-semibold">Roles</h2>
+        <p className="text-muted-foreground">
+          {totalFunctions} functions, {totalRoles} roles
+        </p>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search roles..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search + Add on the same row */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search roles..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Button onClick={() => { setAddType('role'); setAddOpen(true); }}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add
+        </Button>
       </div>
 
       {/* Hierarchical List */}
       <div className="space-y-3">
-        {filteredGroups?.map((group) => (
-          <Card key={group.category.id} className="overflow-hidden">
+        {filteredGroups?.map((group) => {
+          const accent = getCategoryAccent(group.category.name);
+          const isOpen = expandedCategories.has(group.category.id);
+          return (
+          <Card key={group.category.id} className="overflow-hidden group/card border-border/60">
             <Collapsible
-              open={expandedCategories.has(group.category.id)}
+              open={isOpen}
               onOpenChange={() => toggleCategory(group.category.id)}
             >
               <CardHeader className="p-0">
-                <div className={`flex items-center justify-between p-4 ${getCategoryColor(group.category.name)}`}>
+                <div className={`flex items-center justify-between p-4 transition-colors ${accent.hoverBg}`}>
                   <CollapsibleTrigger asChild>
                     <button className="flex items-center gap-3 flex-1 text-left">
-                      {expandedCategories.has(group.category.id) ? (
-                        <ChevronDown className="h-4 w-4" />
+                      {isOpen ? (
+                        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/50" />
                       ) : (
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
                       )}
                       <div className="flex items-center gap-2">
-                        {getCategoryIcon(group.category.name)}
-                        <span className="font-medium">{group.category.name}</span>
+                        <span className={accent.text}>{getCategoryIcon(group.category.name)}</span>
+                        <span className="font-medium text-foreground">{group.category.name}</span>
                       </div>
-                      <Badge variant="secondary" className="ml-2">
+                      <span className="ml-2 text-xs text-muted-foreground/60">
                         {group.roles.length} roles
-                      </Badge>
+                      </span>
                     </button>
                   </CollapsibleTrigger>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -391,10 +388,10 @@ const FunctionsRolesManagement: React.FC = () => {
                       {group.roles.map((role) => (
                         <div
                           key={role.id}
-                          className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                          className="group/role flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
                         >
                           <p className="font-medium flex-1">{role.name}</p>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 opacity-0 group-hover/role:opacity-100 transition-opacity">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -420,7 +417,8 @@ const FunctionsRolesManagement: React.FC = () => {
               </CollapsibleContent>
             </Collapsible>
           </Card>
-        ))}
+          );
+        })}
 
         {filteredGroups?.length === 0 && (
           <Card className="p-8 text-center text-muted-foreground">
@@ -428,6 +426,7 @@ const FunctionsRolesManagement: React.FC = () => {
           </Card>
         )}
       </div>
+
 
       {/* Add Function Dialog */}
       <Dialog open={addFunctionOpen} onOpenChange={setAddFunctionOpen}>
