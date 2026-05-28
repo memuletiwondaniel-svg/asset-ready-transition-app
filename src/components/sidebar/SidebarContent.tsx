@@ -77,7 +77,7 @@ const navigationItems: (NavigationItem & { requiresLeadership?: boolean })[] = [
   
   
   { labelKey: 'navORMaintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance', requiresLeadership: true },
-  { labelKey: 'navCompetenceManagement', shortLabel: 'CD&A', tooltip: 'Competence Development & Assurance', icon: GraduationCap, path: '/competence-management', section: 'competence-management' },
+  { labelKey: 'navCompetenceManagement', shortLabel: 'CD&A', tooltip: 'Ops Readiness', icon: GraduationCap, path: '/competence-management', section: 'competence-management' },
 
 ];
 
