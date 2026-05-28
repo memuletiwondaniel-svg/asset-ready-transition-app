@@ -17,18 +17,87 @@ import { cn } from '@/lib/utils';
 export const ORATemplateManagement = () => {
   const { templates, isLoading, createTemplate, updateTemplate, deleteTemplate, isCreating, isUpdating } = useORAPlanTemplates();
   const { phases } = useORPPhases();
-  const { activities } = useORAActivityCatalog();
+  const { activities, createActivity, deleteActivity, isCreating: isCreatingActivity } = useORAActivityCatalog();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<ORAPlanTemplate | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [viewingTemplate, setViewingTemplate] = useState<ORAPlanTemplate | null>(null);
+  const [viewEditForm, setViewEditForm] = useState<ORAPlanTemplateInput | null>(null);
+  const [confirmSaveOpen, setConfirmSaveOpen] = useState(false);
+  const [addActivityPhase, setAddActivityPhase] = useState<string | null>(null);
+  const [newActivityName, setNewActivityName] = useState('');
+  const [deleteActivityId, setDeleteActivityId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<ORAPlanTemplateInput>({
     name: '', description: '', project_type: '', complexity: 'medium',
     applicable_phases: ['SELECT', 'DEFINE', 'EXECUTE'], is_active: true, is_default: false
   });
+
+  const openViewing = (template: ORAPlanTemplate) => {
+    setViewingTemplate(template);
+    setViewEditForm({
+      name: template.name,
+      description: template.description || '',
+      project_type: template.project_type,
+      complexity: template.complexity,
+      applicable_phases: template.applicable_phases,
+      is_active: template.is_active,
+      is_default: template.is_default,
+    });
+  };
+
+  const closeViewing = () => {
+    setViewingTemplate(null);
+    setViewEditForm(null);
+    setAddActivityPhase(null);
+    setNewActivityName('');
+  };
+
+  const isViewDirty = !!(viewingTemplate && viewEditForm && (
+    viewEditForm.name !== viewingTemplate.name ||
+    (viewEditForm.description || '') !== (viewingTemplate.description || '') ||
+    viewEditForm.project_type !== viewingTemplate.project_type ||
+    viewEditForm.complexity !== viewingTemplate.complexity ||
+    viewEditForm.is_active !== viewingTemplate.is_active
+  ));
+
+  const handleConfirmedSave = async () => {
+    if (!viewingTemplate || !viewEditForm) return;
+    try {
+      await updateTemplate({ id: viewingTemplate.id, ...viewEditForm });
+      setConfirmSaveOpen(false);
+      closeViewing();
+    } catch (e) { console.error(e); }
+  };
+
+  // Display ASS-01 → A.01, SEL-01 → S.01, etc.
+  const formatActivityCode = (code: string) => {
+    if (!code) return code;
+    const m = code.match(/^([A-Za-z]+)[.\-]?(.*)$/);
+    if (!m) return code;
+    const map: Record<string, string> = { ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', IDN: 'I', OPR: 'O' };
+    const prefix = map[m[1].toUpperCase()] || m[1].charAt(0).toUpperCase();
+    const rest = m[2].replace(/^[.\-]/, '');
+    return `${prefix}.${rest}`;
+  };
+
+  const handleAddActivity = async (phaseCode: string) => {
+    const phase = phases.find(p => p.code === phaseCode);
+    if (!phase || !newActivityName.trim()) return;
+    try {
+      await createActivity({ activity: newActivityName.trim(), phase_id: phase.id });
+      setNewActivityName('');
+      setAddActivityPhase(null);
+    } catch (e) { console.error(e); }
+  };
+
+  const handleDeleteActivity = async () => {
+    if (!deleteActivityId) return;
+    try { await deleteActivity(deleteActivityId); setDeleteActivityId(null); }
+    catch (e) { console.error(e); }
+  };
 
   const handleOpenForm = (template?: ORAPlanTemplate) => {
     if (template) {
