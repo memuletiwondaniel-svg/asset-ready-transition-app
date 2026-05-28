@@ -49,10 +49,10 @@ import { useUsers } from "@/hooks/useUsers";
 import { useNavigate } from 'react-router-dom';
 
 interface UserManagementProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
-const UserManagement = ({ onBack }: UserManagementProps) => {
+const UserManagement = ({ onBack: _onBack }: UserManagementProps) => {
   const { buildBreadcrumbsFromPath } = useBreadcrumb();
   const breadcrumbs = buildBreadcrumbsFromPath();
   const navigate = useNavigate();
