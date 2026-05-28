@@ -123,6 +123,9 @@ export const ORPPhaseDeliverablesTab = () => {
     duration_low: undefined,
   });
 
+  // View-only activity
+  const [viewingActivity, setViewingActivity] = useState<ORAActivity | null>(null);
+
   // Phase form
   const [phaseForm, setPhaseForm] = useState({ code: '', label: '', prefix: '' });
   const [isCreatingPhase, setIsCreatingPhase] = useState(false);
@@ -167,6 +170,10 @@ export const ORPPhaseDeliverablesTab = () => {
     });
     setAddType('activity');
     setAddOpen(true);
+  };
+
+  const openViewActivity = (activity: ORAActivity) => {
+    setViewingActivity(activity);
   };
 
   const handleSaveActivity = async () => {
@@ -322,7 +329,8 @@ export const ORPPhaseDeliverablesTab = () => {
                       {phaseActivities.map((activity) => (
                         <TableRow
                           key={activity.id}
-                          className="group/row transition-all duration-200 group-hover/tbody:opacity-40 hover:!opacity-100 hover:bg-muted/60"
+                          className="group/row transition-all duration-200 group-hover/tbody:opacity-40 hover:!opacity-100 hover:bg-muted/60 cursor-pointer"
+                          onClick={() => openViewActivity(activity)}
                         >
                           <TableCell className="font-mono text-xs">
                             {formatActivityCode(activity.activity_code)}
@@ -344,7 +352,10 @@ export const ORPPhaseDeliverablesTab = () => {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
-                                onClick={() => openEditActivity(activity)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEditActivity(activity);
+                                }}
                               >
                                 <Edit3 className="h-4 w-4" />
                               </Button>
@@ -352,7 +363,10 @@ export const ORPPhaseDeliverablesTab = () => {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() => setDeleteConfirmId(activity.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteConfirmId(activity.id);
+                                }}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -604,6 +618,89 @@ export const ORPPhaseDeliverablesTab = () => {
                 disabled={!phaseForm.code || !phaseForm.label || !phaseForm.prefix || isCreatingPhase}
               >
                 {isCreatingPhase ? 'Saving...' : 'Add Phase'}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Activity Dialog */}
+      <Dialog open={!!viewingActivity} onOpenChange={() => setViewingActivity(null)}>
+        <DialogContent className="sm:max-w-lg p-0 overflow-hidden flex flex-col h-[640px] max-h-[90vh]">
+          <DialogHeader className="px-6 pt-6 pb-4 space-y-1 flex-shrink-0">
+            <DialogTitle className="text-xl font-semibold">View Activity</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Activity details for {viewingActivity?.activity}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="px-6 pb-6 space-y-5 border-t border-border/60 pt-5 flex-1 overflow-y-auto min-h-0">
+            {viewingActivity && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                    Activity ID
+                  </Label>
+                  <Input value={formatActivityCode(viewingActivity.activity_code)} disabled className="bg-muted font-mono" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                    Phase
+                  </Label>
+                  <Input
+                    value={visiblePhases.find((p) => p.id === viewingActivity.phase_id)?.label || '-'}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                    Activity
+                  </Label>
+                  <Input value={viewingActivity.activity} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                    Description
+                  </Label>
+                  <Textarea value={viewingActivity.description || ''} disabled className="bg-muted" rows={3} />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                      High (days)
+                    </Label>
+                    <Input value={viewingActivity.duration_high ?? ''} disabled className="bg-muted text-center" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                      Med (days)
+                    </Label>
+                    <Input value={viewingActivity.duration_med ?? ''} disabled className="bg-muted text-center" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                      Low (days)
+                    </Label>
+                    <Input value={viewingActivity.duration_low ?? ''} disabled className="bg-muted text-center" />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          <DialogFooter className="px-6 py-4 border-t border-border/60 bg-muted/30 flex-shrink-0">
+            <Button variant="outline" onClick={() => setViewingActivity(null)}>
+              Close
+            </Button>
+            {viewingActivity && (
+              <Button
+                onClick={() => {
+                  setViewingActivity(null);
+                  openEditActivity(viewingActivity);
+                }}
+              >
+                Edit Activity
               </Button>
             )}
           </DialogFooter>
