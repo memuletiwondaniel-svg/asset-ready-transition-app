@@ -246,10 +246,10 @@ export const ORATemplateManagement = () => {
 
 
       {/* View Template Modal */}
-      <Dialog open={!!viewingTemplate} onOpenChange={(open) => !open && setViewingTemplate(null)}>
+      <Dialog open={!!viewingTemplate} onOpenChange={(open) => !open && closeViewing()}>
         <DialogContent className="max-w-3xl w-[90vw] h-[85vh] max-h-[85vh] p-0 flex flex-col overflow-hidden">
-          {viewingTemplate && (() => {
-            const allowed = viewingTemplate.applicable_phases.filter(p => ['ASSESS', 'SELECT', 'DEFINE', 'EXECUTE'].includes(p));
+          {viewingTemplate && viewEditForm && (() => {
+            const allowed = viewEditForm.applicable_phases!.filter(p => ['ASSESS', 'SELECT', 'DEFINE', 'EXECUTE'].includes(p));
             const phaseByCode = Object.fromEntries(phases.map(p => [p.code, p]));
             const phaseIdToCode = Object.fromEntries(phases.map(p => [p.id, p.code]));
             const phaseColors: Record<string, string> = {
@@ -268,39 +268,62 @@ export const ORATemplateManagement = () => {
               <>
                 <DialogHeader className="px-6 pt-6 pb-4 border-b">
                   <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                    <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
                       <LayoutTemplate className="h-5 w-5" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <DialogTitle className="flex items-center gap-2">
-                        {viewingTemplate.name}
-                        {viewingTemplate.is_default && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
-                      </DialogTitle>
-                      <DialogDescription className="mt-1">
-                        {viewingTemplate.description || 'No description provided.'}
-                      </DialogDescription>
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <Input
+                        value={viewEditForm.name}
+                        onChange={(e) => setViewEditForm(prev => prev ? { ...prev, name: e.target.value } : prev)}
+                        className="text-lg font-semibold border-transparent hover:border-input focus-visible:border-input px-2 -ml-2 h-9 bg-transparent"
+                        placeholder="Template name"
+                      />
+                      <Textarea
+                        value={viewEditForm.description || ''}
+                        onChange={(e) => setViewEditForm(prev => prev ? { ...prev, description: e.target.value } : prev)}
+                        className="text-sm text-muted-foreground border-transparent hover:border-input focus-visible:border-input px-2 -ml-2 min-h-0 py-1 resize-none bg-transparent"
+                        placeholder="Add a description..."
+                        rows={1}
+                      />
                     </div>
                   </div>
                 </DialogHeader>
 
                 <div className="flex-1 overflow-y-auto scrollbar-auto-hide px-6 py-4 space-y-5">
-                  {/* Meta grid */}
+                  {/* Meta grid - editable */}
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label className="text-xs text-muted-foreground">Project Type</Label>
-                      <p className="text-sm font-medium mt-1">{viewingTemplate.project_type}</p>
+                      <Select
+                        value={viewEditForm.project_type}
+                        onValueChange={(v) => setViewEditForm(prev => prev ? { ...prev, project_type: v } : prev)}
+                      >
+                        <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>{PROJECT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label className="text-xs text-muted-foreground">Complexity</Label>
-                      <div className="mt-1">
-                        <Badge variant="outline" className={getComplexityBadge(viewingTemplate.complexity)}>
-                          {viewingTemplate.complexity}
-                        </Badge>
-                      </div>
+                      <Select
+                        value={viewEditForm.complexity}
+                        onValueChange={(v: 'low' | 'medium' | 'high') => setViewEditForm(prev => prev ? { ...prev, complexity: v } : prev)}
+                      >
+                        <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>{COMPLEXITY_LEVELS.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label className="text-xs text-muted-foreground">Status</Label>
-                      <p className="text-sm mt-1">{viewingTemplate.is_active ? 'Active' : 'Inactive'}{viewingTemplate.is_default && ' · Default'}</p>
+                      <Select
+                        value={viewEditForm.is_active ? 'active' : 'inactive'}
+                        onValueChange={(v) => setViewEditForm(prev => prev ? { ...prev, is_active: v === 'active' } : prev)}
+                      >
+                        <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
@@ -319,17 +342,49 @@ export const ORATemplateManagement = () => {
                         return (
                           <div key={code} className="rounded-lg border overflow-hidden">
                             <div className={cn("flex items-center justify-between px-3 py-2 border-b", phaseColors[code])}>
-                              <span className="text-xs font-semibold uppercase tracking-wide">{phase?.label || code}</span>
-                              <Badge variant="outline" className="bg-background/60 text-[10px]">{acts.length}</Badge>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold uppercase tracking-wide">{phase?.label || code}</span>
+                                <Badge variant="outline" className="bg-background/60 text-[10px]">{acts.length}</Badge>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => { setAddActivityPhase(code); setNewActivityName(''); }}
+                              >
+                                <Plus className="h-3.5 w-3.5 mr-1" />Add
+                              </Button>
                             </div>
+                            {addActivityPhase === code && (
+                              <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
+                                <Input
+                                  autoFocus
+                                  value={newActivityName}
+                                  onChange={(e) => setNewActivityName(e.target.value)}
+                                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddActivity(code); if (e.key === 'Escape') { setAddActivityPhase(null); setNewActivityName(''); } }}
+                                  placeholder="New activity name..."
+                                  className="h-8 text-sm"
+                                />
+                                <Button size="sm" className="h-8" disabled={!newActivityName.trim() || isCreatingActivity} onClick={() => handleAddActivity(code)}>Add</Button>
+                                <Button size="sm" variant="ghost" className="h-8" onClick={() => { setAddActivityPhase(null); setNewActivityName(''); }}>Cancel</Button>
+                              </div>
+                            )}
                             {acts.length === 0 ? (
                               <div className="px-3 py-4 text-xs text-muted-foreground text-center">No activities in catalog for this phase.</div>
                             ) : (
                               <ul className="divide-y">
                                 {acts.map(a => (
-                                  <li key={a.id} className="flex items-start gap-3 px-3 py-2 text-sm hover:bg-muted/40">
-                                    <span className="font-mono text-[11px] text-muted-foreground mt-0.5 shrink-0 w-14">{a.activity_code}</span>
+                                  <li key={a.id} className="group/act flex items-center gap-3 px-3 py-2 text-sm hover:bg-muted/40">
+                                    <span className="font-mono text-[11px] text-muted-foreground shrink-0 w-14">{formatActivityCode(a.activity_code)}</span>
                                     <span className="flex-1 min-w-0 truncate">{a.activity}</span>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-destructive opacity-0 group-hover/act:opacity-100 transition-opacity"
+                                      onClick={() => setDeleteActivityId(a.id)}
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
                                   </li>
                                 ))}
                               </ul>
@@ -342,9 +397,12 @@ export const ORATemplateManagement = () => {
                 </div>
 
                 <DialogFooter className="px-6 py-4 border-t bg-muted/30">
-                  <Button variant="outline" onClick={() => setViewingTemplate(null)}>Close</Button>
-                  <Button onClick={() => { handleOpenForm(viewingTemplate); setViewingTemplate(null); }}>
-                    <Edit3 className="h-4 w-4 mr-2" />Edit
+                  <Button variant="outline" onClick={closeViewing}>Close</Button>
+                  <Button
+                    disabled={!isViewDirty || !viewEditForm.name || !viewEditForm.project_type || isUpdating}
+                    onClick={() => setConfirmSaveOpen(true)}
+                  >
+                    {isUpdating ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </DialogFooter>
               </>
@@ -352,6 +410,36 @@ export const ORATemplateManagement = () => {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Confirm Save Changes */}
+      <AlertDialog open={confirmSaveOpen} onOpenChange={setConfirmSaveOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Save changes?</AlertDialogTitle>
+            <AlertDialogDescription>Your changes to this template will be applied. Continue?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmedSave}>Save Changes</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm Delete Activity */}
+      <AlertDialog open={!!deleteActivityId} onOpenChange={(open) => !open && setDeleteActivityId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Activity</AlertDialogTitle>
+            <AlertDialogDescription>This will remove the activity from the catalog. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteActivity} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
 
       {/* Create/Edit Template Dialog - Modern Redesign */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
