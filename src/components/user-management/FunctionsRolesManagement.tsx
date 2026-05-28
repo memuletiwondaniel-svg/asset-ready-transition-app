@@ -96,16 +96,18 @@ const FunctionsRolesManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   
+  // Combined Add dialog
+  const [addOpen, setAddOpen] = useState(false);
+  const [addType, setAddType] = useState<'function' | 'role'>('role');
+
   // Function dialogs
-  const [addFunctionOpen, setAddFunctionOpen] = useState(false);
   const [editFunctionOpen, setEditFunctionOpen] = useState(false);
   const [functionName, setFunctionName] = useState('');
   const [functionDescription, setFunctionDescription] = useState('');
   const [functionOrder, setFunctionOrder] = useState('1');
   const [editingFunction, setEditingFunction] = useState<RoleCategory | null>(null);
-  
+
   // Role dialogs
-  const [addRoleOpen, setAddRoleOpen] = useState(false);
   const [editRoleOpen, setEditRoleOpen] = useState(false);
   const [roleName, setRoleName] = useState('');
   const [roleDescription, setRoleDescription] = useState('');
