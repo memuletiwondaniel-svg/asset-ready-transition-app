@@ -249,6 +249,17 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
   // Section definitions for the sectioned layout
   const sections = [
     {
+      label: 'ORGANIZATION SETTINGS',
+      columns: 3 as const,
+      items: [
+        { id: 'users', title: 'Users', description: 'Manage user accounts, invite team members', icon: Users, gradient: 'from-blue-500 to-blue-600', onClick: () => setActiveView('users') },
+        { id: 'handover-management', title: 'VCRs & PSSRs', description: 'Certificates, safety reviews', icon: Key, gradient: 'from-blue-500 to-cyan-500', onClick: () => setActiveView('handover-management') },
+        { id: 'document-management', title: 'Document Management', description: 'Types, categories, lifecycle', icon: Files, gradient: 'from-sky-500 to-blue-600', onClick: () => setActiveView('document-management') },
+        { id: 'tenant-setup', title: 'Tenant Setup Wizard', description: 'Configure new organisation', icon: Compass, gradient: 'from-teal-500 to-cyan-600', onClick: () => setTenantSetupOpen(true) },
+      ],
+
+    },
+    {
       label: 'USER MANAGEMENT',
       columns: 2 as const,
       items: [
@@ -259,17 +270,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         { id: 'sso', title: 'Single Sign-On', description: 'SAML 2.0, Azure AD, Okta', icon: Shield, gradient: 'from-indigo-500 to-purple-600', onClick: () => setActiveView('sso') },
       ],
     },
-    {
-      label: 'OPERATIONS & CONFIGURATION',
-      columns: 3 as const,
-      items: [
-        { id: 'users', title: 'Users', description: 'Manage user accounts, invite team members', icon: Users, gradient: 'from-blue-500 to-blue-600', onClick: () => setActiveView('users') },
-        { id: 'handover-management', title: 'VCRs & PSSRs', description: 'Certificates, safety reviews', icon: Key, gradient: 'from-blue-500 to-cyan-500', onClick: () => setActiveView('handover-management') },
-        { id: 'document-management', title: 'Document Management', description: 'Types, categories, lifecycle', icon: Files, gradient: 'from-sky-500 to-blue-600', onClick: () => setActiveView('document-management') },
-        { id: 'tenant-setup', title: 'Tenant Setup Wizard', description: 'Configure new organisation', icon: Compass, gradient: 'from-teal-500 to-cyan-600', onClick: () => setTenantSetupOpen(true) },
-      ],
 
-    },
     {
       label: 'AI AGENTS',
       columns: 3 as const,
