@@ -165,6 +165,7 @@ export const ORAActivityCatalog: React.FC<ORAActivityCatalogProps> = ({ hideTool
   return (
     <div className="space-y-4 flex flex-col min-h-0">
       {/* Toolbar */}
+      {!hideToolbar && (
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 bg-card p-3 rounded-lg border">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="relative flex-1">
@@ -203,6 +204,7 @@ export const ORAActivityCatalog: React.FC<ORAActivityCatalogProps> = ({ hideTool
           <Plus className="h-4 w-4 mr-1" />Add Activity
         </Button>
       </div>
+      )}
 
       {/* Table or empty state */}
       {activities.length === 0 ? (
