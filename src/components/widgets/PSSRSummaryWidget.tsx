@@ -269,8 +269,6 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                           size="sm"
                           className="gap-1.5 group/cta"
                           onClick={() => setShowP2APlanWizard(true)}
-
-                          onClick={() => setShowP2APlanWizard(true)}
                         >
                           <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover/cta:text-green-600 transition-colors" />
                           Continue P2A Plan
