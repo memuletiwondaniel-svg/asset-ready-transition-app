@@ -663,7 +663,7 @@ export const ORPPhaseDeliverablesTab = () => {
                   <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
                     Description
                   </Label>
-                  <Textarea value={viewingActivity.description || ''} disabled className="bg-muted" rows={3} />
+                  <Textarea value={viewingActivity.description || ''} disabled className="bg-muted resize-none h-auto" rows={Math.max(3, (viewingActivity.description || '').split('\n').length + Math.ceil((viewingActivity.description || '').length / 60))} />
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-2">
