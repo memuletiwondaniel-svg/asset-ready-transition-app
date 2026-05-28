@@ -7,7 +7,7 @@
  */
 
 export const APP_RESET_ID = "2026-05-28-route-shell-hard-reset-v5";
-
+export const APP_RESET_ID = "2026-05-28-route-shell-hard-reset-v6";
 export const RESET_KEY = "__orsh_reset_id";
 export const SESSION_EPOCH_KEY = "__orsh_session_epoch";
 export const TAB_SESSION_EPOCH_KEY = "__orsh_tab_session_epoch";
