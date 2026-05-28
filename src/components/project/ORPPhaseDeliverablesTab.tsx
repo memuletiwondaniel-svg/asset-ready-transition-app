@@ -329,7 +329,8 @@ export const ORPPhaseDeliverablesTab = () => {
                       {phaseActivities.map((activity) => (
                         <TableRow
                           key={activity.id}
-                          className="group/row transition-all duration-200 group-hover/tbody:opacity-40 hover:!opacity-100 hover:bg-muted/60"
+                          className="group/row transition-all duration-200 group-hover/tbody:opacity-40 hover:!opacity-100 hover:bg-muted/60 cursor-pointer"
+                          onClick={() => openViewActivity(activity)}
                         >
                           <TableCell className="font-mono text-xs">
                             {formatActivityCode(activity.activity_code)}
@@ -351,7 +352,10 @@ export const ORPPhaseDeliverablesTab = () => {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
-                                onClick={() => openEditActivity(activity)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEditActivity(activity);
+                                }}
                               >
                                 <Edit3 className="h-4 w-4" />
                               </Button>
@@ -359,7 +363,10 @@ export const ORPPhaseDeliverablesTab = () => {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() => setDeleteConfirmId(activity.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteConfirmId(activity.id);
+                                }}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
