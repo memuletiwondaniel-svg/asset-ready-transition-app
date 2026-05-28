@@ -39,6 +39,7 @@ import {
   Search,
   GitBranch,
   LayoutGrid,
+  List,
   Trash2,
   GripVertical,
   Pencil,
@@ -47,6 +48,7 @@ import {
   Minimize2
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EditProjectModal } from '@/components/project/EditProjectModal';
 import { useHubs } from '@/hooks/useHubs';
 import { usePortfolioManagers } from '@/hooks/usePortfolioManagers';
