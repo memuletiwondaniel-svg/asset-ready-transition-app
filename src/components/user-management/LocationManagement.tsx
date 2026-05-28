@@ -547,17 +547,22 @@ const LocationManagement: React.FC = () => {
           </div>
 
           <TabsContent value="tree" className="mt-0">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <GitBranch className="h-4 w-4" />
-                  Basrah Gas Company (BGC)
+            <Card className="border-border/60 shadow-md ring-1 ring-primary/5 bg-gradient-to-b from-background to-muted/20">
+              <CardHeader className="pb-3 border-b border-border/40 bg-gradient-to-r from-primary/5 via-background to-background">
+                <CardTitle className="text-base flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background shadow-sm ring-1 ring-border/60">
+                    <BGCIcon size={26} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-base font-semibold tracking-tight">Basrah Gas Company</span>
+                    <span className="text-[11px] font-normal uppercase tracking-wider text-muted-foreground">BGC · Asset Hierarchy</span>
+                  </div>
                   {searchQuery && (
                     <Badge variant="secondary" className="ml-2">Filtered</Badge>
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-4">
                 <TreeView />
               </CardContent>
             </Card>
