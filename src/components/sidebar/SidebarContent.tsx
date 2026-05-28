@@ -190,8 +190,11 @@ export const SidebarContent = memo<SidebarContentProps>(({
                 {visibleNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = currentPage === item.section;
+                  const fullLabel = getLabel(item.labelKey);
+                  const visibleLabel = item.shortLabel || fullLabel;
+                  const tooltipText = item.tooltip || (item.shortLabel ? fullLabel : null);
                   
-                  return (
+                  const button = (
                     <Button
                       key={item.section}
                       variant="ghost"
@@ -208,7 +211,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
                         "mr-2 h-4 w-4 transition-colors flex-shrink-0",
                         isActive ? "text-primary" : "text-muted-foreground"
                       )} />
-                      <span className="truncate">{getLabel(item.labelKey)}</span>
+                      <span className="truncate">{visibleLabel}</span>
                       {item.section === 'ask-orsh' && unreadChatCount > 0 && (
                         <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
                           {unreadChatCount}
@@ -220,6 +223,14 @@ export const SidebarContent = memo<SidebarContentProps>(({
                         </span>
                       )}
                     </Button>
+                  );
+
+                  if (!tooltipText) return button;
+                  return (
+                    <Tooltip key={item.section}>
+                      <TooltipTrigger asChild>{button}</TooltipTrigger>
+                      <TooltipContent side="right">{tooltipText}</TooltipContent>
+                    </Tooltip>
                   );
                 })}
               </div>
