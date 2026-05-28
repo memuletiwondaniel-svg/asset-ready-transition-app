@@ -997,9 +997,9 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         {/* Projects Column - Filtered by selected portfolio and hub */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between group/header">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <FolderKanban className="h-4 w-4" />
+                <FolderKanban className="h-4 w-4 text-emerald-500" />
                 Projects
                 {(selectedRegion || selectedHub) && (
                   <Badge variant="outline" className="ml-1 text-xs">
@@ -1013,17 +1013,13 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
               <Button 
                 size="sm" 
                 variant="outline" 
+                className="opacity-0 group-hover/header:opacity-100 transition-opacity"
                 onClick={() => setShowAddProjectModal(true)}
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Add
               </Button>
             </div>
-            {!selectedRegion && !selectedHub && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Select a portfolio or hub to filter projects
-              </p>
-            )}
           </CardHeader>
           <CardContent className="pt-0">
             {(() => {
