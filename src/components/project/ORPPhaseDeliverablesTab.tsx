@@ -123,6 +123,9 @@ export const ORPPhaseDeliverablesTab = () => {
     duration_low: undefined,
   });
 
+  // View-only activity
+  const [viewingActivity, setViewingActivity] = useState<ORAActivity | null>(null);
+
   // Phase form
   const [phaseForm, setPhaseForm] = useState({ code: '', label: '', prefix: '' });
   const [isCreatingPhase, setIsCreatingPhase] = useState(false);
