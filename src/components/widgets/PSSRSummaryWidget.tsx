@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Key, FileText, Plus, ChevronRight, Pencil, ExternalLink } from 'lucide-react';
+import { Key, FileText, Plus, ChevronRight, Pencil, ExternalLink, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
+
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { VCRCard } from './VCRCard';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
@@ -101,6 +104,9 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const [showP2AApprovals, setShowP2AApprovals] = useState(false);
   const [selectedVCR, setSelectedVCR] = useState<ProjectVCR | null>(null);
   const [wizardVCR, setWizardVCR] = useState<ProjectVCR | null>(null);
+  const [showDeleteP2ADraft, setShowDeleteP2ADraft] = useState(false);
+  const { deleteDraft: deleteP2ADraft, isDeleting: isDeletingP2ADraft } = useP2APlanWizard(projectId, projectCode);
+
 
   // Get the first (active) ORA plan for this project
   const oraPlanId = orpPlans?.[0]?.id || '';
@@ -257,16 +263,28 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                     <p className="text-sm font-medium mb-1 text-foreground">Draft in Progress</p>
                     <p className="text-xs opacity-70 mb-5">Continue setting up your handover plan</p>
                     {canCreateVCR && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="text-xs gap-1.5"
-                        onClick={() => setShowP2APlanWizard(true)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                        Continue Setup
-                      </Button>
+                      <div className="flex items-center justify-center gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="text-xs gap-1.5 group/cta"
+                          onClick={() => setShowP2APlanWizard(true)}
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover/cta:text-green-600 transition-colors" />
+                          Continue P2A Plan
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => { e.stopPropagation(); setShowDeleteP2ADraft(true); }}
+                          aria-label="Delete draft P2A plan"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     )}
+
                   </>
                 ) : (
                   <>
@@ -427,6 +445,36 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
           projectCode={projectCode}
         />
       )}
+
+      <AlertDialog open={showDeleteP2ADraft} onOpenChange={setShowDeleteP2ADraft}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Draft P2A Plan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the draft P2A handover plan including all systems, VCRs, phases, and approvers. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeletingP2ADraft}
+              onClick={async (e) => {
+                e.preventDefault();
+                try {
+                  await deleteP2ADraft();
+                  setShowDeleteP2ADraft(false);
+                } catch {
+                  // toast handled in hook
+                }
+              }}
+            >
+              {isDeletingP2ADraft ? 'Deleting...' : 'Delete Plan'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </>
   );
 };
