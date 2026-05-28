@@ -172,6 +172,10 @@ export const ORPPhaseDeliverablesTab = () => {
     setAddOpen(true);
   };
 
+  const openViewActivity = (activity: ORAActivity) => {
+    setViewingActivity(activity);
+  };
+
   const handleSaveActivity = async () => {
     try {
       const payload = { ...activityForm };
