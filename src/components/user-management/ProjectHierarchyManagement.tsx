@@ -57,6 +57,7 @@ import { PortfolioDetailsModal } from './PortfolioDetailsModal';
 interface ProjectHierarchyManagementProps {
   selectedLanguage?: string;
   translations?: Record<string, string>;
+  onShowProjectList?: () => void;
 }
 
 // Draggable Hub Component
