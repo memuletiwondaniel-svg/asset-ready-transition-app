@@ -33,6 +33,7 @@ import MyTasksPage from "@/pages/MyTasksPage";
 import PSSRItemReview from "@/pages/PSSRItemReview";
 import PSSRApprovalPage from "@/pages/PSSRApprovalPage";
 import ProjectsHomePage from "@/components/project/ProjectsHomePage";
+import HomePage from "@/pages/HomePage";
 
 import MicrosoftCallback from "@/pages/auth/MicrosoftCallback";
 
