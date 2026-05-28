@@ -569,6 +569,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                 <ProjectHierarchyManagement 
                   selectedLanguage={selectedLanguage}
                   translations={translations}
+                  onShowProjectList={() => setActiveTab('projects')}
                 />
               ) : activeTab === 'orp-phases' ? (
                 <ORPPhaseDeliverablesTab />
