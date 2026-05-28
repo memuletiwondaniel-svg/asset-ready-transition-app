@@ -191,6 +191,7 @@ const DraggableProject: React.FC<{
       >
         <GripVertical className="h-3 w-3" />
       </div>
+      <FolderKanban className="h-3 w-3 text-amber-500 shrink-0 mr-2" />
       <span className="text-xs font-mono font-semibold text-primary mr-2">{projectId}</span>
       <span className="text-xs text-muted-foreground font-normal flex-1 truncate">{project.projectTitle}</span>
       <Button
