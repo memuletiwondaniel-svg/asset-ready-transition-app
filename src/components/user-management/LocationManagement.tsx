@@ -344,11 +344,11 @@ const LocationManagement: React.FC = () => {
                               <div className="flex items-center group rounded-md hover:bg-accent/50 transition-colors">
                                 <CollapsibleTrigger asChild>
                                   <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0">
-                                    {hasStations ? (isFieldExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />) : <div className="w-3.5" />}
+                                    {hasStations ? (isFieldExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/40" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />) : <div className="w-3.5" />}
                                   </Button>
                                 </CollapsibleTrigger>
                                 <div className="flex items-center gap-2 flex-1 py-1 px-2 cursor-pointer" onClick={() => toggleFieldExpanded(field.id)}>
-                                  <MapPin className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                                  <MapPin className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                                   <span className="text-sm">{field.name}</span>
                                   {fieldStations.length > 0 && (
                                     <Badge variant="outline" className="ml-1 text-xs py-0">{fieldStations.length}</Badge>
