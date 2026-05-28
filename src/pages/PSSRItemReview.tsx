@@ -234,9 +234,9 @@ const PSSRItemReview: React.FC = () => {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b px-6 py-4">
         <div className="flex items-center gap-4 mb-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/pssr/approver-dashboard')}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/my-tasks')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            Back to Tasks
           </Button>
         </div>
         

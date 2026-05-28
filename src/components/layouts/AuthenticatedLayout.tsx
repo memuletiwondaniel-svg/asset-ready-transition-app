@@ -34,11 +34,10 @@ export const AuthenticatedLayout: React.FC = () => {
     if (path.startsWith('/pssr')) return 'pssr';
     if (path.startsWith('/my-tasks')) return 'my-tasks';
     if (path.startsWith('/executive-dashboard')) return 'executive-dashboard';
-    if (path.startsWith('/vcrs') || path.startsWith('/projects') || path.startsWith('/project/')) return 'projects';
+    if (path.startsWith('/projects') || path.startsWith('/project/')) return 'projects';
     if (path.startsWith('/project-management')) return 'project-management';
-    if (path.startsWith('/users')) return 'users';
+    if (path.startsWith('/admin/users')) return 'users';
     if (path.startsWith('/admin-tools')) return 'admin-tools';
-    if (path.startsWith('/manage-checklist')) return 'manage-checklist';
     // Default: extract first segment
     return path.slice(1).split('/')[0] || 'home';
   }, [location.pathname]);

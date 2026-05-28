@@ -78,26 +78,17 @@ const Index = () => {
   } else if (isAuthenticated) {
     // Show specific section based on navigation
     if (currentSection) {
+      // /admin/users → "admin/users"
+      if (currentSection === 'admin/users') {
+        return <UserManagement onBack={handleBackToLanding} />;
+      }
       switch (currentSection) {
         case 'pssr':
           return <PSSRSummaryPage onBack={handleBackToLanding} />;
-        case 'users':
-        case 'user-management':
-          return <UserManagement onBack={handleBackToLanding} />;
         case 'admin-tools':
           return <AdminToolsPage onBack={handleBackToLanding} />;
         case 'projects':
           return <ProjectsHomePage onBack={handleBackToLanding} />;
-        case 'p2o':
-          return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-100">
-              <div className="text-center">
-                <h1 className="text-3xl font-bold mb-4">Project-to-Operations (P2O)</h1>
-                <p className="text-gray-600 mb-6">PAC and FAC workflows - Coming Soon...</p>
-                <Button onClick={handleBackToLanding}>Back to Dashboard</Button>
-              </div>
-            </div>
-          );
         default:
           return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
       }

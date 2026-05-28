@@ -36,21 +36,17 @@ const TenantSetupWizardLazy = lazy(() => import('./tenant-setup/TenantSetupWizar
 const FAVORITE_ICON_MAP: Record<string, { icon: React.ComponentType<any>; color: string }> = {
   // Main navigation pages (icons match sidebar & page headers)
   '/home': { icon: Home, color: 'bg-primary' },
-  '/vcrs': { icon: Key, color: 'bg-blue-500' },
   '/projects': { icon: Building2, color: 'bg-purple-500' },
   '/project-management': { icon: Building2, color: 'bg-purple-500' },
   '/pssr': { icon: AlertTriangle, color: 'bg-orange-500' },
   '/my-tasks': { icon: CalendarCheck, color: 'bg-indigo-500' },
-  '/my-backlog': { icon: ClipboardList, color: 'bg-indigo-500' },
   '/executive-dashboard': { icon: Gauge, color: 'bg-cyan-500' },
   '/or-maintenance': { icon: Wrench, color: 'bg-slate-500' },
   '/ask-orsh': { icon: MessageSquare, color: 'bg-violet-500' },
   '/operation-readiness': { icon: GanttChart, color: 'bg-emerald-500' },
-  
-  
+
   // Standalone pages
-  '/users': { icon: Users, color: 'bg-blue-500' },
-  '/user-management': { icon: Users, color: 'bg-blue-500' },
+  '/admin/users': { icon: Users, color: 'bg-blue-500' },
   '/settings': { icon: Settings, color: 'bg-zinc-500' },
   
   // Admin tools main dashboard

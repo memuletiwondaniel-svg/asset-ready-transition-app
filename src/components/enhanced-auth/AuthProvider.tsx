@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { checkOnce as checkAppVersion } from '@/lib/version-check';
 
 interface AuthContextType {
   user: User | null;
@@ -66,6 +67,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Track login activity
         if (event === 'SIGNED_IN' && session?.user) {
+          // Revalidate the app bundle on sign-in. If this tab has been
+          // sitting on an old build (common after session timeout + re-login),
+          // checkAppVersion will hard-reload to the current build.
+          void checkAppVersion();
           setTimeout(async () => {
             try {
               await supabase.rpc('track_user_login', {

@@ -69,7 +69,7 @@ interface SidebarContentProps {
 
 const navigationItems: (NavigationItem & { requiresLeadership?: boolean })[] = [
   { labelKey: 'navHome', icon: Home, path: '/', section: 'home' },
-  { labelKey: 'navProjects', icon: Key, path: '/vcrs', section: 'projects' },
+  { labelKey: 'navProjects', icon: Key, path: '/projects', section: 'projects' },
   { labelKey: 'navPSSR', icon: ClipboardCheck, path: '/pssr', section: 'pssr' },
   { labelKey: 'navMyTasks', icon: ListChecks, path: '/my-tasks', section: 'my-tasks' },
   
@@ -110,10 +110,8 @@ export const SidebarContent = memo<SidebarContentProps>(({
   const { hasPermission } = usePermissions();
   const newTaskCount = useNewTaskCount();
   
-  const DANIEL_USER_ID = '05b44255-4358-450c-8aa4-0558b31df70b';
   const isLeadership = hasPermission('view_reports') || hasPermission('create_ora_plan');
   const visibleNavItems = navigationItems.filter(item => {
-    if (item.section === 'my-backlog' && currentUserId !== DANIEL_USER_ID) return false;
     if (item.requiresLeadership && !isLeadership) return false;
     return true;
   });

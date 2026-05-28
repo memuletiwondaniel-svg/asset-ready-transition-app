@@ -16,8 +16,45 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <meta name="app-build" content="__APP_BUILD__" />
-    <!-- Cache/SW/storage reset is handled inside src/main.tsx via
-         runResetIfNeeded() — single source of truth, no inline script. -->
+    <!-- Pre-React stale-bundle guard. Runs before any module import so a
+         tab waking from long idle never renders against an old in-memory
+         bundle. Safe in dev: the meta token stays literal "__APP_BUILD__"
+         and we skip the reload path in that case. -->
+    <script>
+      (function () {
+        try {
+          // 1. Unregister any rogue service workers (Lovable apps don't ship one).
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
+              regs.forEach(function (r) { try { r.unregister(); } catch (e) {} });
+            }).catch(function () {});
+          }
+          // 2. Wipe Cache Storage entries — nothing in this app should be cached there.
+          if (typeof caches !== 'undefined' && caches.keys) {
+            caches.keys().then(function (keys) {
+              keys.forEach(function (k) { try { caches.delete(k); } catch (e) {} });
+            }).catch(function () {});
+          }
+          // 3. Compare HTML build id with what this device last booted.
+          var metaEl = document.querySelector('meta[name="app-build"]');
+          var htmlBuild = metaEl ? metaEl.getAttribute('content') : '';
+          if (!htmlBuild || htmlBuild === '__APP_BUILD__') return; // dev / unreplaced
+          var KEY = '__orsh_html_build';
+          var prev = null;
+          try { prev = localStorage.getItem(KEY); } catch (e) {}
+          if (prev && prev !== htmlBuild) {
+            try { localStorage.setItem(KEY, htmlBuild); } catch (e) {}
+            // Force a cache-busted reload BEFORE React loads. Replace() so
+            // back-button doesn't return to the stale URL.
+            var u = new URL(window.location.href);
+            u.searchParams.set('_b', String(Date.now()));
+            window.location.replace(u.toString());
+            return;
+          }
+          try { localStorage.setItem(KEY, htmlBuild); } catch (e) {}
+        } catch (e) { /* never block boot */ }
+      })();
+    </script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
