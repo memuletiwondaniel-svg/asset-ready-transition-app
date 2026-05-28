@@ -28,7 +28,7 @@ export const agentProfiles: AgentProfile[] = [
   {
     code: 'bob',
     name: 'Bob',
-    role: 'CoPilot & Router',
+    role: 'Project Integration',
     avatar: bobAvatar,
     status: 'active',
     gradient: 'from-amber-500 to-orange-600',
@@ -52,7 +52,7 @@ export const agentProfiles: AgentProfile[] = [
   {
     code: 'selma',
     name: 'Selma',
-    role: 'Documentation & Information Readiness',
+    role: 'Documentation and IM',
     avatar: selmaAvatar,
     status: 'active',
     gradient: 'from-cyan-500 to-blue-600',
@@ -79,7 +79,7 @@ export const agentProfiles: AgentProfile[] = [
   {
     code: 'fred',
     name: 'Fred',
-    role: 'System & Hardware Readiness',
+    role: 'Commissioning & System Readiness',
     avatar: fredAvatar,
     status: 'active',
     gradient: 'from-red-500 to-rose-600',
@@ -108,7 +108,7 @@ export const agentProfiles: AgentProfile[] = [
   {
     code: 'ivan',
     name: 'Ivan',
-    role: 'Technical Authority, Process, Ops & Safety',
+    role: 'Design & Engineering',
     avatar: ivanAvatar,
     status: 'active',
     gradient: 'from-slate-600 to-blue-800',
@@ -142,7 +142,7 @@ export const agentProfiles: AgentProfile[] = [
   {
     code: 'hannah',
     name: 'Hannah',
-    role: 'Training & People Readiness',
+    role: 'Competence Development & Assurance',
     avatar: hannahAvatar,
     status: 'planned',
     gradient: 'from-violet-500 to-purple-600',
@@ -168,7 +168,7 @@ export const agentProfiles: AgentProfile[] = [
   {
     code: 'alex',
     name: 'Alex',
-    role: 'Maintenance System Readiness',
+    role: 'Maintenance Systems',
     avatar: alexAvatar,
     status: 'planned',
     gradient: 'from-cyan-600 to-slate-600',
