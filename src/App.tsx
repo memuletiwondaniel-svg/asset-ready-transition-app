@@ -86,17 +86,9 @@ const App = () => (
                       <Route path="/pssr/:id/review" element={<PSSRItemReview />} />
                       <Route path="/pssr/:id/approve" element={<PSSRApprovalPage />} />
                       <Route path="/executive-dashboard" element={<ExecutiveDashboardPage />} />
-                      {/* Permanent redirects for deleted stale routes — keep so old bookmarks/links don't 404 */}
+                      {/* /users kept as a redirect to the canonical /admin/users page */}
                       <Route path="/users" element={<Navigate to="/admin/users" replace />} />
-                      <Route path="/my-backlog" element={<Navigate to="/my-tasks" replace />} />
-                      <Route path="/manage-checklist" element={<Navigate to="/home" replace />} />
-                      <Route path="/vcrs" element={<Navigate to="/projects" replace />} />
-                      <Route path="/vcrs/*" element={<Navigate to="/projects" replace />} />
-                      <Route path="/pssr/approver-dashboard" element={<Navigate to="/my-tasks" replace />} />
-                      <Route path="/pssr-reviews" element={<Navigate to="/my-tasks" replace />} />
-                      <Route path="/pssr/:id/sof" element={<Navigate to="/my-tasks" replace />} />
-                      <Route path="/p2o" element={<Navigate to="/home" replace />} />
-                      {/* /pssr/:id route removed — PSSRDetailOverlay is used instead */}
+                      {/* Stale routes deleted entirely — they will fall through to NotFound */}
                       <Route path="/operation-readiness" element={<ORPLandingPage />} />
                       <Route path="/operation-readiness/analytics" element={<ORPAnalyticsPage />} />
                       <Route path="/operation-readiness/:id" element={<ORPDetailsPage />} />

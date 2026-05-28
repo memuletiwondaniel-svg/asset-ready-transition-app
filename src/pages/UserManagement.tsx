@@ -57,6 +57,7 @@ const UserManagement = ({ onBack: _onBack }: UserManagementProps) => {
   const breadcrumbItems = useMemo(() => ([
     { label: 'Home', path: '/home', onClick: () => window.location.assign('/home') },
     { label: 'Admin', path: '/admin' },
+    { label: 'Users', path: '/admin/users' },
   ]), []);
   
   const [searchQuery, setSearchQuery] = useState("");
