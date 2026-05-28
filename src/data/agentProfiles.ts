@@ -142,7 +142,7 @@ export const agentProfiles: AgentProfile[] = [
   {
     code: 'hannah',
     name: 'Hannah',
-    role: 'Competence Development & Assurance',
+    role: 'Ops Readiness',
     avatar: hannahAvatar,
     status: 'planned',
     gradient: 'from-violet-500 to-purple-600',
