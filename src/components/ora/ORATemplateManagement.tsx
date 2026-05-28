@@ -11,12 +11,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Switch } from '@/components/ui/switch';
 import { Plus, Edit3, Trash2, Search, Copy, LayoutTemplate, Star, Layers, Sparkles, FileText, Settings2 } from 'lucide-react';
 import { useORAPlanTemplates, PROJECT_TYPES, COMPLEXITY_LEVELS, ORAPlanTemplate, ORAPlanTemplateInput } from '@/hooks/useORAPlanTemplates';
-import { useORPPhases } from '@/hooks/useORAActivityCatalog';
+import { useORPPhases, useORAActivityCatalog } from '@/hooks/useORAActivityCatalog';
 import { cn } from '@/lib/utils';
 
 export const ORATemplateManagement = () => {
   const { templates, isLoading, createTemplate, updateTemplate, deleteTemplate, isCreating, isUpdating } = useORAPlanTemplates();
   const { phases } = useORPPhases();
+  const { activities } = useORAActivityCatalog();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
