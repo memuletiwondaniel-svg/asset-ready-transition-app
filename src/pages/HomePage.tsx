@@ -1,20 +1,7 @@
-import { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import LandingPage from "@/components/LandingPage";
+import { Navigate } from "react-router-dom";
 
 const HomePage = () => {
-  const navigate = useNavigate();
-
-  const handleNavigate = useCallback((section: string) => {
-    const routes: Record<string, string> = {
-      home: "/home",
-      "operation-readiness": "/operation-readiness",
-    };
-
-    navigate(routes[section] || `/${section}`);
-  }, [navigate]);
-
-  return <LandingPage onBack={() => undefined} onNavigate={handleNavigate} />;
+  return <Navigate to="/my-tasks" replace />;
 };
 
 export default HomePage;

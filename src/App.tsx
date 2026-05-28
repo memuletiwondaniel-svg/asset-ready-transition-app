@@ -13,7 +13,6 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { TenantProvider } from "@/contexts/TenantContext";
 import AuthenticatedLayout from "@/components/layouts/AuthenticatedLayout";
 import Index from "./pages/Index";
-import HomePage from "./pages/HomePage";
 import { AdminToolsRoutePage, AdminUsersRoutePage, PssrRoutePage } from "./pages/AuthenticatedRoutePages";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
@@ -76,7 +75,7 @@ const App = () => (
                     
                     {/* Authenticated routes with persistent sidebar layout */}
                     <Route element={<AuthenticatedLayout />}>
-                      <Route path="/home" element={<HomePage />} />
+                      <Route path="/home" element={<Navigate to="/my-tasks" replace />} />
                       <Route path="/pssr" element={<PssrRoutePage />} />
                       <Route path="/admin/users" element={<AdminUsersRoutePage />} />
                       <Route path="/admin-tools" element={<AdminToolsRoutePage />} />
