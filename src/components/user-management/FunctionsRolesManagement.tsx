@@ -427,51 +427,93 @@ const FunctionsRolesManagement: React.FC = () => {
         )}
       </div>
 
-
-      {/* Add Function Dialog */}
-      <Dialog open={addFunctionOpen} onOpenChange={setAddFunctionOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Function</DialogTitle>
-            <DialogDescription>
-              Create a new function to organize roles.
+      {/* Combined Add Dialog (Function or Role) */}
+      <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) { resetFunctionForm(); resetRoleForm(); } }}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
+            <DialogTitle className="text-xl font-semibold">Add New</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Add a function or a role to the organization.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+
+          <div className="px-6 pb-6 space-y-5 border-t border-border/60 pt-5">
             <div className="space-y-2">
-              <Label htmlFor="function-name">Name</Label>
-              <Input
-                id="function-name"
-                value={functionName}
-                onChange={(e) => setFunctionName(e.target.value)}
-                placeholder="e.g., Engineering"
-              />
+              <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                Type
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { key: 'function', label: 'Function', icon: <Folder className="h-5 w-5" /> },
+                  { key: 'role',     label: 'Role',     icon: <ShieldCheck className="h-5 w-5" /> },
+                ] as const).map(opt => {
+                  const active = addType === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setAddType(opt.key)}
+                      className={`flex flex-col items-center justify-center gap-1.5 rounded-lg border px-3 py-3 transition-all ${
+                        active
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-border bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                      }`}
+                    >
+                      {opt.icon}
+                      <span className="text-sm font-medium">{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="function-description">Description</Label>
-              <Textarea
-                id="function-description"
-                value={functionDescription}
-                onChange={(e) => setFunctionDescription(e.target.value)}
-                placeholder="Optional description..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="function-order">Display Order</Label>
-              <Input
-                id="function-order"
-                type="number"
-                value={functionOrder}
-                onChange={(e) => setFunctionOrder(e.target.value)}
-                min="1"
-              />
-            </div>
+
+            {addType === 'function' ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="function-name" className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Name</Label>
+                  <Input id="function-name" value={functionName} onChange={(e) => setFunctionName(e.target.value)} placeholder="e.g., Engineering" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="function-description" className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Description — optional</Label>
+                  <Textarea id="function-description" value={functionDescription} onChange={(e) => setFunctionDescription(e.target.value)} placeholder="Short label or full name" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="function-order" className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Display Order</Label>
+                  <Input id="function-order" type="number" value={functionOrder} onChange={(e) => setFunctionOrder(e.target.value)} min="1" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Function</Label>
+                  <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                    <SelectTrigger><SelectValue placeholder="Select a function" /></SelectTrigger>
+                    <SelectContent>
+                      {categories?.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role-name" className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Role Name</Label>
+                  <Input id="role-name" value={roleName} onChange={(e) => setRoleName(e.target.value)} placeholder="e.g., Senior Engineer" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role-description" className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Description — optional</Label>
+                  <Textarea id="role-description" value={roleDescription} onChange={(e) => setRoleDescription(e.target.value)} placeholder="Short label or full name" />
+                </div>
+              </>
+            )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setAddFunctionOpen(false); resetFunctionForm(); }}>
+
+          <DialogFooter className="px-6 py-4 border-t border-border/60 bg-muted/30">
+            <Button variant="outline" onClick={() => { setAddOpen(false); resetFunctionForm(); resetRoleForm(); }}>
               Cancel
             </Button>
-            <Button onClick={handleAddFunction}>Add Function</Button>
+            <Button onClick={addType === 'function' ? handleAddFunction : handleAddRole}>
+              {addType === 'function' ? 'Add Function' : 'Add Role'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -481,98 +523,28 @@ const FunctionsRolesManagement: React.FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Function</DialogTitle>
-            <DialogDescription>
-              Update function details.
-            </DialogDescription>
+            <DialogDescription>Update function details.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="edit-function-name">Name</Label>
-              <Input
-                id="edit-function-name"
-                value={functionName}
-                onChange={(e) => setFunctionName(e.target.value)}
-              />
+              <Input id="edit-function-name" value={functionName} onChange={(e) => setFunctionName(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-function-description">Description</Label>
-              <Textarea
-                id="edit-function-description"
-                value={functionDescription}
-                onChange={(e) => setFunctionDescription(e.target.value)}
-              />
+              <Textarea id="edit-function-description" value={functionDescription} onChange={(e) => setFunctionDescription(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-function-order">Display Order</Label>
-              <Input
-                id="edit-function-order"
-                type="number"
-                value={functionOrder}
-                onChange={(e) => setFunctionOrder(e.target.value)}
-                min="1"
-              />
+              <Input id="edit-function-order" type="number" value={functionOrder} onChange={(e) => setFunctionOrder(e.target.value)} min="1" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setEditFunctionOpen(false); resetFunctionForm(); }}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => { setEditFunctionOpen(false); resetFunctionForm(); }}>Cancel</Button>
             <Button onClick={handleUpdateFunction}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Add Role Dialog */}
-      <Dialog open={addRoleOpen} onOpenChange={setAddRoleOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Role</DialogTitle>
-            <DialogDescription>
-              Create a new role within a function.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="role-category">Function</Label>
-              <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a function" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories?.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="role-name">Role Name</Label>
-              <Input
-                id="role-name"
-                value={roleName}
-                onChange={(e) => setRoleName(e.target.value)}
-                placeholder="e.g., Senior Engineer"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="role-description">Description</Label>
-              <Textarea
-                id="role-description"
-                value={roleDescription}
-                onChange={(e) => setRoleDescription(e.target.value)}
-                placeholder="Optional description..."
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setAddRoleOpen(false); resetRoleForm(); }}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddRole}>Add Role</Button>
-          </DialogFooter>
-        </DialogContent>
       </Dialog>
 
       {/* Edit Role Dialog */}
