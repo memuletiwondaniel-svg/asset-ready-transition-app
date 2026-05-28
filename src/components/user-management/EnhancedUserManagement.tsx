@@ -175,9 +175,9 @@ const SortableTableHeader: React.FC<SortableTableHeaderProps> = ({ column, onRes
       className={`relative select-none group ${isDragging ? 'opacity-50' : ''}`}
       {...attributes}
     >
-      <div className="flex items-center justify-center w-full relative">
+      <div className="flex items-center justify-start w-full relative pr-6">
         <div 
-          className={`flex items-center justify-center ${column.sortable ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
+          className={`flex items-center justify-start font-semibold text-foreground ${column.sortable ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
           onClick={() => column.sortable && onSort(column.id)}
         >
           {column.label}
