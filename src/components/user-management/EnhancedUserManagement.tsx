@@ -815,27 +815,27 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
             <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
               {/* Tabs Row (kept fixed; only the table body scrolls) */}
               <TabsList className="grid w-full grid-cols-6 max-w-4xl mb-2 bg-background/95 backdrop-blur-md flex-shrink-0 gap-1">
-                <TabsTrigger value="users" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary">
+                <TabsTrigger value="users" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:text-[15px]">
                   <Users className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground/80 group-data-[state=active]:text-primary transition-colors" />
                   Users
                 </TabsTrigger>
-                <TabsTrigger value="configuration" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary">
+                <TabsTrigger value="configuration" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:text-[15px]">
                   <ShieldCheck className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground/80 group-data-[state=active]:text-primary transition-colors" />
                   Roles
                 </TabsTrigger>
-                <TabsTrigger value="locations" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary">
+                <TabsTrigger value="locations" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:text-[15px]">
                   <Factory className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground/80 group-data-[state=active]:text-primary transition-colors" />
                   Asset
                 </TabsTrigger>
-                <TabsTrigger value="project-hierarchy" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary">
+                <TabsTrigger value="project-hierarchy" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:text-[15px]">
                   <FolderKanban className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground/80 group-data-[state=active]:text-primary transition-colors" />
                   Project
                 </TabsTrigger>
-                <TabsTrigger value="orp-phases" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary">
+                <TabsTrigger value="orp-phases" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:text-[15px]">
                   <Layers className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground/80 group-data-[state=active]:text-primary transition-colors" />
                   ORP Phases
                 </TabsTrigger>
-                <TabsTrigger value="milestones" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary">
+                <TabsTrigger value="milestones" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:text-[15px]">
                   <Milestone className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground/80 group-data-[state=active]:text-primary transition-colors" />
                   Milestones
                 </TabsTrigger>
@@ -847,18 +847,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 <Card className="border-border/40 shadow-sm animate-fade-in bg-card/95 backdrop-blur-md flex-shrink-0">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      {/* Title (matches tab styling) */}
-                      <div className="flex items-center gap-2 min-w-0 mr-2">
-                        <Users className="h-5 w-5 text-primary" />
-                        <div className="leading-tight">
-                          <div className="text-base font-semibold text-foreground">Users</div>
-                          <div className="text-xs text-muted-foreground">Manage platform users and access</div>
-                        </div>
-                      </div>
-
-                      <div className="flex-1" />
-
-                      {/* Search (right side, before icons) */}
+                      {/* Search (left, replaces title) */}
                       <div className="relative w-full max-w-sm">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -869,6 +858,9 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                           className="pl-10 bg-background border-border/60 focus-visible:ring-primary/20"
                         />
                       </div>
+
+                      <div className="flex-1" />
+
 
                       <TooltipProvider delayDuration={150}>
                         <div className="flex items-center gap-1">

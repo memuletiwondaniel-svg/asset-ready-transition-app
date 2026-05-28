@@ -296,30 +296,23 @@ const FunctionsRolesManagement: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Header — title + subtext on the left; search + Add on the right */}
+      {/* Header — search left, Add on the right */}
       <div className="flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold text-foreground">Roles</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            {totalFunctions} functions, {totalRoles} roles
-          </p>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search roles..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 w-80"
+          />
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search roles..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-64"
-            />
-          </div>
-          <Button onClick={() => { setAddType('role'); setAddOpen(true); }} className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            Add Roles
-          </Button>
-        </div>
+        <Button onClick={() => { setAddType('role'); setAddOpen(true); }} className="gap-1.5">
+          <Plus className="h-4 w-4" />
+          Add Roles
+        </Button>
       </div>
+
 
 
       {/* Hierarchical List */}

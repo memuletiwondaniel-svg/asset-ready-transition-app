@@ -143,28 +143,21 @@ export const ProjectMilestonesManagementTab = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-foreground">Project Milestones</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage project milestone types used across all projects
-          </p>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search milestones..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 w-80"
+          />
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search milestones..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-64"
-            />
-          </div>
-          <Button onClick={() => handleOpenForm()}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Milestone
-          </Button>
-        </div>
+        <Button onClick={() => handleOpenForm()}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Milestone
+        </Button>
       </div>
+
 
       {/* Milestones Table */}
       <Card className="border-0 shadow-lg">
