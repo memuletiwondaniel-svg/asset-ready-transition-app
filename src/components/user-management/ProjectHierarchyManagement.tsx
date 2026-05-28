@@ -53,6 +53,7 @@ import { EditProjectModal } from '@/components/project/EditProjectModal';
 import { useHubs } from '@/hooks/useHubs';
 import { usePortfolioManagers } from '@/hooks/usePortfolioManagers';
 import { PortfolioDetailsModal } from './PortfolioDetailsModal';
+import BGCIcon from './BGCIcon';
 
 interface ProjectHierarchyManagementProps {
   selectedLanguage?: string;
