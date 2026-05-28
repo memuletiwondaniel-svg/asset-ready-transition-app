@@ -231,7 +231,7 @@ export const ORPPhaseDeliverablesTab = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-foreground">ORP Phases &amp; Deliverables</h2>
+          <h2 className="text-xl font-semibold text-foreground">ORP Deliverables</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Manage master deliverables and activities for each ORP phase
           </p>
@@ -248,7 +248,7 @@ export const ORPPhaseDeliverablesTab = () => {
           </div>
           <Button onClick={() => openAdd()} className="gap-1.5">
             <Plus className="h-4 w-4" />
-            Add
+            Add Deliverables
           </Button>
         </div>
       </div>
