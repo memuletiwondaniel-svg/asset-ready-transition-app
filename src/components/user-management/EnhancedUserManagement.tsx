@@ -799,7 +799,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
         />
 
         {/* Main Tabs for Users and Configuration */}
-        <div className="overflow-auto">
+          iconGradient="from-violet-500 to-indigo-600"
           <div className="max-w-7xl mx-auto w-full px-6 pt-4">
             <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
               {/* Tabs Row (kept fixed; only the table body scrolls) */}
