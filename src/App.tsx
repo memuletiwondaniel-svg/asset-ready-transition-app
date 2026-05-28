@@ -13,6 +13,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { TenantProvider } from "@/contexts/TenantContext";
 import AuthenticatedLayout from "@/components/layouts/AuthenticatedLayout";
 import Index from "./pages/Index";
+import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 import { ORPLandingPage } from "@/components/orp/ORPLandingPage";
@@ -31,6 +32,10 @@ import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
 import MyTasksPage from "@/pages/MyTasksPage";
 import PSSRItemReview from "@/pages/PSSRItemReview";
 import PSSRApprovalPage from "@/pages/PSSRApprovalPage";
+import PSSRSummaryPage from "@/components/PSSRSummaryPage";
+import AdminToolsPage from "@/components/AdminToolsPage";
+import ProjectsHomePage from "@/components/project/ProjectsHomePage";
+import UserManagement from "@/pages/UserManagement";
 
 import MicrosoftCallback from "@/pages/auth/MicrosoftCallback";
 
@@ -73,11 +78,11 @@ const App = () => (
                     
                     {/* Authenticated routes with persistent sidebar layout */}
                     <Route element={<AuthenticatedLayout />}>
-                      <Route path="/home" element={<Index />} />
-                      <Route path="/pssr" element={<Index />} />
-                      <Route path="/admin/users" element={<Index />} />
-                      <Route path="/admin-tools" element={<Index />} />
-                      <Route path="/projects" element={<Index />} />
+                      <Route path="/home" element={<HomePage />} />
+                      <Route path="/pssr" element={<PSSRSummaryPage onBack={() => window.location.assign('/home')} />} />
+                      <Route path="/admin/users" element={<UserManagement onBack={() => window.location.assign('/home')} />} />
+                      <Route path="/admin-tools" element={<AdminToolsPage onBack={() => window.location.assign('/home')} />} />
+                      <Route path="/projects" element={<ProjectsHomePage />} />
                       <Route path="/project-management" element={<ProjectManagementPage />} />
                       <Route path="/project/:id" element={<ProjectDetailsPage />} />
                       <Route path="/my-tasks" element={<MyTasksPage />} />
