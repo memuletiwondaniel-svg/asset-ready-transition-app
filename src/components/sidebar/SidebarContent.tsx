@@ -17,6 +17,8 @@ import { useNewTaskCount } from '@/hooks/useNewTaskCount';
 
 interface NavigationItem {
   labelKey: string;
+  shortLabel?: string;
+  tooltip?: string;
   icon: React.ComponentType<{ className?: string }>;
   path: string;
   section?: string;
@@ -75,7 +77,7 @@ const navigationItems: (NavigationItem & { requiresLeadership?: boolean })[] = [
   
   
   { labelKey: 'navORMaintenance', icon: Wrench, path: '/or-maintenance', section: 'or-maintenance', requiresLeadership: true },
-  { labelKey: 'navCompetenceManagement', icon: GraduationCap, path: '/competence-management', section: 'competence-management' },
+  { labelKey: 'navCompetenceManagement', shortLabel: 'CD&A', tooltip: 'Competence Development & Assurance', icon: GraduationCap, path: '/competence-management', section: 'competence-management' },
 
 ];
 
@@ -124,7 +126,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
   const content = (
     <div className="flex flex-col h-full select-none [&_button]:hover:!scale-100 [&_button]:active:!scale-100 [&_button]:active:!rotate-0 [&_svg]:stroke-[1.75]">
       {/* Header */}
-      <div className={cn("border-b border-border/40 flex-shrink-0", isCollapsed ? "p-2" : "p-4 sm:p-6")}>
+      <div className={cn("border-b border-border/40 flex-shrink-0", isCollapsed ? "p-2" : "p-3 sm:p-4")}>
         {!isCollapsed && (
           <div className="flex items-center justify-center mb-4">
             <OrshLogo size="medium" />
@@ -136,12 +138,12 @@ export const SidebarContent = memo<SidebarContentProps>(({
             <Button 
               variant="ghost" 
               onClick={onProfileClick}
-              className="w-full p-3 h-auto justify-start rounded-lg hover:bg-muted/40 transition-colors duration-150 cursor-pointer"
+              className="w-full p-2 h-auto justify-start rounded-lg hover:bg-muted/40 transition-colors duration-150 cursor-pointer"
             >
               {isProfileLoading ? (
-                <Skeleton className="h-10 w-10 rounded-full flex-shrink-0 mr-3" />
+                <Skeleton className="h-9 w-9 rounded-full flex-shrink-0 mr-2" />
               ) : (
-                <Avatar className="h-10 w-10 flex-shrink-0 mr-3">
+                <Avatar className="h-9 w-9 flex-shrink-0 mr-2">
                   <AvatarImage src={displayAvatar} alt={displayName} />
                   <AvatarFallback delayMs={600} className="bg-gradient-to-br from-primary to-accent text-white">
                     {displayName.slice(0, 2).toUpperCase()}
@@ -157,7 +159,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
                 ) : (
                   <>
                     <p className="text-sm font-semibold leading-tight truncate">{displayName.split(' ')[0]}</p>
-                    <p className="text-[11px] text-muted-foreground/60 leading-tight truncate">{displayTitle}</p>
+                    <p className="text-[11px] text-muted-foreground/70 leading-snug whitespace-normal break-words line-clamp-2">{displayTitle}</p>
                   </>
                 )}
               </div>
@@ -188,8 +190,11 @@ export const SidebarContent = memo<SidebarContentProps>(({
                 {visibleNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = currentPage === item.section;
+                  const fullLabel = getLabel(item.labelKey);
+                  const visibleLabel = item.shortLabel || fullLabel;
+                  const tooltipText = item.tooltip || (item.shortLabel ? fullLabel : null);
                   
-                  return (
+                  const button = (
                     <Button
                       key={item.section}
                       variant="ghost"
@@ -206,7 +211,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
                         "mr-2 h-4 w-4 transition-colors flex-shrink-0",
                         isActive ? "text-primary" : "text-muted-foreground"
                       )} />
-                      <span className="truncate">{getLabel(item.labelKey)}</span>
+                      <span className="truncate">{visibleLabel}</span>
                       {item.section === 'ask-orsh' && unreadChatCount > 0 && (
                         <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
                           {unreadChatCount}
@@ -218,6 +223,14 @@ export const SidebarContent = memo<SidebarContentProps>(({
                         </span>
                       )}
                     </Button>
+                  );
+
+                  if (!tooltipText) return button;
+                  return (
+                    <Tooltip key={item.section}>
+                      <TooltipTrigger asChild>{button}</TooltipTrigger>
+                      <TooltipContent side="right">{tooltipText}</TooltipContent>
+                    </Tooltip>
                   );
                 })}
               </div>
