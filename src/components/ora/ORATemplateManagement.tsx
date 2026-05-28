@@ -171,7 +171,7 @@ export const ORATemplateManagement = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold text-foreground">ORA Plan Templates</h2>
+        <h2 className="text-xl font-semibold text-foreground flex items-center gap-2"><LayoutTemplate className="h-5 w-5 text-primary" />ORA Plan Templates</h2>
         <div className="flex items-center gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
