@@ -102,20 +102,17 @@ const DraggableHub: React.FC<{
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0">
               {hub.projects.length > 0 ? (
                 isExpanded ? (
-                  <ChevronDown className="h-3.5 w-3.5" />
+                  <ChevronDown className="h-3 w-3 text-muted-foreground/50" strokeWidth={1.5} />
                 ) : (
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  <ChevronRight className="h-3 w-3 text-muted-foreground/50" strokeWidth={1.5} />
                 )
               ) : (
-                <div className="w-3.5" />
+                <div className="w-3" />
               )}
             </Button>
           </CollapsibleTrigger>
           <div className="flex items-center gap-2 flex-1 py-1 px-2 cursor-pointer" onClick={onToggle}>
             <span className="text-sm font-medium text-foreground/80">{hub.name}</span>
-            <Badge variant="outline" className="ml-1 text-xs py-0">
-              {hub.projects.length} projects
-            </Badge>
           </div>
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
             <Button
