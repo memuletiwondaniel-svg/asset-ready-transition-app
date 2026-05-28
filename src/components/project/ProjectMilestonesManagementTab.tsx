@@ -7,6 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, Edit3, Trash2, Search, Milestone, GripVertical } from 'lucide-react';
 import { useProjectMilestoneTypes, ProjectMilestoneType } from '@/hooks/useProjectMilestoneTypes';
@@ -27,12 +29,15 @@ export const ProjectMilestonesManagementTab = () => {
   const [formData, setFormData] = useState({
     code: '',
     name: '',
-    description: ''
+    description: '',
+    is_custom: false,
   });
+
 
   // Update mutation
   const updateMilestone = useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; name: string; description?: string; display_order?: number }) => {
+    mutationFn: async ({ id, ...data }: { id: string; code?: string; name?: string; description?: string; is_custom?: boolean; display_order?: number }) => {
+
       const { data: result, error } = await supabase
         .from('project_milestone_types')
         .update(data)
@@ -75,14 +80,16 @@ export const ProjectMilestonesManagementTab = () => {
       setFormData({
         code: milestone.code,
         name: milestone.name,
-        description: milestone.description || ''
+        description: milestone.description || '',
+        is_custom: milestone.is_custom,
       });
     } else {
       setEditingMilestone(null);
       setFormData({
         code: '',
         name: '',
-        description: ''
+        description: '',
+        is_custom: true,
       });
     }
     setIsFormOpen(true);
@@ -91,23 +98,29 @@ export const ProjectMilestonesManagementTab = () => {
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingMilestone(null);
-    setFormData({ code: '', name: '', description: '' });
+    setFormData({ code: '', name: '', description: '', is_custom: true });
   };
+
 
   const handleSave = async () => {
     try {
       if (editingMilestone) {
         await updateMilestone.mutateAsync({
           id: editingMilestone.id,
+          code: formData.code,
           name: formData.name,
-          description: formData.description || undefined
+          description: formData.description || undefined,
+          is_custom: formData.is_custom,
         });
       } else {
         await createMilestoneType({
+          code: formData.code || undefined,
           name: formData.name,
-          description: formData.description || undefined
+          description: formData.description || undefined,
+          is_custom: formData.is_custom,
         });
       }
+
       handleCloseForm();
     } catch (error) {
       console.error('Error saving milestone:', error);
@@ -174,7 +187,6 @@ export const ProjectMilestonesManagementTab = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12"></TableHead>
                   <TableHead className="w-32">Code</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Description</TableHead>
@@ -184,10 +196,7 @@ export const ProjectMilestonesManagementTab = () => {
               </TableHeader>
               <TableBody>
                 {filteredMilestones.map((milestone) => (
-                  <TableRow key={milestone.id}>
-                    <TableCell>
-                      <GripVertical className="h-4 w-4 text-muted-foreground/50" />
-                    </TableCell>
+                  <TableRow key={milestone.id} className="group">
                     <TableCell className="font-mono text-sm">{milestone.code}</TableCell>
                     <TableCell className="font-medium">{milestone.name}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">
@@ -199,7 +208,7 @@ export const ProjectMilestonesManagementTab = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -208,22 +217,21 @@ export const ProjectMilestonesManagementTab = () => {
                         >
                           <Edit3 className="h-4 w-4" />
                         </Button>
-                        {milestone.is_custom && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => setDeleteConfirmId(milestone.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => setDeleteConfirmId(milestone.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+
           )}
         </CardContent>
       </Card>
@@ -238,6 +246,16 @@ export const ProjectMilestonesManagementTab = () => {
           </DialogHeader>
           
           <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Code</Label>
+              <Input
+                value={formData.code}
+                onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
+                placeholder="e.g., FEED_COMPLETE"
+                className="font-mono"
+              />
+            </div>
+
             <div className="space-y-2">
               <Label>Name</Label>
               <Input
@@ -256,7 +274,24 @@ export const ProjectMilestonesManagementTab = () => {
                 rows={3}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <Select
+                value={formData.is_custom ? 'custom' : 'system'}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, is_custom: v === 'custom' }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system">System</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
 
           <DialogFooter>
             <Button variant="outline" onClick={handleCloseForm}>
