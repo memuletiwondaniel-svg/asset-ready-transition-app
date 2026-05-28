@@ -619,105 +619,127 @@ const LocationManagement: React.FC = () => {
 
         {/* Add/Edit Dialog (unified) */}
         <Dialog open={addEditDialog.open} onOpenChange={(open) => !open && setAddEditDialog({ ...addEditDialog, open: false })}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {addEditDialog.mode === 'add' ? 'Add Location' : `Edit ${getTypeLabel(formType)}`}
-              </DialogTitle>
-              <DialogDescription>
-                {addEditDialog.mode === 'add'
-                  ? 'Add a new plant, or a field/station inside an existing plant.'
-                  : `Update the ${formType} details below.`}
-              </DialogDescription>
-            </DialogHeader>
+          <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden">
+            {/* Accent header */}
+            <div className="px-6 pt-6 pb-4 bg-gradient-to-br from-primary/8 via-background to-background border-b border-border/40">
+              <DialogHeader className="space-y-1.5 text-left">
+                <DialogTitle className="text-lg font-semibold tracking-tight">
+                  {addEditDialog.mode === 'add' ? 'Add Location' : `Edit ${getTypeLabel(formType)}`}
+                </DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground">
+                  {addEditDialog.mode === 'add'
+                    ? 'Add a plant, field, or station to the asset hierarchy.'
+                    : `Update the ${formType} details below.`}
+                </DialogDescription>
+              </DialogHeader>
+            </div>
 
-            <div className="space-y-4 py-2">
+            {/* Fixed-height body so the modal does not resize as fields change */}
+            <div className="px-6 py-5 space-y-5 min-h-[360px]">
               {addEditDialog.mode === 'add' && addEditDialog.allowTypeChange && (
                 <div className="space-y-2">
-                  <Label>Location Type</Label>
-                  <Select value={formType} onValueChange={(v) => handleTypeChange(v as LocationType)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="plant">Plant (top level)</SelectItem>
-                      <SelectItem value="field" disabled={plants.length === 0}>
-                        Field (under a Plant)
-                      </SelectItem>
-                      <SelectItem value="station" disabled={fields.length === 0}>
-                        Station (under a Field)
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Location Type
+                  </Label>
+                  <div className="grid grid-cols-3 gap-2 p-1 bg-muted/50 rounded-lg">
+                    {([
+                      { value: 'plant', label: 'Plant', icon: Building2, disabled: false },
+                      { value: 'field', label: 'Field', icon: Layers, disabled: plants.length === 0 },
+                      { value: 'station', label: 'Station', icon: Radio, disabled: fields.length === 0 },
+                    ] as const).map(({ value, label, icon: Icon, disabled }) => {
+                      const active = formType === value;
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => handleTypeChange(value as LocationType)}
+                          className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-md text-xs font-medium transition-all ${
+                            active
+                              ? 'bg-background shadow-sm text-foreground ring-1 ring-border'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-background/60'
+                          } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
-              {formType === 'field' && (
-                <div className="space-y-2">
-                  <Label>Parent Plant</Label>
+              {/* Parent selector — always rendered to keep dialog height constant */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Parent
+                </Label>
+                {formType === 'plant' ? (
+                  <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-dashed border-border/60 bg-muted/30 text-sm text-muted-foreground">
+                    <Building2 className="h-4 w-4 opacity-60" />
+                    Top-level — no parent required
+                  </div>
+                ) : formType === 'field' ? (
                   <Select value={formParentId || '__none__'} onValueChange={(v) => setFormParentId(v === '__none__' ? '' : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a plant" />
-                    </SelectTrigger>
+                    <SelectTrigger className="h-10"><SelectValue placeholder="Select a plant" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__none__">No parent</SelectItem>
+                      <SelectItem value="__none__">Unassigned</SelectItem>
                       {plants.map(plant => (
                         <SelectItem key={plant.id} value={plant.id}>{plant.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-              )}
-
-              {formType === 'station' && (
-                <div className="space-y-2">
-                  <Label>Parent Field</Label>
+                ) : (
                   <Select value={formParentId || '__none__'} onValueChange={(v) => setFormParentId(v === '__none__' ? '' : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a field" />
-                    </SelectTrigger>
+                    <SelectTrigger className="h-10"><SelectValue placeholder="Select a field" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__none__">No parent</SelectItem>
-                      {fields.map(field => (
-                        <SelectItem key={field.id} value={field.id}>
-                          {field.name}
-                          {field.plant_id && plants.find(p => p.id === field.plant_id)
-                            ? ` (${plants.find(p => p.id === field.plant_id)!.name})`
-                            : ''}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="__none__">Unassigned</SelectItem>
+                      {fields.map(field => {
+                        const parent = field.plant_id ? plants.find(p => p.id === field.plant_id) : null;
+                        return (
+                          <SelectItem key={field.id} value={field.id}>
+                            {field.name}{parent ? ` · ${parent.name}` : ''}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
-                </div>
-              )}
+                )}
+              </div>
 
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Name
+                </Label>
                 <Input
                   id="name"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder={`Enter ${formType} name`}
+                  placeholder={`e.g. ${formType === 'plant' ? 'BNGL' : formType === 'field' ? 'Rumaila' : 'CS-01'}`}
+                  className="h-10"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description (Optional)</Label>
+                <Label htmlFor="description" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Description <span className="normal-case text-muted-foreground/70">— optional</span>
+                </Label>
                 <Input
                   id="description"
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder="Enter description"
+                  placeholder="Short label or full name"
+                  className="h-10"
                 />
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="px-6 py-4 border-t border-border/40 bg-muted/20">
               <Button variant="outline" onClick={() => setAddEditDialog({ ...addEditDialog, open: false })}>
                 Cancel
               </Button>
               <Button onClick={handleSave} disabled={!formName.trim()}>
-                {addEditDialog.mode === 'add' ? 'Add' : 'Save'}
+                {addEditDialog.mode === 'add' ? 'Add Location' : 'Save Changes'}
               </Button>
             </DialogFooter>
           </DialogContent>
