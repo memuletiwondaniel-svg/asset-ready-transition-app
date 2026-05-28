@@ -295,18 +295,23 @@ export const ORATemplateManagement = () => {
               <div className="space-y-1.5">
                 <Label>Applicable Phases</Label>
                 <div className="flex flex-wrap gap-2">
-                  {phases.map((p) => {
+                  {phases.filter(p => ['ASSESS', 'SELECT', 'DEFINE', 'EXECUTE'].includes(p.code)).map((p) => {
                     const active = formData.applicable_phases?.includes(p.code);
+                    const phaseColors: Record<string, { active: string; inactive: string }> = {
+                      ASSESS:  { active: 'bg-amber-500 text-white border-amber-500 shadow-sm hover:bg-amber-600',   inactive: 'text-amber-700 dark:text-amber-400 border-amber-300/60 dark:border-amber-700/60 hover:bg-amber-500/10' },
+                      SELECT:  { active: 'bg-purple-500 text-white border-purple-500 shadow-sm hover:bg-purple-600', inactive: 'text-purple-700 dark:text-purple-400 border-purple-300/60 dark:border-purple-700/60 hover:bg-purple-500/10' },
+                      DEFINE:  { active: 'bg-teal-500 text-white border-teal-500 shadow-sm hover:bg-teal-600',       inactive: 'text-teal-700 dark:text-teal-400 border-teal-300/60 dark:border-teal-700/60 hover:bg-teal-500/10' },
+                      EXECUTE: { active: 'bg-blue-500 text-white border-blue-500 shadow-sm hover:bg-blue-600',       inactive: 'text-blue-700 dark:text-blue-400 border-blue-300/60 dark:border-blue-700/60 hover:bg-blue-500/10' },
+                    };
+                    const c = phaseColors[p.code];
                     return (
                       <button
                         key={p.code}
                         type="button"
                         onClick={() => togglePhase(p.code)}
                         className={cn(
-                          "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
-                          active
-                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                            : "bg-background border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                          "px-3 py-1.5 rounded-full text-xs font-medium border transition-all bg-background",
+                          active ? c.active : c.inactive
                         )}
                       >
                         {p.label}
