@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings2, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, ChevronRight, ChevronDown, Trash2, CalendarRange, Activity, CircleDot, Plus } from 'lucide-react';
+import { Settings2, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, ChevronRight, ChevronDown, Trash2, CalendarRange, Activity, CircleDot, Plus, Pencil } from 'lucide-react';
+
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectORPPlans, ProjectORPActivity } from '@/hooks/useProjectORPPlans';
 import { useORPPlans } from '@/hooks/useORPPlans';
@@ -182,8 +183,9 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                     className="gap-1.5 group/cta"
                     onClick={(e) => { e.stopPropagation(); setWizardOpen(true); }}
                   >
-                    <FileEdit className="h-3.5 w-3.5 text-muted-foreground group-hover/cta:text-green-600 transition-colors" />
+                    <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover/cta:text-green-600 transition-colors" />
                     Continue ORA Plan
+
                   </Button>
                   <Button
                     variant="ghost" size="icon"
