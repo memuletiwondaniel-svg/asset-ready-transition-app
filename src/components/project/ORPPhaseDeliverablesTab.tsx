@@ -624,6 +624,96 @@ export const ORPPhaseDeliverablesTab = () => {
         </DialogContent>
       </Dialog>
 
+      {/* View Activity Dialog */}
+      <Dialog open={!!viewingActivity} onOpenChange={() => setViewingActivity(null)}>
+        <DialogContent className="sm:max-w-lg p-0 overflow-hidden flex flex-col h-[640px] max-h-[90vh]">
+          <DialogHeader className="px-6 pt-6 pb-4 space-y-1 flex-shrink-0">
+            <DialogTitle className="text-xl font-semibold">View Activity</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Activity details for {viewingActivity?.activity}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="px-6 pb-6 space-y-5 border-t border-border/60 pt-5 flex-1 overflow-y-auto min-h-0">
+            {viewingActivity && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                    Activity ID
+                  </Label>
+                  <Input value={formatActivityCode(viewingActivity.activity_code)} disabled className="bg-muted font-mono" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                    Phase
+                  </Label>
+                  <Select value={viewingActivity.phase_id || ''} disabled>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select phase" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {visiblePhases.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                    Activity
+                  </Label>
+                  <Input value={viewingActivity.activity} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                    Description
+                  </Label>
+                  <Textarea value={viewingActivity.description || ''} disabled className="bg-muted" rows={3} />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                      High (days)
+                    </Label>
+                    <Input value={viewingActivity.duration_high ?? ''} disabled className="bg-muted text-center" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                      Med (days)
+                    </Label>
+                    <Input value={viewingActivity.duration_med ?? ''} disabled className="bg-muted text-center" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                      Low (days)
+                    </Label>
+                    <Input value={viewingActivity.duration_low ?? ''} disabled className="bg-muted text-center" />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          <DialogFooter className="px-6 py-4 border-t border-border/60 bg-muted/30 flex-shrink-0">
+            <Button variant="outline" onClick={() => setViewingActivity(null)}>
+              Close
+            </Button>
+            {viewingActivity && (
+              <Button
+                onClick={() => {
+                  setViewingActivity(null);
+                  openEditActivity(viewingActivity);
+                }}
+              >
+                Edit Activity
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
         <AlertDialogContent>
