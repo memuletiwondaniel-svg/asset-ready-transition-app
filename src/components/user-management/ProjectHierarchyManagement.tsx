@@ -1276,22 +1276,52 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           )}
         </div>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => setViewMode(viewMode === 'tree' ? 'columns' : 'tree')}
-              aria-label={viewMode === 'tree' ? 'Switch to Columns View' : 'Switch to Tree View'}
-            >
-              {viewMode === 'tree' ? <LayoutGrid className="h-4 w-4" /> : <GitBranch className="h-4 w-4" />}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {viewMode === 'tree' ? 'Switch to Columns View' : 'Switch to Tree View'}
-          </TooltipContent>
-        </Tooltip>
+        <div className="flex items-center rounded-md border bg-background h-9 p-0.5">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={viewMode === 'tree' ? 'secondary' : 'ghost'}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setViewMode('tree')}
+                aria-label="Tree View"
+              >
+                <GitBranch className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Tree View</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={viewMode === 'columns' ? 'secondary' : 'ghost'}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setViewMode('columns')}
+                aria-label="Columns View"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Columns View</TooltipContent>
+          </Tooltip>
+          {onShowProjectList && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={onShowProjectList}
+                  aria-label="Project List"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Project List</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
 
         <Tooltip>
           <TooltipTrigger asChild>
@@ -1310,6 +1340,29 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           </TooltipTrigger>
           <TooltipContent side="bottom">Refresh</TooltipContent>
         </Tooltip>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" className="h-9">
+              <Plus className="h-4 w-4 mr-1" />
+              Add
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 bg-popover">
+            <DropdownMenuItem onClick={() => setShowAddRegionDialog(true)}>
+              <MapPin className="h-4 w-4 mr-2 text-purple-500" />
+              Add Portfolio
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowAddHubDialog(true)}>
+              <Building2 className="h-4 w-4 mr-2 text-blue-500" />
+              Add Project Hub
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowAddProjectModal(true)}>
+              <FolderKanban className="h-4 w-4 mr-2 text-amber-500" />
+              Add Project
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {viewMode === 'tree' ? (
