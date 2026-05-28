@@ -42,8 +42,11 @@ import {
   Trash2,
   GripVertical,
   Pencil,
-  User
+  User,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { EditProjectModal } from '@/components/project/EditProjectModal';
 import { useHubs } from '@/hooks/useHubs';
 import { usePortfolioManagers } from '@/hooks/usePortfolioManagers';
@@ -718,13 +721,13 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         {/* Portfolios Column */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between group/header">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
+                <MapPin className="h-4 w-4 text-violet-500" />
                 Portfolios
                 <Badge variant="secondary" className="ml-1">{regions.length}</Badge>
               </CardTitle>
-              <Button size="sm" variant="outline" onClick={() => setShowAddRegionDialog(true)}>
+              <Button size="sm" variant="outline" onClick={() => setShowAddRegionDialog(true)} className="opacity-0 group-hover/header:opacity-100 transition-opacity">
                 <Plus className="h-4 w-4 mr-1" />
                 Add
               </Button>
@@ -800,19 +803,6 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                                   {totalProjects} projects
                                 </Badge>
                               </div>
-                              {portfolioManager && (
-                                <div className="flex items-center gap-1.5 mt-1.5">
-                                  <User className="h-3 w-3 text-primary" />
-                                  <span className="text-xs font-medium text-primary">
-                                    PM: {portfolioManager.full_name}
-                                  </span>
-                                </div>
-                              )}
-                              {region.description && (
-                                <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                  {region.description}
-                                </p>
-                              )}
                             </div>
                             <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100">
                               <Button
@@ -854,9 +844,9 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         {/* Hubs Column - Filtered by selected portfolio */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between group/header">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
+                <Building2 className="h-4 w-4 text-blue-500" />
                 Project Hubs
                 {selectedRegion && (
                   <Badge variant="outline" className="ml-1 text-xs">
@@ -873,6 +863,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
               <Button 
                 size="sm" 
                 variant="outline" 
+                className="opacity-0 group-hover/header:opacity-100 transition-opacity"
                 onClick={() => {
                   setNewHubRegionId(selectedRegion || '');
                   setShowAddHubDialog(true);
@@ -882,11 +873,6 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                 Add
               </Button>
             </div>
-            {!selectedRegion && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Select a portfolio to filter hubs
-              </p>
-            )}
           </CardHeader>
           <CardContent className="pt-0">
             {(() => {
@@ -1011,9 +997,9 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         {/* Projects Column - Filtered by selected portfolio and hub */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between group/header">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <FolderKanban className="h-4 w-4" />
+                <FolderKanban className="h-4 w-4 text-emerald-500" />
                 Projects
                 {(selectedRegion || selectedHub) && (
                   <Badge variant="outline" className="ml-1 text-xs">
@@ -1027,17 +1013,13 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
               <Button 
                 size="sm" 
                 variant="outline" 
+                className="opacity-0 group-hover/header:opacity-100 transition-opacity"
                 onClick={() => setShowAddProjectModal(true)}
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Add
               </Button>
             </div>
-            {!selectedRegion && !selectedHub && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Select a portfolio or hub to filter projects
-              </p>
-            )}
           </CardHeader>
           <CardContent className="pt-0">
             {(() => {
@@ -1267,23 +1249,23 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
     );
   };
 
+  const [viewMode, setViewMode] = useState<'tree' | 'columns'>('columns');
+  const allHubIds = useMemo(() => regions.flatMap(r => r.hubs.map(h => h.id)), [regions]);
+  const allExpanded = regions.length > 0 && expandedRegions.size === regions.length && expandedHubs.size === allHubIds.length;
+  const toggleExpandCollapseAll = () => (allExpanded ? collapseAll() : expandAll());
+
   return (
-    <div className="space-y-6 p-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MapPin className="h-4 w-4" />
-          <span>Manage your project organization</span>
-        </div>
-        
-        {/* Search Input */}
-        <div className="relative w-72">
+    <TooltipProvider delayDuration={150}>
+    <div className="space-y-4 p-4">
+      {/* Unified toolbar: search + view toggle + expand/collapse + refresh */}
+      <div className="flex items-center justify-end gap-2 flex-wrap">
+        <div className="relative w-72 max-w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search projects by ID (DP385) or title..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-9"
+            className="pl-9 pr-9 h-9"
           />
           {searchQuery && (
             <Button
@@ -1296,57 +1278,63 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
             </Button>
           )}
         </div>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setViewMode(viewMode === 'tree' ? 'columns' : 'tree')}
+              aria-label={viewMode === 'tree' ? 'Switch to Columns View' : 'Switch to Tree View'}
+            >
+              {viewMode === 'tree' ? <LayoutGrid className="h-4 w-4" /> : <GitBranch className="h-4 w-4" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {viewMode === 'tree' ? 'Switch to Columns View' : 'Switch to Tree View'}
+          </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="outline" size="icon" className="h-9 w-9" onClick={toggleExpandCollapseAll} aria-label={allExpanded ? 'Collapse All' : 'Expand All'}>
+              {allExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{allExpanded ? 'Collapse All' : 'Expand All'}</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="outline" size="icon" className="h-9 w-9" onClick={refetch} aria-label="Refresh">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Refresh</TooltipContent>
+        </Tooltip>
       </div>
 
-      <Tabs defaultValue="columns" className="w-full">
-        <div className="flex items-center justify-between mb-4">
-          <TabsList>
-            <TabsTrigger value="tree" className="gap-2">
+      {viewMode === 'tree' ? (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
               <GitBranch className="h-4 w-4" />
-              Tree View
-            </TabsTrigger>
-            <TabsTrigger value="columns" className="gap-2">
-              <LayoutGrid className="h-4 w-4" />
-              Columns View
-            </TabsTrigger>
-          </TabsList>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={refetch}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-            <Button variant="outline" size="sm" onClick={expandAll}>
-              Expand All
-            </Button>
-            <Button variant="outline" size="sm" onClick={collapseAll}>
-              Collapse All
-            </Button>
-          </div>
-        </div>
-
-        <TabsContent value="tree" className="mt-0">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <GitBranch className="h-4 w-4" />
-                Project Organization
-                {searchQuery && (
-                  <Badge variant="secondary" className="ml-2">
-                    Filtered
-                  </Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TreeView />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="columns" className="mt-0">
-          <ColumnsView />
-        </TabsContent>
-      </Tabs>
+              Project Organization
+              {searchQuery && (
+                <Badge variant="secondary" className="ml-2">
+                  Filtered
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TreeView />
+          </CardContent>
+        </Card>
+      ) : (
+        <ColumnsView />
+      )}
 
       {/* Add Region Dialog */}
       <Dialog open={showAddRegionDialog} onOpenChange={setShowAddRegionDialog}>
@@ -1685,6 +1673,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         portfolioName={detailsPortfolioName}
       />
     </div>
+    </TooltipProvider>
   );
 };
 

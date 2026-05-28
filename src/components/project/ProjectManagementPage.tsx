@@ -358,7 +358,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                   </TabsTrigger>
                   <TabsTrigger value="hierarchy" className="flex items-center gap-2">
                     <GitBranch className="h-4 w-4" />
-                    Hierarchy
+                    Project Hierarchy
                   </TabsTrigger>
                   <TabsTrigger value="orp-phases" className="flex items-center gap-2">
                     <Layers className="h-4 w-4" />
