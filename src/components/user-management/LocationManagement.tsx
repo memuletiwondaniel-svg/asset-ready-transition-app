@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Plus, Pencil, Trash2, Building2, MapPin, Radio, ChevronRight, ChevronDown, LayoutGrid, GitBranch, Search, X } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Plus, Pencil, Trash2, Building2, MapPin, Radio, ChevronRight, ChevronDown, LayoutGrid, GitBranch, Search, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useLocations, Plant, Field, Station } from '@/hooks/useLocations';
 
 type LocationType = 'plant' | 'field' | 'station';
@@ -21,6 +22,7 @@ interface AddEditDialogState {
   type: LocationType;
   mode: 'add' | 'edit';
   item?: Plant | Field | Station;
+  allowTypeChange?: boolean;
 }
 
 interface DeleteDialogState {
@@ -28,6 +30,21 @@ interface DeleteDialogState {
   type: LocationType;
   item?: Plant | Field | Station;
 }
+
+// Friendly full-name mapping for known plant codes (shown as subtext)
+const PLANT_FULL_NAMES: Record<string, string> = {
+  BNGL: 'Basrah NGL Plant',
+  CS: 'Compression Stations',
+  KAZ: 'Khor Al Zubair NGL Plant',
+  UQ: 'Umm Qasr Storage & Export Terminal',
+  NRNGL: 'North Rumaila NGL Plant',
+  Pipelines: 'Pipelines Network',
+};
+
+const getPlantFullName = (plant: Plant): string | null => {
+  if (plant.description) return plant.description;
+  return PLANT_FULL_NAMES[plant.name] ?? null;
+};
 
 const LocationManagement: React.FC = () => {
   const {
@@ -55,145 +72,148 @@ const LocationManagement: React.FC = () => {
   const [expandedPlants, setExpandedPlants] = useState<Set<string>>(new Set());
   const [expandedFields, setExpandedFields] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Form state
+  const [formType, setFormType] = useState<LocationType>('plant');
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formParentId, setFormParentId] = useState<string>('');
 
   // Search filtering
   const searchLower = searchQuery.toLowerCase().trim();
-  
-  const searchFilteredPlants = searchLower 
+
+  const searchFilteredPlants = searchLower
     ? plants.filter(p => p.name.toLowerCase().includes(searchLower) || p.description?.toLowerCase().includes(searchLower))
     : plants;
-  
+
   const searchFilteredFields = searchLower
     ? fields.filter(f => f.name.toLowerCase().includes(searchLower) || f.description?.toLowerCase().includes(searchLower))
     : fields;
-  
+
   const searchFilteredStations = searchLower
     ? stations.filter(s => s.name.toLowerCase().includes(searchLower) || s.description?.toLowerCase().includes(searchLower))
     : stations;
 
-  // For tree view: show plants that match OR have matching children
+  // Tree view visibility helpers (unchanged)
   const getVisiblePlantsForTree = () => {
     if (!searchLower) return plants;
-    
     const matchingPlantIds = new Set<string>();
-    
-    // Plants that directly match
     searchFilteredPlants.forEach(p => matchingPlantIds.add(p.id));
-    
-    // Plants that have matching fields
-    searchFilteredFields.forEach(f => {
-      if (f.plant_id) matchingPlantIds.add(f.plant_id);
-    });
-    
-    // Plants that have fields with matching stations
+    searchFilteredFields.forEach(f => { if (f.plant_id) matchingPlantIds.add(f.plant_id); });
     searchFilteredStations.forEach(s => {
       const field = fields.find(f => f.id === s.field_id);
       if (field?.plant_id) matchingPlantIds.add(field.plant_id);
     });
-    
     return plants.filter(p => matchingPlantIds.has(p.id));
   };
 
   const getVisibleFieldsForPlant = (plantId: string) => {
     const plantFields = getFieldsByPlant(plantId);
     if (!searchLower) return plantFields;
-    
     const matchingFieldIds = new Set<string>();
-    
-    // Fields that directly match
-    plantFields.filter(f => 
-      f.name.toLowerCase().includes(searchLower) || 
+    plantFields.filter(f =>
+      f.name.toLowerCase().includes(searchLower) ||
       f.description?.toLowerCase().includes(searchLower)
     ).forEach(f => matchingFieldIds.add(f.id));
-    
-    // Fields that have matching stations
     searchFilteredStations.forEach(s => {
-      if (plantFields.some(f => f.id === s.field_id)) {
-        matchingFieldIds.add(s.field_id!);
-      }
+      if (plantFields.some(f => f.id === s.field_id)) matchingFieldIds.add(s.field_id!);
     });
-    
     return plantFields.filter(f => matchingFieldIds.has(f.id));
   };
 
   const getVisibleStationsForField = (fieldId: string) => {
     const fieldStations = getStationsByField(fieldId);
     if (!searchLower) return fieldStations;
-    
-    return fieldStations.filter(s => 
-      s.name.toLowerCase().includes(searchLower) || 
+    return fieldStations.filter(s =>
+      s.name.toLowerCase().includes(searchLower) ||
       s.description?.toLowerCase().includes(searchLower)
     );
   };
 
-  const filteredFields = selectedPlant ? getFieldsByPlant(selectedPlant) : fields;
-  const filteredStations = selectedField ? getStationsByField(selectedField) : stations;
-  
-  // Column view filtered lists
-  const columnPlants = searchLower ? searchFilteredPlants : plants;
-  const columnFields = searchLower ? searchFilteredFields : filteredFields;
-  const columnStations = searchLower ? searchFilteredStations : filteredStations;
+  // ===== Column view filtering (fixed bi-directional) =====
+  const columnPlants = useMemo(() => {
+    let base = searchLower ? searchFilteredPlants : plants;
+    if (selectedField) {
+      const f = fields.find(x => x.id === selectedField);
+      if (f?.plant_id) base = base.filter(p => p.id === f.plant_id);
+    }
+    return base;
+  }, [plants, searchFilteredPlants, searchLower, selectedField, fields]);
+
+  const columnFields = useMemo(() => {
+    let base = searchLower ? searchFilteredFields : fields;
+    if (selectedPlant) base = base.filter(f => f.plant_id === selectedPlant);
+    return base;
+  }, [fields, searchFilteredFields, searchLower, selectedPlant]);
+
+  const columnStations = useMemo(() => {
+    let base = searchLower ? searchFilteredStations : stations;
+    if (selectedField) {
+      base = base.filter(s => s.field_id === selectedField);
+    } else if (selectedPlant) {
+      const plantFieldIds = new Set(fields.filter(f => f.plant_id === selectedPlant).map(f => f.id));
+      base = base.filter(s => s.field_id && plantFieldIds.has(s.field_id));
+    }
+    return base;
+  }, [stations, searchFilteredStations, searchLower, selectedPlant, selectedField, fields]);
 
   const togglePlantExpanded = (plantId: string) => {
     setExpandedPlants(prev => {
       const next = new Set(prev);
-      if (next.has(plantId)) {
-        next.delete(plantId);
-      } else {
-        next.add(plantId);
-      }
+      next.has(plantId) ? next.delete(plantId) : next.add(plantId);
+      return next;
+    });
+  };
+  const toggleFieldExpanded = (fieldId: string) => {
+    setExpandedFields(prev => {
+      const next = new Set(prev);
+      next.has(fieldId) ? next.delete(fieldId) : next.add(fieldId);
       return next;
     });
   };
 
-  const toggleFieldExpanded = (fieldId: string) => {
-    setExpandedFields(prev => {
-      const next = new Set(prev);
-      if (next.has(fieldId)) {
-        next.delete(fieldId);
-      } else {
-        next.add(fieldId);
-      }
-      return next;
-    });
-  };
+  const allExpanded = plants.length > 0 && expandedPlants.size === plants.length;
 
   const expandAll = () => {
     setExpandedPlants(new Set(plants.map(p => p.id)));
     setExpandedFields(new Set(fields.map(f => f.id)));
   };
-
   const collapseAll = () => {
     setExpandedPlants(new Set());
     setExpandedFields(new Set());
   };
+  const toggleExpandCollapseAll = () => (allExpanded ? collapseAll() : expandAll());
 
-  const openAddDialog = (type: LocationType, parentId?: string) => {
+  // ===== Dialog helpers =====
+  const openAddDialog = (type: LocationType, parentId?: string, allowTypeChange = false) => {
+    setFormType(type);
     setFormName('');
     setFormDescription('');
-    if (type === 'field') {
-      setFormParentId(parentId || selectedPlant || '');
-    } else if (type === 'station') {
-      setFormParentId(parentId || selectedField || '');
-    } else {
-      setFormParentId('');
-    }
-    setAddEditDialog({ open: true, type, mode: 'add' });
+    if (type === 'field') setFormParentId(parentId || selectedPlant || '');
+    else if (type === 'station') setFormParentId(parentId || selectedField || '');
+    else setFormParentId('');
+    setAddEditDialog({ open: true, type, mode: 'add', allowTypeChange });
+  };
+
+  const openUnifiedAddDialog = () => {
+    // Default type based on current selection: if a plant is selected, default to adding a Field under it
+    const defaultType: LocationType = selectedField ? 'station' : selectedPlant ? 'field' : 'plant';
+    setFormType(defaultType);
+    setFormName('');
+    setFormDescription('');
+    setFormParentId(
+      defaultType === 'field' ? (selectedPlant || '') :
+      defaultType === 'station' ? (selectedField || '') : ''
+    );
+    setAddEditDialog({ open: true, type: defaultType, mode: 'add', allowTypeChange: true });
   };
 
   const openEditDialog = (type: LocationType, item: Plant | Field | Station) => {
+    setFormType(type);
     setFormName(item.name);
     setFormDescription(item.description || '');
-    if (type === 'field') {
-      setFormParentId((item as Field).plant_id || '');
-    } else if (type === 'station') {
-      setFormParentId((item as Station).field_id || '');
-    }
+    if (type === 'field') setFormParentId((item as Field).plant_id || '');
+    else if (type === 'station') setFormParentId((item as Station).field_id || '');
     setAddEditDialog({ open: true, type, mode: 'edit', item });
   };
 
@@ -201,53 +221,44 @@ const LocationManagement: React.FC = () => {
     setDeleteDialog({ open: true, type, item });
   };
 
+  const handleTypeChange = (newType: LocationType) => {
+    setFormType(newType);
+    if (newType === 'field') setFormParentId(selectedPlant || '');
+    else if (newType === 'station') setFormParentId(selectedField || '');
+    else setFormParentId('');
+  };
+
   const handleSave = async () => {
     if (!formName.trim()) return;
-
-    const { type, mode, item } = addEditDialog;
+    const { mode, item } = addEditDialog;
+    const type = formType;
 
     if (mode === 'add') {
-      if (type === 'plant') {
-        await addPlant(formName, formDescription || undefined);
-      } else if (type === 'field') {
-        await addField(formName, formParentId || undefined, formDescription || undefined);
-      } else {
-        await addStation(formName, formParentId || undefined, formDescription || undefined);
-      }
+      if (type === 'plant') await addPlant(formName, formDescription || undefined);
+      else if (type === 'field') await addField(formName, formParentId || undefined, formDescription || undefined);
+      else await addStation(formName, formParentId || undefined, formDescription || undefined);
     } else if (item) {
-      if (type === 'plant') {
-        await updatePlant(item.id, { name: formName, description: formDescription || null });
-      } else if (type === 'field') {
-        await updateField(item.id, { name: formName, description: formDescription || null, plant_id: formParentId || null });
-      } else {
-        await updateStation(item.id, { name: formName, description: formDescription || null, field_id: formParentId || null });
-      }
+      if (type === 'plant') await updatePlant(item.id, { name: formName, description: formDescription || null });
+      else if (type === 'field') await updateField(item.id, { name: formName, description: formDescription || null, plant_id: formParentId || null });
+      else await updateStation(item.id, { name: formName, description: formDescription || null, field_id: formParentId || null });
     }
-
     setAddEditDialog({ open: false, type: 'plant', mode: 'add' });
   };
 
   const handleDelete = async () => {
     const { type, item } = deleteDialog;
     if (!item) return;
-
-    if (type === 'plant') {
-      await deletePlant(item.id);
-    } else if (type === 'field') {
+    if (type === 'plant') await deletePlant(item.id);
+    else if (type === 'field') {
       await deleteField(item.id);
       if (selectedField === item.id) setSelectedField(null);
-    } else {
-      await deleteStation(item.id);
-    }
-
+    } else await deleteStation(item.id);
     setDeleteDialog({ open: false, type: 'plant' });
   };
 
-  const getTypeLabel = (type: LocationType) => {
-    return type.charAt(0).toUpperCase() + type.slice(1);
-  };
+  const getTypeLabel = (type: LocationType) => type.charAt(0).toUpperCase() + type.slice(1);
 
-  // Tree View Component
+  // ===== Tree View (unchanged structure, just title via parent) =====
   const TreeView = () => {
     if (isLoading) {
       return (
@@ -288,6 +299,7 @@ const LocationManagement: React.FC = () => {
             const plantFields = getVisibleFieldsForPlant(plant.id);
             const isPlantExpanded = expandedPlants.has(plant.id) || !!searchLower;
             const hasChildren = plantFields.length > 0;
+            const fullName = getPlantFullName(plant);
 
             return (
               <div key={plant.id} className="select-none">
@@ -295,20 +307,13 @@ const LocationManagement: React.FC = () => {
                   <div className="flex items-center group rounded-md hover:bg-accent/50 transition-colors">
                     <CollapsibleTrigger asChild>
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
-                        {hasChildren ? (
-                          isPlantExpanded ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )
-                        ) : (
-                          <div className="w-4" />
-                        )}
+                        {hasChildren ? (isPlantExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />) : <div className="w-4" />}
                       </Button>
                     </CollapsibleTrigger>
-                    <div className="flex items-center gap-2 flex-1 py-1.5 px-2 cursor-pointer" onClick={() => togglePlantExpanded(plant.id)}>
+                    <div className="flex items-center gap-2 flex-1 py-1.5 px-2 cursor-pointer min-w-0" onClick={() => togglePlantExpanded(plant.id)}>
                       <Building2 className="h-4 w-4 text-primary shrink-0" />
                       <span className="font-medium">{plant.name}</span>
+                      {fullName && <span className="text-xs text-muted-foreground truncate">— {fullName}</span>}
                       {plantFields.length > 0 && (
                         <Badge variant="secondary" className="ml-1 text-xs">{plantFields.length}</Badge>
                       )}
@@ -338,15 +343,7 @@ const LocationManagement: React.FC = () => {
                               <div className="flex items-center group rounded-md hover:bg-accent/50 transition-colors">
                                 <CollapsibleTrigger asChild>
                                   <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0">
-                                    {hasStations ? (
-                                      isFieldExpanded ? (
-                                        <ChevronDown className="h-3.5 w-3.5" />
-                                      ) : (
-                                        <ChevronRight className="h-3.5 w-3.5" />
-                                      )
-                                    ) : (
-                                      <div className="w-3.5" />
-                                    )}
+                                    {hasStations ? (isFieldExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />) : <div className="w-3.5" />}
                                   </Button>
                                 </CollapsibleTrigger>
                                 <div className="flex items-center gap-2 flex-1 py-1 px-2 cursor-pointer" onClick={() => toggleFieldExpanded(field.id)}>
@@ -396,70 +393,21 @@ const LocationManagement: React.FC = () => {
               </div>
             );
           })}
-          
-          {/* Orphaned fields (no plant) */}
-          {fields.filter(f => !f.plant_id).length > 0 && (
-            <div className="mt-4 pt-4 border-t border-border">
-              <p className="text-xs text-muted-foreground mb-2 px-2">Unassigned Fields</p>
-              {fields.filter(f => !f.plant_id).map(field => {
-                const fieldStations = getStationsByField(field.id);
-                const isFieldExpanded = expandedFields.has(field.id);
-                
-                return (
-                  <div key={field.id} className="ml-2">
-                    <Collapsible open={isFieldExpanded} onOpenChange={() => toggleFieldExpanded(field.id)}>
-                      <div className="flex items-center group rounded-md hover:bg-accent/50 transition-colors">
-                        <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0">
-                            {fieldStations.length > 0 ? (
-                              isFieldExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />
-                            ) : (
-                              <div className="w-3.5" />
-                            )}
-                          </Button>
-                        </CollapsibleTrigger>
-                        <div className="flex items-center gap-2 flex-1 py-1 px-2">
-                          <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <span className="text-sm text-muted-foreground">{field.name}</span>
-                        </div>
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
-                          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => openEditDialog('field', field)}>
-                            <Pencil className="h-2.5 w-2.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:text-destructive" onClick={() => openDeleteDialog('field', field)}>
-                            <Trash2 className="h-2.5 w-2.5" />
-                          </Button>
-                        </div>
-                      </div>
-                      <CollapsibleContent>
-                        <div className="ml-4 border-l border-border/50 pl-2 space-y-0.5">
-                          {fieldStations.map(station => (
-                            <div key={station.id} className="flex items-center group rounded-md hover:bg-accent/50 transition-colors py-1 px-2">
-                              <Radio className="h-3 w-3 text-muted-foreground shrink-0 mr-2" />
-                              <span className="text-sm text-muted-foreground flex-1">{station.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
       </ScrollArea>
     );
   };
 
+  // ===== Column card =====
   const renderLocationCard = (
     title: string,
     icon: React.ReactNode,
     items: (Plant | Field | Station)[],
     type: LocationType,
     selectedId: string | null,
-    onSelect?: (id: string | null) => void,
-    getParentName?: (item: Field | Station) => string | null
+    onSelect?: (id: string | null, item?: Plant | Field | Station) => void,
+    getParentName?: (item: Field | Station) => string | null,
+    getSubtitle?: (item: Plant | Field | Station) => string | null
   ) => (
     <Card className="flex-1 min-w-[280px]">
       <CardHeader className="pb-3">
@@ -490,51 +438,38 @@ const LocationManagement: React.FC = () => {
               {items.map(item => {
                 const isSelected = selectedId === item.id;
                 const parentName = getParentName ? getParentName(item as Field | Station) : null;
-                
+                const subtitle = getSubtitle ? getSubtitle(item) : null;
+
                 return (
                   <div
                     key={item.id}
-                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                      isSelected 
-                        ? 'bg-primary/10 border-primary' 
-                        : 'hover:bg-accent border-border'
+                    className={`group p-3 rounded-lg border cursor-pointer transition-colors ${
+                      isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-accent border-border'
                     }`}
-                    onClick={() => onSelect?.(isSelected ? null : item.id)}
+                    onClick={() => onSelect?.(isSelected ? null : item.id, item)}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-medium truncate">{item.name}</span>
                           {isSelected && onSelect && (
-                            <ChevronRight className="h-4 w-4 text-primary" />
+                            <ChevronRight className="h-4 w-4 text-primary shrink-0" />
                           )}
                         </div>
-                        {parentName && (
-                          <span className="text-xs text-muted-foreground">
-                            Parent: {parentName}
-                          </span>
+                        {subtitle && (
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">{subtitle}</p>
                         )}
-                        {item.description && (
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">
-                            {item.description}
-                          </p>
+                        {parentName && (
+                          <span className="text-xs text-muted-foreground block">Parent: {parentName}</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 ml-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={(e) => { e.stopPropagation(); openEditDialog(type, item); }}
-                        >
+                      <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-7 w-7"
+                          onClick={(e) => { e.stopPropagation(); openEditDialog(type, item); }}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-destructive hover:text-destructive"
-                          onClick={(e) => { e.stopPropagation(); openDeleteDialog(type, item); }}
-                        >
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"
+                          onClick={(e) => { e.stopPropagation(); openDeleteDialog(type, item); }}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -550,209 +485,257 @@ const LocationManagement: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MapPin className="h-4 w-4" />
-          <span>Manage your asset hierarchy: Plants → Fields → Stations</span>
-        </div>
-        
-        {/* Search Input */}
-        <div className="relative w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search locations..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-9"
-          />
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
-              onClick={() => setSearchQuery('')}
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          )}
-        </div>
+    <TooltipProvider delayDuration={150}>
+      <div className="space-y-4">
+        <Tabs defaultValue="tree" className="w-full">
+          {/* Toolbar: Search (left) + View toggles + Expand/Collapse + Add */}
+          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+            {/* Search left */}
+            <div className="relative w-72 max-w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search locations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-9"
+              />
+              {searchQuery && (
+                <Button variant="ghost" size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
+                  onClick={() => setSearchQuery('')}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+
+            {/* Right cluster: view toggle + expand/collapse + add */}
+            <div className="flex items-center gap-2">
+              <TabsList className="h-9">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger value="tree" className="px-2.5" aria-label="Tree View">
+                      <GitBranch className="h-4 w-4" />
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Tree View</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger value="columns" className="px-2.5" aria-label="Columns View">
+                      <LayoutGrid className="h-4 w-4" />
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Columns View</TooltipContent>
+                </Tooltip>
+              </TabsList>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-9 w-9" onClick={toggleExpandCollapseAll} aria-label={allExpanded ? 'Collapse All' : 'Expand All'}>
+                    {allExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{allExpanded ? 'Collapse All' : 'Expand All'}</TooltipContent>
+              </Tooltip>
+
+              <Button size="sm" onClick={openUnifiedAddDialog} className="h-9">
+                <Plus className="h-4 w-4 mr-1" />
+                Add Location
+              </Button>
+            </div>
+          </div>
+
+          <TabsContent value="tree" className="mt-0">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <GitBranch className="h-4 w-4" />
+                  Basrah Gas Company (BGC)
+                  {searchQuery && (
+                    <Badge variant="secondary" className="ml-2">Filtered</Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TreeView />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="columns" className="mt-0">
+            <div className="flex flex-col lg:flex-row gap-4">
+              {renderLocationCard(
+                'Plants',
+                <Building2 className="h-4 w-4" />,
+                columnPlants,
+                'plant',
+                selectedPlant,
+                (id) => { setSelectedPlant(id); setSelectedField(null); },
+                undefined,
+                (item) => getPlantFullName(item as Plant)
+              )}
+
+              {renderLocationCard(
+                'Fields',
+                <MapPin className="h-4 w-4" />,
+                columnFields,
+                'field',
+                selectedField,
+                (id, item) => {
+                  setSelectedField(id);
+                  if (id && item) {
+                    const f = item as Field;
+                    if (f.plant_id) setSelectedPlant(f.plant_id);
+                  }
+                },
+                (item) => {
+                  const field = item as Field;
+                  return plants.find(p => p.id === field.plant_id)?.name || null;
+                }
+                // No subtitle for fields — only the Parent line should show
+              )}
+
+              {renderLocationCard(
+                'Stations',
+                <Radio className="h-4 w-4" />,
+                columnStations,
+                'station',
+                null,
+                undefined,
+                (item) => {
+                  const station = item as Station;
+                  return fields.find(f => f.id === station.field_id)?.name || null;
+                }
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Add/Edit Dialog (unified) */}
+        <Dialog open={addEditDialog.open} onOpenChange={(open) => !open && setAddEditDialog({ ...addEditDialog, open: false })}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {addEditDialog.mode === 'add' ? 'Add Location' : `Edit ${getTypeLabel(formType)}`}
+              </DialogTitle>
+              <DialogDescription>
+                {addEditDialog.mode === 'add'
+                  ? 'Add a new plant, or a field/station inside an existing plant.'
+                  : `Update the ${formType} details below.`}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-2">
+              {addEditDialog.mode === 'add' && addEditDialog.allowTypeChange && (
+                <div className="space-y-2">
+                  <Label>Location Type</Label>
+                  <Select value={formType} onValueChange={(v) => handleTypeChange(v as LocationType)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="plant">Plant (top level)</SelectItem>
+                      <SelectItem value="field" disabled={plants.length === 0}>
+                        Field (under a Plant)
+                      </SelectItem>
+                      <SelectItem value="station" disabled={fields.length === 0}>
+                        Station (under a Field)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {formType === 'field' && (
+                <div className="space-y-2">
+                  <Label>Parent Plant</Label>
+                  <Select value={formParentId || '__none__'} onValueChange={(v) => setFormParentId(v === '__none__' ? '' : v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a plant" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">No parent</SelectItem>
+                      {plants.map(plant => (
+                        <SelectItem key={plant.id} value={plant.id}>{plant.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {formType === 'station' && (
+                <div className="space-y-2">
+                  <Label>Parent Field</Label>
+                  <Select value={formParentId || '__none__'} onValueChange={(v) => setFormParentId(v === '__none__' ? '' : v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a field" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">No parent</SelectItem>
+                      {fields.map(field => (
+                        <SelectItem key={field.id} value={field.id}>
+                          {field.name}
+                          {field.plant_id && plants.find(p => p.id === field.plant_id)
+                            ? ` (${plants.find(p => p.id === field.plant_id)!.name})`
+                            : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder={`Enter ${formType} name`}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Input
+                  id="description"
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  placeholder="Enter description"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddEditDialog({ ...addEditDialog, open: false })}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={!formName.trim()}>
+                {addEditDialog.mode === 'add' ? 'Add' : 'Save'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ ...deleteDialog, open: false })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {getTypeLabel(deleteDialog.type)}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{deleteDialog.item?.name}"? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
-
-      <Tabs defaultValue="tree" className="w-full">
-        <div className="flex items-center justify-between mb-4">
-          <TabsList>
-            <TabsTrigger value="tree" className="gap-2">
-              <GitBranch className="h-4 w-4" />
-              Tree View
-            </TabsTrigger>
-            <TabsTrigger value="columns" className="gap-2">
-              <LayoutGrid className="h-4 w-4" />
-              Columns View
-            </TabsTrigger>
-          </TabsList>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={expandAll}>
-              Expand All
-            </Button>
-            <Button variant="outline" size="sm" onClick={collapseAll}>
-              Collapse All
-            </Button>
-            <Button size="sm" onClick={() => openAddDialog('plant')}>
-              <Plus className="h-4 w-4 mr-1" />
-              Add Plant
-            </Button>
-          </div>
-        </div>
-
-        <TabsContent value="tree" className="mt-0">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <GitBranch className="h-4 w-4" />
-                Asset Hierarchy
-                {searchQuery && (
-                  <Badge variant="secondary" className="ml-2">
-                    Filtered
-                  </Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TreeView />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="columns" className="mt-0">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {renderLocationCard(
-              'Plants',
-              <Building2 className="h-4 w-4" />,
-              columnPlants,
-              'plant',
-              selectedPlant,
-              (id) => { setSelectedPlant(id); setSelectedField(null); }
-            )}
-
-            {renderLocationCard(
-              'Fields',
-              <MapPin className="h-4 w-4" />,
-              columnFields,
-              'field',
-              selectedField,
-              setSelectedField,
-              (item) => {
-                const field = item as Field;
-                return plants.find(p => p.id === field.plant_id)?.name || null;
-              }
-            )}
-
-            {renderLocationCard(
-              'Stations',
-              <Radio className="h-4 w-4" />,
-              columnStations,
-              'station',
-              null,
-              undefined,
-              (item) => {
-                const station = item as Station;
-                return fields.find(f => f.id === station.field_id)?.name || null;
-              }
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      {/* Add/Edit Dialog */}
-      <Dialog open={addEditDialog.open} onOpenChange={(open) => !open && setAddEditDialog({ ...addEditDialog, open: false })}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {addEditDialog.mode === 'add' ? 'Add' : 'Edit'} {getTypeLabel(addEditDialog.type)}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder={`Enter ${addEditDialog.type} name`}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
-              <Input
-                id="description"
-                value={formDescription}
-                onChange={(e) => setFormDescription(e.target.value)}
-                placeholder="Enter description"
-              />
-            </div>
-            {addEditDialog.type === 'field' && (
-              <div className="space-y-2">
-                <Label>Parent Plant (Optional)</Label>
-                <Select value={formParentId || '__none__'} onValueChange={(v) => setFormParentId(v === '__none__' ? '' : v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a plant" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">No parent</SelectItem>
-                    {plants.map(plant => (
-                      <SelectItem key={plant.id} value={plant.id}>{plant.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            {addEditDialog.type === 'station' && (
-              <div className="space-y-2">
-                <Label>Parent Field (Optional)</Label>
-                <Select value={formParentId || '__none__'} onValueChange={(v) => setFormParentId(v === '__none__' ? '' : v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a field" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">No parent</SelectItem>
-                    {fields.map(field => (
-                      <SelectItem key={field.id} value={field.id}>{field.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddEditDialog({ ...addEditDialog, open: false })}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={!formName.trim()}>
-              {addEditDialog.mode === 'add' ? 'Add' : 'Save'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ ...deleteDialog, open: false })}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete {getTypeLabel(deleteDialog.type)}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{deleteDialog.item?.name}"? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+    </TooltipProvider>
   );
 };
 
