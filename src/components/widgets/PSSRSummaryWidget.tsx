@@ -263,16 +263,28 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                     <p className="text-sm font-medium mb-1 text-foreground">Draft in Progress</p>
                     <p className="text-xs opacity-70 mb-5">Continue setting up your handover plan</p>
                     {canCreateVCR && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="text-xs gap-1.5"
-                        onClick={() => setShowP2APlanWizard(true)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                        Continue Setup
-                      </Button>
+                      <div className="flex items-center justify-center gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="text-xs gap-1.5 group/cta"
+                          onClick={() => setShowP2APlanWizard(true)}
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover/cta:text-green-600 transition-colors" />
+                          Continue P2A Plan
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => { e.stopPropagation(); setShowDeleteP2ADraft(true); }}
+                          aria-label="Delete draft P2A plan"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     )}
+
                   </>
                 ) : (
                   <>
