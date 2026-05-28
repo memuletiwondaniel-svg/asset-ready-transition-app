@@ -109,7 +109,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
     setViewMode,
   } = useProjectPreferences();
   
-  const [activeTab, setActiveTab] = useState('projects');
+  const [activeTab, setActiveTab] = useState('hierarchy');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [viewProject, setViewProject] = useState<any>(null);
   const [editProject, setEditProject] = useState<any>(null);
