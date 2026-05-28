@@ -232,7 +232,7 @@ const FunctionsRolesManagement: React.FC = () => {
       await addRole(roleName.trim(), roleDescription.trim(), selectedCategoryId);
       queryClient.invalidateQueries({ queryKey: ['categorized-roles'] });
       toast({ title: 'Success', description: 'Role added successfully' });
-      setAddRoleOpen(false);
+      setAddOpen(false);
       resetRoleForm();
     } catch (error: any) {
       console.error('Error adding role:', error);
