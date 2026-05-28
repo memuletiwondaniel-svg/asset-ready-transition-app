@@ -6,7 +6,7 @@
  * on the next load. Auth tokens are preserved so users stay signed in.
  */
 
-export const APP_RESET_ID = "2026-05-27-2";
+export const APP_RESET_ID = "2026-05-28-cleanup-stale-routes";
 
 const RESET_KEY = "__orsh_reset_id";
 const PRESERVE_PREFIXES = ["sb-"];
