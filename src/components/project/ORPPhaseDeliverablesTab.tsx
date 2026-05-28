@@ -113,6 +113,8 @@ export const ORPPhaseDeliverablesTab = () => {
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [templatesOpen, setTemplatesOpen] = useState(false);
 
   // Combined Add dialog (Activity or Phase)
   const [addOpen, setAddOpen] = useState(false);
