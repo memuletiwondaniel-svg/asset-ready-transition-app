@@ -505,7 +505,7 @@ const LocationManagement: React.FC = () => {
         </div>
         <div className="flex flex-col min-w-0">
           <span className="text-base font-semibold tracking-tight truncate">Basrah Gas Company</span>
-          <span className="text-[11px] font-normal uppercase tracking-wider text-muted-foreground">BGC · Asset Hierarchy</span>
+          <span className="text-[11px] font-normal uppercase tracking-wider text-muted-foreground">Asset Hierarchy</span>
         </div>
         {searchQuery && (
           <Badge variant="secondary" className="ml-1">Filtered</Badge>
