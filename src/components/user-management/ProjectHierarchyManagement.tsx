@@ -596,6 +596,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                         </Button>
                       </CollapsibleTrigger>
                       <div className="flex items-center gap-2 flex-1 py-1.5 px-2 cursor-pointer" onClick={() => toggleRegion(region.id)}>
+                        <MapPin className="h-4 w-4 text-violet-500 shrink-0" />
                         <span className="text-sm font-semibold uppercase tracking-wide text-foreground">{region.name}</span>
                       </div>
                       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
