@@ -44,7 +44,9 @@ import {
   Home,
   Layers,
   MapPin,
-  Upload
+  Upload,
+  GitBranch,
+  Milestone
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/admin/ThemeToggle';
 import LanguageSelector from '@/components/admin/LanguageSelector';
