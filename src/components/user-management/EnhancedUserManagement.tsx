@@ -48,7 +48,8 @@ import {
   GitBranch,
   Milestone,
   Factory,
-  FolderKanban
+  FolderKanban,
+  ShieldCheck
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/admin/ThemeToggle';
 import LanguageSelector from '@/components/admin/LanguageSelector';
