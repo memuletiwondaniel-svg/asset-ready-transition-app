@@ -721,13 +721,13 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         {/* Portfolios Column */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between group/header">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
+                <MapPin className="h-4 w-4 text-violet-500" />
                 Portfolios
                 <Badge variant="secondary" className="ml-1">{regions.length}</Badge>
               </CardTitle>
-              <Button size="sm" variant="outline" onClick={() => setShowAddRegionDialog(true)}>
+              <Button size="sm" variant="outline" onClick={() => setShowAddRegionDialog(true)} className="opacity-0 group-hover/header:opacity-100 transition-opacity">
                 <Plus className="h-4 w-4 mr-1" />
                 Add
               </Button>
