@@ -27,8 +27,10 @@ export const ProjectMilestonesManagementTab = () => {
   const [formData, setFormData] = useState({
     code: '',
     name: '',
-    description: ''
+    description: '',
+    is_custom: false,
   });
+
 
   // Update mutation
   const updateMilestone = useMutation({
