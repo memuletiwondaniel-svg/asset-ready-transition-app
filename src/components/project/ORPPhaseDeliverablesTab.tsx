@@ -310,7 +310,7 @@ export const ORPPhaseDeliverablesTab = () => {
       </div>
 
       {viewMode === 'table' ? (
-        <ORAActivityCatalog />
+        <ORAActivityCatalog hideToolbar externalSearch={searchQuery} />
       ) : (
       <Accordion type="multiple" className="space-y-3">
         {visiblePhases.map((phase) => {
