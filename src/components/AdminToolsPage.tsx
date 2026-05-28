@@ -252,7 +252,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       label: 'ORGANIZATION SETTINGS',
       columns: 3 as const,
       items: [
-        { id: 'users', title: 'Configuration', description: 'Configure users, roles, and project structure', icon: SlidersHorizontal, gradient: 'from-slate-700 to-slate-900', onClick: () => setActiveView('users') },
+        { id: 'users', title: 'Configuration', description: 'Configure users, roles, and project structure', icon: SlidersHorizontal, gradient: 'from-violet-500 to-indigo-600', onClick: () => setActiveView('users') },
         { id: 'handover-management', title: 'VCRs & PSSRs', description: 'Certificates, safety reviews', icon: Key, gradient: 'from-blue-500 to-cyan-500', onClick: () => setActiveView('handover-management') },
         { id: 'document-management', title: 'Document Management', description: 'Types, categories, lifecycle', icon: Files, gradient: 'from-sky-500 to-blue-600', onClick: () => setActiveView('document-management') },
         { id: 'tenant-setup', title: 'Tenant Setup Wizard', description: 'Configure new organisation', icon: Compass, gradient: 'from-teal-500 to-cyan-600', onClick: () => setTenantSetupOpen(true) },
@@ -266,7 +266,6 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
         { id: 'roles-permissions', title: 'Roles & Permissions', description: 'Access control, permission groups', icon: Shield, gradient: 'from-rose-500 to-pink-600', onClick: () => setActiveView('roles-permissions') },
         { id: 'user-offboarding', title: 'User Offboarding', description: 'Deactivate users, revoke access', icon: UserMinus, gradient: 'from-red-500 to-rose-600', onClick: () => setActiveView('user-offboarding') },
         { id: 'permission-review', title: 'Permission Reviews', description: 'Periodic access certification', icon: ClipboardCheck, gradient: 'from-indigo-500 to-violet-600', onClick: () => setActiveView('permission-review') },
-        { id: 'bulk-upload', title: 'Bulk User Upload', description: 'Import users via CSV', icon: Upload, gradient: 'from-teal-500 to-emerald-600', onClick: () => setActiveView('bulk-upload') },
         { id: 'sso', title: 'Single Sign-On', description: 'SAML 2.0, Azure AD, Okta', icon: Shield, gradient: 'from-indigo-500 to-purple-600', onClick: () => setActiveView('sso') },
       ],
     },
