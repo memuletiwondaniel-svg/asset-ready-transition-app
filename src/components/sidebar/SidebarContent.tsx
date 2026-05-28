@@ -17,6 +17,8 @@ import { useNewTaskCount } from '@/hooks/useNewTaskCount';
 
 interface NavigationItem {
   labelKey: string;
+  shortLabel?: string;
+  tooltip?: string;
   icon: React.ComponentType<{ className?: string }>;
   path: string;
   section?: string;
