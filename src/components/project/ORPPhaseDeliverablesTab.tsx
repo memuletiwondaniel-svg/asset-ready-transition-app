@@ -626,7 +626,7 @@ export const ORPPhaseDeliverablesTab = () => {
 
       {/* View Activity Dialog */}
       <Dialog open={!!viewingActivity} onOpenChange={() => setViewingActivity(null)}>
-        <DialogContent className="sm:max-w-lg p-0 overflow-hidden flex flex-col h-[640px] max-h-[90vh]">
+        <DialogContent className="sm:max-w-lg p-0 overflow-hidden flex flex-col max-h-[90vh]">
           <DialogHeader className="px-6 pt-6 pb-4 space-y-1 flex-shrink-0">
             <DialogTitle className="text-xl font-semibold">View Activity</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
