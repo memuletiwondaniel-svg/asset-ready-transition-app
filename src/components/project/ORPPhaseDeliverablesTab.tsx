@@ -647,18 +647,11 @@ export const ORPPhaseDeliverablesTab = () => {
                   <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
                     Phase
                   </Label>
-                  <Select value={viewingActivity.phase_id || ''} disabled>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select phase" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {visiblePhases.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    value={visiblePhases.find((p) => p.id === viewingActivity.phase_id)?.label || '-'}
+                    disabled
+                    className="bg-muted"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
