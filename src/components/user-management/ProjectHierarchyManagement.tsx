@@ -42,8 +42,11 @@ import {
   Trash2,
   GripVertical,
   Pencil,
-  User
+  User,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { EditProjectModal } from '@/components/project/EditProjectModal';
 import { useHubs } from '@/hooks/useHubs';
 import { usePortfolioManagers } from '@/hooks/usePortfolioManagers';
