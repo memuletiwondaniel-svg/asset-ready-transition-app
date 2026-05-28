@@ -820,12 +820,12 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                   Roles
                 </TabsTrigger>
                 <TabsTrigger value="locations" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary">
-                  <MapPin className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground/80 group-data-[state=active]:text-primary transition-colors" />
-                  Asset Hierarchy
+                  <Factory className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground/80 group-data-[state=active]:text-primary transition-colors" />
+                  Asset
                 </TabsTrigger>
                 <TabsTrigger value="project-hierarchy" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary">
-                  <GitBranch className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground/80 group-data-[state=active]:text-primary transition-colors" />
-                  Project Hierarchy
+                  <FolderKanban className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground/80 group-data-[state=active]:text-primary transition-colors" />
+                  Project
                 </TabsTrigger>
                 <TabsTrigger value="orp-phases" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary">
                   <Layers className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground/80 group-data-[state=active]:text-primary transition-colors" />
