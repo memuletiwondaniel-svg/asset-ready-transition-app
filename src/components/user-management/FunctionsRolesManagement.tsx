@@ -151,8 +151,8 @@ const FunctionsRolesManagement: React.FC = () => {
     return categoryIcons[name] || <Folder className="h-5 w-5" />;
   };
 
-  const getCategoryColor = (name: string) => {
-    return categoryColors[name] || 'bg-muted text-muted-foreground';
+  const getCategoryAccent = (name: string) => {
+    return categoryAccent[name] || { text: 'text-muted-foreground', hoverBg: 'hover:bg-muted/50' };
   };
 
   // Function handlers
