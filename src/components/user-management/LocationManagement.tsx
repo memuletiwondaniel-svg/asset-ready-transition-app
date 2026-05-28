@@ -370,7 +370,7 @@ const LocationManagement: React.FC = () => {
                                 <div className="ml-4 border-l border-border/50 pl-2 space-y-0.5">
                                   {fieldStations.map(station => (
                                     <div key={station.id} className="flex items-center group rounded-md hover:bg-accent/50 transition-colors py-1 px-2">
-                                      <Radio className="h-3 w-3 text-amber-500 shrink-0 mr-2" />
+                                      <Factory className="h-3 w-3 text-amber-500 shrink-0 mr-2" />
                                       <span className="text-sm text-muted-foreground flex-1">{station.name}</span>
                                       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => openEditDialog('station', station)}>
@@ -603,7 +603,7 @@ const LocationManagement: React.FC = () => {
 
               {renderLocationCard(
                 'Stations',
-                <Radio className="h-4 w-4" />,
+                <Factory className="h-4 w-4" />,
                 columnStations,
                 'station',
                 null,
@@ -645,7 +645,7 @@ const LocationManagement: React.FC = () => {
                     {([
                       { value: 'plant', label: 'Plant', icon: Building2, disabled: false },
                       { value: 'field', label: 'Field', icon: Layers, disabled: plants.length === 0 },
-                      { value: 'station', label: 'Station', icon: Radio, disabled: fields.length === 0 },
+                      { value: 'station', label: 'Station', icon: Factory, disabled: fields.length === 0 },
                     ] as const).map(({ value, label, icon: Icon, disabled }) => {
                       const active = formType === value;
                       return (
