@@ -340,35 +340,18 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
           {/* Main Content */}
           <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
             <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
-              {/* Tabs */}
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 max-w-xl mb-6">
-                  <TabsTrigger value="hierarchy" className="flex items-center gap-2">
-                    <GitBranch className="h-4 w-4" />
-                    Project Hierarchy
-                  </TabsTrigger>
-                  <TabsTrigger value="orp-phases" className="flex items-center gap-2">
-                    <Layers className="h-4 w-4" />
-                    ORP Phases
-                  </TabsTrigger>
-                  <TabsTrigger value="milestones" className="flex items-center gap-2">
-                    <Milestone className="h-4 w-4" />
-                    Milestones
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <div className="flex justify-end mb-4">
+                <Button 
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t.createProject || 'Create Project'}
+                </Button>
+              </div>
 
-              {activeTab === 'projects' ? (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setActiveTab('hierarchy')}
-                    className="mb-2 -ml-2"
-                  >
-                    <GitBranch className="h-4 w-4 mr-2" />
-                    Back to Project Hierarchy
-                  </Button>
+              {/* Projects List */}
+              <>
                   {/* Filters */}
                   <ProjectFilters
                     searchQuery={searchQuery}
