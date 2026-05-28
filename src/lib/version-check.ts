@@ -13,7 +13,12 @@
  * trigger that swaps to the new bundle.
  */
 
-import { performHardReset, APP_RESET_ID } from "./app-reset";
+import {
+  APP_RESET_ID,
+  hasSessionEpochMismatch,
+  performHardReset,
+  syncTabSessionEpoch,
+} from "./app-reset";
 
 declare const __APP_BUILD__: string;
 
@@ -25,6 +30,10 @@ let started = false;
 let inFlight = false;
 let reloading = false;
 let lastHiddenAt: number | null = null;
+
+function shouldForceResetForSessionMismatch() {
+  return hasSessionEpochMismatch();
+}
 
 async function fetchRemoteBuild(): Promise<string | null> {
   try {
@@ -45,6 +54,11 @@ async function fetchRemoteBuild(): Promise<string | null> {
 
 export async function checkOnce() {
   if (inFlight || reloading || !CURRENT_BUILD) return;
+  if (shouldForceResetForSessionMismatch()) {
+    reloading = true;
+    await performHardReset(`${APP_RESET_ID}|session-epoch`);
+    return;
+  }
   inFlight = true;
   try {
     const remote = await fetchRemoteBuild();
@@ -73,9 +87,18 @@ function forceFreshReload() {
 export function startVersionCheck() {
   if (started) return;
   started = true;
+  syncTabSessionEpoch();
 
   void checkOnce();
   window.setInterval(checkOnce, POLL_INTERVAL_MS);
+
+  window.addEventListener("pageshow", (event) => {
+    if ((event as PageTransitionEvent).persisted || shouldForceResetForSessionMismatch()) {
+      forceFreshReload();
+      return;
+    }
+    void checkOnce();
+  });
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
@@ -83,6 +106,10 @@ export function startVersionCheck() {
       return;
     }
     // visible
+    if (shouldForceResetForSessionMismatch()) {
+      forceFreshReload();
+      return;
+    }
     const hiddenFor = lastHiddenAt ? Date.now() - lastHiddenAt : 0;
     lastHiddenAt = null;
     if (hiddenFor >= IDLE_RELOAD_MS) {
