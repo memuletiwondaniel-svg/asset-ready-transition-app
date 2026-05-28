@@ -262,17 +262,15 @@ export const ORPPhaseDeliverablesTab = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {viewMode === 'cards' && (
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search deliverables..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-64"
-              />
-            </div>
-          )}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search deliverables..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 w-64"
+            />
+          </div>
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -312,7 +310,7 @@ export const ORPPhaseDeliverablesTab = () => {
       </div>
 
       {viewMode === 'table' ? (
-        <ORAActivityCatalog />
+        <ORAActivityCatalog hideToolbar externalSearch={searchQuery} />
       ) : (
       <Accordion type="multiple" className="space-y-3">
         {visiblePhases.map((phase) => {

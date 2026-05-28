@@ -34,11 +34,17 @@ const COLUMN_OPTIONS: { key: ColumnKey; label: string }[] = [
 
 const DEFAULT_COLUMNS: ColumnKey[] = ['phase'];
 
-export const ORAActivityCatalog = () => {
+interface ORAActivityCatalogProps {
+  hideToolbar?: boolean;
+  externalSearch?: string;
+}
+
+export const ORAActivityCatalog: React.FC<ORAActivityCatalogProps> = ({ hideToolbar = false, externalSearch }) => {
   const [filters, setFilters] = useState({ phase_id: '', search: '' });
+  const effectiveSearch = externalSearch !== undefined ? externalSearch : filters.search;
   const { activities, treeActivities, isLoading, createActivity, updateActivity, deleteActivity, isCreating, isUpdating } = useORAActivityCatalog({
     phase_id: filters.phase_id || undefined,
-    search: filters.search || undefined
+    search: effectiveSearch || undefined
   });
   const { phases } = useORPPhases();
 
@@ -159,6 +165,7 @@ export const ORAActivityCatalog = () => {
   return (
     <div className="space-y-4 flex flex-col min-h-0">
       {/* Toolbar */}
+      {!hideToolbar && (
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 bg-card p-3 rounded-lg border">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="relative flex-1">
@@ -197,6 +204,7 @@ export const ORAActivityCatalog = () => {
           <Plus className="h-4 w-4 mr-1" />Add Activity
         </Button>
       </div>
+      )}
 
       {/* Table or empty state */}
       {activities.length === 0 ? (
