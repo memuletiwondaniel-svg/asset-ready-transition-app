@@ -1071,6 +1071,18 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
               <TabsContent value="configuration" className="mt-0 pb-6">
                 <ConfigurationManagement />
               </TabsContent>
+
+              <TabsContent value="project-hierarchy" className="mt-0 pb-6">
+                <ProjectHierarchyManagement />
+              </TabsContent>
+
+              <TabsContent value="orp-phases" className="mt-0 pb-6">
+                <ORPPhaseDeliverablesTab />
+              </TabsContent>
+
+              <TabsContent value="milestones" className="mt-0 pb-6">
+                <ProjectMilestonesManagementTab />
+              </TabsContent>
             </Tabs>
           </div>
         </div>
