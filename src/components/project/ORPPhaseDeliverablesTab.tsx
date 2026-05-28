@@ -368,8 +368,8 @@ export const ORPPhaseDeliverablesTab = () => {
           }
         }}
       >
-        <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
+        <DialogContent className="sm:max-w-lg p-0 overflow-hidden flex flex-col h-[640px] max-h-[90vh]">
+          <DialogHeader className="px-6 pt-6 pb-4 space-y-1 flex-shrink-0">
             <DialogTitle className="text-xl font-semibold">
               {editingActivity ? 'Edit Activity' : 'Add New'}
             </DialogTitle>
@@ -380,7 +380,7 @@ export const ORPPhaseDeliverablesTab = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="px-6 pb-6 space-y-5 border-t border-border/60 pt-5">
+          <div className="px-6 pb-6 space-y-5 border-t border-border/60 pt-5 flex-1 overflow-y-auto min-h-0">
             {!editingActivity && (
               <div className="space-y-2">
                 <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
@@ -556,7 +556,7 @@ export const ORPPhaseDeliverablesTab = () => {
             )}
           </div>
 
-          <DialogFooter className="px-6 py-4 border-t border-border/60 bg-muted/30">
+          <DialogFooter className="px-6 py-4 border-t border-border/60 bg-muted/30 flex-shrink-0">
             <Button
               variant="outline"
               onClick={() => {
