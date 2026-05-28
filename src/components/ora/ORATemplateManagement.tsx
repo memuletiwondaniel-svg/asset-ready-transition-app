@@ -195,7 +195,7 @@ export const ORATemplateManagement = () => {
           {filteredTemplates.map((template) => (
             <div
               key={template.id}
-              onClick={() => setViewingTemplate(template)}
+              onClick={() => openViewing(template)}
               className={cn(
                 "group relative h-56 flex flex-col rounded-lg border bg-card p-5 cursor-pointer transition-all duration-200",
                 "hover:shadow-lg hover:border-primary/50 hover:-translate-y-0.5",
