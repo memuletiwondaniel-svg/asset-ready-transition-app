@@ -810,7 +810,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
           <div className="max-w-7xl mx-auto w-full px-6 pt-4">
             <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
               {/* Tabs Row (kept fixed; only the table body scrolls) */}
-              <TabsList className="grid w-full grid-cols-3 max-w-xl mb-2 bg-background/95 backdrop-blur-md flex-shrink-0">
+              <TabsList className="grid w-full grid-cols-6 max-w-4xl mb-2 bg-background/95 backdrop-blur-md flex-shrink-0">
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   Users
@@ -822,6 +822,18 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 <TabsTrigger value="locations" className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
                   Asset Hierarchy
+                </TabsTrigger>
+                <TabsTrigger value="project-hierarchy" className="flex items-center gap-2">
+                  <GitBranch className="h-4 w-4" />
+                  Project Hierarchy
+                </TabsTrigger>
+                <TabsTrigger value="orp-phases" className="flex items-center gap-2">
+                  <Layers className="h-4 w-4" />
+                  ORP Phases
+                </TabsTrigger>
+                <TabsTrigger value="milestones" className="flex items-center gap-2">
+                  <Milestone className="h-4 w-4" />
+                  Milestones
                 </TabsTrigger>
               </TabsList>
 
