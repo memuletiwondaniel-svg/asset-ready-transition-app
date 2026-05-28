@@ -77,14 +77,16 @@ export const ProjectMilestonesManagementTab = () => {
       setFormData({
         code: milestone.code,
         name: milestone.name,
-        description: milestone.description || ''
+        description: milestone.description || '',
+        is_custom: milestone.is_custom,
       });
     } else {
       setEditingMilestone(null);
       setFormData({
         code: '',
         name: '',
-        description: ''
+        description: '',
+        is_custom: true,
       });
     }
     setIsFormOpen(true);
@@ -93,7 +95,9 @@ export const ProjectMilestonesManagementTab = () => {
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingMilestone(null);
-    setFormData({ code: '', name: '', description: '' });
+    setFormData({ code: '', name: '', description: '', is_custom: true });
+  };
+
   };
 
   const handleSave = async () => {
