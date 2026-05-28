@@ -8,6 +8,7 @@ import { User, Settings, Shield, LogOut, ChevronDown, Key, Bell, UserCog } from 
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useCurrentUserRole } from '@/hooks/useCurrentUserRole';
 import { NotificationPreferencesPanel } from '@/components/NotificationPreferencesPanel';
+import { performHardReset } from '@/lib/app-reset';
 interface UserProfileDropdownProps {
   className?: string;
   translations: any;
@@ -37,6 +38,7 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
   const handleSignOut = async () => {
     try {
       await signOut();
+      await performHardReset();
     } catch (error) {
       console.error('Error signing out:', error);
     }

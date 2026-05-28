@@ -12,7 +12,7 @@ import LandingLanguageSelector from "@/components/LandingLanguageSelector";
 
 const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
-  const { session, signOut, loading } = useAuth();
+  const { session, loading } = useAuth();
   const { subdomainTenant } = useTenantContext();
   const isAuthenticated = !!session;
   const navigate = useNavigate();

@@ -46,7 +46,6 @@ import AuthenticatorApprovalModal from "@/components/user-management/Authenticat
 import ConfigurationManagement from "@/components/user-management/ConfigurationManagement";
 import LocationManagement from "@/components/user-management/LocationManagement";
 import { useUsers } from "@/hooks/useUsers";
-import { useNavigate } from 'react-router-dom';
 
 interface UserManagementProps {
   onBack?: () => void;
@@ -54,7 +53,6 @@ interface UserManagementProps {
 
 const UserManagement = ({ onBack: _onBack }: UserManagementProps) => {
   useBreadcrumb();
-  useNavigate();
   const [activeTab, setActiveTab] = useState("users");
   const breadcrumbItems = useMemo(() => ([
     { label: 'Home', path: '/home', onClick: () => window.location.assign('/home') },
