@@ -803,19 +803,6 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                                   {totalProjects} projects
                                 </Badge>
                               </div>
-                              {portfolioManager && (
-                                <div className="flex items-center gap-1.5 mt-1.5">
-                                  <User className="h-3 w-3 text-primary" />
-                                  <span className="text-xs font-medium text-primary">
-                                    PM: {portfolioManager.full_name}
-                                  </span>
-                                </div>
-                              )}
-                              {region.description && (
-                                <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                  {region.description}
-                                </p>
-                              )}
                             </div>
                             <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100">
                               <Button
