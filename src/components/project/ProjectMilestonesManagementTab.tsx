@@ -105,15 +105,20 @@ export const ProjectMilestonesManagementTab = () => {
       if (editingMilestone) {
         await updateMilestone.mutateAsync({
           id: editingMilestone.id,
+          code: formData.code,
           name: formData.name,
-          description: formData.description || undefined
+          description: formData.description || undefined,
+          is_custom: formData.is_custom,
         });
       } else {
         await createMilestoneType({
+          code: formData.code || undefined,
           name: formData.name,
-          description: formData.description || undefined
+          description: formData.description || undefined,
+          is_custom: formData.is_custom,
         });
       }
+
       handleCloseForm();
     } catch (error) {
       console.error('Error saving milestone:', error);
