@@ -798,10 +798,10 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
       <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
         {/* Fixed Header */}
         <AdminHeader 
-          icon={<Users className="w-6 h-6" />} 
-          iconGradient="from-blue-500 to-blue-600"
-          title="User Management" 
-          description="Manage users, roles, and permissions across ORSH platform"
+          icon={<SlidersHorizontal className="w-6 h-6" />} 
+          iconGradient="from-slate-700 to-slate-900"
+          title="Configuration" 
+          description="Configure users, roles, and project structure across ORSH"
           favoritePath="/admin-tools/users"
           customBreadcrumbs={[
             { label: 'Home', path: '/', onClick: onBack },
