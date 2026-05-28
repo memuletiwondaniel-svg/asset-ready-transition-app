@@ -183,13 +183,8 @@ export const ProjectMilestonesManagementTab = () => {
                   <TableHead className="w-24">Type</TableHead>
                   <TableHead className="w-24 text-right">Actions</TableHead>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
                 {filteredMilestones.map((milestone) => (
-                  <TableRow key={milestone.id}>
-                    <TableCell>
-                      <GripVertical className="h-4 w-4 text-muted-foreground/50" />
-                    </TableCell>
+                  <TableRow key={milestone.id} className="group">
                     <TableCell className="font-mono text-sm">{milestone.code}</TableCell>
                     <TableCell className="font-medium">{milestone.name}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">
@@ -201,7 +196,7 @@ export const ProjectMilestonesManagementTab = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -222,6 +217,9 @@ export const ProjectMilestonesManagementTab = () => {
                         )}
                       </div>
                     </TableCell>
+                  </TableRow>
+                ))}
+
                   </TableRow>
                 ))}
               </TableBody>
