@@ -819,7 +819,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                   Users
                 </TabsTrigger>
                 <TabsTrigger value="configuration" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary">
-                  <Layers className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground/80 group-data-[state=active]:text-primary transition-colors" />
+                  <ShieldCheck className="h-4 w-4 text-muted-foreground/60 group-hover:text-foreground/80 group-data-[state=active]:text-primary transition-colors" />
                   Roles
                 </TabsTrigger>
                 <TabsTrigger value="locations" className="group flex items-center justify-center gap-2 transition-colors hover:bg-accent/60 data-[state=active]:text-primary">
