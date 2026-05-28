@@ -311,6 +311,9 @@ export const ORPPhaseDeliverablesTab = () => {
 
       </div>
 
+      {viewMode === 'table' ? (
+        <ORAActivityCatalog />
+      ) : (
       <Accordion type="multiple" className="space-y-3">
         {visiblePhases.map((phase) => {
           const style = PHASE_STYLES[phase.code] ?? PHASE_STYLES.ASSESS;
