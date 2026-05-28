@@ -68,15 +68,16 @@ const categoryIcons: Record<string, React.ReactNode> = {
   'Operations': <Activity className="h-5 w-5" />,
 };
 
-const categoryColors: Record<string, string> = {
-  'Project': 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  'Engineering': 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
-  'Maintenance': 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
-  'Management': 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
-  'Technical': 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-  'Security': 'bg-red-500/10 text-red-600 dark:text-red-400',
-  'Safety': 'bg-lime-500/10 text-lime-600 dark:text-lime-400',
-  'Operations': 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
+// Icon-only accent color (always shown). Card background tint is applied on hover only.
+const categoryAccent: Record<string, { text: string; hoverBg: string }> = {
+  'Project':     { text: 'text-blue-600 dark:text-blue-400',     hoverBg: 'hover:bg-blue-500/10' },
+  'Engineering': { text: 'text-orange-600 dark:text-orange-400', hoverBg: 'hover:bg-orange-500/10' },
+  'Maintenance': { text: 'text-slate-600 dark:text-slate-400',   hoverBg: 'hover:bg-slate-500/10' },
+  'Management':  { text: 'text-purple-600 dark:text-purple-400', hoverBg: 'hover:bg-purple-500/10' },
+  'Technical':   { text: 'text-emerald-600 dark:text-emerald-400', hoverBg: 'hover:bg-emerald-500/10' },
+  'Security':    { text: 'text-red-600 dark:text-red-400',       hoverBg: 'hover:bg-red-500/10' },
+  'Safety':      { text: 'text-lime-600 dark:text-lime-400',     hoverBg: 'hover:bg-lime-500/10' },
+  'Operations':  { text: 'text-cyan-600 dark:text-cyan-400',     hoverBg: 'hover:bg-cyan-500/10' },
 };
 
 const FunctionsRolesManagement: React.FC = () => {
