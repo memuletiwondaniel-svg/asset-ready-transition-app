@@ -389,8 +389,20 @@ export const ORPPhaseDeliverablesTab = () => {
                 <div className="grid grid-cols-2 gap-2">
                   {(
                     [
-                      { key: 'activity', label: 'Activity', icon: <ClipboardList className="h-5 w-5" /> },
-                      { key: 'phase', label: 'ORP Phase', icon: <Layers className="h-5 w-5" /> },
+                      {
+                        key: 'activity',
+                        label: 'Activity',
+                        icon: <ClipboardList className="h-5 w-5" />,
+                        activeCls: 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                        hoverCls: 'hover:border-emerald-300 hover:bg-emerald-500/5 hover:text-emerald-600 dark:hover:text-emerald-400',
+                      },
+                      {
+                        key: 'phase',
+                        label: 'ORP Phase',
+                        icon: <Layers className="h-5 w-5" />,
+                        activeCls: 'border-violet-500 bg-violet-500/10 text-violet-600 dark:text-violet-400',
+                        hoverCls: 'hover:border-violet-300 hover:bg-violet-500/5 hover:text-violet-600 dark:hover:text-violet-400',
+                      },
                     ] as const
                   ).map((opt) => {
                     const active = addType === opt.key;
@@ -402,8 +414,8 @@ export const ORPPhaseDeliverablesTab = () => {
                         className={cn(
                           'flex flex-col items-center justify-center gap-1.5 rounded-lg border px-3 py-3 transition-all',
                           active
-                            ? 'border-primary bg-primary/5 text-primary'
-                            : 'border-border bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                            ? opt.activeCls
+                            : cn('border-border bg-background text-muted-foreground', opt.hoverCls)
                         )}
                       >
                         {opt.icon}
