@@ -147,7 +147,7 @@ export const agentProfiles: AgentProfile[] = [
     status: 'planned',
     gradient: 'from-violet-500 to-purple-600',
     accentColor: 'hsl(270, 70%, 55%)',
-    introduction: "I'm Hannah — your People Readiness specialist. I manage the internal Competence Management System, referencing programs like OperatorSuite by Woods. I track and manage the competencies of all operators, working closely with Selma for training documentation, Fred for commissioning-related competency requirements, and Ivan for technical authority sign-off. Together we understand what training needs to be done, how much has been completed, what remains, and critically — what the gap means for startup readiness.",
+    introduction: "I'm Hannah — your People Readiness specialist. I manage the internal Competence Management System, through which I track and manage the competencies of all Asset Operations and Maintenance Team. I  work closely with Selma for training documentation, Fred for commissioning-related competency requirements, and Ivan for expert input on design and engineering. Together we understand what training needs to be done, how much has been completed, what remains, and critically — what the gap means for startup readiness.",
     specializations: [
       'Competence Management System administration (OperatorSuite)',
       'Operator competency tracking & assessment',
