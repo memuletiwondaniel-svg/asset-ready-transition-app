@@ -166,7 +166,7 @@ const FunctionsRolesManagement: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['role-categories'] });
       queryClient.invalidateQueries({ queryKey: ['categorized-roles'] });
       toast({ title: 'Success', description: 'Function added successfully' });
-      setAddFunctionOpen(false);
+      setAddOpen(false);
       resetFunctionForm();
     } catch (error) {
       console.error('Error adding function:', error);
