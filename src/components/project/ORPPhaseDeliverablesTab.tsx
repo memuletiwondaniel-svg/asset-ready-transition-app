@@ -248,7 +248,7 @@ export const ORPPhaseDeliverablesTab = () => {
           </div>
           <Button onClick={() => openAdd()} className="gap-1.5">
             <Plus className="h-4 w-4" />
-            Add
+            Add Deliverables
           </Button>
         </div>
       </div>
