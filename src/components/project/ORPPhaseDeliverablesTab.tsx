@@ -556,7 +556,7 @@ export const ORPPhaseDeliverablesTab = () => {
             )}
           </div>
 
-          <DialogFooter className="px-6 py-4 border-t border-border/60 bg-muted/30">
+          <DialogFooter className="px-6 py-4 border-t border-border/60 bg-muted/30 flex-shrink-0">
             <Button
               variant="outline"
               onClick={() => {
