@@ -360,6 +360,15 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
 
               {activeTab === 'projects' ? (
                 <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setActiveTab('hierarchy')}
+                    className="mb-2 -ml-2"
+                  >
+                    <GitBranch className="h-4 w-4 mr-2" />
+                    Back to Project Hierarchy
+                  </Button>
                   {/* Filters */}
                   <ProjectFilters
                     searchQuery={searchQuery}
