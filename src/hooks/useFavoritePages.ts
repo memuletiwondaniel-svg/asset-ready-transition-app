@@ -19,7 +19,19 @@ const LEGACY_PATH_TO_PATH: Record<string, string> = {
   '/admin-tools/ai-agents-hub': '/admin/ai-agents',
   '/admin-tools/agent-registry': '/admin/ai-agents',
   '/admin-tools/training-feedback': '/admin/ai-agents',
+  // Deleted/renamed routes — migrate to current destinations
+  '/users': '/admin/users',
+  '/user-management': '/admin/users',
+  '/vcrs': '/projects',
+  '/my-backlog': '/my-tasks',
+  '/manage-checklist': '/home',
+  '/p2o': '/home',
+  '/pssr/approver-dashboard': '/my-tasks',
+  '/pssr-reviews': '/my-tasks',
 };
+
+// Paths that should be removed from favorites entirely (no sensible target)
+const REMOVED_PATHS = new Set<string>([]);
 
 const getStorageKey = (userId?: string) => 
   userId ? `${STORAGE_KEY_PREFIX}-${userId}` : LEGACY_STORAGE_KEY;
@@ -61,26 +73,36 @@ export const useFavoritePages = () => {
       };
       
       let migrated = false;
-      const result = safeParsed.map(fav => {
-        const migratedPath = LEGACY_PATH_TO_PATH[fav.path] ?? (
-          fav.path === '/admin-tools' && LABEL_TO_PATH[fav.label]
-            ? LABEL_TO_PATH[fav.label]
-            : fav.path
-        );
+      const result = safeParsed
+        .filter(fav => !REMOVED_PATHS.has(fav.path))
+        .map(fav => {
+          const migratedPath = LEGACY_PATH_TO_PATH[fav.path] ?? (
+            fav.path === '/admin-tools' && LABEL_TO_PATH[fav.label]
+              ? LABEL_TO_PATH[fav.label]
+              : fav.path
+          );
 
-        if (migratedPath !== fav.path) {
-          migrated = true;
-          return { ...fav, path: migratedPath };
-        }
+          if (migratedPath !== fav.path) {
+            migrated = true;
+            return { ...fav, path: migratedPath };
+          }
 
-        return fav;
+          return fav;
+        });
+
+      // de-dupe by path after migration
+      const seen = new Set<string>();
+      const deduped = result.filter(f => {
+        if (seen.has(f.path)) { migrated = true; return false; }
+        seen.add(f.path);
+        return true;
       });
-      
-      if (migrated) {
-        localStorage.setItem(key, JSON.stringify(result));
+
+      if (migrated || deduped.length !== safeParsed.length) {
+        localStorage.setItem(key, JSON.stringify(deduped));
       }
-      
-      return result;
+
+      return deduped;
     } catch {
       return [];
     }
