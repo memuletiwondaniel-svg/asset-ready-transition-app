@@ -82,13 +82,23 @@ const PHASE_STYLES: Record<string, PhaseStyle> = {
 
 const VISIBLE_PHASE_CODES = ['ASSESS', 'SELECT', 'DEFINE', 'EXECUTE'];
 
-// Display activity_code as <Letter>.<NN> with 2-digit padding (e.g., A.01, S.3 -> S.03)
+// Display activity_code as <Letter>.<NN> with 2-digit padding (A.01, S.03, D.11, E.23).
+// Handles both new short codes ("A.01", "S-3") and legacy prefixed codes ("ASS-01", "SEL-3").
+const PREFIX_TO_LETTER: Record<string, string> = {
+  ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', IDN: 'I', OPR: 'O',
+};
 function formatActivityCode(code: string): string {
   if (!code) return '';
-  const m = code.match(/^([A-Z])[.\-]?(\d+)$/i);
-  if (m) return `${m[1].toUpperCase()}.${m[2].padStart(2, '0')}`;
+  const long = code.match(/^(ASS|SEL|DEF|EXE|IDN|OPR)[.\-]?(\d+)$/i);
+  if (long) {
+    const letter = PREFIX_TO_LETTER[long[1].toUpperCase()];
+    return `${letter}.${long[2].padStart(2, '0')}`;
+  }
+  const short = code.match(/^([A-Z])[.\-]?(\d+)$/i);
+  if (short) return `${short[1].toUpperCase()}.${short[2].padStart(2, '0')}`;
   return code;
 }
+
 
 export const ORPPhaseDeliverablesTab = () => {
   const { activities, isLoading, createActivity, updateActivity, deleteActivity, isCreating, isUpdating } = useORAActivityCatalog();
@@ -264,12 +274,11 @@ export const ORPPhaseDeliverablesTab = () => {
               key={phase.id}
               value={phase.id}
               className={cn(
-                'group/phase border rounded-lg bg-card/50 overflow-hidden transition-all duration-200',
-                style.hoverBg,
+                'group/phase border rounded-lg bg-card/50 overflow-hidden transition-colors duration-200',
                 style.hoverBorder
               )}
             >
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <AccordionTrigger className={cn('px-4 py-3 hover:no-underline transition-colors', style.hoverBg)}>
                 <div className="flex items-center gap-3">
                   <div
                     className={cn(
