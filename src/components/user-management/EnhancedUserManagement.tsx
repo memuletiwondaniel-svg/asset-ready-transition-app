@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Users, Settings, CheckCircle, Home, Search, X, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container, MapPin, GitBranch, Files, Brain, ChevronDown, Star, FlaskConical, GraduationCap, SlidersHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,36 +18,24 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { 
-  Search, 
   Filter, 
   Plus, 
   Edit, 
   Trash2, 
   Eye, 
   ArrowLeft, 
-  Shield, 
   Mail, 
   Phone, 
   Building, 
   User,
-  Users,
-  Settings,
-  Activity,
-  AlertTriangle,
   Clock,
-  CheckCircle,
   XCircle,
   MoreVertical,
   GripVertical,
   ChevronUp,
-  ChevronDown,
   EyeOff,
   Columns,
-  Home,
   Layers,
-  MapPin,
-  Upload,
-  GitBranch,
   Milestone,
   Factory,
   FolderKanban,
@@ -798,10 +787,10 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
       <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
         {/* Fixed Header */}
         <AdminHeader 
-          icon={<Users className="w-6 h-6" />} 
-          iconGradient="from-blue-500 to-blue-600"
-          title="User Management" 
-          description="Manage users, roles, and permissions across ORSH platform"
+          icon={<SlidersHorizontal className="w-6 h-6" />} 
+          iconGradient="from-slate-700 to-slate-900"
+          title="Configuration" 
+          description="Configure users, roles, and project structure across ORSH"
           favoritePath="/admin-tools/users"
           customBreadcrumbs={[
             { label: 'Home', path: '/', onClick: onBack },

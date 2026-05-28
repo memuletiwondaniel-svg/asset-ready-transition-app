@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Users, Settings, CheckCircle, Home, Search, X, Activity, Sliders, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container, MapPin, GitBranch, Files, Brain, ChevronDown, Star, FlaskConical, GraduationCap } from 'lucide-react';
+import { Users, Settings, CheckCircle, Home, Search, X, Activity, Sliders, SlidersHorizontal, Building2, LayoutTemplate, Key, Loader2, Upload, Plug, Shield, FileSearch, Timer, ShieldAlert, Database, Archive, BookOpen, KeyRound, Webhook, HeartPulse, UserMinus, ClipboardCheck, Rocket, Flag, FileText, Compass, AlertTriangle, Container, MapPin, GitBranch, Files, Brain, ChevronDown, Star, FlaskConical, GraduationCap } from 'lucide-react';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useBreadcrumb } from '@/contexts/BreadcrumbContext';
@@ -252,7 +252,7 @@ const AdminToolsPageContent: React.FC<AdminToolsPageProps> = ({
       label: 'ORGANIZATION SETTINGS',
       columns: 3 as const,
       items: [
-        { id: 'users', title: 'Users', description: 'Manage user accounts, invite team members', icon: Users, gradient: 'from-blue-500 to-blue-600', onClick: () => setActiveView('users') },
+        { id: 'users', title: 'Configuration', description: 'Configure users, roles, and project structure', icon: SlidersHorizontal, gradient: 'from-slate-700 to-slate-900', onClick: () => setActiveView('users') },
         { id: 'handover-management', title: 'VCRs & PSSRs', description: 'Certificates, safety reviews', icon: Key, gradient: 'from-blue-500 to-cyan-500', onClick: () => setActiveView('handover-management') },
         { id: 'document-management', title: 'Document Management', description: 'Types, categories, lifecycle', icon: Files, gradient: 'from-sky-500 to-blue-600', onClick: () => setActiveView('document-management') },
         { id: 'tenant-setup', title: 'Tenant Setup Wizard', description: 'Configure new organisation', icon: Compass, gradient: 'from-teal-500 to-cyan-600', onClick: () => setTenantSetupOpen(true) },
