@@ -445,6 +445,36 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
           projectCode={projectCode}
         />
       )}
+
+      <AlertDialog open={showDeleteP2ADraft} onOpenChange={setShowDeleteP2ADraft}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Draft P2A Plan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the draft P2A handover plan including all systems, VCRs, phases, and approvers. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeletingP2ADraft}
+              onClick={async (e) => {
+                e.preventDefault();
+                try {
+                  await deleteP2ADraft();
+                  setShowDeleteP2ADraft(false);
+                } catch {
+                  // toast handled in hook
+                }
+              }}
+            >
+              {isDeletingP2ADraft ? 'Deleting...' : 'Delete Plan'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </>
   );
 };
