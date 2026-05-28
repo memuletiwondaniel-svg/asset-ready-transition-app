@@ -844,9 +844,9 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         {/* Hubs Column - Filtered by selected portfolio */}
         <Card className="flex-1 min-w-[280px]">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between group/header">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
+                <Building2 className="h-4 w-4 text-blue-500" />
                 Project Hubs
                 {selectedRegion && (
                   <Badge variant="outline" className="ml-1 text-xs">
@@ -863,6 +863,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
               <Button 
                 size="sm" 
                 variant="outline" 
+                className="opacity-0 group-hover/header:opacity-100 transition-opacity"
                 onClick={() => {
                   setNewHubRegionId(selectedRegion || '');
                   setShowAddHubDialog(true);
@@ -872,11 +873,6 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                 Add
               </Button>
             </div>
-            {!selectedRegion && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Select a portfolio to filter hubs
-              </p>
-            )}
           </CardHeader>
           <CardContent className="pt-0">
             {(() => {
