@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Key, FileText, Plus, ChevronRight, Pencil, ExternalLink } from 'lucide-react';
+import { Key, FileText, Plus, ChevronRight, Pencil, ExternalLink, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
+
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { VCRCard } from './VCRCard';
 import { useProjectPSSRs } from '@/hooks/useProjectPSSRs';
