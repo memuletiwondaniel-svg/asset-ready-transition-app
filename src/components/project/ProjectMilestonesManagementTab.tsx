@@ -34,7 +34,8 @@ export const ProjectMilestonesManagementTab = () => {
 
   // Update mutation
   const updateMilestone = useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; name: string; description?: string; display_order?: number }) => {
+    mutationFn: async ({ id, ...data }: { id: string; code?: string; name?: string; description?: string; is_custom?: boolean; display_order?: number }) => {
+
       const { data: result, error } = await supabase
         .from('project_milestone_types')
         .update(data)
