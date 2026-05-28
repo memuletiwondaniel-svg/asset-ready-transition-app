@@ -626,7 +626,7 @@ export const ORPPhaseDeliverablesTab = () => {
 
       {/* View Activity Dialog */}
       <Dialog open={!!viewingActivity} onOpenChange={() => setViewingActivity(null)}>
-        <DialogContent className="sm:max-w-lg p-0 overflow-hidden flex flex-col h-[640px] max-h-[90vh]">
+        <DialogContent className="sm:max-w-lg p-0 overflow-hidden flex flex-col max-h-[90vh]">
           <DialogHeader className="px-6 pt-6 pb-4 space-y-1 flex-shrink-0">
             <DialogTitle className="text-xl font-semibold">View Activity</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
@@ -663,7 +663,7 @@ export const ORPPhaseDeliverablesTab = () => {
                   <Label className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
                     Description
                   </Label>
-                  <Textarea value={viewingActivity.description || ''} disabled className="bg-muted" rows={3} />
+                  <Textarea value={viewingActivity.description || ''} disabled className="bg-muted resize-none h-auto" rows={Math.max(3, (viewingActivity.description || '').split('\n').length + Math.ceil((viewingActivity.description || '').length / 60))} />
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-2">
