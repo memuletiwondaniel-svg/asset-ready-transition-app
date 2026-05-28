@@ -98,7 +98,6 @@ export const ProjectMilestonesManagementTab = () => {
     setFormData({ code: '', name: '', description: '', is_custom: true });
   };
 
-  };
 
   const handleSave = async () => {
     try {
