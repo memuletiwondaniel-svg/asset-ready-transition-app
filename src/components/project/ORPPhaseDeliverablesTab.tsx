@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Plus,
   Edit3,
@@ -34,7 +35,12 @@ import {
   Rocket,
   Layers,
   ClipboardList,
+  Table2,
+  LayoutGrid,
+  LayoutTemplate,
 } from 'lucide-react';
+import { ORAActivityCatalog } from '@/components/ora/ORAActivityCatalog';
+import { ORATemplateManagement } from '@/components/ora/ORATemplateManagement';
 import { cn } from '@/lib/utils';
 import { useORAActivityCatalog, useORPPhases, ORAActivity, ORAActivityInput } from '@/hooks/useORAActivityCatalog';
 import { supabase } from '@/integrations/supabase/client';
@@ -107,6 +113,8 @@ export const ORPPhaseDeliverablesTab = () => {
   const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [templatesOpen, setTemplatesOpen] = useState(false);
 
   // Combined Add dialog (Activity or Phase)
   const [addOpen, setAddOpen] = useState(false);
@@ -254,22 +262,58 @@ export const ORPPhaseDeliverablesTab = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search deliverables..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-64"
-            />
-          </div>
+          {viewMode === 'cards' && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search deliverables..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 w-64"
+              />
+            </div>
+          )}
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 transition-colors hover:bg-primary/10 hover:text-primary hover:border-primary/40"
+                  onClick={() => setViewMode((v) => (v === 'cards' ? 'table' : 'cards'))}
+                  aria-label="Toggle view"
+                >
+                  {viewMode === 'cards' ? <Table2 className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{viewMode === 'cards' ? 'Switch to table view' : 'Switch to card view'}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 transition-colors hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-400 hover:border-violet-400/50"
+                  onClick={() => setTemplatesOpen(true)}
+                  aria-label="Templates"
+                >
+                  <LayoutTemplate className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Templates</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <Button onClick={() => openAdd()} className="gap-1.5">
             <Plus className="h-4 w-4" />
             Add Deliverables
           </Button>
         </div>
+
       </div>
 
+      {viewMode === 'table' ? (
+        <ORAActivityCatalog />
+      ) : (
       <Accordion type="multiple" className="space-y-3">
         {visiblePhases.map((phase) => {
           const style = PHASE_STYLES[phase.code] ?? PHASE_STYLES.ASSESS;
@@ -382,6 +426,23 @@ export const ORPPhaseDeliverablesTab = () => {
           );
         })}
       </Accordion>
+      )}
+
+      {/* Templates overlay */}
+      <Dialog open={templatesOpen} onOpenChange={setTemplatesOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>ORA Plan Templates</DialogTitle>
+            <DialogDescription>
+              Manage reusable ORA plan templates across project types and complexities.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="pt-2">
+            <ORATemplateManagement />
+          </div>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Combined Add Dialog (Activity or Phase) */}
       <Dialog
