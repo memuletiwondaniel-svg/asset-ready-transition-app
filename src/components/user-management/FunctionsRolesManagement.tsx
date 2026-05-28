@@ -545,7 +545,6 @@ const FunctionsRolesManagement: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </Dialog>
 
       {/* Edit Role Dialog */}
       <Dialog open={editRoleOpen} onOpenChange={setEditRoleOpen}>
