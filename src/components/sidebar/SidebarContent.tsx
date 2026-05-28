@@ -72,7 +72,7 @@ interface SidebarContentProps {
 const navigationItems: (NavigationItem & { requiresLeadership?: boolean })[] = [
   { labelKey: 'navHome', icon: Home, path: '/', section: 'home' },
   { labelKey: 'navProjects', icon: Key, path: '/projects', section: 'projects' },
-  { labelKey: 'navPSSR', icon: ClipboardCheck, path: '/pssr', section: 'pssr' },
+  { labelKey: 'navPSSR', shortLabel: 'PSSR', tooltip: 'Pre Start-up Safety Review', icon: ClipboardCheck, path: '/pssr', section: 'pssr' },
   { labelKey: 'navMyTasks', icon: ListChecks, path: '/my-tasks', section: 'my-tasks' },
   
   
