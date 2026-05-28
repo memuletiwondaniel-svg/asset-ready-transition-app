@@ -39,6 +39,7 @@ import {
   Search,
   GitBranch,
   LayoutGrid,
+  List,
   Trash2,
   GripVertical,
   Pencil,
@@ -47,6 +48,7 @@ import {
   Minimize2
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { EditProjectModal } from '@/components/project/EditProjectModal';
 import { useHubs } from '@/hooks/useHubs';
 import { usePortfolioManagers } from '@/hooks/usePortfolioManagers';
@@ -55,6 +57,7 @@ import { PortfolioDetailsModal } from './PortfolioDetailsModal';
 interface ProjectHierarchyManagementProps {
   selectedLanguage?: string;
   translations?: Record<string, string>;
+  onShowProjectList?: () => void;
 }
 
 // Draggable Hub Component
@@ -99,20 +102,17 @@ const DraggableHub: React.FC<{
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0">
               {hub.projects.length > 0 ? (
                 isExpanded ? (
-                  <ChevronDown className="h-3.5 w-3.5" />
+                  <ChevronDown className="h-3 w-3 text-muted-foreground/50" strokeWidth={1.5} />
                 ) : (
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  <ChevronRight className="h-3 w-3 text-muted-foreground/50" strokeWidth={1.5} />
                 )
               ) : (
-                <div className="w-3.5" />
+                <div className="w-3" />
               )}
             </Button>
           </CollapsibleTrigger>
           <div className="flex items-center gap-2 flex-1 py-1 px-2 cursor-pointer" onClick={onToggle}>
             <span className="text-sm font-medium text-foreground/80">{hub.name}</span>
-            <Badge variant="outline" className="ml-1 text-xs py-0">
-              {hub.projects.length} projects
-            </Badge>
           </div>
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
             <Button
@@ -209,7 +209,8 @@ const DraggableProject: React.FC<{
 
 const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
   selectedLanguage = 'en',
-  translations = {}
+  translations = {},
+  onShowProjectList
 }) => {
   const {
     regions,
@@ -584,23 +585,17 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
                           {region.hubs.length > 0 ? (
                             isRegionExpanded ? (
-                              <ChevronDown className="h-4 w-4" />
+                              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/50" strokeWidth={1.5} />
                             ) : (
-                              <ChevronRight className="h-4 w-4" />
+                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" strokeWidth={1.5} />
                             )
                           ) : (
-                            <div className="w-4" />
+                            <div className="w-3.5" />
                           )}
                         </Button>
                       </CollapsibleTrigger>
                       <div className="flex items-center gap-2 flex-1 py-1.5 px-2 cursor-pointer" onClick={() => toggleRegion(region.id)}>
                         <span className="text-sm font-semibold uppercase tracking-wide text-foreground">{region.name}</span>
-                        <Badge variant="secondary" className="ml-1 text-xs">
-                          {region.hubs.length} hubs
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {totalProjects} projects
-                        </Badge>
                       </div>
                       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
                         <Button 
@@ -1281,22 +1276,52 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           )}
         </div>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => setViewMode(viewMode === 'tree' ? 'columns' : 'tree')}
-              aria-label={viewMode === 'tree' ? 'Switch to Columns View' : 'Switch to Tree View'}
-            >
-              {viewMode === 'tree' ? <LayoutGrid className="h-4 w-4" /> : <GitBranch className="h-4 w-4" />}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {viewMode === 'tree' ? 'Switch to Columns View' : 'Switch to Tree View'}
-          </TooltipContent>
-        </Tooltip>
+        <div className="flex items-center rounded-md border bg-background h-9 p-0.5">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={viewMode === 'tree' ? 'secondary' : 'ghost'}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setViewMode('tree')}
+                aria-label="Tree View"
+              >
+                <GitBranch className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Tree View</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={viewMode === 'columns' ? 'secondary' : 'ghost'}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setViewMode('columns')}
+                aria-label="Columns View"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Columns View</TooltipContent>
+          </Tooltip>
+          {onShowProjectList && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={onShowProjectList}
+                  aria-label="Project List"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Project List</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
 
         <Tooltip>
           <TooltipTrigger asChild>
@@ -1315,6 +1340,29 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
           </TooltipTrigger>
           <TooltipContent side="bottom">Refresh</TooltipContent>
         </Tooltip>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" className="h-9">
+              <Plus className="h-4 w-4 mr-1" />
+              Add
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 bg-popover">
+            <DropdownMenuItem onClick={() => setShowAddRegionDialog(true)}>
+              <MapPin className="h-4 w-4 mr-2 text-purple-500" />
+              Add Portfolio
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowAddHubDialog(true)}>
+              <Building2 className="h-4 w-4 mr-2 text-blue-500" />
+              Add Project Hub
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowAddProjectModal(true)}>
+              <FolderKanban className="h-4 w-4 mr-2 text-amber-500" />
+              Add Project
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {viewMode === 'tree' ? (

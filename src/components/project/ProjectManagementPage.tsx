@@ -109,7 +109,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
     setViewMode,
   } = useProjectPreferences();
   
-  const [activeTab, setActiveTab] = useState('projects');
+  const [activeTab, setActiveTab] = useState('hierarchy');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [viewProject, setViewProject] = useState<any>(null);
   const [editProject, setEditProject] = useState<any>(null);
@@ -334,15 +334,6 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                 </div>
               </div>
               
-              {activeTab === 'projects' && (
-                <Button 
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t.createProject || 'Create Project'}
-                </Button>
-              )}
             </div>
           </div>
 
@@ -351,11 +342,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
             <div className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
               {/* Tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-4 max-w-2xl mb-6">
-                  <TabsTrigger value="projects" className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
-                    Projects
-                  </TabsTrigger>
+                <TabsList className="grid w-full grid-cols-3 max-w-xl mb-6">
                   <TabsTrigger value="hierarchy" className="flex items-center gap-2">
                     <GitBranch className="h-4 w-4" />
                     Project Hierarchy
@@ -373,6 +360,15 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
 
               {activeTab === 'projects' ? (
                 <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setActiveTab('hierarchy')}
+                    className="mb-2 -ml-2"
+                  >
+                    <GitBranch className="h-4 w-4 mr-2" />
+                    Back to Project Hierarchy
+                  </Button>
                   {/* Filters */}
                   <ProjectFilters
                     searchQuery={searchQuery}
@@ -573,6 +569,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
                 <ProjectHierarchyManagement 
                   selectedLanguage={selectedLanguage}
                   translations={translations}
+                  onShowProjectList={() => setActiveTab('projects')}
                 />
               ) : activeTab === 'orp-phases' ? (
                 <ORPPhaseDeliverablesTab />
