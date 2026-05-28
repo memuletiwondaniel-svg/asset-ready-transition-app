@@ -847,18 +847,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 <Card className="border-border/40 shadow-sm animate-fade-in bg-card/95 backdrop-blur-md flex-shrink-0">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      {/* Title (matches tab styling) */}
-                      <div className="flex items-center gap-2 min-w-0 mr-2">
-                        <Users className="h-5 w-5 text-primary" />
-                        <div className="leading-tight">
-                          <div className="text-base font-semibold text-foreground">Users</div>
-                          <div className="text-xs text-muted-foreground">Manage platform users and access</div>
-                        </div>
-                      </div>
-
-                      <div className="flex-1" />
-
-                      {/* Search (right side, before icons) */}
+                      {/* Search (left, replaces title) */}
                       <div className="relative w-full max-w-sm">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -869,6 +858,9 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                           className="pl-10 bg-background border-border/60 focus-visible:ring-primary/20"
                         />
                       </div>
+
+                      <div className="flex-1" />
+
 
                       <TooltipProvider delayDuration={150}>
                         <div className="flex items-center gap-1">
