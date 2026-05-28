@@ -46,7 +46,9 @@ import {
   MapPin,
   Upload,
   GitBranch,
-  Milestone
+  Milestone,
+  Factory,
+  FolderKanban
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/admin/ThemeToggle';
 import LanguageSelector from '@/components/admin/LanguageSelector';
