@@ -212,7 +212,8 @@ const DraggableProject: React.FC<{
 
 const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
   selectedLanguage = 'en',
-  translations = {}
+  translations = {},
+  onShowProjectList
 }) => {
   const {
     regions,
