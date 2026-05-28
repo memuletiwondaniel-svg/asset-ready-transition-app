@@ -113,6 +113,7 @@ const DraggableHub: React.FC<{
             </Button>
           </CollapsibleTrigger>
           <div className="flex items-center gap-2 flex-1 py-1 px-2 cursor-pointer" onClick={onToggle}>
+            <Building2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />
             <span className="text-sm font-medium text-foreground/80">{hub.name}</span>
           </div>
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-2">
