@@ -176,8 +176,14 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
               </p>
               {!isReadOnly && (
                 <div className="flex items-center justify-center gap-2">
-                  <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setWizardOpen(true); }}>
-                    Continue Setup
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="gap-1.5 group/cta"
+                    onClick={(e) => { e.stopPropagation(); setWizardOpen(true); }}
+                  >
+                    <FileEdit className="h-3.5 w-3.5 text-muted-foreground group-hover/cta:text-green-600 transition-colors" />
+                    Continue ORA Plan
                   </Button>
                   <Button
                     variant="ghost" size="icon"
@@ -189,6 +195,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
                   </Button>
                 </div>
               )}
+
             </div>
           </CardContent>
         </Card>
