@@ -1673,6 +1673,7 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
         portfolioName={detailsPortfolioName}
       />
     </div>
+    </TooltipProvider>
   );
 };
 
