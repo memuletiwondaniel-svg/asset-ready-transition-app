@@ -5,13 +5,7 @@ import { ArrowRight, Shield, FileCheck, Headphones, ClipboardCheck, Key } from "
 import { useAuth } from "@/components/enhanced-auth/AuthProvider";
 import { useTenantContext } from "@/contexts/TenantContext";
 import EnhancedAuthModal from "@/components/enhanced-auth/EnhancedAuthModal";
-import PSSRSummaryPage from "@/components/PSSRSummaryPage";
-import LandingPage from "@/components/LandingPage";
 import BackgroundSlideshow from "@/components/BackgroundSlideshow";
-import UserManagement from "@/pages/UserManagement";
-import AdminToolsPage from "@/components/AdminToolsPage";
-import ProjectManagementPage from "@/components/project/ProjectManagementPage";
-import ProjectsHomePage from "@/components/project/ProjectsHomePage";
 import OrshLogo from "@/components/ui/OrshLogo";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LandingLanguageSelector from "@/components/LandingLanguageSelector";
@@ -25,32 +19,8 @@ const Index = () => {
   const location = useLocation();
   const { language, setLanguage, translations: t } = useLanguage();
   
-  // Get current section from URL path
-  const currentSection = location.pathname === '/' ? null : location.pathname.slice(1);
-  
   const handleAuthenticated = () => {
     setShowAuth(false);
-  };
-  
-  const handleBack = () => {
-    try { signOut(); } catch {}
-    navigate('/');
-  };
-  
-  const handleNavigate = (section: string) => {
-    console.log('Index handleNavigate called with section:', section);
-    // Use centralized route mapping
-    const routes: Record<string, string> = {
-      'home': '/home',
-      'operation-readiness': '/operation-readiness',
-      
-    };
-    const route = routes[section] || `/${section}`;
-    navigate(route);
-  };
-  
-  const handleBackToLanding = () => {
-    navigate('/home');
   };
 
   useEffect(() => {
@@ -76,25 +46,7 @@ const Index = () => {
   if (location.pathname === '/' && !isAuthenticated && !loading) {
     // Fall through to the welcome screen return statement below
   } else if (isAuthenticated) {
-    // Show specific section based on navigation
-    if (currentSection) {
-      // /admin/users → "admin/users"
-      if (currentSection === 'admin/users') {
-        return <UserManagement onBack={handleBackToLanding} />;
-      }
-      switch (currentSection) {
-        case 'pssr':
-          return <PSSRSummaryPage onBack={handleBackToLanding} />;
-        case 'admin-tools':
-          return <AdminToolsPage onBack={handleBackToLanding} />;
-        case 'projects':
-          return <ProjectsHomePage onBack={handleBackToLanding} />;
-        default:
-          return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
-      }
-    }
-    // Show dashboard for authenticated users at /home
-    return <LandingPage onBack={handleBack} onNavigate={handleNavigate} />;
+    return null;
   }
 
   // Show welcome screen before authentication
