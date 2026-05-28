@@ -34,19 +34,19 @@ export const useProjectMilestoneTypes = () => {
   });
 
   const createMilestoneType = useMutation({
-    mutationFn: async (input: { name: string; description?: string }) => {
+    mutationFn: async (input: { name: string; description?: string; code?: string; is_custom?: boolean }) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
-      const code = `CUSTOM_${Date.now()}`;
-      
+      const code = input.code?.trim() || `CUSTOM_${Date.now()}`;
+
       const { data: result, error } = await supabase
         .from('project_milestone_types')
         .insert({
           code,
           name: input.name,
           description: input.description || null,
-          is_custom: true,
+          is_custom: input.is_custom ?? true,
           created_by: user.user.id,
           display_order: 999
         })
@@ -55,6 +55,8 @@ export const useProjectMilestoneTypes = () => {
 
       if (error) throw error;
       return result as ProjectMilestoneType;
+    },
+
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-milestone-types'] });
