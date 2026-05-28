@@ -274,12 +274,11 @@ export const ORPPhaseDeliverablesTab = () => {
               key={phase.id}
               value={phase.id}
               className={cn(
-                'group/phase border rounded-lg bg-card/50 overflow-hidden transition-all duration-200',
-                style.hoverBg,
+                'group/phase border rounded-lg bg-card/50 overflow-hidden transition-colors duration-200',
                 style.hoverBorder
               )}
             >
-              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              <AccordionTrigger className={cn('px-4 py-3 hover:no-underline transition-colors', style.hoverBg)}>
                 <div className="flex items-center gap-3">
                   <div
                     className={cn(
