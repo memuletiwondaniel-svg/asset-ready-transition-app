@@ -255,22 +255,16 @@ export const ORPPhaseDeliverablesTab = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold text-foreground">ORP Deliverables</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage master deliverables and activities for each ORP phase
-          </p>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search deliverables..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 w-80"
+          />
         </div>
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search deliverables..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-64"
-            />
-          </div>
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -306,8 +300,8 @@ export const ORPPhaseDeliverablesTab = () => {
             Add Deliverables
           </Button>
         </div>
-
       </div>
+
 
       {viewMode === 'table' ? (
         <ORAActivityCatalog hideToolbar externalSearch={searchQuery} />
