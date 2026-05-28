@@ -788,7 +788,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
         {/* Fixed Header */}
         <AdminHeader 
           icon={<SlidersHorizontal className="w-6 h-6" />} 
-          iconGradient="from-slate-700 to-slate-900"
+          iconGradient="from-violet-500 to-indigo-600"
           title="Configuration" 
           description="Configure users, roles, and project structure across ORSH"
           favoritePath="/admin-tools/users"
@@ -799,7 +799,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
         />
 
         {/* Main Tabs for Users and Configuration */}
-          iconGradient="from-violet-500 to-indigo-600"
+
           <div className="max-w-7xl mx-auto w-full px-6 pt-4">
             <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
               {/* Tabs Row (kept fixed; only the table body scrolls) */}
