@@ -10,6 +10,7 @@ import {
 import { SOFCertificateNavigator } from './SOFCertificateNavigator';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { performHardReset } from '@/lib/app-reset';
 
 interface SOFApprover {
   id: string;
@@ -63,16 +64,7 @@ export const SOFReviewOverlay: React.FC<SOFReviewOverlayProps> = ({
   const handleExit = async () => {
     onOpenChange(false);
     await signOut();
-    // Clear caches and hard reload for fresh bundle
-    if ('caches' in window) {
-      const names = await caches.keys();
-      await Promise.all(names.map(n => caches.delete(n)));
-    }
-    if ('serviceWorker' in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
-    }
-    window.location.href = '/';
+    await performHardReset();
   };
 
   return (

@@ -1,70 +1,71 @@
-## Corrected understanding
+## Goal
+Make logout/login and inactivity recovery always return to the live ORSH app, never an old shell or deleted page.
 
-- The "Good morning, Daniel" home page IS the current/correct authenticated home — keep it.
-- Pages to permanently remove (route + component + nav references):
-  - `/my-backlog` — stale Kanban (`BacklogPage.tsx`); correct page is `/my-tasks`.
-  - `/manage-checklist` — stale, falls back to home.
-  - `/vcrs` — stale, falls back to home.
-  - `/pssr/approver-dashboard` and `/pssr-reviews` — stale; correct destination is `/my-tasks`.
-  - `/pssr/:id/sof` — stale SoF review page; shows "Failed to load SoF certificate" and is no longer wired.
-  - `/p2o` — referenced by the user as a stale route; remove every link/redirect that points to it (route is not currently registered in `App.tsx`, so this is a sweep-only item).
-- `/users` page is correct content but wrong URL — move to `/admin/users`, breadcrumb becomes `Home › Admin › Users`.
-- The "stale ORSH copy after inactivity" symptom is a stale-bundle / cache issue that needs an end-to-end permanent fix.
+## Plan
 
-## Changes
+### 1. Remove the route multiplexer that can fall back to the old shell
+Refactor routing so `Index.tsx` is no longer the authenticated catch-all for multiple pages.
 
-### 1. Permanently delete stale pages and routes
+- Keep `/` as the public welcome/auth entry only.
+- Route each authenticated page directly instead of sending `/home`, `/pssr`, `/projects`, `/admin/users`, and `/admin-tools` through `Index.tsx`.
+- Create a dedicated authenticated home route for the approved current home experience.
+- Keep `/my-tasks` as its own direct page.
 
-For each path below, remove the `<Route>` in `src/App.tsx`, delete the page component if not used elsewhere, scrub every navigation / favorites / sidebar / translation reference, and replace the route with a redirect so old bookmarks land somewhere sensible instead of NotFound.
+This removes the path-switching fallback that currently makes stale UI restoration harder to control.
 
-| Old path | Page file to delete (if unused) | Redirect target |
-|---|---|---|
-| `/my-backlog` | `src/pages/BacklogPage.tsx`, `src/hooks/usePersonalBacklog.ts`, `src/hooks/useBacklogGroups.ts` | `/my-tasks` |
-| `/manage-checklist` | Sidebar/index branch only (no dedicated page file) | `/home` |
-| `/vcrs` | Sidebar/index branch only | `/projects` |
-| `/pssr/approver-dashboard` | `src/pages/PSSRApproverDashboard.tsx` (also drop the import) | `/my-tasks` |
-| `/pssr-reviews` | — (alias of the above) | `/my-tasks` |
-| `/pssr/:id/sof` | `src/pages/SoFReviewPage.tsx` | `/my-tasks` |
-| `/p2o` | — (sweep references only) | `/home` |
+### 2. Add a browser snapshot / BFCache guard
+Block the browser from reviving an old authenticated screen after inactivity, logout, or timeout.
 
-Sweep tasks shared by all of the above:
-- Remove matching entries from `src/utils/sidebarNavigation.ts` (`SIDEBAR_ROUTES`), `src/components/OrshSidebar.tsx`, `src/components/layouts/AuthenticatedLayout.tsx` `currentPage` matcher, `src/pages/Index.tsx` page-branch switch, `src/components/LandingPage.tsx` favorites icon map, and any translation keys (e.g. `navManageChecklist`, `navVCRs`, `navPSSRReviews`).
-- Strip these paths from persisted user data on boot inside `src/lib/app-reset.ts`: clean `orsh-favorites-*`, `orsh-admin-favorites-*`, and any "last route" key.
+- Add a `pageshow` guard for BFCache restores; if a page is restored from browser memory, revalidate and hard-reload instead of trusting the old DOM.
+- Add an auth/session epoch key in storage. When logout, timeout, or a forced reset happens, increment it.
+- On app boot, on visibility resume, and on protected-route mount, compare the tab’s boot epoch with the current stored epoch. If they differ, hard-reset and reload.
+- Keep the build-id check, but extend it so stale browser snapshots are handled even when the deployed build has not changed.
 
-### 2. Move User Management `/users` → `/admin/users`
+### 3. Harden logout and inactivity timeout
+Make every sign-out path fully invalidate the current tab before the next sign-in.
 
-- `src/App.tsx`: change the route from `path="/users"` to `path="/admin/users"`; add `<Route path="/users" element={<Navigate to="/admin/users" replace />} />` so old links don't 404.
-- `src/utils/sidebarNavigation.ts`: update `users` and `user-management` entries to `/admin/users`.
-- `src/components/layouts/AuthenticatedLayout.tsx`: update the matcher from `startsWith('/users')` to `startsWith('/admin/users')`.
-- `src/pages/UserManagement.tsx` + `src/pages/Index.tsx` branch: set breadcrumb to `Home › Admin › Users` (replacing today's `Home › User Management`). "Admin" is non-clickable; "Users" is the current page.
+- Update manual logout and inactivity timeout logout to use the same hard-reset path.
+- Clear any stored return route pointing to deleted or invalid paths.
+- Force the post-logout navigation to a clean public entry after storage/cache/session invalidation completes.
 
-### 3. Permanent fix for the post-inactivity stale ORSH copy
+### 4. Finish stale route cleanup and prevent fallback to deleted pages
+Keep the previously requested cleanup, but enforce it in routing and persisted state.
 
-Earlier attempts (`runResetIfNeeded`, version-check polling, pre-mount spinner) narrowed the window but didn't close it. The remaining hole: after a long idle period the tab wakes with the old in-memory bundle and the SPA renders without ever refetching `index.html`. End-to-end fix:
+- Preserve permanent redirects for deleted routes:
+  - `/my-backlog` -> `/my-tasks`
+  - `/manage-checklist` -> `/home`
+  - `/vcrs` -> `/projects`
+  - `/pssr/approver-dashboard` -> `/my-tasks`
+  - `/pssr-reviews` -> `/my-tasks`
+  - `/pssr/:id/sof` -> `/my-tasks`
+  - `/p2o` -> `/home`
+  - `/users` -> `/admin/users`
+- Strip these legacy paths from favorites, stored navigation state, and any “last visited route” storage.
+- Ensure `/admin/users` is the only valid user-management destination and that breadcrumb remains `Home > Admin > Users`.
 
-- **Pre-React head guard in `index.html`**: inline `<script>` in `<head>` (before any module import) that unregisters every service worker, deletes every Cache Storage entry, then compares `<meta name="app-build">` from the current HTML vs. the build id stored in `localStorage`. On mismatch it sets the new id and `location.replace(...)` with a cache-buster *before* React loads — closes the bootstrap async gap.
-- **Visibility/idle revalidation** in `src/lib/version-check.ts`: when the tab becomes visible after being hidden for more than ~10 minutes, fetch `/` no-store and hard-reload on build mismatch. Exactly the inactivity scenario the user describes.
-- **Post-sign-in revalidation**: in `AuthProvider`'s `SIGNED_IN` handler, call `checkOnce()` once. If the tab was stale, login itself swaps to the new bundle.
-- **Bump `APP_RESET_ID`** in `src/lib/app-reset.ts` for a one-time wipe on every currently stuck browser. Same pass strips deleted routes from persisted favorites.
-- **Logout flow** (`AuthenticatedLayout.handleLogout`): keep current caches/SW wipe + `window.location.href = '/'`; additionally clear any stored "last route" key pointing at deleted paths.
+### 5. Validation
+Verify the fix against the exact failure you reported.
 
-### 4. Post-login destination — no change
+- Logout -> login in the same tab
+- Timeout/logout after inactivity -> login again
+- Return to app after hidden/inactive tab
+- Old bookmarked stale routes
+- `/users` redirect to `/admin/users`
 
-Authenticated `/` already redirects to `/home`. Confirmed correct.
+## Technical details
+- Main files likely involved:
+  - `src/App.tsx`
+  - `src/pages/Index.tsx`
+  - `src/components/LandingPage.tsx`
+  - `src/components/layouts/AuthenticatedLayout.tsx`
+  - `src/components/enhanced-auth/AuthProvider.tsx`
+  - `src/hooks/useSessionTimeout.ts`
+  - `src/lib/version-check.ts`
+  - `src/lib/app-reset.ts`
+  - `index.html`
+  - `src/utils/sidebarNavigation.ts`
+  - `src/hooks/useFavoritePages.ts`
+  - `src/pages/UserManagement.tsx`
 
-## Files touched
-
-- Deleted: `src/pages/BacklogPage.tsx`, `src/hooks/usePersonalBacklog.ts`, `src/hooks/useBacklogGroups.ts`, `src/pages/PSSRApproverDashboard.tsx`, `src/pages/SoFReviewPage.tsx`.
-- Edited: `src/App.tsx`, `src/utils/sidebarNavigation.ts`, `src/components/OrshSidebar.tsx`, `src/components/layouts/AuthenticatedLayout.tsx`, `src/pages/Index.tsx`, `src/pages/UserManagement.tsx` (breadcrumb), `src/components/LandingPage.tsx` (favorites map), any translation file referencing removed paths, `src/lib/app-reset.ts` (bump id + favorites cleanup), `src/lib/version-check.ts` (visibility/idle reload + `checkOnce`), `index.html` (head guard + `<meta name="app-build">`), `src/components/enhanced-auth/AuthProvider.tsx` (`checkOnce` on `SIGNED_IN`).
-
-## Not changed
-
-- Current "Good morning, Daniel" home page — stays.
-- `/my-tasks`, `/projects`, `/operation-readiness`, `/or-maintenance`, `/competence-management`, `/pssr`, `/admin/*` agents pages — unchanged.
-- User Management page UI itself — unchanged; only its route and breadcrumb move.
-- Backend / DB / RLS — no migrations.
-
-## Why this is permanent
-
-- Each deleted page cannot render again: component file is gone (where exclusive), the route element is replaced by a redirect, and every nav/favorite/link/translation reference is scrubbed. Only redirects remain as safety nets for old bookmarks.
-- The stale-copy-after-inactivity case is closed end-to-end by the `<head>` guard (runs before React), the visibility-driven version check (long-idle reactivation), post-`SIGNED_IN` revalidation ("logged back in and got the old shell"), and the one-time `APP_RESET_ID` bump (evicts every currently stuck browser).
+## Expected result
+After this change, a tab that was logged out, timed out, hidden for a long time, or restored from browser memory will be forced onto the current valid ORSH shell and can no longer fall back to the deleted legacy pages.

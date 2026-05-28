@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,17 +46,18 @@ import AuthenticatorApprovalModal from "@/components/user-management/Authenticat
 import ConfigurationManagement from "@/components/user-management/ConfigurationManagement";
 import LocationManagement from "@/components/user-management/LocationManagement";
 import { useUsers } from "@/hooks/useUsers";
-import { useNavigate } from 'react-router-dom';
 
 interface UserManagementProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
-const UserManagement = ({ onBack }: UserManagementProps) => {
-  const { buildBreadcrumbsFromPath } = useBreadcrumb();
-  const breadcrumbs = buildBreadcrumbsFromPath();
-  const navigate = useNavigate();
+const UserManagement = ({ onBack: _onBack }: UserManagementProps) => {
+  useBreadcrumb();
   const [activeTab, setActiveTab] = useState("users");
+  const breadcrumbItems = useMemo(() => ([
+    { label: 'Home', path: '/home', onClick: () => window.location.assign('/home') },
+    { label: 'Admin', path: '/admin' },
+  ]), []);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("");
@@ -177,7 +178,8 @@ const UserManagement = ({ onBack }: UserManagementProps) => {
           <div className="max-w-7xl mx-auto px-6 py-4">
             {/* Breadcrumb Navigation with History */}
             <BreadcrumbNavigation 
-              currentPageLabel="User Management"
+              currentPageLabel="Users"
+              customBreadcrumbs={breadcrumbItems}
               className="mb-4"
             />
 

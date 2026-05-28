@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useSOFAwaitingDirectorReview } from '@/hooks/useSOFAwaitingDirectorReview';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { performHardReset } from '@/lib/app-reset';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProjectIdBadge } from '@/components/ui/project-id-badge';
@@ -192,16 +193,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
 
   const handleExit = async () => {
     await signOut();
-    // Clear caches and hard reload for fresh bundle
-    if ('caches' in window) {
-      const names = await caches.keys();
-      await Promise.all(names.map(n => caches.delete(n)));
-    }
-    if ('serviceWorker' in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
-    }
-    window.location.href = '/';
+    await performHardReset();
   };
 
   if (isLoading) {

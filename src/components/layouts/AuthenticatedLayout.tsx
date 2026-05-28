@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { OrshSidebar } from '@/components/OrshSidebar';
 import { createSidebarNavigator } from '@/utils/sidebarNavigation';
@@ -8,6 +8,7 @@ import { useDirectorRedirect } from '@/hooks/useDirectorRedirect';
 import { Loader2 } from 'lucide-react';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { MobileBottomNav } from '@/components/mobile/MobileBottomNav';
+import { hasSessionEpochMismatch, performHardReset } from '@/lib/app-reset';
 
 /**
  * Persistent layout for authenticated pages.
@@ -22,6 +23,12 @@ export const AuthenticatedLayout: React.FC = () => {
   // Auto-redirect directors to their appropriate landing page
   // Returns isChecking to block render until redirect check completes
   const { isChecking } = useDirectorRedirect();
+
+  useEffect(() => {
+    if (hasSessionEpochMismatch()) {
+      void performHardReset();
+    }
+  }, [location.pathname]);
 
   // Determine current page from route for sidebar highlighting
   const currentPage = useMemo(() => {
@@ -45,20 +52,10 @@ export const AuthenticatedLayout: React.FC = () => {
   const handleLogout = async () => {
     try {
       await signOut();
-      // Clear all browser caches before navigating
-      if ('caches' in window) {
-        const names = await caches.keys();
-        await Promise.all(names.map(n => caches.delete(n)));
-      }
-      if ('serviceWorker' in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(regs.map(r => r.unregister()));
-      }
+      await performHardReset();
     } catch (error) {
       console.error('Logout error:', error);
     }
-    // Hard reload to force fresh bundle fetch
-    window.location.href = '/';
   };
 
   const handleNavigate = createSidebarNavigator(navigate);
