@@ -428,7 +428,7 @@ export const ORPPhaseDeliverablesTab = () => {
 
       {/* Templates overlay */}
       <Dialog open={templatesOpen} onOpenChange={setTemplatesOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent hideCloseButton className="max-w-6xl max-h-[90vh] overflow-y-auto scrollbar-auto-hide">
           <DialogHeader className="sr-only">
             <DialogTitle>ORA Plan Templates</DialogTitle>
             <DialogDescription>Manage reusable ORA plan templates.</DialogDescription>
