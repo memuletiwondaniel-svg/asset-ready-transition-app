@@ -262,20 +262,53 @@ export const ORPPhaseDeliverablesTab = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search deliverables..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-64"
-            />
-          </div>
+          {viewMode === 'cards' && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search deliverables..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 w-64"
+              />
+            </div>
+          )}
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 transition-colors hover:bg-primary/10 hover:text-primary hover:border-primary/40"
+                  onClick={() => setViewMode((v) => (v === 'cards' ? 'table' : 'cards'))}
+                  aria-label="Toggle view"
+                >
+                  {viewMode === 'cards' ? <Table2 className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{viewMode === 'cards' ? 'Switch to table view' : 'Switch to card view'}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 transition-colors hover:bg-violet-500/10 hover:text-violet-600 dark:hover:text-violet-400 hover:border-violet-400/50"
+                  onClick={() => setTemplatesOpen(true)}
+                  aria-label="Templates"
+                >
+                  <LayoutTemplate className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Templates</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <Button onClick={() => openAdd()} className="gap-1.5">
             <Plus className="h-4 w-4" />
             Add Deliverables
           </Button>
         </div>
+
       </div>
 
       <Accordion type="multiple" className="space-y-3">
