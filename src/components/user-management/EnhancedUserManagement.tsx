@@ -44,7 +44,9 @@ import {
   Home,
   Layers,
   MapPin,
-  Upload
+  Upload,
+  GitBranch,
+  Milestone
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/admin/ThemeToggle';
 import LanguageSelector from '@/components/admin/LanguageSelector';
@@ -60,6 +62,9 @@ import EnhancedCreateUserModal from './EnhancedCreateUserModal';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import ConfigurationManagement from './ConfigurationManagement';
 import LocationManagement from './LocationManagement';
+import ProjectHierarchyManagement from './ProjectHierarchyManagement';
+import { ORPPhaseDeliverablesTab } from '@/components/project/ORPPhaseDeliverablesTab';
+import { ProjectMilestonesManagementTab } from '@/components/project/ProjectMilestonesManagementTab';
 
 
 interface EnhancedUserManagementProps {
@@ -805,7 +810,7 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
           <div className="max-w-7xl mx-auto w-full px-6 pt-4">
             <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
               {/* Tabs Row (kept fixed; only the table body scrolls) */}
-              <TabsList className="grid w-full grid-cols-3 max-w-xl mb-2 bg-background/95 backdrop-blur-md flex-shrink-0">
+              <TabsList className="grid w-full grid-cols-6 max-w-4xl mb-2 bg-background/95 backdrop-blur-md flex-shrink-0">
                 <TabsTrigger value="users" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   Users
@@ -817,6 +822,18 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                 <TabsTrigger value="locations" className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
                   Asset Hierarchy
+                </TabsTrigger>
+                <TabsTrigger value="project-hierarchy" className="flex items-center gap-2">
+                  <GitBranch className="h-4 w-4" />
+                  Project Hierarchy
+                </TabsTrigger>
+                <TabsTrigger value="orp-phases" className="flex items-center gap-2">
+                  <Layers className="h-4 w-4" />
+                  ORP Phases
+                </TabsTrigger>
+                <TabsTrigger value="milestones" className="flex items-center gap-2">
+                  <Milestone className="h-4 w-4" />
+                  Milestones
                 </TabsTrigger>
               </TabsList>
 
@@ -1053,6 +1070,18 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
 
               <TabsContent value="configuration" className="mt-0 pb-6">
                 <ConfigurationManagement />
+              </TabsContent>
+
+              <TabsContent value="project-hierarchy" className="mt-0 pb-6">
+                <ProjectHierarchyManagement />
+              </TabsContent>
+
+              <TabsContent value="orp-phases" className="mt-0 pb-6">
+                <ORPPhaseDeliverablesTab />
+              </TabsContent>
+
+              <TabsContent value="milestones" className="mt-0 pb-6">
+                <ProjectMilestonesManagementTab />
               </TabsContent>
             </Tabs>
           </div>
