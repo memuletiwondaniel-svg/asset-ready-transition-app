@@ -194,7 +194,20 @@ export const SidebarContent = memo<SidebarContentProps>(({
                   const visibleLabel = item.shortLabel || fullLabel;
                   const tooltipText = item.tooltip || (item.shortLabel ? fullLabel : null);
                   
-                  const button = (
+                  const labelNode = tooltipText ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="truncate cursor-pointer">{visibleLabel}</span>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" sideOffset={8} align="center">
+                        {tooltipText}
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <span className="truncate">{visibleLabel}</span>
+                  );
+
+                  return (
                     <Button
                       key={item.section}
                       variant="ghost"
@@ -211,7 +224,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
                         "mr-2 h-4 w-4 transition-colors flex-shrink-0",
                         isActive ? "text-primary" : "text-muted-foreground"
                       )} />
-                      <span className="truncate">{visibleLabel}</span>
+                      {labelNode}
                       {item.section === 'ask-orsh' && unreadChatCount > 0 && (
                         <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
                           {unreadChatCount}
@@ -225,13 +238,6 @@ export const SidebarContent = memo<SidebarContentProps>(({
                     </Button>
                   );
 
-                  if (!tooltipText) return button;
-                  return (
-                    <Tooltip key={item.section}>
-                      <TooltipTrigger asChild>{button}</TooltipTrigger>
-                      <TooltipContent side="right">{tooltipText}</TooltipContent>
-                    </Tooltip>
-                  );
                 })}
               </div>
             </div>
