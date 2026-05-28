@@ -208,14 +208,14 @@ const LandingPageContent: React.FC<LandingPageProps> = ({
 
   // Typewriter placeholder cycling through ORSH-relevant prompts
   const typewriterPrompts = React.useMemo(() => [
+    'How many Qualifications are Open in UQ Full Ref Project?',
     'What is the status of my open PSSRs?',
     'Show me overdue tasks across my projects',
-    'Summarize my latest P2A handover',
-    'Which documents are pending my review?',
-    'What is operational readiness for Project Alpha?',
-    'List my competence gaps',
-    'Create a new PSSR for unit 2',
-    'What changed in OR maintenance this week?',
+    'Create a new PSSR for BNGL 2027 TAR',
+    'What are the pending RLMU documents for DP300?',
+    'Have all TAs approved the VCR for DP18F (LLP Gas Capture Project)?',
+    'What is the status of the Training Plan for DP212?',
+    'What are the open actions to complete DP33A Handover?',
   ], []);
   const [typedPlaceholder, setTypedPlaceholder] = useState<string>('');
 
