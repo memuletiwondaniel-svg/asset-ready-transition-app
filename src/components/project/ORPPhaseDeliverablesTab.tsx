@@ -318,9 +318,12 @@ export const ORPPhaseDeliverablesTab = () => {
                         <TableHead className="w-24 text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <TableBody className="group/tbody">
                       {phaseActivities.map((activity) => (
-                        <TableRow key={activity.id} className="group/row">
+                        <TableRow
+                          key={activity.id}
+                          className="group/row transition-all duration-200 group-hover/tbody:opacity-40 hover:!opacity-100 hover:bg-muted/60"
+                        >
                           <TableCell className="font-mono text-xs">
                             {formatActivityCode(activity.activity_code)}
                           </TableCell>
