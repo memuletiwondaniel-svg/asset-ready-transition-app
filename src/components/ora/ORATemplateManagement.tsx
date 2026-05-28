@@ -214,7 +214,7 @@ export const ORATemplateManagement = () => {
                 <div>
                   <Label className="text-xs text-muted-foreground">Applicable Phases</Label>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    {viewingTemplate.applicable_phases.map((p) => (
+                    {viewingTemplate.applicable_phases.filter(p => ['ASSESS', 'SELECT', 'DEFINE', 'EXECUTE'].includes(p)).map((p) => (
                       <Badge key={p} variant="secondary">{p}</Badge>
                     ))}
                   </div>
