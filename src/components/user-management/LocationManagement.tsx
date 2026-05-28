@@ -675,24 +675,45 @@ const LocationManagement: React.FC = () => {
                   </Label>
                   <div className="grid grid-cols-3 gap-2 p-1 bg-muted/50 rounded-lg">
                     {([
-                      { value: 'plant', label: 'Plant', icon: Building2, disabled: false },
-                      { value: 'field', label: 'Field', icon: Layers, disabled: plants.length === 0 },
-                      { value: 'station', label: 'Station', icon: Factory, disabled: fields.length === 0 },
-                    ] as const).map(({ value, label, icon: Icon, disabled }) => {
+                      { value: 'plant', label: 'Plant', icon: Building2, disabled: false, theme: 'blue' },
+                      { value: 'field', label: 'Field', icon: Layers, disabled: plants.length === 0, theme: 'emerald' },
+                      { value: 'station', label: 'Station', icon: Factory, disabled: fields.length === 0, theme: 'amber' },
+                    ] as const).map(({ value, label, icon: Icon, disabled, theme }) => {
                       const active = formType === value;
+                      const themeClasses: Record<string, { active: string; hover: string; iconHover: string; iconActive: string }> = {
+                        blue: {
+                          active: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-800',
+                          hover: 'hover:bg-blue-50/60 hover:text-blue-600 dark:hover:bg-blue-950/20 dark:hover:text-blue-400',
+                          iconHover: 'group-hover:text-blue-500',
+                          iconActive: 'text-blue-600 dark:text-blue-400',
+                        },
+                        emerald: {
+                          active: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800',
+                          hover: 'hover:bg-emerald-50/60 hover:text-emerald-600 dark:hover:bg-emerald-950/20 dark:hover:text-emerald-400',
+                          iconHover: 'group-hover:text-emerald-500',
+                          iconActive: 'text-emerald-600 dark:text-emerald-400',
+                        },
+                        amber: {
+                          active: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800',
+                          hover: 'hover:bg-amber-50/60 hover:text-amber-600 dark:hover:bg-amber-950/20 dark:hover:text-amber-400',
+                          iconHover: 'group-hover:text-amber-500',
+                          iconActive: 'text-amber-600 dark:text-amber-400',
+                        },
+                      };
+                      const t = themeClasses[theme];
                       return (
                         <button
                           key={value}
                           type="button"
                           disabled={disabled}
                           onClick={() => handleTypeChange(value as LocationType)}
-                          className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-md text-xs font-medium transition-all ${
+                          className={`group flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-md text-xs font-semibold transition-all duration-200 ${
                             active
-                              ? 'bg-background shadow-sm text-foreground ring-1 ring-border'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-background/60'
+                              ? `${t.active} shadow-sm`
+                              : `text-muted-foreground ${t.hover}`
                           } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                         >
-                          <Icon className="h-4 w-4" />
+                          <Icon className={`h-5 w-5 transition-colors duration-200 ${active ? t.iconActive : t.iconHover}`} />
                           {label}
                         </button>
                       );
