@@ -53,7 +53,7 @@ const DisciplineCompletionPanel: React.FC<DisciplineCompletionPanelProps> = ({
   const handleClose = () => {
     onOpenChange(false);
     if (isCompleted) {
-      navigate('/pssr/approver-dashboard');
+      navigate('/my-tasks');
     }
   };
 

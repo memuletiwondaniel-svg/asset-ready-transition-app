@@ -7,7 +7,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 
 const baseNavItems = [
   { icon: Home, labelKey: 'navHome', path: '/home', section: 'home' },
-  { icon: Key, labelKey: 'navProjects', path: '/vcrs', section: 'projects' },
+  { icon: Key, labelKey: 'navProjects', path: '/projects', section: 'projects' },
   { icon: AlertTriangle, labelKey: 'navPSSR', path: '/pssr', section: 'pssr' },
   { icon: CalendarCheck, labelKey: 'navMyTasks', path: '/my-tasks', section: 'my-tasks' },
   { icon: Settings, labelKey: 'adminTools', path: '/admin-tools', section: 'admin-tools', requiresPermission: 'access_admin' as const },
@@ -28,7 +28,7 @@ export const MobileBottomNav: React.FC = () => {
   const isActive = (item: typeof baseNavItems[0]) => {
     const path = location.pathname;
     if (item.section === 'home') return path === '/' || path === '/home';
-    if (item.section === 'projects') return path.startsWith('/vcrs') || path.startsWith('/projects') || path.startsWith('/project/');
+    if (item.section === 'projects') return path.startsWith('/projects') || path.startsWith('/project/');
     return path.startsWith(item.path);
   };
 

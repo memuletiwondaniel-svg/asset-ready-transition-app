@@ -155,7 +155,7 @@ export const PSSRReviewsPanel: React.FC<PSSRReviewsPanelProps> = ({
       isLoading={isLoading}
       isEmpty={totalCount === 0}
       emptyMessage="No P2A handover tasks pending"
-      onViewAll={() => navigate('/pssr-reviews')}
+      onViewAll={() => navigate('/my-tasks')}
     >
       {/* User tasks (reviews & approvals) */}
       {filteredUserTasks.map((task, index) => {

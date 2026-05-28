@@ -232,9 +232,9 @@ export default function ProjectDetailsPage() {
                 <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                 <h2 className="text-2xl font-bold mb-2">Project Not Found</h2>
                 <p className="text-muted-foreground mb-6">The project you're looking for doesn't exist.</p>
-                <Button onClick={() => navigate('/vcrs')}>
+                <Button onClick={() => navigate('/projects')}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to VCRs
+                  Back to Projects
                 </Button>
               </CardContent>
             </Card>

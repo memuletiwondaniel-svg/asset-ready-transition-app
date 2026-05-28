@@ -50,11 +50,10 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const routeLabels: Record<string, string> = {
     '/': 'Home',
     '/pssr': 'PSSR',
-    '/p2o': 'P2O Handover',
-    '/users': 'User Management',
+    '/admin': 'Admin',
+    '/admin/users': 'Users',
     '/admin-tools': 'Admin Tools',
     '/admin/ai-agents': 'AI Agents',
-    '/manage-checklist': 'Manage Checklist',
     '/projects': 'Projects',
     '/project': 'Projects',
   };
@@ -78,8 +77,10 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       // Special handling for project routes
       let navigationPath = currentPath;
       if (segment === 'project') {
-        navigationPath = '/vcrs';
+        navigationPath = '/projects';
       }
+      // /admin is a label-only crumb — no dedicated index page; do not navigate
+      const isLabelOnly = currentPath === '/admin';
       
       // Get label from custom labels, route labels, metadata, or format the segment
       const label = customLabels?.[currentPath] || 
@@ -92,7 +93,7 @@ export const BreadcrumbProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       crumbs.push({
         label,
         path: currentPath,
-        onClick: () => navigate(navigationPath)
+        onClick: isLabelOnly ? undefined : () => navigate(navigationPath)
       });
     });
 

@@ -331,7 +331,7 @@ const PSSRApprovalPage: React.FC = () => {
                 approverId={approverId}
                 currentApprover={currentApprover}
                 canSignOff={canSignOff}
-                onApprovalComplete={() => navigate('/pssr/approver-dashboard')}
+                onApprovalComplete={() => navigate('/my-tasks')}
               />
             </div>
           </div>

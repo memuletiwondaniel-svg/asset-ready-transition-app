@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/components/enhanced-auth/AuthProvider";
 import SessionTimeoutProvider from "@/components/session/SessionTimeoutProvider";
 import { ThemeProvider } from "@/components/ui/theme-provider";
@@ -28,14 +28,11 @@ import { ORMNotificationPreferences } from "@/components/orm/ORMNotificationPref
 import { CMSLandingPage } from "@/components/cms/CMSLandingPage";
 import ProjectManagementPage from "@/components/project/ProjectManagementPage";
 import ProjectDetailsPage from "@/pages/ProjectDetailsPage";
-import PSSRApproverDashboard from "@/pages/PSSRApproverDashboard";
 import MyTasksPage from "@/pages/MyTasksPage";
 import PSSRItemReview from "@/pages/PSSRItemReview";
 import PSSRApprovalPage from "@/pages/PSSRApprovalPage";
 
-import SoFReviewPage from "@/pages/SoFReviewPage";
 import MicrosoftCallback from "@/pages/auth/MicrosoftCallback";
-import BacklogPage from "@/pages/BacklogPage";
 
 const SelmaValidation = React.lazy(() => import("@/pages/admin/SelmaValidation"));
 const SelmaAnalytics = React.lazy(() => import("@/pages/admin/SelmaAnalytics"));
@@ -78,21 +75,25 @@ const App = () => (
                     <Route element={<AuthenticatedLayout />}>
                       <Route path="/home" element={<Index />} />
                       <Route path="/pssr" element={<Index />} />
-                      <Route path="/users" element={<Index />} />
-                      <Route path="/manage-checklist" element={<Index />} />
+                      <Route path="/admin/users" element={<Index />} />
                       <Route path="/admin-tools" element={<Index />} />
-                      <Route path="/vcrs" element={<Index />} />
                       <Route path="/projects" element={<Index />} />
                       <Route path="/project-management" element={<ProjectManagementPage />} />
                       <Route path="/project/:id" element={<ProjectDetailsPage />} />
-                      <Route path="/pssr/approver-dashboard" element={<PSSRApproverDashboard />} />
-                      <Route path="/pssr-reviews" element={<PSSRApproverDashboard />} />
                       <Route path="/my-tasks" element={<MyTasksPage />} />
-                      <Route path="/my-backlog" element={<BacklogPage />} />
                       <Route path="/pssr/:id/review" element={<PSSRItemReview />} />
                       <Route path="/pssr/:id/approve" element={<PSSRApprovalPage />} />
-                      <Route path="/pssr/:id/sof" element={<SoFReviewPage />} />
                       <Route path="/executive-dashboard" element={<ExecutiveDashboardPage />} />
+                      {/* Permanent redirects for deleted stale routes — keep so old bookmarks/links don't 404 */}
+                      <Route path="/users" element={<Navigate to="/admin/users" replace />} />
+                      <Route path="/my-backlog" element={<Navigate to="/my-tasks" replace />} />
+                      <Route path="/manage-checklist" element={<Navigate to="/home" replace />} />
+                      <Route path="/vcrs" element={<Navigate to="/projects" replace />} />
+                      <Route path="/vcrs/*" element={<Navigate to="/projects" replace />} />
+                      <Route path="/pssr/approver-dashboard" element={<Navigate to="/my-tasks" replace />} />
+                      <Route path="/pssr-reviews" element={<Navigate to="/my-tasks" replace />} />
+                      <Route path="/pssr/:id/sof" element={<Navigate to="/my-tasks" replace />} />
+                      <Route path="/p2o" element={<Navigate to="/home" replace />} />
                       {/* /pssr/:id route removed — PSSRDetailOverlay is used instead */}
                       <Route path="/operation-readiness" element={<ORPLandingPage />} />
                       <Route path="/operation-readiness/analytics" element={<ORPAnalyticsPage />} />
