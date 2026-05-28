@@ -57,7 +57,7 @@ export const useProjectMilestoneTypes = () => {
       return result as ProjectMilestoneType;
     },
 
-    },
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-milestone-types'] });
       toast({
