@@ -62,6 +62,9 @@ import EnhancedCreateUserModal from './EnhancedCreateUserModal';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import ConfigurationManagement from './ConfigurationManagement';
 import LocationManagement from './LocationManagement';
+import ProjectHierarchyManagement from './ProjectHierarchyManagement';
+import { ORPPhaseDeliverablesTab } from '@/components/project/ORPPhaseDeliverablesTab';
+import { ProjectMilestonesManagementTab } from '@/components/project/ProjectMilestonesManagementTab';
 
 
 interface EnhancedUserManagementProps {
