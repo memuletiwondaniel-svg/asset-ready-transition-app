@@ -1184,7 +1184,6 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      </div>
     </div>
   );
 };
