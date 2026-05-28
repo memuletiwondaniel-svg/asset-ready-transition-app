@@ -464,6 +464,11 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
 
   const visibleRegions = useMemo(() => regions.filter(filterRegion), [regions, searchQuery]);
 
+  const [viewMode, setViewMode] = useState<'tree' | 'columns'>('columns');
+  const allHubIds = useMemo(() => regions.flatMap(r => r.hubs.map(h => h.id)), [regions]);
+  const allExpanded = regions.length > 0 && expandedRegions.size === regions.length && expandedHubs.size === allHubIds.length;
+
+
   if (isLoading) {
     return (
       <div className="space-y-4 p-4">
@@ -1249,9 +1254,6 @@ const ProjectHierarchyManagement: React.FC<ProjectHierarchyManagementProps> = ({
     );
   };
 
-  const [viewMode, setViewMode] = useState<'tree' | 'columns'>('columns');
-  const allHubIds = useMemo(() => regions.flatMap(r => r.hubs.map(h => h.id)), [regions]);
-  const allExpanded = regions.length > 0 && expandedRegions.size === regions.length && expandedHubs.size === allHubIds.length;
   const toggleExpandCollapseAll = () => (allExpanded ? collapseAll() : expandAll());
 
   return (
