@@ -843,12 +843,23 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
 
 
               <TabsContent value="users" className="flex flex-col space-y-4 mt-0 overflow-auto min-h-0 flex-1">
-                {/* Search and Filters Bar (fixed) */}
+                {/* Toolbar: Title left, Search + Icon Actions right */}
                 <Card className="border-border/40 shadow-sm animate-fade-in bg-card/95 backdrop-blur-md flex-shrink-0">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      {/* Search Input */}
-                      <div className="relative flex-1">
+                      {/* Title (matches tab styling) */}
+                      <div className="flex items-center gap-2 min-w-0 mr-2">
+                        <Users className="h-5 w-5 text-primary" />
+                        <div className="leading-tight">
+                          <div className="text-base font-semibold text-foreground">Users</div>
+                          <div className="text-xs text-muted-foreground">Manage platform users and access</div>
+                        </div>
+                      </div>
+
+                      <div className="flex-1" />
+
+                      {/* Search (right side, before icons) */}
+                      <div className="relative w-full max-w-sm">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           type="text"
@@ -858,132 +869,142 @@ const EnhancedUserManagement: React.FC<EnhancedUserManagementProps> = ({ onBack,
                           className="pl-10 bg-background border-border/60 focus-visible:ring-primary/20"
                         />
                       </div>
-                      
-                      {/* Filters Dropdown */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" className="border-border/60 min-w-[120px]">
-                            <Filter className="h-4 w-4 mr-2" />
-                            Filters
-                            {(statusFilter !== 'all' || companyFilter !== 'all' || roleFilter !== 'all') && (
-                              <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-primary text-primary-foreground">
-                                {[statusFilter !== 'all', companyFilter !== 'all', roleFilter !== 'all'].filter(Boolean).length}
-                              </Badge>
-                            )}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-72 bg-popover border shadow-lg z-50 p-4">
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-medium text-sm">Filter Users</h4>
-                              {(statusFilter !== 'all' || companyFilter !== 'all' || roleFilter !== 'all') && (
+
+                      <TooltipProvider delayDuration={150}>
+                        <div className="flex items-center gap-1">
+                          {/* Filters Icon */}
+                          <DropdownMenu>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="relative h-9 w-9 text-muted-foreground/60 hover:text-foreground hover:bg-accent">
+                                    <Filter className="h-4 w-4" />
+                                    {(statusFilter !== 'all' || companyFilter !== 'all' || roleFilter !== 'all') && (
+                                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary" />
+                                    )}
+                                  </Button>
+                                </DropdownMenuTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent>Filters</TooltipContent>
+                            </Tooltip>
+                            <DropdownMenuContent align="end" className="w-72 bg-popover border shadow-lg z-50 p-4">
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h4 className="font-medium text-sm">Filter Users</h4>
+                                  {(statusFilter !== 'all' || companyFilter !== 'all' || roleFilter !== 'all') && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setStatusFilter('all');
+                                        setCompanyFilter('all');
+                                        setRoleFilter('all');
+                                      }}
+                                      className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                                    >
+                                      Clear All
+                                    </Button>
+                                  )}
+                                </div>
+                                <div className="space-y-3">
+                                  <div className="space-y-2">
+                                    <label className="text-xs font-medium text-muted-foreground">Status</label>
+                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                      <SelectTrigger className="w-full border-border/60 bg-background">
+                                        <SelectValue placeholder="Select status" />
+                                      </SelectTrigger>
+                                      <SelectContent className="bg-popover z-[100]">
+                                        <SelectItem value="all">All Status</SelectItem>
+                                        <SelectItem value="active">Active</SelectItem>
+                                        <SelectItem value="pending_approval">Awaiting Authentication</SelectItem>
+                                        <SelectItem value="suspended">Suspended</SelectItem>
+                                        <SelectItem value="inactive">Inactive</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="text-xs font-medium text-muted-foreground">Company</label>
+                                    <Select value={companyFilter} onValueChange={setCompanyFilter}>
+                                      <SelectTrigger className="w-full border-border/60 bg-background">
+                                        <SelectValue placeholder="Select company" />
+                                      </SelectTrigger>
+                                      <SelectContent className="bg-popover z-[100]">
+                                        <SelectItem value="all">All Companies</SelectItem>
+                                        {companies.map(company => (
+                                          <SelectItem key={company} value={company}>{company}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="text-xs font-medium text-muted-foreground">Role</label>
+                                    <Select value={roleFilter} onValueChange={setRoleFilter}>
+                                      <SelectTrigger className="w-full border-border/60 bg-background">
+                                        <SelectValue placeholder="Select role" />
+                                      </SelectTrigger>
+                                      <SelectContent className="bg-popover z-[100]">
+                                        <SelectItem value="all">All Roles</SelectItem>
+                                        {roles.map(role => (
+                                          <SelectItem key={role} value={role}>{role}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
+                              </div>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+
+                          {/* Columns Icon */}
+                          <DropdownMenu>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground/60 hover:text-foreground hover:bg-accent">
+                                    <Columns className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent>Columns</TooltipContent>
+                            </Tooltip>
+                            <DropdownMenuContent align="end" className="w-56 bg-popover border shadow-lg z-50">
+                              <div className="p-2">
+                                <div className="text-sm font-medium mb-2">Show/Hide Columns</div>
+                                {columns.map((column) => (
+                                  <div key={column.id} className="flex items-center space-x-2 py-1">
+                                    <input
+                                      type="checkbox"
+                                      checked={column.visible}
+                                      onChange={() => toggleColumnVisibility(column.id)}
+                                      className="rounded"
+                                    />
+                                    <span className="text-sm">{column.label}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+
+                          {/* Bulk Upload Icon */}
+                          {onBulkUpload && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setStatusFilter('all');
-                                    setCompanyFilter('all');
-                                    setRoleFilter('all');
-                                  }}
-                                  className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                                  size="icon"
+                                  onClick={onBulkUpload}
+                                  className="h-9 w-9 text-muted-foreground/60 hover:text-foreground hover:bg-accent"
                                 >
-                                  Clear All
+                                  <Upload className="h-4 w-4" />
                                 </Button>
-                              )}
-                            </div>
-                            
-                            <div className="space-y-3">
-                              {/* Status Filter */}
-                              <div className="space-y-2">
-                                <label className="text-xs font-medium text-muted-foreground">Status</label>
-                                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                  <SelectTrigger className="w-full border-border/60 bg-background">
-                                    <SelectValue placeholder="Select status" />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-popover z-[100]">
-                                    <SelectItem value="all">All Status</SelectItem>
-                                    <SelectItem value="active">Active</SelectItem>
-                                    <SelectItem value="pending_approval">Awaiting Authentication</SelectItem>
-                                    <SelectItem value="suspended">Suspended</SelectItem>
-                                    <SelectItem value="inactive">Inactive</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              
-                              {/* Company Filter */}
-                              <div className="space-y-2">
-                                <label className="text-xs font-medium text-muted-foreground">Company</label>
-                                <Select value={companyFilter} onValueChange={setCompanyFilter}>
-                                  <SelectTrigger className="w-full border-border/60 bg-background">
-                                    <SelectValue placeholder="Select company" />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-popover z-[100]">
-                                    <SelectItem value="all">All Companies</SelectItem>
-                                    {companies.map(company => (
-                                      <SelectItem key={company} value={company}>{company}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              
-                              {/* Role Filter */}
-                              <div className="space-y-2">
-                                <label className="text-xs font-medium text-muted-foreground">Role</label>
-                                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                                  <SelectTrigger className="w-full border-border/60 bg-background">
-                                    <SelectValue placeholder="Select role" />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-popover z-[100]">
-                                    <SelectItem value="all">All Roles</SelectItem>
-                                    {roles.map(role => (
-                                      <SelectItem key={role} value={role}>{role}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                          </div>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      
-                      {/* Column Visibility */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="border-border/60">
-                            <Columns className="h-4 w-4 mr-2" />
-                            Columns
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56 bg-popover border shadow-lg z-50">
-                          <div className="p-2">
-                            <div className="text-sm font-medium mb-2">Show/Hide Columns</div>
-                            {columns.map((column) => (
-                              <div key={column.id} className="flex items-center space-x-2 py-1">
-                                <input
-                                  type="checkbox"
-                                  checked={column.visible}
-                                  onChange={() => toggleColumnVisibility(column.id)}
-                                  className="rounded"
-                                />
-                                <span className="text-sm">{column.label}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      
-                      {/* Bulk Upload Button */}
-                      {onBulkUpload && (
-                        <Button 
-                          variant="outline"
-                          onClick={onBulkUpload}
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          Bulk Upload
-                        </Button>
-                      )}
-                      
-                      {/* Add User Button */}
+                              </TooltipTrigger>
+                              <TooltipContent>Bulk Upload</TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </TooltipProvider>
+
+                      {/* Add User Button (primary CTA stays prominent) */}
                       <Button 
                         onClick={() => setShowCreateUser(true)}
                         className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-sm"
