@@ -257,17 +257,19 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 ))}
               </div>
             ) : p2aPlanByProject ? (
-              <div className="text-center py-10 text-muted-foreground">
+              <div className="text-center py-8 text-muted-foreground">
                 {p2aPlanByProject.status === 'DRAFT' ? (
                   <>
-                    <p className="text-sm font-medium mb-1 text-foreground">Draft in Progress</p>
-                    <p className="text-xs opacity-70 mb-5">Continue setting up your handover plan</p>
+                    <p className="text-sm font-medium mb-1">Draft in Progress</p>
+                    <p className="text-xs opacity-70 mb-4">Continue setting up your handover plan</p>
                     {canCreateVCR && (
                       <div className="flex items-center justify-center gap-2">
                         <Button
                           variant="secondary"
                           size="sm"
-                          className="text-xs gap-1.5 group/cta"
+                          className="gap-1.5 group/cta"
+                          onClick={() => setShowP2APlanWizard(true)}
+
                           onClick={() => setShowP2APlanWizard(true)}
                         >
                           <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover/cta:text-green-600 transition-colors" />
