@@ -494,106 +494,89 @@ const LocationManagement: React.FC = () => {
     </Card>
   );
 
+  const [viewMode, setViewMode] = useState<'tree' | 'columns'>('tree');
+
+  const HeaderToolbar = (
+    <div className="flex items-center justify-between gap-3 flex-wrap w-full">
+      {/* Brand */}
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background shadow-sm ring-1 ring-border/60 shrink-0">
+          <BGCIcon size={28} />
+        </div>
+        <div className="flex flex-col min-w-0">
+          <span className="text-base font-semibold tracking-tight truncate">Basrah Gas Company</span>
+          <span className="text-[11px] font-normal uppercase tracking-wider text-muted-foreground">BGC · Asset Hierarchy</span>
+        </div>
+        {searchQuery && (
+          <Badge variant="secondary" className="ml-1">Filtered</Badge>
+        )}
+      </div>
+
+      {/* Actions: search + toggle + expand/collapse + add */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative w-64 max-w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search locations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 pr-9 h-9 bg-background/80"
+          />
+          {searchQuery && (
+            <Button variant="ghost" size="icon"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
+              onClick={() => setSearchQuery('')}>
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setViewMode(viewMode === 'tree' ? 'columns' : 'tree')}
+              aria-label={viewMode === 'tree' ? 'Switch to Columns View' : 'Switch to Tree View'}
+            >
+              {viewMode === 'tree' ? <LayoutGrid className="h-4 w-4" /> : <GitBranch className="h-4 w-4" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {viewMode === 'tree' ? 'Switch to Columns View' : 'Switch to Tree View'}
+          </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="outline" size="icon" className="h-9 w-9" onClick={toggleExpandCollapseAll} aria-label={allExpanded ? 'Collapse All' : 'Expand All'}>
+              {allExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{allExpanded ? 'Collapse All' : 'Expand All'}</TooltipContent>
+        </Tooltip>
+
+        <Button size="sm" onClick={openUnifiedAddDialog} className="h-9">
+          <Plus className="h-4 w-4 mr-1" />
+          Add Location
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <TooltipProvider delayDuration={150}>
       <div className="space-y-4">
-        <Tabs defaultValue="tree" className="w-full">
-          {/* Toolbar: Search (left) + View toggles + Expand/Collapse + Add */}
-          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-            {/* Search left */}
-            <div className="relative w-72 max-w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search locations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-9"
-              />
-              {searchQuery && (
-                <Button variant="ghost" size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
-                  onClick={() => setSearchQuery('')}>
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </div>
+        <Card className="border-border/60 shadow-md ring-1 ring-primary/5 bg-gradient-to-b from-background to-muted/20">
+          <CardHeader className="pb-3 border-b border-border/40 bg-gradient-to-r from-primary/5 via-background to-background">
+            {HeaderToolbar}
+          </CardHeader>
+          <CardContent className="pt-4">
+            {viewMode === 'tree' ? (
+              <TreeView />
+            ) : (
 
-            {/* Right cluster: view toggle + expand/collapse + add */}
-            <div className="flex items-center gap-2">
-              <TabsList className="h-9">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <TabsTrigger value="tree" className="px-2.5" aria-label="Tree View">
-                      <GitBranch className="h-4 w-4" />
-                    </TabsTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">Tree View</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <TabsTrigger value="columns" className="px-2.5" aria-label="Columns View">
-                      <LayoutGrid className="h-4 w-4" />
-                    </TabsTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">Columns View</TooltipContent>
-                </Tooltip>
-              </TabsList>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-9 w-9" onClick={toggleExpandCollapseAll} aria-label={allExpanded ? 'Collapse All' : 'Expand All'}>
-                    {allExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">{allExpanded ? 'Collapse All' : 'Expand All'}</TooltipContent>
-              </Tooltip>
-
-              <Button size="sm" onClick={openUnifiedAddDialog} className="h-9">
-                <Plus className="h-4 w-4 mr-1" />
-                Add Location
-              </Button>
-            </div>
-          </div>
-
-          <TabsContent value="tree" className="mt-0">
-            <Card className="border-border/60 shadow-md ring-1 ring-primary/5 bg-gradient-to-b from-background to-muted/20">
-              <CardHeader className="pb-3 border-b border-border/40 bg-gradient-to-r from-primary/5 via-background to-background">
-                <CardTitle className="text-base flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background shadow-sm ring-1 ring-border/60">
-                    <BGCIcon size={26} />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-base font-semibold tracking-tight">Basrah Gas Company</span>
-                    <span className="text-[11px] font-normal uppercase tracking-wider text-muted-foreground">BGC · Asset Hierarchy</span>
-                  </div>
-                  {searchQuery && (
-                    <Badge variant="secondary" className="ml-2">Filtered</Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <TreeView />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="columns" className="mt-0">
-            <Card className="border-border/60 shadow-md ring-1 ring-primary/5 bg-gradient-to-b from-background to-muted/20">
-              <CardHeader className="pb-3 border-b border-border/40 bg-gradient-to-r from-primary/5 via-background to-background">
-                <CardTitle className="text-base flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background shadow-sm ring-1 ring-border/60">
-                    <BGCIcon size={26} />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-base font-semibold tracking-tight">Basrah Gas Company</span>
-                    <span className="text-[11px] font-normal uppercase tracking-wider text-muted-foreground">BGC · Asset Hierarchy</span>
-                  </div>
-                  {searchQuery && (
-                    <Badge variant="secondary" className="ml-2">Filtered</Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
                 <div className="flex flex-col lg:flex-row gap-4">
                   {renderLocationCard(
                     'Plants',
@@ -643,11 +626,10 @@ const LocationManagement: React.FC = () => {
                     'text-amber-600 bg-amber-500/10 ring-amber-500/20 dark:text-amber-400'
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            )}
+          </CardContent>
+        </Card>
 
-        </Tabs>
 
         {/* Add/Edit Dialog (unified) */}
         <Dialog open={addEditDialog.open} onOpenChange={(open) => !open && setAddEditDialog({ ...addEditDialog, open: false })}>
