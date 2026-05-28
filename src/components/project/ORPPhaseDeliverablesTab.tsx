@@ -426,6 +426,23 @@ export const ORPPhaseDeliverablesTab = () => {
           );
         })}
       </Accordion>
+      )}
+
+      {/* Templates overlay */}
+      <Dialog open={templatesOpen} onOpenChange={setTemplatesOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>ORA Plan Templates</DialogTitle>
+            <DialogDescription>
+              Manage reusable ORA plan templates across project types and complexities.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="pt-2">
+            <ORATemplateManagement />
+          </div>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Combined Add Dialog (Activity or Phase) */}
       <Dialog
