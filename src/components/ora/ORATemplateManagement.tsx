@@ -121,13 +121,13 @@ export const ORATemplateManagement = () => {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredTemplates.map((template) => (
             <div
               key={template.id}
               onClick={() => setViewingTemplate(template)}
               className={cn(
-                "group relative h-52 flex flex-col rounded-lg border bg-card p-4 cursor-pointer transition-all duration-200",
+                "group relative h-56 flex flex-col rounded-lg border bg-card p-5 cursor-pointer transition-all duration-200",
                 "hover:shadow-lg hover:border-primary/50 hover:-translate-y-0.5",
                 !template.is_active && 'opacity-60'
               )}
@@ -149,7 +149,7 @@ export const ORATemplateManagement = () => {
               <div className="flex items-center gap-1.5 mb-2">
                 {template.is_default && <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />}
                 <Badge variant="outline" className="text-[10px] uppercase tracking-wide font-medium px-1.5 py-0">
-                  <Layers className="h-2.5 w-2.5 mr-1" />{template.project_type}
+                  {template.project_type}
                 </Badge>
               </div>
 
@@ -164,7 +164,7 @@ export const ORATemplateManagement = () => {
                   {!template.is_active && <Badge variant="outline" className="bg-muted">Inactive</Badge>}
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {template.applicable_phases.map((p) => (
+                  {template.applicable_phases.filter(p => ['ASSESS', 'SELECT', 'DEFINE', 'EXECUTE'].includes(p)).map((p) => (
                     <Badge key={p} variant="secondary" className="text-[10px] px-1.5 py-0">{p}</Badge>
                   ))}
                 </div>
