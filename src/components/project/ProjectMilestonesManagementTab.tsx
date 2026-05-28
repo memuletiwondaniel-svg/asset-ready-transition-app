@@ -176,13 +176,14 @@ export const ProjectMilestonesManagementTab = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12"></TableHead>
                   <TableHead className="w-32">Code</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead className="w-24">Type</TableHead>
                   <TableHead className="w-24 text-right">Actions</TableHead>
                 </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredMilestones.map((milestone) => (
                   <TableRow key={milestone.id} className="group">
                     <TableCell className="font-mono text-sm">{milestone.code}</TableCell>
@@ -205,25 +206,21 @@ export const ProjectMilestonesManagementTab = () => {
                         >
                           <Edit3 className="h-4 w-4" />
                         </Button>
-                        {milestone.is_custom && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => setDeleteConfirmId(milestone.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => setDeleteConfirmId(milestone.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
-
-                  </TableRow>
-                ))}
               </TableBody>
             </Table>
+
           )}
         </CardContent>
       </Card>
