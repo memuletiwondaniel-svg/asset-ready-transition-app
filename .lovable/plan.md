@@ -1,68 +1,122 @@
-# Projects table — round 3 refinements
 
-## 1. Header row — less dull, more structured
+# Critique of the Independent Assessment
 
-Current: flat `bg-muted/40` band, tiny uppercase muted text. Reads as a tinted strip, not a real header.
+The assessment is mostly right but soft in places. Where it lands:
 
-Change:
-- Swap to a subtle two-tone treatment: `bg-gradient-to-b from-muted/60 to-muted/30`, `border-b border-border` (full strength, not `/60`).
-- Header text to `text-[11px] font-semibold text-foreground/70` (was `font-medium text-muted-foreground/80`). Keep uppercase + `tracking-[0.08em]`.
-- Sort chevrons inherit the stronger color, so active sort reads cleanly.
-- Slightly taller: `py-3.5` (was `py-3`) so the header has presence without dominating.
+- **Triple progress indicator** — correct. "Step 1 of 5" + Progress bar + numbered circles is genuinely redundant. Worth fixing.
+- **Internal scroll on Step 1** — correct. Seven fields should never scroll inside an 85vh modal.
+- **Nested containers** — correct. Card-in-modal-in-overlay is three layers of chrome.
+- **Disabled fields don't look disabled** — correct. The locked Hub combobox is visually identical to an active one.
+- **Auto-assignment is invisible until Review** — correct, and arguably the highest-value fix in the whole wizard. The form keeps promising magic ("drives auto-assignment of…") and never shows it.
+- **Stepper should reflect validity** — correct. Right now `visitedSteps` only tracks "have you been here," not "is it valid."
 
-No new colors, no accent stripe — keeps it neutral but no longer washed out.
+Where the assessment is weak or wrong:
 
-## 2. ID as a pill
+- **"Lock DP- as a fixed prefix, monospace, free-form text after"** — half right. Locking DP is correct (we already do). But the assessment then argues for *no format rule at all* because "ORSH doesn't own the scheme." That's overcorrection. The current implementation already accepts alphanumeric + hyphen and uppercases — which is exactly the "free-form but sane" middle ground. The real missing piece isn't loosening validation, it's the **duplicate check against existing projects**, which the assessment correctly calls out.
+- **"Autosave as a draft"** — sounds great, costs a schema migration (`project_drafts` table, RLS, cleanup policy, conflict handling on resume). For a 5-step form opened from a button, a **discard-confirm dialog** delivers 90% of the protection at 5% of the cost. Recommend confirm-on-dismiss now, defer drafts.
+- **"Provenance hint: Official DP number from the [register]"** — good framing, but the assessment leaves `[register]` as a placeholder. We should either name the actual source (ASSAI? a spreadsheet?) or drop the hint rather than ship a bracketed TODO.
+- **Removing the context banner is not discussed** — but it's redundant with a good stepper + persistent project chip in the header. Worth flattening.
+- **"auto-assigned" badge on the Project ID field (visible in the screenshot)** — the assessment misses this entirely. It directly contradicts the assessment's own thesis that ORSH is *recording* not *creating* the ID. That badge is a lie and must go.
 
-Reverse the last round. Bring back a chip, but lighter than v1:
-- `inline-flex items-center px-2 py-0.5 rounded-full bg-primary/8 text-primary border border-primary/15 font-mono text-[11px] font-semibold tabular-nums tracking-tight`
-- Pill shape (`rounded-full`) signals "identifier" the way badges in Linear / Height do.
-- Primary tint gives it recall value without the random per-row colors we killed earlier.
+# Proposed Design
 
-## 3. Scope clamp: 3 → 2 lines
+## 1. Header chrome — one stepper, not three
 
-`ScopeText`: `line-clamp-3` → `line-clamp-2`. "Show more" logic unchanged.
+Replace the current `DialogHeader` block (title + "Step 1 of 5" + Progress bar + 5 numbered circles) with a single segmented track:
 
-## 4. Column widths
+```text
+Project info ──●━━━━━━━━━━ Scope ──○────── Team ──○────── Milestones ──○────── Review ──○
+```
 
-Tighten everything that isn't Title or Progress; give the reclaimed space to Title.
+- One row, five segments. Active segment filled with `bg-primary`, completed segments `bg-primary/40` with a check, future segments `bg-muted`, invalid-but-visited segments `bg-destructive/30` with a ring.
+- Step labels inline (no separate circles row). Click-to-jump only to visited+valid steps.
+- "Step 1 of 5" moves to the footer next to Next ("Step 1 of 5 · Next →").
+- Drops ~80px of vertical chrome — Step 1 now fits without scrolling at 1080p and most laptops.
 
-| Column | Now | New |
-|---|---|---|
-| ID | 76 | 72 |
-| Title | 340 | **440** |
-| Milestone | 208 | 180 |
-| Location | 160 | 120 |
-| Qualifications | 128 | 110 |
-| P2A Progress | 180 | **200** |
+## 2. Step 1 layout — flatten sections, kill internal scroll
 
-Bump `PROJECTS_TABLE_PREFS_KEY` to `p2a-projects-v5` so saved widths don't override.
+Remove the `Section` component's bordered card (`rounded-xl border bg-card/40 p-5`). Replace with a label-only group:
 
-## 5. Qualifications — left-justify under header
+- Section title: uppercase 11px muted, no card, no icon tile. A 1px hairline `border-t border-border/40` separates groups.
+- Helper text sits inline after the title in the same muted style ("OWNERSHIP — auto-assigns Commissioning Lead, Construction Lead & Snr ORA Engineer").
+- Three groups stay: Identity, Ownership, Location. Spacing reduced from `space-y-4` between cards to `space-y-5` between flat groups — visually lighter, vertically tighter.
 
-Header for `qualifications` currently has `align: 'right'`. Remove `align: 'right'` from the column def (header naturally left-aligns) and change the body cell from `flex justify-end pr-4` → `flex justify-start`. The number chip now sits flush-left under the "Qualifications" label. Sort chevron also moves to the left side, matching other columns.
+## 3. Project ID field — transcription, not generation
 
-## 6. P2A Progress — bar redesign, not doughnut
+- Remove the "auto-assigned" pill. It's wrong and misleading.
+- Keep the locked `DP` chip + alphanumeric input (current behavior is correct).
+- Add a **debounced duplicate check** against `projects` table on blur and on Next. On hit:
+  - Field gets `border-destructive` and an inline message: *"DP-385 already exists — West Qurna OT2/3 gas feed to CS."*
+  - Next is blocked until resolved.
+- Subtle helper under the field: *"Enter the official DP number from the project register."* (Generic phrasing — no bracketed placeholder. If we later identify the canonical register, we link it.)
+- No "next free number" suggestion, no format mask beyond the existing alphanumeric filter.
 
-**Recommendation: keep the bar, refine it. Skip doughnut.**
+## 4. Real disabled state for dependent selects
 
-Why not doughnut:
-- Doughnuts at 16–20px diameter are hard to read at a glance; you lose the "where on the journey" sense a linear bar gives.
-- Doughnuts don't sort visually — your eye can't scan a column of rings and see "85, 56, 0" the way it scans bar lengths.
-- They eat more horizontal room per unit of information than a thin bar + %.
-- Bars are the standard for *progress* (linear, time-bounded); doughnuts are for *composition*.
+`EnhancedCombobox` currently renders disabled state the same as enabled. Add a disabled variant:
 
-Refined bar (Linear / Vercel style):
-- Thicker, rounder track: `h-2 rounded-full bg-muted` (was `h-1.5`).
-- Indicator: same `rounded-full`, but tone shifts to a single calmer palette — `bg-emerald-500` at 100, `bg-primary` for in-progress (drop the amber/rose mid-tier — too alarmist for a neutral progress signal), `bg-muted-foreground/20` at 0.
-- Percentage label: `text-[13px] font-semibold tabular-nums`, sits to the right with `w-11` slot.
-- Add a tiny `0` → `100` track tick illusion via inner `shadow-[inset_0_0_0_1px_hsl(var(--border))]` so the empty state still shows a defined track.
-- Subtle hover: bar grows to `h-2.5` on row hover (transition) — gives interaction feedback without being noisy.
+- `border-dashed border-border/60`, `bg-muted/30`, lock icon prefix, muted text.
+- Applied automatically when `disabled` prop is true. Affects: Hub (until Portfolio), Field (until Plant), Station (until Field or Plant-with-no-fields).
 
-If you specifically want to *try* a doughnut variant before deciding, say the word and I'll generate two design directions side-by-side (refined bar vs. ring) so you can pick visually.
+## 5. Live auto-assignment preview
 
-## Files
+The biggest UX win. As soon as Portfolio is selected, render under the Ownership group:
 
-- `src/components/project/ProjectsTable.tsx` — header styling, ID pill, scope clamp, column widths + `align` removal, qualifications cell justify, progress bar refresh, prefs key bump to `v5`.
+```text
+Will be auto-assigned
+  Commissioning Lead   Ali Zachi
+  Construction Lead    Sara Hadi
+  Snr ORA Engineer     Mahmoud R.
+```
 
-No other files touched. No data / hook / business logic changes.
+And under Location, when Plant is selected:
+
+```text
+  Deputy Plant Director   Hassan K.
+```
+
+- Small, muted, no card. Resolved live from the existing role-assignment hooks (`usePortfolioManagers` / role-by-region queries already exist).
+- If no one is assigned to that role for that portfolio/plant: *"No Commissioning Lead assigned for North — can be set later."* in `text-amber-600`.
+- Makes the promise concrete before Review.
+
+## 6. Loss protection — confirm, don't autosave (yet)
+
+- Dirty-check on `onOpenChange(false)` and Cancel: if any field touched, show `AlertDialog`: *"Discard this project? Your progress will be lost."* with Discard / Keep editing.
+- ESC and backdrop click route through the same confirm.
+- Defer the drafts table (separate proposal — out of scope here).
+
+## 7. Stepper validity model
+
+Replace the binary `visitedSteps` Set with a per-step state: `'pending' | 'valid' | 'invalid' | 'active'`.
+
+- `valid`: check icon, primary tint, clickable.
+- `invalid`: red ring, clickable (so user can fix).
+- `pending`: muted, not clickable.
+- `active`: filled primary.
+- Step click runs that step's validator before allowing jump-ahead.
+
+## 8. Context banner (steps 2+) — flatten
+
+The current cross-step context banner (Project / Portfolio / Hub chips in a muted card) duplicates information that should live in the dialog title once Step 1 is complete. Replace with a single subtitle line under "Create New Project":
+
+> `DP-355 · Crude Stabilization Upgrade — North › Basra Hub`
+
+One line, muted, always visible from Step 2 onward. Banner card removed.
+
+---
+
+# Technical Notes
+
+**Files to change**
+- `src/components/project/CreateProjectWizard.tsx` — header chrome (remove Progress + circles, add segmented stepper), footer (add step counter next to Next), dirty-confirm dialog, validity-aware step state, replace context banner with title subtitle.
+- `src/components/project/wizard/WizardStepProjectInfo.tsx` — drop `Section` card chrome, add duplicate-ID check (debounced query against `projects`), add `LiveAssignmentPreview` subcomponent under Ownership and Location, remove "auto-assigned" pill if rendered here.
+- `src/components/ui/enhanced-combobox.tsx` — disabled variant (dashed border, lock icon, muted fill).
+- New: `src/components/project/wizard/LiveAssignmentPreview.tsx` — small presentational component, takes `regionId` / `plantId`, renders resolved role-holders or amber "not assigned" hint. Reuses existing portfolio-manager hooks.
+- New: `src/hooks/useProjectIdAvailability.ts` — debounced `supabase.from('projects').select('id, project_title').eq('project_id_prefix', 'DP').eq('project_id_number', n)`.
+
+**Out of scope (call out, don't build)**
+- Project drafts table / autosave.
+- Canonical "DP register" link target (need product input on source of truth).
+- Renaming "Sub Area → Field" anywhere else in the app (already done in Step 1).
+
+**Approx LOC**: ~250 lines changed/added, no DB migration, no new dependencies.
