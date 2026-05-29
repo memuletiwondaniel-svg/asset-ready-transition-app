@@ -254,7 +254,12 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
         }
         return true;
       case 2:
-        return true; // Scope is optional
+        if (!scopeDescription.trim() && scopeAttachments.length === 0) {
+          toast.error('Please describe the project scope');
+          return false;
+        }
+        return true;
+
       case 3: {
         const validMembers = teamMembers.filter(m => m.user_id && m.user_id.trim() !== '');
         if (validMembers.length === 0) {
