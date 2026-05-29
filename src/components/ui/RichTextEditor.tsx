@@ -5,16 +5,18 @@ import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { 
-  Bold, 
-  Italic, 
-  List, 
-  ListOrdered, 
-  Paperclip, 
+import {
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Paperclip,
   X,
   FileText,
-  Loader2
+  Loader2,
+  Lightbulb,
 } from 'lucide-react';
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ImageEditorDialog from '@/components/ui/ImageEditorDialog';
