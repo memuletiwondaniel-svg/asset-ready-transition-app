@@ -389,12 +389,11 @@ export function ProjectsTable({
                         case 'id':
                           return (
                             <div key={col.id} style={style} className="shrink-0">
-                              <Badge
-                                variant="outline"
-                                className="font-mono text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground border-border/60 tabular-nums tracking-tight inline-flex items-center justify-center leading-none"
+                              <span
+                                className="font-mono text-[12px] font-semibold tracking-tight text-foreground tabular-nums"
                               >
                                 {project.project_id_prefix}-{project.project_id_number}
-                              </Badge>
+                              </span>
                             </div>
                           );
                         case 'title':
@@ -407,16 +406,7 @@ export function ProjectsTable({
                                 {project.is_favorite && <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0" />}
                               </div>
                               {project.project_scope && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
-                                      {project.project_scope}
-                                    </p>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="bottom" className="max-w-md">
-                                    {project.project_scope}
-                                  </TooltipContent>
-                                </Tooltip>
+                                <ScopeText text={project.project_scope} />
                               )}
                             </div>
                           );
@@ -457,18 +447,7 @@ export function ProjectsTable({
                               )}
                             </div>
                           );
-                        case 'status':
-                          return (
-                            <div key={col.id} style={style} className="shrink-0 flex items-center gap-2">
-                              <span className={cn('h-2 w-2 rounded-full shrink-0', status.dot)} aria-hidden />
-                              <span className={cn(
-                                'text-sm truncate',
-                                status.tone === 'muted' ? 'text-muted-foreground' : 'text-foreground',
-                              )}>
-                                {status.label}
-                              </span>
-                            </div>
-                          );
+
                         case 'qualifications':
                           return (
                             <div key={col.id} style={style} className="shrink-0 flex justify-end items-center">
