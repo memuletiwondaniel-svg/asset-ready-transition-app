@@ -125,9 +125,8 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Identity */}
       <div>
-        <GroupHeader title="Project Identity" />
+
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-5">
           <div className="sm:col-span-2">
             <FieldLabel htmlFor="project_id" required>
@@ -185,9 +184,9 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
         </div>
       </div>
 
-      {/* Ownership */}
-      <div>
-        <GroupHeader title="Ownership" withDivider />
+      <div className="pt-4 border-t border-border/40">
+
+
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
           <div>
@@ -226,9 +225,9 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
         />
       </div>
 
-      {/* Location */}
-      <div>
-        <GroupHeader title="Location" withDivider />
+      <div className="pt-4 border-t border-border/40">
+
+
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
           <div>
