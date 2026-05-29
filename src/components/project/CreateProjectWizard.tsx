@@ -296,7 +296,8 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
           formData.plant_id
         );
       case 2:
-        return true;
+        // Scope is optional — only "complete" if the user actually entered something
+        return !!(scopeDescription.trim() || scopeAttachments.length > 0);
       case 3: {
         const valid = teamMembers.filter(m => m.user_id && m.user_id.trim() !== '');
         const norm = (r: string) => (r || '').toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim();
@@ -308,10 +309,15 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
         return valid.length > 0 && hasHubLead && hasOraEngr;
       }
       case 4:
-        return true;
+        // Milestones & docs are optional — only "complete" if the user added at least one
+        return milestones.length > 0 || documents.length > 0;
+      case 5:
+        // Review is the final action, never shown as complete
+        return false;
       default:
-        return true;
+        return false;
     }
+
   };
 
   const handleStepClick = (targetStep: number) => {
