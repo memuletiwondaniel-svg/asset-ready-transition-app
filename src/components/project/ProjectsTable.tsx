@@ -65,7 +65,7 @@ export const PROJECTS_TABLE_DEFAULT_HIDDEN: string[] = [];
 const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
 
 // v9: header refresh, ID hover-blue, scorecard label restored, milestone widened for badge.
-export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v9';
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v11';
 
 
 export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
