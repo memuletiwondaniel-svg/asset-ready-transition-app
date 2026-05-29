@@ -177,7 +177,41 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     setDocuments([]);
   };
 
+  // On open: if a saved draft exists, prompt to resume
+  useEffect(() => {
+    if (open && draft && !isDirty) {
+      setShowResumePrompt(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, draft]);
+
+  const applyDraft = (d: ProjectDraftPayload) => {
+    setFormData(d.formData);
+    setScopeDescription(d.scopeDescription || '');
+    setScopeAttachments(d.scopeAttachments || []);
+    setTeamMembers(d.teamMembers || []);
+    setMilestones(d.milestones || []);
+    setDocuments(d.documents || []);
+    setCurrentStep(d.currentStep || 1);
+    setVisitedSteps(new Set(Array.from({ length: d.currentStep || 1 }, (_, i) => i + 1)));
+  };
+
   const handleClose = () => {
+    resetWizard();
+    onClose();
+  };
+
+  const handleSaveAndClose = async () => {
+    await saveDraft({
+      formData,
+      scopeDescription,
+      scopeAttachments,
+      teamMembers,
+      milestones,
+      documents,
+      currentStep,
+    });
+    await reloadDraft();
     resetWizard();
     onClose();
   };
@@ -189,6 +223,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
       handleClose();
     }
   };
+
 
   const validateStep = (step: number): boolean => {
     switch (step) {
