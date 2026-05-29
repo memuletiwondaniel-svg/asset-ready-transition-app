@@ -194,7 +194,6 @@ function HeaderCell({ col, width, onResize, sort, onSort }: HeaderCellProps) {
           isSortable && 'cursor-pointer hover:text-primary transition-colors',
         )}
       >
-        {col.icon && <col.icon className={cn('h-3 w-3 shrink-0', active ? 'text-primary' : 'text-muted-foreground/50')} />}
         <span className={cn('truncate', active && 'text-primary')}>{col.label}</span>
         {sortIcon}
       </button>
@@ -310,7 +309,7 @@ export function ProjectsTable({
           <div className="min-w-max">
             {/* Header */}
             <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToHorizontalAxis]} onDragEnd={handleDragEnd}>
-              <div className="relative flex items-center gap-2 px-4 py-2.5 bg-gradient-to-b from-muted/30 via-muted/20 to-transparent border-b border-border/70 text-[10.5px] font-semibold text-foreground/80 uppercase tracking-[0.1em] after:absolute after:left-4 after:right-4 after:-bottom-px after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary/30 after:to-transparent">
+              <div className="relative flex items-center gap-2 px-4 py-3.5 bg-gradient-to-b from-muted/30 via-muted/20 to-transparent border-b border-border/70 text-xs font-semibold text-foreground/80 uppercase tracking-[0.08em] after:absolute after:left-4 after:right-4 after:-bottom-px after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary/30 after:to-transparent">
 
                 <div className="w-8 shrink-0" />
                 <SortableContext items={orderedColumns.map(c => c.id)} strategy={horizontalListSortingStrategy}>
