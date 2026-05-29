@@ -228,11 +228,8 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
 
       {/* Location */}
       <div>
-        <GroupHeader
-          title="Location"
-          helper="Plant drives auto-assignment of the Deputy Plant Director"
-          withDivider
-        />
+        <GroupHeader title="Location" withDivider />
+
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
           <div>
             <FieldLabel required>Plant</FieldLabel>
