@@ -32,7 +32,8 @@ export function ProjectColumnsMenu({ prefs, setPrefs, reset }: Props) {
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground" aria-label="Columns">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground/50 hover:text-foreground hover:bg-muted/60" aria-label="Columns">
+
                 <Columns className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
