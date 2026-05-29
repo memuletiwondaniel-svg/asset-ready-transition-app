@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { ProjectTeamSection } from '../ProjectTeamSection';
-import { useAutoPopulateTeam } from '@/hooks/useAutoPopulateTeam';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { RefreshCw, Sparkles, Users, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
+import { Sparkles, X, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useAutoPopulateTeam } from '@/hooks/useAutoPopulateTeam';
+import { useProfileUsers } from '@/hooks/useProfileUsers';
 
 interface TeamMember {
   user_id: string;
@@ -25,12 +25,16 @@ interface WizardStepProjectTeamProps {
   hubId?: string | null;
 }
 
-const REQUIRED_ROLES = [
+const KEY_ROLES = [
   'Project Hub Lead',
   'Construction Lead',
   'Commissioning Lead',
   'Snr. ORA Engr.',
+  'Deputy Plant Director',
 ];
+
+const getInitials = (name?: string) =>
+  !name ? '?' : name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
 const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
   teamMembers,
@@ -41,149 +45,149 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
 }) => {
   const [hasAutoPopulated, setHasAutoPopulated] = useState(false);
   const { suggestedTeam, isLoading } = useAutoPopulateTeam(regionName, hubName, hubId);
+  const { data: allUsers = [] } = useProfileUsers();
 
-  // Auto-populate on mount if team is empty and we have suggestions
+  // Auto-populate on mount when suggestions arrive
   useEffect(() => {
-    if (!hasAutoPopulated && teamMembers.length === 0 && suggestedTeam.length > 0 && !isLoading) {
-      setTeamMembers(suggestedTeam);
+    if (!hasAutoPopulated && suggestedTeam.length > 0 && !isLoading) {
+      const manualRoles = new Set(teamMembers.filter((m) => !m.is_auto_populated).map((m) => m.role));
+      const additions = suggestedTeam.filter((s) => !manualRoles.has(s.role));
+      if (additions.length > 0) {
+        setTeamMembers((prev) => [...prev.filter((m) => !additions.some((a) => a.role === m.role)), ...additions]);
+      }
       setHasAutoPopulated(true);
     }
-  }, [suggestedTeam, hasAutoPopulated, teamMembers.length, isLoading, setTeamMembers]);
+  }, [suggestedTeam, hasAutoPopulated, isLoading, setTeamMembers, teamMembers]);
 
-  const handleAutoPopulate = () => {
-    if (suggestedTeam.length > 0) {
-      const manualMembers = teamMembers.filter(m => !m.is_auto_populated);
-      const suggestedRoles = suggestedTeam.map(s => s.role);
-      const filteredManual = manualMembers.filter(m => !suggestedRoles.includes(m.role));
-      
-      setTeamMembers([...filteredManual, ...suggestedTeam]);
-      setHasAutoPopulated(true);
-    }
+  const userOptions = useMemo(
+    () =>
+      allUsers.map((u) => ({
+        value: u.user_id,
+        label: u.full_name || u.email || 'Unknown',
+        description: u.position || u.email,
+      })),
+    [allUsers]
+  );
+
+  const handleAssign = (role: string, userId: string) => {
+    const user = allUsers.find((u) => u.user_id === userId);
+    if (!user) return;
+    setTeamMembers((prev) => [
+      ...prev.filter((m) => m.role !== role),
+      {
+        user_id: user.user_id,
+        role,
+        is_lead: role === 'Project Hub Lead',
+        user_name: user.full_name,
+        user_email: user.email,
+        avatar_url: user.avatar_url,
+        position: user.position,
+        is_auto_populated: false,
+      },
+    ]);
   };
 
-  const autoPopulatedCount = teamMembers.filter(m => m.is_auto_populated).length;
-
-  // Check which required roles are filled
-  const getRequiredRoleStatus = () => {
-    return REQUIRED_ROLES.map(role => {
-      const member = teamMembers.find(m => m.role === role);
-      return { role, member, assigned: !!member };
-    });
+  const handleRemove = (role: string) => {
+    setTeamMembers((prev) => prev.filter((m) => m.role !== role));
   };
 
-  const roleStatuses = getRequiredRoleStatus();
-  const allRequiredFilled = roleStatuses.every(r => r.assigned);
-
-  const getInitials = (name?: string) => {
-    if (!name) return '?';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
+  const contextMissing = !regionName && !hubName;
 
   return (
     <div className="space-y-5">
       <div>
         <h3 className="text-lg font-medium mb-1">Project Team</h3>
-        <p className="text-sm text-muted-foreground">
-          Assign team members to required roles. Members are auto-resolved based on your Portfolio and Hub selection.
+        <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+          Key roles are auto-resolved from your Portfolio and Hub. Edit any assignment as needed.
         </p>
       </div>
 
-      {/* Auto-resolved summary cards */}
-      {(regionName || hubName) && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm">
-              <Sparkles className="h-4 w-4 text-amber-500" />
-              <span className="font-medium text-foreground">
-                Auto-resolved Team
-              </span>
-              {autoPopulatedCount > 0 && (
-                <Badge variant="secondary" className="text-xs">
-                  {autoPopulatedCount} member{autoPopulatedCount !== 1 ? 's' : ''}
-                </Badge>
-              )}
-            </div>
-            {suggestedTeam.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAutoPopulate}
-                className="gap-1.5 text-xs"
-              >
-                <RefreshCw className="h-3 w-3" />
-                Re-populate
-              </Button>
-            )}
-          </div>
-
-          {/* Required role cards with auto-resolved members */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-            {roleStatuses.map(({ role, member, assigned }) => (
-              <div
-                key={role}
-                className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                  assigned
-                    ? 'bg-emerald-50/50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800'
-                    : 'bg-muted/30 border-border/50'
-                }`}
-              >
-                {assigned && member ? (
-                  <Avatar className="h-9 w-9 border-2 border-emerald-300 dark:border-emerald-700">
-                    <AvatarImage src={(member as any).avatar_url} alt={member.user_name} />
-                    <AvatarFallback className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-                      {getInitials(member.user_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                ) : (
-                  <div className="h-9 w-9 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
-                    <AlertCircle className="h-4 w-4 text-muted-foreground/50" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground">{role}</p>
-                  {assigned && member ? (
-                    <p className="text-sm font-semibold text-foreground truncate">{member.user_name}</p>
-                  ) : (
-                    <p className="text-sm text-muted-foreground/60 italic">Not assigned</p>
-                  )}
-                </div>
-                {assigned && (
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                )}
-              </div>
-            ))}
-          </div>
-
-          {!allRequiredFilled && (regionName || hubName) && (
-            <p className="text-xs text-muted-foreground">
-              {!regionName && !hubName
-                ? 'Select a Portfolio and Hub in Step 1 to auto-resolve team members.'
-                : !regionName
-                  ? 'Select a Portfolio to auto-resolve Construction Lead, Commissioning Lead, and Snr. ORA Engr.'
-                  : !hubName
-                    ? 'Select a Hub to auto-resolve the Project Hub Lead.'
-                    : 'Some roles could not be auto-resolved. Please assign them manually below.'}
-            </p>
-          )}
-        </div>
-      )}
-
-      {!regionName && !hubName && (
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-50/50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+      {contextMissing && (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50/50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
           <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
           <p className="text-sm text-amber-800 dark:text-amber-300">
-            Go back to Step 1 and select a <strong>Portfolio</strong> and <strong>Hub</strong> to automatically resolve team members.
+            Select a <strong>Portfolio</strong> and <strong>Hub</strong> in Step 1 to auto-resolve members.
           </p>
         </div>
       )}
 
-      <ProjectTeamSection
-        teamMembers={teamMembers}
-        setTeamMembers={setTeamMembers}
-        regionName={regionName}
-        hubName={hubName}
-        hubId={hubId}
-      />
+      <div className="space-y-2">
+        {KEY_ROLES.map((role) => {
+          const member = teamMembers.find((m) => m.role === role);
+          const assigned = !!member;
+
+          return (
+            <div
+              key={role}
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                assigned
+                  ? 'bg-emerald-50/40 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800'
+                  : 'bg-muted/20 border-border/60'
+              }`}
+            >
+              <div className="w-44 shrink-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {role}
+                </p>
+              </div>
+
+              {assigned ? (
+                <>
+                  <Avatar className="h-9 w-9 border-2 border-emerald-300 dark:border-emerald-700">
+                    <AvatarImage src={member.avatar_url} alt={member.user_name} />
+                    <AvatarFallback className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
+                      {getInitials(member.user_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      {member.user_name}
+                    </p>
+                    {member.position && (
+                      <p className="text-xs text-muted-foreground truncate">{member.position}</p>
+                    )}
+                  </div>
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <div className="w-44 shrink-0">
+                    <EnhancedCombobox
+                      options={userOptions}
+                      value={member.user_id}
+                      onValueChange={(v) => v && handleAssign(role, v)}
+                      placeholder="Change"
+                      emptyText="No users found"
+                      allowCreate={false}
+                      className="w-full h-8"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => handleRemove(role)}
+                    title="Remove"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </>
+              ) : (
+                <div className="flex-1">
+                  <EnhancedCombobox
+                    options={userOptions}
+                    value=""
+                    onValueChange={(v) => v && handleAssign(role, v)}
+                    placeholder="Select team member..."
+                    emptyText="No users found"
+                    allowCreate={false}
+                    className="w-full"
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
