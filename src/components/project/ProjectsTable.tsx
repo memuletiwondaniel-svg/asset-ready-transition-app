@@ -347,11 +347,27 @@ export function ProjectsTable({
                 const total = p2a?.total ?? 0;
                 const qualCount = p2a?.qualificationCount ?? 0;
                 const qualTone = getQualTone(qualCount);
-                const barColor =
-                  avg >= 100 ? 'bg-emerald-500' :
-                  avg >= 75 ? 'bg-primary' :
-                  avg >= 25 ? 'bg-amber-500' :
-                  avg > 0 ? 'bg-rose-500' : 'bg-transparent';
+
+                // Milestone-aware progress status: green if complete, red if overdue,
+                // red/amber if close to milestone and behind, otherwise neutral grey.
+                const milestoneDate = project.next_milestone_date ? new Date(project.next_milestone_date) : null;
+                const now = new Date();
+                const daysToMilestone = milestoneDate
+                  ? Math.ceil((milestoneDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                  : null;
+                let barColor = 'bg-muted-foreground/30';
+                if (avg >= 100) {
+                  barColor = 'bg-emerald-500/80';
+                } else if (milestoneDate && daysToMilestone !== null && daysToMilestone < 0) {
+                  barColor = 'bg-rose-500/70';
+                } else if (milestoneDate && daysToMilestone !== null && daysToMilestone <= 14) {
+                  if (avg < 50) barColor = 'bg-rose-500/70';
+                  else if (avg < 75) barColor = 'bg-amber-500/70';
+                  else barColor = 'bg-muted-foreground/40';
+                } else if (avg === 0) {
+                  barColor = 'bg-transparent';
+                }
+
 
                 return (
                   <div
