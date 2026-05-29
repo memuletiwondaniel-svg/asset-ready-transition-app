@@ -52,21 +52,21 @@ export interface ColumnDef {
 }
 
 export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
-  { id: 'id', label: 'ID', defaultWidth: 76, reorderable: false, hideable: false, sortable: true },
-  { id: 'title', label: 'Project Title', defaultWidth: 340, hideable: false, sortable: true },
-  { id: 'milestone', label: 'Milestone', defaultWidth: 208, hideable: true, icon: Target },
-  { id: 'location', label: 'Location', defaultWidth: 160, hideable: true, sortable: true },
-  { id: 'qualifications', label: 'Qualifications', defaultWidth: 128, hideable: false, sortable: true, align: 'right', icon: AlertTriangle },
-  { id: 'progress', label: 'P2A Progress', defaultWidth: 180, hideable: false, sortable: true, align: 'right' },
+  { id: 'id', label: 'ID', defaultWidth: 72, reorderable: false, hideable: false, sortable: true },
+  { id: 'title', label: 'Project Title', defaultWidth: 440, hideable: false, sortable: true },
+  { id: 'milestone', label: 'Milestone', defaultWidth: 180, hideable: true, icon: Target },
+  { id: 'location', label: 'Location', defaultWidth: 120, hideable: true, sortable: true },
+  { id: 'qualifications', label: 'Qualifications', defaultWidth: 110, hideable: false, sortable: true, icon: AlertTriangle },
+  { id: 'progress', label: 'P2A Progress', defaultWidth: 200, hideable: false, sortable: true, align: 'right' },
 ];
 const COLUMNS = PROJECTS_TABLE_COLUMNS;
 
 export const PROJECTS_TABLE_DEFAULT_HIDDEN = ['milestone'];
 const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
 
-// Bumped to v4: Status column dropped; ID width tightened; scope expand.
-export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v4';
-export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
+// Bumped to v5: header restyle, ID pill, scope 2 lines, tighter columns, qualifications left-aligned, progress bar refresh.
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v5';
+
   order: COLUMNS.map((c) => c.id),
   widths: Object.fromEntries(COLUMNS.map((c) => [c.id, c.defaultWidth])),
   hidden: DEFAULT_HIDDEN,
