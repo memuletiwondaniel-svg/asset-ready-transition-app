@@ -249,6 +249,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
       case 1:
         return !!(
           formData.project_id_number &&
+          !idConflict &&
           formData.project_title &&
           formData.region_id &&
           formData.hub_id &&
