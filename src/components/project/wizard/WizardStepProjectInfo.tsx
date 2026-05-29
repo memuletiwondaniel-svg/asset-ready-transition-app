@@ -137,12 +137,12 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
                 id="project_id"
                 value={formData.project_id_number}
                 onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  const value = e.target.value.replace(/[^a-zA-Z0-9-]/g, '').toUpperCase();
                   onFormDataChange({ project_id_number: value });
                 }}
                 placeholder="0000"
                 className="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-full"
-                inputMode="numeric"
+                maxLength={20}
               />
             </div>
           </div>
