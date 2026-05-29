@@ -52,20 +52,21 @@ export interface ColumnDef {
 }
 
 export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
-  { id: 'id', label: 'ID', defaultWidth: 76, reorderable: false, hideable: false, sortable: true },
-  { id: 'title', label: 'Project Title', defaultWidth: 460, hideable: false, sortable: true },
-  { id: 'milestone', label: 'Milestone', defaultWidth: 156, hideable: true, icon: Target },
-  { id: 'location', label: 'Location', defaultWidth: 132, hideable: true, sortable: true },
-  { id: 'qualifications', label: 'Qual', defaultWidth: 64, hideable: false, sortable: true, icon: AlertTriangle },
-  { id: 'progress', label: 'P2A Progress', defaultWidth: 200, hideable: false, sortable: true, align: 'right' },
+  { id: 'id', label: 'ID', defaultWidth: 68, reorderable: false, hideable: false, sortable: true },
+  { id: 'title', label: 'Project Title', defaultWidth: 560, hideable: false, sortable: true },
+  { id: 'milestone', label: 'Milestone', defaultWidth: 140, hideable: true, icon: Target },
+  { id: 'location', label: 'Location', defaultWidth: 96, hideable: true, sortable: true },
+  { id: 'qualifications', label: 'Qual', defaultWidth: 56, hideable: false, sortable: true, icon: AlertTriangle },
+  { id: 'progress', label: 'P2A Progress', defaultWidth: 180, hideable: false, sortable: true, align: 'right' },
 ];
 const COLUMNS = PROJECTS_TABLE_COLUMNS;
 
 export const PROJECTS_TABLE_DEFAULT_HIDDEN = ['milestone'];
 const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
 
-// v6: tighter cols, location wraps, Qual rename, ID legibility, progress color tiers.
-export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v6';
+// v7: tighter cols, inline show more, milestone-aware progress colors, calmer ID pill.
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v7';
+
 
 export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
   order: COLUMNS.map((c) => c.id),
