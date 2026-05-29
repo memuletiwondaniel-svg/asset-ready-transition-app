@@ -575,7 +575,10 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
                   const isActive = step.id === currentStep;
                   // "Complete" only counts if user has actually visited the step.
                   const isComplete = visited && !isActive && isStepComplete(step.id);
-                  const isAttention = visited && !isActive && !isComplete;
+                  // Only required-field steps (1, 3) flag amber when visited & incomplete
+                  const stepHasRequiredFields = step.id === 1 || step.id === 3;
+                  const isAttention = visited && !isActive && !isComplete && stepHasRequiredFields;
+
                   const nextStep = STEPS[idx + 1];
                   const nextVisited = nextStep ? visitedSteps.has(nextStep.id) : false;
                   const nextComplete = nextStep ? isStepComplete(nextStep.id) && nextVisited : false;
