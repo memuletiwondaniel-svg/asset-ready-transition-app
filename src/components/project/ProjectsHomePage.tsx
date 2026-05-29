@@ -161,7 +161,8 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
                         variant="ghost"
                         size="sm"
                         onClick={() => setViewMode(viewMode === 'list' ? 'heatmap' : 'list')}
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
+                        className="h-8 w-8 p-0 text-muted-foreground/50 hover:text-foreground hover:bg-muted/60"
+
                         aria-label={viewMode === 'list' ? 'Switch to heatmap view' : 'Switch to list view'}
                       >
                         {viewMode === 'list' ? <Grid className="h-4 w-4" /> : <List className="h-4 w-4" />}

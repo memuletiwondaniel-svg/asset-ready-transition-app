@@ -52,41 +52,70 @@ export interface ColumnDef {
 }
 
 export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
-  { id: 'id', label: 'ID', defaultWidth: 96, reorderable: false, hideable: false, sortable: true },
-  { id: 'title', label: 'Project Title', defaultWidth: 320, hideable: false, sortable: true },
+  { id: 'id', label: 'ID', defaultWidth: 76, reorderable: false, hideable: false, sortable: true },
+  { id: 'title', label: 'Project Title', defaultWidth: 340, hideable: false, sortable: true },
   { id: 'milestone', label: 'Milestone', defaultWidth: 208, hideable: true, icon: Target },
   { id: 'location', label: 'Location', defaultWidth: 160, hideable: true, sortable: true },
-  { id: 'status', label: 'Status', defaultWidth: 130, hideable: true, sortable: true },
-  { id: 'qualifications', label: 'Qualifications', defaultWidth: 120, hideable: false, sortable: true, align: 'right', icon: AlertTriangle },
-  { id: 'progress', label: 'P2A Progress', defaultWidth: 160, hideable: false, sortable: true, align: 'right' },
+  { id: 'qualifications', label: 'Qualifications', defaultWidth: 128, hideable: false, sortable: true, align: 'right', icon: AlertTriangle },
+  { id: 'progress', label: 'P2A Progress', defaultWidth: 180, hideable: false, sortable: true, align: 'right' },
 ];
 const COLUMNS = PROJECTS_TABLE_COLUMNS;
 
 export const PROJECTS_TABLE_DEFAULT_HIDDEN = ['milestone'];
 const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
 
-// Bumped to v3: Scope merged into Title as subtitle; column dropped.
-export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v3';
+// Bumped to v4: Status column dropped; ID width tightened; scope expand.
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v4';
 export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
   order: COLUMNS.map((c) => c.id),
   widths: Object.fromEntries(COLUMNS.map((c) => [c.id, c.defaultWidth])),
   hidden: DEFAULT_HIDDEN,
 };
 
-type SortKey = 'id' | 'title' | 'location' | 'status' | 'qualifications' | 'progress';
+type SortKey = 'id' | 'title' | 'location' | 'qualifications' | 'progress';
 type SortState = { key: SortKey; dir: 'asc' | 'desc' } | null;
-
-function getStatus(avg: number): { label: string; dot: string; tone: 'muted' | 'progress' | 'done' } {
-  if (avg >= 100) return { label: 'Complete', dot: 'bg-emerald-500', tone: 'done' };
-  if (avg > 0) return { label: 'In progress', dot: 'bg-primary', tone: 'progress' };
-  return { label: 'Not started', dot: 'bg-muted-foreground/40', tone: 'muted' };
-}
 
 function getQualTone(count: number) {
   if (count <= 0) return null;
   if (count <= 5) return 'bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20';
   if (count <= 10) return 'bg-amber-500/20 text-amber-800 dark:text-amber-200 hover:bg-amber-500/30';
   return 'bg-rose-500/15 text-rose-700 dark:text-rose-300 hover:bg-rose-500/25';
+}
+
+
+function ScopeText({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const [isClamped, setIsClamped] = useState(false);
+  const ref = React.useRef<HTMLParagraphElement>(null);
+
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    setIsClamped(el.scrollHeight - el.clientHeight > 1);
+  }, [text]);
+
+  return (
+    <div className="mt-0.5">
+      <p
+        ref={ref}
+        className={cn(
+          'text-xs text-muted-foreground leading-snug',
+          !expanded && 'line-clamp-3',
+        )}
+      >
+        {text}
+      </p>
+      {(isClamped || expanded) && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
+          className="mt-0.5 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors"
+        >
+          {expanded ? 'Show less' : 'Show more'}
+        </button>
+      )}
+    </div>
+  );
 }
 
 interface HeaderCellProps {
@@ -96,6 +125,7 @@ interface HeaderCellProps {
   sort: SortState;
   onSort: (key: SortKey) => void;
 }
+
 
 function HeaderCell({ col, width, onResize, sort, onSort }: HeaderCellProps) {
   const sortable = useSortable({ id: col.id, disabled: col.reorderable === false });
@@ -233,7 +263,6 @@ export function ProjectsTable({
         case 'id': return `${p.project_id_prefix}-${String(p.project_id_number).padStart(8, '0')}`;
         case 'title': return (p.project_title || '').toLowerCase();
         case 'location': return (formatProjectLocation({ plant_name: p.plant_name, station_name: p.station_name }) || '').toLowerCase();
-        case 'status': return avg >= 100 ? 2 : avg > 0 ? 1 : 0;
         case 'qualifications': return pg?.qualificationCount ?? 0;
         case 'progress': return avg;
         default: return 0;
@@ -262,6 +291,7 @@ export function ProjectsTable({
       return { ...p, order: arrayMove(order, fromIdx, toIdx) };
     });
   };
+
 
   const handleResize = useCallback((id: string, w: number) => {
     setPrefs(p => ({ ...p, widths: { ...p.widths, [id]: w } }));
@@ -302,7 +332,6 @@ export function ProjectsTable({
                 const completed = p2a?.completed ?? 0;
                 const total = p2a?.total ?? 0;
                 const qualCount = p2a?.qualificationCount ?? 0;
-                const status = getStatus(avg);
                 const qualTone = getQualTone(qualCount);
                 const barColor =
                   avg >= 75 ? 'bg-emerald-500' :
@@ -315,6 +344,7 @@ export function ProjectsTable({
                     className="group relative flex items-center gap-4 px-5 py-3 cursor-pointer transition-all duration-200 ease-out hover:bg-gradient-to-r hover:from-primary/[0.04] hover:via-muted/40 hover:to-transparent hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
                     onClick={() => onProjectClick(project.id)}
                   >
+
                     {/* Row actions */}
                     <div className="w-8 shrink-0">
                       <DropdownMenu>
@@ -354,12 +384,11 @@ export function ProjectsTable({
                         case 'id':
                           return (
                             <div key={col.id} style={style} className="shrink-0">
-                              <Badge
-                                variant="outline"
-                                className="font-mono text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground border-border/60 tabular-nums tracking-tight inline-flex items-center justify-center leading-none"
+                              <span
+                                className="font-mono text-[12px] font-semibold tracking-tight text-foreground tabular-nums"
                               >
                                 {project.project_id_prefix}-{project.project_id_number}
-                              </Badge>
+                              </span>
                             </div>
                           );
                         case 'title':
@@ -372,16 +401,7 @@ export function ProjectsTable({
                                 {project.is_favorite && <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0" />}
                               </div>
                               {project.project_scope && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
-                                      {project.project_scope}
-                                    </p>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="bottom" className="max-w-md">
-                                    {project.project_scope}
-                                  </TooltipContent>
-                                </Tooltip>
+                                <ScopeText text={project.project_scope} />
                               )}
                             </div>
                           );
@@ -422,21 +442,10 @@ export function ProjectsTable({
                               )}
                             </div>
                           );
-                        case 'status':
-                          return (
-                            <div key={col.id} style={style} className="shrink-0 flex items-center gap-2">
-                              <span className={cn('h-2 w-2 rounded-full shrink-0', status.dot)} aria-hidden />
-                              <span className={cn(
-                                'text-sm truncate',
-                                status.tone === 'muted' ? 'text-muted-foreground' : 'text-foreground',
-                              )}>
-                                {status.label}
-                              </span>
-                            </div>
-                          );
+
                         case 'qualifications':
                           return (
-                            <div key={col.id} style={style} className="shrink-0 flex justify-end items-center">
+                            <div key={col.id} style={style} className="shrink-0 flex justify-end items-center pr-4">
                               {qualCount > 0 ? (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
