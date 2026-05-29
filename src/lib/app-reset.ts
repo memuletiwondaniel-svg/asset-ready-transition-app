@@ -13,7 +13,13 @@ export const TAB_SESSION_EPOCH_KEY = "__orsh_tab_session_epoch";
 export const POST_LOGIN_REFRESH_KEY = "__orsh_post_login_refresh";
 
 const PRESERVE_PREFIXES = ["sb-"];
-const PRESERVE_KEYS = ["rememberMe", RESET_KEY, SESSION_EPOCH_KEY, TAB_SESSION_EPOCH_KEY];
+const PRESERVE_KEYS = [
+  "rememberMe",
+  RESET_KEY,
+  SESSION_EPOCH_KEY,
+  TAB_SESSION_EPOCH_KEY,
+  POST_LOGIN_REFRESH_KEY,
+];
 const REMOVED_ROUTE_PREFIXES = [
   "/users",
   "/user-management",
