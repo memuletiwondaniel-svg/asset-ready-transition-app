@@ -335,12 +335,6 @@ export function ProjectsTable({
                 const p2a = progressMap?.[project.id];
                 const vcrs = p2a?.vcrs ?? [];
                 const avg = p2a?.avg ?? 0;
-            <div className="divide-y divide-border/60">
-              {sortedProjects.map((project) => {
-                const location = formatProjectLocation({ plant_name: project.plant_name, station_name: project.station_name });
-                const p2a = progressMap?.[project.id];
-                const vcrs = p2a?.vcrs ?? [];
-                const avg = p2a?.avg ?? 0;
                 const completed = p2a?.completed ?? 0;
                 const total = p2a?.total ?? 0;
                 const qualCount = p2a?.qualificationCount ?? 0;
@@ -349,6 +343,13 @@ export function ProjectsTable({
                   avg >= 75 ? 'bg-emerald-500' :
                   avg >= 25 ? 'bg-amber-500' :
                   avg > 0 ? 'bg-rose-500' : 'bg-muted-foreground/30';
+
+                return (
+                  <div
+                    key={project.id}
+                    className="group relative flex items-center gap-4 px-5 py-3 cursor-pointer transition-all duration-200 ease-out hover:bg-gradient-to-r hover:from-primary/[0.04] hover:via-muted/40 hover:to-transparent hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
+                    onClick={() => onProjectClick(project.id)}
+                  >
 
                     {/* Row actions */}
                     <div className="w-8 shrink-0">
