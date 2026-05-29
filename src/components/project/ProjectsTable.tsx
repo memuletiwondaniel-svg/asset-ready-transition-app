@@ -318,7 +318,7 @@ export function ProjectsTable({
           <div className="min-w-max">
             {/* Header */}
             <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToHorizontalAxis]} onDragEnd={handleDragEnd}>
-              <div className="flex items-center gap-4 px-5 py-3.5 bg-gradient-to-b from-muted/60 to-muted/30 border-b border-border text-[11px] font-semibold text-foreground/70 uppercase tracking-[0.08em]">
+              <div className="flex items-center gap-3 px-4 py-3.5 bg-gradient-to-b from-muted/60 to-muted/30 border-b border-border text-[11px] font-semibold text-foreground/70 uppercase tracking-[0.08em]">
 
                 <div className="w-8 shrink-0" />
                 <SortableContext items={orderedColumns.map(c => c.id)} strategy={horizontalListSortingStrategy}>
@@ -372,7 +372,7 @@ export function ProjectsTable({
                 return (
                   <div
                     key={project.id}
-                    className="group relative flex items-center gap-4 px-5 py-3 cursor-pointer transition-all duration-200 ease-out hover:bg-gradient-to-r hover:from-primary/[0.04] hover:via-muted/40 hover:to-transparent hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
+                    className="group relative flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 ease-out hover:bg-gradient-to-r hover:from-primary/[0.04] hover:via-muted/40 hover:to-transparent hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
                     onClick={() => onProjectClick(project.id)}
                   >
 
