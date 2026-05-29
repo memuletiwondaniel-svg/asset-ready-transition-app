@@ -335,14 +335,12 @@ export function ProjectsTable({
                 const completed = p2a?.completed ?? 0;
                 const total = p2a?.total ?? 0;
                 const qualCount = p2a?.qualificationCount ?? 0;
+                const qualTone = getQualTone(qualCount);
                 const barColor =
                   avg >= 100 ? 'bg-emerald-500' :
                   avg >= 75 ? 'bg-primary' :
                   avg >= 25 ? 'bg-amber-500' :
                   avg > 0 ? 'bg-rose-500' : 'bg-transparent';
-
-                  avg > 0 ? 'bg-primary' : 'bg-transparent';
-
 
                 return (
                   <div
