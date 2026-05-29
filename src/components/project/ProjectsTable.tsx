@@ -436,13 +436,14 @@ export function ProjectsTable({
                               {location ? (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <span className="text-sm text-foreground truncate block">{location}</span>
+                                    <span className="text-sm text-foreground line-clamp-2 leading-snug break-words">{location}</span>
                                   </TooltipTrigger>
                                   <TooltipContent side="bottom">{location}</TooltipContent>
                                 </Tooltip>
                               ) : (
                                 <span className="text-sm text-muted-foreground/60">—</span>
                               )}
+
                             </div>
                           );
 
