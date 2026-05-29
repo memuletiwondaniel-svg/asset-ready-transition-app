@@ -22,7 +22,6 @@ import {
   GripVertical,
   AlertTriangle,
   Target,
-  Target,
   ChevronUp,
   ChevronDown,
   ChevronsUpDown,
