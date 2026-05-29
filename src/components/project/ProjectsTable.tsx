@@ -52,20 +52,21 @@ export interface ColumnDef {
 }
 
 export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
-  { id: 'id', label: 'ID', defaultWidth: 76, reorderable: false, hideable: false, sortable: true },
-  { id: 'title', label: 'Project Title', defaultWidth: 460, hideable: false, sortable: true },
-  { id: 'milestone', label: 'Milestone', defaultWidth: 156, hideable: true, icon: Target },
-  { id: 'location', label: 'Location', defaultWidth: 132, hideable: true, sortable: true },
-  { id: 'qualifications', label: 'Qual', defaultWidth: 64, hideable: false, sortable: true, icon: AlertTriangle },
-  { id: 'progress', label: 'P2A Progress', defaultWidth: 200, hideable: false, sortable: true, align: 'right' },
+  { id: 'id', label: 'ID', defaultWidth: 68, reorderable: false, hideable: false, sortable: true },
+  { id: 'title', label: 'Project Title', defaultWidth: 560, hideable: false, sortable: true },
+  { id: 'milestone', label: 'Milestone', defaultWidth: 140, hideable: true, icon: Target },
+  { id: 'location', label: 'Location', defaultWidth: 96, hideable: true, sortable: true },
+  { id: 'qualifications', label: 'Qual', defaultWidth: 56, hideable: false, sortable: true, icon: AlertTriangle },
+  { id: 'progress', label: 'P2A Progress', defaultWidth: 180, hideable: false, sortable: true, align: 'right' },
 ];
 const COLUMNS = PROJECTS_TABLE_COLUMNS;
 
 export const PROJECTS_TABLE_DEFAULT_HIDDEN = ['milestone'];
 const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
 
-// v6: tighter cols, location wraps, Qual rename, ID legibility, progress color tiers.
-export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v6';
+// v7: tighter cols, inline show more, milestone-aware progress colors, calmer ID pill.
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v7';
+
 
 export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
   order: COLUMNS.map((c) => c.id),
@@ -84,7 +85,6 @@ function getQualTone(count: number) {
   return 'bg-rose-500/15 text-rose-700 dark:text-rose-300 hover:bg-rose-500/25';
 }
 
-
 function ScopeText({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
   const [isClamped, setIsClamped] = useState(false);
@@ -97,7 +97,7 @@ function ScopeText({ text }: { text: string }) {
   }, [text]);
 
   return (
-    <div className="mt-0.5">
+    <div className="relative mt-0.5">
       <p
         ref={ref}
         className={cn(
@@ -106,19 +106,30 @@ function ScopeText({ text }: { text: string }) {
         )}
       >
         {text}
+        {expanded && isClamped && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
+            className="ml-1 text-[11px] font-medium text-muted-foreground/60 hover:text-primary transition-colors"
+          >
+            less
+          </button>
+        )}
       </p>
-      {(isClamped || expanded) && (
+      {isClamped && !expanded && (
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
-          className="mt-0.5 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors"
+          onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+          className="absolute bottom-0 right-0 pl-8 pr-0.5 text-[11px] font-medium text-muted-foreground/50 hover:text-primary transition-colors bg-gradient-to-r from-transparent via-card to-card group-hover:via-muted/40 group-hover:to-muted/40"
         >
-          {expanded ? 'Show less' : 'Show more'}
+          … more
         </button>
       )}
     </div>
   );
 }
+
+
 
 interface HeaderCellProps {
   col: ColumnDef;
@@ -169,7 +180,7 @@ function HeaderCell({ col, width, onResize, sort, onSort }: HeaderCellProps) {
         transition,
         opacity: isDragging ? 0.5 : 1,
       }}
-      className="relative shrink-0 flex items-center pr-3 group/header"
+      className="relative shrink-0 flex items-center pr-2 group/header"
     >
       {col.reorderable !== false && (
         <button
@@ -307,7 +318,7 @@ export function ProjectsTable({
           <div className="min-w-max">
             {/* Header */}
             <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToHorizontalAxis]} onDragEnd={handleDragEnd}>
-              <div className="flex items-center gap-4 px-5 py-3.5 bg-gradient-to-b from-muted/60 to-muted/30 border-b border-border text-[11px] font-semibold text-foreground/70 uppercase tracking-[0.08em]">
+              <div className="flex items-center gap-3 px-4 py-3.5 bg-gradient-to-b from-muted/60 to-muted/30 border-b border-border text-[11px] font-semibold text-foreground/70 uppercase tracking-[0.08em]">
 
                 <div className="w-8 shrink-0" />
                 <SortableContext items={orderedColumns.map(c => c.id)} strategy={horizontalListSortingStrategy}>
@@ -336,16 +347,32 @@ export function ProjectsTable({
                 const total = p2a?.total ?? 0;
                 const qualCount = p2a?.qualificationCount ?? 0;
                 const qualTone = getQualTone(qualCount);
-                const barColor =
-                  avg >= 100 ? 'bg-emerald-500' :
-                  avg >= 75 ? 'bg-primary' :
-                  avg >= 25 ? 'bg-amber-500' :
-                  avg > 0 ? 'bg-rose-500' : 'bg-transparent';
+
+                // Milestone-aware progress status: green if complete, red if overdue,
+                // red/amber if close to milestone and behind, otherwise neutral grey.
+                const milestoneDate = project.next_milestone_date ? new Date(project.next_milestone_date) : null;
+                const now = new Date();
+                const daysToMilestone = milestoneDate
+                  ? Math.ceil((milestoneDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                  : null;
+                let barColor = 'bg-muted-foreground/30';
+                if (avg >= 100) {
+                  barColor = 'bg-emerald-500/80';
+                } else if (milestoneDate && daysToMilestone !== null && daysToMilestone < 0) {
+                  barColor = 'bg-rose-500/70';
+                } else if (milestoneDate && daysToMilestone !== null && daysToMilestone <= 14) {
+                  if (avg < 50) barColor = 'bg-rose-500/70';
+                  else if (avg < 75) barColor = 'bg-amber-500/70';
+                  else barColor = 'bg-muted-foreground/40';
+                } else if (avg === 0) {
+                  barColor = 'bg-transparent';
+                }
+
 
                 return (
                   <div
                     key={project.id}
-                    className="group relative flex items-center gap-4 px-5 py-3 cursor-pointer transition-all duration-200 ease-out hover:bg-gradient-to-r hover:from-primary/[0.04] hover:via-muted/40 hover:to-transparent hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
+                    className="group relative flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 ease-out hover:bg-gradient-to-r hover:from-primary/[0.04] hover:via-muted/40 hover:to-transparent hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
                     onClick={() => onProjectClick(project.id)}
                   >
 
@@ -388,7 +415,7 @@ export function ProjectsTable({
                         case 'id':
                           return (
                             <div key={col.id} style={style} className="shrink-0">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-foreground border border-primary/25 font-mono text-[12px] font-bold tabular-nums tracking-tight leading-none">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/70 text-foreground border border-border/40 text-[12px] font-semibold tabular-nums tracking-tight leading-none">
                                 {project.project_id_prefix}-{project.project_id_number}
                               </span>
                             </div>
