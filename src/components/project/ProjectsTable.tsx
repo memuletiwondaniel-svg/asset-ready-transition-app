@@ -124,8 +124,14 @@ function ScopeText({ text }: { text: string }) {
   );
 }
 
+interface HeaderCellProps {
+  col: ColumnDef;
+  width: number;
+  onResize: (id: string, w: number) => void;
+  sort: SortState;
   onSort: (key: SortKey) => void;
 }
+
 
 function HeaderCell({ col, width, onResize, sort, onSort }: HeaderCellProps) {
   const sortable = useSortable({ id: col.id, disabled: col.reorderable === false });
