@@ -422,6 +422,11 @@ export function ProjectsTable({
                                   {project.project_title}
                                 </h3>
                                 {project.is_favorite && <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0" />}
+                                {prefs.hidden.includes('location') && location && (
+                                  <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted/70 text-muted-foreground border border-border/40">
+                                    {location}
+                                  </span>
+                                )}
                               </div>
                               {project.project_scope && (
                                 <ScopeText text={project.project_scope} />
