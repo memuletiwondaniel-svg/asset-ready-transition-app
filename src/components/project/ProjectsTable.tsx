@@ -336,9 +336,9 @@ export function ProjectsTable({
                 const qualCount = p2a?.qualificationCount ?? 0;
                 const qualTone = getQualTone(qualCount);
                 const barColor =
-                  avg >= 75 ? 'bg-emerald-500' :
-                  avg >= 25 ? 'bg-amber-500' :
-                  avg > 0 ? 'bg-rose-500' : 'bg-muted-foreground/30';
+                  avg >= 100 ? 'bg-emerald-500' :
+                  avg > 0 ? 'bg-primary' : 'bg-transparent';
+
 
                 return (
                   <div
