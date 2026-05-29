@@ -247,6 +247,7 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
               placeholder="Select plant"
               emptyText="No plants found"
               allowCreate={false}
+              showSearch={false}
               className="w-full"
             />
           </div>
