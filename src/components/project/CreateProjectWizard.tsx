@@ -349,14 +349,18 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
 
   const handleSubmit = async () => {
     // Validate every step before final submission
-    for (const s of STEPS.slice(0, 4)) {
-      if (!isStepComplete(s.id)) {
+    // Only steps with required fields gate the final submission (1: Project Info, 3: Team)
+    const requiredSteps = [1, 3];
+    for (const id of requiredSteps) {
+      if (!isStepComplete(id)) {
+        const s = STEPS.find(x => x.id === id)!;
         toast.error(`Step ${s.id} (${s.title}) is incomplete`);
         setCurrentStep(s.id);
         setVisitedSteps(prev => new Set([...prev, s.id]));
         return;
       }
     }
+
     setIsSubmitting(true);
 
     try {
