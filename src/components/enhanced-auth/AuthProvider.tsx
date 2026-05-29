@@ -113,6 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (event === 'SIGNED_OUT') {
           bumpSessionEpoch();
+          try { sessionStorage.removeItem(POST_LOGIN_REFRESH_KEY); } catch { /* ignore */ }
           setTimeout(async () => {
             try {
               await supabase.functions.invoke('write-audit-log', {
