@@ -428,19 +428,19 @@ export function ProjectsTable({
                           );
                         case 'milestone':
                           return (
-                            <div key={col.id} style={style} className="shrink-0">
+                            <div key={col.id} style={style} className="shrink-0 min-w-0">
                               {project.next_milestone_name ? (
-                                <div className="space-y-0.5">
-                                  <div className="flex items-center gap-2">
+                                <div className="space-y-0.5 min-w-0">
+                                  <div className="flex items-center gap-1 min-w-0">
                                     <p className="text-xs text-foreground truncate">{project.next_milestone_name}</p>
                                     {project.is_scorecard && (
-                                      <Badge className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700">
-                                        Scorecard
+                                      <Badge className="text-[9px] px-1 py-0 h-3.5 leading-none bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700 shrink-0">
+                                        SC
                                       </Badge>
                                     )}
                                   </div>
                                   {project.next_milestone_date && (
-                                    <p className="text-[11px] text-muted-foreground">{format(new Date(project.next_milestone_date), 'MMM d, yyyy')}</p>
+                                    <p className="text-[10px] text-muted-foreground/60">{format(new Date(project.next_milestone_date), 'MMM d, yyyy')}</p>
                                   )}
                                 </div>
                               ) : (
