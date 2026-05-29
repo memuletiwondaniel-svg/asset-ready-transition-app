@@ -279,6 +279,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   return (
     <div className="space-y-3">
+      <div>
       {/* Toolbar — compact */}
       <div className="flex items-center gap-0.5 flex-wrap px-1.5 py-1 border border-b-0 rounded-t-lg bg-muted/30">
         <Button
