@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Check, Loader2, FolderPlus, Building2, Target, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Loader2, FolderPlus, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -12,6 +21,7 @@ import { useHubs } from '@/hooks/useHubs';
 import { useStations } from '@/hooks/useStations';
 import { useProjectLocations } from '@/hooks/useProjectLocations';
 import { useLogActivity } from '@/hooks/useActivityLogs';
+import { useProjectIdAvailability } from '@/hooks/useProjectIdAvailability';
 import { Attachment } from '@/components/ui/RichTextEditor';
 import WizardStepProjectInfo from './wizard/WizardStepProjectInfo';
 import WizardStepProjectScope from './wizard/WizardStepProjectScope';
