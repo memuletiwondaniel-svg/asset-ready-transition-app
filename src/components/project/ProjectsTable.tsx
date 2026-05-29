@@ -42,6 +42,7 @@ import type { ProjectsP2AProgressMap } from '@/hooks/useProjectsP2AProgress';
 export interface ColumnDef {
   id: string;
   label: string;
+  fullLabel?: string;
   defaultWidth: number;
   minWidth?: number;
   hideable?: boolean;
