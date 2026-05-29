@@ -188,7 +188,7 @@ export async function performHardReset(nextResetId: string = APP_RESET_ID) {
   await Promise.all([wipeCaches(), wipeServiceWorkers(), wipeIndexedDB()]);
   try {
     const nextEpoch = nextSessionEpoch();
-    localStorage.setItem(RESET_KEY, nextResetId);
+    localStorage.setItem(RESET_KEY, APP_RESET_ID);
     localStorage.setItem(SESSION_EPOCH_KEY, nextEpoch);
     sessionStorage.setItem(TAB_SESSION_EPOCH_KEY, nextEpoch);
   } catch {
