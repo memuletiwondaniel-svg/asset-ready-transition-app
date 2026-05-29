@@ -192,6 +192,10 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
           toast.error('Please enter the project ID number');
           return false;
         }
+        if (idConflict) {
+          toast.error(`DP-${formData.project_id_number} already exists`);
+          return false;
+        }
         if (!formData.project_title) {
           toast.error('Please enter a project title');
           return false;
