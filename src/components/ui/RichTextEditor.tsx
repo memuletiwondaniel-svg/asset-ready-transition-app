@@ -286,39 +286,39 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={cn('h-7 w-7 p-0', editor.isActive('bold') && 'bg-muted')}
+          className={cn('h-6 w-6 p-0', editor.isActive('bold') && 'bg-muted')}
         >
-          <Bold className="h-3.5 w-3.5" />
+          <Bold className="h-3 w-3" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={cn('h-7 w-7 p-0', editor.isActive('italic') && 'bg-muted')}
+          className={cn('h-6 w-6 p-0', editor.isActive('italic') && 'bg-muted')}
         >
-          <Italic className="h-3.5 w-3.5" />
+          <Italic className="h-3 w-3" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={cn('h-7 w-7 p-0', editor.isActive('bulletList') && 'bg-muted')}
+          className={cn('h-6 w-6 p-0', editor.isActive('bulletList') && 'bg-muted')}
         >
-          <List className="h-3.5 w-3.5" />
+          <List className="h-3 w-3" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={cn('h-7 w-7 p-0', editor.isActive('orderedList') && 'bg-muted')}
+          className={cn('h-6 w-6 p-0', editor.isActive('orderedList') && 'bg-muted')}
         >
-          <ListOrdered className="h-3.5 w-3.5" />
+          <ListOrdered className="h-3 w-3" />
         </Button>
 
-        <div className="w-px h-4 bg-border mx-1" />
+        <div className="w-px h-3.5 bg-border mx-1" />
 
         <Button
           type="button"
@@ -326,14 +326,14 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           size="sm"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="h-7 px-2 gap-1"
+          className="h-6 px-1.5 gap-1"
         >
           {isUploading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <Loader2 className="h-3 w-3 animate-spin" />
           ) : (
             <>
-              <Paperclip className="h-3.5 w-3.5" />
-              <span className="text-xs">Attach</span>
+              <Paperclip className="h-3 w-3" />
+              <span className="text-[11px]">Attach</span>
             </>
           )}
         </Button>
@@ -348,15 +348,14 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         />
       </div>
 
-      
-      {/* Editor */}
+      {/* Editor (no gap — toolbar and editor are joined) */}
       <div className="border rounded-b-lg rounded-t-none -mt-3 bg-background">
         <EditorContent editor={editor} />
       </div>
-      
-      {/* Tip */}
-      <p className="text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1.5">
-        <Lightbulb className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+
+      {/* Tip — golden bulb, muted copy */}
+      <p className="text-xs text-muted-foreground flex items-start gap-1.5">
+        <Lightbulb className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500 fill-amber-100 dark:fill-amber-900/40" />
         <span>You can paste or drag &amp; drop images directly into the text area. Click on an image to crop or resize it.</span>
       </p>
 
