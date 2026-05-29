@@ -82,12 +82,48 @@ function getQualTone(count: number) {
   if (count <= 10) return 'bg-amber-500/20 text-amber-800 dark:text-amber-200 hover:bg-amber-500/30';
   return 'bg-rose-500/15 text-rose-700 dark:text-rose-300 hover:bg-rose-500/25';
 }
+function getQualTone(count: number) {
+  if (count <= 0) return null;
+  if (count <= 5) return 'bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20';
+  if (count <= 10) return 'bg-amber-500/20 text-amber-800 dark:text-amber-200 hover:bg-amber-500/30';
+  return 'bg-rose-500/15 text-rose-700 dark:text-rose-300 hover:bg-rose-500/25';
+}
 
-interface HeaderCellProps {
-  col: ColumnDef;
-  width: number;
-  onResize: (id: string, w: number) => void;
-  sort: SortState;
+function ScopeText({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const [isClamped, setIsClamped] = useState(false);
+  const ref = React.useRef<HTMLParagraphElement>(null);
+
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    setIsClamped(el.scrollHeight - el.clientHeight > 1);
+  }, [text]);
+
+  return (
+    <div className="mt-0.5">
+      <p
+        ref={ref}
+        className={cn(
+          'text-xs text-muted-foreground leading-snug',
+          !expanded && 'line-clamp-3',
+        )}
+      >
+        {text}
+      </p>
+      {(isClamped || expanded) && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
+          className="mt-0.5 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors"
+        >
+          {expanded ? 'Show less' : 'Show more'}
+        </button>
+      )}
+    </div>
+  );
+}
+
   onSort: (key: SortKey) => void;
 }
 
