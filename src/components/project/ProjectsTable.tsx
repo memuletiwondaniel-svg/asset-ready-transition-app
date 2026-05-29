@@ -364,7 +364,7 @@ export function ProjectsTable({
                 return (
                   <div
                     key={project.id}
-                    className="group relative flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 ease-out hover:bg-gradient-to-r hover:from-primary/[0.04] hover:via-muted/40 hover:to-transparent hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
+                    className="group relative flex items-center gap-2 px-4 py-3 cursor-pointer transition-all duration-200 ease-out hover:bg-gradient-to-r hover:from-primary/[0.04] hover:via-muted/40 hover:to-transparent hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
                     onClick={() => onProjectClick(project.id)}
                   >
 
