@@ -184,13 +184,13 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
         </div>
       </div>
 
-      <div className="pt-4 border-t border-border/40">
-
-
-
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-          <div>
-            <FieldLabel required>Portfolio</FieldLabel>
+      <div className="pt-5 border-t border-border">
+        <div className="space-y-3">
+          {/* Portfolio row */}
+          <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Portfolio <span className="text-destructive">*</span>
+            </label>
             <EnhancedCombobox
               options={regions.map((region) => ({ value: region.id, label: region.name }))}
               value={formData.region_id}
@@ -201,8 +201,12 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
               className="w-full"
             />
           </div>
-          <div>
-            <FieldLabel required>Project Hub</FieldLabel>
+
+          {/* Project Hub row */}
+          <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Project Hub <span className="text-destructive">*</span>
+            </label>
             <EnhancedCombobox
               options={filteredHubs.map((hub) => ({ value: hub.id, label: hub.name }))}
               value={formData.hub_id}
@@ -225,7 +229,8 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
         />
       </div>
 
-      <div className="pt-4 border-t border-border/40">
+      <div className="pt-5 border-t border-border">
+
         <div className="space-y-3">
           {/* Plant row */}
           <div className="grid grid-cols-[120px_1fr] items-center gap-4">
