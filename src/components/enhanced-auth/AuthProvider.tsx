@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { checkOnce as checkAppVersion } from '@/lib/version-check';
-import { bumpSessionEpoch, syncTabSessionEpoch } from '@/lib/app-reset';
+import { bumpSessionEpoch, syncTabSessionEpoch, performHardReset, POST_LOGIN_REFRESH_KEY } from '@/lib/app-reset';
 
 interface AuthContextType {
   user: User | null;
@@ -69,6 +69,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Track login activity
         if (event === 'SIGNED_IN' && session?.user) {
           syncTabSessionEpoch();
+          // Proactively wipe caches + hard-reload on every fresh login so the
+          // user never lands on a stale bundle. The per-tab flag prevents loops:
+          // after the reload, the flag is present and we skip straight through.
+          try {
+            if (sessionStorage.getItem(POST_LOGIN_REFRESH_KEY) !== '1') {
+              sessionStorage.setItem(POST_LOGIN_REFRESH_KEY, '1');
+              void performHardReset();
+              return;
+            }
+          } catch {
+            /* ignore — fall through to normal boot */
+          }
           // Revalidate the app bundle on sign-in. If this tab has been
           // sitting on an old build (common after session timeout + re-login),
           // checkAppVersion will hard-reload to the current build.
@@ -101,6 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (event === 'SIGNED_OUT') {
           bumpSessionEpoch();
+          try { sessionStorage.removeItem(POST_LOGIN_REFRESH_KEY); } catch { /* ignore */ }
           setTimeout(async () => {
             try {
               await supabase.functions.invoke('write-audit-log', {
