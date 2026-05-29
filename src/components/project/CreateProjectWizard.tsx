@@ -296,7 +296,8 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
           formData.plant_id
         );
       case 2:
-        return true;
+        // Scope is optional — only "complete" if the user actually entered something
+        return !!(scopeDescription.trim() || scopeAttachments.length > 0);
       case 3: {
         const valid = teamMembers.filter(m => m.user_id && m.user_id.trim() !== '');
         const norm = (r: string) => (r || '').toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim();
@@ -308,10 +309,15 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
         return valid.length > 0 && hasHubLead && hasOraEngr;
       }
       case 4:
-        return true;
+        // Milestones & docs are optional — only "complete" if the user added at least one
+        return milestones.length > 0 || documents.length > 0;
+      case 5:
+        // Review is the final action, never shown as complete
+        return false;
       default:
-        return true;
+        return false;
     }
+
   };
 
   const handleStepClick = (targetStep: number) => {
@@ -343,14 +349,18 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
 
   const handleSubmit = async () => {
     // Validate every step before final submission
-    for (const s of STEPS.slice(0, 4)) {
-      if (!isStepComplete(s.id)) {
+    // Only steps with required fields gate the final submission (1: Project Info, 3: Team)
+    const requiredSteps = [1, 3];
+    for (const id of requiredSteps) {
+      if (!isStepComplete(id)) {
+        const s = STEPS.find(x => x.id === id)!;
         toast.error(`Step ${s.id} (${s.title}) is incomplete`);
         setCurrentStep(s.id);
         setVisitedSteps(prev => new Set([...prev, s.id]));
         return;
       }
     }
+
     setIsSubmitting(true);
 
     try {
@@ -565,7 +575,10 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
                   const isActive = step.id === currentStep;
                   // "Complete" only counts if user has actually visited the step.
                   const isComplete = visited && !isActive && isStepComplete(step.id);
-                  const isAttention = visited && !isActive && !isComplete;
+                  // Only required-field steps (1, 3) flag amber when visited & incomplete
+                  const stepHasRequiredFields = step.id === 1 || step.id === 3;
+                  const isAttention = visited && !isActive && !isComplete && stepHasRequiredFields;
+
                   const nextStep = STEPS[idx + 1];
                   const nextVisited = nextStep ? visitedSteps.has(nextStep.id) : false;
                   const nextComplete = nextStep ? isStepComplete(nextStep.id) && nextVisited : false;
