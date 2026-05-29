@@ -187,11 +187,8 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
 
       {/* Ownership */}
       <div>
-        <GroupHeader
-          title="Ownership"
-          helper="auto-assigns Commissioning Lead, Construction Lead & Snr ORA Engineer"
-          withDivider
-        />
+        <GroupHeader title="Ownership" withDivider />
+
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
           <div>
             <FieldLabel required>Portfolio</FieldLabel>
