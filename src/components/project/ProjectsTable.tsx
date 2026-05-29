@@ -56,8 +56,8 @@ export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
   { id: 'title', label: 'Project Title', defaultWidth: 540, hideable: false, sortable: true },
   { id: 'milestone', label: 'Milestone', defaultWidth: 140, hideable: true, icon: Target },
   { id: 'location', label: 'Location', defaultWidth: 96, hideable: true, sortable: true },
-  { id: 'qualifications', label: 'Qual', defaultWidth: 56, hideable: false, sortable: true, icon: AlertTriangle },
-  { id: 'progress', label: 'P2A Progress', defaultWidth: 200, hideable: false, sortable: true, align: 'right' },
+  { id: 'qualifications', label: 'Quals', defaultWidth: 72, hideable: false, sortable: true, icon: AlertTriangle },
+  { id: 'progress', label: 'P2A Progress', defaultWidth: 200, hideable: false, sortable: true },
 ];
 const COLUMNS = PROJECTS_TABLE_COLUMNS;
 
@@ -65,7 +65,7 @@ export const PROJECTS_TABLE_DEFAULT_HIDDEN: string[] = [];
 const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
 
 // v9: header refresh, ID hover-blue, scorecard label restored, milestone widened for badge.
-export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v9';
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v11';
 
 
 export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
@@ -101,7 +101,7 @@ function ScopeText({ text }: { text: string }) {
       <p
         ref={ref}
         className={cn(
-          'text-xs text-muted-foreground/70 leading-snug break-words',
+          'text-[11px] text-muted-foreground/70 leading-snug break-words',
           !expanded && 'line-clamp-2',
         )}
       >
@@ -434,7 +434,7 @@ export function ProjectsTable({
                               {project.next_milestone_name ? (
                                 <div className="space-y-0.5 min-w-0">
                                   <div className="flex items-center gap-1 min-w-0">
-                                    <p className="text-xs text-foreground truncate">{project.next_milestone_name}</p>
+                                    <p className="text-sm text-foreground truncate">{project.next_milestone_name}</p>
                                     {project.is_scorecard && (
                                       <Badge className="text-[9px] px-1 py-0 h-3.5 leading-none bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700 shrink-0 font-semibold tracking-tight">
                                         Scorecard
