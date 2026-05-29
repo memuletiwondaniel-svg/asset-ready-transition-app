@@ -557,13 +557,19 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
               <p className="text-xs text-muted-foreground truncate mt-1">{subtitle}</p>
             )}
 
-            {/* Circular stepper */}
+            {/* Circular stepper — semantic state per step */}
             <nav aria-label="Wizard progress" className="mt-4">
               <ol className="flex items-start justify-between gap-1">
                 {STEPS.map((step, idx) => {
+                  const visited = visitedSteps.has(step.id);
                   const isActive = step.id === currentStep;
-                  const isComplete = isStepComplete(step.id) && step.id !== currentStep;
-                  const isIncomplete = visitedSteps.has(step.id) && !isActive && !isComplete && step.id !== 5;
+                  // "Complete" only counts if user has actually visited the step.
+                  const isComplete = visited && !isActive && isStepComplete(step.id);
+                  const isAttention = visited && !isActive && !isComplete;
+                  const nextStep = STEPS[idx + 1];
+                  const nextVisited = nextStep ? visitedSteps.has(nextStep.id) : false;
+                  const nextComplete = nextStep ? isStepComplete(nextStep.id) && nextVisited : false;
+                  const connectorComplete = isComplete && nextComplete;
                   const isLast = idx === STEPS.length - 1;
 
                   return (
@@ -571,31 +577,42 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
                       {!isLast && (
                         <div
                           className={cn(
-                            'absolute top-4 left-1/2 w-full h-0.5 -z-0',
-                            isComplete ? 'bg-primary' : 'bg-border'
+                            'absolute top-4 left-1/2 w-full h-0.5 -z-0 transition-colors',
+                            connectorComplete ? 'bg-emerald-500' : 'bg-border'
                           )}
                         />
                       )}
                       <button
                         type="button"
                         onClick={() => handleStepClick(step.id)}
-                        className="flex flex-col items-center gap-1.5 group z-10 bg-background px-1"
+                        aria-current={isActive ? 'step' : undefined}
+                        aria-label={`Step ${step.id}: ${step.title}${isComplete ? ' (complete)' : isAttention ? ' (incomplete)' : ''}`}
+                        className="flex flex-col items-center gap-1.5 group z-10 bg-background px-1 cursor-pointer"
                       >
                         <span
                           className={cn(
-                            'flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-semibold transition-colors',
-                            isActive && 'border-primary bg-primary text-primary-foreground',
-                            isComplete && 'border-primary bg-primary text-primary-foreground',
-                            isIncomplete && 'border-destructive/60 bg-background text-destructive',
-                            !isActive && !isComplete && !isIncomplete && 'border-border bg-background text-muted-foreground'
+                            'flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all',
+                            isActive && 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2 ring-offset-background',
+                            !isActive && isComplete && 'bg-background text-emerald-600 border-2 border-emerald-500',
+                            !isActive && isAttention && 'bg-background text-amber-600 border-2 border-amber-500',
+                            !isActive && !isComplete && !isAttention && 'bg-background text-muted-foreground border-2 border-border group-hover:border-muted-foreground/50'
                           )}
                         >
-                          {isComplete ? <Check className="h-4 w-4" /> : isIncomplete ? <AlertCircle className="h-4 w-4" /> : step.id}
+                          {!isActive && isComplete ? (
+                            <Check className="h-4 w-4" />
+                          ) : !isActive && isAttention ? (
+                            <span className="text-sm leading-none">!</span>
+                          ) : (
+                            step.id
+                          )}
                         </span>
                         <span
                           className={cn(
-                            'text-xs font-medium truncate max-w-[80px]',
-                            isActive ? 'text-primary' : isIncomplete ? 'text-destructive' : 'text-muted-foreground'
+                            'text-xs font-medium truncate max-w-[80px] transition-colors',
+                            isActive && 'text-primary',
+                            !isActive && isComplete && 'text-emerald-600',
+                            !isActive && isAttention && 'text-amber-600',
+                            !isActive && !isComplete && !isAttention && 'text-muted-foreground group-hover:text-foreground'
                           )}
                         >
                           {step.title}
@@ -606,6 +623,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
                 })}
               </ol>
             </nav>
+
 
           </DialogHeader>
 
