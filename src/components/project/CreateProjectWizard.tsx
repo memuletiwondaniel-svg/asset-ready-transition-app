@@ -631,6 +631,16 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
               <span className="text-xs text-muted-foreground hidden sm:inline">
                 Step {currentStep} of {STEPS.length}
               </span>
+              <Button
+                variant="ghost"
+                onClick={handleSaveAndClose}
+                disabled={savingDraft || !isDirty}
+                className="gap-1.5"
+                title="Save your progress and finish later"
+              >
+                {savingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Save & close
+              </Button>
               {currentStep < STEPS.length ? (
                 <Button onClick={handleNext}>
                   Next
@@ -655,6 +665,36 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showResumePrompt} onOpenChange={setShowResumePrompt}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resume your saved draft?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have a previously saved project draft. Would you like to continue where you left off?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={async () => {
+                setShowResumePrompt(false);
+                await clearDraft();
+              }}
+            >
+              Start fresh
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (draft) applyDraft(draft);
+                setShowResumePrompt(false);
+              }}
+            >
+              Resume draft
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       <AlertDialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
         <AlertDialogContent>
