@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -15,7 +15,18 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Star, MoreVertical, Trash2, GripVertical, AlertTriangle, FileText, Target } from 'lucide-react';
+import {
+  Star,
+  MoreVertical,
+  Trash2,
+  GripVertical,
+  AlertTriangle,
+  FileText,
+  Target,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,51 +47,59 @@ export interface ColumnDef {
   minWidth?: number;
   hideable?: boolean;
   reorderable?: boolean;
+  sortable?: boolean;
+  align?: 'left' | 'right';
   icon?: React.ComponentType<{ className?: string }>;
 }
 
 export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
-  { id: 'id', label: 'ID', defaultWidth: 96, reorderable: false, hideable: false },
-  { id: 'title', label: 'Project Title', defaultWidth: 240, hideable: false },
+  { id: 'id', label: 'ID', defaultWidth: 96, reorderable: false, hideable: false, sortable: true },
+  { id: 'title', label: 'Project Title', defaultWidth: 240, hideable: false, sortable: true },
   { id: 'scope', label: 'Scope', defaultWidth: 240, hideable: true, icon: FileText },
   { id: 'milestone', label: 'Milestone', defaultWidth: 208, hideable: true, icon: Target },
-  { id: 'location', label: 'Location', defaultWidth: 160, hideable: true },
-  { id: 'qualifications', label: 'Qualifications', defaultWidth: 120, hideable: false, icon: AlertTriangle },
-  { id: 'progress', label: 'P2A Progress', defaultWidth: 140, hideable: false },
+  { id: 'location', label: 'Location', defaultWidth: 160, hideable: true, sortable: true },
+  { id: 'status', label: 'Status', defaultWidth: 130, hideable: true, sortable: true },
+  { id: 'qualifications', label: 'Qualifications', defaultWidth: 120, hideable: false, sortable: true, align: 'right', icon: AlertTriangle },
+  { id: 'progress', label: 'P2A Progress', defaultWidth: 160, hideable: false, sortable: true, align: 'right' },
 ];
 const COLUMNS = PROJECTS_TABLE_COLUMNS;
 
 export const PROJECTS_TABLE_DEFAULT_HIDDEN = ['scope', 'milestone'];
 const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
 
-export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v1';
+// Bumped to v2 to surface the new Status column for existing users.
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v2';
 export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
   order: COLUMNS.map((c) => c.id),
   widths: Object.fromEntries(COLUMNS.map((c) => [c.id, c.defaultWidth])),
   hidden: DEFAULT_HIDDEN,
 };
 
+type SortKey = 'id' | 'title' | 'location' | 'status' | 'qualifications' | 'progress';
+type SortState = { key: SortKey; dir: 'asc' | 'desc' } | null;
 
-function getProjectColor(prefix: string, num: string) {
-  const str = `${prefix}${num}`;
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) hash = (str.charCodeAt(i) + ((hash << 5) - hash)) & 0xffffffff;
-  const hue = Math.abs(hash) % 360;
-  const s = 25 + (Math.abs(hash >> 8) % 15);
-  const l = 55 + (Math.abs(hash >> 16) % 10);
-  return {
-    bgStart: `hsl(${hue}, ${s}%, ${l}%)`,
-    bgEnd: `hsl(${hue}, ${s + 5}%, ${l - 8}%)`,
-  };
+function getStatus(avg: number): { label: string; dot: string; tone: 'muted' | 'progress' | 'done' } {
+  if (avg >= 100) return { label: 'Complete', dot: 'bg-emerald-500', tone: 'done' };
+  if (avg > 0) return { label: 'In progress', dot: 'bg-primary', tone: 'progress' };
+  return { label: 'Not started', dot: 'bg-muted-foreground/40', tone: 'muted' };
+}
+
+function getQualTone(count: number) {
+  if (count <= 0) return null;
+  if (count <= 5) return 'bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20';
+  if (count <= 10) return 'bg-amber-500/20 text-amber-800 dark:text-amber-200 hover:bg-amber-500/30';
+  return 'bg-rose-500/15 text-rose-700 dark:text-rose-300 hover:bg-rose-500/25';
 }
 
 interface HeaderCellProps {
   col: ColumnDef;
   width: number;
   onResize: (id: string, w: number) => void;
+  sort: SortState;
+  onSort: (key: SortKey) => void;
 }
 
-function HeaderCell({ col, width, onResize }: HeaderCellProps) {
+function HeaderCell({ col, width, onResize, sort, onSort }: HeaderCellProps) {
   const sortable = useSortable({ id: col.id, disabled: col.reorderable === false });
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = sortable;
 
@@ -100,6 +119,16 @@ function HeaderCell({ col, width, onResize }: HeaderCellProps) {
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
   }, [col.id, col.minWidth, width, onResize]);
+
+  const isSortable = col.sortable === true;
+  const active = sort?.key === col.id;
+  const sortIcon = !isSortable
+    ? null
+    : active
+      ? (sort!.dir === 'asc'
+          ? <ChevronUp className="h-3 w-3 text-foreground" />
+          : <ChevronDown className="h-3 w-3 text-foreground" />)
+      : <ChevronsUpDown className="h-3 w-3 text-muted-foreground/40 opacity-0 group-hover/header:opacity-100 transition-opacity" />;
 
   return (
     <div
@@ -123,7 +152,19 @@ function HeaderCell({ col, width, onResize }: HeaderCellProps) {
           <GripVertical className="h-3 w-3 text-muted-foreground" />
         </button>
       )}
-      <span className="truncate text-left">{col.label}</span>
+      <button
+        type="button"
+        disabled={!isSortable}
+        onClick={() => isSortable && onSort(col.id as SortKey)}
+        className={cn(
+          'flex items-center gap-1 min-w-0 flex-1 truncate',
+          col.align === 'right' && 'justify-end',
+          isSortable && 'cursor-pointer hover:text-foreground transition-colors',
+        )}
+      >
+        <span className={cn('truncate', active && 'text-foreground')}>{col.label}</span>
+        {sortIcon}
+      </button>
       <div
         onPointerDown={startResize}
         className="absolute right-0 top-1/2 -translate-y-1/2 h-5 w-1 cursor-col-resize rounded-full bg-transparent hover:bg-primary/40 active:bg-primary transition-colors"
@@ -165,6 +206,16 @@ export function ProjectsTable({
   const prefs = externalPrefs ?? internal.prefs;
   const setPrefs = externalSetPrefs ?? internal.setPrefs;
 
+  const [sort, setSort] = useState<SortState>(null);
+
+  const handleSort = useCallback((key: SortKey) => {
+    setSort(prev => {
+      if (!prev || prev.key !== key) return { key, dir: 'asc' };
+      if (prev.dir === 'asc') return { key, dir: 'desc' };
+      return null;
+    });
+  }, []);
+
   const orderedColumns = useMemo(() => {
     const map = new Map(COLUMNS.map(c => [c.id, c]));
     const seen = new Set<string>();
@@ -173,6 +224,31 @@ export function ProjectsTable({
     COLUMNS.forEach(c => { if (!seen.has(c.id)) inOrder.push(c); });
     return inOrder.filter(c => !prefs.hidden.includes(c.id));
   }, [prefs.order, prefs.hidden]);
+
+  const sortedProjects = useMemo(() => {
+    if (!sort) return projects;
+    const dir = sort.dir === 'asc' ? 1 : -1;
+    const valueOf = (p: Project): string | number => {
+      const pg = progressMap?.[p.id];
+      const avg = pg?.avg ?? 0;
+      switch (sort.key) {
+        case 'id': return `${p.project_id_prefix}-${String(p.project_id_number).padStart(8, '0')}`;
+        case 'title': return (p.project_title || '').toLowerCase();
+        case 'location': return (formatProjectLocation({ plant_name: p.plant_name, station_name: p.station_name }) || '').toLowerCase();
+        case 'status': return avg >= 100 ? 2 : avg > 0 ? 1 : 0;
+        case 'qualifications': return pg?.qualificationCount ?? 0;
+        case 'progress': return avg;
+        default: return 0;
+      }
+    };
+    return [...projects].sort((a, b) => {
+      const va = valueOf(a);
+      const vb = valueOf(b);
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return 0;
+    });
+  }, [projects, progressMap, sort]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
@@ -210,6 +286,8 @@ export function ProjectsTable({
                       col={c}
                       width={prefs.widths[c.id] ?? c.defaultWidth}
                       onResize={handleResize}
+                      sort={sort}
+                      onSort={handleSort}
                     />
                   ))}
                 </SortableContext>
@@ -218,8 +296,7 @@ export function ProjectsTable({
 
             {/* Body */}
             <div className="divide-y divide-border/60">
-              {projects.map((project) => {
-                const color = getProjectColor(project.project_id_prefix, project.project_id_number);
+              {sortedProjects.map((project) => {
                 const location = formatProjectLocation({ plant_name: project.plant_name, station_name: project.station_name });
                 const p2a = progressMap?.[project.id];
                 const vcrs = p2a?.vcrs ?? [];
@@ -227,6 +304,8 @@ export function ProjectsTable({
                 const completed = p2a?.completed ?? 0;
                 const total = p2a?.total ?? 0;
                 const qualCount = p2a?.qualificationCount ?? 0;
+                const status = getStatus(avg);
+                const qualTone = getQualTone(qualCount);
                 const barColor =
                   avg >= 75 ? 'bg-emerald-500' :
                   avg >= 25 ? 'bg-amber-500' :
@@ -235,7 +314,7 @@ export function ProjectsTable({
                 return (
                   <div
                     key={project.id}
-                    className="group relative flex items-center gap-4 px-5 py-4 cursor-pointer transition-all duration-200 ease-out hover:bg-gradient-to-r hover:from-primary/[0.04] hover:via-muted/40 hover:to-transparent hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
+                    className="group relative flex items-center gap-4 px-5 py-3 cursor-pointer transition-all duration-200 ease-out hover:bg-gradient-to-r hover:from-primary/[0.04] hover:via-muted/40 hover:to-transparent hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
                     onClick={() => onProjectClick(project.id)}
                   >
                     {/* Row actions */}
@@ -279,8 +358,7 @@ export function ProjectsTable({
                             <div key={col.id} style={style} className="shrink-0">
                               <Badge
                                 variant="outline"
-                                className="text-xs font-semibold px-2.5 py-1 text-white border-0 inline-flex items-center justify-center leading-none transition-all duration-200 ease-out group-hover:shadow-md group-hover:-translate-y-0.5"
-                                style={{ background: `linear-gradient(to right, ${color.bgStart}, ${color.bgEnd})` }}
+                                className="font-mono text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground border-border/60 tabular-nums tracking-tight inline-flex items-center justify-center leading-none"
                               >
                                 {project.project_id_prefix}-{project.project_id_number}
                               </Badge>
@@ -329,21 +407,40 @@ export function ProjectsTable({
                               <span className="text-sm text-foreground truncate">{location || '—'}</span>
                             </div>
                           );
+                        case 'status':
+                          return (
+                            <div key={col.id} style={style} className="shrink-0 flex items-center gap-2">
+                              <span className={cn('h-2 w-2 rounded-full shrink-0', status.dot)} aria-hidden />
+                              <span className={cn(
+                                'text-sm truncate',
+                                status.tone === 'muted' ? 'text-muted-foreground' : 'text-foreground',
+                              )}>
+                                {status.label}
+                              </span>
+                            </div>
+                          );
                         case 'qualifications':
                           return (
-                            <div key={col.id} style={style} className="shrink-0">
+                            <div key={col.id} style={style} className="shrink-0 flex justify-end items-center">
                               {qualCount > 0 ? (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <button
                                       type="button"
                                       onClick={(e) => { e.stopPropagation(); onOpenQualifications(project); }}
-                                      className="inline-flex items-center justify-center min-w-[2rem] px-2 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-sm font-semibold tabular-nums transition-colors"
+                                      className={cn(
+                                        'inline-flex items-center justify-center min-w-[2rem] px-2 py-1 rounded-md text-sm font-semibold tabular-nums transition-colors',
+                                        qualTone,
+                                      )}
                                     >
                                       {qualCount}
                                     </button>
                                   </TooltipTrigger>
-                                  <TooltipContent>View all qualifications</TooltipContent>
+                                  <TooltipContent>
+                                    {qualCount > 10
+                                      ? `${qualCount} open qualifications — needs attention`
+                                      : `${qualCount} open qualification${qualCount === 1 ? '' : 's'}`}
+                                  </TooltipContent>
                                 </Tooltip>
                               ) : (
                                 <span className="text-xs text-muted-foreground/60 tabular-nums">—</span>
@@ -357,7 +454,7 @@ export function ProjectsTable({
                                 <TooltipTrigger asChild>
                                   <div className="flex items-center gap-2 min-w-0">
                                     <Progress value={avg} className="h-1.5 flex-1 min-w-0" indicatorClassName={barColor} />
-                                    <span className="text-sm font-semibold text-foreground tabular-nums shrink-0">{avg}%</span>
+                                    <span className="text-sm font-semibold text-foreground tabular-nums shrink-0 w-10 text-right">{avg}%</span>
                                   </div>
                                 </TooltipTrigger>
                                 <TooltipContent side="top">
