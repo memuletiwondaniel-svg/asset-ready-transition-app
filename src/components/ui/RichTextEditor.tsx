@@ -350,8 +350,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       </div>
 
       {/* Editor (no gap — toolbar and editor are joined) */}
-      <div className="border rounded-b-lg rounded-t-none -mt-3 bg-background">
+      <div className="border rounded-b-lg bg-background">
         <EditorContent editor={editor} />
+      </div>
       </div>
 
       {/* Tip — golden bulb, muted copy */}
