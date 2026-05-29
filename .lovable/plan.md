@@ -1,52 +1,68 @@
-## Critique of the proposal
+# Projects table — round 3 refinements
 
-The reviewer is right on the big move and partly right on the rest.
+## 1. Header row — less dull, more structured
 
-- **Fold Scope under Title — yes, fully.** A paragraph column inside a list table is the wrong pattern; Linear / Notion / Height all use a primary title + muted subtitle for description. Reclaims the widest column on the page and the eye still reads "title → context". This is the single highest-leverage change.
-- **Compact Milestone stack — yes, refined.** Reviewer's version is good but the current cell already nearly does this. The real win is dropping the redundant "No milestones" line on empty rows (recede to a single em-dash) so empty rows visually shrink.
-- **Location → code-only with tooltip — push back.** Hiding "Hammar Mishrif" entirely behind a hover penalises new users and accessibility (keyboard / mobile have no hover). The right fix is: prefer the short station code as the primary text, fall back to plant name when no station, and rely on truncate + tooltip only when the value actually overflows. Keep the current `formatProjectLocation` output but render it in a `truncate` cell with a tooltip showing the full string — no information loss, no overflow.
-- **Merged view-toggle icon — accept with one correction.** Reviewer's pattern (show only the *other* mode's icon as a toggle) is fine and matches buttons like play/pause or theme switchers. The icon must clearly represent the destination, not the current state, with an explicit tooltip ("Switch to heatmap" / "Switch to list"). Leave the third toolbar icon (column visibility) untouched — it's a different control, not part of the view switch.
+Current: flat `bg-muted/40` band, tiny uppercase muted text. Reads as a tinted strip, not a real header.
 
-## Plan
+Change:
+- Swap to a subtle two-tone treatment: `bg-gradient-to-b from-muted/60 to-muted/30`, `border-b border-border` (full strength, not `/60`).
+- Header text to `text-[11px] font-semibold text-foreground/70` (was `font-medium text-muted-foreground/80`). Keep uppercase + `tracking-[0.08em]`.
+- Sort chevrons inherit the stronger color, so active sort reads cleanly.
+- Slightly taller: `py-3.5` (was `py-3`) so the header has presence without dominating.
 
-### A. Table — `src/components/project/ProjectsTable.tsx`
+No new colors, no accent stripe — keeps it neutral but no longer washed out.
 
-1. **Drop `scope` as a column.**
-   - Remove `scope` from `PROJECTS_TABLE_COLUMNS` and from `PROJECTS_TABLE_DEFAULT_HIDDEN`.
-   - Remove the `'scope'` case from the cell switch.
-   - Bump `PROJECTS_TABLE_PREFS_KEY` to `p2a-projects-v3` so existing users pick up the new column set cleanly.
+## 2. ID as a pill
 
-2. **Fold Scope under Title.**
-   - In the `'title'` case, render a two-line stack:
-     - Line 1: project title (`text-sm font-medium text-foreground`, `truncate`, hover → `text-primary`). Favorite star inline.
-     - Line 2: `project.project_scope` as `text-xs text-muted-foreground truncate` with a tooltip showing the full scope. Omit the line when scope is empty (don't show an em-dash — vertical density stays consistent across rows because the title alone keeps its line).
-   - Increase the Title column default width to ~320 to absorb most of the reclaimed space.
+Reverse the last round. Bring back a chip, but lighter than v1:
+- `inline-flex items-center px-2 py-0.5 rounded-full bg-primary/8 text-primary border border-primary/15 font-mono text-[11px] font-semibold tabular-nums tracking-tight`
+- Pill shape (`rounded-full`) signals "identifier" the way badges in Linear / Height do.
+- Primary tint gives it recall value without the random per-row colors we killed earlier.
 
-3. **Tighter Milestone cell.**
-   - When `next_milestone_name` exists: phase name as primary line (`text-xs text-foreground`, truncate), Scorecard chip inline, date as `text-[11px] text-muted-foreground` underneath. Unchanged from today.
-   - When no milestone: render a single muted em-dash (`text-xs text-muted-foreground/60`) instead of the "No milestones" text — empty rows recede.
+## 3. Scope clamp: 3 → 2 lines
 
-4. **Location with safe truncation.**
-   - Wrap the value in `truncate` with a `Tooltip` that shows the full string only when the text is truncated. Simplest implementation: always wrap with a tooltip, content = full location; visually still truncates with ellipsis. No abbreviation logic.
+`ScopeText`: `line-clamp-3` → `line-clamp-2`. "Show more" logic unchanged.
 
-5. **Row height — keep `py-3`.** Two-line title rows already give the vertical room reviewer's mockup uses; no further change.
+## 4. Column widths
 
-### B. Toolbar — `src/components/project/ProjectsHomePage.tsx`
+Tighten everything that isn't Title or Progress; give the reclaimed space to Title.
 
-1. Replace the two-button view toggle (lines ~157–198) with a single icon button that shows the **opposite** mode's icon:
-   - When `viewMode === 'list'` → render `Grid` icon, tooltip "Switch to heatmap view", `aria-label="Switch to heatmap view"`, onClick sets `'heatmap'`.
-   - When `viewMode === 'heatmap'` → render `List` icon, tooltip "Switch to list view", `aria-label="Switch to list view"`, onClick sets `'list'`.
-   - Same `h-8 w-8 p-0 ghost` styling; subtle hover (`hover:bg-muted hover:text-foreground`) so the affordance is obvious.
-2. Leave the `ProjectColumnsMenu` icon (column visibility) untouched — that's the third toolbar icon, a different control.
+| Column | Now | New |
+|---|---|---|
+| ID | 76 | 72 |
+| Title | 340 | **440** |
+| Milestone | 208 | 180 |
+| Location | 160 | 120 |
+| Qualifications | 128 | 110 |
+| P2A Progress | 180 | **200** |
 
-### Out of scope
-- No DB / hook changes.
-- No change to heatmap view itself.
-- No change to row hover, sortable headers, status column, qualifications tinting, or progress bar from the previous round.
+Bump `PROJECTS_TABLE_PREFS_KEY` to `p2a-projects-v5` so saved widths don't override.
 
-### Files
-- `src/components/project/ProjectsTable.tsx` — columns array, prefs key, title cell, milestone empty state, location tooltip.
-- `src/components/project/ProjectsHomePage.tsx` — collapse view toggle to a single icon button.
+## 5. Qualifications — left-justify under header
 
-### Risk
-- Prefs key bump resets table column order/width once. Users who hid Scope themselves are unaffected; users who reordered will be reset. Acceptable trade-off — Scope no longer exists as a column.
+Header for `qualifications` currently has `align: 'right'`. Remove `align: 'right'` from the column def (header naturally left-aligns) and change the body cell from `flex justify-end pr-4` → `flex justify-start`. The number chip now sits flush-left under the "Qualifications" label. Sort chevron also moves to the left side, matching other columns.
+
+## 6. P2A Progress — bar redesign, not doughnut
+
+**Recommendation: keep the bar, refine it. Skip doughnut.**
+
+Why not doughnut:
+- Doughnuts at 16–20px diameter are hard to read at a glance; you lose the "where on the journey" sense a linear bar gives.
+- Doughnuts don't sort visually — your eye can't scan a column of rings and see "85, 56, 0" the way it scans bar lengths.
+- They eat more horizontal room per unit of information than a thin bar + %.
+- Bars are the standard for *progress* (linear, time-bounded); doughnuts are for *composition*.
+
+Refined bar (Linear / Vercel style):
+- Thicker, rounder track: `h-2 rounded-full bg-muted` (was `h-1.5`).
+- Indicator: same `rounded-full`, but tone shifts to a single calmer palette — `bg-emerald-500` at 100, `bg-primary` for in-progress (drop the amber/rose mid-tier — too alarmist for a neutral progress signal), `bg-muted-foreground/20` at 0.
+- Percentage label: `text-[13px] font-semibold tabular-nums`, sits to the right with `w-11` slot.
+- Add a tiny `0` → `100` track tick illusion via inner `shadow-[inset_0_0_0_1px_hsl(var(--border))]` so the empty state still shows a defined track.
+- Subtle hover: bar grows to `h-2.5` on row hover (transition) — gives interaction feedback without being noisy.
+
+If you specifically want to *try* a doughnut variant before deciding, say the word and I'll generate two design directions side-by-side (refined bar vs. ring) so you can pick visually.
+
+## Files
+
+- `src/components/project/ProjectsTable.tsx` — header styling, ID pill, scope clamp, column widths + `align` removal, qualifications cell justify, progress bar refresh, prefs key bump to `v5`.
+
+No other files touched. No data / hook / business logic changes.

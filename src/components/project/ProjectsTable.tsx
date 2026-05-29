@@ -52,25 +52,26 @@ export interface ColumnDef {
 }
 
 export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
-  { id: 'id', label: 'ID', defaultWidth: 76, reorderable: false, hideable: false, sortable: true },
-  { id: 'title', label: 'Project Title', defaultWidth: 340, hideable: false, sortable: true },
-  { id: 'milestone', label: 'Milestone', defaultWidth: 208, hideable: true, icon: Target },
-  { id: 'location', label: 'Location', defaultWidth: 160, hideable: true, sortable: true },
-  { id: 'qualifications', label: 'Qualifications', defaultWidth: 128, hideable: false, sortable: true, align: 'right', icon: AlertTriangle },
-  { id: 'progress', label: 'P2A Progress', defaultWidth: 180, hideable: false, sortable: true, align: 'right' },
+  { id: 'id', label: 'ID', defaultWidth: 72, reorderable: false, hideable: false, sortable: true },
+  { id: 'title', label: 'Project Title', defaultWidth: 440, hideable: false, sortable: true },
+  { id: 'milestone', label: 'Milestone', defaultWidth: 180, hideable: true, icon: Target },
+  { id: 'location', label: 'Location', defaultWidth: 120, hideable: true, sortable: true },
+  { id: 'qualifications', label: 'Qualifications', defaultWidth: 110, hideable: false, sortable: true, icon: AlertTriangle },
+  { id: 'progress', label: 'P2A Progress', defaultWidth: 200, hideable: false, sortable: true, align: 'right' },
 ];
 const COLUMNS = PROJECTS_TABLE_COLUMNS;
 
 export const PROJECTS_TABLE_DEFAULT_HIDDEN = ['milestone'];
 const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
 
-// Bumped to v4: Status column dropped; ID width tightened; scope expand.
-export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v4';
+// Bumped to v5: header restyle, ID pill, scope 2 lines, tighter columns, qualifications left-aligned, progress bar refresh.
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v5';
 export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
   order: COLUMNS.map((c) => c.id),
   widths: Object.fromEntries(COLUMNS.map((c) => [c.id, c.defaultWidth])),
   hidden: DEFAULT_HIDDEN,
 };
+
 
 type SortKey = 'id' | 'title' | 'location' | 'qualifications' | 'progress';
 type SortState = { key: SortKey; dir: 'asc' | 'desc' } | null;
@@ -100,7 +101,7 @@ function ScopeText({ text }: { text: string }) {
         ref={ref}
         className={cn(
           'text-xs text-muted-foreground leading-snug',
-          !expanded && 'line-clamp-3',
+          !expanded && 'line-clamp-2',
         )}
       >
         {text}
@@ -305,7 +306,8 @@ export function ProjectsTable({
           <div className="min-w-max">
             {/* Header */}
             <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToHorizontalAxis]} onDragEnd={handleDragEnd}>
-              <div className="flex items-center gap-4 px-5 py-3 bg-muted/40 border-b border-border/60 text-[11px] font-medium text-muted-foreground/80 uppercase tracking-[0.08em]">
+              <div className="flex items-center gap-4 px-5 py-3.5 bg-gradient-to-b from-muted/60 to-muted/30 border-b border-border text-[11px] font-semibold text-foreground/70 uppercase tracking-[0.08em]">
+
                 <div className="w-8 shrink-0" />
                 <SortableContext items={orderedColumns.map(c => c.id)} strategy={horizontalListSortingStrategy}>
                   {orderedColumns.map(c => (
@@ -334,9 +336,9 @@ export function ProjectsTable({
                 const qualCount = p2a?.qualificationCount ?? 0;
                 const qualTone = getQualTone(qualCount);
                 const barColor =
-                  avg >= 75 ? 'bg-emerald-500' :
-                  avg >= 25 ? 'bg-amber-500' :
-                  avg > 0 ? 'bg-rose-500' : 'bg-muted-foreground/30';
+                  avg >= 100 ? 'bg-emerald-500' :
+                  avg > 0 ? 'bg-primary' : 'bg-transparent';
+
 
                 return (
                   <div
@@ -384,13 +386,12 @@ export function ProjectsTable({
                         case 'id':
                           return (
                             <div key={col.id} style={style} className="shrink-0">
-                              <span
-                                className="font-mono text-[12px] font-semibold tracking-tight text-foreground tabular-nums"
-                              >
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/[0.08] text-primary border border-primary/15 font-mono text-[11px] font-semibold tabular-nums tracking-tight leading-none">
                                 {project.project_id_prefix}-{project.project_id_number}
                               </span>
                             </div>
                           );
+
                         case 'title':
                           return (
                             <div key={col.id} style={style} className="shrink-0 min-w-0">
@@ -445,7 +446,7 @@ export function ProjectsTable({
 
                         case 'qualifications':
                           return (
-                            <div key={col.id} style={style} className="shrink-0 flex justify-end items-center pr-4">
+                            <div key={col.id} style={style} className="shrink-0 flex justify-start items-center">
                               {qualCount > 0 ? (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -476,10 +477,16 @@ export function ProjectsTable({
                             <div key={col.id} style={style} className="shrink-0">
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <Progress value={avg} className="h-1.5 flex-1 min-w-0" indicatorClassName={barColor} />
-                                    <span className="text-sm font-semibold text-foreground tabular-nums shrink-0 w-10 text-right">{avg}%</span>
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className="relative flex-1 min-w-0 h-2 rounded-full bg-muted shadow-[inset_0_0_0_1px_hsl(var(--border))] overflow-hidden transition-all duration-200 group-hover:h-2.5">
+                                      <div
+                                        className={cn('h-full rounded-full transition-all duration-300', barColor)}
+                                        style={{ width: `${Math.max(0, Math.min(100, avg))}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-[13px] font-semibold text-foreground tabular-nums shrink-0 w-11 text-right">{avg}%</span>
                                   </div>
+
                                 </TooltipTrigger>
                                 <TooltipContent side="top">
                                   {vcrs.length === 0
