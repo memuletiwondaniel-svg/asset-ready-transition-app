@@ -189,12 +189,13 @@ function HeaderCell({ col, width, onResize, sort, onSort }: HeaderCellProps) {
         disabled={!isSortable}
         onClick={() => isSortable && onSort(col.id as SortKey)}
         className={cn(
-          'flex items-center gap-1 min-w-0 flex-1 truncate',
+          'flex items-center gap-1.5 min-w-0 flex-1 truncate',
           col.align === 'right' && 'justify-end',
-          isSortable && 'cursor-pointer hover:text-foreground transition-colors',
+          isSortable && 'cursor-pointer hover:text-primary transition-colors',
         )}
       >
-        <span className={cn('truncate', active && 'text-foreground')}>{col.label}</span>
+        {col.icon && <col.icon className={cn('h-3 w-3 shrink-0', active ? 'text-primary' : 'text-muted-foreground/50')} />}
+        <span className={cn('truncate', active && 'text-primary')}>{col.label}</span>
         {sortIcon}
       </button>
       <div
