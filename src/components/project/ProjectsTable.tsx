@@ -434,9 +434,10 @@ export function ProjectsTable({
                                   <div className="flex items-center gap-1 min-w-0">
                                     <p className="text-xs text-foreground truncate">{project.next_milestone_name}</p>
                                     {project.is_scorecard && (
-                                      <Badge className="text-[9px] px-1 py-0 h-3.5 leading-none bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700 shrink-0">
-                                        SC
+                                      <Badge className="text-[9px] px-1 py-0 h-3.5 leading-none bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700 shrink-0 font-semibold tracking-tight">
+                                        Scorecard
                                       </Badge>
+
                                     )}
                                   </div>
                                   {project.next_milestone_date && (
