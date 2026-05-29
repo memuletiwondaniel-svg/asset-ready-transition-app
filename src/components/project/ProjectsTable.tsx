@@ -445,7 +445,7 @@ export function ProjectsTable({
 
                         case 'qualifications':
                           return (
-                            <div key={col.id} style={style} className="shrink-0 flex justify-end items-center">
+                            <div key={col.id} style={style} className="shrink-0 flex justify-end items-center pr-4">
                               {qualCount > 0 ? (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
