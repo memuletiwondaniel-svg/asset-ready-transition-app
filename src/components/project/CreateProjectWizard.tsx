@@ -119,7 +119,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     setCurrentStep(1);
     setVisitedSteps(new Set([1]));
     setFormData({
-      project_id_prefix: '',
+      project_id_prefix: 'DP',
       project_id_number: '',
       project_title: '',
       region_id: '',
