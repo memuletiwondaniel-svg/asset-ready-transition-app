@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { checkOnce as checkAppVersion } from '@/lib/version-check';
-import { bumpSessionEpoch, syncTabSessionEpoch } from '@/lib/app-reset';
+import { bumpSessionEpoch, syncTabSessionEpoch, performHardReset, POST_LOGIN_REFRESH_KEY } from '@/lib/app-reset';
 
 interface AuthContextType {
   user: User | null;
