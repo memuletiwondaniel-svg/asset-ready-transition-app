@@ -415,7 +415,8 @@ export function ProjectsTable({
 
                         case 'title':
                           return (
-                            <div key={col.id} style={style} className="shrink-0 min-w-0">
+                            <div key={col.id} style={style} className="shrink-0 min-w-0 overflow-hidden pr-2">
+
                               <div className="flex items-center gap-2 min-w-0">
                                 <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
                                   {project.project_title}
