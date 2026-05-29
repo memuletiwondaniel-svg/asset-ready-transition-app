@@ -493,21 +493,33 @@ export function ProjectsTable({
                               )}
                             </div>
                           );
-                        case 'progress':
+                        case 'progress': {
+                          const pending = Math.max(0, total - completed);
+                          const narrative = vcrs.length === 0
+                            ? null
+                            : total === 0
+                              ? `${vcrs.length} VCR${vcrs.length === 1 ? '' : 's'} · no deliverables`
+                              : pending === 0
+                                ? `All ${total} deliverable${total === 1 ? '' : 's'} complete`
+                                : `${pending} of ${total} deliverable${total === 1 ? '' : 's'} pending`;
                           return (
                             <div key={col.id} style={style} className="shrink-0">
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-3 min-w-0">
-                                    <div className="relative flex-1 min-w-0 h-2 rounded-full bg-muted shadow-[inset_0_0_0_1px_hsl(var(--border))] overflow-hidden transition-all duration-200 group-hover:h-2.5">
-                                      <div
-                                        className={cn('h-full rounded-full transition-all duration-300', barColor)}
-                                        style={{ width: `${Math.max(0, Math.min(100, avg))}%` }}
-                                      />
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <div className="relative flex-1 min-w-0 h-2 rounded-full bg-muted shadow-[inset_0_0_0_1px_hsl(var(--border))] overflow-hidden transition-all duration-200 group-hover:h-2.5">
+                                        <div
+                                          className={cn('h-full rounded-full transition-all duration-300', barColor)}
+                                          style={{ width: `${Math.max(0, Math.min(100, avg))}%` }}
+                                        />
+                                      </div>
+                                      <span className="text-[13px] font-semibold text-foreground tabular-nums shrink-0 w-11 text-right">{avg}%</span>
                                     </div>
-                                    <span className="text-[13px] font-semibold text-foreground tabular-nums shrink-0 w-11 text-right">{avg}%</span>
+                                    {narrative && (
+                                      <p className="mt-1 text-[10px] text-muted-foreground/60 truncate">{narrative}</p>
+                                    )}
                                   </div>
-
                                 </TooltipTrigger>
                                 <TooltipContent side="top">
                                   {vcrs.length === 0
@@ -515,9 +527,9 @@ export function ProjectsTable({
                                     : `${total > 0 ? `${completed} of ${total} delivered` : 'No deliverables'} \u00b7 ${vcrs.length} VCR${vcrs.length === 1 ? '' : 's'}`}
                                 </TooltipContent>
                               </Tooltip>
-
                             </div>
                           );
+                        }
 
                         default:
                           return null;
