@@ -365,17 +365,25 @@ export function ProjectsTable({
                           );
                         case 'title':
                           return (
-                            <div key={col.id} style={style} className="shrink-0 flex items-center gap-2">
-                              <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
-                                {project.project_title}
-                              </h3>
-                              {project.is_favorite && <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0" />}
-                            </div>
-                          );
-                        case 'scope':
-                          return (
-                            <div key={col.id} style={style} className="shrink-0">
-                              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{project.project_scope || '—'}</p>
+                            <div key={col.id} style={style} className="shrink-0 min-w-0">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
+                                  {project.project_title}
+                                </h3>
+                                {project.is_favorite && <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0" />}
+                              </div>
+                              {project.project_scope && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
+                                      {project.project_scope}
+                                    </p>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="bottom" className="max-w-md">
+                                    {project.project_scope}
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
                             </div>
                           );
                         case 'milestone':
@@ -396,14 +404,23 @@ export function ProjectsTable({
                                   )}
                                 </div>
                               ) : (
-                                <span className="text-xs text-muted-foreground">No milestones</span>
+                                <span className="text-xs text-muted-foreground/60">—</span>
                               )}
                             </div>
                           );
                         case 'location':
                           return (
-                            <div key={col.id} style={style} className="shrink-0">
-                              <span className="text-sm text-foreground truncate">{location || '—'}</span>
+                            <div key={col.id} style={style} className="shrink-0 min-w-0">
+                              {location ? (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="text-sm text-foreground truncate block">{location}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="bottom">{location}</TooltipContent>
+                                </Tooltip>
+                              ) : (
+                                <span className="text-sm text-muted-foreground/60">—</span>
+                              )}
                             </div>
                           );
                         case 'status':
