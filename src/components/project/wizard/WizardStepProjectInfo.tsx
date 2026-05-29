@@ -184,9 +184,9 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
         </div>
       </div>
 
-      {/* Ownership */}
-      <div>
-        <GroupHeader title="Ownership" withDivider />
+      <div className="pt-4 border-t border-border/40">
+
+
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
           <div>
