@@ -231,8 +231,6 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
 
       <div className="pt-5 border-t border-border">
 
-
-      <div className="pt-4 border-t border-border/40">
         <div className="space-y-3">
           {/* Plant row */}
           <div className="grid grid-cols-[120px_1fr] items-center gap-4">
