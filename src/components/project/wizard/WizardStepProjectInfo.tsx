@@ -1,7 +1,5 @@
 import React, { useMemo, useEffect } from 'react';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
 import { useProjectRegions } from '@/hooks/useProjectRegions';
 import { useProjectHierarchy } from '@/hooks/useProjectHierarchy';
@@ -9,6 +7,8 @@ import { useHubs } from '@/hooks/useHubs';
 import { usePlants } from '@/hooks/usePlants';
 import { useFields } from '@/hooks/useFields';
 import { useStations } from '@/hooks/useStations';
+import { FileText, Building2, MapPin } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface WizardStepProjectInfoProps {
   formData: {
@@ -24,7 +24,39 @@ interface WizardStepProjectInfoProps {
   onFormDataChange: (updates: Partial<WizardStepProjectInfoProps['formData']>) => void;
 }
 
-const RequiredMark = () => <span className="text-destructive ml-0.5">*</span>;
+const FieldLabel: React.FC<{ children: React.ReactNode; required?: boolean; htmlFor?: string }> = ({
+  children,
+  required,
+  htmlFor,
+}) => (
+  <label
+    htmlFor={htmlFor}
+    className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5"
+  >
+    {children}
+    {required && <span className="text-destructive ml-0.5">*</span>}
+  </label>
+);
+
+const Section: React.FC<{
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}> = ({ icon, title, subtitle, children }) => (
+  <section className="rounded-xl border border-border/70 bg-card/40 p-4 sm:p-5">
+    <header className="flex items-center gap-2.5 mb-4">
+      <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <h3 className="text-sm font-semibold text-foreground leading-none">{title}</h3>
+        {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
+      </div>
+    </header>
+    {children}
+  </section>
+);
 
 const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
   formData,
@@ -37,7 +69,6 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
   const { allFields } = useFields() as any;
   const { allStations } = useStations() as any;
 
-  // Ensure prefix defaults to DP
   useEffect(() => {
     if (!formData.project_id_prefix) {
       onFormDataChange({ project_id_prefix: 'DP' });
@@ -46,10 +77,10 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
 
   const filteredHubs = useMemo(() => {
     if (!formData.region_id) return hubs;
-    const selectedRegion = hierarchyRegions.find(r => r.id === formData.region_id);
+    const selectedRegion = hierarchyRegions.find((r) => r.id === formData.region_id);
     if (!selectedRegion) return hubs;
-    const hubIdsInRegion = selectedRegion.hubs.map(h => h.id);
-    return hubs.filter(hub => hubIdsInRegion.includes(hub.id));
+    const hubIdsInRegion = selectedRegion.hubs.map((h) => h.id);
+    return hubs.filter((hub) => hubIdsInRegion.includes(hub.id));
   }, [formData.region_id, hierarchyRegions, hubs]);
 
   const fieldsForPlant = useMemo(() => {
@@ -63,7 +94,7 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
       return (allStations as any[]).filter((s: any) => s.field_id === formData.field_id);
     }
     if (formData.plant_id && fieldsForPlant.length === 0) {
-      const plant = plants.find(p => p.id === formData.plant_id);
+      const plant = plants.find((p) => p.id === formData.plant_id);
       return (allStations as any[]).filter((s: any) => s.plant_name === plant?.name);
     }
     return [];
@@ -72,7 +103,6 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
   const hasFields = fieldsForPlant.length > 0;
   const hasStations = stationsForField.length > 0;
 
-  // Clear downstream selections when parent changes
   useEffect(() => {
     if (formData.field_id && !fieldsForPlant.find((f: any) => f.id === formData.field_id)) {
       onFormDataChange({ field_id: '' });
@@ -86,146 +116,159 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
   }, [formData.field_id, formData.plant_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="space-y-5">
-      {/* Project ID + Title row */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="project_id">Project ID<RequiredMark /></Label>
-          <div className="flex h-10 w-full rounded-md border border-input bg-background ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 overflow-hidden">
-            <span className="flex items-center px-3 text-sm font-medium text-muted-foreground bg-muted/60 border-r border-input select-none">
-              DP&nbsp;-
-            </span>
+    <div className="space-y-4">
+      {/* Identity */}
+      <Section icon={<FileText className="h-3.5 w-3.5" />} title="Project Identity">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-5">
+          <div className="sm:col-span-2">
+            <FieldLabel htmlFor="project_id" required>
+              Project ID
+            </FieldLabel>
+            <div
+              className={cn(
+                'flex h-10 w-full rounded-md border border-input bg-background ring-offset-background',
+                'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 overflow-hidden'
+              )}
+            >
+              <span className="flex items-center px-3 text-sm font-semibold text-primary bg-primary/10 border-r border-input select-none tracking-wide">
+                DP
+              </span>
+              <Input
+                id="project_id"
+                value={formData.project_id_number}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  onFormDataChange({ project_id_number: value });
+                }}
+                placeholder="0000"
+                className="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-full"
+                inputMode="numeric"
+              />
+            </div>
+          </div>
+
+          <div className="sm:col-span-3">
+            <FieldLabel htmlFor="project_title" required>
+              Project Title
+            </FieldLabel>
             <Input
-              id="project_id"
-              value={formData.project_id_number}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9]/g, '');
-                onFormDataChange({ project_id_number: value });
-              }}
-              placeholder="0000"
-              className="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-full"
-              inputMode="numeric"
+              id="project_title"
+              value={formData.project_title}
+              onChange={(e) => onFormDataChange({ project_title: e.target.value })}
+              placeholder="e.g. Crude Stabilization Upgrade"
+              className="h-10"
             />
           </div>
         </div>
+      </Section>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="project_title">Project Title<RequiredMark /></Label>
-          <Input
-            id="project_title"
-            value={formData.project_title}
-            onChange={(e) => onFormDataChange({ project_title: e.target.value })}
-            placeholder="e.g. Crude Stabilization Upgrade"
-          />
+      {/* Ownership */}
+      <Section
+        icon={<Building2 className="h-3.5 w-3.5" />}
+        title="Ownership"
+        subtitle="Drives auto-assignment of Commissioning Lead, Construction Lead & Senior ORA Engineer."
+      >
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+          <div>
+            <FieldLabel required>Portfolio</FieldLabel>
+            <EnhancedCombobox
+              options={regions.map((region) => ({ value: region.id, label: region.name }))}
+              value={formData.region_id}
+              onValueChange={(value) => onFormDataChange({ region_id: value, hub_id: '' })}
+              placeholder="Select portfolio"
+              emptyText="No portfolios found"
+              allowCreate={false}
+              className="w-full"
+            />
+          </div>
+          <div>
+            <FieldLabel required>Project Hub</FieldLabel>
+            <EnhancedCombobox
+              options={filteredHubs.map((hub) => ({ value: hub.id, label: hub.name }))}
+              value={formData.hub_id}
+              onValueChange={(value) => onFormDataChange({ hub_id: value })}
+              onCreateNew={async (name) => {
+                await createHub(name);
+              }}
+              placeholder={formData.region_id ? 'Select hub' : 'Select portfolio first'}
+              emptyText="No hubs found"
+              createText="Create hub"
+              disabled={!formData.region_id}
+              className="w-full"
+            />
+          </div>
         </div>
-      </div>
+      </Section>
 
-      {formData.project_id_number && (
-        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 -mt-2">
-          DP-{formData.project_id_number}
-        </Badge>
-      )}
-
-      {/* Portfolio + Hub */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="region">Portfolio<RequiredMark /></Label>
-          <EnhancedCombobox
-            options={regions.map(region => ({ value: region.id, label: region.name }))}
-            value={formData.region_id}
-            onValueChange={(value) => onFormDataChange({ region_id: value, hub_id: '' })}
-            placeholder="Select portfolio"
-            emptyText="No portfolios found"
-            allowCreate={false}
-            className="w-full"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="hub">Project Hub<RequiredMark /></Label>
-          <EnhancedCombobox
-            options={filteredHubs.map(hub => ({ value: hub.id, label: hub.name }))}
-            value={formData.hub_id}
-            onValueChange={(value) => onFormDataChange({ hub_id: value })}
-            onCreateNew={async (name) => { await createHub(name); }}
-            placeholder={formData.region_id ? 'Select hub' : 'Select portfolio first'}
-            emptyText="No hubs found"
-            createText="Create hub"
-            disabled={!formData.region_id}
-            className="w-full"
-          />
-        </div>
-      </div>
-
-      {/* Plant → Field → Station */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="plant">Plant<RequiredMark /></Label>
-          <EnhancedCombobox
-            options={plants.map(p => ({ value: p.id, label: p.name }))}
-            value={formData.plant_id}
-            onValueChange={(value) =>
-              onFormDataChange({ plant_id: value, field_id: '', station_id: '' })
-            }
-            placeholder="Select plant"
-            emptyText="No plants found"
-            allowCreate={false}
-            className="w-full"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="field">
-            Field{hasFields && <RequiredMark />}
-          </Label>
-          <EnhancedCombobox
-            options={fieldsForPlant.map((f: any) => ({ value: f.id, label: f.name }))}
-            value={formData.field_id}
-            onValueChange={(value) => onFormDataChange({ field_id: value, station_id: '' })}
-            placeholder={
-              !formData.plant_id
-                ? 'Select plant first'
-                : hasFields
-                  ? 'Select field'
-                  : 'Not applicable'
-            }
-            emptyText={formData.plant_id ? 'No fields found' : 'Select a plant first'}
-            allowCreate={false}
-            disabled={!formData.plant_id || !hasFields}
-            className="w-full"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="station">
-            Station{hasStations && <RequiredMark />}
-          </Label>
-          <EnhancedCombobox
-            options={stationsForField.map((s: any) => ({ value: s.id, label: s.name }))}
-            value={formData.station_id}
-            onValueChange={(value) => onFormDataChange({ station_id: value })}
-            placeholder={
-              !formData.plant_id
-                ? 'Select plant first'
-                : hasFields && !formData.field_id
-                  ? 'Select field first'
-                  : hasStations
-                    ? 'Select station'
+      {/* Location */}
+      <Section
+        icon={<MapPin className="h-3.5 w-3.5" />}
+        title="Location"
+        subtitle="Plant drives auto-assignment of the Deputy Plant Director."
+      >
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+          <div>
+            <FieldLabel required>Plant</FieldLabel>
+            <EnhancedCombobox
+              options={plants.map((p) => ({ value: p.id, label: p.name }))}
+              value={formData.plant_id}
+              onValueChange={(value) =>
+                onFormDataChange({ plant_id: value, field_id: '', station_id: '' })
+              }
+              placeholder="Select plant"
+              emptyText="No plants found"
+              allowCreate={false}
+              className="w-full"
+            />
+          </div>
+          <div>
+            <FieldLabel required={hasFields}>Field</FieldLabel>
+            <EnhancedCombobox
+              options={fieldsForPlant.map((f: any) => ({ value: f.id, label: f.name }))}
+              value={formData.field_id}
+              onValueChange={(value) => onFormDataChange({ field_id: value, station_id: '' })}
+              placeholder={
+                !formData.plant_id
+                  ? 'Select plant first'
+                  : hasFields
+                    ? 'Select field'
                     : 'Not applicable'
-            }
-            emptyText={
-              !formData.plant_id
-                ? 'Select a plant first'
-                : hasFields && !formData.field_id
-                  ? 'Select a field first'
-                  : 'No stations found'
-            }
-            allowCreate={false}
-            disabled={!hasStations}
-            className="w-full"
-          />
+              }
+              emptyText={formData.plant_id ? 'No fields found' : 'Select a plant first'}
+              allowCreate={false}
+              disabled={!formData.plant_id || !hasFields}
+              className="w-full"
+            />
+          </div>
+          <div>
+            <FieldLabel required={hasStations}>Station</FieldLabel>
+            <EnhancedCombobox
+              options={stationsForField.map((s: any) => ({ value: s.id, label: s.name }))}
+              value={formData.station_id}
+              onValueChange={(value) => onFormDataChange({ station_id: value })}
+              placeholder={
+                !formData.plant_id
+                  ? 'Select plant first'
+                  : hasFields && !formData.field_id
+                    ? 'Select field first'
+                    : hasStations
+                      ? 'Select station'
+                      : 'Not applicable'
+              }
+              emptyText={
+                !formData.plant_id
+                  ? 'Select a plant first'
+                  : hasFields && !formData.field_id
+                    ? 'Select a field first'
+                    : 'No stations found'
+              }
+              allowCreate={false}
+              disabled={!hasStations}
+              className="w-full"
+            />
+          </div>
         </div>
-      </div>
+      </Section>
     </div>
   );
 };
