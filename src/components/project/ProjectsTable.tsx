@@ -129,7 +129,7 @@ function ScopeText({ text }: { text: string }) {
   );
 }
 
-}
+
 
 interface HeaderCellProps {
   col: ColumnDef;
