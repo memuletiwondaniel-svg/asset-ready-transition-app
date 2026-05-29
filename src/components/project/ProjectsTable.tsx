@@ -101,7 +101,7 @@ function ScopeText({ text }: { text: string }) {
       <p
         ref={ref}
         className={cn(
-          'text-xs text-muted-foreground/70 leading-snug',
+          'text-xs text-muted-foreground/70 leading-snug break-words',
           !expanded && 'line-clamp-2',
         )}
       >
@@ -189,12 +189,13 @@ function HeaderCell({ col, width, onResize, sort, onSort }: HeaderCellProps) {
         disabled={!isSortable}
         onClick={() => isSortable && onSort(col.id as SortKey)}
         className={cn(
-          'flex items-center gap-1 min-w-0 flex-1 truncate',
+          'flex items-center gap-1.5 min-w-0 flex-1 truncate',
           col.align === 'right' && 'justify-end',
-          isSortable && 'cursor-pointer hover:text-foreground transition-colors',
+          isSortable && 'cursor-pointer hover:text-primary transition-colors',
         )}
       >
-        <span className={cn('truncate', active && 'text-foreground')}>{col.label}</span>
+        {col.icon && <col.icon className={cn('h-3 w-3 shrink-0', active ? 'text-primary' : 'text-muted-foreground/50')} />}
+        <span className={cn('truncate', active && 'text-primary')}>{col.label}</span>
         {sortIcon}
       </button>
       <div
@@ -309,7 +310,7 @@ export function ProjectsTable({
           <div className="min-w-max">
             {/* Header */}
             <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToHorizontalAxis]} onDragEnd={handleDragEnd}>
-              <div className="flex items-center gap-3 px-4 py-3 bg-card border-b-2 border-border/80 shadow-[0_1px_0_0_hsl(var(--border)/0.4)] text-[10.5px] font-semibold text-muted-foreground uppercase tracking-[0.1em]">
+              <div className="relative flex items-center gap-2 px-4 py-2.5 bg-gradient-to-b from-muted/30 via-muted/20 to-transparent border-b border-border/70 text-[10.5px] font-semibold text-foreground/80 uppercase tracking-[0.1em] after:absolute after:left-4 after:right-4 after:-bottom-px after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary/30 after:to-transparent">
 
                 <div className="w-8 shrink-0" />
                 <SortableContext items={orderedColumns.map(c => c.id)} strategy={horizontalListSortingStrategy}>
@@ -363,7 +364,7 @@ export function ProjectsTable({
                 return (
                   <div
                     key={project.id}
-                    className="group relative flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-200 ease-out hover:bg-gradient-to-r hover:from-primary/[0.04] hover:via-muted/40 hover:to-transparent hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
+                    className="group relative flex items-center gap-2 px-4 py-3 cursor-pointer transition-all duration-200 ease-out hover:bg-gradient-to-r hover:from-primary/[0.04] hover:via-muted/40 hover:to-transparent hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))]"
                     onClick={() => onProjectClick(project.id)}
                   >
 
@@ -414,7 +415,8 @@ export function ProjectsTable({
 
                         case 'title':
                           return (
-                            <div key={col.id} style={style} className="shrink-0 min-w-0">
+                            <div key={col.id} style={style} className="shrink-0 min-w-0 overflow-hidden pr-2">
+
                               <div className="flex items-center gap-2 min-w-0">
                                 <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
                                   {project.project_title}
