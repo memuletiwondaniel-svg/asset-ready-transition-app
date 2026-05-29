@@ -406,7 +406,7 @@ export function ProjectsTable({
                         case 'id':
                           return (
                             <div key={col.id} style={style} className="shrink-0">
-                              <span className="inline-flex items-center -ml-2 px-2 py-0.5 rounded-md bg-muted/70 text-foreground border border-border/40 text-[12px] font-semibold tabular-nums tracking-tight leading-none">
+                              <span className="inline-flex items-center -ml-2 px-2 py-0.5 rounded-md bg-muted/70 text-foreground border border-border/40 text-[12px] font-semibold tabular-nums tracking-tight leading-none transition-colors duration-200 group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/30">
                                 {project.project_id_prefix}-{project.project_id_number}
                               </span>
                             </div>
