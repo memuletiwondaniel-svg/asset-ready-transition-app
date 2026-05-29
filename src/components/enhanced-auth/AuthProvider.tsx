@@ -69,6 +69,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Track login activity
         if (event === 'SIGNED_IN' && session?.user) {
           syncTabSessionEpoch();
+          // Proactively wipe caches + hard-reload on every fresh login so the
+          // user never lands on a stale bundle. The per-tab flag prevents loops:
+          // after the reload, the flag is present and we skip straight through.
+          try {
+            if (sessionStorage.getItem(POST_LOGIN_REFRESH_KEY) !== '1') {
+              sessionStorage.setItem(POST_LOGIN_REFRESH_KEY, '1');
+              void performHardReset();
+              return;
+            }
+          } catch {
+            /* ignore — fall through to normal boot */
+          }
           // Revalidate the app bundle on sign-in. If this tab has been
           // sitting on an old build (common after session timeout + re-login),
           // checkAppVersion will hard-reload to the current build.
