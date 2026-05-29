@@ -53,8 +53,8 @@ export interface ColumnDef {
 
 export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
   { id: 'id', label: 'ID', defaultWidth: 68, reorderable: false, hideable: false, sortable: true },
-  { id: 'title', label: 'Project Title', defaultWidth: 580, hideable: false, sortable: true },
-  { id: 'milestone', label: 'Milestone', defaultWidth: 96, hideable: true, icon: Target },
+  { id: 'title', label: 'Project Title', defaultWidth: 540, hideable: false, sortable: true },
+  { id: 'milestone', label: 'Milestone', defaultWidth: 140, hideable: true, icon: Target },
   { id: 'location', label: 'Location', defaultWidth: 96, hideable: true, sortable: true },
   { id: 'qualifications', label: 'Qual', defaultWidth: 56, hideable: false, sortable: true, icon: AlertTriangle },
   { id: 'progress', label: 'P2A Progress', defaultWidth: 200, hideable: false, sortable: true, align: 'right' },
@@ -64,8 +64,8 @@ const COLUMNS = PROJECTS_TABLE_COLUMNS;
 export const PROJECTS_TABLE_DEFAULT_HIDDEN: string[] = [];
 const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
 
-// v8: milestone visible by default, narrower milestone col, calmer scope/date, inline more.
-export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v8';
+// v9: header refresh, ID hover-blue, scorecard label restored, milestone widened for badge.
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v9';
 
 
 export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
@@ -309,7 +309,7 @@ export function ProjectsTable({
           <div className="min-w-max">
             {/* Header */}
             <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToHorizontalAxis]} onDragEnd={handleDragEnd}>
-              <div className="flex items-center gap-3 px-4 py-3.5 bg-gradient-to-b from-muted/60 to-muted/30 border-b border-border text-[11px] font-semibold text-foreground/70 uppercase tracking-[0.08em]">
+              <div className="flex items-center gap-3 px-4 py-3 bg-card border-b-2 border-border/80 shadow-[0_1px_0_0_hsl(var(--border)/0.4)] text-[10.5px] font-semibold text-muted-foreground uppercase tracking-[0.1em]">
 
                 <div className="w-8 shrink-0" />
                 <SortableContext items={orderedColumns.map(c => c.id)} strategy={horizontalListSortingStrategy}>
@@ -406,7 +406,7 @@ export function ProjectsTable({
                         case 'id':
                           return (
                             <div key={col.id} style={style} className="shrink-0">
-                              <span className="inline-flex items-center -ml-2 px-2 py-0.5 rounded-md bg-muted/70 text-foreground border border-border/40 text-[12px] font-semibold tabular-nums tracking-tight leading-none">
+                              <span className="inline-flex items-center -ml-2 px-2 py-0.5 rounded-md bg-muted/70 text-foreground border border-border/40 text-[12px] font-semibold tabular-nums tracking-tight leading-none transition-colors duration-200 group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/30">
                                 {project.project_id_prefix}-{project.project_id_number}
                               </span>
                             </div>
@@ -434,9 +434,10 @@ export function ProjectsTable({
                                   <div className="flex items-center gap-1 min-w-0">
                                     <p className="text-xs text-foreground truncate">{project.next_milestone_name}</p>
                                     {project.is_scorecard && (
-                                      <Badge className="text-[9px] px-1 py-0 h-3.5 leading-none bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700 shrink-0">
-                                        SC
+                                      <Badge className="text-[9px] px-1 py-0 h-3.5 leading-none bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700 shrink-0 font-semibold tracking-tight">
+                                        Scorecard
                                       </Badge>
+
                                     )}
                                   </div>
                                   {project.next_milestone_date && (
