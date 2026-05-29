@@ -11,7 +11,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Check, Loader2, FolderPlus, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Loader2, FolderPlus, AlertCircle, Save } from 'lucide-react';
+import { useProjectDraft, ProjectDraftPayload } from '@/hooks/useProjectDraft';
+
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
