@@ -226,12 +226,12 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
       </div>
 
       <div className="pt-4 border-t border-border/40">
-
-
-
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-          <div>
-            <FieldLabel required>Plant</FieldLabel>
+        <div className="space-y-3">
+          {/* Plant row */}
+          <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Plant <span className="text-destructive">*</span>
+            </label>
             <EnhancedCombobox
               options={plants.map((p) => ({ value: p.id, label: p.name }))}
               value={formData.plant_id}
@@ -244,8 +244,12 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
               className="w-full"
             />
           </div>
-          <div>
-            <FieldLabel required={hasFields}>Field</FieldLabel>
+
+          {/* Field row */}
+          <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Field{hasFields && <span className="text-destructive"> *</span>}
+            </label>
             <EnhancedCombobox
               options={fieldsForPlant.map((f: any) => ({ value: f.id, label: f.name }))}
               value={formData.field_id}
@@ -263,8 +267,12 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
               className="w-full"
             />
           </div>
-          <div>
-            <FieldLabel required={hasStations}>Station</FieldLabel>
+
+          {/* Station row */}
+          <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Station{hasStations && <span className="text-destructive"> *</span>}
+            </label>
             <EnhancedCombobox
               options={stationsForField.map((s: any) => ({ value: s.id, label: s.name }))}
               value={formData.station_id}
@@ -293,6 +301,7 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
         </div>
         <PlantAssignmentPreview plantName={plantName} />
       </div>
+
     </div>
   );
 };
