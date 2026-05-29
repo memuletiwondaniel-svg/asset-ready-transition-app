@@ -1,63 +1,52 @@
-## Goal
-Adopt the reviewer's tightening of `src/components/project/ProjectsTable.tsx` (the P2A Handover projects list). Keep the existing column-reorder / resize / preferences infrastructure intact — this is a presentation refactor only.
+## Critique of the proposal
 
-## Changes
+The reviewer is right on the big move and partly right on the rest.
 
-### 1. ID column — neutral monospace chip
-- Remove the per-project hue-randomized gradient (`getProjectColor` and its style on the badge).
-- Render `DP-354` as a neutral chip: `bg-muted text-muted-foreground border border-border/60 font-mono text-[11px] tracking-tight px-2 py-0.5 rounded-md tabular-nums`.
-- Keep the column width and the subtle hover lift, drop the gradient shadow.
+- **Fold Scope under Title — yes, fully.** A paragraph column inside a list table is the wrong pattern; Linear / Notion / Height all use a primary title + muted subtitle for description. Reclaims the widest column on the page and the eye still reads "title → context". This is the single highest-leverage change.
+- **Compact Milestone stack — yes, refined.** Reviewer's version is good but the current cell already nearly does this. The real win is dropping the redundant "No milestones" line on empty rows (recede to a single em-dash) so empty rows visually shrink.
+- **Location → code-only with tooltip — push back.** Hiding "Hammar Mishrif" entirely behind a hover penalises new users and accessibility (keyboard / mobile have no hover). The right fix is: prefer the short station code as the primary text, fall back to plant name when no station, and rely on truncate + tooltip only when the value actually overflows. Keep the current `formatProjectLocation` output but render it in a `truncate` cell with a tooltip showing the full string — no information loss, no overflow.
+- **Merged view-toggle icon — accept with one correction.** Reviewer's pattern (show only the *other* mode's icon as a toggle) is fine and matches buttons like play/pause or theme switchers. The icon must clearly represent the destination, not the current state, with an explicit tooltip ("Switch to heatmap" / "Switch to list"). Leave the third toolbar icon (column visibility) untouched — it's a different control, not part of the view switch.
 
-### 2. New Status column (derived from `avg`)
-- Add `{ id: 'status', label: 'Status', defaultWidth: 130, hideable: true }` to `PROJECTS_TABLE_COLUMNS`, inserted between `location` and `qualifications`. Not in `DEFAULT_HIDDEN`.
-- Derive at render time from the existing `avg`:
-  - `avg === 0` → "Not started" · dot `bg-muted-foreground/50`
-  - `0 < avg < 100` → "In progress" · dot `bg-primary` (teal/indigo per theme)
-  - `avg >= 100` → "Complete" · dot `bg-emerald-500`
-- Render as a small colored dot + label, label in `text-sm text-foreground` (muted variant for Not started).
-- Bump `PROJECTS_TABLE_PREFS_KEY` to `p2a-projects-v2` so the new column appears for existing users without manual reset.
+## Plan
 
-### 3. Qualifications — severity tint
-Replace the single amber chip with the user's tier:
-- `0` → muted dash (unchanged)
-- `1–5` → amber chip (`bg-amber-500/10 text-amber-700 dark:text-amber-300`)
-- `6–10` → deeper amber (`bg-amber-500/20 text-amber-800 dark:text-amber-200`)
-- `>10` → red (`bg-rose-500/15 text-rose-700 dark:text-rose-300`)
-- Keep the existing tooltip + click-to-open-qualifications behaviour.
-- Right-align the cell content (`justify-end`).
+### A. Table — `src/components/project/ProjectsTable.tsx`
 
-### 4. Progress column — tighter unit, right-aligned %
-- Right-align cell, keep `flex items-center gap-2`, give the bar `flex-1` and percentage `tabular-nums w-10 text-right`.
-- Keep the existing semantic bar colors (`emerald / amber / rose / muted`) — already correct.
+1. **Drop `scope` as a column.**
+   - Remove `scope` from `PROJECTS_TABLE_COLUMNS` and from `PROJECTS_TABLE_DEFAULT_HIDDEN`.
+   - Remove the `'scope'` case from the cell switch.
+   - Bump `PROJECTS_TABLE_PREFS_KEY` to `p2a-projects-v3` so existing users pick up the new column set cleanly.
 
-### 5. Numeric alignment + density
-- `qualifications` and `progress` cell wrappers: `flex justify-end items-center`.
-- Header labels for those two columns: `text-right`.
-- Row vertical padding: `py-3` (down from `py-4`) for a slightly denser scan. Keep `px-5`.
+2. **Fold Scope under Title.**
+   - In the `'title'` case, render a two-line stack:
+     - Line 1: project title (`text-sm font-medium text-foreground`, `truncate`, hover → `text-primary`). Favorite star inline.
+     - Line 2: `project.project_scope` as `text-xs text-muted-foreground truncate` with a tooltip showing the full scope. Omit the line when scope is empty (don't show an em-dash — vertical density stays consistent across rows because the title alone keeps its line).
+   - Increase the Title column default width to ~320 to absorb most of the reclaimed space.
 
-### 6. Sortable headers
-- Add a `sort` state in `ProjectsTable`: `{ key: 'id'|'title'|'location'|'status'|'qualifications'|'progress', dir: 'asc'|'desc' } | null`.
-- `HeaderCell` becomes clickable for sortable columns (all except the row-actions slot). Show a `ChevronUp` / `ChevronDown` next to the active column, dim placeholder chevron on hover for others.
-- Sort `projects` with `useMemo` before rendering. Numeric sort for qualifications/progress; locale-string sort for id/title/location/status.
-- Drag-to-reorder still works — click sorts, pointer-drag on the grip reorders (already wired via `attributes`/`listeners`).
+3. **Tighter Milestone cell.**
+   - When `next_milestone_name` exists: phase name as primary line (`text-xs text-foreground`, truncate), Scorecard chip inline, date as `text-[11px] text-muted-foreground` underneath. Unchanged from today.
+   - When no milestone: render a single muted em-dash (`text-xs text-muted-foreground/60`) instead of the "No milestones" text — empty rows recede.
 
-### 7. Loading and empty states
-- Add a `loading?: boolean` prop. When true, render 5 skeleton rows (`<div className="animate-pulse bg-muted/40 h-10 rounded" />` per cell) instead of the project list.
-- When `!loading && projects.length === 0`, render an empty state: centered, with a muted `FolderOpen` icon, "No projects yet" headline, and "Create your first project" subtext.
-- `ProjectsHomePage` wires `loading={isLoading}` through (verify hook name when implementing).
+4. **Location with safe truncation.**
+   - Wrap the value in `truncate` with a `Tooltip` that shows the full string only when the text is truncated. Simplest implementation: always wrap with a tooltip, content = full location; visually still truncates with ellipsis. No abbreviation logic.
 
-### 8. Row hover (already present)
-- Keep the existing gradient hover + left inset accent. No change.
+5. **Row height — keep `py-3`.** Two-line title rows already give the vertical room reviewer's mockup uses; no further change.
 
-## Out of scope
-- No DB schema change (no real `status` field — derived only).
-- No change to column drag-and-drop, resize, preferences, or qualifications drawer.
-- No toolbar / page header changes.
+### B. Toolbar — `src/components/project/ProjectsHomePage.tsx`
 
-## Files
-- `src/components/project/ProjectsTable.tsx` — all visual changes, sort state, skeleton/empty, status column, prefs key bump.
-- `src/components/project/ProjectsHomePage.tsx` — pass `loading` prop through.
+1. Replace the two-button view toggle (lines ~157–198) with a single icon button that shows the **opposite** mode's icon:
+   - When `viewMode === 'list'` → render `Grid` icon, tooltip "Switch to heatmap view", `aria-label="Switch to heatmap view"`, onClick sets `'heatmap'`.
+   - When `viewMode === 'heatmap'` → render `List` icon, tooltip "Switch to list view", `aria-label="Switch to list view"`, onClick sets `'list'`.
+   - Same `h-8 w-8 p-0 ghost` styling; subtle hover (`hover:bg-muted hover:text-foreground`) so the affordance is obvious.
+2. Leave the `ProjectColumnsMenu` icon (column visibility) untouched — that's the third toolbar icon, a different control.
 
-## Risk notes
-- Bumping `PROJECTS_TABLE_PREFS_KEY` resets per-user column widths/order once; acceptable trade-off so the new Status column appears.
-- The reviewer's "row hover + cursor pointer" is already in place; no regression.
+### Out of scope
+- No DB / hook changes.
+- No change to heatmap view itself.
+- No change to row hover, sortable headers, status column, qualifications tinting, or progress bar from the previous round.
+
+### Files
+- `src/components/project/ProjectsTable.tsx` — columns array, prefs key, title cell, milestone empty state, location tooltip.
+- `src/components/project/ProjectsHomePage.tsx` — collapse view toggle to a single icon button.
+
+### Risk
+- Prefs key bump resets table column order/width once. Users who hid Scope themselves are unaffected; users who reordered will be reset. Acceptable trade-off — Scope no longer exists as a column.
