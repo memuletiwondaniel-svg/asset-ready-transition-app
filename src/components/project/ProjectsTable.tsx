@@ -383,15 +383,14 @@ export function ProjectsTable({
 
                     {orderedColumns.map((col) => {
                       const w = prefs.widths[col.id] ?? col.defaultWidth;
+                      const style = { width: w };
+                      switch (col.id) {
                         case 'id':
                           return (
                             <div key={col.id} style={style} className="shrink-0">
                               <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-foreground border border-primary/25 font-mono text-[12px] font-bold tabular-nums tracking-tight leading-none">
                                 {project.project_id_prefix}-{project.project_id_number}
                               </span>
-                            </div>
-                          );
-
                             </div>
                           );
 
