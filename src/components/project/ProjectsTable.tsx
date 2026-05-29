@@ -101,7 +101,7 @@ function ScopeText({ text }: { text: string }) {
         ref={ref}
         className={cn(
           'text-xs text-muted-foreground leading-snug',
-          !expanded && 'line-clamp-3',
+          !expanded && 'line-clamp-2',
         )}
       >
         {text}
