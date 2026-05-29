@@ -54,8 +54,7 @@ export interface ColumnDef {
 
 export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
   { id: 'id', label: 'ID', defaultWidth: 96, reorderable: false, hideable: false, sortable: true },
-  { id: 'title', label: 'Project Title', defaultWidth: 240, hideable: false, sortable: true },
-  { id: 'scope', label: 'Scope', defaultWidth: 240, hideable: true, icon: FileText },
+  { id: 'title', label: 'Project Title', defaultWidth: 320, hideable: false, sortable: true },
   { id: 'milestone', label: 'Milestone', defaultWidth: 208, hideable: true, icon: Target },
   { id: 'location', label: 'Location', defaultWidth: 160, hideable: true, sortable: true },
   { id: 'status', label: 'Status', defaultWidth: 130, hideable: true, sortable: true },
@@ -64,11 +63,11 @@ export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
 ];
 const COLUMNS = PROJECTS_TABLE_COLUMNS;
 
-export const PROJECTS_TABLE_DEFAULT_HIDDEN = ['scope', 'milestone'];
+export const PROJECTS_TABLE_DEFAULT_HIDDEN = ['milestone'];
 const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
 
-// Bumped to v2 to surface the new Status column for existing users.
-export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v2';
+// Bumped to v3: Scope merged into Title as subtitle; column dropped.
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v3';
 export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
   order: COLUMNS.map((c) => c.id),
   widths: Object.fromEntries(COLUMNS.map((c) => [c.id, c.defaultWidth])),
