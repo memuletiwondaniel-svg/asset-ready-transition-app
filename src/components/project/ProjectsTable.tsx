@@ -453,7 +453,7 @@ export function ProjectsTable({
                             ? milestoneInfoByCode.get(project.next_milestone_name.toUpperCase())
                             : null;
                           const tooltipText = info
-                            ? (info.description ? `${info.name} — ${info.description}` : info.name)
+                            ? (info.description || info.name)
                             : project.next_milestone_name;
                           return (
                             <div key={col.id} style={style} className="shrink-0 min-w-0">
