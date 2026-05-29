@@ -52,11 +52,11 @@ export interface ColumnDef {
 }
 
 export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
-  { id: 'id', label: 'ID', defaultWidth: 72, reorderable: false, hideable: false, sortable: true },
-  { id: 'title', label: 'Project Title', defaultWidth: 440, hideable: false, sortable: true },
-  { id: 'milestone', label: 'Milestone', defaultWidth: 180, hideable: true, icon: Target },
-  { id: 'location', label: 'Location', defaultWidth: 120, hideable: true, sortable: true },
-  { id: 'qualifications', label: 'Qualifications', defaultWidth: 110, hideable: false, sortable: true, icon: AlertTriangle },
+  { id: 'id', label: 'ID', defaultWidth: 76, reorderable: false, hideable: false, sortable: true },
+  { id: 'title', label: 'Project Title', defaultWidth: 460, hideable: false, sortable: true },
+  { id: 'milestone', label: 'Milestone', defaultWidth: 156, hideable: true, icon: Target },
+  { id: 'location', label: 'Location', defaultWidth: 132, hideable: true, sortable: true },
+  { id: 'qualifications', label: 'Qual', defaultWidth: 64, hideable: false, sortable: true, icon: AlertTriangle },
   { id: 'progress', label: 'P2A Progress', defaultWidth: 200, hideable: false, sortable: true, align: 'right' },
 ];
 const COLUMNS = PROJECTS_TABLE_COLUMNS;
@@ -64,8 +64,9 @@ const COLUMNS = PROJECTS_TABLE_COLUMNS;
 export const PROJECTS_TABLE_DEFAULT_HIDDEN = ['milestone'];
 const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
 
-// Bumped to v5: header restyle, ID pill, scope 2 lines, tighter columns, qualifications left-aligned, progress bar refresh.
-export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v5';
+// v6: tighter cols, location wraps, Qual rename, ID legibility, progress color tiers.
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v6';
+
 export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
   order: COLUMNS.map((c) => c.id),
   widths: Object.fromEntries(COLUMNS.map((c) => [c.id, c.defaultWidth])),
@@ -337,8 +338,9 @@ export function ProjectsTable({
                 const qualTone = getQualTone(qualCount);
                 const barColor =
                   avg >= 100 ? 'bg-emerald-500' :
-                  avg > 0 ? 'bg-primary' : 'bg-transparent';
-
+                  avg >= 75 ? 'bg-primary' :
+                  avg >= 25 ? 'bg-amber-500' :
+                  avg > 0 ? 'bg-rose-500' : 'bg-transparent';
 
                 return (
                   <div
@@ -386,7 +388,7 @@ export function ProjectsTable({
                         case 'id':
                           return (
                             <div key={col.id} style={style} className="shrink-0">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/[0.08] text-primary border border-primary/15 font-mono text-[11px] font-semibold tabular-nums tracking-tight leading-none">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-foreground border border-primary/25 font-mono text-[12px] font-bold tabular-nums tracking-tight leading-none">
                                 {project.project_id_prefix}-{project.project_id_number}
                               </span>
                             </div>
@@ -434,13 +436,14 @@ export function ProjectsTable({
                               {location ? (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <span className="text-sm text-foreground truncate block">{location}</span>
+                                    <span className="text-sm text-foreground line-clamp-2 leading-snug break-words">{location}</span>
                                   </TooltipTrigger>
                                   <TooltipContent side="bottom">{location}</TooltipContent>
                                 </Tooltip>
                               ) : (
                                 <span className="text-sm text-muted-foreground/60">—</span>
                               )}
+
                             </div>
                           );
 
