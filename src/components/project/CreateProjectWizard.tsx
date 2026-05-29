@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -11,7 +11,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Check, Loader2, FolderPlus, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Loader2, FolderPlus, AlertCircle, Save } from 'lucide-react';
+import { useProjectDraft, ProjectDraftPayload } from '@/hooks/useProjectDraft';
+
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -97,6 +99,9 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([1]));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
+  const { draft, save: saveDraft, saving: savingDraft, clear: clearDraft, reload: reloadDraft } = useProjectDraft();
+
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
@@ -172,7 +177,41 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     setDocuments([]);
   };
 
+  // On open: if a saved draft exists, prompt to resume
+  useEffect(() => {
+    if (open && draft && !isDirty) {
+      setShowResumePrompt(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, draft]);
+
+  const applyDraft = (d: ProjectDraftPayload) => {
+    setFormData(d.formData);
+    setScopeDescription(d.scopeDescription || '');
+    setScopeAttachments(d.scopeAttachments || []);
+    setTeamMembers(d.teamMembers || []);
+    setMilestones(d.milestones || []);
+    setDocuments(d.documents || []);
+    setCurrentStep(d.currentStep || 1);
+    setVisitedSteps(new Set(Array.from({ length: d.currentStep || 1 }, (_, i) => i + 1)));
+  };
+
   const handleClose = () => {
+    resetWizard();
+    onClose();
+  };
+
+  const handleSaveAndClose = async () => {
+    await saveDraft({
+      formData,
+      scopeDescription,
+      scopeAttachments,
+      teamMembers,
+      milestones,
+      documents,
+      currentStep,
+    });
+    await reloadDraft();
     resetWizard();
     onClose();
   };
@@ -184,6 +223,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
       handleClose();
     }
   };
+
 
   const validateStep = (step: number): boolean => {
     switch (step) {
@@ -424,8 +464,10 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
       queryClient.invalidateQueries({ queryKey: ['projects'] });
 
       toast.success(`Project ${formData.project_id_prefix}${formData.project_id_number} created successfully!`);
+      await clearDraft();
       handleClose();
       onSuccess?.(newProject.id);
+
     } catch (error: any) {
       console.error('Failed to create project:', error);
       toast.error(error.message || 'Failed to create project');
@@ -589,6 +631,16 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
               <span className="text-xs text-muted-foreground hidden sm:inline">
                 Step {currentStep} of {STEPS.length}
               </span>
+              <Button
+                variant="ghost"
+                onClick={handleSaveAndClose}
+                disabled={savingDraft || !isDirty}
+                className="gap-1.5"
+                title="Save your progress and finish later"
+              >
+                {savingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Save & close
+              </Button>
               {currentStep < STEPS.length ? (
                 <Button onClick={handleNext}>
                   Next
@@ -613,6 +665,36 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showResumePrompt} onOpenChange={setShowResumePrompt}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resume your saved draft?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have a previously saved project draft. Would you like to continue where you left off?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={async () => {
+                setShowResumePrompt(false);
+                await clearDraft();
+              }}
+            >
+              Start fresh
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (draft) applyDraft(draft);
+                setShowResumePrompt(false);
+              }}
+            >
+              Resume draft
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       <AlertDialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
         <AlertDialogContent>
