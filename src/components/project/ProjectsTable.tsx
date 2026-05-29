@@ -53,19 +53,19 @@ export interface ColumnDef {
 
 export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
   { id: 'id', label: 'ID', defaultWidth: 68, reorderable: false, hideable: false, sortable: true },
-  { id: 'title', label: 'Project Title', defaultWidth: 560, hideable: false, sortable: true },
-  { id: 'milestone', label: 'Milestone', defaultWidth: 140, hideable: true, icon: Target },
+  { id: 'title', label: 'Project Title', defaultWidth: 580, hideable: false, sortable: true },
+  { id: 'milestone', label: 'Milestone', defaultWidth: 96, hideable: true, icon: Target },
   { id: 'location', label: 'Location', defaultWidth: 96, hideable: true, sortable: true },
   { id: 'qualifications', label: 'Qual', defaultWidth: 56, hideable: false, sortable: true, icon: AlertTriangle },
-  { id: 'progress', label: 'P2A Progress', defaultWidth: 180, hideable: false, sortable: true, align: 'right' },
+  { id: 'progress', label: 'P2A Progress', defaultWidth: 200, hideable: false, sortable: true, align: 'right' },
 ];
 const COLUMNS = PROJECTS_TABLE_COLUMNS;
 
-export const PROJECTS_TABLE_DEFAULT_HIDDEN = ['milestone'];
+export const PROJECTS_TABLE_DEFAULT_HIDDEN: string[] = [];
 const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
 
-// v7: tighter cols, inline show more, milestone-aware progress colors, calmer ID pill.
-export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v7';
+// v8: milestone visible by default, narrower milestone col, calmer scope/date, inline more.
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v8';
 
 
 export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
@@ -97,32 +97,23 @@ function ScopeText({ text }: { text: string }) {
   }, [text]);
 
   return (
-    <div className="relative mt-0.5">
+    <div className="mt-0.5">
       <p
         ref={ref}
         className={cn(
-          'text-xs text-muted-foreground leading-snug',
+          'text-xs text-muted-foreground/70 leading-snug',
           !expanded && 'line-clamp-2',
         )}
       >
         {text}
-        {expanded && isClamped && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
-            className="ml-1 text-[11px] font-medium text-muted-foreground/60 hover:text-primary transition-colors"
-          >
-            less
-          </button>
-        )}
       </p>
-      {isClamped && !expanded && (
+      {isClamped && (
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
-          className="absolute bottom-0 right-0 pl-8 pr-0.5 text-[11px] font-medium text-muted-foreground/50 hover:text-primary transition-colors bg-gradient-to-r from-transparent via-card to-card group-hover:via-muted/40 group-hover:to-muted/40"
+          onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
+          className="mt-0.5 text-[11px] font-medium text-muted-foreground/40 hover:text-primary transition-colors"
         >
-          … more
+          {expanded ? 'less' : '… more'}
         </button>
       )}
     </div>
@@ -437,19 +428,19 @@ export function ProjectsTable({
                           );
                         case 'milestone':
                           return (
-                            <div key={col.id} style={style} className="shrink-0">
+                            <div key={col.id} style={style} className="shrink-0 min-w-0">
                               {project.next_milestone_name ? (
-                                <div className="space-y-0.5">
-                                  <div className="flex items-center gap-2">
+                                <div className="space-y-0.5 min-w-0">
+                                  <div className="flex items-center gap-1 min-w-0">
                                     <p className="text-xs text-foreground truncate">{project.next_milestone_name}</p>
                                     {project.is_scorecard && (
-                                      <Badge className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700">
-                                        Scorecard
+                                      <Badge className="text-[9px] px-1 py-0 h-3.5 leading-none bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700 shrink-0">
+                                        SC
                                       </Badge>
                                     )}
                                   </div>
                                   {project.next_milestone_date && (
-                                    <p className="text-[11px] text-muted-foreground">{format(new Date(project.next_milestone_date), 'MMM d, yyyy')}</p>
+                                    <p className="text-[10px] text-muted-foreground/60">{format(new Date(project.next_milestone_date), 'MMM d, yyyy')}</p>
                                   )}
                                 </div>
                               ) : (
@@ -502,21 +493,33 @@ export function ProjectsTable({
                               )}
                             </div>
                           );
-                        case 'progress':
+                        case 'progress': {
+                          const pending = Math.max(0, total - completed);
+                          const narrative = vcrs.length === 0
+                            ? null
+                            : total === 0
+                              ? `${vcrs.length} VCR${vcrs.length === 1 ? '' : 's'} · no deliverables`
+                              : pending === 0
+                                ? `All ${total} deliverable${total === 1 ? '' : 's'} complete`
+                                : `${pending} of ${total} deliverable${total === 1 ? '' : 's'} pending`;
                           return (
                             <div key={col.id} style={style} className="shrink-0">
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-3 min-w-0">
-                                    <div className="relative flex-1 min-w-0 h-2 rounded-full bg-muted shadow-[inset_0_0_0_1px_hsl(var(--border))] overflow-hidden transition-all duration-200 group-hover:h-2.5">
-                                      <div
-                                        className={cn('h-full rounded-full transition-all duration-300', barColor)}
-                                        style={{ width: `${Math.max(0, Math.min(100, avg))}%` }}
-                                      />
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <div className="relative flex-1 min-w-0 h-2 rounded-full bg-muted shadow-[inset_0_0_0_1px_hsl(var(--border))] overflow-hidden transition-all duration-200 group-hover:h-2.5">
+                                        <div
+                                          className={cn('h-full rounded-full transition-all duration-300', barColor)}
+                                          style={{ width: `${Math.max(0, Math.min(100, avg))}%` }}
+                                        />
+                                      </div>
+                                      <span className="text-[13px] font-semibold text-foreground tabular-nums shrink-0 w-11 text-right">{avg}%</span>
                                     </div>
-                                    <span className="text-[13px] font-semibold text-foreground tabular-nums shrink-0 w-11 text-right">{avg}%</span>
+                                    {narrative && (
+                                      <p className="mt-1 text-[10px] text-muted-foreground/60 truncate">{narrative}</p>
+                                    )}
                                   </div>
-
                                 </TooltipTrigger>
                                 <TooltipContent side="top">
                                   {vcrs.length === 0
@@ -524,9 +527,9 @@ export function ProjectsTable({
                                     : `${total > 0 ? `${completed} of ${total} delivered` : 'No deliverables'} \u00b7 ${vcrs.length} VCR${vcrs.length === 1 ? '' : 's'}`}
                                 </TooltipContent>
                               </Tooltip>
-
                             </div>
                           );
+                        }
 
                         default:
                           return null;
