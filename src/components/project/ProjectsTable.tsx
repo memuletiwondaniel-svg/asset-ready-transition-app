@@ -21,7 +21,7 @@ import {
   Trash2,
   GripVertical,
   AlertTriangle,
-  FileText,
+  Target,
   Target,
   ChevronUp,
   ChevronDown,
