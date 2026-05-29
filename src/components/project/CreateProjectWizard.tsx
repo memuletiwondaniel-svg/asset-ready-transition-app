@@ -99,6 +99,9 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([1]));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
+  const { draft, save: saveDraft, saving: savingDraft, clear: clearDraft, reload: reloadDraft } = useProjectDraft();
+
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
