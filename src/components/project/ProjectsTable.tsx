@@ -448,18 +448,28 @@ export function ProjectsTable({
                               )}
                             </div>
                           );
-                        case 'milestone':
+                        case 'milestone': {
+                          const info = project.next_milestone_name
+                            ? milestoneInfoByCode.get(project.next_milestone_name.toUpperCase())
+                            : null;
+                          const tooltipText = info
+                            ? (info.description ? `${info.name} — ${info.description}` : info.name)
+                            : project.next_milestone_name;
                           return (
                             <div key={col.id} style={style} className="shrink-0 min-w-0">
                               {project.next_milestone_name ? (
                                 <div className="space-y-0.5 min-w-0">
                                   <div className="flex items-center gap-1 min-w-0">
-                                    <p className="text-sm text-foreground truncate">{project.next_milestone_name}</p>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <p className="text-sm text-foreground truncate cursor-help">{project.next_milestone_name}</p>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="max-w-xs">{tooltipText}</TooltipContent>
+                                    </Tooltip>
                                     {project.is_scorecard && (
                                       <Badge className="text-[9px] px-1 py-0 h-3.5 leading-none bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700 shrink-0 font-semibold tracking-tight">
                                         Scorecard
                                       </Badge>
-
                                     )}
                                   </div>
                                   {project.next_milestone_date && (
@@ -471,16 +481,12 @@ export function ProjectsTable({
                               )}
                             </div>
                           );
+                        }
                         case 'location':
                           return (
                             <div key={col.id} style={style} className="shrink-0 min-w-0">
                               {location ? (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <span className="text-sm text-foreground line-clamp-2 leading-snug break-words">{location}</span>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="bottom">{location}</TooltipContent>
-                                </Tooltip>
+                                <span className="text-sm text-foreground line-clamp-2 leading-snug break-words">{location}</span>
                               ) : (
                                 <span className="text-sm text-muted-foreground/60">—</span>
                               )}
