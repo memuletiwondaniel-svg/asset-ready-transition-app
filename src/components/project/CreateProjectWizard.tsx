@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Check, Loader2, FolderPlus, Building2, Target, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Loader2, FolderPlus, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -12,6 +21,7 @@ import { useHubs } from '@/hooks/useHubs';
 import { useStations } from '@/hooks/useStations';
 import { useProjectLocations } from '@/hooks/useProjectLocations';
 import { useLogActivity } from '@/hooks/useActivityLogs';
+import { useProjectIdAvailability } from '@/hooks/useProjectIdAvailability';
 import { Attachment } from '@/components/ui/RichTextEditor';
 import WizardStepProjectInfo from './wizard/WizardStepProjectInfo';
 import WizardStepProjectScope from './wizard/WizardStepProjectScope';
@@ -86,6 +96,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([1]));
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
@@ -103,6 +114,32 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
+
+  // Live duplicate check for Project ID (used to block Next on step 1)
+  const { conflict: idConflict } = useProjectIdAvailability(
+    formData.project_id_prefix || 'DP',
+    formData.project_id_number
+  );
+
+  // Track dirty state for discard-confirm
+  const isDirty = useMemo(
+    () =>
+      !!(
+        formData.project_id_number ||
+        formData.project_title ||
+        formData.region_id ||
+        formData.hub_id ||
+        formData.plant_id ||
+        formData.field_id ||
+        formData.station_id ||
+        scopeDescription ||
+        scopeAttachments.length ||
+        teamMembers.length ||
+        milestones.length ||
+        documents.length
+      ),
+    [formData, scopeDescription, scopeAttachments, teamMembers, milestones, documents]
+  );
 
   // Get region and hub names for auto-population
   const getRegionName = () => {
@@ -140,11 +177,23 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     onClose();
   };
 
+  const requestClose = () => {
+    if (isDirty) {
+      setShowDiscardConfirm(true);
+    } else {
+      handleClose();
+    }
+  };
+
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
         if (!formData.project_id_number) {
           toast.error('Please enter the project ID number');
+          return false;
+        }
+        if (idConflict) {
+          toast.error(`DP-${formData.project_id_number} already exists`);
           return false;
         }
         if (!formData.project_title) {
@@ -200,6 +249,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
       case 1:
         return !!(
           formData.project_id_number &&
+          !idConflict &&
           formData.project_title &&
           formData.region_id &&
           formData.hub_id &&
@@ -372,7 +422,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     }
   };
 
-  const progressPercentage = (currentStep / STEPS.length) * 100;
+  
 
   const regionName = getRegionName();
   const hubName = getHubName();
@@ -434,158 +484,166 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     }
   };
 
+  const subtitle = formData.project_id_number
+    ? `${formData.project_id_prefix || 'DP'}-${formData.project_id_number}${
+        formData.project_title ? ` · ${formData.project_title}` : ''
+      }${regionName ? ` — ${regionName}` : ''}${hubName ? ` › ${hubName}` : ''}`
+    : null;
+
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="sm:max-w-3xl h-[85vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="border-b px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
-          <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
-            <FolderPlus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-            Create New Project
-          </DialogTitle>
-
-          {/* Progress Indicator - matching ORA wizard style */}
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">Step {currentStep} of {STEPS.length}</span>
-              <span className="text-muted-foreground">{STEPS[currentStep - 1].description}</span>
-            </div>
-            <Progress value={progressPercentage} className="h-2" />
-            
-            {/* Step Indicators - clickable like ORA wizard */}
-            <div className="flex justify-between mt-2">
-              {STEPS.map((step) => {
-                const isActive = step.id === currentStep;
-                const isVisited = visitedSteps.has(step.id);
-                const isComplete = step.id < currentStep || (isVisited && isStepComplete(step.id));
-                const isClickable = isVisited || step.id <= currentStep;
-
-                return (
-                  <button
-                    key={step.id}
-                    type="button"
-                    onClick={() => handleStepClick(step.id)}
-                    disabled={!isClickable}
-                    className={cn(
-                      "flex flex-col items-center flex-1 transition-colors",
-                      isClickable ? "cursor-pointer" : "cursor-default",
-                      isActive
-                        ? "text-primary"
-                        : isComplete
-                          ? "text-primary/60"
-                          : "text-muted-foreground"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-colors",
-                        isActive
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : isComplete
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-muted-foreground/30 bg-muted/30"
-                      )}
-                    >
-                      {isComplete ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        step.id
-                      )}
-                    </div>
-                    <span className="text-xs mt-1 text-center hidden sm:block">{step.title}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </DialogHeader>
-
-        {/* Context banner - shown from step 2 onwards when project info is filled */}
-        {currentStep >= 2 && formData.project_id_prefix && formData.project_id_number && (
-          <div className="mx-3 sm:mx-6 mt-2 mb-0 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-muted/60 border border-border/50">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground font-medium">Project</p>
-                <p className="font-semibold text-foreground/90 truncate">
-                  {formData.project_id_prefix}-{formData.project_id_number}
-                  {formData.project_title ? ` – ${formData.project_title}` : ''}
-                </p>
-              </div>
-              {regionName && (
-                <>
-                  <div className="w-px h-8 bg-border" />
-                  <div className="flex items-center gap-1.5">
-                    <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground font-medium">Portfolio</p>
-                      <p className="font-semibold text-foreground/90">{regionName}</p>
-                    </div>
-                  </div>
-                </>
-              )}
-              {hubName && (
-                <>
-                  <div className="w-px h-8 bg-border" />
-                  <div className="flex items-center gap-1.5">
-                    <Target className="h-3.5 w-3.5 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground font-medium">Hub</p>
-                      <p className="font-semibold text-foreground/90">{hubName}</p>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Step Content */}
-        <div className="flex-1 overflow-y-auto py-3 sm:py-4 px-4 sm:px-6">
-          {renderStepContent()}
-        </div>
-
-        {/* Navigation Buttons */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-t">
-          <Button
-            variant="outline"
-            onClick={currentStep === 1 ? handleClose : handleBack}
-          >
-            {currentStep === 1 ? (
-              'Cancel'
-            ) : (
-              <>
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Back
-              </>
+    <>
+      <Dialog open={open} onOpenChange={(o) => !o && requestClose()}>
+        <DialogContent className="sm:max-w-3xl h-[85vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="border-b px-4 sm:px-6 pt-4 sm:pt-5 pb-3">
+            <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-semibold">
+              <FolderPlus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              Create New Project
+            </DialogTitle>
+            {currentStep > 1 && subtitle && (
+              <p className="text-xs text-muted-foreground truncate mt-1">{subtitle}</p>
             )}
-          </Button>
-          
-          {currentStep < STEPS.length ? (
-            <Button onClick={handleNext}>
-              Next
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          ) : (
-            <Button 
-              onClick={handleSubmit} 
-              disabled={isSubmitting}
-              className="gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating...
-                </>
+
+            {/* Segmented stepper — one row, one indicator */}
+            <nav aria-label="Wizard progress" className="mt-3">
+              <ol className="flex items-center gap-1.5">
+                {STEPS.map((step) => {
+                  const isActive = step.id === currentStep;
+                  const isVisited = visitedSteps.has(step.id);
+                  const isComplete = step.id < currentStep || (isVisited && isStepComplete(step.id));
+                  const isInvalid = isVisited && !isActive && !isStepComplete(step.id) && step.id < currentStep;
+                  const isClickable = isVisited || step.id <= currentStep;
+
+                  return (
+                    <li key={step.id} className="flex-1 min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => handleStepClick(step.id)}
+                        disabled={!isClickable}
+                        className={cn(
+                          'group w-full text-left transition-colors',
+                          isClickable ? 'cursor-pointer' : 'cursor-default'
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            'h-1 rounded-full transition-colors',
+                            isActive
+                              ? 'bg-primary'
+                              : isInvalid
+                                ? 'bg-destructive/60'
+                                : isComplete
+                                  ? 'bg-primary/50'
+                                  : 'bg-muted'
+                          )}
+                        />
+                        <div className="mt-1.5 flex items-center gap-1.5 min-w-0">
+                          {isComplete && !isActive ? (
+                            <Check className="h-3 w-3 text-primary shrink-0" />
+                          ) : isInvalid ? (
+                            <AlertCircle className="h-3 w-3 text-destructive shrink-0" />
+                          ) : (
+                            <span
+                              className={cn(
+                                'text-[10px] font-semibold w-3 text-center shrink-0',
+                                isActive ? 'text-primary' : 'text-muted-foreground'
+                              )}
+                            >
+                              {step.id}
+                            </span>
+                          )}
+                          <span
+                            className={cn(
+                              'text-xs font-medium truncate',
+                              isActive
+                                ? 'text-foreground'
+                                : isInvalid
+                                  ? 'text-destructive'
+                                  : isComplete
+                                    ? 'text-foreground/70'
+                                    : 'text-muted-foreground'
+                            )}
+                          >
+                            {step.title}
+                          </span>
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </nav>
+          </DialogHeader>
+
+          {/* Step Content */}
+          <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-6">
+            {renderStepContent()}
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3 border-t">
+            <Button variant="outline" onClick={currentStep === 1 ? requestClose : handleBack}>
+              {currentStep === 1 ? (
+                'Cancel'
               ) : (
                 <>
-                  <Check className="h-4 w-4" />
-                  Create Project
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Back
                 </>
               )}
             </Button>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground hidden sm:inline">
+                Step {currentStep} of {STEPS.length}
+              </span>
+              {currentStep < STEPS.length ? (
+                <Button onClick={handleNext}>
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              ) : (
+                <Button onClick={handleSubmit} disabled={isSubmitting} className="gap-2">
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Create Project
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard this project?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. If you close now, all progress in this wizard will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowDiscardConfirm(false);
+                handleClose();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

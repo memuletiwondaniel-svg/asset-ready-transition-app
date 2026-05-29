@@ -7,7 +7,9 @@ import { useHubs } from '@/hooks/useHubs';
 import { usePlants } from '@/hooks/usePlants';
 import { useFields } from '@/hooks/useFields';
 import { useStations } from '@/hooks/useStations';
-import { FileText, Building2, MapPin } from 'lucide-react';
+import { useProjectIdAvailability } from '@/hooks/useProjectIdAvailability';
+import { OwnershipAssignmentPreview, PlantAssignmentPreview } from './LiveAssignmentPreview';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface WizardStepProjectInfoProps {
@@ -38,24 +40,21 @@ const FieldLabel: React.FC<{ children: React.ReactNode; required?: boolean; html
   </label>
 );
 
-const Section: React.FC<{
-  icon: React.ReactNode;
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-}> = ({ icon, title, subtitle, children }) => (
-  <section className="rounded-xl border border-border/70 bg-card/40 p-4 sm:p-5">
-    <header className="flex items-center gap-2.5 mb-4">
-      <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <h3 className="text-sm font-semibold text-foreground leading-none">{title}</h3>
-        {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
-      </div>
-    </header>
-    {children}
-  </section>
+const GroupHeader: React.FC<{ title: string; helper?: string; withDivider?: boolean }> = ({
+  title,
+  helper,
+  withDivider,
+}) => (
+  <div className={cn('mb-3', withDivider && 'pt-4 border-t border-border/40')}>
+    <div className="flex items-baseline flex-wrap gap-x-2">
+      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
+        {title}
+      </h3>
+      {helper && (
+        <span className="text-[11px] text-muted-foreground">— {helper}</span>
+      )}
+    </div>
+  </div>
 );
 
 const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
@@ -74,6 +73,11 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
       onFormDataChange({ project_id_prefix: 'DP' });
     }
   }, [formData.project_id_prefix, onFormDataChange]);
+
+  const { conflict, isChecking } = useProjectIdAvailability(
+    formData.project_id_prefix || 'DP',
+    formData.project_id_number
+  );
 
   const filteredHubs = useMemo(() => {
     if (!formData.region_id) return hubs;
@@ -115,10 +119,15 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
     }
   }, [formData.field_id, formData.plant_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const regionName = regions.find((r) => r.id === formData.region_id)?.name || null;
+  const hubName = hubs.find((h) => h.id === formData.hub_id)?.name || null;
+  const plantName = plants.find((p) => p.id === formData.plant_id)?.name || null;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Identity */}
-      <Section icon={<FileText className="h-3.5 w-3.5" />} title="Project Identity">
+      <div>
+        <GroupHeader title="Project Identity" />
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-5">
           <div className="sm:col-span-2">
             <FieldLabel htmlFor="project_id" required>
@@ -126,11 +135,12 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
             </FieldLabel>
             <div
               className={cn(
-                'flex h-10 w-full rounded-md border border-input bg-background ring-offset-background',
-                'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 overflow-hidden'
+                'flex h-10 w-full rounded-md border bg-background ring-offset-background overflow-hidden',
+                'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
+                conflict ? 'border-destructive' : 'border-input'
               )}
             >
-              <span className="flex items-center px-3 text-sm font-semibold text-primary bg-primary/10 border-r border-input select-none tracking-wide">
+              <span className="flex items-center px-3 text-sm font-semibold text-primary bg-primary/10 border-r border-input select-none tracking-wide font-mono">
                 DP
               </span>
               <Input
@@ -141,10 +151,26 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
                   onFormDataChange({ project_id_number: value });
                 }}
                 placeholder="0000"
-                className="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-full"
+                className="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-full font-mono"
                 maxLength={20}
               />
+              {isChecking && (
+                <span className="flex items-center px-2 text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                </span>
+              )}
             </div>
+            {conflict ? (
+              <p className="mt-1.5 text-xs text-destructive flex items-start gap-1">
+                <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                DP-{formData.project_id_number} already exists
+                {conflict.project_title ? ` — ${conflict.project_title}` : ''}.
+              </p>
+            ) : (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Enter the official DP number from the project register.
+              </p>
+            )}
           </div>
 
           <div className="sm:col-span-3">
@@ -160,14 +186,15 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
             />
           </div>
         </div>
-      </Section>
+      </div>
 
       {/* Ownership */}
-      <Section
-        icon={<Building2 className="h-3.5 w-3.5" />}
-        title="Ownership"
-        subtitle="Drives auto-assignment of Commissioning Lead, Construction Lead & Senior ORA Engineer."
-      >
+      <div>
+        <GroupHeader
+          title="Ownership"
+          helper="auto-assigns Commissioning Lead, Construction Lead & Snr ORA Engineer"
+          withDivider
+        />
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
           <div>
             <FieldLabel required>Portfolio</FieldLabel>
@@ -190,7 +217,7 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
               onCreateNew={async (name) => {
                 await createHub(name);
               }}
-              placeholder={formData.region_id ? 'Select hub' : 'Select portfolio first'}
+              placeholder={formData.region_id ? 'Select hub' : 'Choose a portfolio first'}
               emptyText="No hubs found"
               createText="Create hub"
               disabled={!formData.region_id}
@@ -198,14 +225,20 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
             />
           </div>
         </div>
-      </Section>
+        <OwnershipAssignmentPreview
+          regionName={regionName}
+          hubName={hubName}
+          hubId={formData.hub_id || null}
+        />
+      </div>
 
       {/* Location */}
-      <Section
-        icon={<MapPin className="h-3.5 w-3.5" />}
-        title="Location"
-        subtitle="Plant drives auto-assignment of the Deputy Plant Director."
-      >
+      <div>
+        <GroupHeader
+          title="Location"
+          helper="Plant drives auto-assignment of the Deputy Plant Director"
+          withDivider
+        />
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
           <div>
             <FieldLabel required>Plant</FieldLabel>
@@ -229,7 +262,7 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
               onValueChange={(value) => onFormDataChange({ field_id: value, station_id: '' })}
               placeholder={
                 !formData.plant_id
-                  ? 'Select plant first'
+                  ? 'Choose a plant first'
                   : hasFields
                     ? 'Select field'
                     : 'Not applicable'
@@ -248,9 +281,9 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
               onValueChange={(value) => onFormDataChange({ station_id: value })}
               placeholder={
                 !formData.plant_id
-                  ? 'Select plant first'
+                  ? 'Choose a plant first'
                   : hasFields && !formData.field_id
-                    ? 'Select field first'
+                    ? 'Choose a field first'
                     : hasStations
                       ? 'Select station'
                       : 'Not applicable'
@@ -268,7 +301,8 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
             />
           </div>
         </div>
-      </Section>
+        <PlantAssignmentPreview plantName={plantName} />
+      </div>
     </div>
   );
 };
