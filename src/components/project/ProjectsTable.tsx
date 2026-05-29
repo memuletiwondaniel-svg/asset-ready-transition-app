@@ -21,7 +21,6 @@ import {
   Trash2,
   GripVertical,
   AlertTriangle,
-  FileText,
   Target,
   ChevronUp,
   ChevronDown,
@@ -54,8 +53,7 @@ export interface ColumnDef {
 
 export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
   { id: 'id', label: 'ID', defaultWidth: 96, reorderable: false, hideable: false, sortable: true },
-  { id: 'title', label: 'Project Title', defaultWidth: 240, hideable: false, sortable: true },
-  { id: 'scope', label: 'Scope', defaultWidth: 240, hideable: true, icon: FileText },
+  { id: 'title', label: 'Project Title', defaultWidth: 320, hideable: false, sortable: true },
   { id: 'milestone', label: 'Milestone', defaultWidth: 208, hideable: true, icon: Target },
   { id: 'location', label: 'Location', defaultWidth: 160, hideable: true, sortable: true },
   { id: 'status', label: 'Status', defaultWidth: 130, hideable: true, sortable: true },
@@ -64,11 +62,11 @@ export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
 ];
 const COLUMNS = PROJECTS_TABLE_COLUMNS;
 
-export const PROJECTS_TABLE_DEFAULT_HIDDEN = ['scope', 'milestone'];
+export const PROJECTS_TABLE_DEFAULT_HIDDEN = ['milestone'];
 const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
 
-// Bumped to v2 to surface the new Status column for existing users.
-export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v2';
+// Bumped to v3: Scope merged into Title as subtitle; column dropped.
+export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v3';
 export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
   order: COLUMNS.map((c) => c.id),
   widths: Object.fromEntries(COLUMNS.map((c) => [c.id, c.defaultWidth])),
@@ -366,17 +364,25 @@ export function ProjectsTable({
                           );
                         case 'title':
                           return (
-                            <div key={col.id} style={style} className="shrink-0 flex items-center gap-2">
-                              <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
-                                {project.project_title}
-                              </h3>
-                              {project.is_favorite && <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0" />}
-                            </div>
-                          );
-                        case 'scope':
-                          return (
-                            <div key={col.id} style={style} className="shrink-0">
-                              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{project.project_scope || '—'}</p>
+                            <div key={col.id} style={style} className="shrink-0 min-w-0">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <h3 className="text-sm font-medium text-foreground group-hover:text-primary transition-colors truncate">
+                                  {project.project_title}
+                                </h3>
+                                {project.is_favorite && <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 shrink-0" />}
+                              </div>
+                              {project.project_scope && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
+                                      {project.project_scope}
+                                    </p>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="bottom" className="max-w-md">
+                                    {project.project_scope}
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
                             </div>
                           );
                         case 'milestone':
@@ -397,14 +403,23 @@ export function ProjectsTable({
                                   )}
                                 </div>
                               ) : (
-                                <span className="text-xs text-muted-foreground">No milestones</span>
+                                <span className="text-xs text-muted-foreground/60">—</span>
                               )}
                             </div>
                           );
                         case 'location':
                           return (
-                            <div key={col.id} style={style} className="shrink-0">
-                              <span className="text-sm text-foreground truncate">{location || '—'}</span>
+                            <div key={col.id} style={style} className="shrink-0 min-w-0">
+                              {location ? (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="text-sm text-foreground truncate block">{location}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="bottom">{location}</TooltipContent>
+                                </Tooltip>
+                              ) : (
+                                <span className="text-sm text-muted-foreground/60">—</span>
+                              )}
                             </div>
                           );
                         case 'status':
