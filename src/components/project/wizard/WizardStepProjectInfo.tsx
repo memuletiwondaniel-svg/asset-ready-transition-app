@@ -198,6 +198,7 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
               placeholder="Select portfolio"
               emptyText="No portfolios found"
               allowCreate={false}
+              showSearch={false}
               className="w-full"
             />
           </div>
