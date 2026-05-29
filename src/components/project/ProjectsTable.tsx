@@ -85,7 +85,6 @@ function getQualTone(count: number) {
   return 'bg-rose-500/15 text-rose-700 dark:text-rose-300 hover:bg-rose-500/25';
 }
 
-
 function ScopeText({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
   const [isClamped, setIsClamped] = useState(false);
@@ -98,7 +97,7 @@ function ScopeText({ text }: { text: string }) {
   }, [text]);
 
   return (
-    <div className="mt-0.5">
+    <div className="relative mt-0.5">
       <p
         ref={ref}
         className={cn(
@@ -107,18 +106,29 @@ function ScopeText({ text }: { text: string }) {
         )}
       >
         {text}
+        {expanded && isClamped && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
+            className="ml-1 text-[11px] font-medium text-muted-foreground/60 hover:text-primary transition-colors"
+          >
+            less
+          </button>
+        )}
       </p>
-      {(isClamped || expanded) && (
+      {isClamped && !expanded && (
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
-          className="mt-0.5 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors"
+          onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+          className="absolute bottom-0 right-0 pl-8 pr-0.5 text-[11px] font-medium text-muted-foreground/50 hover:text-primary transition-colors bg-gradient-to-r from-transparent via-card to-card group-hover:via-muted/40 group-hover:to-muted/40"
         >
-          {expanded ? 'Show less' : 'Show more'}
+          … more
         </button>
       )}
     </div>
   );
+}
+
 }
 
 interface HeaderCellProps {
