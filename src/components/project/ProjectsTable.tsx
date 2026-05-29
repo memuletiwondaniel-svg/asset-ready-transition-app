@@ -194,7 +194,6 @@ function HeaderCell({ col, width, onResize, sort, onSort }: HeaderCellProps) {
           isSortable && 'cursor-pointer hover:text-primary transition-colors',
         )}
       >
-        {col.icon && <col.icon className={cn('h-3 w-3 shrink-0', active ? 'text-primary' : 'text-muted-foreground/50')} />}
         <span className={cn('truncate', active && 'text-primary')}>{col.label}</span>
         {sortIcon}
       </button>
