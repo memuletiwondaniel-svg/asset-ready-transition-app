@@ -180,7 +180,7 @@ function HeaderCell({ col, width, onResize, sort, onSort }: HeaderCellProps) {
         transition,
         opacity: isDragging ? 0.5 : 1,
       }}
-      className="relative shrink-0 flex items-center pr-3 group/header"
+      className="relative shrink-0 flex items-center pr-2 group/header"
     >
       {col.reorderable !== false && (
         <button
