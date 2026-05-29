@@ -464,8 +464,10 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
       queryClient.invalidateQueries({ queryKey: ['projects'] });
 
       toast.success(`Project ${formData.project_id_prefix}${formData.project_id_number} created successfully!`);
+      await clearDraft();
       handleClose();
       onSuccess?.(newProject.id);
+
     } catch (error: any) {
       console.error('Failed to create project:', error);
       toast.error(error.message || 'Failed to create project');
