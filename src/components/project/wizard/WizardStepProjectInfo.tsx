@@ -125,9 +125,8 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Identity */}
       <div>
-        <GroupHeader title="Project Identity" />
+
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-5">
           <div className="sm:col-span-2">
             <FieldLabel htmlFor="project_id" required>
