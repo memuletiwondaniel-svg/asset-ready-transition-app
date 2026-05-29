@@ -355,7 +355,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   const handleSubmit = async () => {
     // Validate every step before final submission
     // Only steps with required fields gate the final submission (1: Project Info, 3: Team)
-    const requiredSteps = [1, 3];
+    const requiredSteps = [1, 2, 3];
     for (const id of requiredSteps) {
       if (!isStepComplete(id)) {
         const s = STEPS.find(x => x.id === id)!;
