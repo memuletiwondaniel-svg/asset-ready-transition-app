@@ -306,7 +306,8 @@ export function ProjectsTable({
           <div className="min-w-max">
             {/* Header */}
             <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToHorizontalAxis]} onDragEnd={handleDragEnd}>
-              <div className="flex items-center gap-4 px-5 py-3 bg-muted/40 border-b border-border/60 text-[11px] font-medium text-muted-foreground/80 uppercase tracking-[0.08em]">
+              <div className="flex items-center gap-4 px-5 py-3.5 bg-gradient-to-b from-muted/60 to-muted/30 border-b border-border text-[11px] font-semibold text-foreground/70 uppercase tracking-[0.08em]">
+
                 <div className="w-8 shrink-0" />
                 <SortableContext items={orderedColumns.map(c => c.id)} strategy={horizontalListSortingStrategy}>
                   {orderedColumns.map(c => (
