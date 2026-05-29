@@ -89,7 +89,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
-    project_id_prefix: '',
+    project_id_prefix: 'DP',
     project_id_number: '',
     project_title: '',
     region_id: '',
@@ -119,7 +119,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     setCurrentStep(1);
     setVisitedSteps(new Set([1]));
     setFormData({
-      project_id_prefix: '',
+      project_id_prefix: 'DP',
       project_id_number: '',
       project_title: '',
       region_id: '',
@@ -143,16 +143,24 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        if (!formData.project_id_prefix) {
-          toast.error('Please select a project ID prefix');
-          return false;
-        }
         if (!formData.project_id_number) {
-          toast.error('Please enter a project ID number');
+          toast.error('Please enter the project ID number');
           return false;
         }
         if (!formData.project_title) {
           toast.error('Please enter a project title');
+          return false;
+        }
+        if (!formData.region_id) {
+          toast.error('Please select a Portfolio');
+          return false;
+        }
+        if (!formData.hub_id) {
+          toast.error('Please select a Project Hub');
+          return false;
+        }
+        if (!formData.plant_id) {
+          toast.error('Please select a Plant');
           return false;
         }
         return true;
@@ -190,7 +198,13 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   const isStepComplete = (step: number): boolean => {
     switch (step) {
       case 1:
-        return !!(formData.project_id_prefix && formData.project_id_number && formData.project_title);
+        return !!(
+          formData.project_id_number &&
+          formData.project_title &&
+          formData.region_id &&
+          formData.hub_id &&
+          formData.plant_id
+        );
       case 2:
         return true;
       case 3: {
