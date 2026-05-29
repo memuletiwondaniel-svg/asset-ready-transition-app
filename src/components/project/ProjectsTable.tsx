@@ -185,19 +185,24 @@ function HeaderCell({ col, width, onResize, sort, onSort }: HeaderCellProps) {
           <GripVertical className="h-3 w-3 text-muted-foreground" />
         </button>
       )}
-      <button
-        type="button"
-        disabled={!isSortable}
-        onClick={() => isSortable && onSort(col.id as SortKey)}
-        className={cn(
-          'flex items-center gap-1.5 min-w-0 flex-1 truncate',
-          col.align === 'right' && 'justify-end',
-          isSortable && 'cursor-pointer hover:text-primary transition-colors',
-        )}
-      >
-        <span className={cn('truncate', active && 'text-primary')}>{col.label}</span>
-        {sortIcon}
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            disabled={!isSortable}
+            onClick={() => isSortable && onSort(col.id as SortKey)}
+            className={cn(
+              'flex items-center gap-1.5 min-w-0 flex-1 truncate',
+              col.align === 'right' && 'justify-end',
+              isSortable && 'cursor-pointer hover:text-primary transition-colors',
+            )}
+          >
+            <span className={cn('truncate', active && 'text-primary')}>{col.label}</span>
+            {sortIcon}
+          </button>
+        </TooltipTrigger>
+        {col.fullLabel && <TooltipContent side="top">{col.fullLabel}</TooltipContent>}
+      </Tooltip>
       <div
         onPointerDown={startResize}
         className="absolute right-0 top-1/2 -translate-y-1/2 h-5 w-1 cursor-col-resize rounded-full bg-transparent hover:bg-primary/40 active:bg-primary transition-colors"
