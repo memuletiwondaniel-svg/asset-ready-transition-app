@@ -97,32 +97,23 @@ function ScopeText({ text }: { text: string }) {
   }, [text]);
 
   return (
-    <div className="relative mt-0.5">
+    <div className="mt-0.5">
       <p
         ref={ref}
         className={cn(
-          'text-xs text-muted-foreground leading-snug',
+          'text-xs text-muted-foreground/70 leading-snug',
           !expanded && 'line-clamp-2',
         )}
       >
         {text}
-        {expanded && isClamped && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
-            className="ml-1 text-[11px] font-medium text-muted-foreground/60 hover:text-primary transition-colors"
-          >
-            less
-          </button>
-        )}
       </p>
-      {isClamped && !expanded && (
+      {isClamped && (
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
-          className="absolute bottom-0 right-0 pl-8 pr-0.5 text-[11px] font-medium text-muted-foreground/50 hover:text-primary transition-colors bg-gradient-to-r from-transparent via-card to-card group-hover:via-muted/40 group-hover:to-muted/40"
+          onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
+          className="mt-0.5 text-[11px] font-medium text-muted-foreground/40 hover:text-primary transition-colors"
         >
-          … more
+          {expanded ? 'less' : '… more'}
         </button>
       )}
     </div>
