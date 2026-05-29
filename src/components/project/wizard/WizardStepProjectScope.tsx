@@ -15,23 +15,17 @@ const WizardStepProjectScope: React.FC<WizardStepProjectScopeProps> = ({
   onAttachmentsChange,
 }) => {
   return (
-    <div className="space-y-4">
-      <div>
-        <h3 className="text-lg font-medium mb-1">
-          Project Scope <span className="text-destructive">*</span>
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Describe the scope of the project. You can add text formatting, paste images directly,
-          and attach supporting documents.
-        </p>
-      </div>
+    <div className="space-y-3">
+      <h3 className="text-lg font-medium">
+        Project Scope <span className="text-destructive">*</span>
+      </h3>
 
       <RichTextEditor
         value={scopeDescription}
         onChange={onScopeChange}
         attachments={scopeAttachments}
         onAttachmentsChange={onAttachmentsChange}
-        placeholder="Describe the project scope... You can paste images and attach files."
+        placeholder="Describe the scope of the project. Format text, paste images, or attach supporting documents."
         storageBucket="project-attachments"
         storagePath="scope"
       />
