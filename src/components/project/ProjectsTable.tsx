@@ -75,19 +75,13 @@ export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
 type SortKey = 'id' | 'title' | 'location' | 'qualifications' | 'progress';
 type SortState = { key: SortKey; dir: 'asc' | 'desc' } | null;
 
+function getQualTone(count: number) {
+  if (count <= 0) return null;
+  if (count <= 5) return 'bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20';
+  if (count <= 10) return 'bg-amber-500/20 text-amber-800 dark:text-amber-200 hover:bg-amber-500/30';
+  return 'bg-rose-500/15 text-rose-700 dark:text-rose-300 hover:bg-rose-500/25';
+}
 
-function getQualTone(count: number) {
-  if (count <= 0) return null;
-  if (count <= 5) return 'bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20';
-  if (count <= 10) return 'bg-amber-500/20 text-amber-800 dark:text-amber-200 hover:bg-amber-500/30';
-  return 'bg-rose-500/15 text-rose-700 dark:text-rose-300 hover:bg-rose-500/25';
-}
-function getQualTone(count: number) {
-  if (count <= 0) return null;
-  if (count <= 5) return 'bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20';
-  if (count <= 10) return 'bg-amber-500/20 text-amber-800 dark:text-amber-200 hover:bg-amber-500/30';
-  return 'bg-rose-500/15 text-rose-700 dark:text-rose-300 hover:bg-rose-500/25';
-}
 
 function ScopeText({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
