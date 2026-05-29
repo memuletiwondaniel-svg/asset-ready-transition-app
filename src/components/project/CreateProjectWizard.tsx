@@ -276,20 +276,22 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
 
   const handleStepClick = (targetStep: number) => {
     if (targetStep === currentStep) return;
-    const canNavigate = visitedSteps.has(targetStep) || targetStep <= currentStep;
-    if (!canNavigate) {
-      if (!validateStep(currentStep)) return;
-    }
     setVisitedSteps(prev => new Set([...prev, targetStep]));
     setCurrentStep(targetStep);
   };
 
+  const incompleteSteps = useMemo(
+    () => STEPS.slice(0, 4).filter(s => !isStepComplete(s.id)).map(s => s.id),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [formData, teamMembers, idConflict]
+  );
+
   const handleNext = () => {
-    if (!validateStep(currentStep)) return;
     const nextStep = Math.min(currentStep + 1, STEPS.length);
     setVisitedSteps(prev => new Set([...prev, nextStep]));
     setCurrentStep(nextStep);
   };
+
 
   const handleBack = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
@@ -300,7 +302,17 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   };
 
   const handleSubmit = async () => {
+    // Validate every step before final submission
+    for (const s of STEPS.slice(0, 4)) {
+      if (!isStepComplete(s.id)) {
+        toast.error(`Step ${s.id} (${s.title}) is incomplete`);
+        setCurrentStep(s.id);
+        setVisitedSteps(prev => new Set([...prev, s.id]));
+        return;
+      }
+    }
     setIsSubmitting(true);
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
@@ -503,75 +515,56 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
               <p className="text-xs text-muted-foreground truncate mt-1">{subtitle}</p>
             )}
 
-            {/* Segmented stepper — one row, one indicator */}
-            <nav aria-label="Wizard progress" className="mt-3">
-              <ol className="flex items-center gap-1.5">
-                {STEPS.map((step) => {
+            {/* Circular stepper */}
+            <nav aria-label="Wizard progress" className="mt-4">
+              <ol className="flex items-start justify-between gap-1">
+                {STEPS.map((step, idx) => {
                   const isActive = step.id === currentStep;
-                  const isVisited = visitedSteps.has(step.id);
-                  const isComplete = step.id < currentStep || (isVisited && isStepComplete(step.id));
-                  const isInvalid = isVisited && !isActive && !isStepComplete(step.id) && step.id < currentStep;
-                  const isClickable = isVisited || step.id <= currentStep;
+                  const isComplete = isStepComplete(step.id) && step.id !== currentStep;
+                  const isIncomplete = visitedSteps.has(step.id) && !isActive && !isComplete && step.id !== 5;
+                  const isLast = idx === STEPS.length - 1;
 
                   return (
-                    <li key={step.id} className="flex-1 min-w-0">
+                    <li key={step.id} className="flex-1 flex flex-col items-center min-w-0 relative">
+                      {!isLast && (
+                        <div
+                          className={cn(
+                            'absolute top-4 left-1/2 w-full h-0.5 -z-0',
+                            isComplete ? 'bg-primary' : 'bg-border'
+                          )}
+                        />
+                      )}
                       <button
                         type="button"
                         onClick={() => handleStepClick(step.id)}
-                        disabled={!isClickable}
-                        className={cn(
-                          'group w-full text-left transition-colors',
-                          isClickable ? 'cursor-pointer' : 'cursor-default'
-                        )}
+                        className="flex flex-col items-center gap-1.5 group z-10 bg-background px-1"
                       >
-                        <div
+                        <span
                           className={cn(
-                            'h-1 rounded-full transition-colors',
-                            isActive
-                              ? 'bg-primary'
-                              : isInvalid
-                                ? 'bg-destructive/60'
-                                : isComplete
-                                  ? 'bg-primary/50'
-                                  : 'bg-muted'
+                            'flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-semibold transition-colors',
+                            isActive && 'border-primary bg-primary text-primary-foreground',
+                            isComplete && 'border-primary bg-primary text-primary-foreground',
+                            isIncomplete && 'border-destructive/60 bg-background text-destructive',
+                            !isActive && !isComplete && !isIncomplete && 'border-border bg-background text-muted-foreground'
                           )}
-                        />
-                        <div className="mt-1.5 flex items-center gap-1.5 min-w-0">
-                          {isComplete && !isActive ? (
-                            <Check className="h-3 w-3 text-primary shrink-0" />
-                          ) : isInvalid ? (
-                            <AlertCircle className="h-3 w-3 text-destructive shrink-0" />
-                          ) : (
-                            <span
-                              className={cn(
-                                'text-[10px] font-semibold w-3 text-center shrink-0',
-                                isActive ? 'text-primary' : 'text-muted-foreground'
-                              )}
-                            >
-                              {step.id}
-                            </span>
+                        >
+                          {isComplete ? <Check className="h-4 w-4" /> : isIncomplete ? <AlertCircle className="h-4 w-4" /> : step.id}
+                        </span>
+                        <span
+                          className={cn(
+                            'text-xs font-medium truncate max-w-[80px]',
+                            isActive ? 'text-primary' : isIncomplete ? 'text-destructive' : 'text-muted-foreground'
                           )}
-                          <span
-                            className={cn(
-                              'text-xs font-medium truncate',
-                              isActive
-                                ? 'text-foreground'
-                                : isInvalid
-                                  ? 'text-destructive'
-                                  : isComplete
-                                    ? 'text-foreground/70'
-                                    : 'text-muted-foreground'
-                            )}
-                          >
-                            {step.title}
-                          </span>
-                        </div>
+                        >
+                          {step.title}
+                        </span>
                       </button>
                     </li>
                   );
                 })}
               </ol>
             </nav>
+
           </DialogHeader>
 
           {/* Step Content */}

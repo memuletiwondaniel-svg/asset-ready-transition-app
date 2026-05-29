@@ -160,17 +160,14 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
                 </span>
               )}
             </div>
-            {conflict ? (
+            {conflict && (
               <p className="mt-1.5 text-xs text-destructive flex items-start gap-1">
                 <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                 DP-{formData.project_id_number} already exists
                 {conflict.project_title ? ` — ${conflict.project_title}` : ''}.
               </p>
-            ) : (
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                Enter the official DP number from the project register.
-              </p>
             )}
+
           </div>
 
           <div className="sm:col-span-3">
@@ -190,11 +187,8 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
 
       {/* Ownership */}
       <div>
-        <GroupHeader
-          title="Ownership"
-          helper="auto-assigns Commissioning Lead, Construction Lead & Snr ORA Engineer"
-          withDivider
-        />
+        <GroupHeader title="Ownership" withDivider />
+
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
           <div>
             <FieldLabel required>Portfolio</FieldLabel>
@@ -234,11 +228,8 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
 
       {/* Location */}
       <div>
-        <GroupHeader
-          title="Location"
-          helper="Plant drives auto-assignment of the Deputy Plant Director"
-          withDivider
-        />
+        <GroupHeader title="Location" withDivider />
+
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
           <div>
             <FieldLabel required>Plant</FieldLabel>
