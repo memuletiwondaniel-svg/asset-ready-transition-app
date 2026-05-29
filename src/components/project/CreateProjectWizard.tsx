@@ -302,7 +302,17 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   };
 
   const handleSubmit = async () => {
+    // Validate every step before final submission
+    for (const s of STEPS.slice(0, 4)) {
+      if (!isStepComplete(s.id)) {
+        toast.error(`Step ${s.id} (${s.title}) is incomplete`);
+        setCurrentStep(s.id);
+        setVisitedSteps(prev => new Set([...prev, s.id]));
+        return;
+      }
+    }
     setIsSubmitting(true);
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
