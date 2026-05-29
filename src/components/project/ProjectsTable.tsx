@@ -66,11 +66,12 @@ const DEFAULT_HIDDEN = PROJECTS_TABLE_DEFAULT_HIDDEN;
 
 // Bumped to v5: header restyle, ID pill, scope 2 lines, tighter columns, qualifications left-aligned, progress bar refresh.
 export const PROJECTS_TABLE_PREFS_KEY = 'p2a-projects-v5';
-
+export const PROJECTS_TABLE_DEFAULTS: TablePreferences = {
   order: COLUMNS.map((c) => c.id),
   widths: Object.fromEntries(COLUMNS.map((c) => [c.id, c.defaultWidth])),
   hidden: DEFAULT_HIDDEN,
 };
+
 
 type SortKey = 'id' | 'title' | 'location' | 'qualifications' | 'progress';
 type SortState = { key: SortKey; dir: 'asc' | 'desc' } | null;
