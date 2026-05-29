@@ -563,9 +563,8 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     <>
       <Dialog open={open} onOpenChange={(o) => !o && requestClose()}>
         <DialogContent className="sm:max-w-3xl h-[85vh] overflow-hidden flex flex-col p-0">
-          <DialogHeader className="border-b px-4 sm:px-6 pt-4 sm:pt-5 pb-3">
-            <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-semibold">
-              <FolderPlus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+          <DialogHeader className="border-b px-4 sm:px-6 pt-3 sm:pt-4 pb-4">
+            <DialogTitle className="text-lg sm:text-xl font-semibold">
               Create New Project
             </DialogTitle>
             {currentStep > 1 && subtitle && (
@@ -573,7 +572,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
             )}
 
             {/* Circular stepper — semantic state per step */}
-            <nav aria-label="Wizard progress" className="mt-4">
+            <nav aria-label="Wizard progress" className="mt-6">
               <ol className="flex items-start justify-between gap-1">
                 {STEPS.map((step, idx) => {
                   const visited = visitedSteps.has(step.id);
