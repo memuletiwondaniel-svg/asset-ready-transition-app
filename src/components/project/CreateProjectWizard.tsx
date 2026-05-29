@@ -276,20 +276,22 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
 
   const handleStepClick = (targetStep: number) => {
     if (targetStep === currentStep) return;
-    const canNavigate = visitedSteps.has(targetStep) || targetStep <= currentStep;
-    if (!canNavigate) {
-      if (!validateStep(currentStep)) return;
-    }
     setVisitedSteps(prev => new Set([...prev, targetStep]));
     setCurrentStep(targetStep);
   };
 
+  const incompleteSteps = useMemo(
+    () => STEPS.slice(0, 4).filter(s => !isStepComplete(s.id)).map(s => s.id),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [formData, teamMembers, idConflict]
+  );
+
   const handleNext = () => {
-    if (!validateStep(currentStep)) return;
     const nextStep = Math.min(currentStep + 1, STEPS.length);
     setVisitedSteps(prev => new Set([...prev, nextStep]));
     setCurrentStep(nextStep);
   };
+
 
   const handleBack = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
