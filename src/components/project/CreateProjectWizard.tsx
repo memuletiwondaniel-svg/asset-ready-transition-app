@@ -422,7 +422,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     }
   };
 
-  const progressPercentage = (currentStep / STEPS.length) * 100;
+  
 
   const regionName = getRegionName();
   const hubName = getHubName();
