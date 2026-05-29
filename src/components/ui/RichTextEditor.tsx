@@ -355,9 +355,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       </div>
       
       {/* Tip */}
-      <p className="text-xs text-muted-foreground">
-        Tip: You can paste or drag & drop images directly into the text area. Click on an image to crop or resize it.
+      <p className="text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1.5">
+        <Lightbulb className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+        <span>You can paste or drag &amp; drop images directly into the text area. Click on an image to crop or resize it.</span>
       </p>
+
       
       {/* Attachments List */}
       {attachments.length > 0 && (
