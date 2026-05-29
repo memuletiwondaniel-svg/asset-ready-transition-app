@@ -277,64 +277,65 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   return (
     <div className="space-y-3">
-      {/* Toolbar */}
-      <div className="flex items-center gap-1 flex-wrap p-2 border border-b-0 rounded-t-lg bg-muted/30">
+      {/* Toolbar — compact */}
+      <div className="flex items-center gap-0.5 flex-wrap px-1.5 py-1 border border-b-0 rounded-t-lg bg-muted/30">
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={editor.isActive('bold') ? 'bg-muted' : ''}
+          className={cn('h-7 w-7 p-0', editor.isActive('bold') && 'bg-muted')}
         >
-          <Bold className="h-4 w-4" />
+          <Bold className="h-3.5 w-3.5" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={editor.isActive('italic') ? 'bg-muted' : ''}
+          className={cn('h-7 w-7 p-0', editor.isActive('italic') && 'bg-muted')}
         >
-          <Italic className="h-4 w-4" />
+          <Italic className="h-3.5 w-3.5" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={editor.isActive('bulletList') ? 'bg-muted' : ''}
+          className={cn('h-7 w-7 p-0', editor.isActive('bulletList') && 'bg-muted')}
         >
-          <List className="h-4 w-4" />
+          <List className="h-3.5 w-3.5" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={editor.isActive('orderedList') ? 'bg-muted' : ''}
+          className={cn('h-7 w-7 p-0', editor.isActive('orderedList') && 'bg-muted')}
         >
-          <ListOrdered className="h-4 w-4" />
+          <ListOrdered className="h-3.5 w-3.5" />
         </Button>
-        
-        <div className="w-px h-6 bg-border mx-1" />
-        
+
+        <div className="w-px h-4 bg-border mx-1" />
+
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
+          className="h-7 px-2 gap-1"
         >
           {isUploading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
             <>
-              <Paperclip className="h-4 w-4 mr-1" />
+              <Paperclip className="h-3.5 w-3.5" />
               <span className="text-xs">Attach</span>
             </>
           )}
         </Button>
-        
+
         <input
           ref={fileInputRef}
           type="file"
@@ -344,6 +345,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           className="hidden"
         />
       </div>
+
       
       {/* Editor */}
       <div className="border rounded-b-lg rounded-t-none -mt-3 bg-background">
