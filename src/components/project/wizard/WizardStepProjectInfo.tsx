@@ -225,9 +225,9 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
         />
       </div>
 
-      {/* Location */}
-      <div>
-        <GroupHeader title="Location" withDivider />
+      <div className="pt-4 border-t border-border/40">
+
+
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
           <div>
