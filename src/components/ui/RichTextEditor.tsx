@@ -5,18 +5,22 @@ import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { 
-  Bold, 
-  Italic, 
-  List, 
-  ListOrdered, 
-  Paperclip, 
+import {
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Paperclip,
   X,
   FileText,
-  Loader2
+  Loader2,
+  Lightbulb,
 } from 'lucide-react';
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+
 import ImageEditorDialog from '@/components/ui/ImageEditorDialog';
 
 export interface Attachment {
@@ -69,7 +73,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-[150px] px-3 py-2',
+        class: 'prose prose-sm max-w-none focus:outline-none min-h-[240px] px-3 py-2',
       },
       handlePaste: (view, event) => {
         const items = event.clipboardData?.items;
@@ -275,64 +279,65 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   return (
     <div className="space-y-3">
-      {/* Toolbar */}
-      <div className="flex items-center gap-1 flex-wrap p-2 border border-b-0 rounded-t-lg bg-muted/30">
+      {/* Toolbar — compact */}
+      <div className="flex items-center gap-0.5 flex-wrap px-1.5 py-1 border border-b-0 rounded-t-lg bg-muted/30">
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={editor.isActive('bold') ? 'bg-muted' : ''}
+          className={cn('h-7 w-7 p-0', editor.isActive('bold') && 'bg-muted')}
         >
-          <Bold className="h-4 w-4" />
+          <Bold className="h-3.5 w-3.5" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={editor.isActive('italic') ? 'bg-muted' : ''}
+          className={cn('h-7 w-7 p-0', editor.isActive('italic') && 'bg-muted')}
         >
-          <Italic className="h-4 w-4" />
+          <Italic className="h-3.5 w-3.5" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={editor.isActive('bulletList') ? 'bg-muted' : ''}
+          className={cn('h-7 w-7 p-0', editor.isActive('bulletList') && 'bg-muted')}
         >
-          <List className="h-4 w-4" />
+          <List className="h-3.5 w-3.5" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={editor.isActive('orderedList') ? 'bg-muted' : ''}
+          className={cn('h-7 w-7 p-0', editor.isActive('orderedList') && 'bg-muted')}
         >
-          <ListOrdered className="h-4 w-4" />
+          <ListOrdered className="h-3.5 w-3.5" />
         </Button>
-        
-        <div className="w-px h-6 bg-border mx-1" />
-        
+
+        <div className="w-px h-4 bg-border mx-1" />
+
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
+          className="h-7 px-2 gap-1"
         >
           {isUploading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
             <>
-              <Paperclip className="h-4 w-4 mr-1" />
+              <Paperclip className="h-3.5 w-3.5" />
               <span className="text-xs">Attach</span>
             </>
           )}
         </Button>
-        
+
         <input
           ref={fileInputRef}
           type="file"
@@ -342,6 +347,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           className="hidden"
         />
       </div>
+
       
       {/* Editor */}
       <div className="border rounded-b-lg rounded-t-none -mt-3 bg-background">
@@ -349,9 +355,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       </div>
       
       {/* Tip */}
-      <p className="text-xs text-muted-foreground">
-        Tip: You can paste or drag & drop images directly into the text area. Click on an image to crop or resize it.
+      <p className="text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1.5">
+        <Lightbulb className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+        <span>You can paste or drag &amp; drop images directly into the text area. Click on an image to crop or resize it.</span>
       </p>
+
       
       {/* Attachments List */}
       {attachments.length > 0 && (

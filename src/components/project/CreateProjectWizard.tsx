@@ -254,7 +254,12 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
         }
         return true;
       case 2:
-        return true; // Scope is optional
+        if (!scopeDescription.trim() && scopeAttachments.length === 0) {
+          toast.error('Please describe the project scope');
+          return false;
+        }
+        return true;
+
       case 3: {
         const validMembers = teamMembers.filter(m => m.user_id && m.user_id.trim() !== '');
         if (validMembers.length === 0) {
@@ -350,7 +355,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   const handleSubmit = async () => {
     // Validate every step before final submission
     // Only steps with required fields gate the final submission (1: Project Info, 3: Team)
-    const requiredSteps = [1, 3];
+    const requiredSteps = [1, 2, 3];
     for (const id of requiredSteps) {
       if (!isStepComplete(id)) {
         const s = STEPS.find(x => x.id === id)!;
@@ -576,7 +581,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
                   // "Complete" only counts if user has actually visited the step.
                   const isComplete = visited && !isActive && isStepComplete(step.id);
                   // Only required-field steps (1, 3) flag amber when visited & incomplete
-                  const stepHasRequiredFields = step.id === 1 || step.id === 3;
+                  const stepHasRequiredFields = step.id === 1 || step.id === 2 || step.id === 3;
                   const isAttention = visited && !isActive && !isComplete && stepHasRequiredFields;
 
                   const nextStep = STEPS[idx + 1];
