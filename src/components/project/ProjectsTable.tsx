@@ -37,6 +37,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import type { Project } from '@/hooks/useProjects';
 import { useTablePreferences, type TablePreferences } from '@/hooks/useTablePreferences';
 import { formatProjectLocation } from '@/utils/projectLocation';
+import { useProjectMilestoneTypes } from '@/hooks/useProjectMilestoneTypes';
 import type { ProjectsP2AProgressMap } from '@/hooks/useProjectsP2AProgress';
 
 export interface ColumnDef {
