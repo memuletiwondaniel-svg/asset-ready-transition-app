@@ -477,10 +477,16 @@ export function ProjectsTable({
                             <div key={col.id} style={style} className="shrink-0">
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <Progress value={avg} className="h-1.5 flex-1 min-w-0" indicatorClassName={barColor} />
-                                    <span className="text-sm font-semibold text-foreground tabular-nums shrink-0 w-10 text-right">{avg}%</span>
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className="relative flex-1 min-w-0 h-2 rounded-full bg-muted shadow-[inset_0_0_0_1px_hsl(var(--border))] overflow-hidden transition-all duration-200 group-hover:h-2.5">
+                                      <div
+                                        className={cn('h-full rounded-full transition-all duration-300', barColor)}
+                                        style={{ width: `${Math.max(0, Math.min(100, avg))}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-[13px] font-semibold text-foreground tabular-nums shrink-0 w-11 text-right">{avg}%</span>
                                   </div>
+
                                 </TooltipTrigger>
                                 <TooltipContent side="top">
                                   {vcrs.length === 0
