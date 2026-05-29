@@ -223,11 +223,16 @@ export function ProjectsTable({
     const valueOf = (p: Project): string | number => {
       const pg = progressMap?.[p.id];
       const avg = pg?.avg ?? 0;
+  const sortedProjects = useMemo(() => {
+    if (!sort) return projects;
+    const dir = sort.dir === 'asc' ? 1 : -1;
+    const valueOf = (p: Project): string | number => {
+      const pg = progressMap?.[p.id];
+      const avg = pg?.avg ?? 0;
       switch (sort.key) {
         case 'id': return `${p.project_id_prefix}-${String(p.project_id_number).padStart(8, '0')}`;
         case 'title': return (p.project_title || '').toLowerCase();
         case 'location': return (formatProjectLocation({ plant_name: p.plant_name, station_name: p.station_name }) || '').toLowerCase();
-        case 'status': return avg >= 100 ? 2 : avg > 0 ? 1 : 0;
         case 'qualifications': return pg?.qualificationCount ?? 0;
         case 'progress': return avg;
         default: return 0;
@@ -242,11 +247,6 @@ export function ProjectsTable({
     });
   }, [projects, progressMap, sort]);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
-
-  const handleDragEnd = (e: DragEndEvent) => {
-    if (!e.over || e.over.id === e.active.id) return;
-    const fromId = e.active.id as string;
     const toId = e.over.id as string;
     setPrefs(p => {
       const order = p.order.length ? p.order : COLUMNS.map(c => c.id);
