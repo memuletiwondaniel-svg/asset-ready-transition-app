@@ -96,6 +96,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([1]));
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
@@ -113,6 +114,32 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
+
+  // Live duplicate check for Project ID (used to block Next on step 1)
+  const { conflict: idConflict } = useProjectIdAvailability(
+    formData.project_id_prefix || 'DP',
+    formData.project_id_number
+  );
+
+  // Track dirty state for discard-confirm
+  const isDirty = useMemo(
+    () =>
+      !!(
+        formData.project_id_number ||
+        formData.project_title ||
+        formData.region_id ||
+        formData.hub_id ||
+        formData.plant_id ||
+        formData.field_id ||
+        formData.station_id ||
+        scopeDescription ||
+        scopeAttachments.length ||
+        teamMembers.length ||
+        milestones.length ||
+        documents.length
+      ),
+    [formData, scopeDescription, scopeAttachments, teamMembers, milestones, documents]
+  );
 
   // Get region and hub names for auto-population
   const getRegionName = () => {
@@ -148,6 +175,14 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   const handleClose = () => {
     resetWizard();
     onClose();
+  };
+
+  const requestClose = () => {
+    if (isDirty) {
+      setShowDiscardConfirm(true);
+    } else {
+      handleClose();
+    }
   };
 
   const validateStep = (step: number): boolean => {
