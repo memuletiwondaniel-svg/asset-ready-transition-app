@@ -56,8 +56,8 @@ export const PROJECTS_TABLE_COLUMNS: ColumnDef[] = [
   { id: 'title', label: 'Project Title', defaultWidth: 540, hideable: false, sortable: true },
   { id: 'milestone', label: 'Milestone', defaultWidth: 140, hideable: true, icon: Target },
   { id: 'location', label: 'Location', defaultWidth: 96, hideable: true, sortable: true },
-  { id: 'qualifications', label: 'Qual', defaultWidth: 56, hideable: false, sortable: true, icon: AlertTriangle },
-  { id: 'progress', label: 'P2A Progress', defaultWidth: 200, hideable: false, sortable: true, align: 'right' },
+  { id: 'qualifications', label: 'Quals', defaultWidth: 72, hideable: false, sortable: true, icon: AlertTriangle },
+  { id: 'progress', label: 'P2A Progress', defaultWidth: 200, hideable: false, sortable: true },
 ];
 const COLUMNS = PROJECTS_TABLE_COLUMNS;
 
