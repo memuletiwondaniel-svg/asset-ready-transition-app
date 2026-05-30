@@ -1,8 +1,6 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, Users, Calendar, Paperclip, MapPin, Building2, Target } from 'lucide-react';
+import { Paperclip } from 'lucide-react';
 import { Attachment } from '@/components/ui/RichTextEditor';
 import DOMPurify from 'dompurify';
 
@@ -47,11 +45,29 @@ interface WizardStepProjectReviewProps {
   teamMembers: TeamMember[];
   milestones: Milestone[];
   documents: Document[];
-  // Lookup data
   regions: { id: string; name: string }[];
   hubs: { id: string; name: string }[];
   stations: { id: string; name: string }[];
 }
+
+const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <div className="min-w-0">
+    <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-1">{label}</p>
+    <div className="text-sm text-foreground truncate">{children}</div>
+  </div>
+);
+
+const Section: React.FC<{ title: string; count?: number; children: React.ReactNode }> = ({ title, count, children }) => (
+  <section className="py-5 border-t border-border first:border-t-0 first:pt-0">
+    <div className="flex items-baseline justify-between mb-3">
+      <h4 className="text-sm font-semibold tracking-tight">{title}</h4>
+      {typeof count === 'number' && (
+        <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
+      )}
+    </div>
+    {children}
+  </section>
+);
 
 const WizardStepProjectReview: React.FC<WizardStepProjectReviewProps> = ({
   formData,
@@ -73,178 +89,109 @@ const WizardStepProjectReview: React.FC<WizardStepProjectReviewProps> = ({
   const validMilestones = milestones.filter(m => m.milestone_name && m.milestone_date);
   const validDocuments = documents.filter(d => d.document_name && (d.file_path || d.link_url));
 
+  const projectId = `${formData.project_id_prefix}-${formData.project_id_number || '---'}`;
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium mb-1">Review & Create</h3>
+    <div className="space-y-1">
+      <div className="pb-2">
+        <h3 className="text-lg font-semibold tracking-tight">Review & Create</h3>
         <p className="text-sm text-muted-foreground">
-          Review all project details before creating. You can go back to any step to make changes.
+          Review all details before creating. Go back to any step to make changes.
         </p>
       </div>
 
-      <ScrollArea className="h-[400px] pr-4">
-        <div className="space-y-4">
-          {/* Project Information */}
-          <Card>
-            <CardHeader className="py-3">
-              <CardTitle className="text-base">
-                Project Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="py-3 space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Project ID</p>
-                  <Badge variant="outline" className="mt-1 bg-primary/10 text-primary">
-                    {formData.project_id_prefix}-{formData.project_id_number || '---'}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Title</p>
-                  <p className="font-medium">{formData.project_title || '---'}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="flex items-start gap-2">
-                  <Building2 className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Portfolio</p>
-                    <p className="text-sm">{selectedRegion?.name || '---'}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Target className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Hub</p>
-                    <p className="text-sm">{selectedHub?.name || '---'}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Locations</p>
-                    <p className="text-sm">
-                      {selectedStations.length > 0 
-                        ? selectedStations.map(s => s.name).join(', ') 
-                        : '---'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Project Scope */}
-          <Card>
-            <CardHeader className="py-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Project Scope
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="py-3">
-              {scopeDescription ? (
-                <div 
-                  className="prose prose-sm max-w-none text-sm"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(scopeDescription) }}
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground italic">No scope description provided</p>
-              )}
-              {scopeAttachments.length > 0 && (
-                <div className="mt-3 pt-3 border-t">
-                  <p className="text-sm text-muted-foreground mb-2">Attachments ({scopeAttachments.length})</p>
-                  <div className="flex flex-wrap gap-2">
-                    {scopeAttachments.map(att => (
-                      <Badge key={att.id} variant="secondary" className="text-xs">
-                        <Paperclip className="h-3 w-3 mr-1" />
-                        {att.name}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Team Members */}
-          <Card>
-            <CardHeader className="py-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Team Members
-                <Badge variant="secondary" className="ml-auto">{validTeamMembers.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="py-3">
-              {validTeamMembers.length > 0 ? (
-                <div className="space-y-2">
-                  {validTeamMembers.map((member, index) => (
-                    <div key={index} className="flex items-center justify-between text-sm py-1">
-                      <span className="font-medium">{member.user_name || 'Assigned User'}</span>
-                      <Badge variant="outline">{member.role}</Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground italic">No team members assigned</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Milestones */}
-          <Card>
-            <CardHeader className="py-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Milestones
-                <Badge variant="secondary" className="ml-auto">{validMilestones.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="py-3">
-              {validMilestones.length > 0 ? (
-                <div className="space-y-2">
-                  {validMilestones.map((milestone, index) => (
-                    <div key={index} className="flex items-center justify-between text-sm py-1">
-                      <span>{milestone.milestone_name}</span>
-                      <span className="text-muted-foreground">
-                        {new Date(milestone.milestone_date).toLocaleDateString()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground italic">No milestones added</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Documents */}
-          <Card>
-            <CardHeader className="py-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Paperclip className="h-4 w-4" />
-                Documents
-                <Badge variant="secondary" className="ml-auto">{validDocuments.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="py-3">
-              {validDocuments.length > 0 ? (
-                <div className="space-y-2">
-                  {validDocuments.map((doc, index) => (
-                    <div key={index} className="flex items-center justify-between text-sm py-1">
-                      <span>{doc.document_name}</span>
-                      <Badge variant="outline">{doc.document_type}</Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground italic">No documents attached</p>
-              )}
-            </CardContent>
-          </Card>
+      {/* Hero summary */}
+      <div className="pt-4 pb-5 border-t border-border">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="min-w-0">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-1">
+              {projectId}
+            </p>
+            <h2 className="text-xl font-semibold tracking-tight truncate">
+              {formData.project_title || 'Untitled project'}
+            </h2>
+          </div>
         </div>
-      </ScrollArea>
+        <div className="grid grid-cols-3 gap-6">
+          <Field label="Portfolio">{selectedRegion?.name || '—'}</Field>
+          <Field label="Hub">{selectedHub?.name || '—'}</Field>
+          <Field label="Locations">
+            {selectedStations.length > 0 ? selectedStations.map(s => s.name).join(', ') : '—'}
+          </Field>
+        </div>
+      </div>
+
+      {/* Scope */}
+      <Section title="Project Scope">
+        {scopeDescription ? (
+          <div
+            className="prose prose-sm max-w-none text-sm text-foreground"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(scopeDescription) }}
+          />
+        ) : (
+          <p className="text-sm text-muted-foreground italic">No scope description provided</p>
+        )}
+        {scopeAttachments.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {scopeAttachments.map(att => (
+              <Badge key={att.id} variant="secondary" className="text-xs font-normal">
+                <Paperclip className="h-3 w-3 mr-1" />
+                {att.name}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      {/* Team */}
+      <Section title="Team Members" count={validTeamMembers.length}>
+        {validTeamMembers.length > 0 ? (
+          <ul className="divide-y divide-border/60">
+            {validTeamMembers.map((m, i) => (
+              <li key={i} className="flex items-center justify-between py-2 text-sm">
+                <span className="font-medium truncate">{m.user_name || 'Assigned user'}</span>
+                <span className="text-muted-foreground text-xs">{m.role}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground italic">No team members assigned</p>
+        )}
+      </Section>
+
+      {/* Milestones */}
+      <Section title="Milestones" count={validMilestones.length}>
+        {validMilestones.length > 0 ? (
+          <ul className="divide-y divide-border/60">
+            {validMilestones.map((m, i) => (
+              <li key={i} className="flex items-center justify-between py-2 text-sm">
+                <span className="truncate">{m.milestone_name}</span>
+                <span className="text-muted-foreground text-xs tabular-nums">
+                  {new Date(m.milestone_date).toLocaleDateString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground italic">No milestones added</p>
+        )}
+      </Section>
+
+      {/* Documents */}
+      <Section title="Documents" count={validDocuments.length}>
+        {validDocuments.length > 0 ? (
+          <ul className="divide-y divide-border/60">
+            {validDocuments.map((d, i) => (
+              <li key={i} className="flex items-center justify-between py-2 text-sm">
+                <span className="truncate">{d.document_name}</span>
+                <span className="text-muted-foreground text-xs">{d.document_type}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground italic">No documents attached</p>
+        )}
+      </Section>
     </div>
   );
 };
