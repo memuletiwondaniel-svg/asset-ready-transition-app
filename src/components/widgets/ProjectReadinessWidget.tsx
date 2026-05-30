@@ -427,10 +427,8 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-medium truncate leading-tight">{doc.document_name}</p>
-                      <p className="text-[10px] text-muted-foreground truncate leading-tight uppercase tracking-wide">
-                        {isLink ? (doc.link_type || 'Link') : (ext || 'File')}
-                      </p>
                     </div>
+
                   </Wrapper>
                 );
               })}
