@@ -256,9 +256,6 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                 <Users className="h-4 w-4 text-violet-600" />
               </div>
               Team Members
-              <Badge variant="secondary" className="ml-auto text-xs font-medium">
-                {assignedCount}/{CANONICAL_REQUIRED_ROLES.length}
-              </Badge>
             </h3>
             <div className="space-y-1.5 pl-1">
               {visibleRoles.map((data, idx) => {
@@ -370,11 +367,6 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
             <Target className="h-4 w-4 text-rose-600" />
           </div>
           Milestones
-          {milestones.length > 0 && (
-            <Badge variant="secondary" className="ml-auto text-xs font-medium">
-              {milestones.filter(m => m.status === 'completed').length}/{milestones.length}
-            </Badge>
-          )}
         </h3>
         <div className="pl-1">
           <MilestonesTimeline milestones={milestones} />
