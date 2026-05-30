@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { checkOnce as checkAppVersion } from '@/lib/version-check';
 import { bumpSessionEpoch, syncTabSessionEpoch, performHardReset, POST_LOGIN_REFRESH_KEY } from '@/lib/app-reset';
+import { shouldSkipSelfReload } from '@/lib/runtime-env';
 
 interface AuthContextType {
   user: User | null;
