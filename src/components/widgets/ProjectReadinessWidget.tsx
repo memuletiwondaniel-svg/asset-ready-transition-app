@@ -402,7 +402,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                 const isLink = doc.document_type === 'link';
                 const ext = (doc.file_extension || '').toLowerCase();
                 const Icon = isLink
-                  ? (doc.link_type ? Folder : LinkIcon)
+                  ? LinkIcon
                   : ext === 'pdf' ? FileText
                   : ['doc','docx'].includes(ext) ? FileText
                   : ['xls','xlsx','csv'].includes(ext) ? FileSpreadsheet
