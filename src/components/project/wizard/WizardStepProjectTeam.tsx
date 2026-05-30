@@ -53,22 +53,30 @@ interface MemberPickerProps {
   role: string;
   currentUserId?: string;
   allUsers: ReturnType<typeof useProfileUsers>['data'];
+  plantName?: string | null;
   onSelect: (userId: string) => void;
   trigger: React.ReactNode;
 }
 
-const MemberPicker: React.FC<MemberPickerProps> = ({ role, currentUserId, allUsers = [], onSelect, trigger }) => {
+const MemberPicker: React.FC<MemberPickerProps> = ({ role, currentUserId, allUsers = [], plantName, onSelect, trigger }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
   const eligible = useMemo(() => {
     const patterns = ROLE_ELIGIBILITY[role];
     if (!patterns || !allUsers) return allUsers ?? [];
-    return allUsers.filter((u) => {
+    let list = allUsers.filter((u) => {
       const hay = `${u.position || ''} ${u.role || ''}`.toLowerCase();
       return patterns.some((p) => hay.includes(p));
     });
-  }, [allUsers, role]);
+    // For Deputy Plant Director, narrow to users tied to the selected plant
+    if (role === 'Deputy Plant Director' && plantName) {
+      const plantLower = plantName.toLowerCase();
+      const scoped = list.filter((u) => (u.position || '').toLowerCase().includes(plantLower));
+      if (scoped.length > 0) list = scoped;
+    }
+    return list;
+  }, [allUsers, role, plantName]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
