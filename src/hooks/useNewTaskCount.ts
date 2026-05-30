@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { fetchB2BPartnerIds } from './useB2BPartner';
 
 /**
  * Returns the count of tasks created since the user's last login.
  * Used to show a badge on the "My Tasks" sidebar item.
+ * Includes B2B partner's pending tasks (same inbox model).
  */
 export const useNewTaskCount = () => {
   const { user } = useAuth();
@@ -21,11 +23,14 @@ export const useNewTaskCount = () => {
         .eq('user_id', user.id)
         .maybeSingle();
 
+      const partnerIds = await fetchB2BPartnerIds(user.id);
+      const effectiveUserIds = [user.id, ...partnerIds];
+
       // Build query for pending/in_progress tasks
       let query = supabase
         .from('user_tasks')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
+        .in('user_id', effectiveUserIds)
         .in('status', ['pending', 'in_progress']);
 
       // If last_login_at exists, only count tasks created after it
