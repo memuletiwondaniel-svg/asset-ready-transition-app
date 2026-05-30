@@ -18,7 +18,7 @@ interface ProjectMilestonesSectionProps {
   setMilestones: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
-interface SortableMilestoneItemProps {
+interface MilestoneItemProps {
   milestone: any;
   editingId: string | null;
   editingMilestone: any;
@@ -29,7 +29,6 @@ interface SortableMilestoneItemProps {
   onSaveEditing: () => void;
   onCancelEditing: () => void;
   onRemove: (id: string) => void;
-  onStatusChange: (id: string, checked: boolean) => void;
   onEditMilestoneTypeSelect: (typeId: string) => void;
   onEditDescriptionChange: (value: string) => void;
   onEditDateChange: (date: Date | undefined) => void;
@@ -37,7 +36,7 @@ interface SortableMilestoneItemProps {
   onCreateNewMilestoneTypeForEdit: (name: string) => void;
 }
 
-const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
+const MilestoneItem: React.FC<MilestoneItemProps> = ({
   milestone,
   editingId,
   editingMilestone,
@@ -48,40 +47,17 @@ const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
   onSaveEditing,
   onCancelEditing,
   onRemove,
-  onStatusChange,
   onEditMilestoneTypeSelect,
   onEditDescriptionChange,
   onEditDateChange,
   onEditScorecardChange,
   onCreateNewMilestoneTypeForEdit,
 }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: milestone.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
   const isEditing = editingId === milestone.id;
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "p-3 bg-muted/50 rounded-lg",
-        isDragging && "opacity-50 shadow-lg ring-2 ring-primary/20"
-      )}
-    >
+    <div className="group p-3 bg-muted/40 hover:bg-muted/60 rounded-lg border border-transparent hover:border-border/60 transition-colors">
       {isEditing && editingMilestone ? (
-        // Editing mode
         <div className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
             <div className="space-y-2">
@@ -97,7 +73,6 @@ const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
                 disabled={isLoading || isCreating}
               />
             </div>
-
             <div className="space-y-2">
               <Label className="text-xs">Description</Label>
               <Textarea
@@ -108,7 +83,6 @@ const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
                 rows={1}
               />
             </div>
-
             <div className="space-y-2">
               <Label className="text-xs">Date</Label>
               <Popover>
@@ -139,7 +113,6 @@ const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
                 </PopoverContent>
               </Popover>
             </div>
-
             <div className="flex items-center gap-2">
               <div className="flex items-center space-x-2">
                 <Switch
@@ -149,20 +122,10 @@ const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
                 <span className="text-xs text-muted-foreground">Scorecard</span>
               </div>
               <div className="flex gap-1 ml-auto">
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={onSaveEditing}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                >
+                <Button type="button" size="sm" onClick={onSaveEditing} className="bg-green-600 hover:bg-green-700 text-white">
                   <Check className="h-4 w-4" />
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={onCancelEditing}
-                >
+                <Button type="button" size="sm" variant="outline" onClick={onCancelEditing}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -170,54 +133,32 @@ const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
           </div>
         </div>
       ) : (
-        // View mode
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3 flex-1">
-            <button
-              {...attributes}
-              {...listeners}
-              className="mt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
-            >
-              <GripVertical className="h-4 w-4" />
-            </button>
-            <Checkbox 
-              checked={milestone.status === 'completed'}
-              onCheckedChange={(checked) => onStatusChange(milestone.id, !!checked)}
-              className="mt-1"
-            />
-            <div className="flex-1 min-w-0">
-              <span className={cn(
-                "font-medium block",
-                milestone.status === 'completed' ? 'line-through text-muted-foreground' : 'text-foreground'
-              )}>
-                {milestone.milestone_name}
-              </span>
-              {milestone.milestone_description && (
-                <span className="text-sm text-muted-foreground block mt-1">
-                  {milestone.milestone_description}
-                </span>
-              )}
-            </div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <span className="font-medium text-foreground truncate">
+              {milestone.milestone_name}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
             <span className="text-sm text-muted-foreground whitespace-nowrap">
               {format(new Date(milestone.milestone_date), "do MMMM yyyy")}
             </span>
             {milestone.is_scorecard_project && (
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 border-yellow-400 text-xs font-semibold shadow-sm whitespace-nowrap"
               >
-                ✨ Scorecard
+                Scorecard
               </Badge>
             )}
-          </div>
-          <div className="flex gap-1 ml-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onStartEditing(milestone)}
-              className="text-muted-foreground hover:text-foreground hover:bg-accent/50"
-            >
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => onStartEditing(milestone)}
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              >
               <Pencil className="h-4 w-4" />
             </Button>
             <Button
