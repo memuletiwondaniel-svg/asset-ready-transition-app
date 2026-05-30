@@ -330,46 +330,53 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
             </div>
           </DialogContent>
         </Dialog>
+      </div>
 
-        {/* Documents List */}
-        {documents.length > 0 && (
-          <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/40">
-            <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2">Uploaded Documents</h4>
-            <div className="space-y-2">
-              {documents.map((doc) => (
-                <div 
-                  key={doc.id}
-                  className="flex items-center justify-between p-4 bg-background rounded-lg border border-border/60 hover:border-border transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    {doc.document_type === 'file' 
-                      ? getFileIcon(doc.file_extension) 
-                      : getLinkIcon(doc.link_type)
-                    }
-                    <div className="flex flex-col">
-                      <span className="font-medium text-foreground">{doc.document_name}</span>
-                      {doc.file_extension && (
-                        <span className="text-xs text-muted-foreground uppercase">
-                          {doc.file_extension} file
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeDocument(doc.id)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+      {/* Documents List */}
+      {documents.length === 0 ? (
+        <button
+          type="button"
+          onClick={() => setIsAddDocumentOpen(true)}
+          className="w-full rounded-lg border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary transition-colors px-4 py-8 text-center group"
+        >
+          <FileText className="mx-auto h-6 w-6 text-primary/60 group-hover:text-primary mb-2 transition-colors" />
+          <p className="text-sm font-medium text-foreground">No documents yet</p>
+          <p className="text-xs text-muted-foreground mt-1">Click <span className="font-medium text-primary">Add Document</span> to attach a file or link.</p>
+        </button>
+      ) : (
+        <div className="space-y-2 rounded-lg border border-border/60 bg-card p-3">
+          {documents.map((doc) => (
+            <div
+              key={doc.id}
+              className="group flex items-center justify-between gap-3 p-3 bg-muted/40 hover:bg-muted/60 rounded-lg border border-transparent hover:border-border/60 transition-colors"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                {doc.document_type === 'file'
+                  ? getFileIcon(doc.file_extension)
+                  : getLinkIcon(doc.link_type)
+                }
+                <div className="flex flex-col min-w-0">
+                  <span className="font-medium text-foreground truncate">{doc.document_name}</span>
+                  {doc.file_extension && (
+                    <span className="text-xs text-muted-foreground uppercase">
+                      {doc.file_extension} file
+                    </span>
+                  )}
                 </div>
-              ))}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeDocument(doc.id)}
+                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 transition-opacity"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
