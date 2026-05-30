@@ -257,7 +257,7 @@ const FunctionsRolesManagement: React.FC = () => {
       return;
     }
     try {
-      await updateRole(editingRole.id, roleName.trim(), roleDescription.trim(), selectedCategoryId);
+      await updateRole(editingRole.id, roleName.trim(), roleDescription.trim(), selectedCategoryId, roleIsB2b);
       queryClient.invalidateQueries({ queryKey: ['categorized-roles'] });
       toast({ title: 'Success', description: 'Role updated successfully' });
       setEditRoleOpen(false);
