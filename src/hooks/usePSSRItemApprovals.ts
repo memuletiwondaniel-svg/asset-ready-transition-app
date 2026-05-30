@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { fetchB2BPartnerIds } from '@/hooks/useB2BPartner';
 
 export type ItemApprovalStatus = 'pending' | 'ready_for_review' | 'approved' | 'rejected' | 'approved_with_action';
 
