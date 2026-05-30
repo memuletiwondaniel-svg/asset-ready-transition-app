@@ -206,11 +206,11 @@ export const SidebarContent = memo<SidebarContentProps>(({
                     </Button>
                   );
 
-                })}
+                  })}
               </div>
             ) : (
               <div className="space-y-1">
-              {visibleNavItems.map((item) => {
+                {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentPage === item.section;
                 const button = (
