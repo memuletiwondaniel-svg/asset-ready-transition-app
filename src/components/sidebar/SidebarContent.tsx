@@ -124,7 +124,22 @@ export const SidebarContent = memo<SidebarContentProps>(({
   };
 
   const content = (
-    <div className="flex flex-col h-full select-none [&_button]:hover:!scale-100 [&_button]:active:!scale-100 [&_button]:active:!rotate-0 [&_svg]:stroke-[1.75]">
+    <div
+      className={cn(
+        "flex flex-col h-full select-none [&_button]:hover:!scale-100 [&_button]:active:!scale-100 [&_button]:active:!rotate-0 [&_svg]:stroke-[1.75]",
+        isCollapsed && [
+          // Apple-style collapsed icon hover: smooth scale, color tint, soft pill background
+          "[&_button]:transition-all [&_button]:duration-200 [&_button]:ease-out",
+          "[&_button]:rounded-xl",
+          "[&_button_svg]:transition-all [&_button_svg]:duration-200 [&_button_svg]:ease-out",
+          "[&_button:hover]:bg-primary/10",
+          "[&_button:hover_svg]:!text-primary",
+          "[&_button:hover_svg]:!scale-[1.18]",
+          "[&_button:hover_svg]:drop-shadow-[0_0_8px_hsl(var(--primary)/0.35)]",
+          "[&_button:active_svg]:!scale-[1.05]",
+        ],
+      )}
+    >
       {/* Header */}
       <div
         className={cn(
