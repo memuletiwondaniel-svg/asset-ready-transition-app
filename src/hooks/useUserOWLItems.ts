@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useEffect } from 'react';
+import { fetchB2BPartnerIds, useB2BPartner } from './useB2BPartner';
 
 export type OWLSource = 'PUNCHLIST' | 'PSSR' | 'PAC' | 'FAC';
 export type OWLStatus = 'OPEN' | 'IN_PROGRESS' | 'CLOSED' | 'CANCELLED';
