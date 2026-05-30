@@ -28,16 +28,20 @@ interface ProjectDocumentsSectionProps {
   setDocuments: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
-const getLinkIcon = (linkType: string) => {
+const getLinkIcon = (_linkType: string) => {
+  return <Link className="h-4 w-4 text-blue-500" />;
+};
+
+const getLinkTypeLabel = (linkType: string): string | null => {
   switch (linkType) {
     case 'assai':
-      return <Folder className="h-4 w-4" />;
+      return 'Assai';
     case 'sharepoint':
-      return <Folder className="h-4 w-4" />;
+      return 'SharePoint';
     case 'wrench':
-      return <Folder className="h-4 w-4" />;
+      return 'Wrench';
     default:
-      return <Link className="h-4 w-4" />;
+      return null;
   }
 };
 
