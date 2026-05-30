@@ -210,10 +210,10 @@ export const SidebarContent = memo<SidebarContentProps>(({
                   <Button
                     key={item.section}
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     onClick={() => onNavigate(item.section || '', false)}
                     className={cn(
-                      "w-full h-8 relative transition-colors duration-150",
+                      "w-full h-8 relative justify-start transition-colors duration-150",
                       isActive
                         ? "bg-primary/10 text-primary rounded-lg hover:bg-primary/20 hover:text-primary"
                         : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
@@ -244,6 +244,7 @@ export const SidebarContent = memo<SidebarContentProps>(({
               })}
             </div>
           )}
+
 
           <Separator className="mb-4" />
 
