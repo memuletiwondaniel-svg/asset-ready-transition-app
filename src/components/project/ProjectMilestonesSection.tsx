@@ -339,10 +339,7 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
     <div className="space-y-3">
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-muted-foreground" />
-          <h3 className="text-lg font-medium text-foreground">Milestones</h3>
-        </div>
+        <h3 className="text-lg font-medium text-foreground">Milestones</h3>
         <Button
           type="button"
           size="sm"
