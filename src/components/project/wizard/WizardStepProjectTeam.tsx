@@ -316,6 +316,7 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
                   <MemberPicker
                     role={role}
                     allUsers={allUsers}
+                    plantName={plantName}
                     onSelect={(uid) => handleAssign(role, uid)}
                     trigger={
                       <Button
