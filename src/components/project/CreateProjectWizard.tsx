@@ -751,6 +751,17 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
           <AlertDialogFooter>
             <AlertDialogCancel>Keep editing</AlertDialogCancel>
             <AlertDialogAction
+              onClick={async (e) => {
+                e.preventDefault();
+                setShowDiscardConfirm(false);
+                await handleSaveAndClose();
+              }}
+              disabled={savingDraft}
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            >
+              Save & exit
+            </AlertDialogAction>
+            <AlertDialogAction
               onClick={() => {
                 setShowDiscardConfirm(false);
                 handleClose();
