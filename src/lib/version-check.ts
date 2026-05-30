@@ -54,6 +54,7 @@ async function fetchRemoteBuild(): Promise<string | null> {
 }
 
 export async function checkOnce() {
+  if (shouldSkipSelfReload()) return;
   if (inFlight || reloading || !CURRENT_BUILD) return;
   if (shouldForceResetForSessionMismatch()) {
     reloading = true;
