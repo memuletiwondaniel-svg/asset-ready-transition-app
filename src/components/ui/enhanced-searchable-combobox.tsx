@@ -95,7 +95,20 @@ export const EnhancedSearchableCombobox: React.FC<EnhancedSearchableComboboxProp
             onTouchMove={(e) => e.stopPropagation()}
             className="max-h-[240px] overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/50"
           >
-            <CommandEmpty>No options found.</CommandEmpty>
+            <CommandEmpty>
+              {allowCreate && searchValue ? (
+                <button
+                  type="button"
+                  onClick={handleCreate}
+                  className="w-full flex items-center px-2 py-1.5 text-sm text-primary hover:bg-primary/10 rounded cursor-pointer"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add "{searchValue}"
+                </button>
+              ) : (
+                "No options found."
+              )}
+            </CommandEmpty>
             <CommandGroup>
               {filteredOptions.map((option) => (
                 <CommandItem
