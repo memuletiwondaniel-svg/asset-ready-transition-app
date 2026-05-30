@@ -114,31 +114,41 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
     return supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
   };
 
-  // Fetch milestones only (team members now use react-query)
+  // Fetch milestones and documents
   useEffect(() => {
-    const fetchMilestones = async () => {
+    const fetchData = async () => {
       if (!projectId) return;
       
       setMilestonesLoading(true);
       try {
-        const { data: milestonesData, error: milestonesError } = await (supabase as any)
-          .from('project_milestones')
-          .select('*')
-          .eq('project_id', projectId)
-          .order('milestone_date', { ascending: true })
-          .limit(5);
+        const [milestonesRes, docsRes] = await Promise.all([
+          (supabase as any)
+            .from('project_milestones')
+            .select('*')
+            .eq('project_id', projectId)
+            .order('milestone_date', { ascending: true })
+            .limit(5),
+          (supabase as any)
+            .from('project_documents')
+            .select('*')
+            .eq('project_id', projectId)
+            .order('created_at', { ascending: false }),
+        ]);
         
-        if (!milestonesError && milestonesData) {
-          setMilestones(milestonesData);
+        if (!milestonesRes.error && milestonesRes.data) {
+          setMilestones(milestonesRes.data);
+        }
+        if (!docsRes.error && docsRes.data) {
+          setDocuments(docsRes.data);
         }
       } catch (error) {
-        console.error('Error fetching milestones:', error);
+        console.error('Error fetching project data:', error);
       } finally {
         setMilestonesLoading(false);
       }
     };
 
-    fetchMilestones();
+    fetchData();
   }, [projectId]);
 
   const loading = teamLoading || milestonesLoading;
