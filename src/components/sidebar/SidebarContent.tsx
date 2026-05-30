@@ -133,50 +133,8 @@ export const SidebarContent = memo<SidebarContentProps>(({
           </div>
         )}
         
-        {isCollapsed ? null : (
-          <>
-            <Button 
-              variant="ghost" 
-              onClick={onProfileClick}
-              className="w-full p-2 h-auto justify-start rounded-lg hover:bg-muted/40 transition-colors duration-150 cursor-pointer"
-            >
-              {isProfileLoading ? (
-                <Skeleton className="h-9 w-9 rounded-full flex-shrink-0 mr-2" />
-              ) : (
-                <Avatar className="h-9 w-9 flex-shrink-0 mr-2">
-                  <AvatarImage src={displayAvatar} alt={displayName} />
-                  <AvatarFallback delayMs={600} className="bg-gradient-to-br from-primary to-accent text-white">
-                    {displayName.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              )}
-              <div className="flex-1 text-left min-w-0">
-                {isProfileLoading ? (
-                  <>
-                    <Skeleton className="h-4 w-24 mb-1" />
-                    <Skeleton className="h-3 w-16" />
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm font-semibold leading-tight truncate">{displayName.split(' ')[0]}</p>
-                    <p className="text-[11px] text-muted-foreground/70 leading-snug whitespace-normal break-words line-clamp-2">{displayTitle}</p>
-                  </>
-                )}
-              </div>
-            </Button>
-            
-            {realtimeProfile && (
-              <div className="px-3 pt-2">
-                <ProfileCompletionIndicator
-                  profile={realtimeProfile}
-                  onOpenProfile={onProfileClick}
-                  collapsed={false}
-                />
-              </div>
-            )}
-          </>
-        )}
       </div>
+
 
       {/* Navigation */}
       <ScrollArea className="flex-1 px-2">
