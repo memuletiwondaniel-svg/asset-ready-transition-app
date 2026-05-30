@@ -1,6 +1,7 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { fetchB2BPartnerIds } from './useB2BPartner';
 
 export interface UserORPActivity {
   id: string;
