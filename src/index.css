@@ -563,6 +563,17 @@
     background-clip: padding-box;
   }
 
+  /* Fully hidden scrollbar — scroll still works */
+  .scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hidden::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+
 
   /* Smooth scrolling */
   html {
