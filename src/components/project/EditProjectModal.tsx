@@ -356,6 +356,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
           region_id: formData.region_id || null,
           hub_id: formData.hub_id || null,
           plant_id: formData.plant_id || null,
+          field_id: formData.field_id || null,
           station_id: formData.station_id || null,
         },
       });
