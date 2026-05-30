@@ -31,6 +31,8 @@ interface ProjectReadinessWidgetProps {
 
 export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onViewDetails, onEdit }) => {
   const [teamExpanded, setTeamExpanded] = useState(false);
+  const [milestonesExpanded, setMilestonesExpanded] = useState(true);
+  const [documentsExpanded, setDocumentsExpanded] = useState(true);
   const { projects } = useProjects();
   const { plants } = usePlants();
   const { stations } = useStations();
@@ -373,64 +375,78 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
 
       {/* Milestones Timeline */}
       <div className="space-y-3">
-        <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setMilestonesExpanded(v => !v); }}
+          className="w-full font-semibold text-sm text-muted-foreground flex items-center gap-2 hover:text-foreground transition-colors"
+        >
           <div className="p-1.5 rounded-lg bg-rose-500/10">
             <Target className="h-4 w-4 text-rose-600" />
           </div>
-          Milestones
-        </h3>
-        <div className="pl-1">
-          <MilestonesTimeline milestones={milestones} />
-        </div>
+          <span className="flex-1 text-left">Milestones</span>
+          {milestonesExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+        {milestonesExpanded && (
+          <div className="pl-1">
+            <MilestonesTimeline milestones={milestones} />
+          </div>
+        )}
       </div>
 
       {/* Documents */}
       {documents.length > 0 && (
         <div className="space-y-3">
-          <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setDocumentsExpanded(v => !v); }}
+            className="w-full font-semibold text-sm text-muted-foreground flex items-center gap-2 hover:text-foreground transition-colors"
+          >
             <div className="p-1.5 rounded-lg bg-blue-500/10">
               <FileText className="h-4 w-4 text-blue-600" />
             </div>
-            Documents
-          </h3>
-          <div className="space-y-1.5 pl-1">
-            {documents.map((doc) => {
-              const isLink = doc.document_type === 'link';
-              const ext = (doc.file_extension || '').toLowerCase();
-              const Icon = isLink
-                ? (doc.link_type ? Folder : LinkIcon)
-                : ext === 'pdf' ? FileText
-                : ['doc','docx'].includes(ext) ? FileText
-                : ['xls','xlsx','csv'].includes(ext) ? FileSpreadsheet
-                : ['ppt','pptx'].includes(ext) ? Presentation
-                : ['jpg','jpeg','png','gif','webp'].includes(ext) ? FileImage
-                : ['txt'].includes(ext) ? FileCode
-                : File;
-              const href = isLink ? doc.link_url : (doc.file_path ? supabase.storage.from('project-documents').getPublicUrl(doc.file_path).data.publicUrl : undefined);
-              const Wrapper: any = href ? 'a' : 'div';
-              const wrapperProps: any = href ? { href, target: '_blank', rel: 'noopener noreferrer', onClick: (e: React.MouseEvent) => e.stopPropagation() } : {};
-              return (
-                <Wrapper
-                  key={doc.id}
-                  {...wrapperProps}
-                  className={cn(
-                    "flex items-center gap-2.5 p-2 rounded-lg border bg-muted/30 border-border/40 transition-all duration-200",
-                    href && "hover:bg-muted/50 hover:border-primary/20 cursor-pointer"
-                  )}
-                >
-                  <div className="p-1.5 rounded-md bg-background/60 border border-border/40 shrink-0">
-                    <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium truncate leading-tight">{doc.document_name}</p>
-                    <p className="text-[10px] text-muted-foreground truncate leading-tight uppercase tracking-wide">
-                      {isLink ? (doc.link_type || 'Link') : (ext || 'File')}
-                    </p>
-                  </div>
-                </Wrapper>
-              );
-            })}
-          </div>
+            <span className="flex-1 text-left">Documents</span>
+            {documentsExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+          {documentsExpanded && (
+            <div className="space-y-1.5 pl-1">
+              {documents.map((doc) => {
+                const isLink = doc.document_type === 'link';
+                const ext = (doc.file_extension || '').toLowerCase();
+                const Icon = isLink
+                  ? (doc.link_type ? Folder : LinkIcon)
+                  : ext === 'pdf' ? FileText
+                  : ['doc','docx'].includes(ext) ? FileText
+                  : ['xls','xlsx','csv'].includes(ext) ? FileSpreadsheet
+                  : ['ppt','pptx'].includes(ext) ? Presentation
+                  : ['jpg','jpeg','png','gif','webp'].includes(ext) ? FileImage
+                  : ['txt'].includes(ext) ? FileCode
+                  : File;
+                const href = isLink ? doc.link_url : (doc.file_path ? supabase.storage.from('project-documents').getPublicUrl(doc.file_path).data.publicUrl : undefined);
+                const Wrapper: any = href ? 'a' : 'div';
+                const wrapperProps: any = href ? { href, target: '_blank', rel: 'noopener noreferrer', onClick: (e: React.MouseEvent) => e.stopPropagation() } : {};
+                return (
+                  <Wrapper
+                    key={doc.id}
+                    {...wrapperProps}
+                    className={cn(
+                      "flex items-center gap-2.5 p-2 rounded-lg border bg-muted/30 border-border/40 transition-all duration-200",
+                      href && "hover:bg-muted/50 hover:border-primary/20 cursor-pointer"
+                    )}
+                  >
+                    <div className="p-1.5 rounded-md bg-background/60 border border-border/40 shrink-0">
+                      <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-medium truncate leading-tight">{doc.document_name}</p>
+                      <p className="text-[10px] text-muted-foreground truncate leading-tight uppercase tracking-wide">
+                        {isLink ? (doc.link_type || 'Link') : (ext || 'File')}
+                      </p>
+                    </div>
+                  </Wrapper>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
