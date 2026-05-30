@@ -355,22 +355,28 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
                   : getLinkIcon(doc.link_type)
                 }
                 <div className="flex items-baseline gap-2 min-w-0 flex-1">
-                  <span className="text-sm font-medium text-foreground truncate">{doc.document_name}</span>
+                  {doc.document_type === 'link' && doc.link_url ? (
+                    <a
+                      href={doc.link_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-primary hover:underline truncate"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {doc.document_name}
+                    </a>
+                  ) : (
+                    <span className="text-sm font-medium text-foreground truncate">{doc.document_name}</span>
+                  )}
                   {doc.document_type === 'file' && doc.file_extension && (
                     <span className="text-[10px] text-muted-foreground uppercase shrink-0">
                       {doc.file_extension}
                     </span>
                   )}
-                  {doc.document_type === 'link' && doc.link_url && (
-                    <a
-                      href={doc.link_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary hover:underline truncate"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {doc.link_url}
-                    </a>
+                  {doc.document_type === 'link' && getLinkTypeLabel(doc.link_type) && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
+                      {getLinkTypeLabel(doc.link_type)}
+                    </Badge>
                   )}
                 </div>
               </div>
