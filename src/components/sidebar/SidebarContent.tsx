@@ -261,10 +261,10 @@ export const SidebarContent = memo<SidebarContentProps>(({
               const btn = (
                 <Button 
                   variant="ghost" 
-                  size={isCollapsed ? "icon" : "sm"} 
+                  size="sm" 
                   onClick={() => onNavigate('admin-tools', isMobile)} 
                   className={cn(
-                    `w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`,
+                    `w-full h-8 text-xs transition-colors duration-150 justify-start`,
                     currentPage === 'admin-tools' 
                       ? "bg-primary/10 text-primary rounded-lg hover:bg-primary/20 hover:text-primary" 
                       : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
@@ -287,9 +287,9 @@ export const SidebarContent = memo<SidebarContentProps>(({
               const btn = (
                 <Button 
                   variant="ghost" 
-                  size={isCollapsed ? "icon" : "sm"} 
+                  size="sm" 
                   onClick={onThemeToggle} 
-                  className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
+                  className={`w-full h-8 text-xs transition-colors duration-150 justify-start text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
                 >
                   {theme === 'dark' ? (
                     <>
@@ -314,8 +314,8 @@ export const SidebarContent = memo<SidebarContentProps>(({
               const btn = (
                 <Button 
                   variant="ghost" 
-                  size={isCollapsed ? "icon" : "sm"} 
-                  className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
+                  size="sm" 
+                  className={`w-full h-8 text-xs transition-colors duration-150 justify-start text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
                 >
                   <Bell className="w-4 h-4 text-muted-foreground" />
                   {!isCollapsed && <span className="ml-2">{label}</span>}
@@ -333,8 +333,8 @@ export const SidebarContent = memo<SidebarContentProps>(({
                   <DropdownMenuTrigger asChild>
                     <Button 
                       variant="ghost" 
-                      size={isCollapsed ? "icon" : "sm"} 
-                      className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
+                      size="sm" 
+                      className={`w-full h-8 text-xs transition-colors duration-150 justify-start text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
                     >
                       <Languages className="w-4 h-4 text-muted-foreground" />
                       {!isCollapsed && <span className="ml-2">{label}</span>}
@@ -371,9 +371,9 @@ export const SidebarContent = memo<SidebarContentProps>(({
               const btn = (
                 <Button 
                   variant="ghost" 
-                  size={isCollapsed ? "icon" : "sm"} 
+                  size="sm" 
                   onClick={onShowOnboarding} 
-                  className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
+                  className={`w-full h-8 text-xs transition-colors duration-150 justify-start text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
                 >
                   <Clock className="w-4 h-4 text-muted-foreground" />
                   {!isCollapsed && <span className="ml-2">{label}</span>}
@@ -496,9 +496,9 @@ export const SidebarContent = memo<SidebarContentProps>(({
           const btn = (
             <Button 
               variant="ghost" 
-              size={isCollapsed ? "icon" : "sm"} 
+              size="sm" 
               onClick={onLogout}
-              className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10`} 
+              className={`w-full h-8 text-xs transition-colors duration-150 justify-start text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10`} 
             >
               <LogOut className="w-4 h-4" />
               {!isCollapsed && <span className="ml-2">{label}</span>}
@@ -515,9 +515,9 @@ export const SidebarContent = memo<SidebarContentProps>(({
           const btn = (
             <Button 
               variant="ghost" 
-              size={isCollapsed ? "icon" : "sm"} 
+              size="sm" 
               onClick={onToggleCollapse}
-              className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground hover:text-foreground`} 
+              className={`w-full h-8 text-xs transition-colors duration-150 justify-start text-muted-foreground hover:text-foreground`} 
             >
               {isCollapsed ? (
                 <ChevronRight className="w-4 h-4" />
