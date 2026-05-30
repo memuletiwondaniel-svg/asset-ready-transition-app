@@ -332,17 +332,6 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
     ));
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      setMilestones((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
 
   return (
     <div className="space-y-3">
