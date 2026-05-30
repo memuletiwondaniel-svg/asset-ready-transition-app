@@ -248,10 +248,10 @@ export function ProjectsTable({
   const [sort, setSort] = useState<SortState>(null);
   const { milestoneTypes } = useProjectMilestoneTypes();
   const milestoneInfoByCode = useMemo(() => {
-    const map = new Map<string, { name: string; description: string | null }>();
+    const map = new Map<string, { code: string; name: string; description: string | null }>();
     milestoneTypes.forEach(m => {
-      map.set(m.code.toUpperCase(), { name: m.name, description: m.description });
-      map.set(m.name.toUpperCase(), { name: m.name, description: m.description });
+      map.set(m.code.toUpperCase(), { code: m.code, name: m.name, description: m.description });
+      map.set(m.name.toUpperCase(), { code: m.code, name: m.name, description: m.description });
     });
     return map;
   }, [milestoneTypes]);
