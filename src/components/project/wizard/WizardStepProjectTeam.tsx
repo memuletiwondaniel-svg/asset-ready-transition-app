@@ -266,18 +266,72 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
 
               {assigned ? (
                 <>
-                  <Avatar className="h-9 w-9 border-2 border-emerald-300 dark:border-emerald-700">
-                    <AvatarImage src={member.avatar_url} alt={member.user_name} />
-                    <AvatarFallback className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-                      {getInitials(member.user_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{member.user_name}</p>
-                    {member.position && (
-                      <p className="text-xs text-muted-foreground truncate">{member.position}</p>
-                    )}
-                  </div>
+                  {(() => {
+                    // Detect B2B partner: another user matching the same eligibility patterns
+                    // (and plant for Deputy Plant Director). If exactly one other matches, that's the partner.
+                    const patterns = ROLE_ELIGIBILITY[role] || [];
+                    let pool = allUsers.filter((u) => {
+                      const hay = `${u.position || ''} ${u.role || ''}`.toLowerCase();
+                      return patterns.some((p) => hay.includes(p));
+                    });
+                    if (role === 'Deputy Plant Director' && plantName) {
+                      const pl = plantName.toLowerCase();
+                      const scoped = pool.filter((u) => (u.position || '').toLowerCase().includes(pl));
+                      if (scoped.length > 0) pool = scoped;
+                    }
+                    const others = pool.filter((u) => u.user_id !== member.user_id);
+                    const partner = pool.length === 2 && others.length === 1 ? others[0] : null;
+
+                    const avatarBlock = (
+                      <Avatar className="h-9 w-9 border-2 border-emerald-300 dark:border-emerald-700">
+                        <AvatarImage src={member.avatar_url} alt={member.user_name} />
+                        <AvatarFallback className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
+                          {getInitials(member.user_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    );
+
+                    const nameBlock = (
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-semibold text-foreground truncate">{member.user_name}</p>
+                          {partner && (
+                            <span className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0">
+                              B2B
+                            </span>
+                          )}
+                        </div>
+                        {member.position && (
+                          <p className="text-xs text-muted-foreground truncate">{member.position}</p>
+                        )}
+                      </div>
+                    );
+
+                    if (partner) {
+                      return (
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-3 flex-1 min-w-0 cursor-help">
+                                {avatarBlock}
+                                {nameBlock}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                              B2B: {partner.full_name || partner.email}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    }
+
+                    return (
+                      <>
+                        {avatarBlock}
+                        {nameBlock}
+                      </>
+                    );
+                  })()}
                   <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
 
                   <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">

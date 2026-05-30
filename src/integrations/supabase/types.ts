@@ -10870,6 +10870,7 @@ export type Database = {
           display_order: number | null
           id: string
           is_active: boolean
+          is_b2b: boolean
           is_director: boolean | null
           name: string
           parent_role_id: string | null
@@ -10882,6 +10883,7 @@ export type Database = {
           display_order?: number | null
           id?: string
           is_active?: boolean
+          is_b2b?: boolean
           is_director?: boolean | null
           name: string
           parent_role_id?: string | null
@@ -10894,6 +10896,7 @@ export type Database = {
           display_order?: number | null
           id?: string
           is_active?: boolean
+          is_b2b?: boolean
           is_director?: boolean | null
           name?: string
           parent_role_id?: string | null
@@ -13614,6 +13617,7 @@ export type Database = {
           category_order: number
           role_description: string
           role_id: string
+          role_is_b2b: boolean
           role_name: string
         }[]
       }

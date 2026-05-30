@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -112,6 +113,7 @@ const FunctionsRolesManagement: React.FC = () => {
   const [roleName, setRoleName] = useState('');
   const [roleDescription, setRoleDescription] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [roleIsB2b, setRoleIsB2b] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
 
   const toggleCategory = (categoryId: string) => {
@@ -229,7 +231,7 @@ const FunctionsRolesManagement: React.FC = () => {
       return;
     }
     try {
-      await addRole(roleName.trim(), roleDescription.trim(), selectedCategoryId);
+      await addRole(roleName.trim(), roleDescription.trim(), selectedCategoryId, roleIsB2b);
       queryClient.invalidateQueries({ queryKey: ['categorized-roles'] });
       toast({ title: 'Success', description: 'Role added successfully' });
       setAddOpen(false);
@@ -245,6 +247,7 @@ const FunctionsRolesManagement: React.FC = () => {
     setRoleName(role.name);
     setRoleDescription(role.description || '');
     setSelectedCategoryId(role.category_id || '');
+    setRoleIsB2b(!!role.is_b2b);
     setEditRoleOpen(true);
   };
 
@@ -254,7 +257,7 @@ const FunctionsRolesManagement: React.FC = () => {
       return;
     }
     try {
-      await updateRole(editingRole.id, roleName.trim(), roleDescription.trim(), selectedCategoryId);
+      await updateRole(editingRole.id, roleName.trim(), roleDescription.trim(), selectedCategoryId, roleIsB2b);
       queryClient.invalidateQueries({ queryKey: ['categorized-roles'] });
       toast({ title: 'Success', description: 'Role updated successfully' });
       setEditRoleOpen(false);
@@ -283,6 +286,7 @@ const FunctionsRolesManagement: React.FC = () => {
     setRoleName('');
     setRoleDescription('');
     setSelectedCategoryId('');
+    setRoleIsB2b(false);
     setEditingRole(null);
   };
 
@@ -384,7 +388,14 @@ const FunctionsRolesManagement: React.FC = () => {
                           key={role.id}
                           className="group/role flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
                         >
-                          <p className="font-medium flex-1">{role.name}</p>
+                          <div className="flex-1 flex items-center gap-2">
+                            <p className="font-medium">{role.name}</p>
+                            {role.is_b2b && (
+                              <Badge variant="secondary" className="text-[10px] font-medium px-1.5 py-0 h-5 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                                B2B
+                              </Badge>
+                            )}
+                          </div>
                           <div className="flex items-center gap-1 opacity-0 group-hover/role:opacity-100 transition-opacity">
                             <Button
                               variant="ghost"
@@ -497,6 +508,13 @@ const FunctionsRolesManagement: React.FC = () => {
                   <Label htmlFor="role-description" className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Description — optional</Label>
                   <Textarea id="role-description" value={roleDescription} onChange={(e) => setRoleDescription(e.target.value)} placeholder="Short label or full name" />
                 </div>
+                <label className="flex items-start gap-2.5 rounded-md border border-border/60 bg-muted/20 p-3 cursor-pointer hover:bg-muted/40 transition-colors">
+                  <Checkbox checked={roleIsB2b} onCheckedChange={(c) => setRoleIsB2b(!!c)} className="mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Back-to-back (B2B) role</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Two users share this role as a rotation. Auto-resolve will pick one and surface the partner on hover.</p>
+                  </div>
+                </label>
               </>
             )}
           </div>
@@ -581,6 +599,13 @@ const FunctionsRolesManagement: React.FC = () => {
                 onChange={(e) => setRoleDescription(e.target.value)}
               />
             </div>
+            <label className="flex items-start gap-2.5 rounded-md border border-border/60 bg-muted/20 p-3 cursor-pointer hover:bg-muted/40 transition-colors">
+              <Checkbox checked={roleIsB2b} onCheckedChange={(c) => setRoleIsB2b(!!c)} className="mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Back-to-back (B2B) role</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Two users share this role as a rotation. Auto-resolve will pick one and surface the partner on hover.</p>
+              </div>
+            </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setEditRoleOpen(false); resetRoleForm(); }}>

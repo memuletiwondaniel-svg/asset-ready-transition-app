@@ -14,6 +14,7 @@ export interface Role {
   name: string;
   description: string | null;
   category_id: string | null;
+  is_b2b?: boolean;
 }
 
 export interface CategorizedRole {
@@ -23,6 +24,7 @@ export interface CategorizedRole {
   role_id: string | null;
   role_name: string | null;
   role_description: string | null;
+  role_is_b2b?: boolean;
 }
 
 export interface GroupedRoles {
@@ -84,6 +86,7 @@ export const useCategorizedRoles = () => {
             name: item.role_name!,
             description: item.role_description,
             category_id: item.category_id,
+            is_b2b: !!item.role_is_b2b,
           });
         }
       });
@@ -95,7 +98,7 @@ export const useCategorizedRoles = () => {
 };
 
 export const useAddRole = () => {
-  const addRole = async (name: string, description: string, categoryId: string) => {
+  const addRole = async (name: string, description: string, categoryId: string, isB2b: boolean = false) => {
     // Check if a soft-deleted role with this name exists — reactivate it
     const { data: existing } = await supabase
       .from('roles')
@@ -106,7 +109,7 @@ export const useAddRole = () => {
     if (existing && !existing.is_active) {
       const { data, error } = await supabase
         .from('roles')
-        .update({ is_active: true, description, category_id: categoryId })
+        .update({ is_active: true, description, category_id: categoryId, is_b2b: isB2b } as any)
         .eq('id', existing.id)
         .select()
         .single();
@@ -120,7 +123,7 @@ export const useAddRole = () => {
 
     const { data, error } = await supabase
       .from('roles')
-      .insert({ name, description, category_id: categoryId, is_active: true })
+      .insert({ name, description, category_id: categoryId, is_active: true, is_b2b: isB2b } as any)
       .select()
       .single();
 
@@ -193,14 +196,15 @@ export const useDeleteRoleCategory = () => {
 };
 
 export const useUpdateRole = () => {
-  const updateRole = async (id: string, name: string, description: string, categoryId: string) => {
+  const updateRole = async (id: string, name: string, description: string, categoryId: string, isB2b: boolean = false) => {
     const { data, error } = await supabase
       .from('roles')
       .update({
         name,
         description,
         category_id: categoryId,
-      })
+        is_b2b: isB2b,
+      } as any)
       .eq('id', id)
       .select()
       .single();
