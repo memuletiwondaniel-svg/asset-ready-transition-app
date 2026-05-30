@@ -508,6 +508,13 @@ const FunctionsRolesManagement: React.FC = () => {
                   <Label htmlFor="role-description" className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">Description — optional</Label>
                   <Textarea id="role-description" value={roleDescription} onChange={(e) => setRoleDescription(e.target.value)} placeholder="Short label or full name" />
                 </div>
+                <label className="flex items-start gap-2.5 rounded-md border border-border/60 bg-muted/20 p-3 cursor-pointer hover:bg-muted/40 transition-colors">
+                  <Checkbox checked={roleIsB2b} onCheckedChange={(c) => setRoleIsB2b(!!c)} className="mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Back-to-back (B2B) role</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Two users share this role as a rotation. Auto-resolve will pick one and surface the partner on hover.</p>
+                  </div>
+                </label>
               </>
             )}
           </div>
