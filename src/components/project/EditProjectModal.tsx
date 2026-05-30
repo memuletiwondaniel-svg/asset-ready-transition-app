@@ -661,6 +661,26 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             </Button>
 
             <div className="flex items-center gap-3">
+              {currentStep < STEPS.length && (
+                <Button
+                  variant="ghost"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="gap-2 text-muted-foreground hover:text-primary-foreground hover:bg-primary"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Save & Exit
+                    </>
+                  )}
+                </Button>
+              )}
               {currentStep < STEPS.length ? (
                 <Button onClick={handleNext}>
                   Next
@@ -686,6 +706,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 </Button>
               )}
             </div>
+
           </div>
         </DialogContent>
       </Dialog>
