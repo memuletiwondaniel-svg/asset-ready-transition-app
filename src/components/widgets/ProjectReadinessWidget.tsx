@@ -179,17 +179,16 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                 </p>
               )}
               {stripHtml(project.project_scope).length > 200 && (
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="p-0 h-auto text-primary mt-2"
+                <button
+                  type="button"
+                  className="mt-2 text-[11px] font-medium text-primary/80 hover:text-primary hover:underline underline-offset-2 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsScopeExpanded(!isScopeExpanded);
                   }}
                 >
-                  {isScopeExpanded ? 'Show Less' : 'Read More'}
-                </Button>
+                  {isScopeExpanded ? 'Show less' : 'Read more'}
+                </button>
               )}
             </div>
           </div>
