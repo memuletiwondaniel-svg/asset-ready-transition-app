@@ -84,6 +84,38 @@ const STEPS = [
   { id: 5, title: 'Review', description: 'Confirm & create' },
 ];
 
+const LOCAL_PROJECT_RECOVERY_KEY = 'orsh:create-project-wizard-recovery-v1';
+
+function readLocalRecoveryDraft(): ProjectDraftPayload | null {
+  try {
+    const raw = localStorage.getItem(LOCAL_PROJECT_RECOVERY_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { payload?: ProjectDraftPayload };
+    return parsed?.payload ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalRecoveryDraft(payload: ProjectDraftPayload) {
+  try {
+    localStorage.setItem(
+      LOCAL_PROJECT_RECOVERY_KEY,
+      JSON.stringify({ payload, savedAt: new Date().toISOString() })
+    );
+  } catch {
+    // Ignore storage quota / serialization issues for recovery drafts.
+  }
+}
+
+function clearLocalRecoveryDraft() {
+  try {
+    localStorage.removeItem(LOCAL_PROJECT_RECOVERY_KEY);
+  } catch {
+    // Ignore storage access issues.
+  }
+}
+
 export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({ 
   open, 
   onClose,
@@ -147,6 +179,19 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     [formData, scopeDescription, scopeAttachments, teamMembers, milestones, documents]
   );
 
+  const draftPayload = useMemo<ProjectDraftPayload>(
+    () => ({
+      formData,
+      scopeDescription,
+      scopeAttachments,
+      teamMembers,
+      milestones,
+      documents,
+      currentStep,
+    }),
+    [formData, scopeDescription, scopeAttachments, teamMembers, milestones, documents, currentStep]
+  );
+
   // Get region and hub names for auto-population
   const getRegionName = () => {
     const region = regions.find(r => r.id === formData.region_id);
@@ -180,11 +225,18 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
 
   // On open: if a saved draft exists, prompt to resume
   useEffect(() => {
-    if (open && draft && !isDirty) {
+    if (!open || isDirty) return;
+    const recoveryDraft = readLocalRecoveryDraft();
+    if (recoveryDraft || draft) {
       setShowResumePrompt(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, draft]);
+
+  useEffect(() => {
+    if (!open || !isDirty) return;
+    writeLocalRecoveryDraft(draftPayload);
+  }, [open, isDirty, draftPayload]);
 
   const applyDraft = (d: ProjectDraftPayload) => {
     setFormData(d.formData);
@@ -203,16 +255,9 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
   };
 
   const handleSaveAndClose = async () => {
-    await saveDraft({
-      formData,
-      scopeDescription,
-      scopeAttachments,
-      teamMembers,
-      milestones,
-      documents,
-      currentStep,
-    });
+    await saveDraft(draftPayload);
     await reloadDraft();
+    clearLocalRecoveryDraft();
     resetWizard();
     onClose();
   };
@@ -481,6 +526,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
 
       toast.success(`Project ${formData.project_id_prefix}${formData.project_id_number} created successfully!`);
       await clearDraft();
+      clearLocalRecoveryDraft();
       handleClose();
       onSuccess?.(newProject.id);
 
@@ -724,6 +770,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
             <AlertDialogCancel
               onClick={async () => {
                 setShowResumePrompt(false);
+                clearLocalRecoveryDraft();
                 await clearDraft();
               }}
             >
@@ -731,7 +778,12 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (draft) applyDraft(draft);
+                const recoveryDraft = readLocalRecoveryDraft();
+                if (recoveryDraft) {
+                  applyDraft(recoveryDraft);
+                } else if (draft) {
+                  applyDraft(draft);
+                }
                 setShowResumePrompt(false);
               }}
             >
@@ -766,6 +818,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
             <AlertDialogAction
               onClick={() => {
                 setShowDiscardConfirm(false);
+                clearLocalRecoveryDraft();
                 handleClose();
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

@@ -22,6 +22,8 @@ export function useProjectDraft() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+      setDraftId(null);
+      setDraft(null);
       setLoading(false);
       return;
     }
@@ -44,6 +46,18 @@ export function useProjectDraft() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      void load();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [load]);
+
   const save = useCallback(async (payload: ProjectDraftPayload) => {
     setSaving(true);
     try {
@@ -64,6 +78,7 @@ export function useProjectDraft() {
         if (error) throw error;
         setDraftId(data.id);
       }
+      setDraft(payload);
       toast.success('Draft saved');
     } catch (e: any) {
       toast.error(e.message || 'Failed to save draft');
@@ -73,8 +88,9 @@ export function useProjectDraft() {
   }, [draftId]);
 
   const clear = useCallback(async () => {
-    if (!draftId) return;
-    await (supabase as any).from('project_drafts').delete().eq('id', draftId);
+    if (draftId) {
+      await (supabase as any).from('project_drafts').delete().eq('id', draftId);
+    }
     setDraftId(null);
     setDraft(null);
   }, [draftId]);
