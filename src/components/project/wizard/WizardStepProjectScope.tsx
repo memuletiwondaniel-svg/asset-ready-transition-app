@@ -16,7 +16,7 @@ const WizardStepProjectScope: React.FC<WizardStepProjectScopeProps> = ({
 }) => {
   return (
     <div className="space-y-3">
-      <h3 className="text-lg font-medium">
+      <h3 className="text-sm font-medium text-foreground">
         Project Scope <span className="text-destructive">*</span>
       </h3>
 
