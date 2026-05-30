@@ -568,7 +568,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     <>
       <Dialog open={open} onOpenChange={(o) => !o && requestClose()}>
         <DialogContent hideCloseButton className="sm:max-w-3xl h-[85vh] overflow-hidden flex flex-col p-0">
-          <DialogHeader className="border-b px-4 sm:px-6 pt-3 sm:pt-4 pb-4">
+          <DialogHeader className="border-b px-4 sm:px-6 pt-1 sm:pt-2 pb-4">
             <DialogTitle className="text-lg sm:text-xl font-semibold">
               Create New Project
             </DialogTitle>
