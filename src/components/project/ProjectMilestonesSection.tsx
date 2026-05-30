@@ -134,7 +134,7 @@ const MilestoneItem: React.FC<MilestoneItemProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-[minmax(0,0.75fr)_auto_7rem_minmax(0,0.25fr)_auto] items-center gap-3">
-          <span className="text-xs font-medium text-foreground truncate">
+          <span className="text-sm font-medium text-foreground truncate">
             {milestone.milestone_name}
           </span>
           <div className="flex justify-start min-w-[5rem]">
@@ -147,7 +147,7 @@ const MilestoneItem: React.FC<MilestoneItemProps> = ({
               </Badge>
             ) : null}
           </div>
-          <span className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap text-left">
+          <span className="text-sm text-muted-foreground tabular-nums whitespace-nowrap text-left">
             {format(new Date(milestone.milestone_date), "dd-MMM-yyyy")}
           </span>
           <div aria-hidden />
