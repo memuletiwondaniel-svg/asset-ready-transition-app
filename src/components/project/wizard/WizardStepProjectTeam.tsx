@@ -296,9 +296,18 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
                         <div className="flex items-center gap-1.5">
                           <p className="text-sm font-semibold text-foreground truncate">{member.user_name}</p>
                           {partner && (
-                            <span className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0">
-                              B2B
-                            </span>
+                            <TooltipProvider delayDuration={150}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0">
+                                    B2B
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
+                                  B2B: {partner.full_name || partner.email}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
                         {member.position && (
@@ -306,24 +315,6 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
                         )}
                       </div>
                     );
-
-                    if (partner) {
-                      return (
-                        <TooltipProvider delayDuration={150}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                {avatarBlock}
-                                {nameBlock}
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
-                              B2B: {partner.full_name || partner.email}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      );
-                    }
 
                     return (
                       <>
