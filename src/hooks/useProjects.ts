@@ -249,7 +249,7 @@ export const useProjectTeamMembers = (projectId?: string) => {
         (data || []).map(async (member: any) => {
           const { data: profile } = await (supabase as any)
             .from('profiles')
-            .select('full_name, avatar_url')
+            .select('full_name, avatar_url, position, email')
             .eq('user_id', member.user_id)
             .maybeSingle();
           
@@ -257,6 +257,8 @@ export const useProjectTeamMembers = (projectId?: string) => {
             ...member,
             user_name: profile?.full_name || 'Unknown User',
             avatar_url: profile?.avatar_url || '',
+            position: profile?.position || '',
+            user_email: profile?.email || '',
           };
         })
       );
