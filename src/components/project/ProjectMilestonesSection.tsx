@@ -150,6 +150,7 @@ const MilestoneItem: React.FC<MilestoneItemProps> = ({
           <span className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap text-left">
             {format(new Date(milestone.milestone_date), "dd-MMM-yyyy")}
           </span>
+          <div aria-hidden />
           <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 justify-end w-12">
             <Button
               type="button"
