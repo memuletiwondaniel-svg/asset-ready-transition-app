@@ -496,6 +496,11 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
 
   const regionName = getRegionName();
   const hubName = getHubName();
+  const { plants } = usePlants();
+  const plantName = useMemo(
+    () => plants.find((p) => p.id === formData.plant_id)?.name ?? null,
+    [plants, formData.plant_id]
+  );
 
   const renderStepContent = () => {
     switch (currentStep) {
