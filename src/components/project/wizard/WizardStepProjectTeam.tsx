@@ -150,8 +150,10 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
   regionName = null,
   hubName = null,
   hubId = null,
+  plantName = null,
 }) => {
   const [hasAutoPopulated, setHasAutoPopulated] = useState(false);
+  const [hasAutoPopulatedDPD, setHasAutoPopulatedDPD] = useState(false);
   const { suggestedTeam, isLoading } = useAutoPopulateTeam(regionName, hubName, hubId);
   const { data: allUsers = [] } = useProfileUsers();
 
@@ -165,6 +167,38 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
       setHasAutoPopulated(true);
     }
   }, [suggestedTeam, hasAutoPopulated, isLoading, setTeamMembers, teamMembers]);
+
+  // Auto-populate Deputy Plant Director based on the selected plant
+  useEffect(() => {
+    if (hasAutoPopulatedDPD || !plantName || allUsers.length === 0) return;
+    const alreadySet = teamMembers.some((m) => m.role === 'Deputy Plant Director');
+    if (alreadySet) {
+      setHasAutoPopulatedDPD(true);
+      return;
+    }
+    const plantLower = plantName.toLowerCase();
+    const patterns = ROLE_ELIGIBILITY['Deputy Plant Director'];
+    const match = allUsers.find((u) => {
+      const pos = (u.position || '').toLowerCase();
+      return patterns.some((p) => pos.includes(p)) && pos.includes(plantLower);
+    });
+    if (match) {
+      setTeamMembers((prev) => [
+        ...prev.filter((m) => m.role !== 'Deputy Plant Director'),
+        {
+          user_id: match.user_id,
+          role: 'Deputy Plant Director',
+          is_lead: false,
+          user_name: match.full_name,
+          user_email: match.email,
+          avatar_url: match.avatar_url,
+          position: match.position,
+          is_auto_populated: true,
+        },
+      ]);
+    }
+    setHasAutoPopulatedDPD(true);
+  }, [plantName, allUsers, hasAutoPopulatedDPD, setTeamMembers, teamMembers]);
 
   const handleAssign = (role: string, userId: string) => {
     const user = allUsers.find((u) => u.user_id === userId);
