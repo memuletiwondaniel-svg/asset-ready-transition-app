@@ -28,16 +28,20 @@ interface ProjectDocumentsSectionProps {
   setDocuments: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
-const getLinkIcon = (linkType: string) => {
+const getLinkIcon = (_linkType: string) => {
+  return <Link className="h-4 w-4 text-blue-500" />;
+};
+
+const getLinkTypeLabel = (linkType: string): string | null => {
   switch (linkType) {
     case 'assai':
-      return <Folder className="h-4 w-4" />;
+      return 'Assai';
     case 'sharepoint':
-      return <Folder className="h-4 w-4" />;
+      return 'SharePoint';
     case 'wrench':
-      return <Folder className="h-4 w-4" />;
+      return 'Wrench';
     default:
-      return <Link className="h-4 w-4" />;
+      return null;
   }
 };
 
@@ -351,22 +355,28 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
                   : getLinkIcon(doc.link_type)
                 }
                 <div className="flex items-baseline gap-2 min-w-0 flex-1">
-                  <span className="text-sm font-medium text-foreground truncate">{doc.document_name}</span>
+                  {doc.document_type === 'link' && doc.link_url ? (
+                    <a
+                      href={doc.link_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-primary hover:underline truncate"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {doc.document_name}
+                    </a>
+                  ) : (
+                    <span className="text-sm font-medium text-foreground truncate">{doc.document_name}</span>
+                  )}
                   {doc.document_type === 'file' && doc.file_extension && (
                     <span className="text-[10px] text-muted-foreground uppercase shrink-0">
                       {doc.file_extension}
                     </span>
                   )}
-                  {doc.document_type === 'link' && doc.link_url && (
-                    <a
-                      href={doc.link_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary hover:underline truncate"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {doc.link_url}
-                    </a>
+                  {doc.document_type === 'link' && getLinkTypeLabel(doc.link_type) && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
+                      {getLinkTypeLabel(doc.link_type)}
+                    </Badge>
                   )}
                 </div>
               </div>
