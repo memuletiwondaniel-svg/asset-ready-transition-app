@@ -157,27 +157,28 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
     setIsDragOver(false);
   }, []);
 
+  const isEmpty = documents.length === 0;
+
   return (
-    <Card className="border-border/60 shadow-sm">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center text-lg gap-2 text-foreground">
-          <FileText className="h-5 w-5 text-primary" />
-          Supporting Documents
-          <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium bg-primary/10 text-primary">
-            {documents.length}
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Add Document Button */}
+    <div className="space-y-3">
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FileText className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Supporting Documents</span>
+        </div>
         <Dialog open={isAddDocumentOpen} onOpenChange={setIsAddDocumentOpen}>
           <DialogTrigger asChild>
-            <Button 
+            <Button
               type="button"
+              size="sm"
               variant="outline"
-              className="w-full border-dashed border-2 border-border hover:border-primary/50 hover:bg-primary/5 h-12 transition-colors"
+              className={cn(
+                "gap-1.5 transition-all duration-200 hover:bg-primary hover:text-primary-foreground hover:border-primary hover:shadow-md hover:-translate-y-0.5",
+                isEmpty && "animate-pulse border-primary/60 text-primary"
+              )}
             >
-              <Plus className="h-5 w-5 mr-2" />
+              <Plus className="h-3.5 w-3.5" />
               Add Document
             </Button>
           </DialogTrigger>
