@@ -177,127 +177,127 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
               Add Document
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-xl">
-                <Paperclip className="h-5 w-5" />
+              <DialogTitle className="flex items-center gap-2 text-base font-semibold">
+                <Paperclip className="h-4 w-4 text-primary" />
                 Add Supporting Document
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Document Name</Label>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground">Document Name</Label>
                 <Input
                   value={documentForm.document_name}
                   onChange={(e) => setDocumentForm(prev => ({ ...prev, document_name: e.target.value }))}
                   placeholder="Enter document name"
-                  className="h-11"
+                  className="h-9 text-sm"
                 />
               </div>
 
-              <Tabs 
-                value={documentForm.document_type} 
-                onValueChange={(value: 'file' | 'link') => 
+              <Tabs
+                value={documentForm.document_type}
+                onValueChange={(value: 'file' | 'link') =>
                   setDocumentForm(prev => ({ ...prev, document_type: value }))
                 }
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-2 h-11">
-                  <TabsTrigger value="file" className="flex items-center gap-2">
-                    <Upload className="h-4 w-4" />
-                    Upload File
+                <TabsList className="grid w-full grid-cols-2 h-9">
+                  <TabsTrigger value="file" className="flex items-center gap-1.5 text-xs">
+                    <Upload className="h-3.5 w-3.5" />
+                    File
                   </TabsTrigger>
-                  <TabsTrigger value="link" className="flex items-center gap-2">
-                    <Link className="h-4 w-4" />
-                    Add Link
+                  <TabsTrigger value="link" className="flex items-center gap-1.5 text-xs">
+                    <Link className="h-3.5 w-3.5" />
+                    Link
                   </TabsTrigger>
                 </TabsList>
-                
-                <TabsContent value="file" className="space-y-4 mt-6">
-                  {/* Drag and Drop Area */}
-                  <div
-                    onDrop={onDrop}
-                    onDragOver={onDragOver}
-                    onDragLeave={onDragLeave}
-                    className={`
-                      relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200
-                      ${isDragOver 
-                        ? 'border-blue-400 bg-blue-50/50' 
-                        : 'border-gray-300 hover:border-gray-400'
-                      }
-                    `}
-                  >
-                    <CloudUpload className={`mx-auto h-12 w-12 mb-4 ${isDragOver ? 'text-blue-500' : 'text-gray-400'}`} />
-                    <div className="space-y-2">
-                      <p className="text-lg font-medium text-gray-700">
-                        {isDragOver ? 'Drop your file here' : 'Drag and drop your file here'}
+
+                {/* Fixed-height area so modal height does not jump between tabs */}
+                <div className="mt-4 min-h-[180px]">
+                  <TabsContent value="file" className="space-y-3 mt-0">
+                    <div
+                      onDrop={onDrop}
+                      onDragOver={onDragOver}
+                      onDragLeave={onDragLeave}
+                      className={cn(
+                        'relative border border-dashed rounded-lg p-5 text-center transition-all duration-200',
+                        isDragOver
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50 hover:bg-muted/30'
+                      )}
+                    >
+                      <CloudUpload className={cn('mx-auto h-7 w-7 mb-2', isDragOver ? 'text-primary' : 'text-muted-foreground')} />
+                      <p className="text-sm font-medium text-foreground">
+                        {isDragOver ? 'Drop your file here' : (
+                          <>
+                            Drag & drop, or{' '}
+                            <button
+                              type="button"
+                              onClick={() => document.getElementById('file-input')?.click()}
+                              className="text-primary hover:underline font-medium"
+                            >
+                              browse
+                            </button>
+                          </>
+                        )}
                       </p>
-                      <p className="text-sm text-gray-500">or</p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => document.getElementById('file-input')?.click()}
-                        className="bg-white"
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Browse Files
-                      </Button>
+                      <p className="text-[11px] text-muted-foreground mt-1">PDF, DOCX, XLSX, images up to 20MB</p>
+                      <Input
+                        id="file-input"
+                        type="file"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileChange(file);
+                        }}
+                        className="hidden"
+                      />
                     </div>
-                    <Input
-                      id="file-input"
-                      type="file"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleFileChange(file);
-                      }}
-                      className="hidden"
-                    />
-                  </div>
-                  
-                  {documentForm.file && (
-                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-                      {getFileIcon(documentForm.file.name.split('.').pop() || '')}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {documentForm.file.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {(documentForm.file.size / 1024).toFixed(1)} KB
-                        </p>
+
+                    {documentForm.file && (
+                      <div className="flex items-center gap-2.5 p-2.5 bg-muted/50 rounded-md border border-border/60">
+                        {getFileIcon(documentForm.file.name.split('.').pop() || '')}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">
+                            {documentForm.file.name}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {(documentForm.file.size / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDocumentForm(prev => ({ ...prev, file: null }))}
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDocumentForm(prev => ({ ...prev, file: null }))}
-                        className="text-gray-400 hover:text-red-500"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="link" className="space-y-3 mt-0">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground">Document Link</Label>
+                      <Input
+                        value={documentForm.link_url}
+                        onChange={(e) => handleLinkChange(e.target.value)}
+                        placeholder="Paste Assai, SharePoint, or Wrench link"
+                        className="h-9 text-sm"
+                      />
                     </div>
-                  )}
-                </TabsContent>
-                
-                <TabsContent value="link" className="space-y-4 mt-6">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Document Link</Label>
-                    <Input
-                      value={documentForm.link_url}
-                      onChange={(e) => handleLinkChange(e.target.value)}
-                      placeholder="Paste Assai, SharePoint, or Wrench link"
-                      className="h-11"
-                    />
-                  </div>
-                  {documentForm.link_type && (
-                    <div className="flex items-center gap-2">
-                      {getLinkIcon(documentForm.link_type)}
-                      <Badge variant="outline" className="capitalize">
-                        {documentForm.link_type} Link Detected
-                      </Badge>
-                    </div>
-                  )}
-                </TabsContent>
+                    {documentForm.link_type && (
+                      <div className="flex items-center gap-2">
+                        {getLinkIcon(documentForm.link_type)}
+                        <Badge variant="outline" className="capitalize text-[10px]">
+                          {documentForm.link_type} Link Detected
+                        </Badge>
+                      </div>
+                    )}
+                  </TabsContent>
+                </div>
               </Tabs>
 
               <div className="flex justify-end gap-3 pt-4 border-t">
