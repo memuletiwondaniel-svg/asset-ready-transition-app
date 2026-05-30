@@ -294,7 +294,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <p className={cn(
-                          "text-xs font-medium truncate leading-tight",
+                          "text-[13px] font-medium truncate leading-tight",
                           !data.member && "text-muted-foreground/60 italic"
                         )}>
                           {data.profile?.full_name || 'Unassigned'}
@@ -325,7 +325,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                                         is_lead: !!(data.member as any).is_lead,
                                       });
                                     }}
-                                    className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 hover:bg-amber-200 dark:hover:bg-amber-900/60 cursor-pointer transition-colors"
+                                    className="text-[8px] font-semibold tracking-wider px-1 py-px rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 hover:bg-amber-200 dark:hover:bg-amber-900/60 cursor-pointer transition-colors leading-none"
                                     title={`Switch to B2B: ${partnerName}`}
                                   >
                                     B2B
