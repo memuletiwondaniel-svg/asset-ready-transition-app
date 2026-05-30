@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { checkOnce as checkAppVersion } from '@/lib/version-check';
 import { bumpSessionEpoch, syncTabSessionEpoch, performHardReset, POST_LOGIN_REFRESH_KEY } from '@/lib/app-reset';
+import { shouldSkipSelfReload } from '@/lib/runtime-env';
 
 interface AuthContextType {
   user: User | null;
@@ -72,14 +73,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Proactively wipe caches + hard-reload on every fresh login so the
           // user never lands on a stale bundle. The per-tab flag prevents loops:
           // after the reload, the flag is present and we skip straight through.
-          try {
-            if (sessionStorage.getItem(POST_LOGIN_REFRESH_KEY) !== '1') {
-              sessionStorage.setItem(POST_LOGIN_REFRESH_KEY, '1');
-              void performHardReset();
-              return;
+          // Skipped in the editor live preview / Vite dev — see runtime-env.ts.
+          if (!shouldSkipSelfReload()) {
+            try {
+              if (sessionStorage.getItem(POST_LOGIN_REFRESH_KEY) !== '1') {
+                sessionStorage.setItem(POST_LOGIN_REFRESH_KEY, '1');
+                void performHardReset();
+                return;
+              }
+            } catch {
+              /* ignore — fall through to normal boot */
             }
-          } catch {
-            /* ignore — fall through to normal boot */
           }
           // Revalidate the app bundle on sign-in. If this tab has been
           // sitting on an old build (common after session timeout + re-login),

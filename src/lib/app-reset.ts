@@ -6,6 +6,8 @@
  * on the next load. Auth tokens are preserved so users stay signed in.
  */
 
+import { shouldSkipSelfReload } from "./runtime-env";
+
 export const APP_RESET_ID = "2026-05-29-projects-table-hard-reset-v8";
 export const RESET_KEY = "__orsh_reset_id";
 export const SESSION_EPOCH_KEY = "__orsh_session_epoch";
@@ -189,6 +191,11 @@ function wipeStorage(storage: Storage) {
  * boot-time reset-id mismatch and the runtime version-change path.
  */
 export async function performHardReset(nextResetId: string = APP_RESET_ID) {
+  if (shouldSkipSelfReload()) {
+    // Editor live preview / Vite dev → never nuke storage + reload the iframe.
+    // Production builds keep the full reset behavior.
+    return;
+  }
   wipeStorage(localStorage);
   wipeStorage(sessionStorage);
   await Promise.all([wipeCaches(), wipeServiceWorkers(), wipeIndexedDB()]);
@@ -210,6 +217,7 @@ export async function performHardReset(nextResetId: string = APP_RESET_ID) {
  * Returns true if a reload was triggered (caller should NOT continue booting).
  */
 export function runResetIfNeeded(): boolean {
+  if (shouldSkipSelfReload()) return false;
   try {
     const stored = localStorage.getItem(RESET_KEY);
     if (stored === APP_RESET_ID) return false;

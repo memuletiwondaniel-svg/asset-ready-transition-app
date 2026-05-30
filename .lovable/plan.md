@@ -1,122 +1,121 @@
+# Stale preview — findings and fix (revised)
 
-# Critique of the Independent Assessment
+## TL;DR
 
-The assessment is mostly right but soft in places. Where it lands:
+The stale preview is **not** caused by leaked Supabase realtime connections, polling, or streaming fetches. ORSH ships a heavy "stale-bundle hardening" system (built for production) that fires the wrong way inside the Lovable editor iframe. It repeatedly wipes storage and calls `window.location.replace(...)` inside the preview iframe, which is exactly the behavior that produces the "old, unresponsive instance" symptom — and it explains why the simpler app (which has none of this machinery) is fine.
 
-- **Triple progress indicator** — correct. "Step 1 of 5" + Progress bar + numbered circles is genuinely redundant. Worth fixing.
-- **Internal scroll on Step 1** — correct. Seven fields should never scroll inside an 85vh modal.
-- **Nested containers** — correct. Card-in-modal-in-overlay is three layers of chrome.
-- **Disabled fields don't look disabled** — correct. The locked Hub combobox is visually identical to an active one.
-- **Auto-assignment is invisible until Review** — correct, and arguably the highest-value fix in the whole wizard. The form keeps promising magic ("drives auto-assignment of…") and never shows it.
-- **Stepper should reflect validity** — correct. Right now `visitedSteps` only tracks "have you been here," not "is it valid."
+## Evidence ruling OUT the leaked-connections hypothesis
 
-Where the assessment is weak or wrong:
+Audit of every long-lived primitive in `src/`:
 
-- **"Lock DP- as a fixed prefix, monospace, free-form text after"** — half right. Locking DP is correct (we already do). But the assessment then argues for *no format rule at all* because "ORSH doesn't own the scheme." That's overcorrection. The current implementation already accepts alphanumeric + hyphen and uppercases — which is exactly the "free-form but sane" middle ground. The real missing piece isn't loosening validation, it's the **duplicate check against existing projects**, which the assessment correctly calls out.
-- **"Autosave as a draft"** — sounds great, costs a schema migration (`project_drafts` table, RLS, cleanup policy, conflict handling on resume). For a 5-step form opened from a button, a **discard-confirm dialog** delivers 90% of the protection at 5% of the cost. Recommend confirm-on-dismiss now, defer drafts.
-- **"Provenance hint: Official DP number from the [register]"** — good framing, but the assessment leaves `[register]` as a placeholder. We should either name the actual source (ASSAI? a spreadsheet?) or drop the hint rather than ship a bracketed TODO.
-- **Removing the context banner is not discussed** — but it's redundant with a good stepper + persistent project chip in the header. Worth flattening.
-- **"auto-assigned" badge on the Project ID field (visible in the screenshot)** — the assessment misses this entirely. It directly contradicts the assessment's own thesis that ORSH is *recording* not *creating* the ID. That badge is a lie and must go.
+- **`supabase.channel(...)`** — 5 call sites: `AdminToolsPage.tsx` (2), `useUserPresence.ts`, `useTaskDocument.ts`, `useAttachmentCollaboration.ts`. Every one has a matching `supabase.removeChannel(channel)` in the effect's cleanup. No channel is created on every render.
+- **`.subscribe()` realtime hooks** — 19 hooks reviewed (notifications, ORM, ORP, OWL, presence, comments, tasks, profile, attachments, chat dialog, kanban). `rg` for `.subscribe()` files without matching `removeChannel`/`unsubscribe` returns **zero misses**.
+- **Polling (`setInterval`)** — All audited (`useUserPresence` 30s, `useSessionTimeout`, `version-check` 60s, etc.) have `clearInterval` cleanup.
+- **Supabase client** — Single shared singleton in `src/integrations/supabase/client.ts`. Not re-created.
+- **`onAuthStateChange`** — One listener in `AuthProvider`, unsubscribed via `subscription.unsubscribe()`. Session is awaited via `getSession()` before downstream effects run (`loading` gate).
+- **Service worker / `vite-plugin-pwa`** — Not registered. The boot script in `index.html` actively unregisters any SW and clears Cache Storage on every load.
 
-# Proposed Design
+Connections are not leaking. Re-login does not stack channels.
 
-## 1. Header chrome — one stepper, not three
+## Actual root cause: self-reload machinery firing inside the editor iframe
 
-Replace the current `DialogHeader` block (title + "Step 1 of 5" + Progress bar + 5 numbered circles) with a single segmented track:
+Three pieces conspire, all unique to ORSH:
 
-```text
-Project info ──●━━━━━━━━━━ Scope ──○────── Team ──○────── Milestones ──○────── Review ──○
+### 1. `src/lib/version-check.ts` — runs from `main.tsx` on every boot
+
+- Polls `fetch('/?_v=<now>')` every **60s** and compares `<meta name="app-build">` to the in-memory `__APP_BUILD__`. On mismatch → `performHardReset()` → `window.location.replace(...)`.
+- `visibilitychange`: if the tab was hidden ≥ **10 min**, on resume it **unconditionally** calls `forceFreshReload()`.
+- `pageshow` with `event.persisted` → forced reload.
+- `online` event → another `checkOnce()`.
+
+Inside the Lovable editor iframe this is hostile. `__APP_BUILD__` is `Date.now()` set at Vite config load, so after any dev-server restart the in-memory `CURRENT_BUILD` of the still-open iframe no longer matches the newly served `/` HTML — the next 60-second poll triggers `performHardReset()` inside the iframe. That's also why "restart the dev server" appears to fix it (you actually navigate the iframe right after) and why the symptom keeps coming back (the next poll re-arms the trap).
+
+### 2. `AuthProvider.tsx` — mandatory hard reset on every fresh SIGNED_IN
+
+```ts
+if (event === 'SIGNED_IN' && session?.user) {
+  syncTabSessionEpoch();
+  if (sessionStorage.getItem(POST_LOGIN_REFRESH_KEY) !== '1') {
+    sessionStorage.setItem(POST_LOGIN_REFRESH_KEY, '1');
+    void performHardReset();   // wipes storage + Cache + IDB + SW, then location.replace()
+    return;
+  }
+  ...
+}
 ```
 
-- One row, five segments. Active segment filled with `bg-primary`, completed segments `bg-primary/40` with a check, future segments `bg-muted`, invalid-but-visited segments `bg-destructive/30` with a ring.
-- Step labels inline (no separate circles row). Click-to-jump only to visited+valid steps.
-- "Step 1 of 5" moves to the footer next to Next ("Step 1 of 5 · Next →").
-- Drops ~80px of vertical chrome — Step 1 now fits without scrolling at 1080p and most laptops.
+`SIGNED_OUT` clears `POST_LOGIN_REFRESH_KEY`, so **every re-login** re-arms the hard reset. Inside the preview, this means re-login = full nuke + `location.replace` inside the iframe = the "after I re-login it gets worse" symptom.
 
-## 2. Step 1 layout — flatten sections, kill internal scroll
+### 3. `performHardReset()` itself (`src/lib/app-reset.ts`)
 
-Remove the `Section` component's bordered card (`rounded-xl border bg-card/40 p-5`). Replace with a label-only group:
+Wipes `localStorage`, `sessionStorage`, Cache Storage, IndexedDB, and all service workers, then `window.location.replace('?_r=<ts>')`. Fine for a production deploy, hostile inside a long-lived editor iframe.
 
-- Section title: uppercase 11px muted, no card, no icon tile. A 1px hairline `border-t border-border/40` separates groups.
-- Helper text sits inline after the title in the same muted style ("OWNERSHIP — auto-assigns Commissioning Lead, Construction Lead & Snr ORA Engineer").
-- Three groups stay: Identity, Ownership, Location. Spacing reduced from `space-y-4` between cards to `space-y-5` between flat groups — visually lighter, vertically tighter.
+The simpler app has none of `version-check.ts`, `app-reset.ts`, or the AuthProvider reset branch — exactly why it doesn't exhibit the symptom.
 
-## 3. Project ID field — transcription, not generation
+## The fix (production behavior unchanged)
 
-- Remove the "auto-assigned" pill. It's wrong and misleading.
-- Keep the locked `DP` chip + alphanumeric input (current behavior is correct).
-- Add a **debounced duplicate check** against `projects` table on blur and on Next. On hit:
-  - Field gets `border-destructive` and an inline message: *"DP-385 already exists — West Qurna OT2/3 gas feed to CS."*
-  - Next is blocked until resolved.
-- Subtle helper under the field: *"Enter the official DP number from the project register."* (Generic phrasing — no bracketed placeholder. If we later identify the canonical register, we link it.)
-- No "next free number" suggestion, no format mask beyond the existing alphanumeric filter.
+Add a single "skip self-reload" predicate keyed on `import.meta.env.DEV` and short-circuit the reload machinery when true.
 
-## 4. Real disabled state for dependent selects
+### Pre-flight (must run before code changes)
 
-`EnhancedCombobox` currently renders disabled state the same as enabled. Add a disabled variant:
+Confirm two facts in the running app (one quick `console.log` per environment is enough):
 
-- `border-dashed border-border/60`, `bg-muted/30`, lock icon prefix, muted text.
-- Applied automatically when `disabled` prop is true. Affects: Hub (until Portfolio), Field (until Plant), Station (until Field or Plant-with-no-fields).
+1. In the **editor live preview**, `import.meta.env.DEV === true` and log the hostname.
+2. In the **published build**, `import.meta.env.DEV === false` and log the hostname.
 
-## 5. Live auto-assignment preview
+If (1) and (2) hold (expected), the predicate below is airtight and we drop hostname matching almost entirely. If `DEV` is unexpectedly `false` in preview, stop and reassess — do not ship.
 
-The biggest UX win. As soon as Portfolio is selected, render under the Ownership group:
+### Detection helper (new) — `src/lib/runtime-env.ts`
 
-```text
-Will be auto-assigned
-  Commissioning Lead   Ali Zachi
-  Construction Lead    Sara Hadi
-  Snr ORA Engineer     Mahmoud R.
+```ts
+export function shouldSkipSelfReload(): boolean {
+  // Editor live preview runs the Vite dev server → DEV is true.
+  // Published app is a production build → DEV is false. This is the reliable signal.
+  if (import.meta.env.DEV) return true;
+
+  // Belt-and-suspenders for the editor iframe ONLY. Never match the bare
+  // *.lovableproject.com / *.lovable.app suffix — that is also the production
+  // host for projects without a custom domain, and would silently disable
+  // every stale-bundle protection in prod.
+  try {
+    if (window.location.hostname.startsWith('id-preview--')) return true;
+    if (window.self !== window.top) return true; // embedded in the editor iframe
+  } catch {
+    /* cross-origin frame access can throw; ignore */
+  }
+  return false;
+}
 ```
 
-And under Location, when Plant is selected:
+Explicitly **rejected** alternative: `host.endsWith('.lovableproject.com')`. That would match the published ORSH origin (no custom domain attached) and silently disable the stale-bundle protections in production. Do not ship that variant.
 
-```text
-  Deputy Plant Director   Hassan K.
-```
+### `src/lib/version-check.ts`
 
-- Small, muted, no card. Resolved live from the existing role-assignment hooks (`usePortfolioManagers` / role-by-region queries already exist).
-- If no one is assigned to that role for that portfolio/plant: *"No Commissioning Lead assigned for North — can be set later."* in `text-amber-600`.
-- Makes the promise concrete before Review.
+- Top of `startVersionCheck()`: `if (shouldSkipSelfReload()) return;`
+- Top of `checkOnce()`: same guard.
+- Install the `online` / `pageshow` / `visibilitychange` listeners only behind the guard.
 
-## 6. Loss protection — confirm, don't autosave (yet)
+### `src/components/enhanced-auth/AuthProvider.tsx`
 
-- Dirty-check on `onOpenChange(false)` and Cancel: if any field touched, show `AlertDialog`: *"Discard this project? Your progress will be lost."* with Discard / Keep editing.
-- ESC and backdrop click route through the same confirm.
-- Defer the drafts table (separate proposal — out of scope here).
+- Wrap only the `performHardReset()` block in the `SIGNED_IN` branch with `if (!shouldSkipSelfReload()) { ... }`.
+- **Keep outside the guard:** `syncTabSessionEpoch()`, `track_user_login` RPC, the `write-audit-log` invocation, and `checkAppVersion()` (which is itself a no-op under the guard now).
+- `SIGNED_OUT` audit logging unchanged.
 
-## 7. Stepper validity model
+### `src/lib/app-reset.ts`
 
-Replace the binary `visitedSteps` Set with a per-step state: `'pending' | 'valid' | 'invalid' | 'active'`.
+- First line of `performHardReset()`: `if (shouldSkipSelfReload()) return;` — covers every direct caller (`useSessionTimeout`, `AuthenticatedLayout`, `SOFReviewOverlay`, `DirectorSoFView`, `admin/UserProfileDropdown`).
+- First line of `runResetIfNeeded()`: same guard, returning `false` so boot continues normally and a stale `APP_RESET_ID` from a prior session can't trigger a reload loop in the editor.
 
-- `valid`: check icon, primary tint, clickable.
-- `invalid`: red ring, clickable (so user can fix).
-- `pending`: muted, not clickable.
-- `active`: filled primary.
-- Step click runs that step's validator before allowing jump-ahead.
+## Verification — step 5 is the go/no-go
 
-## 8. Context banner (steps 2+) — flatten
+1. Open the editor preview, leave it for >10 min on another tab, switch back. Expect: no reload, no stale instance.
+2. Sign out and sign back in inside the preview. Expect: no `location.replace`; console shows `track_user_login` + audit-log calls; app continues. Previously: full wipe + iframe reload.
+3. Restart the dev server. Expect: HMR-driven refresh only; no 60-second-later forced `location.replace` from version-check.
+4. DevTools → Network → WS filter: navigate + re-login. Confirm WS count does not grow (regression test for the connection audit).
+5. **GATING — published URL.** Version-check must still poll (60s), `visibilitychange` must still force-reload after 10-min idle, and `SIGNED_IN` must still run `performHardReset()`. If any of these no longer fire in production, the predicate is too broad — do not ship.
 
-The current cross-step context banner (Project / Portfolio / Hub chips in a muted card) duplicates information that should live in the dialog title once Step 1 is complete. Replace with a single subtitle line under "Create New Project":
+## Out of scope / explicit non-changes
 
-> `DP-355 · Crude Stabilization Upgrade — North › Basra Hub`
-
-One line, muted, always visible from Step 2 onward. Banner card removed.
-
----
-
-# Technical Notes
-
-**Files to change**
-- `src/components/project/CreateProjectWizard.tsx` — header chrome (remove Progress + circles, add segmented stepper), footer (add step counter next to Next), dirty-confirm dialog, validity-aware step state, replace context banner with title subtitle.
-- `src/components/project/wizard/WizardStepProjectInfo.tsx` — drop `Section` card chrome, add duplicate-ID check (debounced query against `projects`), add `LiveAssignmentPreview` subcomponent under Ownership and Location, remove "auto-assigned" pill if rendered here.
-- `src/components/ui/enhanced-combobox.tsx` — disabled variant (dashed border, lock icon, muted fill).
-- New: `src/components/project/wizard/LiveAssignmentPreview.tsx` — small presentational component, takes `regionId` / `plantId`, renders resolved role-holders or amber "not assigned" hint. Reuses existing portfolio-manager hooks.
-- New: `src/hooks/useProjectIdAvailability.ts` — debounced `supabase.from('projects').select('id, project_title').eq('project_id_prefix', 'DP').eq('project_id_number', n)`.
-
-**Out of scope (call out, don't build)**
-- Project drafts table / autosave.
-- Canonical "DP register" link target (need product input on source of truth).
-- Renaming "Sub Area → Field" anywhere else in the app (already done in Step 1).
-
-**Approx LOC**: ~250 lines changed/added, no DB migration, no new dependencies.
+- No changes to any `supabase.channel(...)`, hook cleanup, polling, or streaming code — audited and correct.
+- No changes to `index.html`'s pre-React build-guard script (self-skips in dev via the `__APP_BUILD__` literal check; harmless in prod).
+- No changes to `vite.config.ts` — stock Lovable config plus the `app-build` HTML transform; nothing custom is breaking the preview.

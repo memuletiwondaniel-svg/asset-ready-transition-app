@@ -19,6 +19,7 @@ import {
   performHardReset,
   syncTabSessionEpoch,
 } from "./app-reset";
+import { shouldSkipSelfReload } from "./runtime-env";
 
 declare const __APP_BUILD__: string;
 
@@ -53,6 +54,7 @@ async function fetchRemoteBuild(): Promise<string | null> {
 }
 
 export async function checkOnce() {
+  if (shouldSkipSelfReload()) return;
   if (inFlight || reloading || !CURRENT_BUILD) return;
   if (shouldForceResetForSessionMismatch()) {
     reloading = true;
@@ -86,6 +88,12 @@ function forceFreshReload() {
 
 export function startVersionCheck() {
   if (started) return;
+  if (shouldSkipSelfReload()) {
+    // Editor live preview / Vite dev → do NOT install self-reload listeners.
+    // Production builds (DEV === false) keep the full stale-bundle hardening.
+    started = true;
+    return;
+  }
   started = true;
   syncTabSessionEpoch();
 
