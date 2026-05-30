@@ -191,6 +191,11 @@ function wipeStorage(storage: Storage) {
  * boot-time reset-id mismatch and the runtime version-change path.
  */
 export async function performHardReset(nextResetId: string = APP_RESET_ID) {
+  if (shouldSkipSelfReload()) {
+    // Editor live preview / Vite dev → never nuke storage + reload the iframe.
+    // Production builds keep the full reset behavior.
+    return;
+  }
   wipeStorage(localStorage);
   wipeStorage(sessionStorage);
   await Promise.all([wipeCaches(), wipeServiceWorkers(), wipeIndexedDB()]);
