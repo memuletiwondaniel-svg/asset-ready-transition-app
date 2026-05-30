@@ -8,6 +8,7 @@ import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
+import { fetchB2BPartnerIds } from '@/hooks/useB2BPartner';
 
 interface CompletedTask {
   id: string;
