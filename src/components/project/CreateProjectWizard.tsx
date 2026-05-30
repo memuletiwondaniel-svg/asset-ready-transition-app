@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useProjectRegions } from '@/hooks/useProjectRegions';
 import { useHubs } from '@/hooks/useHubs';
 import { useStations } from '@/hooks/useStations';
+import { usePlants } from '@/hooks/usePlants';
 import { useProjectLocations } from '@/hooks/useProjectLocations';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import { useProjectIdAvailability } from '@/hooks/useProjectIdAvailability';
@@ -495,6 +496,11 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
 
   const regionName = getRegionName();
   const hubName = getHubName();
+  const { plants } = usePlants();
+  const plantName = useMemo(
+    () => plants.find((p) => p.id === formData.plant_id)?.name ?? null,
+    [plants, formData.plant_id]
+  );
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -522,6 +528,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
             regionName={regionName}
             hubName={hubName}
             hubId={formData.hub_id || null}
+            plantName={plantName}
           />
         );
       case 4:

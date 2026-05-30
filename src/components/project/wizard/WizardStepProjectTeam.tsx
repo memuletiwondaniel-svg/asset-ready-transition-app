@@ -26,6 +26,7 @@ interface WizardStepProjectTeamProps {
   regionName?: string | null;
   hubName?: string | null;
   hubId?: string | null;
+  plantName?: string | null;
 }
 
 const KEY_ROLES = [
@@ -42,7 +43,7 @@ const ROLE_ELIGIBILITY: Record<string, string[]> = {
   'Construction Lead': ['construction lead', 'construction'],
   'Commissioning Lead': ['commissioning lead', 'commissioning'],
   'Snr. ORA Engr.': ['snr. ora engr', 'snr ora engr', 'snr. ora eng', 'snr ora eng', 'senior ora'],
-  'Deputy Plant Director': ['deputy plant director'],
+  'Deputy Plant Director': ['dep. plant director', 'dep plant director', 'deputy plant director'],
 };
 
 const getInitials = (name?: string) =>
@@ -52,22 +53,30 @@ interface MemberPickerProps {
   role: string;
   currentUserId?: string;
   allUsers: ReturnType<typeof useProfileUsers>['data'];
+  plantName?: string | null;
   onSelect: (userId: string) => void;
   trigger: React.ReactNode;
 }
 
-const MemberPicker: React.FC<MemberPickerProps> = ({ role, currentUserId, allUsers = [], onSelect, trigger }) => {
+const MemberPicker: React.FC<MemberPickerProps> = ({ role, currentUserId, allUsers = [], plantName, onSelect, trigger }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
   const eligible = useMemo(() => {
     const patterns = ROLE_ELIGIBILITY[role];
     if (!patterns || !allUsers) return allUsers ?? [];
-    return allUsers.filter((u) => {
+    let list = allUsers.filter((u) => {
       const hay = `${u.position || ''} ${u.role || ''}`.toLowerCase();
       return patterns.some((p) => hay.includes(p));
     });
-  }, [allUsers, role]);
+    // For Deputy Plant Director, narrow to users tied to the selected plant
+    if (role === 'Deputy Plant Director' && plantName) {
+      const plantLower = plantName.toLowerCase();
+      const scoped = list.filter((u) => (u.position || '').toLowerCase().includes(plantLower));
+      if (scoped.length > 0) list = scoped;
+    }
+    return list;
+  }, [allUsers, role, plantName]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -141,8 +150,10 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
   regionName = null,
   hubName = null,
   hubId = null,
+  plantName = null,
 }) => {
   const [hasAutoPopulated, setHasAutoPopulated] = useState(false);
+  const [hasAutoPopulatedDPD, setHasAutoPopulatedDPD] = useState(false);
   const { suggestedTeam, isLoading } = useAutoPopulateTeam(regionName, hubName, hubId);
   const { data: allUsers = [] } = useProfileUsers();
 
@@ -156,6 +167,38 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
       setHasAutoPopulated(true);
     }
   }, [suggestedTeam, hasAutoPopulated, isLoading, setTeamMembers, teamMembers]);
+
+  // Auto-populate Deputy Plant Director based on the selected plant
+  useEffect(() => {
+    if (hasAutoPopulatedDPD || !plantName || allUsers.length === 0) return;
+    const alreadySet = teamMembers.some((m) => m.role === 'Deputy Plant Director');
+    if (alreadySet) {
+      setHasAutoPopulatedDPD(true);
+      return;
+    }
+    const plantLower = plantName.toLowerCase();
+    const patterns = ROLE_ELIGIBILITY['Deputy Plant Director'];
+    const match = allUsers.find((u) => {
+      const pos = (u.position || '').toLowerCase();
+      return patterns.some((p) => pos.includes(p)) && pos.includes(plantLower);
+    });
+    if (match) {
+      setTeamMembers((prev) => [
+        ...prev.filter((m) => m.role !== 'Deputy Plant Director'),
+        {
+          user_id: match.user_id,
+          role: 'Deputy Plant Director',
+          is_lead: false,
+          user_name: match.full_name,
+          user_email: match.email,
+          avatar_url: match.avatar_url,
+          position: match.position,
+          is_auto_populated: true,
+        },
+      ]);
+    }
+    setHasAutoPopulatedDPD(true);
+  }, [plantName, allUsers, hasAutoPopulatedDPD, setTeamMembers, teamMembers]);
 
   const handleAssign = (role: string, userId: string) => {
     const user = allUsers.find((u) => u.user_id === userId);
@@ -242,6 +285,7 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
                       role={role}
                       currentUserId={member.user_id}
                       allUsers={allUsers}
+                      plantName={plantName}
                       onSelect={(uid) => handleAssign(role, uid)}
                       trigger={
                         <Button
@@ -272,6 +316,7 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
                   <MemberPicker
                     role={role}
                     allUsers={allUsers}
+                    plantName={plantName}
                     onSelect={(uid) => handleAssign(role, uid)}
                     trigger={
                       <Button
