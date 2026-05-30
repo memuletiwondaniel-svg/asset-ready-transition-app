@@ -257,69 +257,94 @@ export const SidebarContent = memo<SidebarContentProps>(({
 
           {/* Quick Actions */}
           <div className="space-y-2">
-            {hasPermission('access_admin') && (
-              <Button 
-                variant="ghost" 
-                size={isCollapsed ? "icon" : "sm"} 
-                onClick={() => onNavigate('admin-tools', isMobile)} 
-                className={cn(
-                  `w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`,
-                  currentPage === 'admin-tools' 
-                    ? "bg-primary/10 text-primary rounded-lg hover:bg-primary/20 hover:text-primary" 
-                    : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
-                )} 
-                title={t.adminTools || 'Admin Tools'}
-              >
-                <Settings className={cn(
-                  "w-4 h-4 transition-colors",
-                  currentPage === 'admin-tools' ? "text-primary" : "text-muted-foreground"
-                )} />
-                {!isCollapsed && <span className="ml-2">{t.adminTools || 'Admin Tools'}</span>}
-              </Button>
-            )}
+            {hasPermission('access_admin') && (() => {
+              const btn = (
+                <Button 
+                  variant="ghost" 
+                  size={isCollapsed ? "icon" : "sm"} 
+                  onClick={() => onNavigate('admin-tools', isMobile)} 
+                  className={cn(
+                    `w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'}`,
+                    currentPage === 'admin-tools' 
+                      ? "bg-primary/10 text-primary rounded-lg hover:bg-primary/20 hover:text-primary" 
+                      : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
+                  )} 
+                >
+                  <Settings className={cn(
+                    "w-4 h-4 transition-colors",
+                    currentPage === 'admin-tools' ? "text-primary" : "text-muted-foreground"
+                  )} />
+                  {!isCollapsed && <span className="ml-2">{t.adminTools || 'Admin Tools'}</span>}
+                </Button>
+              );
+              return isCollapsed ? (
+                <Tooltip><TooltipTrigger asChild>{btn}</TooltipTrigger><TooltipContent side="right">{t.adminTools || 'Admin Tools'}</TooltipContent></Tooltip>
+              ) : btn;
+            })()}
 
-            <Button 
-              variant="ghost" 
-              size={isCollapsed ? "icon" : "sm"} 
-              onClick={onThemeToggle} 
-              className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
-              title={theme === 'dark' ? (t.lightMode || 'Light Mode') : (t.darkMode || 'Dark Mode')}
-            >
-              {theme === 'dark' ? (
-                <>
-                  <Sun className="w-4 h-4 text-muted-foreground" />
-                  {!isCollapsed && <span className="ml-2">{t.lightMode || 'Light Mode'}</span>}
-                </>
-              ) : (
-                <>
-                  <Moon className="w-4 h-4 text-muted-foreground" />
-                  {!isCollapsed && <span className="ml-2">{t.darkMode || 'Dark Mode'}</span>}
-                </>
-              )}
-            </Button>
+            {(() => {
+              const label = theme === 'dark' ? (t.lightMode || 'Light Mode') : (t.darkMode || 'Dark Mode');
+              const btn = (
+                <Button 
+                  variant="ghost" 
+                  size={isCollapsed ? "icon" : "sm"} 
+                  onClick={onThemeToggle} 
+                  className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
+                >
+                  {theme === 'dark' ? (
+                    <>
+                      <Sun className="w-4 h-4 text-muted-foreground" />
+                      {!isCollapsed && <span className="ml-2">{label}</span>}
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="w-4 h-4 text-muted-foreground" />
+                      {!isCollapsed && <span className="ml-2">{label}</span>}
+                    </>
+                  )}
+                </Button>
+              );
+              return isCollapsed ? (
+                <Tooltip><TooltipTrigger asChild>{btn}</TooltipTrigger><TooltipContent side="right">{label}</TooltipContent></Tooltip>
+              ) : btn;
+            })()}
 
-            <Button 
-              variant="ghost" 
-              size={isCollapsed ? "icon" : "sm"} 
-              className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
-              title={t.notifications || 'Notifications'}
-            >
-              <Bell className="w-4 h-4 text-muted-foreground" />
-              {!isCollapsed && <span className="ml-2">{t.notifications || 'Notifications'}</span>}
-            </Button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            {(() => {
+              const label = t.notifications || 'Notifications';
+              const btn = (
                 <Button 
                   variant="ghost" 
                   size={isCollapsed ? "icon" : "sm"} 
                   className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
-                  title={t.language || 'Language'}
                 >
-                  <Languages className="w-4 h-4 text-muted-foreground" />
-                  {!isCollapsed && <span className="ml-2">{t.language || 'Language'}</span>}
+                  <Bell className="w-4 h-4 text-muted-foreground" />
+                  {!isCollapsed && <span className="ml-2">{label}</span>}
                 </Button>
-              </DropdownMenuTrigger>
+              );
+              return isCollapsed ? (
+                <Tooltip><TooltipTrigger asChild>{btn}</TooltipTrigger><TooltipContent side="right">{label}</TooltipContent></Tooltip>
+              ) : btn;
+            })()}
+
+            <DropdownMenu>
+              {(() => {
+                const label = t.language || 'Language';
+                const trigger = (
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size={isCollapsed ? "icon" : "sm"} 
+                      className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
+                    >
+                      <Languages className="w-4 h-4 text-muted-foreground" />
+                      {!isCollapsed && <span className="ml-2">{label}</span>}
+                    </Button>
+                  </DropdownMenuTrigger>
+                );
+                return isCollapsed ? (
+                  <Tooltip><TooltipTrigger asChild>{trigger}</TooltipTrigger><TooltipContent side="right">{label}</TooltipContent></Tooltip>
+                ) : trigger;
+              })()}
               <DropdownMenuContent align="start" className="w-48 bg-background z-50">
                 <DropdownMenuLabel>{t.selectLanguage || 'Select Language'}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -341,19 +366,25 @@ export const SidebarContent = memo<SidebarContentProps>(({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {isLeadership && (
-              <Button 
-                variant="ghost" 
-                size={isCollapsed ? "icon" : "sm"} 
-                onClick={onShowOnboarding} 
-                className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
-                title={t.takeTour || 'Take Tour'}
-              >
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                {!isCollapsed && <span className="ml-2">{t.takeTour || 'Take Tour'}</span>}
-              </Button>
-            )}
+            {isLeadership && (() => {
+              const label = t.takeTour || 'Take Tour';
+              const btn = (
+                <Button 
+                  variant="ghost" 
+                  size={isCollapsed ? "icon" : "sm"} 
+                  onClick={onShowOnboarding} 
+                  className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-foreground hover:bg-muted/50`} 
+                >
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  {!isCollapsed && <span className="ml-2">{label}</span>}
+                </Button>
+              );
+              return isCollapsed ? (
+                <Tooltip><TooltipTrigger asChild>{btn}</TooltipTrigger><TooltipContent side="right">{label}</TooltipContent></Tooltip>
+              ) : btn;
+            })()}
           </div>
+
 
           {/* Search History */}
           {searchHistory.length > 0 && !isCollapsed && (
