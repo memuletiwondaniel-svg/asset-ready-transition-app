@@ -174,10 +174,7 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
               type="button"
               size="sm"
               variant="outline"
-              className={cn(
-                "gap-1.5 transition-all duration-200 hover:bg-primary hover:text-primary-foreground hover:border-primary hover:shadow-md hover:-translate-y-0.5",
-                isEmpty && "animate-pulse border-primary/60 text-primary"
-              )}
+              className="gap-1.5 text-muted-foreground border-border/60 transition-all duration-200 hover:bg-primary hover:text-primary-foreground hover:border-primary hover:shadow-md hover:-translate-y-0.5"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Document
