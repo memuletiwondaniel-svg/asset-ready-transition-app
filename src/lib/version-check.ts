@@ -19,6 +19,7 @@ import {
   performHardReset,
   syncTabSessionEpoch,
 } from "./app-reset";
+import { shouldSkipSelfReload } from "./runtime-env";
 
 declare const __APP_BUILD__: string;
 
