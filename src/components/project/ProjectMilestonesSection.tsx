@@ -56,7 +56,7 @@ const MilestoneItem: React.FC<MilestoneItemProps> = ({
   const isEditing = editingId === milestone.id;
 
   return (
-    <div className="group p-3 bg-muted/40 hover:bg-muted/60 rounded-lg border border-transparent hover:border-border/60 transition-colors">
+    <div className="group px-2.5 py-1.5 bg-muted/40 hover:bg-muted/60 rounded-md border border-transparent hover:border-border/60 transition-colors">
       {isEditing && editingMilestone ? (
         <div className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
