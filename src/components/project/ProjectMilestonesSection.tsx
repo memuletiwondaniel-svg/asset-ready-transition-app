@@ -204,15 +204,11 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
     is_scorecard_project: boolean;
   } | null>(null);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+  const sortedMilestones = useMemo(
+    () => [...milestones].sort((a, b) =>
+      new Date(a.milestone_date).getTime() - new Date(b.milestone_date).getTime()
+    ),
+    [milestones]
   );
 
   const milestoneOptions = milestoneTypes.map(type => ({
