@@ -315,7 +315,7 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
               currentPageLabel="Manage Projects" 
               customBreadcrumbs={[
                 { label: 'Home', path: '/', onClick: () => navigate('/') },
-                { label: 'Administration', path: '/admin-tools', onClick: () => navigate('/admin-tools') }
+                { label: 'Admin', path: '/admin-tools', onClick: () => navigate('/admin-tools') }
               ]}
             />
             

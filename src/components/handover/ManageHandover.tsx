@@ -47,7 +47,7 @@ export const ManageHandover: React.FC<ManageHandoverProps> = ({ onBack }) => {
           favoritePath="/admin-tools/handover-management"
           customBreadcrumbs={[
             { label: 'Home', path: '/', onClick: () => window.location.href = '/' },
-            { label: 'Administration', path: '/admin-tools', onClick: () => window.location.href = '/admin-tools' }
+            { label: 'Admin', path: '/admin-tools', onClick: () => window.location.href = '/admin-tools' }
           ]}
         />
         <div className="flex items-center justify-between mt-2 md:mt-3">

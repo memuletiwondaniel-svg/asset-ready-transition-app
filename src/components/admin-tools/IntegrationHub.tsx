@@ -696,7 +696,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
         favoritePath="/admin-tools/integration-hub"
         customBreadcrumbs={[
           { label: 'Home', path: '/', onClick: onBack },
-          { label: 'Administration', path: '/admin-tools', onClick: onBack },
+          { label: 'Admin', path: '/admin-tools', onClick: onBack },
         ]}
       />
 
