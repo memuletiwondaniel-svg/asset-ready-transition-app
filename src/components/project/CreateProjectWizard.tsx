@@ -584,7 +584,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
             )}
 
             {/* Circular stepper — semantic state per step */}
-            <nav aria-label="Wizard progress" className="pt-10 pb-3">
+            <nav aria-label="Wizard progress" className="pt-4 pb-1">
               <ol className="flex items-start justify-between gap-1">
                 {STEPS.map((step, idx) => {
                   const visited = visitedSteps.has(step.id);
