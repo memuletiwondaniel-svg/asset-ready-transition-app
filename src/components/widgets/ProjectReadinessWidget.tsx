@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, Target, FileText, UserCircle, Building2, Edit, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, Target, FileText, UserCircle, Building2, Edit, ChevronDown, ChevronUp, File, FileImage, FileSpreadsheet, Presentation, FileCode, Link as LinkIcon, Folder } from 'lucide-react';
 import { useProjects, useProjectTeamMembers } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
@@ -42,6 +42,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   const { data: allUsers = [] } = useProfileUsers();
   const [milestones, setMilestones] = useState<any[]>([]);
   const [milestonesLoading, setMilestonesLoading] = useState(true);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [isScopeExpanded, setIsScopeExpanded] = useState(false);
   const hasAutoHealed = useRef(false);
 
@@ -113,31 +114,41 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
     return supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
   };
 
-  // Fetch milestones only (team members now use react-query)
+  // Fetch milestones and documents
   useEffect(() => {
-    const fetchMilestones = async () => {
+    const fetchData = async () => {
       if (!projectId) return;
       
       setMilestonesLoading(true);
       try {
-        const { data: milestonesData, error: milestonesError } = await (supabase as any)
-          .from('project_milestones')
-          .select('*')
-          .eq('project_id', projectId)
-          .order('milestone_date', { ascending: true })
-          .limit(5);
+        const [milestonesRes, docsRes] = await Promise.all([
+          (supabase as any)
+            .from('project_milestones')
+            .select('*')
+            .eq('project_id', projectId)
+            .order('milestone_date', { ascending: true })
+            .limit(5),
+          (supabase as any)
+            .from('project_documents')
+            .select('*')
+            .eq('project_id', projectId)
+            .order('created_at', { ascending: false }),
+        ]);
         
-        if (!milestonesError && milestonesData) {
-          setMilestones(milestonesData);
+        if (!milestonesRes.error && milestonesRes.data) {
+          setMilestones(milestonesRes.data);
+        }
+        if (!docsRes.error && docsRes.data) {
+          setDocuments(docsRes.data);
         }
       } catch (error) {
-        console.error('Error fetching milestones:', error);
+        console.error('Error fetching project data:', error);
       } finally {
         setMilestonesLoading(false);
       }
     };
 
-    fetchMilestones();
+    fetchData();
   }, [projectId]);
 
   const loading = teamLoading || milestonesLoading;
@@ -372,6 +383,56 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           <MilestonesTimeline milestones={milestones} />
         </div>
       </div>
+
+      {/* Documents */}
+      {documents.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-blue-500/10">
+              <FileText className="h-4 w-4 text-blue-600" />
+            </div>
+            Documents
+          </h3>
+          <div className="space-y-1.5 pl-1">
+            {documents.map((doc) => {
+              const isLink = doc.document_type === 'link';
+              const ext = (doc.file_extension || '').toLowerCase();
+              const Icon = isLink
+                ? (doc.link_type ? Folder : LinkIcon)
+                : ext === 'pdf' ? FileText
+                : ['doc','docx'].includes(ext) ? FileText
+                : ['xls','xlsx','csv'].includes(ext) ? FileSpreadsheet
+                : ['ppt','pptx'].includes(ext) ? Presentation
+                : ['jpg','jpeg','png','gif','webp'].includes(ext) ? FileImage
+                : ['txt'].includes(ext) ? FileCode
+                : File;
+              const href = isLink ? doc.link_url : (doc.file_path ? supabase.storage.from('project-documents').getPublicUrl(doc.file_path).data.publicUrl : undefined);
+              const Wrapper: any = href ? 'a' : 'div';
+              const wrapperProps: any = href ? { href, target: '_blank', rel: 'noopener noreferrer', onClick: (e: React.MouseEvent) => e.stopPropagation() } : {};
+              return (
+                <Wrapper
+                  key={doc.id}
+                  {...wrapperProps}
+                  className={cn(
+                    "flex items-center gap-2.5 p-2 rounded-lg border bg-muted/30 border-border/40 transition-all duration-200",
+                    href && "hover:bg-muted/50 hover:border-primary/20 cursor-pointer"
+                  )}
+                >
+                  <div className="p-1.5 rounded-md bg-background/60 border border-border/40 shrink-0">
+                    <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium truncate leading-tight">{doc.document_name}</p>
+                    <p className="text-[10px] text-muted-foreground truncate leading-tight uppercase tracking-wide">
+                      {isLink ? (doc.link_type || 'Link') : (ext || 'File')}
+                    </p>
+                  </div>
+                </Wrapper>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 
