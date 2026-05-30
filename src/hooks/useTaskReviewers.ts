@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { useB2BPartner } from '@/hooks/useB2BPartner';
 
 export interface TaskReviewer {
   id: string;
@@ -19,6 +20,7 @@ export interface TaskReviewer {
 
 export const useTaskReviewers = (taskId: string | undefined) => {
   const { user } = useAuth();
+  const { effectiveUserIds } = useB2BPartner();
   const queryClient = useQueryClient();
 
   const { data: reviewers = [], isLoading } = useQuery({
@@ -110,6 +112,8 @@ export const useTaskReviewers = (taskId: string | undefined) => {
     mutationFn: async ({ reviewerId, decision, comments }: { reviewerId: string; decision: 'APPROVED' | 'REJECTED'; comments?: string }) => {
       if (!user?.id) throw new Error('Not authenticated');
 
+      // B2B: either user or their partner may close the reviewer row.
+      const ids = effectiveUserIds.length ? effectiveUserIds : [user.id];
       const { data, error } = await (supabase as any)
         .from('task_reviewers')
         .update({
@@ -118,7 +122,7 @@ export const useTaskReviewers = (taskId: string | undefined) => {
           comments: comments || null,
         })
         .eq('id', reviewerId)
-        .eq('user_id', user.id)
+        .in('user_id', ids)
         .select('id, status')
         .maybeSingle();
 
@@ -138,8 +142,9 @@ export const useTaskReviewers = (taskId: string | undefined) => {
   const totalCount = reviewers.length;
   const allApproved = totalCount > 0 && approvedCount === totalCount;
   const hasRejection = rejectedCount > 0;
-  const isCurrentUserReviewer = reviewers.some(r => r.user_id === user?.id);
-  const currentUserReview = reviewers.find(r => r.user_id === user?.id);
+  // B2B: treat the current user as the reviewer if either they or their partner is on the row.
+  const isCurrentUserReviewer = reviewers.some(r => r.user_id && effectiveUserIds.includes(r.user_id));
+  const currentUserReview = reviewers.find(r => r.user_id && effectiveUserIds.includes(r.user_id));
 
   return {
     reviewers,

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { fetchB2BPartnerIds } from '@/hooks/useB2BPartner';
 
 export type ItemApprovalStatus = 'pending' | 'ready_for_review' | 'approved' | 'rejected' | 'approved_with_action';
 
@@ -210,7 +211,11 @@ export const usePSSRsAwaitingReview = (userId: string | undefined) => {
     queryFn: async () => {
       if (!userId) return [];
 
-      // Fetch all item approvals assigned to this user - removed station column (doesn't exist)
+      // B2B: include partner's pending approvals so either person can act.
+      const partnerIds = await fetchB2BPartnerIds(userId);
+      const ids = [userId, ...partnerIds];
+
+      // Fetch all item approvals assigned to this user or their B2B partner
       const { data: approvals, error } = await supabase
         .from('pssr_item_approvals')
         .select(`
@@ -229,7 +234,7 @@ export const usePSSRsAwaitingReview = (userId: string | undefined) => {
             created_at
           )
         `)
-        .eq('approver_user_id', userId)
+        .in('approver_user_id', ids)
         .in('status', ['ready_for_review', 'pending']);
 
       if (error) throw error;
