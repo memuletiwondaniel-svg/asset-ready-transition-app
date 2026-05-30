@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -86,17 +88,41 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
   });
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const addDocument = () => {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const addDocument = async () => {
     if (!documentForm.document_name) return;
 
     if (documentForm.document_type === 'file' && !documentForm.file) return;
     if (documentForm.document_type === 'link' && !documentForm.link_url) return;
 
+    let uploadedPath: string | undefined;
+    if (documentForm.document_type === 'file' && documentForm.file) {
+      try {
+        setIsUploading(true);
+        const file = documentForm.file;
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const path = `documents/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+        const { error } = await supabase.storage
+          .from('project-attachments')
+          .upload(path, file, { upsert: false, contentType: file.type || undefined });
+        if (error) throw error;
+        uploadedPath = path;
+      } catch (err: any) {
+        console.error('Document upload failed:', err);
+        toast.error(err?.message || 'Failed to upload file');
+        setIsUploading(false);
+        return;
+      } finally {
+        setIsUploading(false);
+      }
+    }
+
     const document = {
       id: Date.now().toString(),
       document_name: documentForm.document_name,
       document_type: documentForm.document_type,
-      file_path: documentForm.file ? documentForm.file.name : undefined,
+      file_path: uploadedPath,
       link_url: documentForm.document_type === 'link' ? documentForm.link_url : undefined,
       link_type: documentForm.document_type === 'link' ? documentForm.link_type : undefined,
       file_extension: documentForm.file ? documentForm.file.name.split('.').pop() : undefined,
@@ -316,6 +342,7 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
                   type="button"
                   onClick={addDocument}
                   disabled={
+                    isUploading ||
                     !documentForm.document_name ||
                     (documentForm.document_type === 'file' && !documentForm.file) ||
                     (documentForm.document_type === 'link' && !documentForm.link_url)
@@ -323,7 +350,7 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Document
+                  {isUploading ? 'Uploading…' : 'Add Document'}
                 </Button>
               </div>
             </div>
