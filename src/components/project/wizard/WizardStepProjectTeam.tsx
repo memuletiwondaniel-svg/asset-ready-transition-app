@@ -96,7 +96,14 @@ const MemberPicker: React.FC<MemberPickerProps> = ({ role, currentUserId, allUse
               onValueChange={setSearch}
             />
           )}
-          <CommandList className="max-h-72 overflow-y-auto overscroll-contain scrollbar-hidden">
+          <CommandList
+            className="max-h-72 overflow-y-auto overscroll-contain scrollbar-hidden"
+            onWheel={(e) => {
+              // Radix Dialog's scroll-lock blocks wheel events on portaled popovers.
+              // Manually translate the wheel into a scrollTop change so the list scrolls.
+              e.currentTarget.scrollTop += e.deltaY;
+            }}
+          >
             <CommandEmpty>No users found.</CommandEmpty>
             <CommandGroup>
               {filtered.map((u) => {
