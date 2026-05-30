@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Users, Target, FileText, UserCircle, Building2, Edit, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, Target, FileText, UserCircle, Building2, Edit, ChevronDown, ChevronUp, File, FileImage, FileSpreadsheet, Presentation, FileCode, Link as LinkIcon, Folder } from 'lucide-react';
 import { useProjects, useProjectTeamMembers } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
 import { useStations } from '@/hooks/useStations';
