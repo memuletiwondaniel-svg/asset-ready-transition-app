@@ -400,7 +400,7 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <Calendar className="h-4 w-4 text-primary" />
-              Add milestone
+              Add Milestone
             </DialogTitle>
           </DialogHeader>
 
