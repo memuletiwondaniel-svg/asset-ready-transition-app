@@ -96,7 +96,7 @@ const MemberPicker: React.FC<MemberPickerProps> = ({ role, currentUserId, allUse
               onValueChange={setSearch}
             />
           )}
-          <CommandList className="max-h-72 scrollbar-overlay">
+          <CommandList className="max-h-72 overflow-y-auto overscroll-contain scrollbar-hidden">
             <CommandEmpty>No users found.</CommandEmpty>
             <CommandGroup>
               {filtered.map((u) => {
