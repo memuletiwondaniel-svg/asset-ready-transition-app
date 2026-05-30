@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Users, Target, FileText, UserCircle, Building2, Edit, ChevronDown, ChevronUp } from 'lucide-react';
 import { useProjects, useProjectTeamMembers } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
@@ -10,6 +11,7 @@ import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
 import { useProjectRegions } from '@/hooks/useProjectRegions';
 import { useAutoPopulateTeam } from '@/hooks/useAutoPopulateTeam';
+import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -36,7 +38,8 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   const { regions } = useProjectRegions();
   
   // Use react-query hook for team members - automatically refetches when cache is invalidated
-  const { teamMembers: rawTeamMembers, isLoading: teamLoading, addTeamMember } = useProjectTeamMembers(projectId);
+  const { teamMembers: rawTeamMembers, isLoading: teamLoading, addTeamMember, removeTeamMember } = useProjectTeamMembers(projectId);
+  const { data: allUsers = [] } = useProfileUsers();
   const [milestones, setMilestones] = useState<any[]>([]);
   const [milestonesLoading, setMilestonesLoading] = useState(true);
   const [isScopeExpanded, setIsScopeExpanded] = useState(false);
@@ -65,7 +68,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   }));
 
   // Self-healing: auto-fill missing required roles from region/hub-based suggestions
-  const REQUIRED_ROLES = ['Project Hub Lead', 'Construction Lead', 'Commissioning Lead', 'Snr. ORA Engr.'];
+  const REQUIRED_ROLES = ['Project Hub Lead', 'Construction Lead', 'Commissioning Lead', 'Snr. ORA Engr.', 'Deputy Plant Director'];
   
   useEffect(() => {
     if (teamLoading || suggestionsLoading || hasAutoHealed.current || !projectId) return;
@@ -77,6 +80,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
         'Construction Lead': ['Construction Lead'],
         'Commissioning Lead': ['Commissioning Lead'],
         'Snr. ORA Engr.': ['Snr ORA Engr', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr. ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+        'Deputy Plant Director': ['Deputy Plant Director', 'Dep. Plant Director', 'Dep Plant Director'],
       };
       const variations = roleVariations[role] || [role];
       return !rawTeamMembers.some(m => variations.includes(m.role));
