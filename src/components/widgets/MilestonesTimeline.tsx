@@ -8,6 +8,7 @@ interface Milestone {
   milestone_name: string;
   milestone_date: string | null;
   status: string;
+  is_scorecard_project?: boolean;
 }
 
 interface MilestonesTimelineProps {
@@ -44,12 +45,20 @@ export const MilestonesTimeline: React.FC<MilestonesTimelineProps> = ({ mileston
               {isCompleted && <Check className="h-2.5 w-2.5" />}
             </div>
 
-            {/* Name + Date */}
+            {/* Name + scorecard badge */}
             <span className={cn(
-              "text-xs flex-1 truncate",
+              "text-xs flex-1 truncate flex items-center gap-1.5",
               isCompleted ? "text-muted-foreground" : "text-foreground"
             )}>
-              {milestone.milestone_name}
+              <span className="truncate">{milestone.milestone_name}</span>
+              {milestone.is_scorecard_project && (
+                <span
+                  className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0"
+                  title="Scorecard milestone"
+                >
+                  SCORECARD
+                </span>
+              )}
             </span>
             {milestone.milestone_date && (
               <span className="text-[11px] text-muted-foreground tabular-nums shrink-0">

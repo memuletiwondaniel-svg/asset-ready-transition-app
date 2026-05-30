@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Users, Target, FileText, UserCircle, Building2, Edit, ChevronDown, ChevronUp } from 'lucide-react';
 import { useProjects, useProjectTeamMembers } from '@/hooks/useProjects';
 import { usePlants } from '@/hooks/usePlants';
@@ -10,6 +11,7 @@ import { useStations } from '@/hooks/useStations';
 import { useHubs } from '@/hooks/useHubs';
 import { useProjectRegions } from '@/hooks/useProjectRegions';
 import { useAutoPopulateTeam } from '@/hooks/useAutoPopulateTeam';
+import { useProfileUsers } from '@/hooks/useProfileUsers';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -36,7 +38,8 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   const { regions } = useProjectRegions();
   
   // Use react-query hook for team members - automatically refetches when cache is invalidated
-  const { teamMembers: rawTeamMembers, isLoading: teamLoading, addTeamMember } = useProjectTeamMembers(projectId);
+  const { teamMembers: rawTeamMembers, isLoading: teamLoading, addTeamMember, removeTeamMember } = useProjectTeamMembers(projectId);
+  const { data: allUsers = [] } = useProfileUsers();
   const [milestones, setMilestones] = useState<any[]>([]);
   const [milestonesLoading, setMilestonesLoading] = useState(true);
   const [isScopeExpanded, setIsScopeExpanded] = useState(false);
@@ -65,7 +68,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   }));
 
   // Self-healing: auto-fill missing required roles from region/hub-based suggestions
-  const REQUIRED_ROLES = ['Project Hub Lead', 'Construction Lead', 'Commissioning Lead', 'Snr. ORA Engr.'];
+  const REQUIRED_ROLES = ['Project Hub Lead', 'Construction Lead', 'Commissioning Lead', 'Snr. ORA Engr.', 'Deputy Plant Director'];
   
   useEffect(() => {
     if (teamLoading || suggestionsLoading || hasAutoHealed.current || !projectId) return;
@@ -77,6 +80,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
         'Construction Lead': ['Construction Lead'],
         'Commissioning Lead': ['Commissioning Lead'],
         'Snr. ORA Engr.': ['Snr ORA Engr', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr. ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+        'Deputy Plant Director': ['Deputy Plant Director', 'Dep. Plant Director', 'Dep Plant Director'],
       };
       const variations = roleVariations[role] || [role];
       return !rawTeamMembers.some(m => variations.includes(m.role));
@@ -219,6 +223,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           'Construction Lead',
           'Commissioning Lead',
           'Snr. ORA Engr.',
+          'Deputy Plant Director',
         ];
         
         const ROLE_VARIATIONS: Record<string, string[]> = {
@@ -226,6 +231,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           'Construction Lead': ['Construction Lead'],
           'Commissioning Lead': ['Commissioning Lead'],
           'Snr. ORA Engr.': ['Snr ORA Engr', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr. ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+          'Deputy Plant Director': ['Deputy Plant Director', 'Dep. Plant Director', 'Dep Plant Director'],
         };
         
         const roleDisplayData = CANONICAL_REQUIRED_ROLES.map(role => {
@@ -286,12 +292,53 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                       )}
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className={cn(
-                        "text-sm font-medium truncate",
-                        !data.member && "text-muted-foreground/60 italic"
-                      )}>
-                        {data.profile?.full_name || 'Unassigned'}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={cn(
+                          "text-sm font-medium truncate",
+                          !data.member && "text-muted-foreground/60 italic"
+                        )}>
+                          {data.profile?.full_name || 'Unassigned'}
+                        </p>
+                        {(() => {
+                          if (!data.member) return null;
+                          const memberPos = ((data.member as any).position || '').toLowerCase().replace(/\s+/g, ' ').trim();
+                          if (!memberPos) return null;
+                          const sharing = (allUsers || []).filter((u: any) => ((u.position || '').toLowerCase().replace(/\s+/g, ' ').trim()) === memberPos);
+                          const others = sharing.filter((u: any) => u.user_id !== data.member!.user_id);
+                          const partner = sharing.length === 2 && others.length === 1 ? others[0] : null;
+                          if (!partner) return null;
+                          const partnerName = (partner as any).full_name || (partner as any).email;
+                          return (
+                            <TooltipProvider delayDuration={150}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // Switch: remove current member, add partner with same role
+                                      removeTeamMember((data.member as any).id);
+                                      addTeamMember({
+                                        project_id: projectId,
+                                        user_id: (partner as any).user_id,
+                                        role: (data.member as any).role,
+                                        is_lead: !!(data.member as any).is_lead,
+                                      });
+                                    }}
+                                    className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 hover:bg-amber-200 dark:hover:bg-amber-900/60 cursor-pointer transition-colors"
+                                    title={`Switch to B2B: ${partnerName}`}
+                                  >
+                                    B2B
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
+                                  Click to switch to B2B: {partnerName}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })()}
+                      </div>
                       <p className="text-xs text-muted-foreground truncate">{data.role}</p>
                     </div>
                     {isLeadRow && others.length > 0 && (
