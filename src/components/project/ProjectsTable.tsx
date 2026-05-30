@@ -455,6 +455,8 @@ export function ProjectsTable({
                           const tooltipText = info
                             ? (info.description || info.name)
                             : project.next_milestone_name;
+                          const displayCode = info?.code
+                            || (project.next_milestone_name?.split(/[\s-]/)[0] ?? project.next_milestone_name);
                           return (
                             <div key={col.id} style={style} className="shrink-0 min-w-0">
                               {project.next_milestone_name ? (
@@ -462,7 +464,7 @@ export function ProjectsTable({
                                   <div className="flex items-center gap-1 min-w-0">
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <p className="text-sm text-foreground truncate cursor-help">{project.next_milestone_name}</p>
+                                        <p className="text-sm text-foreground truncate cursor-help">{displayCode}</p>
                                       </TooltipTrigger>
                                       <TooltipContent side="top" className="max-w-xs">{tooltipText}</TooltipContent>
                                     </Tooltip>
