@@ -16,6 +16,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { MilestonesTimeline } from './MilestonesTimeline';
+import DOMPurify from 'dompurify';
+
+const isHtmlScope = (s: string) => /<\/?[a-z][\s\S]*>/i.test(s);
+const stripHtml = (s: string) => s.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
 
 interface ProjectReadinessWidgetProps {
   projectId: string;
@@ -164,13 +168,20 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
               Scope
             </h3>
             <div>
-              <p className={`text-xs text-foreground/90 leading-relaxed ${!isScopeExpanded ? 'line-clamp-4' : ''}`}>
-                {project.project_scope}
-              </p>
-              {project.project_scope.length > 200 && (
-                <Button 
-                  variant="link" 
-                  size="sm" 
+              {isHtmlScope(project.project_scope) ? (
+                <div
+                  className={`text-xs text-foreground/90 leading-relaxed prose prose-sm max-w-none prose-img:rounded-lg prose-img:my-2 [&_img]:max-w-full [&_img]:h-auto ${!isScopeExpanded ? 'line-clamp-4' : ''}`}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(project.project_scope) }}
+                />
+              ) : (
+                <p className={`text-xs text-foreground/90 leading-relaxed ${!isScopeExpanded ? 'line-clamp-4' : ''}`}>
+                  {project.project_scope}
+                </p>
+              )}
+              {stripHtml(project.project_scope).length > 200 && (
+                <Button
+                  variant="link"
+                  size="sm"
                   className="p-0 h-auto text-primary mt-2"
                   onClick={(e) => {
                     e.stopPropagation();
