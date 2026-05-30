@@ -54,9 +54,9 @@ async function fetchRemoteBuild(): Promise<string | null> {
 }
 
 export async function checkOnce() {
-  if (shouldSkipSelfReload()) return;
+  const softReloadOnly = shouldSkipSelfReload();
   if (inFlight || reloading || !CURRENT_BUILD) return;
-  if (shouldForceResetForSessionMismatch()) {
+  if (!softReloadOnly && shouldForceResetForSessionMismatch()) {
     reloading = true;
     await performHardReset(`${APP_RESET_ID}|session-epoch`);
     return;
@@ -67,6 +67,10 @@ export async function checkOnce() {
     if (!remote || remote === "__APP_BUILD__") return; // dev / unreplaced
     if (remote !== CURRENT_BUILD) {
       reloading = true;
+      if (softReloadOnly) {
+        forceFreshReload();
+        return;
+      }
       await performHardReset(`${APP_RESET_ID}|build:${remote}`);
     }
   } finally {
@@ -88,16 +92,17 @@ function forceFreshReload() {
 
 export function startVersionCheck() {
   if (started) return;
-  if (shouldSkipSelfReload()) {
-    // Editor live preview / Vite dev → do NOT install self-reload listeners.
-    // Production builds (DEV === false) keep the full stale-bundle hardening.
-    started = true;
-    return;
-  }
   started = true;
   syncTabSessionEpoch();
 
   void checkOnce();
+
+  if (shouldSkipSelfReload()) {
+    // Editor live preview / Vite dev → keep only the one-shot safe build check
+    // above. Do NOT install long-lived self-reload listeners in preview.
+    return;
+  }
+
   window.setInterval(checkOnce, POLL_INTERVAL_MS);
 
   window.addEventListener("pageshow", (event) => {
