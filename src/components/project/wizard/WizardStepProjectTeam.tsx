@@ -36,6 +36,15 @@ const KEY_ROLES = [
   'Deputy Plant Director',
 ];
 
+// Patterns used to filter eligible users per role (matches against position / role)
+const ROLE_ELIGIBILITY: Record<string, string[]> = {
+  'Project Hub Lead': ['hub lead', 'project hub lead', 'engr. manager', 'engineering manager'],
+  'Construction Lead': ['construction lead', 'construction'],
+  'Commissioning Lead': ['commissioning lead', 'commissioning'],
+  'Snr. ORA Engr.': ['snr. ora engr', 'snr ora engr', 'snr. ora eng', 'snr ora eng', 'senior ora'],
+  'Deputy Plant Director': ['deputy plant director', 'plant director'],
+};
+
 const getInitials = (name?: string) =>
   !name ? '?' : name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
