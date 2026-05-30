@@ -426,22 +426,86 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
   };
 
   return (
-    <Card className="border-border/60 shadow-sm">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center text-lg gap-2 text-foreground">
-          <Calendar className="h-5 w-5 text-primary" />
-          Project Milestones
-          <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium bg-primary/10 text-primary">
+    <div className="space-y-3">
+      {/* Header row: count + Add button */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Milestones</span>
+          <Badge variant="secondary" className="h-5 min-w-5 rounded-full px-1.5 text-[11px] font-medium bg-muted text-muted-foreground">
             {milestones.length}
           </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Add Milestone */}
-        <div className="p-4 rounded-lg bg-muted/30 border border-border/40">
-          <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2 mb-4">Add New Milestone</h4>
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-            <div className="space-y-1.5 md:col-span-5">
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => setIsAddOpen(true)}
+          className="gap-1.5"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Add milestone
+        </Button>
+      </div>
+
+      {/* Milestones List or Empty State */}
+      {milestones.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-8 text-center">
+          <Calendar className="mx-auto h-6 w-6 text-muted-foreground/60 mb-2" />
+          <p className="text-sm text-muted-foreground">No milestones yet</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">Click "Add milestone" to define your first one.</p>
+        </div>
+      ) : (
+        <div className="space-y-2 rounded-lg border border-border/60 bg-card p-3">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={milestones.map(m => m.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2">
+                {milestones.map((milestone) => (
+                  <SortableMilestoneItem
+                    key={milestone.id}
+                    milestone={milestone}
+                    editingId={editingId}
+                    editingMilestone={editingMilestone}
+                    milestoneOptions={milestoneOptions}
+                    isLoading={isLoading}
+                    isCreating={isCreating}
+                    onStartEditing={startEditing}
+                    onSaveEditing={saveEditing}
+                    onCancelEditing={cancelEditing}
+                    onRemove={removeMilestone}
+                    onStatusChange={handleStatusChange}
+                    onEditMilestoneTypeSelect={handleEditMilestoneTypeSelect}
+                    onEditDescriptionChange={(value) => setEditingMilestone(prev => prev ? ({ ...prev, milestone_description: value }) : null)}
+                    onEditDateChange={(date) => setEditingMilestone(prev => prev ? ({ ...prev, milestone_date: date }) : null)}
+                    onEditScorecardChange={(checked) => setEditingMilestone(prev => prev ? ({ ...prev, is_scorecard_project: checked }) : null)}
+                    onCreateNewMilestoneTypeForEdit={handleCreateNewMilestoneTypeForEdit}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </div>
+      )}
+
+      {/* Add Milestone Dialog */}
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Calendar className="h-4 w-4 text-primary" />
+              Add milestone
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1.5">
               <Label className="text-xs font-medium text-muted-foreground">Milestone Type</Label>
               <EnhancedSearchableCombobox
                 options={milestoneOptions}
@@ -455,117 +519,80 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
               />
             </div>
 
-            <div className="space-y-1.5 md:col-span-4">
-              <Label className="text-xs font-medium text-muted-foreground">Milestone Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal bg-background",
-                      !newMilestone.milestone_date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarDays className="mr-2 h-4 w-4 shrink-0" />
-                    <span className="truncate">
-                      {newMilestone.milestone_date
-                        ? format(newMilestone.milestone_date, "dd MMM yyyy")
-                        : "Pick a date"}
-                    </span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={newMilestone.milestone_date}
-                    onSelect={(date) => setNewMilestone(prev => ({ ...prev, milestone_date: date }))}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground">Milestone Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal bg-background",
+                        !newMilestone.milestone_date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarDays className="mr-2 h-4 w-4 shrink-0" />
+                      <span className="truncate">
+                        {newMilestone.milestone_date
+                          ? format(newMilestone.milestone_date, "dd MMM yyyy")
+                          : "Pick a date"}
+                      </span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={newMilestone.milestone_date}
+                      onSelect={(date) => setNewMilestone(prev => ({ ...prev, milestone_date: date }))}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-            <div className="space-y-1.5 md:col-span-3">
-              <Label className="text-xs font-medium text-muted-foreground">Scorecard</Label>
-              <div className="flex items-center space-x-2 h-10 px-3 rounded-md border border-input bg-background">
-                <Switch
-                  checked={newMilestone.is_scorecard_project}
-                  onCheckedChange={(checked) => setNewMilestone(prev => ({ ...prev, is_scorecard_project: checked }))}
-                />
-                <span className="text-sm text-muted-foreground">
-                  {newMilestone.is_scorecard_project ? 'Yes' : 'No'}
-                </span>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground">Scorecard</Label>
+                <div className="flex items-center space-x-2 h-10 px-3 rounded-md border border-input bg-background">
+                  <Switch
+                    checked={newMilestone.is_scorecard_project}
+                    onCheckedChange={(checked) => setNewMilestone(prev => ({ ...prev, is_scorecard_project: checked }))}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {newMilestone.is_scorecard_project ? 'Yes' : 'No'}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-1.5 md:col-span-9">
+            <div className="space-y-1.5">
               <Label className="text-xs font-medium text-muted-foreground">Description / Comments</Label>
               <Textarea
                 value={newMilestone.milestone_description}
                 onChange={(e) => setNewMilestone(prev => ({ ...prev, milestone_description: e.target.value }))}
                 placeholder="Optional notes about this milestone..."
-                className="min-h-[40px] resize-none bg-background"
-                rows={2}
+                className="min-h-[80px] resize-none bg-background"
+                rows={3}
               />
             </div>
-
-            <div className="md:col-span-3 flex items-end">
-              <Button
-                type="button"
-                onClick={addMilestone}
-                disabled={!newMilestone.milestone_name || !newMilestone.milestone_date || isCreating}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Milestone
-              </Button>
-            </div>
           </div>
-        </div>
 
-
-        {/* Milestones List */}
-        {milestones.length > 0 && (
-          <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/40">
-            <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2">Existing Milestones</h4>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
+          <DialogFooter className="pt-2">
+            <Button type="button" variant="ghost" onClick={() => setIsAddOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={addMilestone}
+              disabled={!newMilestone.milestone_name || !newMilestone.milestone_date || isCreating}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
             >
-              <SortableContext
-                items={milestones.map(m => m.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-2">
-                  {milestones.map((milestone) => (
-                    <SortableMilestoneItem
-                      key={milestone.id}
-                      milestone={milestone}
-                      editingId={editingId}
-                      editingMilestone={editingMilestone}
-                      milestoneOptions={milestoneOptions}
-                      isLoading={isLoading}
-                      isCreating={isCreating}
-                      onStartEditing={startEditing}
-                      onSaveEditing={saveEditing}
-                      onCancelEditing={cancelEditing}
-                      onRemove={removeMilestone}
-                      onStatusChange={handleStatusChange}
-                      onEditMilestoneTypeSelect={handleEditMilestoneTypeSelect}
-                      onEditDescriptionChange={(value) => setEditingMilestone(prev => prev ? ({ ...prev, milestone_description: value }) : null)}
-                      onEditDateChange={(date) => setEditingMilestone(prev => prev ? ({ ...prev, milestone_date: date }) : null)}
-                      onEditScorecardChange={(checked) => setEditingMilestone(prev => prev ? ({ ...prev, is_scorecard_project: checked }) : null)}
-                      onCreateNewMilestoneTypeForEdit={handleCreateNewMilestoneTypeForEdit}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              <Plus className="h-4 w-4" />
+              Add milestone
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
