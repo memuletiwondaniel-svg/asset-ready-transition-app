@@ -16,6 +16,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { MilestonesTimeline } from './MilestonesTimeline';
+import DOMPurify from 'dompurify';
+
+const isHtmlScope = (s: string) => /<\/?[a-z][\s\S]*>/i.test(s);
+const stripHtml = (s: string) => s.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
 
 interface ProjectReadinessWidgetProps {
   projectId: string;
