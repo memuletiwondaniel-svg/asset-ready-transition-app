@@ -9050,6 +9050,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          field_id: string | null
           hub_id: string | null
           id: string
           is_active: boolean
@@ -9068,6 +9069,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          field_id?: string | null
           hub_id?: string | null
           id?: string
           is_active?: boolean
@@ -9086,6 +9088,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          field_id?: string | null
           hub_id?: string | null
           id?: string
           is_active?: boolean
@@ -9102,6 +9105,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "projects_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "field"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "projects_hub_id_fkey"
             columns: ["hub_id"]
@@ -13333,6 +13343,8 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           document_count: number | null
+          field_id: string | null
+          field_name: string | null
           hub_id: string | null
           hub_name: string | null
           id: string | null
@@ -13359,6 +13371,13 @@ export type Database = {
           updated_at: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "projects_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "field"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "projects_hub_id_fkey"
             columns: ["hub_id"]
