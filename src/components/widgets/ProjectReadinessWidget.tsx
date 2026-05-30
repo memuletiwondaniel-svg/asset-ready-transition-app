@@ -402,7 +402,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                 const isLink = doc.document_type === 'link';
                 const ext = (doc.file_extension || '').toLowerCase();
                 const Icon = isLink
-                  ? (doc.link_type ? Folder : LinkIcon)
+                  ? LinkIcon
                   : ext === 'pdf' ? FileText
                   : ['doc','docx'].includes(ext) ? FileText
                   : ['xls','xlsx','csv'].includes(ext) ? FileSpreadsheet
@@ -427,10 +427,8 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-medium truncate leading-tight">{doc.document_name}</p>
-                      <p className="text-[10px] text-muted-foreground truncate leading-tight uppercase tracking-wide">
-                        {isLink ? (doc.link_type || 'Link') : (ext || 'File')}
-                      </p>
                     </div>
+
                   </Wrapper>
                 );
               })}
