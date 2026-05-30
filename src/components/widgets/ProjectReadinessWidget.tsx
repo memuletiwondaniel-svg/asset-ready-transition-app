@@ -543,10 +543,10 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           </div>
           
           {/* Location Labels */}
-          {project && (plant || station) && (
+          {project && (plant || (project as any).field_name || station) && (
             <p className="text-xs text-muted-foreground">
               <span className="font-medium text-foreground/70">Location:</span>{' '}
-              {[plant?.name, station?.name].filter(Boolean).join(' · ')}
+              {[plant?.name, (project as any).field_name, station?.name].filter(Boolean).join(' · ')}
             </p>
           )}
         </div>
