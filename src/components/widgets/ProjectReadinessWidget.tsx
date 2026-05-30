@@ -155,22 +155,57 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
 
   const loading = teamLoading || milestonesLoading;
 
-  const downloadDocument = async (url: string, filename: string) => {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Download failed');
+  const getDownloadFilename = (doc: any) => {
+    const baseName = doc.document_name || doc.file_path?.split('/').pop() || 'download';
+    const extension = (doc.file_extension || '').trim().toLowerCase();
 
-      const blob = await response.blob();
+    if (!extension || baseName.toLowerCase().endsWith(`.${extension}`)) {
+      return baseName;
+    }
+
+    return `${baseName}.${extension}`;
+  };
+
+  const downloadDocument = async (doc: any) => {
+    try {
+      let blob: Blob | null = null;
+
+      if (doc.file_path) {
+        for (const bucket of ['project-attachments', 'project-documents']) {
+          const { data, error } = await supabase.storage.from(bucket).download(doc.file_path);
+          if (!error && data) {
+            blob = data;
+            break;
+          }
+        }
+      }
+
+      if (!blob && doc.file_path?.startsWith('http')) {
+        const response = await fetch(doc.file_path);
+        if (!response.ok) throw new Error('Download failed');
+        blob = await response.blob();
+      }
+
+      if (!blob) throw new Error('Download failed');
+
       const blobUrl = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = blobUrl;
-      anchor.download = filename;
+      anchor.download = getDownloadFilename(doc);
       document.body.appendChild(anchor);
       anchor.click();
       document.body.removeChild(anchor);
       URL.revokeObjectURL(blobUrl);
     } catch (error) {
-      window.open(url, '_blank', 'noopener,noreferrer');
+      const fallbackUrl = doc.file_path?.startsWith('http')
+        ? doc.file_path
+        : doc.file_path
+          ? supabase.storage.from('project-attachments').getPublicUrl(doc.file_path).data.publicUrl
+          : undefined;
+
+      if (fallbackUrl) {
+        window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+      }
     }
   };
 
@@ -429,11 +464,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                   : ['jpg','jpeg','png','gif','webp'].includes(ext) ? FileImage
                   : ['txt'].includes(ext) ? FileCode
                   : File;
-                const href = isLink
-                  ? doc.link_url
-                  : (doc.file_path
-                      ? supabase.storage.from('project-attachments').getPublicUrl(doc.file_path).data.publicUrl
-                      : undefined);
+                const href = isLink ? doc.link_url : doc.file_path;
                 const Wrapper: any = href ? 'button' : 'div';
                 const wrapperProps: any = href
                   ? {
@@ -446,7 +477,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                           return;
                         }
 
-                        await downloadDocument(href, doc.document_name || doc.file_path?.split('/').pop() || 'download');
+                        await downloadDocument(doc);
                       },
                     }
                   : {};
