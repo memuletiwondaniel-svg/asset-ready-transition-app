@@ -410,25 +410,34 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                   : ['jpg','jpeg','png','gif','webp'].includes(ext) ? FileImage
                   : ['txt'].includes(ext) ? FileCode
                   : File;
-                const href = isLink ? doc.link_url : (doc.file_path ? supabase.storage.from('project-documents').getPublicUrl(doc.file_path).data.publicUrl : undefined);
+                const href = isLink
+                  ? doc.link_url
+                  : (doc.file_path
+                      ? supabase.storage.from('project-attachments').getPublicUrl(doc.file_path).data.publicUrl
+                      : undefined);
                 const Wrapper: any = href ? 'a' : 'div';
-                const wrapperProps: any = href ? { href, target: '_blank', rel: 'noopener noreferrer', onClick: (e: React.MouseEvent) => e.stopPropagation() } : {};
+                const wrapperProps: any = href
+                  ? {
+                      href,
+                      target: '_blank',
+                      rel: 'noopener noreferrer',
+                      ...(isLink ? {} : { download: doc.document_name || true }),
+                      onClick: (e: React.MouseEvent) => e.stopPropagation(),
+                    }
+                  : {};
                 return (
                   <Wrapper
                     key={doc.id}
                     {...wrapperProps}
                     className={cn(
-                      "flex items-center gap-2.5 p-2 rounded-lg border bg-muted/30 border-border/40 transition-all duration-200",
+                      "flex items-center gap-2 px-2 py-1.5 rounded-md border bg-muted/30 border-border/40 transition-all duration-200",
                       href && "hover:bg-muted/50 hover:border-primary/20 cursor-pointer"
                     )}
                   >
-                    <div className="p-1.5 rounded-md bg-background/60 border border-border/40 shrink-0">
-                      <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
+                    <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-medium truncate leading-tight">{doc.document_name}</p>
                     </div>
-
                   </Wrapper>
                 );
               })}
