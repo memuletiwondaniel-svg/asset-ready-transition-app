@@ -528,6 +528,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
             regionName={regionName}
             hubName={hubName}
             hubId={formData.hub_id || null}
+            plantName={plantName}
           />
         );
       case 4:
