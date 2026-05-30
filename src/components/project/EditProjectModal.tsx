@@ -1,34 +1,35 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
-import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { X, FileText, Calendar, Users, MapPin, Building, Layers, Check, ChevronsUpDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { useProjects } from '@/hooks/useProjects';
+import { useProjectRegions } from '@/hooks/useProjectRegions';
+import { useHubs } from '@/hooks/useHubs';
 import { useStations } from '@/hooks/useStations';
 import { usePlants } from '@/hooks/usePlants';
-import { useFields } from '@/hooks/useFields';
-import { useHubs } from '@/hooks/useHubs';
-import { useProjectRegions } from '@/hooks/useProjectRegions';
 import { useProjectLocations } from '@/hooks/useProjectLocations';
-import { useProjectHierarchy } from '@/hooks/useProjectHierarchy';
-import { useToast } from '@/hooks/use-toast';
 import { useLogActivity } from '@/hooks/useActivityLogs';
-import { useQueryClient } from '@tanstack/react-query';
-import { ProjectTeamSection } from './ProjectTeamSection';
-import { ProjectMilestonesSection } from './ProjectMilestonesSection';
-import { EnhancedProjectDocumentsSection } from './EnhancedProjectDocumentsSection';
-import { supabase } from '@/integrations/supabase/client';
-import { cn } from '@/lib/utils';
+import { useProjectIdAvailability } from '@/hooks/useProjectIdAvailability';
+import { Attachment } from '@/components/ui/RichTextEditor';
+import WizardStepProjectInfo from './wizard/WizardStepProjectInfo';
+import WizardStepProjectScope from './wizard/WizardStepProjectScope';
+import WizardStepProjectTeam from './wizard/WizardStepProjectTeam';
+import WizardStepMilestonesDocuments from './wizard/WizardStepMilestonesDocuments';
+import WizardStepProjectReview from './wizard/WizardStepProjectReview';
 
 interface EditProjectModalProps {
   open: boolean;
@@ -37,383 +38,393 @@ interface EditProjectModalProps {
   project: any;
 }
 
-export const EditProjectModal: React.FC<EditProjectModalProps> = ({ 
-  open, 
+interface FormData {
+  project_id_prefix: 'DP' | 'ST' | 'MoC' | '';
+  project_id_number: string;
+  project_title: string;
+  region_id: string;
+  hub_id: string;
+  plant_id: string;
+  field_id: string;
+  station_id: string;
+}
+
+interface TeamMember {
+  user_id: string;
+  role: string;
+  is_lead: boolean;
+  user_name?: string;
+  user_email?: string;
+  avatar_url?: string;
+  position?: string;
+}
+
+interface Milestone {
+  id: string;
+  milestone_name: string;
+  milestone_date: string;
+  is_scorecard_project: boolean;
+  milestone_type_id?: string;
+}
+
+interface Document {
+  id: string;
+  document_name: string;
+  document_type: string;
+  file_path?: string;
+  link_url?: string;
+  link_type?: string;
+  file_extension?: string;
+  file_size?: number;
+}
+
+const STEPS = [
+  { id: 1, title: 'Project Info', description: 'Basic details' },
+  { id: 2, title: 'Scope', description: 'Define scope' },
+  { id: 3, title: 'Team', description: 'Assign members' },
+  { id: 4, title: 'Milestones', description: 'Timeline & docs' },
+  { id: 5, title: 'Review', description: 'Confirm & save' },
+];
+
+export const EditProjectModal: React.FC<EditProjectModalProps> = ({
+  open,
   onClose,
   onSave,
-  project
+  project,
 }) => {
-  const { updateProjectAsync, isUpdating } = useProjects();
-  const { allStations, getStationsByField, isLoading: stationsLoading } = useStations();
-  const { plants, isLoading: plantsLoading } = usePlants();
-  const { allFields, getFieldsByPlant, isLoading: fieldsLoading } = useFields();
-  const { data: hubs = [], createHub } = useHubs();
-  const { regions } = useProjectRegions();
-  const { regions: hierarchyRegions } = useProjectHierarchy();
-  const { locations, saveLocations } = useProjectLocations(project?.id);
-  const { toast } = useToast();
-  const { mutate: logActivity } = useLogActivity();
   const queryClient = useQueryClient();
+  const { updateProjectAsync } = useProjects();
+  const { regions } = useProjectRegions();
+  const { data: hubs = [] } = useHubs();
+  const { stations } = useStations();
+  const { plants } = usePlants();
+  const { saveLocations } = useProjectLocations(project?.id);
+  const { mutate: logActivity } = useLogActivity();
 
-  const [formData, setFormData] = useState({
-    project_id_prefix: '' as 'DP' | 'ST' | 'MoC' | '',
+  const [currentStep, setCurrentStep] = useState(1);
+  const [visitedSteps, setVisitedSteps] = useState<Set<number>>(
+    new Set([1, 2, 3, 4, 5])
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
+  const [formData, setFormData] = useState<FormData>({
+    project_id_prefix: 'DP',
     project_id_number: '',
     project_title: '',
     region_id: '',
     hub_id: '',
-    project_scope: '',
-    project_scope_image_url: '',
-    is_favorite: false,
+    plant_id: '',
+    field_id: '',
+    station_id: '',
   });
+  const [scopeDescription, setScopeDescription] = useState('');
+  const [scopeAttachments, setScopeAttachments] = useState<Attachment[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [isDirty, setIsDirty] = useState(false);
 
-  // Multiple locations state - each with plant_id, field_id, station_id
-  interface LocationEntry {
-    id: string;
-    plant_id: string;
-    field_id: string;
-    station_id: string;
-  }
-  
-  const [projectLocations, setProjectLocations] = useState<LocationEntry[]>([
-    { id: crypto.randomUUID(), plant_id: '', field_id: '', station_id: '' }
-  ]);
-  const [openStationPopovers, setOpenStationPopovers] = useState<Record<string, boolean>>({});
+  // Live duplicate check — ignore the current project's own ID
+  const { conflict: rawConflict } = useProjectIdAvailability(
+    formData.project_id_prefix || 'DP',
+    formData.project_id_number
+  );
+  const idConflict =
+    rawConflict && rawConflict.id !== project?.id ? rawConflict : null;
 
-  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
-  const [teamMembers, setTeamMembers] = useState<any[]>([]);
-  const [milestones, setMilestones] = useState<any[]>([]);
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  // Helper functions for location management
-  const addLocation = () => {
-    setProjectLocations(prev => [...prev, { 
-      id: crypto.randomUUID(), 
-      plant_id: '', 
-      field_id: '', 
-      station_id: '' 
-    }]);
-  };
-
-  const removeLocation = (id: string) => {
-    if (projectLocations.length > 1) {
-      setProjectLocations(prev => prev.filter(loc => loc.id !== id));
-    }
-  };
-
-  const updateLocation = (id: string, field: 'plant_id' | 'field_id' | 'station_id', value: string) => {
-    setProjectLocations(prev => prev.map(loc => {
-      if (loc.id === id) {
-        if (field === 'plant_id') {
-          return { ...loc, plant_id: value, field_id: '', station_id: '' };
-        } else if (field === 'field_id') {
-          return { ...loc, field_id: value, station_id: '' };
-        }
-        return { ...loc, [field]: value };
-      }
-      return loc;
-    }));
-  };
-
-  // Helper function to format date
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'Not set';
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      day: 'numeric',
-      month: 'long', 
-      year: 'numeric' 
-    });
-  };
-
-  // Load existing project data
+  // Hydrate from project + related rows on open
   useEffect(() => {
-    if (open && project) {
-      setFormData({
-        project_id_prefix: project.project_id_prefix || '',
-        project_id_number: project.project_id_number || '',
-        project_title: project.project_title || '',
-        region_id: project.region_id || '',
-        hub_id: project.hub_id || '',
-        project_scope: project.project_scope || '',
-        project_scope_image_url: project.project_scope_image_url || '',
-        is_favorite: project.is_favorite || false,
-      });
-      
-      // Initialize locations from project data
-      if (project.plant_id || project.station_id) {
-        setProjectLocations([{
-          id: crypto.randomUUID(),
-          plant_id: project.plant_id || '',
-          field_id: project.field_id || '',
-          station_id: project.station_id || ''
-        }]);
-      } else {
-        setProjectLocations([{ id: crypto.randomUUID(), plant_id: '', field_id: '', station_id: '' }]);
+    if (!open || !project) return;
+
+    setCurrentStep(1);
+    setIsDirty(false);
+
+    setFormData({
+      project_id_prefix: (project.project_id_prefix as any) || 'DP',
+      project_id_number: project.project_id_number || '',
+      project_title: project.project_title || '',
+      region_id: project.region_id || '',
+      hub_id: project.hub_id || '',
+      plant_id: project.plant_id || '',
+      field_id: project.field_id || '',
+      station_id: project.station_id || '',
+    });
+    setScopeDescription(project.project_scope || '');
+    setScopeAttachments([]);
+
+    (async () => {
+      setIsLoadingDetails(true);
+      try {
+        // Team members + profiles
+        const { data: teamData } = await supabase
+          .from('project_team_members')
+          .select('*')
+          .eq('project_id', project.id);
+
+        if (teamData && teamData.length) {
+          const userIds = teamData.map((m: any) => m.user_id);
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url, position, user_email')
+            .in('user_id', userIds);
+
+          setTeamMembers(
+            teamData.map((m: any) => {
+              const p = profilesData?.find((pp: any) => pp.user_id === m.user_id);
+              return {
+                user_id: m.user_id,
+                role: m.role,
+                is_lead: !!m.is_lead,
+                user_name: p?.full_name || '',
+                user_email: p?.user_email || '',
+                avatar_url: p?.avatar_url || '',
+                position: p?.position || '',
+              };
+            })
+          );
+        } else {
+          setTeamMembers([]);
+        }
+
+        // Milestones
+        const { data: milestonesData } = await supabase
+          .from('project_milestones')
+          .select('*')
+          .eq('project_id', project.id)
+          .order('milestone_date', { ascending: true });
+
+        setMilestones(
+          (milestonesData || []).map((m: any) => ({
+            id: m.id,
+            milestone_name: m.milestone_name,
+            milestone_date: m.milestone_date,
+            is_scorecard_project: !!m.is_scorecard_project,
+            milestone_type_id: m.milestone_type_id || undefined,
+          }))
+        );
+
+        // Documents
+        const { data: documentsData } = await supabase
+          .from('project_documents')
+          .select('*')
+          .eq('project_id', project.id)
+          .order('created_at', { ascending: false });
+
+        setDocuments(
+          (documentsData || []).map((d: any) => ({
+            id: d.id,
+            document_name: d.document_name,
+            document_type: d.document_type,
+            file_path: d.file_path || undefined,
+            link_url: d.link_url || undefined,
+            link_type: d.link_type || undefined,
+            file_extension: d.file_extension || undefined,
+            file_size: d.file_size || undefined,
+          }))
+        );
+      } catch (err) {
+        console.error('[EditProjectModal] failed to load project details', err);
+      } finally {
+        setIsLoadingDetails(false);
       }
-      
-      // Fetch existing team members, milestones, and documents
-      fetchProjectDetails();
-    }
+    })();
   }, [open, project]);
 
-  // Load existing locations
+  // Mark dirty on any meaningful change after initial hydration
   useEffect(() => {
-    if (locations.length > 0) {
-      setSelectedLocationIds(locations.map(l => l.station_id));
+    if (!open) return;
+    setIsDirty(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    formData,
+    scopeDescription,
+    scopeAttachments,
+    teamMembers,
+    milestones,
+    documents,
+  ]);
+  // Reset dirty flag right after hydration completes
+  useEffect(() => {
+    if (open && !isLoadingDetails) {
+      const t = setTimeout(() => setIsDirty(false), 0);
+      return () => clearTimeout(t);
     }
-  }, [locations]);
+  }, [open, isLoadingDetails]);
 
-  const fetchProjectDetails = async () => {
-    if (!project?.id) return;
-    
-    setLoading(true);
-    try {
-      // Fetch team members
-      const { data: teamData, error: teamError } = await supabase
-        .from('project_team_members')
-        .select('*')
-        .eq('project_id', project.id);
-      
-      if (!teamError && teamData) {
-        // Fetch profiles separately
-        const userIds = teamData.map(m => m.user_id);
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, avatar_url, position')
-          .in('user_id', userIds);
-        
-        const formattedTeam = teamData.map(member => {
-          const profile = profilesData?.find(p => p.user_id === member.user_id);
-          return {
-            id: member.id,
-            role: member.role,
-            user_id: member.user_id,
-            user_name: profile?.full_name || '',
-            is_lead: member.is_lead,
-            avatar_url: profile?.avatar_url || '',
-            position: profile?.position || ''
-          };
+  const getRegionName = () =>
+    regions.find((r) => r.id === formData.region_id)?.name || null;
+  const getHubName = () =>
+    hubs.find((h) => h.id === formData.hub_id)?.name || null;
+  const plantName = useMemo(
+    () => plants.find((p) => p.id === formData.plant_id)?.name ?? null,
+    [plants, formData.plant_id]
+  );
+
+  const handleFormDataChange = (updates: Partial<FormData>) => {
+    setFormData((prev) => ({ ...prev, ...updates }));
+  };
+
+  const isStepComplete = (step: number): boolean => {
+    switch (step) {
+      case 1:
+        return !!(
+          formData.project_id_number &&
+          !idConflict &&
+          formData.project_title &&
+          formData.region_id &&
+          formData.hub_id &&
+          formData.plant_id
+        );
+      case 2:
+        return !!(scopeDescription.trim() || scopeAttachments.length > 0);
+      case 3: {
+        const valid = teamMembers.filter(
+          (m) => m.user_id && m.user_id.trim() !== ''
+        );
+        const norm = (r: string) =>
+          (r || '').toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim();
+        const hasHubLead = valid.some(
+          (m) => norm(m.role) === 'project hub lead'
+        );
+        const hasOraEngr = valid.some((m) => {
+          const r = norm(m.role);
+          return (
+            r === 'ora engr' ||
+            r === 'ora engineer' ||
+            r === 'snr ora engr' ||
+            r === 'senior ora engr' ||
+            r === 'senior ora engineer'
+          );
         });
-        setTeamMembers(formattedTeam);
+        return valid.length > 0 && hasHubLead && hasOraEngr;
       }
-
-      // Fetch milestones
-      const { data: milestonesData, error: milestonesError } = await supabase
-        .from('project_milestones')
-        .select('*')
-        .eq('project_id', project.id)
-        .order('milestone_date', { ascending: true });
-      
-      if (!milestonesError && milestonesData) {
-        const formattedMilestones = milestonesData.map(m => ({
-          id: m.id,
-          milestone_name: m.milestone_name,
-          milestone_date: m.milestone_date,
-          is_scorecard_project: m.is_scorecard_project,
-          status: m.status || 'pending'
-        }));
-        setMilestones(formattedMilestones);
-      }
-
-      // Fetch documents
-      const { data: documentsData, error: documentsError } = await supabase
-        .from('project_documents')
-        .select('*')
-        .eq('project_id', project.id)
-        .order('created_at', { ascending: false });
-      
-      if (!documentsError && documentsData) {
-        const formattedDocs = documentsData.map(d => ({
-          id: d.id,
-          document_name: d.document_name,
-          document_type: d.document_type,
-          file_path: d.file_path,
-          link_url: d.link_url,
-          link_type: d.link_type,
-          file_extension: d.file_extension,
-          file_size: d.file_size
-        }));
-        setDocuments(formattedDocs);
-      }
-    } catch (error) {
-      console.error('Error fetching project details:', error);
-    } finally {
-      setLoading(false);
+      case 4:
+        return milestones.length > 0 || documents.length > 0;
+      case 5:
+        return false;
+      default:
+        return false;
     }
   };
 
-  const handleImageDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    
-    const files = Array.from(e.dataTransfer.files);
-    const imageFile = files.find(file => file.type.startsWith('image/'));
-    
-    if (imageFile) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setFormData(prev => ({ 
-          ...prev, 
-          project_scope_image_url: event.target?.result as string 
-        }));
-      };
-      reader.readAsDataURL(imageFile);
-    }
-  }, []);
+  const handleStepClick = (target: number) => {
+    if (target === currentStep) return;
+    setVisitedSteps((prev) => new Set([...prev, target]));
+    setCurrentStep(target);
+  };
 
-  const handleImageDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  }, []);
+  const handleNext = () => {
+    const next = Math.min(currentStep + 1, STEPS.length);
+    setVisitedSteps((prev) => new Set([...prev, next]));
+    setCurrentStep(next);
+  };
+  const handleBack = () => setCurrentStep((p) => Math.max(p - 1, 1));
 
-  const handleImageDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  }, []);
+  const requestClose = () => {
+    if (isDirty) setShowDiscardConfirm(true);
+    else onClose();
+  };
 
-  const prefixOptions = [
-    { value: 'DP', label: 'DP' },
-    { value: 'ST', label: 'ST' },
-    { value: 'MoC', label: 'MoC' }
-  ];
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.project_id_prefix || !formData.project_id_number || !formData.project_title) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields (Project ID and Title)",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // 1. Update project basic info
-      const projectData = {
-        project_id_prefix: formData.project_id_prefix as 'DP' | 'ST' | 'MoC',
-        project_id_number: formData.project_id_number,
-        project_title: formData.project_title,
-        project_scope: formData.project_scope,
-        project_scope_image_url: formData.project_scope_image_url,
-        region_id: formData.region_id || null,
-        hub_id: formData.hub_id || null,
-        // Use the first location's plant and station for backward compatibility
-        plant_id: projectLocations[0]?.plant_id || null,
-        station_id: projectLocations[0]?.station_id || null,
-        is_favorite: formData.is_favorite,
-      };
-
-      // Await the project update to ensure it completes before continuing
-      const updatedProject = await updateProjectAsync({ id: project.id, updates: projectData });
-
-      // 2. Save project locations (multiple stations from all location entries)
-      const stationIds = projectLocations
-        .filter(loc => loc.station_id)
-        .map(loc => loc.station_id);
-      await saveLocations({ projectId: project.id, stationIds });
-
-      // 2. Update team members - delete existing and insert new (filter invalid)
-      await supabase.from('project_team_members').delete().eq('project_id', project.id);
-      
-      if (teamMembers.length > 0) {
-        const validTeamMembers = teamMembers.filter(member => 
-          member.user_id && 
-          member.user_id.trim() !== '' && 
-          member.user_id !== 'undefined'
-        );
-        
-        const skippedMembers = teamMembers.length - validTeamMembers.length;
-        
-        if (validTeamMembers.length > 0) {
-          const teamData = validTeamMembers.map(member => ({
-            project_id: project.id,
-            user_id: member.user_id,
-            role: member.role,
-            is_lead: member.is_lead || false
-          }));
-          
-          const { error: teamError } = await supabase
-            .from('project_team_members')
-            .insert(teamData);
-            
-          if (teamError) {
-            console.error('Error saving team members:', teamError);
-            throw teamError;
-          }
-        }
-        
-        if (skippedMembers > 0) {
-          toast({
-            title: "Note",
-            description: `${skippedMembers} team member(s) without selected users were skipped`,
-            variant: "default"
-          });
-        }
+  const handleSubmit = async () => {
+    const requiredSteps = [1, 2, 3];
+    for (const id of requiredSteps) {
+      if (!isStepComplete(id)) {
+        const s = STEPS.find((x) => x.id === id)!;
+        toast.error(`Step ${s.id} (${s.title}) is incomplete`);
+        setCurrentStep(s.id);
+        return;
       }
-      
-      // Invalidate team members query so widgets refresh
-      queryClient.invalidateQueries({ queryKey: ['project-team-members', project.id] });
+    }
 
-      // 3. Update milestones - delete existing and insert new (filter invalid)
-      await supabase.from('project_milestones').delete().eq('project_id', project.id);
-      
-      if (milestones.length > 0) {
-        const validMilestones = milestones.filter(m => 
-          m.milestone_name && 
-          m.milestone_name.trim() !== '' &&
-          m.milestone_date
+    setIsSubmitting(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // 1. Update project core fields
+      const updatedProject = await updateProjectAsync({
+        id: project.id,
+        updates: {
+          project_id_prefix: formData.project_id_prefix as 'DP' | 'ST' | 'MoC',
+          project_id_number: formData.project_id_number,
+          project_title: formData.project_title,
+          project_scope: scopeDescription || null,
+          region_id: formData.region_id || null,
+          hub_id: formData.hub_id || null,
+          plant_id: formData.plant_id || null,
+          station_id: formData.station_id || null,
+        },
+      });
+
+      // 2. Locations
+      if (formData.station_id) {
+        await saveLocations({
+          projectId: project.id,
+          stationIds: [formData.station_id],
+        });
+      } else {
+        await saveLocations({ projectId: project.id, stationIds: [] });
+      }
+
+      // 3. Team — replace
+      await supabase
+        .from('project_team_members')
+        .delete()
+        .eq('project_id', project.id);
+      const validTeam = teamMembers.filter(
+        (m) => m.user_id && m.user_id.trim() !== '' && m.user_id !== 'undefined'
+      );
+      if (validTeam.length) {
+        const { error } = await supabase.from('project_team_members').insert(
+          validTeam.map((m) => ({
+            project_id: project.id,
+            user_id: m.user_id,
+            role: m.role,
+            is_lead: m.is_lead || false,
+          }))
         );
-        
-        const skippedMilestones = milestones.length - validMilestones.length;
-        
-        if (validMilestones.length > 0) {
-          const { data: { user } } = await supabase.auth.getUser();
-          const milestoneData = validMilestones.map(m => ({
+        if (error) throw error;
+      }
+      queryClient.invalidateQueries({
+        queryKey: ['project-team-members', project.id],
+      });
+
+      // 4. Milestones — replace
+      await supabase
+        .from('project_milestones')
+        .delete()
+        .eq('project_id', project.id);
+      const validMilestones = milestones.filter(
+        (m) => m.milestone_name?.trim() && m.milestone_date
+      );
+      if (validMilestones.length) {
+        const { error } = await supabase.from('project_milestones').insert(
+          validMilestones.map((m) => ({
             project_id: project.id,
             milestone_name: m.milestone_name,
             milestone_date: m.milestone_date,
             is_scorecard_project: m.is_scorecard_project || false,
-            status: m.status || 'pending',
-            created_by: user?.id || ''
-          }));
-          
-          const { error: milestoneError } = await supabase
-            .from('project_milestones')
-            .insert(milestoneData);
-            
-          if (milestoneError) {
-            console.error('Error saving milestones:', milestoneError);
-            throw milestoneError;
-          }
-        }
-        
-        if (skippedMilestones > 0) {
-          toast({
-            title: "Note",
-            description: `${skippedMilestones} incomplete milestone(s) were skipped`,
-            variant: "default"
-          });
-        }
+            created_by: user.id,
+          }))
+        );
+        if (error) throw error;
       }
 
-      // 4. Update documents - delete existing and insert new (filter invalid)
-      await supabase.from('project_documents').delete().eq('project_id', project.id);
-      
-      if (documents.length > 0) {
-        const validDocuments = documents.filter(d =>
-          d.document_name &&
-          d.document_name.trim() !== '' &&
-          (d.file_path || d.link_url)
-        );
-        
-        const skippedDocuments = documents.length - validDocuments.length;
-        
-        if (validDocuments.length > 0) {
-          const { data: { user } } = await supabase.auth.getUser();
-          const docData = validDocuments.map(d => ({
+      // 5. Documents — replace
+      await supabase
+        .from('project_documents')
+        .delete()
+        .eq('project_id', project.id);
+      const validDocs = documents.filter(
+        (d) => d.document_name?.trim() && (d.file_path || d.link_url)
+      );
+      if (validDocs.length) {
+        const { error } = await supabase.from('project_documents').insert(
+          validDocs.map((d) => ({
             project_id: project.id,
             document_name: d.document_name,
             document_type: d.document_type || 'General',
@@ -422,463 +433,288 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             link_type: d.link_type,
             file_extension: d.file_extension,
             file_size: d.file_size,
-            uploaded_by: user?.id || ''
-          }));
-          
-          const { error: docError } = await supabase
-            .from('project_documents')
-            .insert(docData);
-            
-          if (docError) {
-            console.error('Error saving documents:', docError);
-            throw docError;
-          }
-        }
-        
-        if (skippedDocuments > 0) {
-          toast({
-            title: "Note",
-            description: `${skippedDocuments} incomplete document(s) were skipped`,
-            variant: "default"
-          });
-        }
+            uploaded_by: user.id,
+          }))
+        );
+        if (error) throw error;
       }
-      
-      // Log activity
+
       logActivity({
         activityType: 'project_updated',
         description: `Updated project: ${formData.project_id_prefix}${formData.project_id_number} - ${formData.project_title}`,
         metadata: {
           project_id: `${formData.project_id_prefix}${formData.project_id_number}`,
-          project_title: formData.project_title
-        }
-      });
-      
-      toast({
-        title: "Success",
-        description: "Project updated successfully",
+          project_title: formData.project_title,
+        },
       });
 
-      // Call onSave with updated project data if provided
-      // Use the actual returned data from the database to ensure we have fresh data
-      if (onSave) {
-        onSave(updatedProject);
-      } else {
-        onClose();
-      }
-      
-      // Invalidate queries to refresh data across the app
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-    } catch (error) {
-      console.error('Error updating project:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update project",
-        variant: "destructive",
-      });
+
+      toast.success('Project updated successfully');
+      if (onSave) onSave(updatedProject);
+      else onClose();
+    } catch (err: any) {
+      console.error('Failed to update project:', err);
+      toast.error(err?.message || 'Failed to update project');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // Get hubs filtered by selected region
-  const filteredHubs = useMemo(() => {
-    if (!formData.region_id) return hubs;
-    
-    const selectedRegion = hierarchyRegions.find(r => r.id === formData.region_id);
-    if (!selectedRegion) return hubs;
-    
-    const hubIdsInRegion = selectedRegion.hubs.map(h => h.id);
-    return hubs.filter(hub => hubIdsInRegion.includes(hub.id));
-  }, [formData.region_id, hierarchyRegions, hubs]);
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <WizardStepProjectInfo
+            formData={formData}
+            onFormDataChange={handleFormDataChange}
+            currentProjectId={project?.id}
+          />
+        );
+      case 2:
+        return (
+          <WizardStepProjectScope
+            scopeDescription={scopeDescription}
+            scopeAttachments={scopeAttachments}
+            onScopeChange={setScopeDescription}
+            onAttachmentsChange={setScopeAttachments}
+          />
+        );
+      case 3:
+        return (
+          <WizardStepProjectTeam
+            teamMembers={teamMembers as any}
+            setTeamMembers={setTeamMembers as any}
+            regionName={getRegionName()}
+            hubName={getHubName()}
+            hubId={formData.hub_id || null}
+            plantName={plantName}
+          />
+        );
+      case 4:
+        return (
+          <WizardStepMilestonesDocuments
+            milestones={milestones}
+            setMilestones={setMilestones}
+            documents={documents}
+            setDocuments={setDocuments}
+          />
+        );
+      case 5:
+        return (
+          <WizardStepProjectReview
+            formData={formData}
+            selectedLocationIds={formData.station_id ? [formData.station_id] : []}
+            scopeDescription={scopeDescription}
+            scopeAttachments={scopeAttachments}
+            teamMembers={teamMembers}
+            milestones={milestones}
+            documents={documents}
+            regions={regions}
+            hubs={hubs}
+            stations={stations}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  const projectIdLabel = formData.project_id_number
+    ? `${formData.project_id_prefix || 'DP'}-${formData.project_id_number}`
+    : null;
 
   if (!project) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onClose} modal={true}>
-      <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0 data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
-          <DialogTitle className="text-2xl font-bold text-foreground">
-            {formData.project_id_prefix}{formData.project_id_number} - {formData.project_title || 'Untitled Project'}
-          </DialogTitle>
-        </DialogHeader>
-
-        <ScrollArea className="flex-1 px-6 py-6">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Basic Information */}
-            <Card className="border-border/60 shadow-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg gap-2 text-foreground">
-                  <FileText className="h-5 w-5 text-primary" />
-                  Project Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Project ID Section */}
-                <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/40">
-                  <Label htmlFor="project_id" className="text-sm font-medium text-muted-foreground">
-                    Project ID <span className="text-destructive">*</span>
-                  </Label>
-                  <div className="flex gap-3">
-                    <EnhancedCombobox
-                      options={prefixOptions}
-                      value={formData.project_id_prefix}
-                      onValueChange={(value) => 
-                        setFormData(prev => ({ ...prev, project_id_prefix: value as 'DP' | 'ST' | 'MoC' }))
-                      }
-                      placeholder="Prefix"
-                      allowCreate={false}
-                      showSearch={false}
-                      className="w-28 bg-muted/50"
-                    />
-                    <Input
-                      value={formData.project_id_number}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9]/g, '');
-                        setFormData(prev => ({ ...prev, project_id_number: value }));
-                      }}
-                      placeholder="Enter number"
-                      className="flex-1 bg-muted/50"
-                    />
-                  </div>
-                  {formData.project_id_prefix && formData.project_id_number && (
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 mt-1">
-                      {formData.project_id_prefix}{formData.project_id_number}
-                    </Badge>
+    <>
+      <Dialog open={open} onOpenChange={(o) => !o && requestClose()}>
+        <DialogContent
+          hideCloseButton
+          className="sm:max-w-3xl h-[85vh] overflow-hidden flex flex-col p-0"
+        >
+          <DialogHeader className="border-b px-4 sm:px-6 pt-1 sm:pt-2 pb-4">
+            <DialogTitle className="text-lg sm:text-xl font-semibold">
+              Edit Project
+            </DialogTitle>
+            <div className="flex items-center gap-2 mt-0.5 min-w-0 min-h-[20px]">
+              {projectIdLabel && (
+                <>
+                  <span className="inline-flex items-center rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-[11px] font-medium font-mono shrink-0">
+                    {projectIdLabel}
+                  </span>
+                  {formData.project_title && (
+                    <span className="text-xs text-muted-foreground truncate">
+                      {formData.project_title}
+                    </span>
                   )}
-                </div>
+                </>
+              )}
+            </div>
 
-                {/* Project Title Section */}
-                <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/40">
-                  <Label htmlFor="project_title" className="text-sm font-semibold text-foreground">
-                    Project Title <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="project_title"
-                    value={formData.project_title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, project_title: e.target.value }))}
-                    placeholder="Enter project title"
-                    required
-                    className="bg-muted/50"
-                  />
-                </div>
+            <nav aria-label="Wizard progress" className="pt-1 pb-1">
+              <ol className="flex items-start justify-between gap-1">
+                {STEPS.map((step, idx) => {
+                  const isActive = step.id === currentStep;
+                  const isComplete = !isActive && isStepComplete(step.id);
+                  const stepHasRequiredFields =
+                    step.id === 1 || step.id === 2 || step.id === 3;
+                  const isAttention =
+                    !isActive && !isComplete && stepHasRequiredFields;
 
-                {/* Location Section */}
-                <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border/40">
-                  <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2">
-                    Location Details
-                  </h4>
-                  
-                  {/* Portfolio and Hub - 2 columns */}
-                  <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="region" className="text-sm font-medium text-muted-foreground">
-                        Portfolio
-                      </Label>
-                      <EnhancedCombobox
-                        options={regions.map(region => ({ value: region.id, label: region.name }))}
-                        value={formData.region_id}
-                        onValueChange={(value) => {
-                          setFormData(prev => ({ ...prev, region_id: value, hub_id: '' }));
-                        }}
-                        placeholder="Select portfolio"
-                        emptyText="No portfolios found"
-                        allowCreate={false}
-                        showSearch={false}
-                        className="w-full bg-muted/50"
-                      />
-                    </div>
+                  const nextStep = STEPS[idx + 1];
+                  const nextComplete = nextStep
+                    ? isStepComplete(nextStep.id)
+                    : false;
+                  const connectorComplete = isComplete && nextComplete;
+                  const isLast = idx === STEPS.length - 1;
 
-                    <div className="space-y-2">
-                      <Label htmlFor="hub" className="text-sm font-medium text-muted-foreground">
-                        Project Hub
-                      </Label>
-                      <EnhancedCombobox
-                        options={filteredHubs.map(hub => ({ value: hub.id, label: hub.name }))}
-                        value={formData.hub_id}
-                        onValueChange={(value) => setFormData(prev => ({ ...prev, hub_id: value }))}
-                        onCreateNew={async (name) => {
-                          await createHub(name);
-                        }}
-                        placeholder="Select or create hub"
-                        emptyText="No hubs found"
-                        createText="Create hub"
-                        showSearch={false}
-                        className="w-full bg-muted/50"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Asset Hierarchy Location Selection - Multiple Locations */}
-                  <div className="space-y-4 pt-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-primary" />
-                        <Label className="text-sm font-medium text-muted-foreground">
-                          Locations
-                        </Label>
-                        {projectLocations.length > 1 && (
-                          <Badge variant="secondary" className="text-xs">
-                            {projectLocations.length}
-                          </Badge>
-                        )}
-                      </div>
-                      <Button
+                  return (
+                    <li
+                      key={step.id}
+                      className="flex-1 flex flex-col items-center min-w-0 relative"
+                    >
+                      {!isLast && (
+                        <div
+                          className={cn(
+                            'absolute top-4 left-1/2 w-full h-0.5 -z-0 transition-colors',
+                            connectorComplete ? 'bg-emerald-500' : 'bg-border'
+                          )}
+                        />
+                      )}
+                      <button
                         type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={addLocation}
-                        className="text-xs"
+                        onClick={() => handleStepClick(step.id)}
+                        aria-current={isActive ? 'step' : undefined}
+                        className="flex flex-col items-center gap-1.5 group z-10 bg-background px-1 cursor-pointer"
                       >
-                        + Add Location
-                      </Button>
-                    </div>
-
-                    <div className="space-y-3">
-                      {projectLocations.map((location, index) => (
-                        <div 
-                          key={location.id} 
-                          className="grid gap-3 grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] items-end p-3 rounded-lg bg-background border border-border/40"
+                        <span
+                          className={cn(
+                            'flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all',
+                            isActive &&
+                              'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2 ring-offset-background',
+                            !isActive &&
+                              isComplete &&
+                              'bg-background text-emerald-600 border-2 border-emerald-500',
+                            !isActive &&
+                              isAttention &&
+                              'bg-background text-amber-600 border-2 border-amber-500',
+                            !isActive &&
+                              !isComplete &&
+                              !isAttention &&
+                              'bg-background text-muted-foreground border-2 border-border group-hover:border-muted-foreground/50'
+                          )}
                         >
-                          {/* Plant Selection - No Search */}
-                          <div className="space-y-1.5">
-                            <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Building className="h-3 w-3" />
-                              Plant
-                            </Label>
-                            <Select
-                              value={location.plant_id}
-                              onValueChange={(value) => updateLocation(location.id, 'plant_id', value)}
-                            >
-                              <SelectTrigger className="bg-muted/50">
-                                <SelectValue placeholder={plantsLoading ? "Loading..." : "Select plant"} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {plants?.map((plant) => (
-                                  <SelectItem key={plant.id} value={plant.id}>
-                                    {plant.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
+                          {!isActive && isComplete ? (
+                            <Check className="h-4 w-4" />
+                          ) : !isActive && isAttention ? (
+                            <span className="text-sm leading-none">!</span>
+                          ) : (
+                            step.id
+                          )}
+                        </span>
+                        <span
+                          className={cn(
+                            'text-xs font-medium truncate max-w-[80px] transition-colors',
+                            isActive && 'text-primary',
+                            !isActive && isComplete && 'text-emerald-600',
+                            !isActive && isAttention && 'text-amber-600',
+                            !isActive &&
+                              !isComplete &&
+                              !isAttention &&
+                              'text-muted-foreground group-hover:text-foreground'
+                          )}
+                        >
+                          {step.title}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </nav>
+          </DialogHeader>
 
-                          {/* Field Selection - No Search */}
-                          <div className="space-y-1.5">
-                            <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Layers className="h-3 w-3" />
-                              Field
-                            </Label>
-                            <Select
-                              value={location.field_id}
-                              onValueChange={(value) => updateLocation(location.id, 'field_id', value)}
-                              disabled={!location.plant_id}
-                            >
-                              <SelectTrigger className="bg-muted/50">
-                                <SelectValue placeholder={
-                                  !location.plant_id 
-                                    ? "Select plant first" 
-                                    : fieldsLoading 
-                                      ? "Loading..." 
-                                      : "Select field"
-                                } />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {getFieldsByPlant(location.plant_id)?.map((field) => (
-                                  <SelectItem key={field.id} value={field.id}>
-                                    {field.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
+          <div className="flex-1 overflow-y-auto scrollbar-overlay py-4 px-4 sm:px-6">
+            {isLoadingDetails ? (
+              <div className="flex items-center justify-center h-40 text-muted-foreground gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading project…
+              </div>
+            ) : (
+              renderStepContent()
+            )}
+          </div>
 
-                          {/* Station Selection - With Search */}
-                          <div className="space-y-1.5">
-                            <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              Station
-                            </Label>
-                            <Popover 
-                              open={openStationPopovers[location.id] || false} 
-                              onOpenChange={(open) => setOpenStationPopovers(prev => ({ ...prev, [location.id]: open }))}
-                              modal={true}
-                            >
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  aria-expanded={openStationPopovers[location.id] || false}
-                                  className="w-full justify-between bg-muted/50"
-                                  disabled={!location.field_id}
-                                >
-                                  {location.station_id
-                                    ? getStationsByField(location.field_id)?.find(s => s.id === location.station_id)?.name || "Select station"
-                                    : !location.field_id 
-                                      ? "Select field first"
-                                      : stationsLoading 
-                                        ? "Loading..." 
-                                        : "Select station"}
-                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-full p-0 z-50" align="start">
-                                <Command>
-                                  <CommandInput placeholder="Search station..." />
-                                  <CommandList>
-                                    <CommandEmpty>No station found.</CommandEmpty>
-                                    <CommandGroup>
-                                      {getStationsByField(location.field_id)?.map((station) => (
-                                        <CommandItem
-                                          key={station.id}
-                                          value={station.name}
-                                          onSelect={() => {
-                                            updateLocation(location.id, 'station_id', station.id);
-                                            setOpenStationPopovers(prev => ({ ...prev, [location.id]: false }));
-                                          }}
-                                        >
-                                          <Check
-                                            className={cn(
-                                              "mr-2 h-4 w-4",
-                                              location.station_id === station.id ? "opacity-100" : "opacity-0"
-                                            )}
-                                          />
-                                          {station.name}
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                          </div>
+          <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3 border-t">
+            <Button
+              variant="outline"
+              onClick={currentStep === 1 ? requestClose : handleBack}
+            >
+              {currentStep === 1 ? (
+                'Cancel'
+              ) : (
+                <>
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Back
+                </>
+              )}
+            </Button>
 
-                          {/* Remove button */}
-                          <div className="flex items-center justify-center">
-                            {projectLocations.length > 1 && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeLocation(location.id)}
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Project Scope Section */}
-                <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/40">
-                  <Label htmlFor="project_scope" className="text-sm font-semibold text-foreground">
-                    Project Scope
-                  </Label>
-                  <div className="relative">
-                    <Textarea
-                      id="project_scope"
-                      value={formData.project_scope}
-                      onChange={(e) => setFormData(prev => ({ ...prev, project_scope: e.target.value }))}
-                      onPaste={(e) => {
-                        const items = e.clipboardData?.items;
-                        if (items) {
-                          for (let i = 0; i < items.length; i++) {
-                            if (items[i].type.indexOf('image') !== -1) {
-                              const blob = items[i].getAsFile();
-                              if (blob) {
-                                const reader = new FileReader();
-                                reader.onload = (event) => {
-                                  setFormData(prev => ({ 
-                                    ...prev, 
-                                    project_scope_image_url: event.target?.result as string 
-                                  }));
-                                };
-                                reader.readAsDataURL(blob);
-                              }
-                              break;
-                            }
-                          }
-                        }
-                      }}
-                      placeholder="Describe the project scope... (You can paste an image here)"
-                      rows={4}
-                      className="resize-none bg-background"
-                    />
-                  </div>
-                  
-                  {/* Pasted Image Preview */}
-                  {formData.project_scope_image_url && (
-                    <div className="relative border border-border/60 rounded-lg p-3 bg-background">
-                      <img 
-                        src={formData.project_scope_image_url} 
-                        alt="Project Scope" 
-                        className="w-full max-h-48 object-contain rounded-lg"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setFormData(prev => ({ ...prev, project_scope_image_url: '' }))}
-                        className="absolute top-4 right-4 bg-destructive/10 hover:bg-destructive/20 text-destructive"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
+            <div className="flex items-center gap-3">
+              {currentStep < STEPS.length ? (
+                <Button onClick={handleNext}>
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Save Changes
+                    </>
                   )}
-                  <p className="text-xs text-muted-foreground italic">
-                    Tip: You can paste an image directly into the text field above
-                  </p>
-                </div>
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-              </CardContent>
-            </Card>
-
-            {/* Project Team */}
-            <ProjectTeamSection 
-              teamMembers={teamMembers}
-              setTeamMembers={setTeamMembers}
-              regionName={regions.find(r => r.id === formData.region_id)?.name || null}
-              hubName={filteredHubs.find(h => h.id === formData.hub_id)?.name || null}
-              hubId={formData.hub_id || null}
-            />
-
-            {/* Milestones */}
-            <ProjectMilestonesSection 
-              milestones={milestones}
-              setMilestones={setMilestones}
-            />
-
-            {/* Documents */}
-            <EnhancedProjectDocumentsSection 
-              documents={documents}
-              setDocuments={setDocuments}
-            />
-          </form>
-        </ScrollArea>
-
-        {/* Actions */}
-        <div className="px-6 py-4 border-t border-border/60 bg-muted/20 shrink-0 flex justify-end gap-3">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onClose}
-            disabled={isUpdating || loading}
-            className="min-w-[100px]"
-          >
-            Cancel
-          </Button>
-          <Button 
-            type="submit"
-            onClick={handleSubmit}
-            disabled={isUpdating || loading}
-            className="min-w-[100px]"
-          >
-            {isUpdating ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <AlertDialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. If you close now, your edits will be
+              lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowDiscardConfirm(false);
+                onClose();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
+
+export default EditProjectModal;
