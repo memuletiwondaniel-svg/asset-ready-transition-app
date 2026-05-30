@@ -309,15 +309,15 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
 
                     if (partner) {
                       return (
-                        <TooltipProvider delayDuration={200}>
+                        <TooltipProvider delayDuration={150}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="flex items-center gap-3 flex-1 min-w-0 cursor-help">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
                                 {avatarBlock}
                                 {nameBlock}
                               </div>
                             </TooltipTrigger>
-                            <TooltipContent side="top" className="text-xs">
+                            <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
                               B2B: {partner.full_name || partner.email}
                             </TooltipContent>
                           </Tooltip>
