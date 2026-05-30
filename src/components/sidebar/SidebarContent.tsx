@@ -205,50 +205,49 @@ export const SidebarContent = memo<SidebarContentProps>(({
                       )}
                     </Button>
                   );
-
-                  })}
+                })}
               </div>
             ) : (
               <div className="space-y-1">
                 {visibleNavItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = currentPage === item.section;
-                const button = (
-                  <Button
-                    key={item.section}
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onNavigate(item.section || '', false)}
-                    className={cn(
-                      "w-full h-8 relative justify-start transition-colors duration-150",
-                      isActive
-                        ? "bg-primary/10 text-primary rounded-lg hover:bg-primary/20 hover:text-primary"
-                        : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <Icon className={cn(
-                      "h-4 w-4 transition-colors",
-                      isActive ? "text-primary" : "text-muted-foreground"
-                    )} />
-                    {item.section === 'ask-orsh' && unreadChatCount > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-semibold text-primary-foreground">
-                        {unreadChatCount}
-                      </span>
-                    )}
-                    {item.section === 'my-tasks' && newTaskCount > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-0.5 items-center justify-center rounded-full bg-destructive text-[9px] font-semibold text-destructive-foreground">
-                        {newTaskCount}
-                      </span>
-                    )}
-                  </Button>
-                );
-                return (
-                  <Tooltip key={item.section}>
-                    <TooltipTrigger asChild>{button}</TooltipTrigger>
-                    <TooltipContent side="right">{getLabel(item.labelKey)}</TooltipContent>
-                  </Tooltip>
-                );
-              })}
+                  const Icon = item.icon;
+                  const isActive = currentPage === item.section;
+                  const button = (
+                    <Button
+                      key={item.section}
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onNavigate(item.section || '', false)}
+                      className={cn(
+                        "w-full h-8 relative justify-start transition-colors duration-150",
+                        isActive
+                          ? "bg-primary/10 text-primary rounded-lg hover:bg-primary/20 hover:text-primary"
+                          : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      <Icon className={cn(
+                        "h-4 w-4 transition-colors",
+                        isActive ? "text-primary" : "text-muted-foreground"
+                      )} />
+                      {item.section === 'ask-orsh' && unreadChatCount > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-semibold text-primary-foreground">
+                          {unreadChatCount}
+                        </span>
+                      )}
+                      {item.section === 'my-tasks' && newTaskCount > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-0.5 items-center justify-center rounded-full bg-destructive text-[9px] font-semibold text-destructive-foreground">
+                          {newTaskCount}
+                        </span>
+                      )}
+                    </Button>
+                  );
+                  return (
+                    <Tooltip key={item.section}>
+                      <TooltipTrigger asChild>{button}</TooltipTrigger>
+                      <TooltipContent side="right">{getLabel(item.labelKey)}</TooltipContent>
+                    </Tooltip>
+                  );
+                })}
               </div>
             )}
           </div>
