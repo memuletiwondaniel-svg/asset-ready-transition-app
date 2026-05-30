@@ -35,11 +35,15 @@ export function useUserOWLItems() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { partnerIds } = useB2BPartner();
 
   const query = useQuery({
-    queryKey: ['user-owl-items', user?.id],
+    queryKey: ['user-owl-items', user?.id, partnerIds.join(',')],
     queryFn: async () => {
       if (!user?.id) return [];
+
+      const partners = await fetchB2BPartnerIds(user.id);
+      const effectiveUserIds = [user.id, ...partners];
 
       const { data, error } = await supabase
         .from('outstanding_work_items')
@@ -48,7 +52,7 @@ export function useUserOWLItems() {
           project:projects(id, project_title, project_id_prefix, project_id_number),
           action_role:roles!outstanding_work_items_action_party_role_id_fkey(id, name)
         `)
-        .eq('assigned_to', user.id)
+        .in('assigned_to', effectiveUserIds)
         .in('status', ['OPEN', 'IN_PROGRESS'])
         .order('priority', { ascending: true })
         .order('due_date', { ascending: true, nullsFirst: false })
@@ -73,30 +77,34 @@ export function useUserOWLItems() {
     placeholderData: keepPreviousData,
   });
 
-  // Set up real-time subscription
+  // Set up real-time subscription. Supabase realtime postgres-changes
+  // filters don't support OR/IN, so subscribe per effective user id.
   useEffect(() => {
     if (!user?.id) return;
 
-    const channel = supabase
-      .channel('user-owl-items-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'outstanding_work_items',
-          filter: `assigned_to=eq.${user.id}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['user-owl-items', user.id] });
-        }
-      )
-      .subscribe();
+    const ids = [user.id, ...partnerIds];
+    const channels = ids.map((uid) =>
+      supabase
+        .channel(`user-owl-items-changes-${uid}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'outstanding_work_items',
+            filter: `assigned_to=eq.${uid}`,
+          },
+          () => {
+            queryClient.invalidateQueries({ queryKey: ['user-owl-items'] });
+          }
+        )
+        .subscribe()
+    );
 
     return () => {
-      supabase.removeChannel(channel);
+      channels.forEach((c) => supabase.removeChannel(c));
     };
-  }, [user?.id, queryClient]);
+  }, [user?.id, partnerIds.join(','), queryClient]);
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: OWLStatus }) => {
