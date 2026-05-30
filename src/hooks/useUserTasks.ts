@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { getCurrentP2AReviewCycle } from './p2aApprovalCycles';
+import { fetchB2BPartnerIds } from './useB2BPartner';
 
 export interface TaskDependency {
   id: string;
