@@ -88,6 +88,12 @@ function forceFreshReload() {
 
 export function startVersionCheck() {
   if (started) return;
+  if (shouldSkipSelfReload()) {
+    // Editor live preview / Vite dev → do NOT install self-reload listeners.
+    // Production builds (DEV === false) keep the full stale-bundle hardening.
+    started = true;
+    return;
+  }
   started = true;
   syncTabSessionEpoch();
 
