@@ -491,36 +491,49 @@ export const SidebarContent = memo<SidebarContentProps>(({
         )}
 
 
-        <Button 
-          variant="ghost" 
-          size={isCollapsed ? "icon" : "sm"} 
-          onClick={onLogout}
-          className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10`} 
-          title={t.logout || 'Log Out'}
-        >
-          <LogOut className="w-4 h-4" />
-          {!isCollapsed && <span className="ml-2">{t.logout || 'Log Out'}</span>}
-        </Button>
+        {(() => {
+          const label = t.logout || 'Log Out';
+          const btn = (
+            <Button 
+              variant="ghost" 
+              size={isCollapsed ? "icon" : "sm"} 
+              onClick={onLogout}
+              className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10`} 
+            >
+              <LogOut className="w-4 h-4" />
+              {!isCollapsed && <span className="ml-2">{label}</span>}
+            </Button>
+          );
+          return isCollapsed ? (
+            <Tooltip><TooltipTrigger asChild>{btn}</TooltipTrigger><TooltipContent side="right">{label}</TooltipContent></Tooltip>
+          ) : btn;
+        })()}
 
         {/* Collapse/Expand Button */}
-        {onToggleCollapse && !isMobile && (
-          <Button 
-            variant="ghost" 
-            size={isCollapsed ? "icon" : "sm"} 
-            onClick={onToggleCollapse}
-            className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground hover:text-foreground`} 
-            title={isCollapsed ? (t.expandSidebar || 'Expand Sidebar') : (t.collapseSidebar || 'Collapse Sidebar')}
-          >
-            {isCollapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <>
-                <ChevronLeft className="w-4 h-4" />
-                <span className="ml-2">{t.collapse || 'Collapse'}</span>
-              </>
-            )}
-          </Button>
-        )}
+        {onToggleCollapse && !isMobile && (() => {
+          const label = isCollapsed ? (t.expandSidebar || 'Expand Sidebar') : (t.collapseSidebar || 'Collapse Sidebar');
+          const btn = (
+            <Button 
+              variant="ghost" 
+              size={isCollapsed ? "icon" : "sm"} 
+              onClick={onToggleCollapse}
+              className={`w-full h-8 text-xs transition-colors duration-150 ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-muted-foreground hover:text-foreground`} 
+            >
+              {isCollapsed ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <>
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="ml-2">{t.collapse || 'Collapse'}</span>
+                </>
+              )}
+            </Button>
+          );
+          return isCollapsed ? (
+            <Tooltip><TooltipTrigger asChild>{btn}</TooltipTrigger><TooltipContent side="right">{label}</TooltipContent></Tooltip>
+          ) : btn;
+        })()}
+
       </div>
     </div>
   );
