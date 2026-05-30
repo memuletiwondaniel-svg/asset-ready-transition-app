@@ -196,14 +196,15 @@ export const useDeleteRoleCategory = () => {
 };
 
 export const useUpdateRole = () => {
-  const updateRole = async (id: string, name: string, description: string, categoryId: string) => {
+  const updateRole = async (id: string, name: string, description: string, categoryId: string, isB2b: boolean = false) => {
     const { data, error } = await supabase
       .from('roles')
       .update({
         name,
         description,
         category_id: categoryId,
-      })
+        is_b2b: isB2b,
+      } as any)
       .eq('id', id)
       .select()
       .single();
