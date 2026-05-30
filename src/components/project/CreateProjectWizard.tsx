@@ -574,11 +574,11 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
             </DialogTitle>
             {currentStep > 1 && projectIdLabel && (
               <div className="flex items-center gap-2 mt-2 min-w-0">
-                <span className="inline-flex items-center rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs font-semibold font-mono shrink-0">
+                <span className="inline-flex items-center rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-[11px] font-medium font-mono shrink-0">
                   {projectIdLabel}
                 </span>
                 {formData.project_title && (
-                  <span className="text-sm text-foreground/80 truncate">{formData.project_title}</span>
+                  <span className="text-xs text-muted-foreground truncate">{formData.project_title}</span>
                 )}
               </div>
             )}
