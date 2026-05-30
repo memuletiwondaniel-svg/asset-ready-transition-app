@@ -437,22 +437,24 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
       </div>
 
       {/* Documents */}
-      {documents.length > 0 && (
-        <div className="space-y-3">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setDocumentsExpanded(v => !v); }}
-            className="w-full font-semibold text-sm text-muted-foreground flex items-center gap-2 hover:text-foreground transition-colors"
-          >
-            <div className="p-1.5 rounded-lg bg-blue-500/10">
-              <FileText className="h-4 w-4 text-blue-600" />
-            </div>
-            <span className="flex-1 text-left">Documents</span>
-            {documentsExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </button>
-          {documentsExpanded && (
-            <div className="space-y-1.5 pl-1">
-              {documents.map((doc) => {
+      <div className="space-y-3">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setDocumentsExpanded(v => !v); }}
+          className="w-full font-semibold text-sm text-muted-foreground flex items-center gap-2 hover:text-foreground transition-colors"
+        >
+          <div className="p-1.5 rounded-lg bg-blue-500/10">
+            <FileText className="h-4 w-4 text-blue-600" />
+          </div>
+          <span className="flex-1 text-left">Documents{documents.length > 0 ? ` (${documents.length})` : ''}</span>
+          {documentsExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+        {documentsExpanded && (
+          <div className="space-y-1.5 pl-1">
+            {documents.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic px-2 py-1.5">No documents uploaded yet.</p>
+            ) : (
+              documents.map((doc) => {
                 const isLink = doc.document_type === 'link';
                 const ext = (doc.file_extension || '').toLowerCase();
                 const Icon = isLink
