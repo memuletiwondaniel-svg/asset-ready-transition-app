@@ -672,7 +672,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
                 variant="ghost"
                 onClick={handleSaveAndClose}
                 disabled={savingDraft || !isDirty}
-                className="gap-1.5"
+                className="gap-1.5 text-muted-foreground hover:text-foreground hover:bg-primary/10 hover:shadow-sm transition-all duration-200"
                 title="Save your progress and finish later"
               >
                 {savingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
