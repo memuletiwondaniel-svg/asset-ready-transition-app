@@ -164,10 +164,7 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
     <div className="space-y-3">
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-muted-foreground" />
-          <h3 className="text-lg font-medium text-foreground">Supporting Documents</h3>
-        </div>
+        <h3 className="text-lg font-medium text-foreground">Supporting Documents</h3>
         <Dialog open={isAddDocumentOpen} onOpenChange={setIsAddDocumentOpen}>
           <DialogTrigger asChild>
             <Button
