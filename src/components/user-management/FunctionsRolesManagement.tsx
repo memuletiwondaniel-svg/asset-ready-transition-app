@@ -247,6 +247,7 @@ const FunctionsRolesManagement: React.FC = () => {
     setRoleName(role.name);
     setRoleDescription(role.description || '');
     setSelectedCategoryId(role.category_id || '');
+    setRoleIsB2b(!!role.is_b2b);
     setEditRoleOpen(true);
   };
 
