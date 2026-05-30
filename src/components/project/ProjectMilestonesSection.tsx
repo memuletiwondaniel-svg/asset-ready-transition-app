@@ -269,6 +269,8 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
     is_scorecard_project: false,
     status: 'pending' as 'pending' | 'in_progress' | 'completed'
   });
+  const [isAddOpen, setIsAddOpen] = useState(false);
+
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingMilestone, setEditingMilestone] = useState<{
