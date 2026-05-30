@@ -93,7 +93,7 @@ export function EnhancedCombobox({
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
         <Command shouldFilter={false}>
-          {showSearch && (options.length > 6 || allowCreate) && (
+          {showSearch && options.length > 6 && (
             <CommandInput 
               placeholder="Search..." 
               value={searchValue}
