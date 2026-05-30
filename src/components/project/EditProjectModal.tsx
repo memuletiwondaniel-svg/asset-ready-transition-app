@@ -666,7 +666,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                   variant="ghost"
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="gap-2 text-muted-foreground hover:text-primary-foreground hover:bg-primary"
+                  className="gap-2 text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
                   {isSubmitting ? (
                     <>
@@ -675,11 +675,12 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                     </>
                   ) : (
                     <>
-                      <Check className="h-4 w-4" />
+                      <Save className="h-4 w-4" />
                       Save & Exit
                     </>
                   )}
                 </Button>
+
               )}
               {currentStep < STEPS.length ? (
                 <Button onClick={handleNext}>
