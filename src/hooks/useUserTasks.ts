@@ -41,11 +41,15 @@ interface FetchResult {
 }
 
 const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
+  // Include B2B partner's tasks so both partners see the same inbox.
+  const partnerIds = await fetchB2BPartnerIds(userId);
+  const effectiveUserIds = [userId, ...partnerIds];
+
   // Single query fetches both regular tasks AND bundle tasks (previously two separate queries)
   const { data: tasksData, error: tasksError } = await supabase
     .from('user_tasks')
-    .select('id,title,description,due_date,priority,type,status,display_order,created_at,metadata,sub_items,progress_percentage')
-    .eq('user_id', userId)
+    .select('id,title,description,due_date,priority,type,status,display_order,created_at,metadata,sub_items,progress_percentage,user_id')
+    .in('user_id', effectiveUserIds)
     .in('status', ['pending', 'in_progress', 'waiting', 'completed'])
     .order('display_order', { ascending: true })
     .order('priority', { ascending: false })
