@@ -553,26 +553,31 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     }
   };
 
-  const subtitle = formData.project_id_number
-    ? `${formData.project_id_prefix || 'DP'}-${formData.project_id_number}${
-        formData.project_title ? ` · ${formData.project_title}` : ''
-      }${regionName ? ` — ${regionName}` : ''}${hubName ? ` › ${hubName}` : ''}`
+  const projectIdLabel = formData.project_id_number
+    ? `${formData.project_id_prefix || 'DP'}-${formData.project_id_number}`
     : null;
 
   return (
     <>
       <Dialog open={open} onOpenChange={(o) => !o && requestClose()}>
         <DialogContent hideCloseButton className="sm:max-w-3xl h-[85vh] overflow-hidden flex flex-col p-0">
-          <DialogHeader className="border-b px-4 sm:px-6 pt-2 sm:pt-2 pb-4">
+          <DialogHeader className="border-b px-4 sm:px-6 pt-3 sm:pt-4 pb-4">
             <DialogTitle className="text-lg sm:text-xl font-semibold">
               Create New Project
             </DialogTitle>
-            {currentStep > 1 && subtitle && (
-              <p className="text-xs text-muted-foreground truncate mt-1">{subtitle}</p>
+            {currentStep > 1 && projectIdLabel && (
+              <div className="flex items-center gap-2 mt-2 min-w-0">
+                <span className="inline-flex items-center rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs font-semibold font-mono shrink-0">
+                  {projectIdLabel}
+                </span>
+                {formData.project_title && (
+                  <span className="text-sm text-foreground/80 truncate">{formData.project_title}</span>
+                )}
+              </div>
             )}
 
             {/* Circular stepper — semantic state per step */}
-            <nav aria-label="Wizard progress" className="mt-24">
+            <nav aria-label="Wizard progress" className="mt-8">
               <ol className="flex items-start justify-between gap-1">
                 {STEPS.map((step, idx) => {
                   const visited = visitedSteps.has(step.id);

@@ -223,14 +223,10 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
             />
           </div>
         </div>
-        <OwnershipAssignmentPreview
-          regionName={regionName}
-          hubName={hubName}
-          hubId={formData.hub_id || null}
-        />
       </div>
 
       <div className="pt-5 border-t border-border">
+
 
         <div className="space-y-3">
           {/* Plant row */}
@@ -306,7 +302,7 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
             />
           </div>
         </div>
-        <PlantAssignmentPreview plantName={plantName} />
+        
       </div>
 
     </div>
