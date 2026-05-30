@@ -572,16 +572,18 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
             <DialogTitle className="text-lg sm:text-xl font-semibold">
               Create New Project
             </DialogTitle>
-            {currentStep > 1 && projectIdLabel && (
-              <div className="flex items-center gap-2 mt-0.5 min-w-0">
-                <span className="inline-flex items-center rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-[11px] font-medium font-mono shrink-0">
-                  {projectIdLabel}
-                </span>
-                {formData.project_title && (
-                  <span className="text-xs text-muted-foreground truncate">{formData.project_title}</span>
-                )}
-              </div>
-            )}
+            <div className="flex items-center gap-2 mt-0.5 min-w-0 min-h-[20px]">
+              {currentStep > 1 && projectIdLabel && (
+                <>
+                  <span className="inline-flex items-center rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-[11px] font-medium font-mono shrink-0">
+                    {projectIdLabel}
+                  </span>
+                  {formData.project_title && (
+                    <span className="text-xs text-muted-foreground truncate">{formData.project_title}</span>
+                  )}
+                </>
+              )}
+            </div>
 
             {/* Circular stepper — semantic state per step */}
             <nav aria-label="Wizard progress" className="pt-1 pb-1">
