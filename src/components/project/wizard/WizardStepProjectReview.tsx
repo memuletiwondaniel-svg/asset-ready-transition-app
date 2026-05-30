@@ -87,7 +87,9 @@ const WizardStepProjectReview: React.FC<WizardStepProjectReviewProps> = ({
   const selectedHub = hubs.find(h => h.id === formData.hub_id);
   const selectedStations = stations.filter(s => selectedLocationIds.includes(s.id));
 
-  const validTeamMembers = teamMembers.filter(m => m.user_id && m.user_id.trim() !== '');
+  const validTeamMembers = teamMembers.filter(
+    m => m.user_id && m.user_id.trim() !== '' && !/additional/i.test(m.role || '')
+  );
   const validMilestones = milestones.filter(m => m.milestone_name && m.milestone_date);
   const validDocuments = documents.filter(d => d.document_name && (d.file_path || d.link_url));
 
