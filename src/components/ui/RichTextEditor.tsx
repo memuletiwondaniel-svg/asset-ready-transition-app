@@ -73,7 +73,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-[240px] px-3 py-2',
+        class: 'prose prose-sm max-w-none focus:outline-none min-h-[360px] px-3 py-2',
       },
       handlePaste: (view, event) => {
         const items = event.clipboardData?.items;
@@ -280,62 +280,64 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   return (
     <div className="space-y-3">
       <div>
-      {/* Toolbar — compact */}
-      <div className="flex items-center gap-0.5 flex-wrap px-1.5 py-1 border border-b-0 rounded-t-lg bg-muted/30">
+      {/* Toolbar — modern, minimal */}
+      <div className="flex items-center gap-0.5 flex-wrap px-2 py-1.5 border border-b-0 rounded-t-lg bg-muted/30">
         <Button
           type="button"
           variant="ghost"
           size="sm"
+          aria-label="Bold"
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={cn('h-6 w-6 p-0', editor.isActive('bold') && 'bg-muted')}
+          className={cn('h-7 w-7 p-0 rounded-md text-muted-foreground hover:text-foreground', editor.isActive('bold') && 'bg-muted text-foreground')}
         >
-          <Bold className="h-3 w-3" />
+          <Bold className="h-3.5 w-3.5" strokeWidth={2.25} />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
+          aria-label="Italic"
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={cn('h-6 w-6 p-0', editor.isActive('italic') && 'bg-muted')}
+          className={cn('h-7 w-7 p-0 rounded-md text-muted-foreground hover:text-foreground', editor.isActive('italic') && 'bg-muted text-foreground')}
         >
-          <Italic className="h-3 w-3" />
+          <Italic className="h-3.5 w-3.5" strokeWidth={2.25} />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
+          aria-label="Bulleted list"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={cn('h-6 w-6 p-0', editor.isActive('bulletList') && 'bg-muted')}
+          className={cn('h-7 w-7 p-0 rounded-md text-muted-foreground hover:text-foreground', editor.isActive('bulletList') && 'bg-muted text-foreground')}
         >
-          <List className="h-3 w-3" />
+          <List className="h-3.5 w-3.5" strokeWidth={2.25} />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
+          aria-label="Numbered list"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={cn('h-6 w-6 p-0', editor.isActive('orderedList') && 'bg-muted')}
+          className={cn('h-7 w-7 p-0 rounded-md text-muted-foreground hover:text-foreground', editor.isActive('orderedList') && 'bg-muted text-foreground')}
         >
-          <ListOrdered className="h-3 w-3" />
+          <ListOrdered className="h-3.5 w-3.5" strokeWidth={2.25} />
         </Button>
 
-        <div className="w-px h-3.5 bg-border mx-1" />
+        <div className="w-px h-4 bg-border mx-1" />
 
         <Button
           type="button"
           variant="ghost"
           size="sm"
+          aria-label="Attach file"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="h-6 px-1.5 gap-1"
+          className="h-7 w-7 p-0 rounded-md text-muted-foreground hover:text-foreground"
         >
           {isUploading ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <>
-              <Paperclip className="h-3 w-3" />
-              <span className="text-[11px]">Attach</span>
-            </>
+            <Paperclip className="h-3.5 w-3.5" strokeWidth={2.25} />
           )}
         </Button>
 
