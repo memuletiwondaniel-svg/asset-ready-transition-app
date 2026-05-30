@@ -388,7 +388,14 @@ const FunctionsRolesManagement: React.FC = () => {
                           key={role.id}
                           className="group/role flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
                         >
-                          <p className="font-medium flex-1">{role.name}</p>
+                          <div className="flex-1 flex items-center gap-2">
+                            <p className="font-medium">{role.name}</p>
+                            {role.is_b2b && (
+                              <Badge variant="secondary" className="text-[10px] font-medium px-1.5 py-0 h-5 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                                B2B
+                              </Badge>
+                            )}
+                          </div>
                           <div className="flex items-center gap-1 opacity-0 group-hover/role:opacity-100 transition-opacity">
                             <Button
                               variant="ghost"
