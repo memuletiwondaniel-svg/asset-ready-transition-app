@@ -42,7 +42,7 @@ const ROLE_ELIGIBILITY: Record<string, string[]> = {
   'Construction Lead': ['construction lead', 'construction'],
   'Commissioning Lead': ['commissioning lead', 'commissioning'],
   'Snr. ORA Engr.': ['snr. ora engr', 'snr ora engr', 'snr. ora eng', 'snr ora eng', 'senior ora'],
-  'Deputy Plant Director': ['deputy plant director'],
+  'Deputy Plant Director': ['dep. plant director', 'dep plant director', 'deputy plant director'],
 };
 
 const getInitials = (name?: string) =>
