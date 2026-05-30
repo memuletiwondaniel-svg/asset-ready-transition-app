@@ -133,24 +133,24 @@ const MilestoneItem: React.FC<MilestoneItemProps> = ({
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2.5 flex-1 min-w-0">
-            <span className="text-xs font-medium text-foreground truncate">
-              {milestone.milestone_name}
-            </span>
-            <span className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap">
-              {format(new Date(milestone.milestone_date), "dd-MMM-yyyy")}
-            </span>
-            {milestone.is_scorecard_project && (
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_7rem_auto] items-center gap-3">
+          <span className="text-xs font-medium text-foreground truncate">
+            {milestone.milestone_name}
+          </span>
+          <div className="flex justify-start min-w-[5rem]">
+            {milestone.is_scorecard_project ? (
               <Badge
                 variant="outline"
                 className="h-4 px-1.5 bg-yellow-100 text-yellow-800 border-yellow-300 text-[10px] font-medium leading-none whitespace-nowrap"
               >
                 Scorecard
               </Badge>
-            )}
+            ) : null}
           </div>
-          <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          <span className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap text-left">
+            {format(new Date(milestone.milestone_date), "dd-MMM-yyyy")}
+          </span>
+          <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 justify-end w-12">
             <Button
               type="button"
               variant="ghost"
