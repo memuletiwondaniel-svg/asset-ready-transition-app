@@ -167,7 +167,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
           const userIds = teamData.map((m: any) => m.user_id);
           const { data: profilesData } = await supabase
             .from('profiles')
-            .select('user_id, full_name, avatar_url, position, user_email')
+            .select('user_id, full_name, avatar_url, position')
             .in('user_id', userIds);
 
           setTeamMembers(
@@ -178,7 +178,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 role: m.role,
                 is_lead: !!m.is_lead,
                 user_name: p?.full_name || '',
-                user_email: p?.user_email || '',
+                user_email: '',
                 avatar_url: p?.avatar_url || '',
                 position: p?.position || '',
               };
