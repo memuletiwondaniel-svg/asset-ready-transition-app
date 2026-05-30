@@ -362,6 +362,7 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
         is_scorecard_project: false,
         status: 'pending'
       });
+      setIsAddOpen(false);
     }
   };
 
