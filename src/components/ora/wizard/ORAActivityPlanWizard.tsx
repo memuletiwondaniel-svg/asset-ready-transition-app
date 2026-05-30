@@ -896,7 +896,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
                   const isLast = idx === STEPS.length - 1;
 
                   return (
-                    <React.Fragment key={step.id}>
+                    <div key={step.id} className="contents">
                       <div className="flex flex-col items-center gap-1 shrink-0">
                         <button
                           type="button"
@@ -930,7 +930,7 @@ export const ORAActivityPlanWizard: React.FC<ORAActivityPlanWizardProps> = ({
                           )}
                         />
                       )}
-                    </React.Fragment>
+                    </div>
                   );
                 })}
               </div>
