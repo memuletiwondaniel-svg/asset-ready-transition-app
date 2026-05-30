@@ -260,33 +260,33 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                 {assignedCount}/{CANONICAL_REQUIRED_ROLES.length}
               </Badge>
             </h3>
-            <div className="space-y-2 pl-1">
+            <div className="space-y-1.5 pl-1">
               {visibleRoles.map((data, idx) => {
                 const isLeadRow = idx === 0;
                 return (
                   <div
                     key={data.role}
                     className={cn(
-                      "flex items-center gap-3 p-3 rounded-xl border transition-all duration-200",
+                      "flex items-center gap-2.5 p-2 rounded-lg border transition-all duration-200",
                       data.member
                         ? "bg-muted/30 border-border/40 hover:bg-muted/50 hover:border-primary/20"
                         : "bg-muted/10 border-dashed border-border/30"
                     )}
                   >
                     <Avatar className={cn(
-                      "h-10 w-10 ring-2 ring-background shadow-md",
+                      "h-8 w-8 ring-2 ring-background shadow-sm",
                       data.member?.is_lead && "ring-primary/30"
                     )}>
                       {data.profile?.avatar_url ? (
                         <AvatarImage src={getAvatarUrl(data.profile.avatar_url)} alt={data.profile?.full_name} />
                       ) : (
                         <AvatarFallback className={cn(
-                          "text-sm font-medium",
+                          "text-[11px] font-medium",
                           data.member ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
                         )}>
                           {data.profile?.full_name
                             ? data.profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)
-                            : <UserCircle className="h-5 w-5" />
+                            : <UserCircle className="h-4 w-4" />
                           }
                         </AvatarFallback>
                       )}
@@ -294,7 +294,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <p className={cn(
-                          "text-sm font-medium truncate",
+                          "text-xs font-medium truncate leading-tight",
                           !data.member && "text-muted-foreground/60 italic"
                         )}>
                           {data.profile?.full_name || 'Unassigned'}
