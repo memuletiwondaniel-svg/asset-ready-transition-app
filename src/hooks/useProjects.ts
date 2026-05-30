@@ -10,6 +10,7 @@ export interface Project {
   project_id_number: string;
   project_title: string;
   plant_id?: string;
+  field_id?: string;
   station_id?: string;
   project_scope?: string;
   project_scope_image_url?: string;
