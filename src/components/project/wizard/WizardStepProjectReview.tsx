@@ -59,10 +59,12 @@ const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, 
 
 const Section: React.FC<{ title: string; count?: number; children: React.ReactNode }> = ({ title, count, children }) => (
   <section className="py-5 border-t border-border first:border-t-0 first:pt-0">
-    <div className="flex items-baseline justify-between mb-3">
-      <h4 className="text-sm font-semibold tracking-tight">{title}</h4>
+    <div className="flex items-center gap-2 mb-3">
+      <h4 className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">{title}</h4>
       {typeof count === 'number' && (
-        <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
+        <Badge variant="secondary" className="h-4 px-1.5 text-[10px] font-medium tabular-nums">
+          {count}
+        </Badge>
       )}
     </div>
     {children}
@@ -85,7 +87,9 @@ const WizardStepProjectReview: React.FC<WizardStepProjectReviewProps> = ({
   const selectedHub = hubs.find(h => h.id === formData.hub_id);
   const selectedStations = stations.filter(s => selectedLocationIds.includes(s.id));
 
-  const validTeamMembers = teamMembers.filter(m => m.user_id && m.user_id.trim() !== '');
+  const validTeamMembers = teamMembers.filter(
+    m => m.user_id && m.user_id.trim() !== '' && !/additional/i.test(m.role || '')
+  );
   const validMilestones = milestones.filter(m => m.milestone_name && m.milestone_date);
   const validDocuments = documents.filter(d => d.document_name && (d.file_path || d.link_url));
 
