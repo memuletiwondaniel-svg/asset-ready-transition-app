@@ -572,7 +572,7 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
             )}
 
             {/* Circular stepper — semantic state per step */}
-            <nav aria-label="Wizard progress" className="mt-10">
+            <nav aria-label="Wizard progress" className="mt-16">
               <ol className="flex items-start justify-between gap-1">
                 {STEPS.map((step, idx) => {
                   const visited = visitedSteps.has(step.id);
@@ -663,9 +663,6 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
             </Button>
 
             <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground hidden sm:inline">
-                Step {currentStep} of {STEPS.length}
-              </span>
               <Button
                 variant="ghost"
                 onClick={handleSaveAndClose}
