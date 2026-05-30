@@ -3,7 +3,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Sparkles, Trash2, AlertCircle, CheckCircle2, Pencil, Check } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Lightbulb, Trash2, AlertCircle, CheckCircle2, Pencil, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAutoPopulateTeam } from '@/hooks/useAutoPopulateTeam';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
@@ -35,6 +36,15 @@ const KEY_ROLES = [
   'Deputy Plant Director',
 ];
 
+// Patterns used to filter eligible users per role (matches against position / role)
+const ROLE_ELIGIBILITY: Record<string, string[]> = {
+  'Project Hub Lead': ['hub lead', 'project hub lead', 'engr. manager', 'engineering manager'],
+  'Construction Lead': ['construction lead', 'construction'],
+  'Commissioning Lead': ['commissioning lead', 'commissioning'],
+  'Snr. ORA Engr.': ['snr. ora engr', 'snr ora engr', 'snr. ora eng', 'snr ora eng', 'senior ora'],
+  'Deputy Plant Director': ['deputy plant director', 'plant director'],
+};
+
 const getInitials = (name?: string) =>
   !name ? '?' : name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
@@ -50,15 +60,24 @@ const MemberPicker: React.FC<MemberPickerProps> = ({ role, currentUserId, allUse
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
+  const eligible = useMemo(() => {
+    const patterns = ROLE_ELIGIBILITY[role];
+    if (!patterns || !allUsers) return allUsers ?? [];
+    return allUsers.filter((u) => {
+      const hay = `${u.position || ''} ${u.role || ''}`.toLowerCase();
+      return patterns.some((p) => hay.includes(p));
+    });
+  }, [allUsers, role]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return allUsers;
-    return allUsers.filter((u) =>
+    if (!q) return eligible;
+    return eligible.filter((u) =>
       [u.full_name, u.email, u.position].filter(Boolean).some((v) => v!.toLowerCase().includes(q))
     );
-  }, [allUsers, search]);
+  }, [eligible, search]);
 
-  const showSearch = allUsers.length > 6;
+  const showSearch = eligible.length > 6;
 
   return (
     <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setSearch(''); }}>
@@ -159,10 +178,22 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
     <div className="space-y-5">
       <div>
         <h3 className="text-lg font-medium mb-1">Project Team</h3>
-        <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-          Key roles are auto-resolved from your Portfolio and Hub. Edit any assignment as needed.
-        </p>
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-help"
+              >
+                <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
+                <span className="underline decoration-dotted underline-offset-2">How are these populated?</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-xs">
+              Roles below are auto-populated based on the portfolio and hub. Edit any assignment as needed.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {contextMissing && (

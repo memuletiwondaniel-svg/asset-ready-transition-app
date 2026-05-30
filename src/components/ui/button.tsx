@@ -10,15 +10,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.96] active:rotate-[0.5deg]",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.97]",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:scale-[1.02] active:scale-[0.96] active:rotate-[-0.5deg]",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:scale-[1.02] active:scale-[0.97]",
         outline:
-          "border border-input bg-background hover:bg-muted/50 hover:border-border hover:scale-[1.01] active:scale-[0.97] active:rotate-[0.5deg]",
+          "border border-input bg-background hover:bg-muted/50 hover:border-border hover:scale-[1.01] active:scale-[0.98]",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary-hover hover:scale-[1.01] active:scale-[0.97] active:rotate-[-0.5deg]",
-        ghost: "hover:bg-muted/50 hover:scale-[1.01] active:scale-[0.97] active:rotate-[0.5deg]",
-        link: "text-primary underline-offset-4 hover:underline hover:opacity-80 active:scale-[0.98]",
+          "bg-secondary text-secondary-foreground hover:bg-secondary-hover hover:scale-[1.01] active:scale-[0.98]",
+        ghost: "hover:bg-muted/50 hover:scale-[1.01] active:scale-[0.98]",
+        link: "text-primary underline-offset-4 hover:underline hover:opacity-80 active:scale-[0.99]",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -44,24 +44,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
     const createRipple = useRipple()
-    const [isPressed, setIsPressed] = React.useState(false)
-    
+
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       createRipple(e)
-      
-      // Micro-interaction: brief press animation
-      setIsPressed(true)
-      setTimeout(() => setIsPressed(false), 150)
-      
       props.onClick?.(e)
     }
-    
+
     return (
       <Comp
         className={cn(
-          buttonVariants({ variant, size, className }), 
-          "relative overflow-hidden",
-          isPressed && "animate-micro-press"
+          buttonVariants({ variant, size, className }),
+          "relative overflow-hidden"
         )}
         ref={ref}
         {...props}
