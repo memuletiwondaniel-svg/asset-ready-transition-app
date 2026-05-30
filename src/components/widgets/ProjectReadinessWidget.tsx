@@ -446,7 +446,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           <div className="p-1.5 rounded-lg bg-blue-500/10">
             <FileText className="h-4 w-4 text-blue-600" />
           </div>
-          <span className="flex-1 text-left">Documents{documents.length > 0 ? ` (${documents.length})` : ''}</span>
+          <span className="flex-1 text-left">Documents</span>
           {documentsExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
         {documentsExpanded && (
