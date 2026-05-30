@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Check, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Loader2, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -666,7 +666,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                   variant="ghost"
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="gap-2 text-muted-foreground hover:text-primary-foreground hover:bg-primary"
+                  className="gap-2 text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
                   {isSubmitting ? (
                     <>
@@ -675,11 +675,12 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
                     </>
                   ) : (
                     <>
-                      <Check className="h-4 w-4" />
+                      <Save className="h-4 w-4" />
                       Save & Exit
                     </>
                   )}
                 </Button>
+
               )}
               {currentStep < STEPS.length ? (
                 <Button onClick={handleNext}>
