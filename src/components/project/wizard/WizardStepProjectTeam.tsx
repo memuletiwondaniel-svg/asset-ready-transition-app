@@ -267,20 +267,20 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
               {assigned ? (
                 <>
                   {(() => {
-                    // Detect B2B partner: another user matching the same eligibility patterns
-                    // (and plant for Deputy Plant Director). If exactly one other matches, that's the partner.
-                    const patterns = ROLE_ELIGIBILITY[role] || [];
-                    let pool = allUsers.filter((u) => {
-                      const hay = `${u.position || ''} ${u.role || ''}`.toLowerCase();
-                      return patterns.some((p) => hay.includes(p));
-                    });
-                    if (role === 'Deputy Plant Director' && plantName) {
-                      const pl = plantName.toLowerCase();
-                      const scoped = pool.filter((u) => (u.position || '').toLowerCase().includes(pl));
-                      if (scoped.length > 0) pool = scoped;
+                    // Detect B2B partner: another user with the EXACT same unique position
+                    // (case-insensitive, whitespace-normalized). If exactly one other user
+                    // shares that position, treat them as the B2B partner.
+                    const normalizePos = (p?: string | null) =>
+                      (p || '').toLowerCase().replace(/\s+/g, ' ').trim();
+                    const memberPos = normalizePos(member.position);
+                    let partner: typeof allUsers[number] | null = null;
+                    if (memberPos) {
+                      const sharing = allUsers.filter(
+                        (u) => normalizePos(u.position) === memberPos
+                      );
+                      const others = sharing.filter((u) => u.user_id !== member.user_id);
+                      partner = sharing.length === 2 && others.length === 1 ? others[0] : null;
                     }
-                    const others = pool.filter((u) => u.user_id !== member.user_id);
-                    const partner = pool.length === 2 && others.length === 1 ? others[0] : null;
 
                     const avatarBlock = (
                       <Avatar className="h-9 w-9 border-2 border-emerald-300 dark:border-emerald-700">
