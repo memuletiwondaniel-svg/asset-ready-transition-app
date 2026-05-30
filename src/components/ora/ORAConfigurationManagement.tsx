@@ -25,7 +25,7 @@ export const ORAConfigurationManagement: React.FC<ORAConfigurationManagementProp
           favoritePath="/admin-tools/ora-configuration"
           customBreadcrumbs={[
             { label: 'Home', path: '/', onClick: () => window.location.href = '/' },
-            { label: 'Administration', path: '/admin-tools', onClick: () => window.location.href = '/admin-tools' }
+            { label: 'Admin', path: '/admin-tools', onClick: () => window.location.href = '/admin-tools' }
           ]}
         />
         <div className="flex items-center justify-between mt-3">

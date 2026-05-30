@@ -68,7 +68,7 @@ const APIManagement: React.FC<APIManagementProps> = ({ onBack }) => {
         favoritePath="/admin-tools/apis"
         customBreadcrumbs={[
           { label: 'Home', path: '/', onClick: onBack },
-          { label: 'Administration', path: '/admin-tools', onClick: onBack }
+          { label: 'Admin', path: '/admin-tools', onClick: onBack }
         ]}
       />
 
