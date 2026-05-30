@@ -1,5 +1,4 @@
 import React from 'react';
-import { Lightbulb } from 'lucide-react';
 import { ProjectMilestonesSection } from '../ProjectMilestonesSection';
 import { EnhancedProjectDocumentsSection } from '../EnhancedProjectDocumentsSection';
 
@@ -36,26 +35,16 @@ const WizardStepMilestonesDocuments: React.FC<WizardStepMilestonesDocumentsProps
   setDocuments,
 }) => {
   return (
-    <div className="space-y-5">
-      <div>
-        <h3 className="text-lg font-medium mb-1">Milestones & Documents</h3>
-        <p className="text-xs text-muted-foreground flex items-start gap-1.5">
-          <Lightbulb className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500 fill-amber-100 dark:fill-amber-900/40" />
-          <span>Add project milestones and attach relevant documents or links.</span>
-        </p>
-      </div>
+    <div className="space-y-8">
+      <ProjectMilestonesSection
+        milestones={milestones}
+        setMilestones={setMilestones}
+      />
 
-      <div className="space-y-6">
-        <ProjectMilestonesSection
-          milestones={milestones}
-          setMilestones={setMilestones}
-        />
-
-        <EnhancedProjectDocumentsSection
-          documents={documents}
-          setDocuments={setDocuments}
-        />
-      </div>
+      <EnhancedProjectDocumentsSection
+        documents={documents}
+        setDocuments={setDocuments}
+      />
     </div>
   );
 };
