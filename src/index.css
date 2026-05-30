@@ -529,6 +529,42 @@
     scrollbar-color: hsl(var(--border)) transparent;
   }
 
+  /* Auto-hide overlay scrollbar — invisible until hover/scroll */
+  .scrollbar-overlay {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.3s ease;
+  }
+  .scrollbar-overlay::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-overlay::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-overlay::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 0.3s ease;
+  }
+  .scrollbar-overlay:hover,
+  .scrollbar-overlay:focus-within {
+    scrollbar-color: hsl(var(--muted-foreground) / 0.45) transparent;
+  }
+  .scrollbar-overlay:hover::-webkit-scrollbar-thumb,
+  .scrollbar-overlay:focus-within::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.45);
+    background-clip: padding-box;
+  }
+  .scrollbar-overlay::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.7) !important;
+    background-clip: padding-box;
+  }
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
