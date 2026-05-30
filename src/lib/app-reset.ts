@@ -217,6 +217,7 @@ export async function performHardReset(nextResetId: string = APP_RESET_ID) {
  * Returns true if a reload was triggered (caller should NOT continue booting).
  */
 export function runResetIfNeeded(): boolean {
+  if (shouldSkipSelfReload()) return false;
   try {
     const stored = localStorage.getItem(RESET_KEY);
     if (stored === APP_RESET_ID) return false;
