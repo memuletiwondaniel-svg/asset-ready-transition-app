@@ -42,6 +42,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   const { data: allUsers = [] } = useProfileUsers();
   const [milestones, setMilestones] = useState<any[]>([]);
   const [milestonesLoading, setMilestonesLoading] = useState(true);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [isScopeExpanded, setIsScopeExpanded] = useState(false);
   const hasAutoHealed = useRef(false);
 
