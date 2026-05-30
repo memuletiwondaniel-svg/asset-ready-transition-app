@@ -20,6 +20,7 @@ export interface TaskReviewer {
 
 export const useTaskReviewers = (taskId: string | undefined) => {
   const { user } = useAuth();
+  const { effectiveUserIds } = useB2BPartner();
   const queryClient = useQueryClient();
 
   const { data: reviewers = [], isLoading } = useQuery({
