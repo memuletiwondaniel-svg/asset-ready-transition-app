@@ -24,6 +24,8 @@ interface WizardStepProjectInfoProps {
     station_id: string;
   };
   onFormDataChange: (updates: Partial<WizardStepProjectInfoProps['formData']>) => void;
+  /** Optional id of the project being edited — used to ignore self in duplicate-ID check. */
+  currentProjectId?: string;
 }
 
 const FieldLabel: React.FC<{ children: React.ReactNode; required?: boolean; htmlFor?: string }> = ({
@@ -60,6 +62,7 @@ const GroupHeader: React.FC<{ title: string; helper?: string; withDivider?: bool
 const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
   formData,
   onFormDataChange,
+  currentProjectId,
 }) => {
   const { regions } = useProjectRegions();
   const { regions: hierarchyRegions } = useProjectHierarchy();
@@ -74,10 +77,12 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
     }
   }, [formData.project_id_prefix, onFormDataChange]);
 
-  const { conflict, isChecking } = useProjectIdAvailability(
+  const { conflict: rawConflict, isChecking } = useProjectIdAvailability(
     formData.project_id_prefix || 'DP',
     formData.project_id_number
   );
+  // Ignore conflict against the project being edited (its own ID is allowed).
+  const conflict = rawConflict && rawConflict.id !== currentProjectId ? rawConflict : null;
 
   const filteredHubs = useMemo(() => {
     if (!formData.region_id) return hubs;
