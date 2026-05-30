@@ -86,6 +86,7 @@ export const useCategorizedRoles = () => {
             name: item.role_name!,
             description: item.role_description,
             category_id: item.category_id,
+            is_b2b: !!item.role_is_b2b,
           });
         }
       });
