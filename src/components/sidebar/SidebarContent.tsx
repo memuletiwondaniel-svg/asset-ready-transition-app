@@ -424,31 +424,9 @@ export const SidebarContent = memo<SidebarContentProps>(({
 
       {/* Footer */}
       <div className="p-2 border-t border-border/40 space-y-2 flex-shrink-0">
-        {/* User Profile */}
-        {isCollapsed ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onProfileClick}
-                className="w-full h-9 p-0 hover:bg-muted/40"
-              >
-                {isProfileLoading ? (
-                  <Skeleton className="h-7 w-7 rounded-full" />
-                ) : (
-                  <Avatar className="h-7 w-7">
-                    <AvatarImage src={displayAvatar} alt={displayName} />
-                    <AvatarFallback delayMs={600} className="bg-gradient-to-br from-primary to-accent text-white text-[10px]">
-                      {displayName.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{displayName}</TooltipContent>
-          </Tooltip>
-        ) : (
+        {/* User Profile - hidden when collapsed */}
+        {isCollapsed ? null : (
+
           <>
             <Button
               variant="ghost"
