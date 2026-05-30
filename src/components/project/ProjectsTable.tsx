@@ -248,10 +248,10 @@ export function ProjectsTable({
   const [sort, setSort] = useState<SortState>(null);
   const { milestoneTypes } = useProjectMilestoneTypes();
   const milestoneInfoByCode = useMemo(() => {
-    const map = new Map<string, { name: string; description: string | null }>();
+    const map = new Map<string, { code: string; name: string; description: string | null }>();
     milestoneTypes.forEach(m => {
-      map.set(m.code.toUpperCase(), { name: m.name, description: m.description });
-      map.set(m.name.toUpperCase(), { name: m.name, description: m.description });
+      map.set(m.code.toUpperCase(), { code: m.code, name: m.name, description: m.description });
+      map.set(m.name.toUpperCase(), { code: m.code, name: m.name, description: m.description });
     });
     return map;
   }, [milestoneTypes]);
@@ -455,6 +455,8 @@ export function ProjectsTable({
                           const tooltipText = info
                             ? (info.description || info.name)
                             : project.next_milestone_name;
+                          const displayCode = info?.code
+                            || (project.next_milestone_name?.split(/[\s-]/)[0] ?? project.next_milestone_name);
                           return (
                             <div key={col.id} style={style} className="shrink-0 min-w-0">
                               {project.next_milestone_name ? (
@@ -462,7 +464,7 @@ export function ProjectsTable({
                                   <div className="flex items-center gap-1 min-w-0">
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <p className="text-sm text-foreground truncate cursor-help">{project.next_milestone_name}</p>
+                                        <p className="text-sm text-foreground truncate cursor-help">{displayCode}</p>
                                       </TooltipTrigger>
                                       <TooltipContent side="top" className="max-w-xs">{tooltipText}</TooltipContent>
                                     </Tooltip>
