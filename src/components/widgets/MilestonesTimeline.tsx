@@ -53,7 +53,7 @@ export const MilestonesTimeline: React.FC<MilestonesTimelineProps> = ({ mileston
               <span className="truncate">{milestone.milestone_name}</span>
               {milestone.is_scorecard_project && (
                 <span
-                  className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0"
+                  className="text-[8px] font-semibold tracking-wide px-1 py-px rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200/70 dark:border-amber-800 shrink-0 leading-none"
                   title="Scorecard milestone"
                 >
                   SCORECARD
