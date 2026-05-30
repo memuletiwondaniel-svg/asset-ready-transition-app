@@ -177,7 +177,7 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
               Add Document
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md overflow-hidden">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-base font-semibold">
                 <Paperclip className="h-4 w-4 text-primary" />
@@ -339,23 +339,34 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
           <p className="text-xs text-muted-foreground mt-1">Click <span className="font-medium text-primary">Add Document</span> to attach a file or link.</p>
         </button>
       ) : (
-        <div className="space-y-2 rounded-lg border border-border/60 bg-card p-3">
+        <div className="space-y-1.5 rounded-lg border border-border/60 bg-card p-2">
           {documents.map((doc) => (
             <div
               key={doc.id}
-              className="group flex items-center justify-between gap-3 p-3 bg-muted/40 hover:bg-muted/60 rounded-lg border border-transparent hover:border-border/60 transition-colors"
+              className="group flex items-center justify-between gap-2 px-2.5 py-1.5 bg-muted/40 hover:bg-muted/60 rounded-md border border-transparent hover:border-border/60 transition-colors"
             >
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
                 {doc.document_type === 'file'
                   ? getFileIcon(doc.file_extension)
                   : getLinkIcon(doc.link_type)
                 }
-                <div className="flex flex-col min-w-0">
-                  <span className="font-medium text-foreground truncate">{doc.document_name}</span>
-                  {doc.file_extension && (
-                    <span className="text-xs text-muted-foreground uppercase">
-                      {doc.file_extension} file
+                <div className="flex items-baseline gap-2 min-w-0 flex-1">
+                  <span className="text-sm font-medium text-foreground truncate">{doc.document_name}</span>
+                  {doc.document_type === 'file' && doc.file_extension && (
+                    <span className="text-[10px] text-muted-foreground uppercase shrink-0">
+                      {doc.file_extension}
                     </span>
+                  )}
+                  {doc.document_type === 'link' && doc.link_url && (
+                    <a
+                      href={doc.link_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary hover:underline truncate"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {doc.link_url}
+                    </a>
                   )}
                 </div>
               </div>
@@ -364,9 +375,9 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
                 variant="ghost"
                 size="sm"
                 onClick={() => removeDocument(doc.id)}
-                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 transition-opacity"
+                className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 transition-opacity shrink-0"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </div>
           ))}
