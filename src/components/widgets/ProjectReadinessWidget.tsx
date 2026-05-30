@@ -179,17 +179,16 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                 </p>
               )}
               {stripHtml(project.project_scope).length > 200 && (
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="p-0 h-auto text-primary mt-2"
+                <button
+                  type="button"
+                  className="mt-2 text-[11px] font-medium text-primary/80 hover:text-primary hover:underline underline-offset-2 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsScopeExpanded(!isScopeExpanded);
                   }}
                 >
-                  {isScopeExpanded ? 'Show Less' : 'Read More'}
-                </Button>
+                  {isScopeExpanded ? 'Show less' : 'Read more'}
+                </button>
               )}
             </div>
           </div>
@@ -363,12 +362,12 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
             {onEdit && (
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 px-2 text-xs gap-1.5"
+                className="h-8 w-8 text-muted-foreground/50 hover:text-primary hover:bg-primary/10 transition-all duration-200 hover:scale-110"
                 title="Edit project"
               >
-                <Edit className="h-3.5 w-3.5" /> Edit
+                <Edit className="h-4 w-4" />
               </Button>
             )}
           </div>
@@ -388,10 +387,10 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
         <div className="lg:hidden pr-1">
           {widgetContent}
         </div>
-        {/* Desktop: ScrollArea for fixed-height widget */}
-        <ScrollArea className="h-full pr-4 overscroll-contain hidden lg:block">
+        {/* Desktop: native scroll with modern thin scrollbar */}
+        <div className="h-full overflow-y-auto overscroll-contain hidden lg:block pr-2 scrollbar-modern">
           {widgetContent}
-        </ScrollArea>
+        </div>
       </CardContent>
     </Card>
   );
