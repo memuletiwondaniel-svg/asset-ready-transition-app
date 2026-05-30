@@ -223,6 +223,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           'Construction Lead',
           'Commissioning Lead',
           'Snr. ORA Engr.',
+          'Deputy Plant Director',
         ];
         
         const ROLE_VARIATIONS: Record<string, string[]> = {
@@ -230,6 +231,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
           'Construction Lead': ['Construction Lead'],
           'Commissioning Lead': ['Commissioning Lead'],
           'Snr. ORA Engr.': ['Snr ORA Engr', 'Snr ORA Engr.', 'Snr. ORA Engr.', 'Snr. ORA Engr', 'Senior ORA Engr.', 'Senior ORA Engineer'],
+          'Deputy Plant Director': ['Deputy Plant Director', 'Dep. Plant Director', 'Dep Plant Director'],
         };
         
         const roleDisplayData = CANONICAL_REQUIRED_ROLES.map(role => {
