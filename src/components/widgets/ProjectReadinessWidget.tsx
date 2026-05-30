@@ -339,7 +339,7 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                           );
                         })()}
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">{data.role}</p>
+                      <p className="text-[10px] text-muted-foreground truncate leading-tight">{data.role}</p>
                     </div>
                     {isLeadRow && others.length > 0 && (
                       <button
