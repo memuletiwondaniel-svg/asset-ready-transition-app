@@ -56,7 +56,7 @@ const MilestoneItem: React.FC<MilestoneItemProps> = ({
   const isEditing = editingId === milestone.id;
 
   return (
-    <div className="group p-3 bg-muted/40 hover:bg-muted/60 rounded-lg border border-transparent hover:border-border/60 transition-colors">
+    <div className="group px-2.5 py-1.5 bg-muted/40 hover:bg-muted/60 rounded-md border border-transparent hover:border-border/60 transition-colors">
       {isEditing && editingMilestone ? (
         <div className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
@@ -133,46 +133,44 @@ const MilestoneItem: React.FC<MilestoneItemProps> = ({
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <span className="font-medium text-foreground truncate">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <span className="text-xs font-medium text-foreground truncate">
               {milestone.milestone_name}
             </span>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <span className="text-sm text-muted-foreground whitespace-nowrap">
-              {format(new Date(milestone.milestone_date), "do MMMM yyyy")}
+            <span className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap">
+              {format(new Date(milestone.milestone_date), "dd-MMM-yyyy")}
             </span>
             {milestone.is_scorecard_project && (
               <Badge
                 variant="outline"
-                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 border-yellow-400 text-xs font-semibold shadow-sm whitespace-nowrap"
+                className="h-4 px-1.5 bg-yellow-100 text-yellow-800 border-yellow-300 text-[10px] font-medium leading-none whitespace-nowrap"
               >
                 Scorecard
               </Badge>
             )}
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onStartEditing(milestone)}
-                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent/50"
-              >
-              <Pencil className="h-4 w-4" />
+          </div>
+          <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onStartEditing(milestone)}
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            >
+              <Pencil className="h-3 w-3" />
             </Button>
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => onRemove(milestone.id)}
-              className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="h-6 w-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-3 w-3" />
             </Button>
-            </div>
           </div>
-          </div>
+        </div>
       )}
     </div>
   );
