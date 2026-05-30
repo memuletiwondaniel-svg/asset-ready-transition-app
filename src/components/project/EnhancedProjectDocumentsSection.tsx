@@ -342,6 +342,7 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
                   type="button"
                   onClick={addDocument}
                   disabled={
+                    isUploading ||
                     !documentForm.document_name ||
                     (documentForm.document_type === 'file' && !documentForm.file) ||
                     (documentForm.document_type === 'link' && !documentForm.link_url)
@@ -349,7 +350,7 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Document
+                  {isUploading ? 'Uploading…' : 'Add Document'}
                 </Button>
               </div>
             </div>
