@@ -1,6 +1,7 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { fetchB2BPartnerIds } from './useB2BPartner';
 
 export interface UserORPActivity {
   id: string;
@@ -29,7 +30,10 @@ export const useUserORPActivities = () => {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      // Fetch resources assigned to user with plan + project data
+      const partnerIds = await fetchB2BPartnerIds(user.id);
+      const effectiveUserIds = [user.id, ...partnerIds];
+
+      // Fetch resources assigned to user (or B2B partner) with plan + project data
       const { data: resources, error: resourceError } = await supabase
         .from('orp_resources')
         .select(`
@@ -46,7 +50,7 @@ export const useUserORPActivities = () => {
             )
           )
         `)
-        .eq('user_id', user.id)
+        .in('user_id', effectiveUserIds)
         .eq('orp_plans.is_active', true);
 
       if (resourceError) throw resourceError;

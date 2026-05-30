@@ -1,6 +1,7 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { fetchB2BPartnerIds } from './useB2BPartner';
 
 export interface VCRSubItem {
   prerequisite_id?: string;
@@ -46,10 +47,13 @@ export const useUserVCRBundleTasks = () => {
     queryFn: async () => {
       if (!user?.id) return [];
 
+      const partnerIds = await fetchB2BPartnerIds(user.id);
+      const effectiveUserIds = [user.id, ...partnerIds];
+
       const { data, error } = await (supabase as any)
         .from('user_tasks')
         .select('*')
-        .eq('user_id', user.id)
+        .in('user_id', effectiveUserIds)
         .in('type', ['vcr_checklist_bundle', 'vcr_approval_bundle', 'pssr_checklist_bundle', 'pssr_approval_bundle'])
         .neq('status', 'completed')
         .order('created_at', { ascending: false });

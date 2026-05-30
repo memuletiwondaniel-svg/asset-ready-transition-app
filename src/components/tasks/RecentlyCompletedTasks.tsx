@@ -8,6 +8,7 @@ import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
+import { fetchB2BPartnerIds } from '@/hooks/useB2BPartner';
 
 interface CompletedTask {
   id: string;
@@ -31,10 +32,13 @@ export const RecentlyCompletedTasks: React.FC<{ searchQuery?: string }> = ({ sea
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
+      const partnerIds = await fetchB2BPartnerIds(user!.id);
+      const effectiveUserIds = [user!.id, ...partnerIds];
+
       const { data, error } = await supabase
         .from('user_tasks')
         .select('id, title, description, type, priority, status, updated_at, created_at, metadata')
-        .eq('user_id', user!.id)
+        .in('user_id', effectiveUserIds)
         .in('status', ['completed', 'cancelled'])
         .gte('updated_at', sevenDaysAgo.toISOString())
         .order('updated_at', { ascending: false })
