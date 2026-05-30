@@ -13685,6 +13685,7 @@ export type Database = {
         Returns: undefined
       }
       initiate_password_reset: { Args: { user_email: string }; Returns: string }
+      is_b2b_partner_of: { Args: { target_user_id: string }; Returns: boolean }
       is_feature_enabled: { Args: { p_feature_key: string }; Returns: boolean }
       offboard_user: {
         Args: {
