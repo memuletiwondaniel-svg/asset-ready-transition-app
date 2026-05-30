@@ -1,6 +1,7 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { useB2BPartner } from '@/hooks/useB2BPartner';
 
 export interface UserP2AApproval {
   id: string;
