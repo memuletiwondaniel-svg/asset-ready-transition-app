@@ -292,12 +292,53 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                       )}
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className={cn(
-                        "text-sm font-medium truncate",
-                        !data.member && "text-muted-foreground/60 italic"
-                      )}>
-                        {data.profile?.full_name || 'Unassigned'}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className={cn(
+                          "text-sm font-medium truncate",
+                          !data.member && "text-muted-foreground/60 italic"
+                        )}>
+                          {data.profile?.full_name || 'Unassigned'}
+                        </p>
+                        {(() => {
+                          if (!data.member) return null;
+                          const memberPos = ((data.member as any).position || '').toLowerCase().replace(/\s+/g, ' ').trim();
+                          if (!memberPos) return null;
+                          const sharing = (allUsers || []).filter((u: any) => ((u.position || '').toLowerCase().replace(/\s+/g, ' ').trim()) === memberPos);
+                          const others = sharing.filter((u: any) => u.user_id !== data.member!.user_id);
+                          const partner = sharing.length === 2 && others.length === 1 ? others[0] : null;
+                          if (!partner) return null;
+                          const partnerName = (partner as any).full_name || (partner as any).email;
+                          return (
+                            <TooltipProvider delayDuration={150}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // Switch: remove current member, add partner with same role
+                                      removeTeamMember((data.member as any).id);
+                                      addTeamMember({
+                                        project_id: projectId,
+                                        user_id: (partner as any).user_id,
+                                        role: (data.member as any).role,
+                                        is_lead: !!(data.member as any).is_lead,
+                                      });
+                                    }}
+                                    className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 hover:bg-amber-200 dark:hover:bg-amber-900/60 cursor-pointer transition-colors"
+                                    title={`Switch to B2B: ${partnerName}`}
+                                  >
+                                    B2B
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
+                                  Click to switch to B2B: {partnerName}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })()}
+                      </div>
                       <p className="text-xs text-muted-foreground truncate">{data.role}</p>
                     </div>
                     {isLeadRow && others.length > 0 && (
