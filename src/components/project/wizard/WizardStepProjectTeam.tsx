@@ -26,6 +26,7 @@ interface WizardStepProjectTeamProps {
   regionName?: string | null;
   hubName?: string | null;
   hubId?: string | null;
+  plantName?: string | null;
 }
 
 const KEY_ROLES = [
