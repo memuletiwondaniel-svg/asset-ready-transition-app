@@ -20,6 +20,7 @@ import {
   syncTabSessionEpoch,
 } from "./app-reset";
 import { shouldSkipSelfReload } from "./runtime-env";
+import { showBootOverlay } from "./boot-overlay";
 
 declare const __APP_BUILD__: string;
 
@@ -78,6 +79,7 @@ function forceFreshReload() {
   if (shouldSkipSelfReload()) return;
   if (reloading) return;
   reloading = true;
+  showBootOverlay("Loading latest version…");
   try {
     const url = new URL(window.location.href);
     url.searchParams.set("_r", String(Date.now()));

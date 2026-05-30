@@ -7,6 +7,7 @@
  */
 
 import { shouldSkipSelfReload } from "./runtime-env";
+import { showBootOverlay } from "./boot-overlay";
 
 export const APP_RESET_ID = "2026-05-29-projects-table-hard-reset-v8";
 export const RESET_KEY = "__orsh_reset_id";
@@ -196,6 +197,7 @@ export async function performHardReset(nextResetId: string = APP_RESET_ID) {
     // Production builds keep the full reset behavior.
     return;
   }
+  showBootOverlay("Loading latest version…");
   wipeStorage(localStorage);
   wipeStorage(sessionStorage);
   await Promise.all([wipeCaches(), wipeServiceWorkers(), wipeIndexedDB()]);
