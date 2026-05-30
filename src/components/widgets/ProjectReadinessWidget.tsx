@@ -387,10 +387,10 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
         <div className="lg:hidden pr-1">
           {widgetContent}
         </div>
-        {/* Desktop: ScrollArea for fixed-height widget */}
-        <ScrollArea className="h-full pr-4 overscroll-contain hidden lg:block">
+        {/* Desktop: native scroll with modern thin scrollbar */}
+        <div className="h-full overflow-y-auto overscroll-contain hidden lg:block pr-2 scrollbar-modern">
           {widgetContent}
-        </ScrollArea>
+        </div>
       </CardContent>
     </Card>
   );
