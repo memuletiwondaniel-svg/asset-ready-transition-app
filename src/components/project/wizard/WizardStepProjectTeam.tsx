@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { EnhancedCombobox } from '@/components/ui/enhanced-combobox';
-import { Sparkles, X, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Sparkles, Trash2, AlertCircle, CheckCircle2, Pencil, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useAutoPopulateTeam } from '@/hooks/useAutoPopulateTeam';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 
@@ -36,6 +38,77 @@ const KEY_ROLES = [
 const getInitials = (name?: string) =>
   !name ? '?' : name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
+interface MemberPickerProps {
+  role: string;
+  currentUserId?: string;
+  allUsers: ReturnType<typeof useProfileUsers>['data'];
+  onSelect: (userId: string) => void;
+  trigger: React.ReactNode;
+}
+
+const MemberPicker: React.FC<MemberPickerProps> = ({ role, currentUserId, allUsers = [], onSelect, trigger }) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return allUsers;
+    return allUsers.filter((u) =>
+      [u.full_name, u.email, u.position].filter(Boolean).some((v) => v!.toLowerCase().includes(q))
+    );
+  }, [allUsers, search]);
+
+  const showSearch = allUsers.length > 6;
+
+  return (
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setSearch(''); }}>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-0" onOpenAutoFocus={(e) => !showSearch && e.preventDefault()}>
+        <div className="px-3 py-2 border-b">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Assign {role}
+          </p>
+        </div>
+        <Command shouldFilter={false}>
+          {showSearch && (
+            <CommandInput
+              placeholder="Search by name, email, position..."
+              value={search}
+              onValueChange={setSearch}
+            />
+          )}
+          <CommandList className="max-h-72 scrollbar-overlay">
+            <CommandEmpty>No users found.</CommandEmpty>
+            <CommandGroup>
+              {filtered.map((u) => {
+                const isCurrent = u.user_id === currentUserId;
+                return (
+                  <CommandItem
+                    key={u.user_id}
+                    value={u.user_id}
+                    onSelect={() => { onSelect(u.user_id); setOpen(false); setSearch(''); }}
+                    className="flex items-center gap-3 py-2 cursor-pointer"
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={u.avatar_url} alt={u.full_name} />
+                      <AvatarFallback className="text-[10px]">{getInitials(u.full_name || u.email)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{u.full_name || u.email}</p>
+                      {u.position && <p className="text-xs text-muted-foreground truncate">{u.position}</p>}
+                    </div>
+                    {isCurrent && <Check className="h-4 w-4 text-emerald-500 shrink-0" />}
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
   teamMembers,
   setTeamMembers,
@@ -47,7 +120,6 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
   const { suggestedTeam, isLoading } = useAutoPopulateTeam(regionName, hubName, hubId);
   const { data: allUsers = [] } = useProfileUsers();
 
-  // Auto-populate on mount when suggestions arrive
   useEffect(() => {
     if (!hasAutoPopulated && suggestedTeam.length > 0 && !isLoading) {
       const manualRoles = new Set(teamMembers.filter((m) => !m.is_auto_populated).map((m) => m.role));
@@ -58,16 +130,6 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
       setHasAutoPopulated(true);
     }
   }, [suggestedTeam, hasAutoPopulated, isLoading, setTeamMembers, teamMembers]);
-
-  const userOptions = useMemo(
-    () =>
-      allUsers.map((u) => ({
-        value: u.user_id,
-        label: u.full_name || u.email || 'Unknown',
-        description: u.position || u.email,
-      })),
-    [allUsers]
-  );
 
   const handleAssign = (role: string, userId: string) => {
     const user = allUsers.find((u) => u.user_id === userId);
@@ -120,11 +182,12 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
           return (
             <div
               key={role}
-              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+              className={cn(
+                'group flex items-center gap-3 p-3 rounded-lg border transition-colors',
                 assigned
                   ? 'bg-emerald-50/40 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800'
                   : 'bg-muted/20 border-border/60'
-              }`}
+              )}
             >
               <div className="w-44 shrink-0">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -141,46 +204,58 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">
-                      {member.user_name}
-                    </p>
+                    <p className="text-sm font-semibold text-foreground truncate">{member.user_name}</p>
                     {member.position && (
                       <p className="text-xs text-muted-foreground truncate">{member.position}</p>
                     )}
                   </div>
                   <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                  <div className="w-44 shrink-0">
-                    <EnhancedCombobox
-                      options={userOptions}
-                      value={member.user_id}
-                      onValueChange={(v) => v && handleAssign(role, v)}
-                      placeholder="Change"
-                      emptyText="No users found"
-                      allowCreate={false}
-                      className="w-full h-8"
+
+                  <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                    <MemberPicker
+                      role={role}
+                      currentUserId={member.user_id}
+                      allUsers={allUsers}
+                      onSelect={(uid) => handleAssign(role, uid)}
+                      trigger={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                          title="Change member"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      }
                     />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleRemove(role)}
+                      title="Remove"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleRemove(role)}
-                    title="Remove"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
                 </>
               ) : (
                 <div className="flex-1">
-                  <EnhancedCombobox
-                    options={userOptions}
-                    value=""
-                    onValueChange={(v) => v && handleAssign(role, v)}
-                    placeholder="Select team member..."
-                    emptyText="No users found"
-                    allowCreate={false}
-                    className="w-full"
+                  <MemberPicker
+                    role={role}
+                    allUsers={allUsers}
+                    onSelect={(uid) => handleAssign(role, uid)}
+                    trigger={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-start text-muted-foreground font-normal"
+                      >
+                        Select team member...
+                      </Button>
+                    }
                   />
                 </div>
               )}
