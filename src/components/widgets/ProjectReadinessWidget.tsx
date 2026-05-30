@@ -31,8 +31,8 @@ interface ProjectReadinessWidgetProps {
 
 export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onViewDetails, onEdit }) => {
   const [teamExpanded, setTeamExpanded] = useState(false);
-  const [milestonesExpanded, setMilestonesExpanded] = useState(true);
-  const [documentsExpanded, setDocumentsExpanded] = useState(true);
+  const [milestonesExpanded, setMilestonesExpanded] = useState(false);
+  const [documentsExpanded, setDocumentsExpanded] = useState(false);
   const { projects } = useProjects();
   const { plants } = usePlants();
   const { stations } = useStations();
@@ -154,6 +154,60 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
   }, [projectId]);
 
   const loading = teamLoading || milestonesLoading;
+
+  const getDownloadFilename = (doc: any) => {
+    const baseName = doc.document_name || doc.file_path?.split('/').pop() || 'download';
+    const extension = (doc.file_extension || '').trim().toLowerCase();
+
+    if (!extension || baseName.toLowerCase().endsWith(`.${extension}`)) {
+      return baseName;
+    }
+
+    return `${baseName}.${extension}`;
+  };
+
+  const downloadDocument = async (doc: any) => {
+    try {
+      let blob: Blob | null = null;
+
+      if (doc.file_path) {
+        for (const bucket of ['project-attachments', 'project-documents']) {
+          const { data, error } = await supabase.storage.from(bucket).download(doc.file_path);
+          if (!error && data) {
+            blob = data;
+            break;
+          }
+        }
+      }
+
+      if (!blob && doc.file_path?.startsWith('http')) {
+        const response = await fetch(doc.file_path);
+        if (!response.ok) throw new Error('Download failed');
+        blob = await response.blob();
+      }
+
+      if (!blob) throw new Error('Download failed');
+
+      const blobUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = blobUrl;
+      anchor.download = getDownloadFilename(doc);
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const fallbackUrl = doc.file_path?.startsWith('http')
+        ? doc.file_path
+        : doc.file_path
+          ? supabase.storage.from('project-attachments').getPublicUrl(doc.file_path).data.publicUrl
+          : undefined;
+
+      if (fallbackUrl) {
+        window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+      }
+    }
+  };
 
 
   if (loading) {
@@ -410,19 +464,21 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                   : ['jpg','jpeg','png','gif','webp'].includes(ext) ? FileImage
                   : ['txt'].includes(ext) ? FileCode
                   : File;
-                const href = isLink
-                  ? doc.link_url
-                  : (doc.file_path
-                      ? supabase.storage.from('project-attachments').getPublicUrl(doc.file_path).data.publicUrl
-                      : undefined);
-                const Wrapper: any = href ? 'a' : 'div';
+                const href = isLink ? doc.link_url : doc.file_path;
+                const Wrapper: any = href ? 'button' : 'div';
                 const wrapperProps: any = href
                   ? {
-                      href,
-                      target: '_blank',
-                      rel: 'noopener noreferrer',
-                      ...(isLink ? {} : { download: doc.document_name || true }),
-                      onClick: (e: React.MouseEvent) => e.stopPropagation(),
+                      type: 'button',
+                      onClick: async (e: React.MouseEvent) => {
+                        e.stopPropagation();
+
+                        if (isLink) {
+                          window.open(href, '_blank', 'noopener,noreferrer');
+                          return;
+                        }
+
+                        await downloadDocument(doc);
+                      },
                     }
                   : {};
                 return (
@@ -430,13 +486,13 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
                     key={doc.id}
                     {...wrapperProps}
                     className={cn(
-                      "flex items-center gap-2 px-2 py-1.5 rounded-md border bg-muted/30 border-border/40 transition-all duration-200",
+                      "flex w-full items-center gap-2 px-2 py-1.5 rounded-md border bg-muted/30 border-border/40 text-left transition-all duration-200",
                       href && "hover:bg-muted/50 hover:border-primary/20 cursor-pointer"
                     )}
                   >
                     <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-medium truncate leading-tight">{doc.document_name}</p>
+                      <p className="text-xs font-medium truncate leading-tight">{doc.document_name}</p>
                     </div>
                   </Wrapper>
                 );
