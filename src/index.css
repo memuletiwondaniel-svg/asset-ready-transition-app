@@ -41,6 +41,34 @@
   display: none;
 }
 
+/* Modern thin scrollbar — subtle, appears on hover */
+.scrollbar-modern {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.2s ease;
+}
+.scrollbar-modern:hover {
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+.scrollbar-modern::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-modern::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-modern::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+.scrollbar-modern:hover::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+}
+.scrollbar-modern::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.4);
+}
+
 /* Line clamp utilities */
 .line-clamp-2 {
   overflow: hidden;
