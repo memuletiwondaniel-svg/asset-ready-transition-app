@@ -126,9 +126,16 @@ export const SidebarContent = memo<SidebarContentProps>(({
   const content = (
     <div className="flex flex-col h-full select-none [&_button]:hover:!scale-100 [&_button]:active:!scale-100 [&_button]:active:!rotate-0 [&_svg]:stroke-[1.75]">
       {/* Header */}
-      <div className={cn("border-b border-border/40 flex-shrink-0", isCollapsed ? "p-2" : "p-3 sm:p-4")}>
-        {!isCollapsed && (
-          <div className="flex items-center justify-center mb-4">
+      <div
+        className={cn(
+          "border-b border-border/40 flex-shrink-0",
+          isCollapsed ? "p-2 min-h-[96px]" : "p-3 sm:p-4 min-h-[96px]"
+        )}
+      >
+        {isCollapsed ? (
+          <div aria-hidden="true" className="h-[52px] mb-4" />
+        ) : (
+          <div className="flex items-center justify-center mb-4 h-[52px]">
             <OrshLogo size="medium" />
           </div>
         )}
@@ -139,11 +146,14 @@ export const SidebarContent = memo<SidebarContentProps>(({
       {/* Navigation */}
       <ScrollArea className="flex-1 px-2">
         <div className="py-4">
-          {!isCollapsed && (
-            <div className="mb-6">
-              <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-[0.08em] px-3 mb-2">
+          <div className="mb-6">
+            <div className={cn("px-3 mb-2", isCollapsed && "invisible")} aria-hidden={isCollapsed}>
+              <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-[0.08em]">
                 {t.navigation || 'Navigation'}
               </p>
+            </div>
+
+            {!isCollapsed ? (
               <div className="space-y-1">
                 {visibleNavItems.map((item) => {
                   const Icon = item.icon;
@@ -198,11 +208,8 @@ export const SidebarContent = memo<SidebarContentProps>(({
 
                 })}
               </div>
-            </div>
-          )}
-
-          {isCollapsed && (
-            <div className="space-y-1 mb-6">
+            ) : (
+              <div className="space-y-1">
               {visibleNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentPage === item.section;
@@ -242,19 +249,18 @@ export const SidebarContent = memo<SidebarContentProps>(({
                   </Tooltip>
                 );
               })}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
 
 
           <Separator className="mb-4" />
 
-          {!isCollapsed && (
-            <div className="mb-4">
-              <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-[0.08em] px-3 mb-2">
-                {t.settings || 'Settings'}
-              </p>
-            </div>
-          )}
+          <div className={cn("mb-4 px-3", isCollapsed && "invisible")} aria-hidden={isCollapsed}>
+            <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-[0.08em] mb-2">
+              {t.settings || 'Settings'}
+            </p>
+          </div>
 
           {/* Quick Actions */}
           <div className="space-y-2">
