@@ -299,12 +299,17 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
                             <TooltipProvider delayDuration={150}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <span className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAssign(role, partner!.user_id)}
+                                    className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 hover:bg-amber-200 dark:hover:bg-amber-900/60 cursor-pointer transition-colors"
+                                    title={`Switch to B2B: ${partner.full_name || partner.email}`}
+                                  >
                                     B2B
-                                  </span>
+                                  </button>
                                 </TooltipTrigger>
                                 <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
-                                  B2B: {partner.full_name || partner.email}
+                                  Click to switch to B2B: {partner.full_name || partner.email}
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>

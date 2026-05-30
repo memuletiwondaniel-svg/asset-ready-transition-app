@@ -383,10 +383,16 @@ export const CreateProjectWizard: React.FC<CreateProjectWizardProps> = ({
     [formData, teamMembers, idConflict]
   );
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const nextStep = Math.min(currentStep + 1, STEPS.length);
     setVisitedSteps(prev => new Set([...prev, nextStep]));
     setCurrentStep(nextStep);
+    // Autosave draft on every Next so progress is not lost on session expiry
+    try {
+      await saveDraft(draftPayload);
+    } catch (e) {
+      console.warn('[CreateProjectWizard] autosave on Next failed', e);
+    }
   };
 
 
