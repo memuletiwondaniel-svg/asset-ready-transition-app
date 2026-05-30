@@ -6,6 +6,8 @@
  * on the next load. Auth tokens are preserved so users stay signed in.
  */
 
+import { shouldSkipSelfReload } from "./runtime-env";
+
 export const APP_RESET_ID = "2026-05-29-projects-table-hard-reset-v8";
 export const RESET_KEY = "__orsh_reset_id";
 export const SESSION_EPOCH_KEY = "__orsh_session_epoch";
