@@ -302,7 +302,7 @@ const WizardStepProjectInfo: React.FC<WizardStepProjectInfoProps> = ({
             />
           </div>
         </div>
-        <PlantAssignmentPreview plantName={plantName} />
+        
       </div>
 
     </div>
