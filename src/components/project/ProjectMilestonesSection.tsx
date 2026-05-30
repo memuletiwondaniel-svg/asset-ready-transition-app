@@ -133,7 +133,7 @@ const MilestoneItem: React.FC<MilestoneItemProps> = ({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-[minmax(0,0.8fr)_auto_7rem_minmax(0,0.2fr)_auto] items-center gap-3">
+        <div className="grid grid-cols-[minmax(0,0.75fr)_auto_7rem_minmax(0,0.25fr)_auto] items-center gap-3">
           <span className="text-xs font-medium text-foreground truncate">
             {milestone.milestone_name}
           </span>
