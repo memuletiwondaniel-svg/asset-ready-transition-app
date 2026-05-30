@@ -488,7 +488,7 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
               className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
             >
               <Plus className="h-4 w-4" />
-              Add milestone
+              Add Milestone
             </Button>
           </DialogFooter>
         </DialogContent>
