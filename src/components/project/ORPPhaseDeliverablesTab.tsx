@@ -297,7 +297,7 @@ export const ORPPhaseDeliverablesTab = () => {
           </TooltipProvider>
           <Button onClick={() => openAdd()} className="gap-1.5">
             <Plus className="h-4 w-4" />
-            Add Deliverables
+            Add Activity
           </Button>
         </div>
       </div>
