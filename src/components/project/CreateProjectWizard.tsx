@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useProjectRegions } from '@/hooks/useProjectRegions';
 import { useHubs } from '@/hooks/useHubs';
 import { useStations } from '@/hooks/useStations';
+import { usePlants } from '@/hooks/usePlants';
 import { useProjectLocations } from '@/hooks/useProjectLocations';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import { useProjectIdAvailability } from '@/hooks/useProjectIdAvailability';
