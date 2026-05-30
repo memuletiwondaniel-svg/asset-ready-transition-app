@@ -333,72 +333,64 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
   };
 
 
+  const isEmpty = milestones.length === 0;
+
   return (
     <div className="space-y-3">
-      {/* Header row: count + Add button */}
+      {/* Header row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium text-foreground">Milestones</span>
-          <Badge variant="secondary" className="h-5 min-w-5 rounded-full px-1.5 text-[11px] font-medium bg-muted text-muted-foreground">
-            {milestones.length}
-          </Badge>
         </div>
         <Button
           type="button"
           size="sm"
           variant="outline"
           onClick={() => setIsAddOpen(true)}
-          className="gap-1.5"
+          className={cn(
+            "gap-1.5 transition-all duration-200 hover:bg-primary hover:text-primary-foreground hover:border-primary hover:shadow-md hover:-translate-y-0.5",
+            isEmpty && "animate-pulse border-primary/60 text-primary"
+          )}
         >
           <Plus className="h-3.5 w-3.5" />
-          Add milestone
+          Add Milestone
         </Button>
       </div>
 
       {/* Milestones List or Empty State */}
-      {milestones.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-8 text-center">
-          <Calendar className="mx-auto h-6 w-6 text-muted-foreground/60 mb-2" />
-          <p className="text-sm text-muted-foreground">No milestones yet</p>
-          <p className="text-xs text-muted-foreground/70 mt-1">Click "Add milestone" to define your first one.</p>
-        </div>
+      {isEmpty ? (
+        <button
+          type="button"
+          onClick={() => setIsAddOpen(true)}
+          className="w-full rounded-lg border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary transition-colors px-4 py-8 text-center group"
+        >
+          <Calendar className="mx-auto h-6 w-6 text-primary/60 group-hover:text-primary mb-2 transition-colors" />
+          <p className="text-sm font-medium text-foreground">No milestones yet</p>
+          <p className="text-xs text-muted-foreground mt-1">Click <span className="font-medium text-primary">Add Milestone</span> to define your first one.</p>
+        </button>
       ) : (
         <div className="space-y-2 rounded-lg border border-border/60 bg-card p-3">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={milestones.map(m => m.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-2">
-                {milestones.map((milestone) => (
-                  <SortableMilestoneItem
-                    key={milestone.id}
-                    milestone={milestone}
-                    editingId={editingId}
-                    editingMilestone={editingMilestone}
-                    milestoneOptions={milestoneOptions}
-                    isLoading={isLoading}
-                    isCreating={isCreating}
-                    onStartEditing={startEditing}
-                    onSaveEditing={saveEditing}
-                    onCancelEditing={cancelEditing}
-                    onRemove={removeMilestone}
-                    onStatusChange={handleStatusChange}
-                    onEditMilestoneTypeSelect={handleEditMilestoneTypeSelect}
-                    onEditDescriptionChange={(value) => setEditingMilestone(prev => prev ? ({ ...prev, milestone_description: value }) : null)}
-                    onEditDateChange={(date) => setEditingMilestone(prev => prev ? ({ ...prev, milestone_date: date }) : null)}
-                    onEditScorecardChange={(checked) => setEditingMilestone(prev => prev ? ({ ...prev, is_scorecard_project: checked }) : null)}
-                    onCreateNewMilestoneTypeForEdit={handleCreateNewMilestoneTypeForEdit}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+          {sortedMilestones.map((milestone) => (
+            <MilestoneItem
+              key={milestone.id}
+              milestone={milestone}
+              editingId={editingId}
+              editingMilestone={editingMilestone}
+              milestoneOptions={milestoneOptions}
+              isLoading={isLoading}
+              isCreating={isCreating}
+              onStartEditing={startEditing}
+              onSaveEditing={saveEditing}
+              onCancelEditing={cancelEditing}
+              onRemove={removeMilestone}
+              onEditMilestoneTypeSelect={handleEditMilestoneTypeSelect}
+              onEditDescriptionChange={(value) => setEditingMilestone(prev => prev ? ({ ...prev, milestone_description: value }) : null)}
+              onEditDateChange={(date) => setEditingMilestone(prev => prev ? ({ ...prev, milestone_date: date }) : null)}
+              onEditScorecardChange={(checked) => setEditingMilestone(prev => prev ? ({ ...prev, is_scorecard_project: checked }) : null)}
+              onCreateNewMilestoneTypeForEdit={handleCreateNewMilestoneTypeForEdit}
+            />
+          ))}
         </div>
       )}
 
