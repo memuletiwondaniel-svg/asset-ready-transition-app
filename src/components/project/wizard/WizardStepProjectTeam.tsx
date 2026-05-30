@@ -178,10 +178,22 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
     <div className="space-y-5">
       <div>
         <h3 className="text-lg font-medium mb-1">Project Team</h3>
-        <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-          Key roles are auto-resolved from your Portfolio and Hub. Edit any assignment as needed.
-        </p>
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-help"
+              >
+                <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
+                <span className="underline decoration-dotted underline-offset-2">How are these populated?</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-xs">
+              Roles below are auto-populated based on the portfolio and hub. Edit any assignment as needed.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {contextMissing && (
