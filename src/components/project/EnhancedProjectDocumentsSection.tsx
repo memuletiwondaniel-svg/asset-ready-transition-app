@@ -1,26 +1,27 @@
 import React, { useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { 
-  FileText, 
-  Plus, 
-  X, 
-  Upload, 
-  Link, 
-  File, 
-  FileImage, 
+import {
+  FileText,
+  Plus,
+  X,
+  Upload,
+  Link,
+  File,
+  FileImage,
   FileSpreadsheet,
   Presentation,
   FileCode,
   Folder,
   CloudUpload,
-  Paperclip
+  Paperclip,
+  Trash2,
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 interface ProjectDocumentsSectionProps {
   documents: any[];
@@ -157,27 +158,28 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
     setIsDragOver(false);
   }, []);
 
+  const isEmpty = documents.length === 0;
+
   return (
-    <Card className="border-border/60 shadow-sm">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center text-lg gap-2 text-foreground">
-          <FileText className="h-5 w-5 text-primary" />
-          Supporting Documents
-          <Badge variant="secondary" className="ml-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium bg-primary/10 text-primary">
-            {documents.length}
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Add Document Button */}
+    <div className="space-y-3">
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FileText className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Supporting Documents</span>
+        </div>
         <Dialog open={isAddDocumentOpen} onOpenChange={setIsAddDocumentOpen}>
           <DialogTrigger asChild>
-            <Button 
+            <Button
               type="button"
+              size="sm"
               variant="outline"
-              className="w-full border-dashed border-2 border-border hover:border-primary/50 hover:bg-primary/5 h-12 transition-colors"
+              className={cn(
+                "gap-1.5 transition-all duration-200 hover:bg-primary hover:text-primary-foreground hover:border-primary hover:shadow-md hover:-translate-y-0.5",
+                isEmpty && "animate-pulse border-primary/60 text-primary"
+              )}
             >
-              <Plus className="h-5 w-5 mr-2" />
+              <Plus className="h-3.5 w-3.5" />
               Add Document
             </Button>
           </DialogTrigger>
@@ -329,46 +331,53 @@ export const EnhancedProjectDocumentsSection: React.FC<ProjectDocumentsSectionPr
             </div>
           </DialogContent>
         </Dialog>
+      </div>
 
-        {/* Documents List */}
-        {documents.length > 0 && (
-          <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/40">
-            <h4 className="text-sm font-semibold text-foreground border-b border-border/40 pb-2">Uploaded Documents</h4>
-            <div className="space-y-2">
-              {documents.map((doc) => (
-                <div 
-                  key={doc.id}
-                  className="flex items-center justify-between p-4 bg-background rounded-lg border border-border/60 hover:border-border transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    {doc.document_type === 'file' 
-                      ? getFileIcon(doc.file_extension) 
-                      : getLinkIcon(doc.link_type)
-                    }
-                    <div className="flex flex-col">
-                      <span className="font-medium text-foreground">{doc.document_name}</span>
-                      {doc.file_extension && (
-                        <span className="text-xs text-muted-foreground uppercase">
-                          {doc.file_extension} file
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeDocument(doc.id)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+      {/* Documents List */}
+      {documents.length === 0 ? (
+        <button
+          type="button"
+          onClick={() => setIsAddDocumentOpen(true)}
+          className="w-full rounded-lg border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary transition-colors px-4 py-8 text-center group"
+        >
+          <FileText className="mx-auto h-6 w-6 text-primary/60 group-hover:text-primary mb-2 transition-colors" />
+          <p className="text-sm font-medium text-foreground">No documents yet</p>
+          <p className="text-xs text-muted-foreground mt-1">Click <span className="font-medium text-primary">Add Document</span> to attach a file or link.</p>
+        </button>
+      ) : (
+        <div className="space-y-2 rounded-lg border border-border/60 bg-card p-3">
+          {documents.map((doc) => (
+            <div
+              key={doc.id}
+              className="group flex items-center justify-between gap-3 p-3 bg-muted/40 hover:bg-muted/60 rounded-lg border border-transparent hover:border-border/60 transition-colors"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                {doc.document_type === 'file'
+                  ? getFileIcon(doc.file_extension)
+                  : getLinkIcon(doc.link_type)
+                }
+                <div className="flex flex-col min-w-0">
+                  <span className="font-medium text-foreground truncate">{doc.document_name}</span>
+                  {doc.file_extension && (
+                    <span className="text-xs text-muted-foreground uppercase">
+                      {doc.file_extension} file
+                    </span>
+                  )}
                 </div>
-              ))}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeDocument(doc.id)}
+                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 transition-opacity"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };

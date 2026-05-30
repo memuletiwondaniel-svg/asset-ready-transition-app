@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, Plus, X, CalendarDays, Pencil, Check, GripVertical } from 'lucide-react';
+import { Calendar, Plus, X, CalendarDays, Pencil, Check, Trash2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -14,30 +12,13 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useProjectMilestoneTypes } from '@/hooks/useProjectMilestoneTypes';
 import { EnhancedSearchableCombobox } from '@/components/ui/enhanced-searchable-combobox';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 interface ProjectMilestonesSectionProps {
   milestones: any[];
   setMilestones: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
-interface SortableMilestoneItemProps {
+interface MilestoneItemProps {
   milestone: any;
   editingId: string | null;
   editingMilestone: any;
@@ -48,7 +29,6 @@ interface SortableMilestoneItemProps {
   onSaveEditing: () => void;
   onCancelEditing: () => void;
   onRemove: (id: string) => void;
-  onStatusChange: (id: string, checked: boolean) => void;
   onEditMilestoneTypeSelect: (typeId: string) => void;
   onEditDescriptionChange: (value: string) => void;
   onEditDateChange: (date: Date | undefined) => void;
@@ -56,7 +36,7 @@ interface SortableMilestoneItemProps {
   onCreateNewMilestoneTypeForEdit: (name: string) => void;
 }
 
-const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
+const MilestoneItem: React.FC<MilestoneItemProps> = ({
   milestone,
   editingId,
   editingMilestone,
@@ -67,40 +47,17 @@ const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
   onSaveEditing,
   onCancelEditing,
   onRemove,
-  onStatusChange,
   onEditMilestoneTypeSelect,
   onEditDescriptionChange,
   onEditDateChange,
   onEditScorecardChange,
   onCreateNewMilestoneTypeForEdit,
 }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: milestone.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
   const isEditing = editingId === milestone.id;
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "p-3 bg-muted/50 rounded-lg",
-        isDragging && "opacity-50 shadow-lg ring-2 ring-primary/20"
-      )}
-    >
+    <div className="group p-3 bg-muted/40 hover:bg-muted/60 rounded-lg border border-transparent hover:border-border/60 transition-colors">
       {isEditing && editingMilestone ? (
-        // Editing mode
         <div className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
             <div className="space-y-2">
@@ -116,7 +73,6 @@ const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
                 disabled={isLoading || isCreating}
               />
             </div>
-
             <div className="space-y-2">
               <Label className="text-xs">Description</Label>
               <Textarea
@@ -127,7 +83,6 @@ const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
                 rows={1}
               />
             </div>
-
             <div className="space-y-2">
               <Label className="text-xs">Date</Label>
               <Popover>
@@ -158,7 +113,6 @@ const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
                 </PopoverContent>
               </Popover>
             </div>
-
             <div className="flex items-center gap-2">
               <div className="flex items-center space-x-2">
                 <Switch
@@ -168,20 +122,10 @@ const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
                 <span className="text-xs text-muted-foreground">Scorecard</span>
               </div>
               <div className="flex gap-1 ml-auto">
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={onSaveEditing}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                >
+                <Button type="button" size="sm" onClick={onSaveEditing} className="bg-green-600 hover:bg-green-700 text-white">
                   <Check className="h-4 w-4" />
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={onCancelEditing}
-                >
+                <Button type="button" size="sm" variant="outline" onClick={onCancelEditing}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -189,54 +133,32 @@ const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
           </div>
         </div>
       ) : (
-        // View mode
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3 flex-1">
-            <button
-              {...attributes}
-              {...listeners}
-              className="mt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
-            >
-              <GripVertical className="h-4 w-4" />
-            </button>
-            <Checkbox 
-              checked={milestone.status === 'completed'}
-              onCheckedChange={(checked) => onStatusChange(milestone.id, !!checked)}
-              className="mt-1"
-            />
-            <div className="flex-1 min-w-0">
-              <span className={cn(
-                "font-medium block",
-                milestone.status === 'completed' ? 'line-through text-muted-foreground' : 'text-foreground'
-              )}>
-                {milestone.milestone_name}
-              </span>
-              {milestone.milestone_description && (
-                <span className="text-sm text-muted-foreground block mt-1">
-                  {milestone.milestone_description}
-                </span>
-              )}
-            </div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <span className="font-medium text-foreground truncate">
+              {milestone.milestone_name}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
             <span className="text-sm text-muted-foreground whitespace-nowrap">
               {format(new Date(milestone.milestone_date), "do MMMM yyyy")}
             </span>
             {milestone.is_scorecard_project && (
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 border-yellow-400 text-xs font-semibold shadow-sm whitespace-nowrap"
               >
-                ✨ Scorecard
+                Scorecard
               </Badge>
             )}
-          </div>
-          <div className="flex gap-1 ml-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onStartEditing(milestone)}
-              className="text-muted-foreground hover:text-foreground hover:bg-accent/50"
-            >
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => onStartEditing(milestone)}
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              >
               <Pencil className="h-4 w-4" />
             </Button>
             <Button
@@ -244,12 +166,13 @@ const SortableMilestoneItem: React.FC<SortableMilestoneItemProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => onRemove(milestone.id)}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
             >
-              <X className="h-4 w-4" />
+              <Trash2 className="h-4 w-4" />
             </Button>
+            </div>
           </div>
-        </div>
+          </div>
       )}
     </div>
   );
@@ -281,15 +204,11 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
     is_scorecard_project: boolean;
   } | null>(null);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+  const sortedMilestones = useMemo(
+    () => [...milestones].sort((a, b) =>
+      new Date(a.milestone_date).getTime() - new Date(b.milestone_date).getTime()
+    ),
+    [milestones]
   );
 
   const milestoneOptions = milestoneTypes.map(type => ({
@@ -413,84 +332,65 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
     ));
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
 
-    if (over && active.id !== over.id) {
-      setMilestones((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
+  const isEmpty = milestones.length === 0;
 
   return (
     <div className="space-y-3">
-      {/* Header row: count + Add button */}
+      {/* Header row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium text-foreground">Milestones</span>
-          <Badge variant="secondary" className="h-5 min-w-5 rounded-full px-1.5 text-[11px] font-medium bg-muted text-muted-foreground">
-            {milestones.length}
-          </Badge>
         </div>
         <Button
           type="button"
           size="sm"
           variant="outline"
           onClick={() => setIsAddOpen(true)}
-          className="gap-1.5"
+          className={cn(
+            "gap-1.5 transition-all duration-200 hover:bg-primary hover:text-primary-foreground hover:border-primary hover:shadow-md hover:-translate-y-0.5",
+            isEmpty && "animate-pulse border-primary/60 text-primary"
+          )}
         >
           <Plus className="h-3.5 w-3.5" />
-          Add milestone
+          Add Milestone
         </Button>
       </div>
 
       {/* Milestones List or Empty State */}
-      {milestones.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-8 text-center">
-          <Calendar className="mx-auto h-6 w-6 text-muted-foreground/60 mb-2" />
-          <p className="text-sm text-muted-foreground">No milestones yet</p>
-          <p className="text-xs text-muted-foreground/70 mt-1">Click "Add milestone" to define your first one.</p>
-        </div>
+      {isEmpty ? (
+        <button
+          type="button"
+          onClick={() => setIsAddOpen(true)}
+          className="w-full rounded-lg border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary transition-colors px-4 py-8 text-center group"
+        >
+          <Calendar className="mx-auto h-6 w-6 text-primary/60 group-hover:text-primary mb-2 transition-colors" />
+          <p className="text-sm font-medium text-foreground">No milestones yet</p>
+          <p className="text-xs text-muted-foreground mt-1">Click <span className="font-medium text-primary">Add Milestone</span> to define your first one.</p>
+        </button>
       ) : (
         <div className="space-y-2 rounded-lg border border-border/60 bg-card p-3">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={milestones.map(m => m.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-2">
-                {milestones.map((milestone) => (
-                  <SortableMilestoneItem
-                    key={milestone.id}
-                    milestone={milestone}
-                    editingId={editingId}
-                    editingMilestone={editingMilestone}
-                    milestoneOptions={milestoneOptions}
-                    isLoading={isLoading}
-                    isCreating={isCreating}
-                    onStartEditing={startEditing}
-                    onSaveEditing={saveEditing}
-                    onCancelEditing={cancelEditing}
-                    onRemove={removeMilestone}
-                    onStatusChange={handleStatusChange}
-                    onEditMilestoneTypeSelect={handleEditMilestoneTypeSelect}
-                    onEditDescriptionChange={(value) => setEditingMilestone(prev => prev ? ({ ...prev, milestone_description: value }) : null)}
-                    onEditDateChange={(date) => setEditingMilestone(prev => prev ? ({ ...prev, milestone_date: date }) : null)}
-                    onEditScorecardChange={(checked) => setEditingMilestone(prev => prev ? ({ ...prev, is_scorecard_project: checked }) : null)}
-                    onCreateNewMilestoneTypeForEdit={handleCreateNewMilestoneTypeForEdit}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+          {sortedMilestones.map((milestone) => (
+            <MilestoneItem
+              key={milestone.id}
+              milestone={milestone}
+              editingId={editingId}
+              editingMilestone={editingMilestone}
+              milestoneOptions={milestoneOptions}
+              isLoading={isLoading}
+              isCreating={isCreating}
+              onStartEditing={startEditing}
+              onSaveEditing={saveEditing}
+              onCancelEditing={cancelEditing}
+              onRemove={removeMilestone}
+              onEditMilestoneTypeSelect={handleEditMilestoneTypeSelect}
+              onEditDescriptionChange={(value) => setEditingMilestone(prev => prev ? ({ ...prev, milestone_description: value }) : null)}
+              onEditDateChange={(date) => setEditingMilestone(prev => prev ? ({ ...prev, milestone_date: date }) : null)}
+              onEditScorecardChange={(checked) => setEditingMilestone(prev => prev ? ({ ...prev, is_scorecard_project: checked }) : null)}
+              onCreateNewMilestoneTypeForEdit={handleCreateNewMilestoneTypeForEdit}
+            />
+          ))}
         </div>
       )}
 
@@ -500,7 +400,7 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <Calendar className="h-4 w-4 text-primary" />
-              Add milestone
+              Add Milestone
             </DialogTitle>
           </DialogHeader>
 
@@ -588,7 +488,7 @@ export const ProjectMilestonesSection: React.FC<ProjectMilestonesSectionProps> =
               className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
             >
               <Plus className="h-4 w-4" />
-              Add milestone
+              Add Milestone
             </Button>
           </DialogFooter>
         </DialogContent>
