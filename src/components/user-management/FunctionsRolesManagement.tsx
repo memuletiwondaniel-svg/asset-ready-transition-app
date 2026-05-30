@@ -113,6 +113,7 @@ const FunctionsRolesManagement: React.FC = () => {
   const [roleName, setRoleName] = useState('');
   const [roleDescription, setRoleDescription] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [roleIsB2b, setRoleIsB2b] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
 
   const toggleCategory = (categoryId: string) => {
