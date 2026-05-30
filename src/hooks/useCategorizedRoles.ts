@@ -98,7 +98,7 @@ export const useCategorizedRoles = () => {
 };
 
 export const useAddRole = () => {
-  const addRole = async (name: string, description: string, categoryId: string) => {
+  const addRole = async (name: string, description: string, categoryId: string, isB2b: boolean = false) => {
     // Check if a soft-deleted role with this name exists — reactivate it
     const { data: existing } = await supabase
       .from('roles')
@@ -109,7 +109,7 @@ export const useAddRole = () => {
     if (existing && !existing.is_active) {
       const { data, error } = await supabase
         .from('roles')
-        .update({ is_active: true, description, category_id: categoryId })
+        .update({ is_active: true, description, category_id: categoryId, is_b2b: isB2b } as any)
         .eq('id', existing.id)
         .select()
         .single();
@@ -123,7 +123,7 @@ export const useAddRole = () => {
 
     const { data, error } = await supabase
       .from('roles')
-      .insert({ name, description, category_id: categoryId, is_active: true })
+      .insert({ name, description, category_id: categoryId, is_active: true, is_b2b: isB2b } as any)
       .select()
       .single();
 
