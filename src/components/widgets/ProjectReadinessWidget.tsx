@@ -31,6 +31,8 @@ interface ProjectReadinessWidgetProps {
 
 export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ projectId, onViewDetails, onEdit }) => {
   const [teamExpanded, setTeamExpanded] = useState(false);
+  const [milestonesExpanded, setMilestonesExpanded] = useState(true);
+  const [documentsExpanded, setDocumentsExpanded] = useState(true);
   const { projects } = useProjects();
   const { plants } = usePlants();
   const { stations } = useStations();
