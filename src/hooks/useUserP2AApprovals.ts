@@ -20,11 +20,13 @@ export interface UserP2AApproval {
 
 export const useUserP2AApprovals = () => {
   const { user } = useAuth();
+  const { effectiveUserIds } = useB2BPartner();
 
   const query = useQuery({
-    queryKey: ['user-p2a-approvals', user?.id],
+    queryKey: ['user-p2a-approvals', user?.id, effectiveUserIds.join(',')],
     queryFn: async () => {
       if (!user?.id) return [];
+      const ids = effectiveUserIds.length ? effectiveUserIds : [user.id];
 
       const { data, error } = await supabase
         .from('p2a_approval_workflow')
@@ -38,7 +40,7 @@ export const useUserP2AApprovals = () => {
             fac_target_date
           )
         `)
-        .eq('approver_user_id', user.id)
+        .in('approver_user_id', ids)
         .eq('status', 'PENDING')
         .order('created_at', { ascending: false });
 
