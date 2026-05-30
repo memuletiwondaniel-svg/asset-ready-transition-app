@@ -362,12 +362,12 @@ export const ProjectReadinessWidget: React.FC<ProjectReadinessWidgetProps> = ({ 
             {onEdit && (
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 px-2 text-xs gap-1.5"
+                className="h-8 w-8 text-muted-foreground/50 hover:text-primary hover:bg-primary/10 transition-all duration-200 hover:scale-110"
                 title="Edit project"
               >
-                <Edit className="h-3.5 w-3.5" /> Edit
+                <Edit className="h-4 w-4" />
               </Button>
             )}
           </div>
