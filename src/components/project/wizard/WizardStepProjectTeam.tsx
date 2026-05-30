@@ -60,15 +60,24 @@ const MemberPicker: React.FC<MemberPickerProps> = ({ role, currentUserId, allUse
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
+  const eligible = useMemo(() => {
+    const patterns = ROLE_ELIGIBILITY[role];
+    if (!patterns || !allUsers) return allUsers ?? [];
+    return allUsers.filter((u) => {
+      const hay = `${u.position || ''} ${u.role || ''}`.toLowerCase();
+      return patterns.some((p) => hay.includes(p));
+    });
+  }, [allUsers, role]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return allUsers;
-    return allUsers.filter((u) =>
+    if (!q) return eligible;
+    return eligible.filter((u) =>
       [u.full_name, u.email, u.position].filter(Boolean).some((v) => v!.toLowerCase().includes(q))
     );
-  }, [allUsers, search]);
+  }, [eligible, search]);
 
-  const showSearch = allUsers.length > 6;
+  const showSearch = eligible.length > 6;
 
   return (
     <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setSearch(''); }}>
