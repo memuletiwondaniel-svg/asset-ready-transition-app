@@ -44,24 +44,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
     const createRipple = useRipple()
-    const [isPressed, setIsPressed] = React.useState(false)
-    
+
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       createRipple(e)
-      
-      // Micro-interaction: brief press animation
-      setIsPressed(true)
-      setTimeout(() => setIsPressed(false), 150)
-      
       props.onClick?.(e)
     }
-    
+
     return (
       <Comp
         className={cn(
-          buttonVariants({ variant, size, className }), 
-          "relative overflow-hidden",
-          isPressed && "animate-micro-press"
+          buttonVariants({ variant, size, className }),
+          "relative overflow-hidden"
         )}
         ref={ref}
         {...props}
