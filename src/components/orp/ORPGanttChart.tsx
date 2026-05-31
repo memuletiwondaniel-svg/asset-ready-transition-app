@@ -458,7 +458,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         console.log('[P2A Reconcile] Orphaned cascade artifacts cleaned up');
 
         // Refresh
-        queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
+        queryClient.invalidateQueries({ queryKey: ['orp-plan', planId] });
         queryClient.invalidateQueries({ queryKey: ['ora-plan-activities'] });
         queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
         queryClient.invalidateQueries({ queryKey: ['ori-scores'] });
@@ -681,7 +681,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       insertedIds.forEach(id => next.add(id));
       return next;
     });
-    queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
+    queryClient.invalidateQueries({ queryKey: ['orp-plan', planId] });
     setShowCatalogDialog(false);
     toast({ title: `${newActivities.length} activit${newActivities.length > 1 ? 'ies' : 'y'} added` });
   }, [planId, queryClient, toast]);
@@ -740,7 +740,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       await client.from('orp_plans').update({ wizard_state: { ...plan.wizard_state, activities: updatedActivities } }).eq('id', planId);
     }
 
-    await queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
+    await queryClient.invalidateQueries({ queryKey: ['orp-plan', planId] });
     toast({ title: 'Custom activity added' });
 
     // Open the activity sheet for editing
