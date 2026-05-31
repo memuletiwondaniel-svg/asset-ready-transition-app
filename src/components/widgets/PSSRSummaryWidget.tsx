@@ -235,7 +235,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 ))}
               </div>
             ) : showVCRList ? (
-              <div className="space-y-2 overflow-y-auto overscroll-contain pr-1 flex-1 min-h-0">
+              <div className="space-y-2 overflow-y-auto overscroll-contain pr-1 flex-1 min-h-0 scrollbar-modern">
                 {allVCRs.map((vcr) => (
                   <VCRCard
                     key={vcr.id}
