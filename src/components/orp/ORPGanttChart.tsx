@@ -49,7 +49,7 @@ const ROW_HEIGHT = 40;
 
 const COL_WIDTHS = {
   index: 36,
-  id: 90,
+  id: 60,
   name: 260,
   start: 72,
   end: 72,
