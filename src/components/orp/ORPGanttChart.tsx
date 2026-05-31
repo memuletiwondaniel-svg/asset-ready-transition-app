@@ -795,6 +795,36 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     }
   }, [planId, queryClient, toast, deliverables]);
 
+  const confirmDeleteActivity = useCallback(async () => {
+    if (!deleteTarget) return;
+    const dbId = String(deleteTarget.id || '').replace(/^(ora-|ws-)/, '');
+    try {
+      const client = supabase as any;
+      await client.from('ora_plan_activities').delete().eq('id', dbId);
+
+      const { data: planRow } = await client.from('orp_plans').select('wizard_state').eq('id', planId).single();
+      if (planRow?.wizard_state) {
+        const ws = planRow.wizard_state as any;
+        const wsActivities: any[] = ws.activities || [];
+        const updated = wsActivities.filter((a: any) => String(a.id || '') !== dbId);
+        await client.from('orp_plans').update({ wizard_state: { ...ws, activities: updated } }).eq('id', planId);
+      }
+
+      // Remove linked tasks
+      await client.from('user_tasks').delete().filter('metadata->>ora_plan_activity_id', 'eq', dbId);
+
+      queryClient.invalidateQueries({ queryKey: ['orp-plan', planId] });
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      toast({ title: 'Activity deleted', description: deleteTarget.name });
+    } catch (e) {
+      console.error(e);
+      toast({ title: 'Failed to delete activity', variant: 'destructive' as any });
+    } finally {
+      setDeleteTarget(null);
+    }
+  }, [deleteTarget, planId, queryClient, toast]);
+
+
   const toggleColumn = (key: ColumnKey) => {
     setVisibleColumns(prev => {
       const next = new Set(prev);
