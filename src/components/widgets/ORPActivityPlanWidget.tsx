@@ -247,9 +247,6 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
               <span className="truncate">ORA Activities</span>
             </button>
             {statusConfig && (
-              <span className="shrink-0 inline-block w-0" aria-hidden />
-            )}
-            {statusConfig && (
               <button
                 type="button"
                 onPointerDown={(e) => e.stopPropagation()}
