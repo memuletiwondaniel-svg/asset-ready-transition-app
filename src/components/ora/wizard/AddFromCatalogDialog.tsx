@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Check, X, BookOpen, PenLine, Calendar as CalendarIcon, ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
+import { Search, Check, X, BookOpen, PenLine, Calendar as CalendarIcon, ArrowLeft, ArrowRight, Lightbulb, Trash2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { WizardActivity, catalogToWizardActivity } from './types';
 import { useORAActivityCatalog, useORPPhases } from '@/hooks/useORAActivityCatalog';
@@ -36,13 +37,14 @@ const LETTER_COLOR: Record<string, string> = {
   S: 'text-purple-600 bg-purple-50 dark:bg-purple-950/30',
   D: 'text-teal-600 bg-teal-50 dark:bg-teal-950/30',
   E: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30',
+  C: 'text-rose-600 bg-rose-50 dark:bg-rose-950/30',
 };
 
 const LETTER_TO_PHASE_LABEL: Record<string, string> = {
   A: 'Assess', S: 'Select', D: 'Define', E: 'Execute', I: 'Identify', O: 'Operate',
 };
 
-const PREFIX_TO_LETTER: Record<string, string> = { IDN: 'I', ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', OPR: 'O' };
+const PREFIX_TO_LETTER: Record<string, string> = { IDN: 'I', ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', OPR: 'O', CUSTOM: 'C' };
 function getLetter(code: string): string {
   const prefix = code.split(/[.\-]/)[0].toUpperCase();
   return PREFIX_TO_LETTER[prefix] || prefix.charAt(0);
@@ -348,15 +350,23 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                 </ScrollArea>
               </div>
             ) : (
-              <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-3 space-y-4">
-                <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 px-4 py-3 flex items-start gap-2">
-                  <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                  <p className="text-xs text-muted-foreground">
-                    Define an activity that isn't in the catalogue. It will be added to your selection and you can schedule it in the next step.
-                  </p>
-                </div>
+              <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-3 space-y-3">
                 <div>
-                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Activity Name *</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Activity Name *</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
+                            <Lightbulb className="w-3.5 h-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="text-xs max-w-[260px]">
+                          Define an activity that isn't in the catalogue — schedule it in the next step.
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Input
                     value={customName}
                     onChange={(e) => setCustomName(e.target.value)}
@@ -370,7 +380,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                     value={customDesc}
                     onChange={(e) => setCustomDesc(e.target.value)}
                     placeholder="Briefly describe the scope and objectives..."
-                    rows={4}
+                    rows={3}
                     className="mt-1.5 resize-none"
                   />
                 </div>
@@ -406,22 +416,29 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-                  {selectedList.map(a => (
-                    <span
-                      key={a.id}
-                      className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-full bg-background border text-xs"
-                    >
-                      <span className="font-mono text-[10px] text-muted-foreground">{formatActivityCode(a.activityCode)}</span>
-                      <span className="max-w-[180px] truncate">{a.activity}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeFromSelection(a.id)}
-                        className="hover:bg-muted rounded-full p-0.5"
+                  {selectedList.map(a => {
+                    const letter = getLetter(a.activityCode);
+                    const codeColor = LETTER_COLOR[letter] || 'text-muted-foreground bg-muted';
+                    return (
+                      <span
+                        key={a.id}
+                        className="group/chip inline-flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full bg-background border text-xs hover:border-foreground/30 transition-colors"
                       >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
+                        <span className={cn('font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded', codeColor)}>
+                          {formatActivityCode(a.activityCode)}
+                        </span>
+                        <span className="max-w-[180px] truncate">{a.activity}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeFromSelection(a.id)}
+                          className="opacity-0 group-hover/chip:opacity-100 text-destructive hover:bg-destructive/10 rounded-full p-0.5 transition-all"
+                          aria-label="Remove"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -431,7 +448,10 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
             <ScrollArea className="flex-1 min-h-0">
               <div className="px-6 py-4 space-y-2">
                 {selectedList.map(a => (
-                  <div key={a.id} className="rounded-lg border bg-background p-3">
+                  <div
+                    key={a.id}
+                    className="group/card rounded-lg border bg-background p-3 transition-all hover:border-primary/40 hover:shadow-sm hover:bg-muted/20"
+                  >
                     <div className="flex items-center gap-2 mb-2.5">
                       <span className={cn(
                         'text-[10px] font-mono font-semibold tabular-nums px-2 py-0.5 rounded',
@@ -440,9 +460,17 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                         {formatActivityCode(a.activityCode)}
                       </span>
                       <span className="text-sm font-medium flex-1 min-w-0 truncate">{a.activity}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeFromSelection(a.id)}
+                        className="opacity-0 group-hover/card:opacity-100 text-destructive hover:bg-destructive/10 rounded p-1 transition-all"
+                        aria-label="Remove"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
+                    <div className="flex items-end gap-3">
+                      <div className="flex-1">
                         <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Start date</Label>
                         <div className="relative mt-1">
                           <CalendarIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
@@ -454,7 +482,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                           />
                         </div>
                       </div>
-                      <div>
+                      <div className="w-[120px]">
                         <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Duration (days)</Label>
                         <Input
                           type="number"
@@ -465,12 +493,12 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                           className="mt-1 h-9 text-xs"
                         />
                       </div>
+                      {a.startDate && a.durationDays && a.endDate && (
+                        <div className="text-[10px] text-muted-foreground pb-2 whitespace-nowrap">
+                          Ends <span className="font-medium text-foreground">{a.endDate}</span>
+                        </div>
+                      )}
                     </div>
-                    {a.startDate && a.durationDays && a.endDate && (
-                      <p className="text-[10px] text-muted-foreground mt-2">
-                        Ends on <span className="font-medium text-foreground">{a.endDate}</span>
-                      </p>
-                    )}
                   </div>
                 ))}
               </div>
