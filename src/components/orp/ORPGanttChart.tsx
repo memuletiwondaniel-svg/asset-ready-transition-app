@@ -1652,32 +1652,39 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             <div className="flex-1 min-w-8" />
 
             {/* Active zoom preset - click to switch */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2.5 text-[10px] font-semibold text-muted-foreground/70 hover:text-foreground hover:bg-muted transition-colors"
-                >
-                  {activeZoomPreset}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-1" align="end">
-                <div className="flex items-center gap-0.5">
-                  {ZOOM_PRESETS.map(p => (
-                    <Button
-                      key={p.label}
-                      variant={activeZoomPreset === p.label ? 'default' : 'ghost'}
-                      size="sm"
-                      className="h-7 px-2.5 text-[10px] font-semibold"
-                      onClick={() => { setActiveZoomPreset(p.label); setZoomToFitDays(p.days); }}
-                    >
-                      {p.label}
-                    </Button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2.5 text-[10px] font-semibold text-muted-foreground/70 hover:text-foreground hover:bg-muted transition-colors"
+                      >
+                        {activeZoomPreset}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-1" align="end">
+                      <div className="flex items-center gap-0.5">
+                        {ZOOM_PRESETS.map(p => (
+                          <Button
+                            key={p.label}
+                            variant={activeZoomPreset === p.label ? 'default' : 'ghost'}
+                            size="sm"
+                            className="h-7 px-2.5 text-[10px] font-semibold"
+                            onClick={() => { setActiveZoomPreset(p.label); setZoomToFitDays(p.days); }}
+                          >
+                            {p.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </TooltipTrigger>
+                <TooltipContent side="bottom"><p>Time range</p></TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             <div className="group flex items-center gap-0.5 rounded-md p-0.5 border border-transparent hover:border-border hover:bg-muted/40 transition-colors">
               <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground/60 group-hover:text-foreground transition-colors" onClick={handleZoomOut} disabled={zoomLevel === ZOOM_LEVELS[0]}>
@@ -1690,22 +1697,16 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             </div>
 
             {!hideToolbar && !readOnly && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium gap-1 border-primary/30 text-primary hover:bg-primary/10">
-                    <Plus className="w-3 h-3" /> Add Activity
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setShowCatalogDialog(true)}>
-                    <BookOpen className="w-4 h-4 mr-2" /> From Catalog
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleAddCustom()}>
-                    <PenLine className="w-4 h-4 mr-2" /> Custom Activity
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 px-2 text-[10px] font-medium gap-1 border-primary/30 text-primary hover:bg-primary/10"
+                onClick={() => setShowCatalogDialog(true)}
+              >
+                <Plus className="w-3 h-3" /> Add Activity
+              </Button>
             )}
+
           </div>
         </div>
       </CardHeader>
