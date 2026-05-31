@@ -268,6 +268,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                 readOnly={isStatusReadOnly}
                 highlightActivityCode={highlightActivityCode}
                 autoOpenAddActivity={autoOpenAddActivity}
+                onAutoAddCancel={onAutoAddCancel}
               />
             ) : (
               <div className="text-center py-16 text-muted-foreground">
