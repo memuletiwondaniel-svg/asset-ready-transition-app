@@ -282,9 +282,11 @@ const WizardStepProjectTeam: React.FC<WizardStepProjectTeamProps> = ({
                       partner = sharing.length === 2 && others.length === 1 ? others[0] : null;
                     }
 
+                    const liveUser = allUsers.find((u) => u.user_id === member.user_id);
+                    const resolvedAvatar = liveUser?.avatar_url || member.avatar_url;
                     const avatarBlock = (
                       <Avatar className="h-9 w-9 border-2 border-emerald-300 dark:border-emerald-700">
-                        <AvatarImage src={member.avatar_url} alt={member.user_name} />
+                        <AvatarImage src={resolvedAvatar} alt={member.user_name} />
                         <AvatarFallback className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
                           {getInitials(member.user_name)}
                         </AvatarFallback>
