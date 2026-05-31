@@ -255,7 +255,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
             )}
           </DialogHeader>
 
-          <div className="flex-1 overflow-auto p-5 pt-2">
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col p-5 pt-2">
             {isLoading ? (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

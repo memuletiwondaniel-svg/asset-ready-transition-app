@@ -7,9 +7,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, Check, X, BookOpen, PenLine, Calendar as CalendarIcon, ArrowLeft, ArrowRight, Lightbulb, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format, parseISO } from 'date-fns';
 import { WizardActivity, catalogToWizardActivity } from './types';
 import { useORAActivityCatalog, useORPPhases } from '@/hooks/useORAActivityCatalog';
 import { cn } from '@/lib/utils';
+
+const formatGanttDate = (iso?: string | null) => {
+  if (!iso) return '';
+  try { return format(parseISO(iso), 'd-MMM-yyyy'); } catch { return iso; }
+};
 
 interface Props {
   open: boolean;
@@ -235,10 +243,10 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
             </div>
           ) : (
             <div className="flex items-center justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 <DialogTitle className="text-base">Schedule Activities</DialogTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Set a start date and duration for each activity, or skip to add them now.
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  Set start date and duration, or skip to add now.
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -489,12 +497,29 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                     <div className="mt-2 flex items-center gap-2 pl-[52px]">
                       <div className="flex items-center gap-1.5">
                         <Label className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Start</Label>
-                        <Input
-                          type="date"
-                          value={a.startDate || ''}
-                          onChange={(e) => updateScheduleField(a.id, { startDate: e.target.value })}
-                          className="h-7 w-[140px] text-xs px-2 [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                        />
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                'h-7 px-2 text-xs font-normal justify-start gap-1.5 w-[140px]',
+                                !a.startDate && 'text-muted-foreground'
+                              )}
+                            >
+                              <CalendarIcon className="w-3 h-3 opacity-60" />
+                              {a.startDate ? formatGanttDate(a.startDate) : 'Pick date'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={a.startDate ? parseISO(a.startDate) : undefined}
+                              onSelect={(d) => updateScheduleField(a.id, { startDate: d ? format(d, 'yyyy-MM-dd') : '' })}
+                              initialFocus
+                              className="p-3 pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Label className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Days</Label>
@@ -509,7 +534,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                       </div>
                       {a.startDate && a.durationDays && a.endDate && (
                         <span className="text-[10px] text-muted-foreground ml-auto">
-                          Ends <span className="font-medium text-foreground">{a.endDate}</span>
+                          Ends <span className="font-medium text-foreground">{formatGanttDate(a.endDate)}</span>
                         </span>
                       )}
                     </div>

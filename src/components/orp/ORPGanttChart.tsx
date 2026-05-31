@@ -1575,7 +1575,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   }
 
   return (
-    <Card>
+    <Card className="flex flex-col h-full min-h-0">
+
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Gantt Chart</CardTitle>
@@ -1737,10 +1738,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="border rounded-lg bg-background">
+      <CardContent className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        <div className="border rounded-lg bg-background flex-1 min-h-0 flex flex-col">
           {/* Scrollable area with sticky header */}
-          <div className="max-h-[calc(95vh-280px)] overflow-auto rounded-lg" ref={scrollContainerRef}>
+          <div className="flex-1 min-h-0 overflow-auto rounded-lg" ref={scrollContainerRef}>
+
             {/* Sticky header row */}
             <div className="flex sticky top-0 z-20 bg-background">
               <div className="shrink-0 border-r bg-muted/30" style={{ width: leftPanelWidth }}>
