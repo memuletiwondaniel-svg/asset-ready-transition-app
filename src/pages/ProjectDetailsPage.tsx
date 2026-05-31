@@ -82,7 +82,7 @@ const SortableWidget: React.FC<SortableWidgetProps> = ({ id, children, onHide, c
   };
 
   return (
-    <div ref={setNodeRef} style={style} className={cn("group/widget relative h-full min-h-0 overflow-hidden", className)}>
+    <div ref={setNodeRef} style={style} className={cn("group/widget relative h-full min-h-0", className)}>
       {React.cloneElement(children as React.ReactElement, {
         dragAttributes: attributes,
         dragListeners: listeners,
