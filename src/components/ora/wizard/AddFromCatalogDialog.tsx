@@ -448,7 +448,10 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
             <ScrollArea className="flex-1 min-h-0">
               <div className="px-6 py-4 space-y-2">
                 {selectedList.map(a => (
-                  <div key={a.id} className="rounded-lg border bg-background p-3">
+                  <div
+                    key={a.id}
+                    className="group/card rounded-lg border bg-background p-3 transition-all hover:border-primary/40 hover:shadow-sm hover:bg-muted/20"
+                  >
                     <div className="flex items-center gap-2 mb-2.5">
                       <span className={cn(
                         'text-[10px] font-mono font-semibold tabular-nums px-2 py-0.5 rounded',
@@ -457,9 +460,17 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                         {formatActivityCode(a.activityCode)}
                       </span>
                       <span className="text-sm font-medium flex-1 min-w-0 truncate">{a.activity}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeFromSelection(a.id)}
+                        className="opacity-0 group-hover/card:opacity-100 text-destructive hover:bg-destructive/10 rounded p-1 transition-all"
+                        aria-label="Remove"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
+                    <div className="flex items-end gap-3">
+                      <div className="flex-1">
                         <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Start date</Label>
                         <div className="relative mt-1">
                           <CalendarIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
@@ -471,7 +482,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                           />
                         </div>
                       </div>
-                      <div>
+                      <div className="w-[120px]">
                         <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Duration (days)</Label>
                         <Input
                           type="number"
@@ -482,12 +493,12 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                           className="mt-1 h-9 text-xs"
                         />
                       </div>
+                      {a.startDate && a.durationDays && a.endDate && (
+                        <div className="text-[10px] text-muted-foreground pb-2 whitespace-nowrap">
+                          Ends <span className="font-medium text-foreground">{a.endDate}</span>
+                        </div>
+                      )}
                     </div>
-                    {a.startDate && a.durationDays && a.endDate && (
-                      <p className="text-[10px] text-muted-foreground mt-2">
-                        Ends on <span className="font-medium text-foreground">{a.endDate}</span>
-                      </p>
-                    )}
                   </div>
                 ))}
               </div>
