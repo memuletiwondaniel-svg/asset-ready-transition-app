@@ -1769,6 +1769,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                             isCritical && "text-destructive font-semibold"
                           )} title={deliverable.deliverable?.name}>
                             {deliverable.deliverable?.name}
+                            {newlyAddedIds.has(deliverable.deliverable?.id) && (
+                              <span className="ml-1.5 inline-flex items-center gap-0.5 px-1.5 py-0 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-[8px] font-semibold uppercase tracking-wide align-middle animate-pulse">
+                                New
+                              </span>
+                            )}
                           </span>
                         </div>
                       </div>
