@@ -281,7 +281,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
           </div>
 
           {/* Scrollable activity sections */}
-          <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pr-1">
+          <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pr-1 scrollbar-modern">
             {/* Ongoing */}
             {ongoingActivities.length > 0 && (
               <Collapsible open={ongoingOpen} onOpenChange={setOngoingOpen}>
