@@ -368,6 +368,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
         isReadOnly={isReadOnly}
         highlightActivityCode={highlightCode}
         autoOpenAddActivity={autoOpenAdd}
+        onAutoAddCancel={() => { setAutoOpenAdd(false); setOverlayOpen(false); }}
       />
 
       <ORAActivityPlanWizard

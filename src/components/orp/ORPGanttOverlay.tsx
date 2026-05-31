@@ -38,6 +38,7 @@ interface ORPGanttOverlayProps {
   highlightActivityCode?: string;
   /** When true, automatically open the "Add from Catalog" dialog on mount */
   autoOpenAddActivity?: boolean;
+  onAutoAddCancel?: () => void;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
@@ -66,6 +67,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
   isReadOnly: externalReadOnly,
   highlightActivityCode,
   autoOpenAddActivity,
+  onAutoAddCancel,
 }) => {
   const [approvalsOpen, setApprovalsOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -266,6 +268,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
                 readOnly={isStatusReadOnly}
                 highlightActivityCode={highlightActivityCode}
                 autoOpenAddActivity={autoOpenAddActivity}
+                onAutoAddCancel={onAutoAddCancel}
               />
             ) : (
               <div className="text-center py-16 text-muted-foreground">

@@ -40,6 +40,8 @@ interface ORPGanttChartProps {
   highlightActivityCode?: string;
   /** When true, opens the "Add from Catalog" dialog on mount */
   autoOpenAddActivity?: boolean;
+  /** Called when the auto-opened Add Activity dialog is dismissed without adding anything */
+  onAutoAddCancel?: () => void;
 }
 
 const ZOOM_LEVELS = [0.15, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
@@ -322,10 +324,11 @@ function computeCriticalPath(rows: FlatRow[], getBarPos: (s: string, e: string) 
   return criticalSet;
 }
 
-export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar = false, readOnly = false, highlightActivityCode, autoOpenAddActivity }) => {
+export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverables, searchQuery: externalSearchQuery, hideToolbar = false, readOnly = false, highlightActivityCode, autoOpenAddActivity, onAutoAddCancel }) => {
   const isMobile = useIsMobile();
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const [showCatalogDialog, setShowCatalogDialog] = useState(false);
+  const [newlyAddedIds, setNewlyAddedIds] = useState<Set<string>>(new Set());
   const [showP2AWizard, setShowP2AWizard] = useState(false);
   const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
   const [showVCRWizard, setShowVCRWizard] = useState(false);
@@ -633,23 +636,39 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     : '';
   const projectName = planData?.project?.project_title || '';
 
-  // Get existing activity IDs for catalog exclusion
+  // Get existing activity IDs / codes for catalog exclusion
   const existingActivityIds = useMemo(() => deliverables.map((d: any) => d.id?.replace('ora-', '') || d.id), [deliverables]);
+  const existingActivityCodes = useMemo(
+    () => deliverables.map((d: any) => d.deliverable?.activity_code || '').filter(Boolean),
+    [deliverables]
+  );
 
   const handleAddFromCatalog = useCallback(async (newActivities: WizardActivity[]) => {
     const client = supabase as any;
+    const insertedIds: string[] = [];
     for (const a of newActivities) {
-      await client.from('ora_plan_activities').insert({
+      const isCustom = a.id.startsWith('custom-') || a.activityCode.startsWith('CUSTOM-');
+      const startDate = a.startDate || null;
+      let endDate = a.endDate || null;
+      if (startDate && a.durationDays && !endDate) {
+        const d = new Date(startDate);
+        d.setDate(d.getDate() + Number(a.durationDays));
+        endDate = d.toISOString().slice(0, 10);
+      }
+      const { data: inserted } = await client.from('ora_plan_activities').insert({
         orp_plan_id: planId,
         name: a.activity,
         activity_code: a.activityCode,
         description: a.description,
-        source_type: 'catalog',
-        source_ref_id: a.id,
+        source_type: isCustom ? 'custom' : 'catalog',
+        source_ref_id: isCustom ? null : a.id,
         status: 'NOT_STARTED',
         duration_days: a.durationDays,
+        start_date: startDate,
+        end_date: endDate,
         parent_id: a.parentActivityId,
-      });
+      }).select().single();
+      if (inserted?.id) insertedIds.push(inserted.id);
     }
     // Also append to wizard_state
     const { data: plan } = await client.from('orp_plans').select('wizard_state').eq('id', planId).single();
@@ -657,10 +676,21 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       const updatedActivities = [...plan.wizard_state.activities, ...newActivities.map(a => ({ ...a, selected: true }))];
       await client.from('orp_plans').update({ wizard_state: { ...plan.wizard_state, activities: updatedActivities } }).eq('id', planId);
     }
+    setNewlyAddedIds(prev => {
+      const next = new Set(prev);
+      insertedIds.forEach(id => next.add(id));
+      return next;
+    });
     queryClient.invalidateQueries({ queryKey: ['orp-plan-details'] });
     setShowCatalogDialog(false);
     toast({ title: `${newActivities.length} activit${newActivities.length > 1 ? 'ies' : 'y'} added` });
   }, [planId, queryClient, toast]);
+
+  const handleCatalogCancelEmpty = useCallback(() => {
+    if (autoOpenAddActivity) {
+      onAutoAddCancel?.();
+    }
+  }, [autoOpenAddActivity, onAutoAddCancel]);
 
   const handleAddCustom = useCallback(async () => {
     // Auto-generate activity code from existing activities
@@ -1368,7 +1398,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             getReconciledActivityState={getReconciledActivityState}
           />
         </Card>
-        <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
+        <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} existingCodes={existingActivityCodes} onAdd={handleAddFromCatalog} onCancelEmpty={handleCatalogCancelEmpty} />
         <TaskDetailSheet
           task={selectedReviewTask}
           open={!!selectedReviewTask}
@@ -1490,7 +1520,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             </div>
           </div>
         </CardContent>
-        <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
+        <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} existingCodes={existingActivityCodes} onAdd={handleAddFromCatalog} onCancelEmpty={handleCatalogCancelEmpty} />
       </Card>
     );
   }
@@ -1739,6 +1769,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                             isCritical && "text-destructive font-semibold"
                           )} title={deliverable.deliverable?.name}>
                             {deliverable.deliverable?.name}
+                            {newlyAddedIds.has(deliverable.deliverable?.id) && (
+                              <span className="ml-1.5 inline-flex items-center gap-0.5 px-1.5 py-0 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-[8px] font-semibold uppercase tracking-wide align-middle animate-pulse">
+                                New
+                              </span>
+                            )}
                           </span>
                         </div>
                       </div>
@@ -2102,7 +2137,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         </div>
       )}
 
-      <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
+      <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} existingCodes={existingActivityCodes} onAdd={handleAddFromCatalog} onCancelEmpty={handleCatalogCancelEmpty} />
       <TaskDetailSheet
         task={selectedReviewTask}
         open={!!selectedReviewTask}
