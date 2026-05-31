@@ -43,7 +43,7 @@ const LETTER_TO_PHASE_LABEL: Record<string, string> = {
   A: 'Assess', S: 'Select', D: 'Define', E: 'Execute', I: 'Identify', O: 'Operate',
 };
 
-const PREFIX_TO_LETTER: Record<string, string> = { IDN: 'I', ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', OPR: 'O' };
+const PREFIX_TO_LETTER: Record<string, string> = { IDN: 'I', ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', OPR: 'O', CUSTOM: 'C' };
 function getLetter(code: string): string {
   const prefix = code.split(/[.\-]/)[0].toUpperCase();
   return PREFIX_TO_LETTER[prefix] || prefix.charAt(0);
