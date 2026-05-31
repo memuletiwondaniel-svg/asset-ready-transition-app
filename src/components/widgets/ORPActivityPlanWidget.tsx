@@ -246,17 +246,8 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
               <StyledWidgetIcon Icon={Settings2} gradientFrom="from-purple-500" gradientTo="to-violet-500" glowFrom="from-purple-500/40" glowTo="to-violet-500/40" />
               <span className="truncate">ORA Activities</span>
             </button>
-            {!isReadOnly && (
-              <button
-                type="button"
-                onPointerDown={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => { e.stopPropagation(); openAddActivity(); }}
-                title="Add activity"
-                className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-1 h-5 px-2 rounded-full bg-primary/10 text-primary text-[10px] font-medium hover:bg-primary/20 relative z-10"
-              >
-                <Plus className="h-3 w-3" /> Add Activity
-              </button>
+            {statusConfig && (
+              <span className="shrink-0 inline-block w-0" aria-hidden />
             )}
             {statusConfig && (
               <button
