@@ -462,8 +462,9 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                 {selectedList.map(a => (
                   <div
                     key={a.id}
-                    className="group/card rounded-lg border bg-background px-3 py-2 transition-all hover:border-primary/50 hover:shadow-md hover:bg-accent/30"
+                    className="group/card relative rounded-xl border bg-card px-3.5 py-2.5 transition-all hover:border-primary/40 hover:shadow-sm hover:bg-accent/20"
                   >
+                    {/* Row 1: Code + activity name (full width) */}
                     <div className="flex items-center gap-2.5">
                       <span className={cn(
                         'text-[10px] font-mono font-semibold tabular-nums px-2 py-0.5 rounded shrink-0',
@@ -471,30 +472,9 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                       )}>
                         {formatActivityCode(a.activityCode)}
                       </span>
-                      <span className="text-sm font-medium flex-1 min-w-0 truncate">{a.activity}</span>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <Label className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Start</Label>
-                        <Input
-                          type="date"
-                          value={a.startDate || ''}
-                          onChange={(e) => updateScheduleField(a.id, { startDate: e.target.value })}
-                          className="h-7 w-[130px] text-xs px-2 [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <Label className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Days</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={a.durationDays ?? ''}
-                          onChange={(e) => updateScheduleField(a.id, { durationDays: e.target.value ? parseInt(e.target.value) : null })}
-                          placeholder="—"
-                          className="h-7 w-[64px] text-xs px-2"
-                        />
-                      </div>
-
+                      <span className="text-sm font-medium flex-1 min-w-0 truncate" title={a.activity}>
+                        {a.activity}
+                      </span>
                       <button
                         type="button"
                         onClick={() => removeFromSelection(a.id)}
@@ -504,11 +484,35 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    {a.startDate && a.durationDays && a.endDate && (
-                      <div className="text-[10px] text-muted-foreground mt-1 pl-[68px]">
-                        Ends <span className="font-medium text-foreground">{a.endDate}</span>
+
+                    {/* Row 2: Start date + duration */}
+                    <div className="mt-2 flex items-center gap-2 pl-[52px]">
+                      <div className="flex items-center gap-1.5">
+                        <Label className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Start</Label>
+                        <Input
+                          type="date"
+                          value={a.startDate || ''}
+                          onChange={(e) => updateScheduleField(a.id, { startDate: e.target.value })}
+                          className="h-7 w-[140px] text-xs px-2 [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                        />
                       </div>
-                    )}
+                      <div className="flex items-center gap-1.5">
+                        <Label className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Days</Label>
+                        <Input
+                          type="number"
+                          min={1}
+                          value={a.durationDays ?? ''}
+                          onChange={(e) => updateScheduleField(a.id, { durationDays: e.target.value ? parseInt(e.target.value) : null })}
+                          placeholder="—"
+                          className="h-7 w-[72px] text-xs px-2"
+                        />
+                      </div>
+                      {a.startDate && a.durationDays && a.endDate && (
+                        <span className="text-[10px] text-muted-foreground ml-auto">
+                          Ends <span className="font-medium text-foreground">{a.endDate}</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
