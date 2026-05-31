@@ -1766,7 +1766,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               <div className="shrink-0 border-r" style={{ width: leftPanelWidth }}>
                 {visibleRows.map((row, index) => {
                   const { deliverable, depth, hasChildren, activityCode } = row;
-                  const idColors = ID_BADGE_PALETTE[index % ID_BADGE_PALETTE.length];
+                  const idColors = getIdBadgeColors(activityCode);
                   const isExpanded = expandedCodes.has(activityCode);
                   const isParent = hasChildren;
                   const hasDates = deliverable.start_date && deliverable.end_date;
