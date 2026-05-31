@@ -7,9 +7,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, Check, X, BookOpen, PenLine, Calendar as CalendarIcon, ArrowLeft, ArrowRight, Lightbulb, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format, parseISO } from 'date-fns';
 import { WizardActivity, catalogToWizardActivity } from './types';
 import { useORAActivityCatalog, useORPPhases } from '@/hooks/useORAActivityCatalog';
 import { cn } from '@/lib/utils';
+
+const formatGanttDate = (iso?: string | null) => {
+  if (!iso) return '';
+  try { return format(parseISO(iso), 'd-MMM-yyyy'); } catch { return iso; }
+};
 
 interface Props {
   open: boolean;
