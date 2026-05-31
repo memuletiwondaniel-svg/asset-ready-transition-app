@@ -700,7 +700,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     }
     setNewlyAddedIds(prev => {
       const next = new Set(prev);
+      // Track both ora_plan_activities.id AND wizard source ids (source_ref_id for catalog)
       insertedIds.forEach(id => next.add(id));
+      newActivities.forEach(a => { if (a.id) next.add(a.id); });
+      newActivities.forEach(a => { if (a.activityCode) next.add(a.activityCode); });
       return next;
     });
     queryClient.invalidateQueries({ queryKey: ['orp-plan', planId] });
