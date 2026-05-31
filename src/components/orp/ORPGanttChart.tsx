@@ -1899,7 +1899,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                     </div>
                       </ContextMenuTrigger>
                       <ContextMenuContent className="w-48">
-                        <ContextMenuItem onClick={() => openActivitySheet(deliverable)} className="text-xs gap-2">
+                        <ContextMenuItem onClick={() => openActivitySheet(deliverable)} className="text-xs gap-2 cursor-pointer focus:bg-accent">
                           <Eye className="h-3.5 w-3.5" />
                           View Details
                         </ContextMenuItem>
@@ -1907,7 +1907,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           <>
                             <ContextMenuSeparator />
                             <ContextMenuItem
-                              className="text-xs gap-2"
+                              className="text-xs gap-2 cursor-pointer focus:bg-accent"
                               onClick={() => {
                                 const reconciled = getReconciledActivityState(deliverable);
                                 const nextStatus = reconciled.status === 'NOT_STARTED' ? 'IN_PROGRESS' : reconciled.status === 'IN_PROGRESS' ? 'COMPLETED' : 'NOT_STARTED';
@@ -1923,7 +1923,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                               Cycle Status
                             </ContextMenuItem>
                             <ContextMenuItem
-                              className="text-xs gap-2"
+                              className="text-xs gap-2 cursor-pointer focus:bg-accent"
                               onClick={() => {
                                 const predIds = deliverable._predecessorIds || [];
                                 const siblings = visibleRows.filter(r => r.activityCode !== activityCode && !r.hasChildren);
@@ -1936,11 +1936,20 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                               <GitBranch className="h-3.5 w-3.5" />
                               Add Predecessor
                             </ContextMenuItem>
+                            <ContextMenuSeparator />
+                            <ContextMenuItem
+                              className="text-xs gap-2 cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+                              onClick={() => setDeleteTarget({ id: deliverable.id, name: deliverable.deliverable?.name || 'this activity' })}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Delete Activity
+                            </ContextMenuItem>
                           </>
                         )}
                       </ContextMenuContent>
                     </ContextMenu>
                   );
+
                 })}
               </div>
 
