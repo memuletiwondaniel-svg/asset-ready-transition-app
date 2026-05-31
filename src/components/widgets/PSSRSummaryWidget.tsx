@@ -207,18 +207,6 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               />
               <span className="truncate">P2A Handover</span>
             </button>
-            {showVCRList && canCreateVCR && (
-              <button
-                type="button"
-                onPointerDown={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => { e.stopPropagation(); setShowCreateVCR(true); }}
-                title="Add VCR"
-                className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-1 h-6 px-2 rounded-md bg-primary/10 text-primary text-[11px] font-medium hover:bg-primary/20 relative z-10"
-              >
-                <Plus className="h-3 w-3" /> Add VCR
-              </button>
-            )}
             {headerStatusLabel && (
               <button
                 type="button"
@@ -329,6 +317,21 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               </div>
             )}
           </div>
+
+          {showVCRList && canCreateVCR && (
+            <div className="flex-shrink-0 pt-2 mt-1 border-t border-border/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); setShowCreateVCR(true); }}
+                className="group/cta w-full flex items-center justify-center gap-1.5 h-8 rounded-md text-xs font-medium text-muted-foreground/70 hover:text-primary hover:bg-primary/5 transition-all relative z-10"
+              >
+                <Plus className="h-3.5 w-3.5 transition-transform group-hover/cta:rotate-90 duration-200" />
+                <span>Add VCR</span>
+              </button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
