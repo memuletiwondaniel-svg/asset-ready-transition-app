@@ -58,19 +58,27 @@ const COL_WIDTHS = {
   status: 96,
 };
 
-// Sequential hue rotation palette for ID badges
-const ID_BADGE_PALETTE = [
-  { bg: 'bg-blue-500/15', text: 'text-blue-700 dark:text-blue-400' },
-  { bg: 'bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-400' },
-  { bg: 'bg-purple-500/15', text: 'text-purple-700 dark:text-purple-400' },
-  { bg: 'bg-amber-500/15', text: 'text-amber-700 dark:text-amber-400' },
-  { bg: 'bg-rose-500/15', text: 'text-rose-700 dark:text-rose-400' },
-  { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
-  { bg: 'bg-indigo-500/15', text: 'text-indigo-700 dark:text-indigo-400' },
-  { bg: 'bg-orange-500/15', text: 'text-orange-700 dark:text-orange-400' },
-  { bg: 'bg-cyan-500/15', text: 'text-cyan-700 dark:text-cyan-400' },
-  { bg: 'bg-pink-500/15', text: 'text-pink-700 dark:text-pink-400' },
-];
+// Phase-letter based ID badge palette — must match AddFromCatalogDialog (LETTER_COLOR)
+const LETTER_BADGE_COLORS: Record<string, { bg: string; text: string }> = {
+  A: { bg: 'bg-amber-50 dark:bg-amber-950/30', text: 'text-amber-600' },
+  S: { bg: 'bg-purple-50 dark:bg-purple-950/30', text: 'text-purple-600' },
+  D: { bg: 'bg-teal-50 dark:bg-teal-950/30', text: 'text-teal-600' },
+  E: { bg: 'bg-emerald-50 dark:bg-emerald-950/30', text: 'text-emerald-600' },
+  I: { bg: 'bg-blue-50 dark:bg-blue-950/30', text: 'text-blue-600' },
+  O: { bg: 'bg-indigo-50 dark:bg-indigo-950/30', text: 'text-indigo-600' },
+  C: { bg: 'bg-rose-50 dark:bg-rose-950/30', text: 'text-rose-600' },
+  V: { bg: 'bg-pink-50 dark:bg-pink-950/30', text: 'text-pink-600' },
+};
+function getIdBadgeColors(code: string): { bg: string; text: string } {
+  if (!code) return { bg: 'bg-muted', text: 'text-muted-foreground' };
+  if (code.startsWith('VCR-')) return LETTER_BADGE_COLORS.V;
+  const prefix = code.split(/[.\-]/)[0].toUpperCase();
+  const letter = CODE_PREFIX_TO_LETTER_LOCAL[prefix] || prefix.charAt(0);
+  return LETTER_BADGE_COLORS[letter] || { bg: 'bg-muted', text: 'text-muted-foreground' };
+}
+const CODE_PREFIX_TO_LETTER_LOCAL: Record<string, string> = {
+  IDN: 'I', ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', OPR: 'O', CUSTOM: 'C',
+};
 
 type ColumnKey = 'index' | 'id' | 'start' | 'end' | 'duration' | 'status';
 const TOGGLEABLE_COLUMNS: { key: ColumnKey; label: string }[] = [
