@@ -1753,7 +1753,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         <div className="px-1 flex items-center border-r border-border/40" style={{ width: COL_WIDTHS.id }}>
                           {activityCode ? (
                             <span className={cn("inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-mono font-semibold whitespace-nowrap", idColors.bg, idColors.text)}>
-                              {activityCode}
+                              {formatActivityCodeDisplay(activityCode)}
                             </span>
                           ) : (
                             <span className="text-[10px] text-muted-foreground">—</span>
