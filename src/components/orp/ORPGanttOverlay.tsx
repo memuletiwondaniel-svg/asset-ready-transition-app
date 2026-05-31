@@ -38,6 +38,7 @@ interface ORPGanttOverlayProps {
   highlightActivityCode?: string;
   /** When true, automatically open the "Add from Catalog" dialog on mount */
   autoOpenAddActivity?: boolean;
+  onAutoAddCancel?: () => void;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
