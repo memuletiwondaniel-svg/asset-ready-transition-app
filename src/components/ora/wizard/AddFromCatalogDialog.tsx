@@ -37,6 +37,7 @@ const LETTER_COLOR: Record<string, string> = {
   S: 'text-purple-600 bg-purple-50 dark:bg-purple-950/30',
   D: 'text-teal-600 bg-teal-50 dark:bg-teal-950/30',
   E: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30',
+  C: 'text-rose-600 bg-rose-50 dark:bg-rose-950/30',
 };
 
 const LETTER_TO_PHASE_LABEL: Record<string, string> = {
