@@ -123,6 +123,18 @@ function getPhasePrefix(code: string): string {
   return code.split('-')[0];
 }
 
+const CODE_PREFIX_TO_LETTER: Record<string, string> = {
+  IDN: 'I', ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', OPR: 'O', CUSTOM: 'C',
+};
+function formatActivityCodeDisplay(code: string): string {
+  if (!code) return '';
+  if (code.startsWith('VCR-')) return code;
+  const m = code.match(/^([A-Za-z]+)[-.](.+)$/);
+  if (!m) return code;
+  const letter = CODE_PREFIX_TO_LETTER[m[1].toUpperCase()] || m[1];
+  return `${letter}.${m[2]}`;
+}
+
 function getParentCode(code: string): string | null {
   if (!code) return null;
   const lastDotIdx = code.lastIndexOf('.');
@@ -1741,7 +1753,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                         <div className="px-1 flex items-center border-r border-border/40" style={{ width: COL_WIDTHS.id }}>
                           {activityCode ? (
                             <span className={cn("inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-mono font-semibold whitespace-nowrap", idColors.bg, idColors.text)}>
-                              {activityCode}
+                              {formatActivityCodeDisplay(activityCode)}
                             </span>
                           ) : (
                             <span className="text-[10px] text-muted-foreground">—</span>
