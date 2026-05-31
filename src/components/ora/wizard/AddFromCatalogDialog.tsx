@@ -219,25 +219,35 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
       <DialogContent className="max-w-2xl flex flex-col gap-0 p-0 sm:h-[680px] sm:max-h-[88vh] overflow-hidden">
         {/* Header with step indicator */}
         <DialogHeader className="px-6 pt-6 pb-3 border-b">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <DialogTitle className="text-base">
-                {step === 'select' ? 'Add Activity' : 'Schedule Activities'}
-              </DialogTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {step === 'select'
-                  ? 'Pick from the catalog or define a custom activity'
-                  : 'Set when each new activity should start (optional — you can do this later)'}
-              </p>
+          {step === 'select' ? (
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <DialogTitle className="text-base">Add Activity</DialogTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Pick from the catalog or define a custom activity
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <StepDot index={1} label="Select" active={step === 'select'} done={false} />
+                <div className="h-px w-6 bg-border" />
+                <StepDot index={2} label="Schedule" active={false} done={false} />
+              </div>
             </div>
-            {/* Stepper */}
-            <div className="flex items-center gap-2 shrink-0">
-              <StepDot index={1} label="Select" active={step === 'select'} done={step === 'schedule'} />
-              <div className={cn('h-px w-6 transition-colors', step === 'schedule' ? 'bg-primary' : 'bg-border')} />
-              <StepDot index={2} label="Schedule" active={step === 'schedule'} done={false} />
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-baseline gap-2">
+                <DialogTitle className="text-base">Schedule Activities</DialogTitle>
+                <span className="text-[11px] text-muted-foreground font-normal">(Optional)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <StepDot index={1} label="Select" active={false} done={true} />
+                <div className="h-px w-6 bg-primary" />
+                <StepDot index={2} label="Schedule" active={true} done={false} />
+              </div>
             </div>
-          </div>
+          )}
         </DialogHeader>
+
 
         {/* Body */}
         {step === 'select' ? (
@@ -446,62 +456,61 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
         ) : (
           <div className="flex-1 min-h-0 flex flex-col">
             <ScrollArea className="flex-1 min-h-0">
-              <div className="px-6 py-4 space-y-2">
+              <div className="px-6 py-4 space-y-1.5">
                 {selectedList.map(a => (
                   <div
                     key={a.id}
-                    className="group/card rounded-lg border bg-background p-3 transition-all hover:border-primary/40 hover:shadow-sm hover:bg-muted/20"
+                    className="group/card rounded-lg border bg-background px-3 py-2 transition-all hover:border-primary/50 hover:shadow-md hover:bg-accent/30"
                   >
-                    <div className="flex items-center gap-2 mb-2.5">
+                    <div className="flex items-center gap-2.5">
                       <span className={cn(
-                        'text-[10px] font-mono font-semibold tabular-nums px-2 py-0.5 rounded',
+                        'text-[10px] font-mono font-semibold tabular-nums px-2 py-0.5 rounded shrink-0',
                         LETTER_COLOR[getLetter(a.activityCode)] || 'text-muted-foreground bg-muted'
                       )}>
                         {formatActivityCode(a.activityCode)}
                       </span>
                       <span className="text-sm font-medium flex-1 min-w-0 truncate">{a.activity}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeFromSelection(a.id)}
-                        className="opacity-0 group-hover/card:opacity-100 text-destructive hover:bg-destructive/10 rounded p-1 transition-all"
-                        aria-label="Remove"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    <div className="flex items-end gap-3">
-                      <div className="flex-1">
-                        <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Start date</Label>
-                        <div className="relative mt-1">
-                          <CalendarIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-                          <Input
-                            type="date"
-                            value={a.startDate || ''}
-                            onChange={(e) => updateScheduleField(a.id, { startDate: e.target.value })}
-                            className="pl-8 h-9 text-xs"
-                          />
-                        </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Label className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Start</Label>
+                        <Input
+                          type="date"
+                          value={a.startDate || ''}
+                          onChange={(e) => updateScheduleField(a.id, { startDate: e.target.value })}
+                          className="h-7 w-[130px] text-xs px-2 [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                        />
                       </div>
-                      <div className="w-[120px]">
-                        <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">Duration (days)</Label>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Label className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Days</Label>
                         <Input
                           type="number"
                           min={1}
                           value={a.durationDays ?? ''}
                           onChange={(e) => updateScheduleField(a.id, { durationDays: e.target.value ? parseInt(e.target.value) : null })}
                           placeholder="—"
-                          className="mt-1 h-9 text-xs"
+                          className="h-7 w-[64px] text-xs px-2"
                         />
                       </div>
-                      {a.startDate && a.durationDays && a.endDate && (
-                        <div className="text-[10px] text-muted-foreground pb-2 whitespace-nowrap">
-                          Ends <span className="font-medium text-foreground">{a.endDate}</span>
-                        </div>
-                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => removeFromSelection(a.id)}
+                        className="opacity-0 group-hover/card:opacity-100 text-destructive hover:bg-destructive/10 rounded p-1 transition-all shrink-0"
+                        aria-label="Remove"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
+                    {a.startDate && a.durationDays && a.endDate && (
+                      <div className="text-[10px] text-muted-foreground mt-1 pl-[68px]">
+                        Ends <span className="font-medium text-foreground">{a.endDate}</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
+
             </ScrollArea>
           </div>
         )}

@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route, BookOpen, PenLine, FileText, ArrowUp, ArrowDown, ArrowUpDown, Eye, RotateCw } from 'lucide-react';
+import { Plus, Search, ZoomIn, ZoomOut, ChevronRight, ChevronDown, ChevronsUpDown, GitBranch, Columns3, Route, BookOpen, PenLine, FileText, ArrowUp, ArrowDown, ArrowUpDown, Eye, RotateCw, Trash2 } from 'lucide-react';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from '@/components/ui/context-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MobileTimelineList } from './MobileTimelineList';
 import { AddFromCatalogDialog } from '@/components/ora/wizard/AddFromCatalogDialog';
@@ -57,19 +58,27 @@ const COL_WIDTHS = {
   status: 96,
 };
 
-// Sequential hue rotation palette for ID badges
-const ID_BADGE_PALETTE = [
-  { bg: 'bg-blue-500/15', text: 'text-blue-700 dark:text-blue-400' },
-  { bg: 'bg-emerald-500/15', text: 'text-emerald-700 dark:text-emerald-400' },
-  { bg: 'bg-purple-500/15', text: 'text-purple-700 dark:text-purple-400' },
-  { bg: 'bg-amber-500/15', text: 'text-amber-700 dark:text-amber-400' },
-  { bg: 'bg-rose-500/15', text: 'text-rose-700 dark:text-rose-400' },
-  { bg: 'bg-teal-500/15', text: 'text-teal-700 dark:text-teal-400' },
-  { bg: 'bg-indigo-500/15', text: 'text-indigo-700 dark:text-indigo-400' },
-  { bg: 'bg-orange-500/15', text: 'text-orange-700 dark:text-orange-400' },
-  { bg: 'bg-cyan-500/15', text: 'text-cyan-700 dark:text-cyan-400' },
-  { bg: 'bg-pink-500/15', text: 'text-pink-700 dark:text-pink-400' },
-];
+// Phase-letter based ID badge palette — must match AddFromCatalogDialog (LETTER_COLOR)
+const LETTER_BADGE_COLORS: Record<string, { bg: string; text: string }> = {
+  A: { bg: 'bg-amber-50 dark:bg-amber-950/30', text: 'text-amber-600' },
+  S: { bg: 'bg-purple-50 dark:bg-purple-950/30', text: 'text-purple-600' },
+  D: { bg: 'bg-teal-50 dark:bg-teal-950/30', text: 'text-teal-600' },
+  E: { bg: 'bg-emerald-50 dark:bg-emerald-950/30', text: 'text-emerald-600' },
+  I: { bg: 'bg-blue-50 dark:bg-blue-950/30', text: 'text-blue-600' },
+  O: { bg: 'bg-indigo-50 dark:bg-indigo-950/30', text: 'text-indigo-600' },
+  C: { bg: 'bg-rose-50 dark:bg-rose-950/30', text: 'text-rose-600' },
+  V: { bg: 'bg-pink-50 dark:bg-pink-950/30', text: 'text-pink-600' },
+};
+function getIdBadgeColors(code: string): { bg: string; text: string } {
+  if (!code) return { bg: 'bg-muted', text: 'text-muted-foreground' };
+  if (code.startsWith('VCR-')) return LETTER_BADGE_COLORS.V;
+  const prefix = code.split(/[.\-]/)[0].toUpperCase();
+  const letter = CODE_PREFIX_TO_LETTER_LOCAL[prefix] || prefix.charAt(0);
+  return LETTER_BADGE_COLORS[letter] || { bg: 'bg-muted', text: 'text-muted-foreground' };
+}
+const CODE_PREFIX_TO_LETTER_LOCAL: Record<string, string> = {
+  IDN: 'I', ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', OPR: 'O', CUSTOM: 'C',
+};
 
 type ColumnKey = 'index' | 'id' | 'start' | 'end' | 'duration' | 'status';
 const TOGGLEABLE_COLUMNS: { key: ColumnKey; label: string }[] = [
@@ -345,6 +354,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const [showP2AWorkspace, setShowP2AWorkspace] = useState(false);
   const [showVCRWizard, setShowVCRWizard] = useState(false);
   const [vcrWizardTarget, setVcrWizardTarget] = useState<{ id: string; vcr_code: string; name: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -691,7 +701,10 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     }
     setNewlyAddedIds(prev => {
       const next = new Set(prev);
+      // Track both ora_plan_activities.id AND wizard source ids (source_ref_id for catalog)
       insertedIds.forEach(id => next.add(id));
+      newActivities.forEach(a => { if (a.id) next.add(a.id); });
+      newActivities.forEach(a => { if (a.activityCode) next.add(a.activityCode); });
       return next;
     });
     queryClient.invalidateQueries({ queryKey: ['orp-plan', planId] });
@@ -781,6 +794,36 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       });
     }
   }, [planId, queryClient, toast, deliverables]);
+
+  const confirmDeleteActivity = useCallback(async () => {
+    if (!deleteTarget) return;
+    const dbId = String(deleteTarget.id || '').replace(/^(ora-|ws-)/, '');
+    try {
+      const client = supabase as any;
+      await client.from('ora_plan_activities').delete().eq('id', dbId);
+
+      const { data: planRow } = await client.from('orp_plans').select('wizard_state').eq('id', planId).single();
+      if (planRow?.wizard_state) {
+        const ws = planRow.wizard_state as any;
+        const wsActivities: any[] = ws.activities || [];
+        const updated = wsActivities.filter((a: any) => String(a.id || '') !== dbId);
+        await client.from('orp_plans').update({ wizard_state: { ...ws, activities: updated } }).eq('id', planId);
+      }
+
+      // Remove linked tasks
+      await client.from('user_tasks').delete().filter('metadata->>ora_plan_activity_id', 'eq', dbId);
+
+      queryClient.invalidateQueries({ queryKey: ['orp-plan', planId] });
+      queryClient.invalidateQueries({ queryKey: ['user-tasks'] });
+      toast({ title: 'Activity deleted', description: deleteTarget.name });
+    } catch (e) {
+      console.error(e);
+      toast({ title: 'Failed to delete activity', variant: 'destructive' as any });
+    } finally {
+      setDeleteTarget(null);
+    }
+  }, [deleteTarget, planId, queryClient, toast]);
+
 
   const toggleColumn = (key: ColumnKey) => {
     setVisibleColumns(prev => {
@@ -1506,21 +1549,14 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                 <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
               </div>
               {!hideToolbar && !readOnly && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium gap-1 border-primary/30 text-primary hover:bg-primary/10">
-                      <Plus className="w-3 h-3" /> Add Activity
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setShowCatalogDialog(true)}>
-                      <BookOpen className="w-4 h-4 mr-2" /> From Catalog
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleAddCustom()}>
-                      <PenLine className="w-4 h-4 mr-2" /> Custom Activity
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2 text-[10px] font-medium gap-1 border-primary/30 text-primary hover:bg-primary/10"
+                  onClick={() => setShowCatalogDialog(true)}
+                >
+                  <Plus className="w-3 h-3" /> Add Activity
+                </Button>
               )}
             </div>
           </div>
@@ -1555,7 +1591,12 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             <TooltipProvider delayDuration={300}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={isAllExpanded ? collapseAll : expandAll}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground/60 hover:text-foreground hover:bg-muted transition-colors"
+                    onClick={isAllExpanded ? collapseAll : expandAll}
+                  >
                     <ChevronsUpDown className="w-3.5 h-3.5" />
                   </Button>
                 </TooltipTrigger>
@@ -1563,6 +1604,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               </Tooltip>
 
               <div className="w-px h-5 bg-border" />
+
 
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1637,32 +1679,39 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             <div className="flex-1 min-w-8" />
 
             {/* Active zoom preset - click to switch */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2.5 text-[10px] font-semibold text-muted-foreground/70 hover:text-foreground hover:bg-muted transition-colors"
-                >
-                  {activeZoomPreset}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-1" align="end">
-                <div className="flex items-center gap-0.5">
-                  {ZOOM_PRESETS.map(p => (
-                    <Button
-                      key={p.label}
-                      variant={activeZoomPreset === p.label ? 'default' : 'ghost'}
-                      size="sm"
-                      className="h-7 px-2.5 text-[10px] font-semibold"
-                      onClick={() => { setActiveZoomPreset(p.label); setZoomToFitDays(p.days); }}
-                    >
-                      {p.label}
-                    </Button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2.5 text-[10px] font-semibold text-muted-foreground/70 hover:text-foreground hover:bg-muted transition-colors"
+                      >
+                        {activeZoomPreset}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-1" align="end">
+                      <div className="flex items-center gap-0.5">
+                        {ZOOM_PRESETS.map(p => (
+                          <Button
+                            key={p.label}
+                            variant={activeZoomPreset === p.label ? 'default' : 'ghost'}
+                            size="sm"
+                            className="h-7 px-2.5 text-[10px] font-semibold"
+                            onClick={() => { setActiveZoomPreset(p.label); setZoomToFitDays(p.days); }}
+                          >
+                            {p.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </TooltipTrigger>
+                <TooltipContent side="bottom"><p>Time range</p></TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             <div className="group flex items-center gap-0.5 rounded-md p-0.5 border border-transparent hover:border-border hover:bg-muted/40 transition-colors">
               <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground/60 group-hover:text-foreground transition-colors" onClick={handleZoomOut} disabled={zoomLevel === ZOOM_LEVELS[0]}>
@@ -1675,22 +1724,16 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             </div>
 
             {!hideToolbar && !readOnly && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium gap-1 border-primary/30 text-primary hover:bg-primary/10">
-                    <Plus className="w-3 h-3" /> Add Activity
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setShowCatalogDialog(true)}>
-                    <BookOpen className="w-4 h-4 mr-2" /> From Catalog
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleAddCustom()}>
-                    <PenLine className="w-4 h-4 mr-2" /> Custom Activity
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 px-2 text-[10px] font-medium gap-1 border-primary/30 text-primary hover:bg-primary/10"
+                onClick={() => setShowCatalogDialog(true)}
+              >
+                <Plus className="w-3 h-3" /> Add Activity
+              </Button>
             )}
+
           </div>
         </div>
       </CardHeader>
@@ -1757,7 +1800,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               <div className="shrink-0 border-r" style={{ width: leftPanelWidth }}>
                 {visibleRows.map((row, index) => {
                   const { deliverable, depth, hasChildren, activityCode } = row;
-                  const idColors = ID_BADGE_PALETTE[index % ID_BADGE_PALETTE.length];
+                  const idColors = getIdBadgeColors(activityCode);
                   const isExpanded = expandedCodes.has(activityCode);
                   const isParent = hasChildren;
                   const hasDates = deliverable.start_date && deliverable.end_date;
@@ -1816,7 +1859,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                             isCritical && "text-destructive font-semibold"
                           )} title={deliverable.deliverable?.name}>
                             {deliverable.deliverable?.name}
-                            {newlyAddedIds.has(deliverable.deliverable?.id) && (
+                            {(newlyAddedIds.has(deliverable.deliverable?.id) || newlyAddedIds.has(activityCode) || newlyAddedIds.has(String(deliverable.id || '').replace(/^(ora-|ws-)/, ''))) && (
                               <span className="ml-1.5 inline-flex items-center gap-0.5 px-1.5 py-0 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-[8px] font-semibold uppercase tracking-wide align-middle animate-pulse">
                                 New
                               </span>
@@ -1856,7 +1899,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                     </div>
                       </ContextMenuTrigger>
                       <ContextMenuContent className="w-48">
-                        <ContextMenuItem onClick={() => openActivitySheet(deliverable)} className="text-xs gap-2">
+                        <ContextMenuItem onClick={() => openActivitySheet(deliverable)} className="text-xs gap-2 cursor-pointer focus:bg-accent">
                           <Eye className="h-3.5 w-3.5" />
                           View Details
                         </ContextMenuItem>
@@ -1864,7 +1907,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                           <>
                             <ContextMenuSeparator />
                             <ContextMenuItem
-                              className="text-xs gap-2"
+                              className="text-xs gap-2 cursor-pointer focus:bg-accent"
                               onClick={() => {
                                 const reconciled = getReconciledActivityState(deliverable);
                                 const nextStatus = reconciled.status === 'NOT_STARTED' ? 'IN_PROGRESS' : reconciled.status === 'IN_PROGRESS' ? 'COMPLETED' : 'NOT_STARTED';
@@ -1880,7 +1923,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                               Cycle Status
                             </ContextMenuItem>
                             <ContextMenuItem
-                              className="text-xs gap-2"
+                              className="text-xs gap-2 cursor-pointer focus:bg-accent"
                               onClick={() => {
                                 const predIds = deliverable._predecessorIds || [];
                                 const siblings = visibleRows.filter(r => r.activityCode !== activityCode && !r.hasChildren);
@@ -1893,11 +1936,20 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                               <GitBranch className="h-3.5 w-3.5" />
                               Add Predecessor
                             </ContextMenuItem>
+                            <ContextMenuSeparator />
+                            <ContextMenuItem
+                              className="text-xs gap-2 cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+                              onClick={() => setDeleteTarget({ id: deliverable.id, name: deliverable.deliverable?.name || 'this activity' })}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Delete Activity
+                            </ContextMenuItem>
                           </>
                         )}
                       </ContextMenuContent>
                     </ContextMenu>
                   );
+
                 })}
               </div>
 
@@ -2185,6 +2237,24 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
       )}
 
       <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} existingCodes={existingActivityCodes} onAdd={handleAddFromCatalog} onCancelEmpty={handleCatalogCancelEmpty} />
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="z-[200]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Activity</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove <span className="font-medium text-foreground">{deleteTarget?.name}</span> and its associated task. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteActivity} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <TaskDetailSheet
         task={selectedReviewTask}
         open={!!selectedReviewTask}
