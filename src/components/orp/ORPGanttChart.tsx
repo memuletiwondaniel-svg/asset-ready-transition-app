@@ -40,6 +40,8 @@ interface ORPGanttChartProps {
   highlightActivityCode?: string;
   /** When true, opens the "Add from Catalog" dialog on mount */
   autoOpenAddActivity?: boolean;
+  /** Called when the auto-opened Add Activity dialog is dismissed without adding anything */
+  onAutoAddCancel?: () => void;
 }
 
 const ZOOM_LEVELS = [0.15, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
