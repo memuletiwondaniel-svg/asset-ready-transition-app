@@ -358,6 +358,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   const [showCriticalPath, setShowCriticalPath] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<Set<ColumnKey>>(() => new Set(['index', 'id', 'start', 'status']));
   const [hasInitialZoom, setHasInitialZoom] = useState(false);
+  const [activeZoomPreset, setActiveZoomPreset] = useState<string>('6M');
 
   // Fetch plan data for project info (needed for P2A wizard) and status (for auto-heal)
   const { data: planData } = useQuery({
