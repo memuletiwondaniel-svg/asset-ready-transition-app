@@ -317,6 +317,21 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               </div>
             )}
           </div>
+
+          {showVCRList && canCreateVCR && (
+            <div className="flex-shrink-0 pt-2 mt-1 border-t border-border/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); setShowCreateVCR(true); }}
+                className="group/cta w-full flex items-center justify-center gap-1.5 h-8 rounded-md text-xs font-medium text-muted-foreground/70 hover:text-primary hover:bg-primary/5 transition-all relative z-10"
+              >
+                <Plus className="h-3.5 w-3.5 transition-transform group-hover/cta:rotate-90 duration-200" />
+                <span>Add VCR</span>
+              </button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
