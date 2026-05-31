@@ -233,7 +233,7 @@ export const ORPActivityPlanWidget: React.FC<ORPActivityPlanWidgetProps> = ({
   // Active plan (PENDING_APPROVAL, APPROVED, IN_PROGRESS, COMPLETED)
   return (
     <>
-      <Card className="h-full flex flex-col transition-all duration-300 group overflow-hidden">
+      <Card className="h-full flex flex-col transition-all duration-300 group overflow-hidden glass-card glass-card-hover">
         <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing flex-shrink-0 pb-3">
           <CardTitle className="text-lg flex items-center gap-3">
             <button
