@@ -350,15 +350,23 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                 </ScrollArea>
               </div>
             ) : (
-              <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-3 space-y-4">
-                <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 px-4 py-3 flex items-start gap-2">
-                  <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                  <p className="text-xs text-muted-foreground">
-                    Define an activity that isn't in the catalogue. It will be added to your selection and you can schedule it in the next step.
-                  </p>
-                </div>
+              <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-3 space-y-3">
                 <div>
-                  <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Activity Name *</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Activity Name *</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
+                            <Lightbulb className="w-3.5 h-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="text-xs max-w-[260px]">
+                          Define an activity that isn't in the catalogue — schedule it in the next step.
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <Input
                     value={customName}
                     onChange={(e) => setCustomName(e.target.value)}
@@ -372,7 +380,7 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                     value={customDesc}
                     onChange={(e) => setCustomDesc(e.target.value)}
                     placeholder="Briefly describe the scope and objectives..."
-                    rows={4}
+                    rows={3}
                     className="mt-1.5 resize-none"
                   />
                 </div>
