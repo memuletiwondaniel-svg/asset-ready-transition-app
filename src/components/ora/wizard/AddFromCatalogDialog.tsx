@@ -416,22 +416,29 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-                  {selectedList.map(a => (
-                    <span
-                      key={a.id}
-                      className="inline-flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-full bg-background border text-xs"
-                    >
-                      <span className="font-mono text-[10px] text-muted-foreground">{formatActivityCode(a.activityCode)}</span>
-                      <span className="max-w-[180px] truncate">{a.activity}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeFromSelection(a.id)}
-                        className="hover:bg-muted rounded-full p-0.5"
+                  {selectedList.map(a => {
+                    const letter = getLetter(a.activityCode);
+                    const codeColor = LETTER_COLOR[letter] || 'text-muted-foreground bg-muted';
+                    return (
+                      <span
+                        key={a.id}
+                        className="group/chip inline-flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full bg-background border text-xs hover:border-foreground/30 transition-colors"
                       >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
+                        <span className={cn('font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded', codeColor)}>
+                          {formatActivityCode(a.activityCode)}
+                        </span>
+                        <span className="max-w-[180px] truncate">{a.activity}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeFromSelection(a.id)}
+                          className="opacity-0 group-hover/chip:opacity-100 text-destructive hover:bg-destructive/10 rounded-full p-0.5 transition-all"
+                          aria-label="Remove"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}
