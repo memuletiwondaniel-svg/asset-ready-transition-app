@@ -1515,21 +1515,14 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                 <Input placeholder="Search deliverables..." value={internalSearchQuery} onChange={(e) => setInternalSearchQuery(e.target.value)} className="pl-9" />
               </div>
               {!hideToolbar && !readOnly && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium gap-1 border-primary/30 text-primary hover:bg-primary/10">
-                      <Plus className="w-3 h-3" /> Add Activity
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setShowCatalogDialog(true)}>
-                      <BookOpen className="w-4 h-4 mr-2" /> From Catalog
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleAddCustom()}>
-                      <PenLine className="w-4 h-4 mr-2" /> Custom Activity
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2 text-[10px] font-medium gap-1 border-primary/30 text-primary hover:bg-primary/10"
+                  onClick={() => setShowCatalogDialog(true)}
+                >
+                  <Plus className="w-3 h-3" /> Add Activity
+                </Button>
               )}
             </div>
           </div>
