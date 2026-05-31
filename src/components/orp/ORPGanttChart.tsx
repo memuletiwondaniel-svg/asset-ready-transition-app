@@ -1575,7 +1575,8 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
   }
 
   return (
-    <Card>
+    <Card className="flex flex-col h-full min-h-0">
+
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Gantt Chart</CardTitle>
