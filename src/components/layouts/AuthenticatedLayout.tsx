@@ -8,7 +8,8 @@ import { useDirectorRedirect } from '@/hooks/useDirectorRedirect';
 import { Loader2 } from 'lucide-react';
 import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { MobileBottomNav } from '@/components/mobile/MobileBottomNav';
-import { hasSessionEpochMismatch, performHardReset } from '@/lib/app-reset';
+import { hasSessionEpochMismatch, performHardReset, syncTabSessionEpoch } from '@/lib/app-reset';
+import { shouldSkipSelfReload } from '@/lib/runtime-env';
 
 /**
  * Persistent layout for authenticated pages.
@@ -27,6 +28,10 @@ export const AuthenticatedLayout: React.FC = () => {
 
   useEffect(() => {
     if (hasSessionEpochMismatch()) {
+      if (shouldSkipSelfReload()) {
+        syncTabSessionEpoch();
+        return;
+      }
       void performHardReset();
     }
   }, [location.pathname]);
