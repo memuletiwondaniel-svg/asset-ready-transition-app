@@ -243,10 +243,10 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
             </div>
           ) : (
             <div className="flex items-center justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 <DialogTitle className="text-base">Schedule Activities</DialogTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Set a start date and duration for each activity, or skip to add them now.
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  Set start date and duration, or skip to add now.
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
