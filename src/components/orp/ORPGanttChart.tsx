@@ -1564,7 +1564,12 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             <TooltipProvider delayDuration={300}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={isAllExpanded ? collapseAll : expandAll}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground/60 hover:text-foreground hover:bg-muted transition-colors"
+                    onClick={isAllExpanded ? collapseAll : expandAll}
+                  >
                     <ChevronsUpDown className="w-3.5 h-3.5" />
                   </Button>
                 </TooltipTrigger>
@@ -1572,6 +1577,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               </Tooltip>
 
               <div className="w-px h-5 bg-border" />
+
 
               <Tooltip>
                 <TooltipTrigger asChild>
