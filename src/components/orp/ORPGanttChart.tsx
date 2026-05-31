@@ -1398,7 +1398,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             getReconciledActivityState={getReconciledActivityState}
           />
         </Card>
-        <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
+        <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} existingCodes={existingActivityCodes} onAdd={handleAddFromCatalog} onCancelEmpty={handleCatalogCancelEmpty} />
         <TaskDetailSheet
           task={selectedReviewTask}
           open={!!selectedReviewTask}
@@ -1520,7 +1520,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
             </div>
           </div>
         </CardContent>
-        <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
+        <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} existingCodes={existingActivityCodes} onAdd={handleAddFromCatalog} onCancelEmpty={handleCatalogCancelEmpty} />
       </Card>
     );
   }
@@ -2132,7 +2132,7 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
         </div>
       )}
 
-      <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} onAdd={handleAddFromCatalog} />
+      <AddFromCatalogDialog open={showCatalogDialog} onOpenChange={setShowCatalogDialog} existingIds={existingActivityIds} existingCodes={existingActivityCodes} onAdd={handleAddFromCatalog} onCancelEmpty={handleCatalogCancelEmpty} />
       <TaskDetailSheet
         task={selectedReviewTask}
         open={!!selectedReviewTask}
