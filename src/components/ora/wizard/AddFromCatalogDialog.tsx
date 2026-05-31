@@ -219,25 +219,35 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
       <DialogContent className="max-w-2xl flex flex-col gap-0 p-0 sm:h-[680px] sm:max-h-[88vh] overflow-hidden">
         {/* Header with step indicator */}
         <DialogHeader className="px-6 pt-6 pb-3 border-b">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <DialogTitle className="text-base">
-                {step === 'select' ? 'Add Activity' : 'Schedule Activities'}
-              </DialogTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {step === 'select'
-                  ? 'Pick from the catalog or define a custom activity'
-                  : 'Set when each new activity should start (optional — you can do this later)'}
-              </p>
+          {step === 'select' ? (
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <DialogTitle className="text-base">Add Activity</DialogTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Pick from the catalog or define a custom activity
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <StepDot index={1} label="Select" active={step === 'select'} done={false} />
+                <div className="h-px w-6 bg-border" />
+                <StepDot index={2} label="Schedule" active={false} done={false} />
+              </div>
             </div>
-            {/* Stepper */}
-            <div className="flex items-center gap-2 shrink-0">
-              <StepDot index={1} label="Select" active={step === 'select'} done={step === 'schedule'} />
-              <div className={cn('h-px w-6 transition-colors', step === 'schedule' ? 'bg-primary' : 'bg-border')} />
-              <StepDot index={2} label="Schedule" active={step === 'schedule'} done={false} />
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-baseline gap-2">
+                <DialogTitle className="text-base">Schedule Activities</DialogTitle>
+                <span className="text-[11px] text-muted-foreground font-normal">(Optional)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <StepDot index={1} label="Select" active={false} done={true} />
+                <div className="h-px w-6 bg-primary" />
+                <StepDot index={2} label="Schedule" active={true} done={false} />
+              </div>
             </div>
-          </div>
+          )}
         </DialogHeader>
+
 
         {/* Body */}
         {step === 'select' ? (
