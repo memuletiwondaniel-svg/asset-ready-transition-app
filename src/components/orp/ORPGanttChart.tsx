@@ -123,6 +123,18 @@ function getPhasePrefix(code: string): string {
   return code.split('-')[0];
 }
 
+const CODE_PREFIX_TO_LETTER: Record<string, string> = {
+  IDN: 'I', ASS: 'A', SEL: 'S', DEF: 'D', EXE: 'E', OPR: 'O', CUSTOM: 'C',
+};
+function formatActivityCodeDisplay(code: string): string {
+  if (!code) return '';
+  if (code.startsWith('VCR-')) return code;
+  const m = code.match(/^([A-Za-z]+)[-.](.+)$/);
+  if (!m) return code;
+  const letter = CODE_PREFIX_TO_LETTER[m[1].toUpperCase()] || m[1];
+  return `${letter}.${m[2]}`;
+}
+
 function getParentCode(code: string): string | null {
   if (!code) return null;
   const lastDotIdx = code.lastIndexOf('.');
