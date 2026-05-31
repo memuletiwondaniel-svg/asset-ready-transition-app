@@ -67,6 +67,7 @@ export const ORPGanttOverlay: React.FC<ORPGanttOverlayProps> = ({
   isReadOnly: externalReadOnly,
   highlightActivityCode,
   autoOpenAddActivity,
+  onAutoAddCancel,
 }) => {
   const [approvalsOpen, setApprovalsOpen] = useState(false);
   const isMobile = useIsMobile();
