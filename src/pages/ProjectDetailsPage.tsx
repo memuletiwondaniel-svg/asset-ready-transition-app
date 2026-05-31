@@ -82,7 +82,7 @@ const SortableWidget: React.FC<SortableWidgetProps> = ({ id, children, onHide, c
   };
 
   return (
-    <div ref={setNodeRef} style={style} className={cn("group/widget relative h-full", className)}>
+    <div ref={setNodeRef} style={style} className={cn("group/widget relative h-full min-h-0 overflow-hidden", className)}>
       {React.cloneElement(children as React.ReactElement, {
         dragAttributes: attributes,
         dragListeners: listeners,
@@ -299,7 +299,7 @@ export default function ProjectDetailsPage() {
                   onDragEnd={handleDragEnd}
                 >
                   <SortableContext items={visibleWidgets} strategy={rectSortingStrategy}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 min-h-0 items-stretch">
+                    <div className="grid grid-cols-1 md:grid-cols-2 auto-rows-fr gap-6 flex-1 min-h-0 items-stretch overflow-hidden">
                       {visibleWidgets.map((widgetId) => (
                         <SortableWidget 
                           key={widgetId} 
