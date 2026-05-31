@@ -188,7 +188,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   return (
     <>
-      <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-lg hover:scale-[1.02] hover:border-red-500/20 group">
+      <Card className="h-full flex flex-col transition-all duration-300 group overflow-hidden">
         <CardHeader {...dragAttributes} {...dragListeners} className="cursor-grab active:cursor-grabbing pb-3">
           <CardTitle className="text-lg flex items-center gap-3">
             <button
