@@ -1567,9 +1567,14 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant={showRelationships ? 'default' : 'outline'}
+                    variant="ghost"
                     size="icon"
-                    className={cn("h-7 w-7", showRelationships && "bg-primary text-primary-foreground")}
+                    className={cn(
+                      "h-7 w-7 transition-colors",
+                      showRelationships
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                        : "text-muted-foreground/60 hover:text-foreground hover:bg-muted"
+                    )}
                     onClick={() => setShowRelationships(!showRelationships)}
                   >
                     <GitBranch className="w-3.5 h-3.5" />
@@ -1581,9 +1586,14 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant={showCriticalPath ? 'default' : 'outline'}
+                    variant="ghost"
                     size="icon"
-                    className={cn("h-7 w-7", showCriticalPath && "bg-destructive text-destructive-foreground hover:bg-destructive/90")}
+                    className={cn(
+                      "h-7 w-7 transition-colors",
+                      showCriticalPath
+                        ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        : "text-muted-foreground/60 hover:text-foreground hover:bg-muted"
+                    )}
                     onClick={() => setShowCriticalPath(!showCriticalPath)}
                   >
                     <Route className="w-3.5 h-3.5" />
@@ -1596,7 +1606,11 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
                 <TooltipTrigger asChild>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" size="icon" className="h-7 w-7">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground/60 hover:text-foreground hover:bg-muted transition-colors"
+                      >
                         <Columns3 className="w-3.5 h-3.5" />
                       </Button>
                     </PopoverTrigger>
@@ -1622,21 +1636,41 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
 
             <div className="flex-1 min-w-8" />
 
-            <div className="flex items-center gap-1">
-              {ZOOM_PRESETS.map(p => (
-                <Button key={p.label} variant="outline" size="sm" className="h-6 px-2 text-[10px] font-medium" onClick={() => setZoomToFitDays(p.days)}>
-                  {p.label}
+            {/* Active zoom preset - click to switch */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2.5 text-[10px] font-semibold text-muted-foreground/70 hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  {activeZoomPreset}
                 </Button>
-              ))}
-            </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-1" align="end">
+                <div className="flex items-center gap-0.5">
+                  {ZOOM_PRESETS.map(p => (
+                    <Button
+                      key={p.label}
+                      variant={activeZoomPreset === p.label ? 'default' : 'ghost'}
+                      size="sm"
+                      className="h-7 px-2.5 text-[10px] font-semibold"
+                      onClick={() => { setActiveZoomPreset(p.label); setZoomToFitDays(p.days); }}
+                    >
+                      {p.label}
+                    </Button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
 
-            <div className="flex items-center gap-1 border rounded-md p-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomOut} disabled={zoomLevel === ZOOM_LEVELS[0]}>
-                <ZoomOut className="h-4 w-4" />
+            <div className="group flex items-center gap-0.5 rounded-md p-0.5 border border-transparent hover:border-border hover:bg-muted/40 transition-colors">
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground/60 group-hover:text-foreground transition-colors" onClick={handleZoomOut} disabled={zoomLevel === ZOOM_LEVELS[0]}>
+                <ZoomOut className="h-3.5 w-3.5" />
               </Button>
-              <span className="text-xs font-medium w-10 text-center">{Math.round(zoomLevel * 100)}%</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomIn} disabled={zoomLevel === ZOOM_LEVELS[ZOOM_LEVELS.length - 1]}>
-                <ZoomIn className="h-4 w-4" />
+              <span className="text-[10px] font-medium w-9 text-center text-muted-foreground/70 group-hover:text-foreground transition-colors">{Math.round(zoomLevel * 100)}%</span>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground/60 group-hover:text-foreground transition-colors" onClick={handleZoomIn} disabled={zoomLevel === ZOOM_LEVELS[ZOOM_LEVELS.length - 1]}>
+                <ZoomIn className="h-3.5 w-3.5" />
               </Button>
             </div>
 
