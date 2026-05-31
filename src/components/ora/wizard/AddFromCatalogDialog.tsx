@@ -234,12 +234,14 @@ export const AddFromCatalogDialog: React.FC<Props> = ({ open, onOpenChange, exis
               </div>
             </div>
           ) : (
-            <div className="space-y-2">
-              <div className="flex items-baseline gap-2">
+            <div className="flex items-center justify-between gap-4">
+              <div>
                 <DialogTitle className="text-base">Schedule Activities</DialogTitle>
-                <span className="text-[11px] text-muted-foreground font-normal">(Optional)</span>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Set a start date and duration for each activity, or skip to add them now.
+                </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <StepDot index={1} label="Select" active={false} done={true} />
                 <div className="h-px w-6 bg-primary" />
                 <StepDot index={2} label="Schedule" active={true} done={false} />
