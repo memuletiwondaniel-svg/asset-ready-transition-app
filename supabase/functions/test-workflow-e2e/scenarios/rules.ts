@@ -192,8 +192,8 @@ function buildReviewRule(rule: "R3" | "R4"): Scenario["run"] {
   return async (ctx) => {
     const svc = svcOf(ctx);
     const spec = SPEC[rule];
+    const e = spec.expects[0];
     const planId = await ensureOrpPlan(svc, ctx);
-    // Only seed/approve ORA Lead once (R3 runs first; R4 finds existing APPROVED row).
     const { data: existing } = await svc
       .from("orp_approvals")
       .select("status")
@@ -206,22 +206,21 @@ function buildReviewRule(rule: "R3" | "R4"): Scenario["run"] {
         return { status: "fail", expected: "ORA Lead UPDATE APPROVED allowed", observed: err };
       }
     }
-    const assignee = ctx.users[spec.assigneeRole];
-    // Seed assertion — R3/R4's trigger should have seeded PHL+DPD PENDING rows
-    // when ORA Lead flipped APPROVED. A missing seed here = R5 can't approve.
-    const seedErr = await assertSeed(svc, planId, spec.assigneeRole, assignee.id);
+    const assignee = ctx.users[e.assigneeRole];
+    const seedErr = await assertSeed(svc, planId, e.assigneeRole, assignee.id);
     if (seedErr) {
-      return { status: "fail", expected: `${spec.assigneeRole} seed after ORA Lead approval`, observed: seedErr };
+      return { status: "fail", expected: `${e.assigneeRole} seed after ORA Lead approval`, observed: seedErr };
     }
-    const rows = await findTask(svc, ctx.project.id, spec.action, assignee.id);
+    const rows = await findTask(svc, ctx.project.id, e.action, assignee.id);
     if (rows.length === 0) {
       return {
         status: "fail",
-        expected: { title: expandTitle(spec.title, ctx.project.code), assignee: spec.assigneeRole, status: spec.status },
-        observed: { count: 0, note: `no trigger creates review_ora_plan task for ${spec.assigneeRole} after ORA Lead approval` },
+        expected: { title: expandTitle(e.title, ctx.project.code), assignee: e.assigneeRole, status: spec.status },
+        observed: { count: 0, note: `no trigger creates review_ora_plan task for ${e.assigneeRole} after ORA Lead approval` },
       };
     }
     return { status: "pass", observed: { taskId: rows[0].id } };
+
   };
 }
 
