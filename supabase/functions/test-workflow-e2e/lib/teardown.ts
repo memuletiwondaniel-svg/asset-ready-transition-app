@@ -44,6 +44,16 @@ export async function sweepByRunId(
     );
   }
 
+  // Sweep harness_users by run_id explicitly. ON DELETE CASCADE on user_id
+  // would also catch these when auth.users rows are deleted below, but the
+  // explicit sweep guarantees zero orphan membership rows even if a user
+  // delete fails partway. Run BEFORE auth.users deletion so a failure here
+  // is visible in `errors` rather than masked by the cascade.
+  await safe("harness_users", () =>
+    svc.from("harness_users").delete({ count: "exact" }).eq("run_id", runId) as any,
+  );
+
+
   // auth.users — find by email pattern then delete one by one (admin API has no bulk delete)
   try {
     const { data: list } = await svc.auth.admin.listUsers({ page: 1, perPage: 1000 });

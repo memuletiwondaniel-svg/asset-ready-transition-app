@@ -2774,6 +2774,24 @@ export type Database = {
         }
         Relationships: []
       }
+      harness_users: {
+        Row: {
+          created_at: string
+          run_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          run_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          run_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       hubs: {
         Row: {
           created_at: string
