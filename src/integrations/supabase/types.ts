@@ -12511,6 +12511,7 @@ export type Database = {
       user_tasks: {
         Row: {
           created_at: string | null
+          dedupe_key: string | null
           description: string | null
           display_order: number | null
           due_date: string | null
@@ -12531,6 +12532,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          dedupe_key?: string | null
           description?: string | null
           display_order?: number | null
           due_date?: string | null
@@ -12551,6 +12553,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          dedupe_key?: string | null
           description?: string | null
           display_order?: number | null
           due_date?: string | null
