@@ -157,7 +157,12 @@ const runR2: Scenario["run"] = async (ctx) => {
   if (upErr) {
     return { status: "fail", expected: "submit allowed for Sr ORA Engr", observed: upErr.message };
   }
+  // Seed assertion — R2's trigger should have seeded ORA Lead PENDING row.
   const oraLead = ctx.users[spec.assigneeRole];
+  const seedErr = await assertSeed(svc, planId, "ORA Lead", oraLead.id);
+  if (seedErr) {
+    return { status: "fail", expected: "ORA Lead orp_approvals seed after submit", observed: seedErr };
+  }
   const rows = await findTask(svc, ctx.project.id, spec.action, oraLead.id);
   if (rows.length === 0) {
     return {
