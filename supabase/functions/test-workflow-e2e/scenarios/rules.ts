@@ -40,6 +40,35 @@ function expandTitle(tmpl: string, projCode: string, activity = ""): string {
   return tmpl.replace("{projCode}", projCode).replace("{activity}", activity);
 }
 
+// Assert that the trigger seeded an orp_approvals row with the shape the
+// Mig 6 UPDATE policy expects: status=PENDING, approver_user_id = resolved
+// user, cycle=1. Returns null on OK, mismatch string on failure. A missing
+// or wrong-shape seed surfaces as the cause of an R3/R4/R5 fail, not as a
+// downstream task-count mystery.
+async function assertSeed(
+  svc: SupabaseClient,
+  planId: string,
+  role: string,
+  expectedUserId: string,
+): Promise<string | null> {
+  const { data, error } = await svc
+    .from("orp_approvals")
+    .select("status,approver_user_id,cycle")
+    .eq("orp_plan_id", planId)
+    .eq("approver_role", role)
+    .eq("cycle", 1)
+    .maybeSingle();
+  if (error) return `seed lookup error: ${error.message}`;
+  if (!data) return `seed missing for role=${role} cycle=1`;
+  if (data.status !== "PENDING" && data.status !== "APPROVED") {
+    return `seed status=${data.status} (expected PENDING or APPROVED)`;
+  }
+  if (data.approver_user_id !== expectedUserId) {
+    return `seed approver_user_id=${data.approver_user_id} (expected ${expectedUserId})`;
+  }
+  return null;
+}
+
 async function ensureOrpPlan(svc: SupabaseClient, ctx: any): Promise<string> {
   const existing = await svc
     .from("orp_plans")
