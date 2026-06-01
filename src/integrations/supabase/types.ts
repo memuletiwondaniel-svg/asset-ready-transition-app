@@ -9132,6 +9132,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_favorite: boolean | null
+          is_test_project: boolean
           plant_id: string | null
           project_id_number: string
           project_id_prefix: string
@@ -9151,6 +9152,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_favorite?: boolean | null
+          is_test_project?: boolean
           plant_id?: string | null
           project_id_number: string
           project_id_prefix: string
@@ -9170,6 +9172,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_favorite?: boolean | null
+          is_test_project?: boolean
           plant_id?: string | null
           project_id_number?: string
           project_id_prefix?: string
