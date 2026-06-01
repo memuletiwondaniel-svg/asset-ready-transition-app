@@ -153,11 +153,15 @@ export const useORPPlans = () => {
       if (deliverablesError) throw deliverablesError;
 
       // Create approvals
+      // Mig 6: INSERT CHECK locks role to spec set { 'Project Hub Lead',
+      // 'Dep. Plant Director' } with status=PENDING / approver_user_id=NULL /
+      // approved_at=NULL / cycle=1. Old labels ('Project Manager',
+      // 'Plant Director') are off-spec and would be rejected at write time.
       const { error: approvalsError } = await supabase
         .from('orp_approvals')
         .insert([
-          { orp_plan_id: plan.id, approver_role: 'Project Manager' },
-          { orp_plan_id: plan.id, approver_role: 'Plant Director' }
+          { orp_plan_id: plan.id, approver_role: 'Project Hub Lead' },
+          { orp_plan_id: plan.id, approver_role: 'Dep. Plant Director' }
         ]);
 
       if (approvalsError) throw approvalsError;
