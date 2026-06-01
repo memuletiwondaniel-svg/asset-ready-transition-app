@@ -32,8 +32,8 @@ const runB: Scenario["run"] = async (ctx) => {
   if (projPts.length < 2) return { status: "fail", expected: "2 VCR points to compare", observed: { found: projPts.length } };
   const approvedPt = projPts[0];
   const unapprovedPt = projPts[1];
-  const { data: g1 } = await svc.rpc("vcr_plan_is_approved", { p_point_id: approvedPt.id });
-  const { data: g2 } = await svc.rpc("vcr_plan_is_approved", { p_point_id: unapprovedPt.id });
+  const { data: g1 } = await svc.rpc("vcr_plan_is_approved", { _point_id: approvedPt.id });
+  const { data: g2 } = await svc.rpc("vcr_plan_is_approved", { _point_id: unapprovedPt.id });
   if (g1 !== true) return { status: "fail", expected: "approved point → gate=true", observed: { gate: g1, pointId: approvedPt.id } };
   if (g2 !== false) return { status: "fail", expected: "unapproved point → gate=false", observed: { gate: g2, pointId: unapprovedPt.id } };
   return { status: "pass", observed: { approved: g1, unapproved: g2 } };
@@ -165,7 +165,7 @@ const runH: Scenario["run"] = async (ctx) => {
   if (pt) {
     const { error: gErr } = await svc.from("p2a_handover_points").update({ gate_model: "legacy" }).eq("id", pt.id);
     if (gErr) fails.push(`set legacy failed: ${gErr.message}`);
-    const { data: gateLegacy } = await svc.rpc("vcr_plan_is_approved", { p_point_id: pt.id });
+    const { data: gateLegacy } = await svc.rpc("vcr_plan_is_approved", { _point_id: pt.id });
     if (gateLegacy !== true) fails.push(`legacy gate returned ${gateLegacy}, expected true`);
     // restore
     await svc.from("p2a_handover_points").update({ gate_model: "spec_v2" }).eq("id", pt.id);
