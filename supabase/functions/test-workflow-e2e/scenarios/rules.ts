@@ -709,3 +709,11 @@ const runR22: Scenario["run"] = async (ctx) => {
   return { status: "pass", observed: { R22a: "ok", R22b_parent: itpParent.id, children: children?.length ?? 0, parent_progress: parentRow?.progress_percentage ?? null } };
 };
 
+
+export const ruleScenarios: Scenario[] = [
+  ...ruleList,
+  { id: "R19", name: "VCR approved → checklist scoped to Sr ORA Engr",                    dependsOn: ["R18"], run: buildChecklistRule("R19") },
+  { id: "R20", name: "VCR approved → 2 CMMS deliverables → CMMS Lead",                    dependsOn: ["R18"], run: runR20 },
+  { id: "R21", name: "VCR approved → checklist scoped to Construction Lead",              dependsOn: ["R18"], run: buildChecklistRule("R21") },
+  { id: "R22", name: "VCR approved → Commissioning Lead checklist + ITP rollup",          dependsOn: ["R18"], run: runR22 },
+];
