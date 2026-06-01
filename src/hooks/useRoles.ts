@@ -43,14 +43,23 @@ export const useRoles = () => {
 
   const addRole = async (roleName: string) => {
     try {
+      // Mig 5b: roles.code is required (NOT NULL, UNIQUE, ^[A-Z][A-Z0-9_]*$).
+      // Derive a slug from the display name to match the back-fill rule.
+      const code = roleName
+        .replace(/[^A-Za-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .toUpperCase();
+
       const { data, error: insertError } = await supabase
         .from('roles')
         .insert({
           name: roleName,
-          is_active: true
+          code,
+          is_active: true,
         })
         .select()
         .single();
+
 
       if (insertError) {
         throw insertError;
