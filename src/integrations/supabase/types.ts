@@ -14033,6 +14033,10 @@ export type Database = {
         Args: { item_unique_id: string; new_position: number }
         Returns: undefined
       }
+      resolve_project_role_user: {
+        Args: { p_project_id: string; p_role_label: string }
+        Returns: string
+      }
       search_team_members: {
         Args: { search_term?: string }
         Returns: {
