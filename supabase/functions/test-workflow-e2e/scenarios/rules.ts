@@ -40,6 +40,35 @@ function expandTitle(tmpl: string, projCode: string, activity = ""): string {
   return tmpl.replace("{projCode}", projCode).replace("{activity}", activity);
 }
 
+// Assert that the trigger seeded an orp_approvals row with the shape the
+// Mig 6 UPDATE policy expects: status=PENDING, approver_user_id = resolved
+// user, cycle=1. Returns null on OK, mismatch string on failure. A missing
+// or wrong-shape seed surfaces as the cause of an R3/R4/R5 fail, not as a
+// downstream task-count mystery.
+async function assertSeed(
+  svc: SupabaseClient,
+  planId: string,
+  role: string,
+  expectedUserId: string,
+): Promise<string | null> {
+  const { data, error } = await svc
+    .from("orp_approvals")
+    .select("status,approver_user_id,cycle")
+    .eq("orp_plan_id", planId)
+    .eq("approver_role", role)
+    .eq("cycle", 1)
+    .maybeSingle();
+  if (error) return `seed lookup error: ${error.message}`;
+  if (!data) return `seed missing for role=${role} cycle=1`;
+  if (data.status !== "PENDING" && data.status !== "APPROVED") {
+    return `seed status=${data.status} (expected PENDING or APPROVED)`;
+  }
+  if (data.approver_user_id !== expectedUserId) {
+    return `seed approver_user_id=${data.approver_user_id} (expected ${expectedUserId})`;
+  }
+  return null;
+}
+
 async function ensureOrpPlan(svc: SupabaseClient, ctx: any): Promise<string> {
   const existing = await svc
     .from("orp_plans")
@@ -128,7 +157,12 @@ const runR2: Scenario["run"] = async (ctx) => {
   if (upErr) {
     return { status: "fail", expected: "submit allowed for Sr ORA Engr", observed: upErr.message };
   }
+  // Seed assertion — R2's trigger should have seeded ORA Lead PENDING row.
   const oraLead = ctx.users[spec.assigneeRole];
+  const seedErr = await assertSeed(svc, planId, "ORA Lead", oraLead.id);
+  if (seedErr) {
+    return { status: "fail", expected: "ORA Lead orp_approvals seed after submit", observed: seedErr };
+  }
   const rows = await findTask(svc, ctx.project.id, spec.action, oraLead.id);
   if (rows.length === 0) {
     return {
@@ -174,6 +208,12 @@ function buildReviewRule(rule: "R3" | "R4"): Scenario["run"] {
       }
     }
     const assignee = ctx.users[spec.assigneeRole];
+    // Seed assertion — R3/R4's trigger should have seeded PHL+DPD PENDING rows
+    // when ORA Lead flipped APPROVED. A missing seed here = R5 can't approve.
+    const seedErr = await assertSeed(svc, planId, spec.assigneeRole, assignee.id);
+    if (seedErr) {
+      return { status: "fail", expected: `${spec.assigneeRole} seed after ORA Lead approval`, observed: seedErr };
+    }
     const rows = await findTask(svc, ctx.project.id, spec.action, assignee.id);
     if (rows.length === 0) {
       return {
@@ -199,14 +239,25 @@ const runR5: Scenario["run"] = async (ctx) => {
   const planId = await ensureOrpPlan(svc, ctx);
   for (const role of ["Project Hub Lead", "Dep. Plant Director"] as const) {
     const u = ctx.users[role];
+    // Seed assertion BEFORE attempting the UPDATE — a missing seed would
+    // make the UPDATE silently affect 0 rows (no RLS error, no row matched)
+    // and the failure would surface as "leaf-task trigger didn't fire" when
+    // the real cause is upstream.
+    const seedErr = await assertSeed(svc, planId, role, u.id);
+    if (seedErr) {
+      return { status: "fail", expected: `${role} seed present before R5 approval`, observed: seedErr };
+    }
     const c = clientAs(ctx.anonUrl, ctx.anonKey, u.jwt);
-    const { error } = await c
+    const { error, count } = await c
       .from("orp_approvals")
-      .update({ status: "APPROVED", approved_at: new Date().toISOString() })
+      .update({ status: "APPROVED", approved_at: new Date().toISOString() }, { count: "exact" })
       .eq("orp_plan_id", planId)
       .eq("approver_role", role);
     if (error) {
       return { status: "fail", expected: `${role} UPDATE APPROVED allowed`, observed: error.message };
+    }
+    if ((count ?? 0) === 0) {
+      return { status: "fail", expected: `${role} UPDATE affects 1 row`, observed: "0 rows updated — RLS denied silently" };
     }
   }
 
