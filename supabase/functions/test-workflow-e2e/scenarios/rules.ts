@@ -141,17 +141,11 @@ const runR2: Scenario["run"] = async (ctx) => {
 };
 
 // ── R3 + R4 share setup: ORA Lead approves; expect PHL & DPD review tasks ─
+// 10c trigger create_ora_lead_review_task seeds the ORA Lead PENDING row on
+// orp_plans.status='PENDING_APPROVAL'. We only UPDATE it here via per-role
+// JWT to exercise the Mig 6 UPDATE policy.
 async function approveAsOraLead(ctx: any, planId: string) {
-  const svc = svcOf(ctx);
   const oraLead = ctx.users["ORA Lead"];
-  // Seed PENDING orp_approvals row via service-role (no trigger does this).
-  await svc.from("orp_approvals").insert({
-    orp_plan_id: planId,
-    approver_role: "ORA Lead",
-    approver_user_id: oraLead.id,
-    status: "PENDING",
-  });
-  // Approve via per-role JWT to exercise Mig 6 UPDATE gate.
   const c = clientAs(ctx.anonUrl, ctx.anonKey, oraLead.jwt);
   const { error } = await c
     .from("orp_approvals")
