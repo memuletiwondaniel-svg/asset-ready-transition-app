@@ -259,15 +259,17 @@ const runR5: Scenario["run"] = async (ctx) => {
     }
   }
 
-  const sr = ctx.users[spec.assigneeRole];
-  const rows = await findTask(svc, ctx.project.id, spec.action, sr.id);
+  const e = SPEC.R5.expects[0];
+  const sr = ctx.users[e.assigneeRole];
+  const rows = await findTask(svc, ctx.project.id, e.action, sr.id);
   if (rows.length === 0) {
     return {
       status: "fail",
-      expected: { count: ">=1", assignee: spec.assigneeRole, gate: spec.trigger },
+      expected: { count: ">=1", assignee: e.assigneeRole, gate: spec.trigger },
       observed: { count: 0, note: "leaf-task trigger did not fire after PHL+DPD APPROVED" },
     };
   }
+
   const t = rows[0];
   const expectedPrefix = `${ctx.project.code}: `;
   const mismatches: string[] = [];
