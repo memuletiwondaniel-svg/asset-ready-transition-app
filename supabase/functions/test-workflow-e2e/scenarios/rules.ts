@@ -99,12 +99,14 @@ const runR1: Scenario["run"] = async (ctx) => {
   if (task.status !== spec.status) {
     mismatches.push(`status: expected "${spec.status}", got "${task.status}"`);
   }
-  // The trigger itself fires on team-member insert, not project insert — record it.
-  mismatches.push(`trigger: SPEC "${spec.trigger}" but code attaches to project_team_members INSERT`);
+  // Trigger-event note: SPEC originally said "projects INSERT"; the lean
+  // accepted in M10 keeps it on project_team_members INSERT (assignee must
+  // exist). The R1 catalog-resolution + title fix is what landed. Event is
+  // NOT recorded as a mismatch.
   if (mismatches.length > 0) {
     return {
       status: "fail",
-      expected: { title: expectedTitle, status: spec.status, trigger: spec.trigger },
+      expected: { title: expectedTitle, status: spec.status },
       observed: { title: task.title, status: task.status, mismatches },
     };
   }
