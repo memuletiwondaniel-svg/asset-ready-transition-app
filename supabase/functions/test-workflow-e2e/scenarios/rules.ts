@@ -619,9 +619,97 @@ export const ruleScenarios: Scenario[] = [
   { id: "R18", name: "4-of-4 leads approve VCR → 5 deliverable parents (+2 sub-tasks) → Sr ORA Engr",
                dependsOn: ["R14","R15","R16","R17"], run: runR18 },
 
-  // chunk 3 pending
-  { id: "R19", name: "VCR approved → checklist scoped to Sr ORA Engr",                    dependsOn: ["R18"], run: pending },
-  { id: "R20", name: "VCR approved → 2 CMMS deliverables → CMMS Lead",                    dependsOn: ["R18"], run: pending },
-  { id: "R21", name: "VCR approved → checklist scoped to Construction Lead",              dependsOn: ["R18"], run: pending },
-  { id: "R22", name: "VCR approved → Commissioning Lead checklist + ITP rollup",          dependsOn: ["R18"], run: pending },
+  { id: "R19", name: "VCR approved → checklist scoped to Sr ORA Engr",                    dependsOn: ["R18"], run: buildChecklistRule("R19") },
+  { id: "R20", name: "VCR approved → 2 CMMS deliverables → CMMS Lead",                    dependsOn: ["R18"], run: runR20 },
+  { id: "R21", name: "VCR approved → checklist scoped to Construction Lead",              dependsOn: ["R18"], run: buildChecklistRule("R21") },
+  { id: "R22", name: "VCR approved → Commissioning Lead checklist + ITP rollup",          dependsOn: ["R18"], run: runR22 },
 ];
+
+// ══════════════════════════════════════════════════════════════════════════
+// R19 / R21 / R22a — checklist scoped via vcr_item_delivering_parties.
+// Seeds 1 delivering-party row per role on first point, then asserts exactly
+// 1 complete_checklist task exists assigned to that role's user.
+// ══════════════════════════════════════════════════════════════════════════
+async function seedDeliveringParty(svc: SupabaseClient, pointId: string, userId: string): Promise<string | null> {
+  const { data: existing } = await svc.from("vcr_item_delivering_parties")
+    .select("id").eq("handover_point_id", pointId).eq("user_id", userId).maybeSingle();
+  if (existing?.id) return null;
+  const { error } = await svc.from("vcr_item_delivering_parties")
+    .insert({ handover_point_id: pointId, user_id: userId, added_by: userId });
+  return error ? error.message : null;
+}
+
+function buildChecklistRule(rule: "R19" | "R21" | "R22a"): Scenario["run"] {
+  const roleMap = { R19: "Sr ORA Engr", R21: "Construction Lead", R22a: "Commissioning Lead" } as const;
+  return async (ctx) => {
+    const svc = svcOf(ctx);
+    const pt = await getFirstPoint(svc, ctx);
+    const role = roleMap[rule];
+    const u = ctx.users[role];
+    const seedErr = await seedDeliveringParty(svc, pt.id, u.id);
+    if (seedErr) return { status: "fail", expected: `seed delivering party for ${role}`, observed: seedErr };
+    const rows = await findP2ATask(svc, ctx.project.id, "complete_checklist", u.id);
+    const expectedTitle = `${ctx.project.code}: Complete ${pt.vcr_code} Checklist Items`;
+    const match = rows.find((r: any) => r.title === expectedTitle);
+    if (!match) return {
+      status: "fail",
+      expected: { title: expectedTitle, assignee: role, count: ">=1 (per vcr_item_delivering_parties row)" },
+      observed: { count: rows.length, got: rows.map((r: any) => r.title), note: "no product trigger creates complete_checklist tasks scoped to delivering parties" },
+    };
+    return { status: "pass", observed: { taskId: match.id } };
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// R20 — 2 CMMS deliverable parents → CMMS Lead.
+// ══════════════════════════════════════════════════════════════════════════
+const CMMS_SPEC = [
+  { action: "deliver_cmms",   title: "Deliver CMMS for" },
+  { action: "deliver_spares", title: "Deliver 2Y Operating Spares for" },
+] as const;
+
+const runR20: Scenario["run"] = async (ctx) => {
+  const svc = svcOf(ctx);
+  const pt = await getFirstPoint(svc, ctx);
+  const cmms = ctx.users["CMMS Lead"];
+  const missing: string[] = [];
+  for (const d of CMMS_SPEC) {
+    const rows = await findP2ATask(svc, ctx.project.id, d.action, cmms.id);
+    const expectedTitle = `${ctx.project.code}: ${d.title} ${pt.vcr_code}`;
+    if (!rows.find((r: any) => r.title === expectedTitle)) missing.push(d.action);
+  }
+  if (missing.length > 0) return {
+    status: "fail",
+    expected: { actions: CMMS_SPEC.map(d => d.action), assignee: "CMMS Lead" },
+    observed: { missing, note: "no product trigger creates CMMS deliverable fan-out for CMMS Lead" },
+  };
+  return { status: "pass", observed: { vcr: pt.vcr_code, parents: 2 } };
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+// R22 — Commissioning Lead: (a) checklist + (b) ITP rollup gated on
+// confirmed_by_sr_ora_engr.
+// ══════════════════════════════════════════════════════════════════════════
+const runR22: Scenario["run"] = async (ctx) => {
+  const svc = svcOf(ctx);
+  const pt = await getFirstPoint(svc, ctx);
+  const comm = ctx.users["Commissioning Lead"];
+  const checklistResult = await buildChecklistRule("R22a")(ctx);
+  if (checklistResult.status === "fail") {
+    return { status: "fail", expected: "R22a checklist + R22b ITP both seeded", observed: { R22a: checklistResult.observed } };
+  }
+  const itpRows = await findP2ATask(svc, ctx.project.id, "complete_itp", comm.id);
+  const expectedItpTitle = `${ctx.project.code}: Complete ITP for ${pt.vcr_code}`;
+  const itpParent = itpRows.find((r: any) => r.title === expectedItpTitle);
+  if (!itpParent) return {
+    status: "fail",
+    expected: { title: expectedItpTitle, assignee: "Commissioning Lead", action: "complete_itp", requires: "confirmed_by_sr_ora_engr gate on rollup" },
+    observed: { count: itpRows.length, got: itpRows.map((r: any) => r.title), note: "no product trigger creates complete_itp parent for Commissioning Lead" },
+  };
+  const { data: children } = await svc.from("user_tasks")
+    .select("id,status,confirmed_by_sr_ora_engr,progress_percentage")
+    .eq("parent_task_id", itpParent.id);
+  const { data: parentRow } = await svc.from("user_tasks").select("progress_percentage").eq("id", itpParent.id).maybeSingle();
+  return { status: "pass", observed: { R22a: "ok", R22b_parent: itpParent.id, children: children?.length ?? 0, parent_progress: parentRow?.progress_percentage ?? null } };
+};
+
