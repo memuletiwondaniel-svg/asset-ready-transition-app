@@ -6111,6 +6111,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           dms_platforms: string[] | null
+          gate_model: string
           id: string
           last_rejected_at: string | null
           last_rejected_by_name: string | null
@@ -6131,6 +6132,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           dms_platforms?: string[] | null
+          gate_model?: string
           id?: string
           last_rejected_at?: string | null
           last_rejected_by_name?: string | null
@@ -6151,6 +6153,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           dms_platforms?: string[] | null
+          gate_model?: string
           id?: string
           last_rejected_at?: string | null
           last_rejected_by_name?: string | null
@@ -6257,6 +6260,7 @@ export type Database = {
           execution_plan_status: string
           execution_plan_submitted_at: string | null
           execution_plan_submitted_by: string | null
+          gate_model: string
           handover_plan_id: string | null
           id: string
           name: string
@@ -6279,6 +6283,7 @@ export type Database = {
           execution_plan_status?: string
           execution_plan_submitted_at?: string | null
           execution_plan_submitted_by?: string | null
+          gate_model?: string
           handover_plan_id?: string | null
           id?: string
           name: string
@@ -6301,6 +6306,7 @@ export type Database = {
           execution_plan_status?: string
           execution_plan_submitted_at?: string | null
           execution_plan_submitted_by?: string | null
+          gate_model?: string
           handover_plan_id?: string | null
           id?: string
           name?: string
