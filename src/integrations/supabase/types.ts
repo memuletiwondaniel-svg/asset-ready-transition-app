@@ -5323,6 +5323,7 @@ export type Database = {
           status: Database["public"]["Enums"]["orp_status"]
           tenant_id: string | null
           updated_at: string
+          version: number
           wizard_state: Json | null
         }
         Insert: {
@@ -5340,6 +5341,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["orp_status"]
           tenant_id?: string | null
           updated_at?: string
+          version?: number
           wizard_state?: Json | null
         }
         Update: {
@@ -5357,6 +5359,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["orp_status"]
           tenant_id?: string | null
           updated_at?: string
+          version?: number
           wizard_state?: Json | null
         }
         Relationships: [
@@ -6091,6 +6094,7 @@ export type Database = {
           status: Database["public"]["Enums"]["p2a_plan_status"]
           tenant_id: string | null
           updated_at: string
+          version: number
         }
         Insert: {
           created_at?: string
@@ -6110,6 +6114,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["p2a_plan_status"]
           tenant_id?: string | null
           updated_at?: string
+          version?: number
         }
         Update: {
           created_at?: string
@@ -6129,6 +6134,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["p2a_plan_status"]
           tenant_id?: string | null
           updated_at?: string
+          version?: number
         }
         Relationships: [
           {
@@ -6231,6 +6237,7 @@ export type Database = {
           target_date: string | null
           updated_at: string
           vcr_code: string
+          version: number
         }
         Insert: {
           completion_date?: string | null
@@ -6252,6 +6259,7 @@ export type Database = {
           target_date?: string | null
           updated_at?: string
           vcr_code: string
+          version?: number
         }
         Update: {
           completion_date?: string | null
@@ -6273,6 +6281,7 @@ export type Database = {
           target_date?: string | null
           updated_at?: string
           vcr_code?: string
+          version?: number
         }
         Relationships: [
           {
@@ -12509,6 +12518,9 @@ export type Database = {
           metadata: Json | null
           priority: string
           progress_percentage: number | null
+          source_plan_id: string | null
+          source_plan_table: string | null
+          source_plan_version: number | null
           status: string
           sub_items: Json | null
           tenant_id: string | null
@@ -12526,6 +12538,9 @@ export type Database = {
           metadata?: Json | null
           priority: string
           progress_percentage?: number | null
+          source_plan_id?: string | null
+          source_plan_table?: string | null
+          source_plan_version?: number | null
           status?: string
           sub_items?: Json | null
           tenant_id?: string | null
@@ -12543,6 +12558,9 @@ export type Database = {
           metadata?: Json | null
           priority?: string
           progress_percentage?: number | null
+          source_plan_id?: string | null
+          source_plan_table?: string | null
+          source_plan_version?: number | null
           status?: string
           sub_items?: Json | null
           tenant_id?: string | null
