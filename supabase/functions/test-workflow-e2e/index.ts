@@ -72,6 +72,7 @@ serve(async (req) => {
   const projectIds: string[] = [];
   let users: RunContext["users"] = {};
   const results: ScenarioResult[] = [];
+  let fatalError: string | null = null;
 
   try {
     // Provision
