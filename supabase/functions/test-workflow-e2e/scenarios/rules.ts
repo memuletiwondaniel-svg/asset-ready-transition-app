@@ -208,6 +208,12 @@ function buildReviewRule(rule: "R3" | "R4"): Scenario["run"] {
       }
     }
     const assignee = ctx.users[spec.assigneeRole];
+    // Seed assertion — R3/R4's trigger should have seeded PHL+DPD PENDING rows
+    // when ORA Lead flipped APPROVED. A missing seed here = R5 can't approve.
+    const seedErr = await assertSeed(svc, planId, spec.assigneeRole, assignee.id);
+    if (seedErr) {
+      return { status: "fail", expected: `${spec.assigneeRole} seed after ORA Lead approval`, observed: seedErr };
+    }
     const rows = await findTask(svc, ctx.project.id, spec.action, assignee.id);
     if (rows.length === 0) {
       return {
