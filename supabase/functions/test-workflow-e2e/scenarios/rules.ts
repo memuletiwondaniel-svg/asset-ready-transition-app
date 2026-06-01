@@ -149,13 +149,18 @@ const runR2: Scenario["run"] = async (ctx) => {
   const planId = await ensureOrpPlan(svc, ctx);
   const sr = ctx.users["Sr ORA Engr"];
   // Sr ORA Engr submits via per-role JWT — exercises Mig 6 UPDATE policy.
+  // count:"exact" so a 0-row RLS deny (e.g. profiles.role unset) surfaces
+  // here, not as a missing-seed mystery on R3/R4.
   const srClient = clientAs(ctx.anonUrl, ctx.anonKey, sr.jwt);
-  const { error: upErr } = await srClient
+  const { error: upErr, count: upCount } = await srClient
     .from("orp_plans")
-    .update({ status: "PENDING_APPROVAL" })
+    .update({ status: "PENDING_APPROVAL" }, { count: "exact" })
     .eq("id", planId);
   if (upErr) {
     return { status: "fail", expected: "submit allowed for Sr ORA Engr", observed: upErr.message };
+  }
+  if ((upCount ?? 0) === 0) {
+    return { status: "fail", expected: "Sr ORA Engr submit affects 1 row", observed: "0 rows updated — RLS denied silently" };
   }
   // Seed assertion — R2's trigger should have seeded ORA Lead PENDING row.
   const oraLead = ctx.users[spec.assigneeRole];
