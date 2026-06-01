@@ -209,9 +209,13 @@ export default function DefaultApproversConfig({ certificateType }: DefaultAppro
           toast.success('Default approvers saved successfully');
           setHasChanges(false);
         },
-        onError: (error) => {
-          toast.error('Failed to save approvers');
-          console.error(error);
+        onError: (error: Error) => {
+          // Mig 6: surface the underlying DB error so off-spec/off-catalog
+          // role labels produce a usable message instead of a silent generic
+          // toast. Dropdown enforcement stays deferred.
+          const detail = error?.message || 'Unknown error';
+          toast.error(`Failed to save approvers: ${detail}`);
+          console.error('[DefaultApproversConfig] save failed:', error);
         },
       }
     );
