@@ -495,7 +495,13 @@ async function approveVCRApprover(ctx: any, pointId: string, role: string): Prom
     .update({ status: "APPROVED", approved_at: new Date().toISOString() }, { count: "exact" })
     .eq("point_id", pointId).eq("stage", "VCR").eq("role_name", role);
   if (error) return error.message;
-  if ((count ?? 0) === 0) return `${role} VCR UPDATE 0 rows — RLS denied silently`;
+  if ((count ?? 0) === 0) {
+    const svc = svcOf(ctx);
+    const { data: diag } = await svc.from("p2a_handover_approvers")
+      .select("id,handover_id,point_id,stage,role_name,user_id,cycle,status")
+      .eq("point_id", pointId).eq("stage", "VCR").eq("role_name", role);
+    return `${role} VCR UPDATE 0 rows — diag: caller_uid=${u.id} rows=${JSON.stringify(diag)}`;
+  }
   return null;
 }
 
