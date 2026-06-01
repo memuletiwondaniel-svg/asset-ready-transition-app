@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { slugifyRoleCode } from '@/lib/roles';
 
 interface Role {
   id: string;
@@ -43,12 +44,11 @@ export const useRoles = () => {
 
   const addRole = async (roleName: string) => {
     try {
-      // Mig 5b: roles.code is required (NOT NULL, UNIQUE, ^[A-Z][A-Z0-9_]*$).
-      // Derive a slug from the display name to match the back-fill rule.
-      const code = roleName
-        .replace(/[^A-Za-z0-9]+/g, '_')
-        .replace(/^_+|_+$/g, '')
-        .toUpperCase();
+      // Mig 5b: roles.code required (NOT NULL, UNIQUE, ^[A-Z][A-Z0-9_]*$).
+      // Use the single-source slug helper so back-fill, UI, and gate agree.
+      const code = slugifyRoleCode(roleName);
+
+
 
       const { data, error: insertError } = await supabase
         .from('roles')
