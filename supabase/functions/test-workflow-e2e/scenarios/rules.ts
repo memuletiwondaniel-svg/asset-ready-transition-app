@@ -443,6 +443,149 @@ const runR12: Scenario["run"] = async (ctx) => {
   return { status: "pass", observed: { count: rows.length, vcrs: points.map(p=>p.vcr_code) } };
 };
 
+// ══════════════════════════════════════════════════════════════════════════
+// VCR WORKFLOW (R13–R18) — spec_v2 chain on p2a_handover_points
+// ══════════════════════════════════════════════════════════════════════════
+async function getFirstPoint(svc: SupabaseClient, ctx: any): Promise<{id:string;vcr_code:string}> {
+  const planId = await ensureP2APlan(svc, ctx);
+  const pts = await ensureP2APoints(svc, ctx, planId);
+  return pts[0];
+}
+
+async function assertVCRApproverSeed(svc: SupabaseClient, pointId: string, role: string, expectedUserId: string): Promise<string | null> {
+  const { data, error } = await svc.from("p2a_handover_approvers")
+    .select("status,user_id,cycle,stage,point_id")
+    .eq("point_id", pointId).eq("stage", "VCR").eq("role_name", role).eq("cycle", 1).maybeSingle();
+  if (error) return `seed lookup error: ${error.message}`;
+  if (!data) return `VCR seed missing for role=${role} point=${pointId}`;
+  if (data.status !== "PENDING" && data.status !== "APPROVED") return `seed status=${data.status}`;
+  if (data.user_id !== expectedUserId) return `seed user_id=${data.user_id} (expected ${expectedUserId})`;
+  return null;
+}
+
+const runR13: Scenario["run"] = async (ctx) => {
+  const svc = svcOf(ctx);
+  const pt = await getFirstPoint(svc, ctx);
+  const { error: upErr } = await svc.from("p2a_handover_points")
+    .update({ execution_plan_status: "PENDING_APPROVAL",
+              execution_plan_submitted_at: new Date().toISOString(),
+              execution_plan_submitted_by: ctx.users["Sr ORA Engr"].id })
+    .eq("id", pt.id);
+  if (upErr) return { status: "fail", expected: "submit VCR allowed", observed: upErr.message };
+
+  const oraLead = ctx.users["ORA Lead"];
+  const seedErr = await assertVCRApproverSeed(svc, pt.id, "ORA Lead", oraLead.id);
+  if (seedErr) return { status: "fail", expected: "ORA Lead VCR seed after submit", observed: seedErr };
+
+  const rows = await findP2ATask(svc, ctx.project.id, "review_vcr_plan", oraLead.id);
+  const expectedTitle = `${ctx.project.code}: Review and Approve ${pt.vcr_code} Plan`;
+  const match = rows.find((r:any)=>r.title === expectedTitle);
+  if (!match) return {
+    status: "fail",
+    expected: { title: expectedTitle, assignee: "ORA Lead" },
+    observed: { count: rows.length, got: rows.map((r:any)=>r.title) },
+  };
+  return { status: "pass", observed: { pointId: pt.id, taskId: match.id } };
+};
+
+async function approveVCRApprover(ctx: any, pointId: string, role: string): Promise<string | null> {
+  const u = ctx.users[role];
+  const c = clientAs(ctx.anonUrl, ctx.anonKey, u.jwt);
+  const { error, count } = await c.from("p2a_handover_approvers")
+    .update({ status: "APPROVED", approved_at: new Date().toISOString() }, { count: "exact" })
+    .eq("point_id", pointId).eq("stage", "VCR").eq("role_name", role);
+  if (error) return error.message;
+  if ((count ?? 0) === 0) return `${role} VCR UPDATE 0 rows — RLS denied silently`;
+  return null;
+}
+
+function buildVCRLeadRule(rule: "R14" | "R15" | "R16" | "R17"): Scenario["run"] {
+  const spec = SPEC[rule];
+  const role = spec.expects[0].assigneeRole;
+  const action = spec.expects[0].action;
+  return async (ctx) => {
+    const svc = svcOf(ctx);
+    const pt = await getFirstPoint(svc, ctx);
+    const { data: existing } = await svc.from("p2a_handover_approvers")
+      .select("status").eq("point_id", pt.id).eq("stage","VCR").eq("role_name","ORA Lead").maybeSingle();
+    if (!existing || existing.status !== "APPROVED") {
+      const err = await approveVCRApprover(ctx, pt.id, "ORA Lead");
+      if (err) return { status: "fail", expected: "ORA Lead VCR APPROVED", observed: err };
+    }
+    const assignee = ctx.users[role];
+    const seedErr = await assertVCRApproverSeed(svc, pt.id, role, assignee.id);
+    if (seedErr) return { status: "fail", expected: `${role} VCR seed`, observed: seedErr };
+
+    const rows = await findP2ATask(svc, ctx.project.id, action, assignee.id);
+    const expectedTitle = `${ctx.project.code}: Review and Approve ${pt.vcr_code} Plan`;
+    const match = rows.find((r:any)=>r.title === expectedTitle);
+    if (!match) return {
+      status: "fail",
+      expected: { title: expectedTitle, assignee: role },
+      observed: { count: rows.length, got: rows.map((r:any)=>r.title) },
+    };
+    return { status: "pass", observed: { taskId: match.id } };
+  };
+}
+
+const DELIVERABLE_SPEC = [
+  { action: "deliver_training",             title: "Deliver Training for" },
+  { action: "deliver_procedures",           title: "Deliver Procedures for" },
+  { action: "deliver_critical_docs",        title: "Deliver Critical Documents for" },
+  { action: "deliver_procedures_registers", title: "Deliver Procedures & Registers for" },
+  { action: "complete_witness_hold",        title: "Complete Witness and Hold Points for" },
+] as const;
+
+const runR18: Scenario["run"] = async (ctx) => {
+  const svc = svcOf(ctx);
+  const pt = await getFirstPoint(svc, ctx);
+  for (const role of ["Construction Lead","Commissioning Lead","Project Hub Lead","Dep. Plant Director"] as const) {
+    const seedErr = await assertVCRApproverSeed(svc, pt.id, role, ctx.users[role].id);
+    if (seedErr) return { status: "fail", expected: `${role} VCR seed before R18`, observed: seedErr };
+    const { data: row } = await svc.from("p2a_handover_approvers")
+      .select("status").eq("point_id", pt.id).eq("stage","VCR").eq("role_name", role).maybeSingle();
+    if (row?.status === "APPROVED") continue;
+    const err = await approveVCRApprover(ctx, pt.id, role);
+    if (err) return { status: "fail", expected: `${role} UPDATE`, observed: err };
+  }
+
+  const sr = ctx.users["Sr ORA Engr"];
+  const missing: string[] = [];
+  const childCounts: Record<string, number> = {};
+  const progress: Record<string, number | null> = {};
+  for (const d of DELIVERABLE_SPEC) {
+    const rows = await findP2ATask(svc, ctx.project.id, d.action, sr.id);
+    const expectedTitle = `${ctx.project.code}: ${d.title} ${pt.vcr_code}`;
+    const parent = rows.find((r:any)=>r.title === expectedTitle);
+    if (!parent) { missing.push(d.action); continue; }
+    const { count, error: cErr } = await svc.from("user_tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("parent_task_id", parent.id);
+    if (cErr) return { status: "fail", expected: "child count query", observed: cErr.message };
+    childCounts[d.action] = count ?? 0;
+    const { data: parentRow } = await svc.from("user_tasks").select("progress_percentage").eq("id", parent.id).maybeSingle();
+    progress[d.action] = parentRow?.progress_percentage ?? null;
+  }
+  if (missing.length > 0) return {
+    status: "fail",
+    expected: { parents: DELIVERABLE_SPEC.map(d=>d.action), assignee: "Sr ORA Engr" },
+    observed: { missing },
+  };
+  const badChild = Object.entries(childCounts).filter(([,n]) => n !== 2);
+  if (badChild.length > 0) return {
+    status: "fail",
+    expected: "2 sub-tasks per deliverable parent (rollup denominator > 0)",
+    observed: { childCounts },
+  };
+  const badProgress = Object.entries(progress).filter(([,p]) => (p ?? 0) !== 0);
+  if (badProgress.length > 0) return {
+    status: "fail",
+    expected: "all deliverable parents at progress=0 (no children completed)",
+    observed: { progress },
+  };
+  return { status: "pass", observed: { pointId: pt.id, vcr: pt.vcr_code, parents: 5, subTasks: childCounts, progress } };
+};
+
 // ──────────────────────────────────────────────────────────────────────────
 export const ruleScenarios: Scenario[] = [
   { id: "R1",  name: "Project created → Develop ORA Plan → Sr ORA Engr",                 run: runR1 },
@@ -459,13 +602,15 @@ export const ruleScenarios: Scenario[] = [
   { id: "R11", name: "ORA Lead approves P2A → review → Dep. Plant Director",             dependsOn: ["R7"], run: buildP2ALeadRule("R11") },
   { id: "R12", name: "4-of-4 leads approve P2A → Develop VCR-XX Plan per VCR → Sr ORA Engr", dependsOn: ["R8","R9","R10","R11"], run: runR12 },
 
-  // chunks 2 & 3 pending
-  { id: "R13", name: "Sr ORA Engr submits VCR → review → ORA Lead",                       dependsOn: ["R12"], run: pending },
-  { id: "R14", name: "ORA Lead approves VCR → review → Construction Lead",                dependsOn: ["R13"], run: pending },
-  { id: "R15", name: "ORA Lead approves VCR → review → Commissioning Lead",               dependsOn: ["R13"], run: pending },
-  { id: "R16", name: "ORA Lead approves VCR → review → Project Hub Lead",                 dependsOn: ["R13"], run: pending },
-  { id: "R17", name: "ORA Lead approves VCR → review → Dep. Plant Director",              dependsOn: ["R13"], run: pending },
-  { id: "R18", name: "VCR approved → 5 deliverable parents → Sr ORA Engr",                dependsOn: ["R14","R15","R16","R17"], run: pending },
+  { id: "R13", name: "Sr ORA Engr submits VCR → review → ORA Lead",                       dependsOn: ["R12"], run: runR13 },
+  { id: "R14", name: "ORA Lead approves VCR → review → Construction Lead",                dependsOn: ["R13"], run: buildVCRLeadRule("R14") },
+  { id: "R15", name: "ORA Lead approves VCR → review → Commissioning Lead",               dependsOn: ["R13"], run: buildVCRLeadRule("R15") },
+  { id: "R16", name: "ORA Lead approves VCR → review → Project Hub Lead",                 dependsOn: ["R13"], run: buildVCRLeadRule("R16") },
+  { id: "R17", name: "ORA Lead approves VCR → review → Dep. Plant Director",              dependsOn: ["R13"], run: buildVCRLeadRule("R17") },
+  { id: "R18", name: "4-of-4 leads approve VCR → 5 deliverable parents (+2 sub-tasks) → Sr ORA Engr",
+               dependsOn: ["R14","R15","R16","R17"], run: runR18 },
+
+  // chunk 3 pending
   { id: "R19", name: "VCR approved → checklist scoped to Sr ORA Engr",                    dependsOn: ["R18"], run: pending },
   { id: "R20", name: "VCR approved → 2 CMMS deliverables → CMMS Lead",                    dependsOn: ["R18"], run: pending },
   { id: "R21", name: "VCR approved → checklist scoped to Construction Lead",              dependsOn: ["R18"], run: pending },
