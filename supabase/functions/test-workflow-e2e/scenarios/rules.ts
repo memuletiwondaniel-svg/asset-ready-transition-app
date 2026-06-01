@@ -333,15 +333,18 @@ async function ensureP2APlan(svc: SupabaseClient, ctx: any): Promise<string> {
 }
 
 async function ensureP2APoints(svc: SupabaseClient, ctx: any, planId: string) {
-  const { data: existing } = await svc.from("p2a_handover_points").select("id,vcr_code").eq("handover_plan_id", planId);
+  const { data: existing } = await svc.from("p2a_handover_points")
+    .select("id,vcr_code").eq("handover_plan_id", planId).order("vcr_code", { ascending: true });
   if ((existing?.length ?? 0) >= 2) return existing as Array<{id:string;vcr_code:string}>;
   const sr = ctx.users["Sr ORA Engr"];
-  const { data, error } = await svc.from("p2a_handover_points").insert([
+  const { error } = await svc.from("p2a_handover_points").insert([
     { handover_plan_id: planId, name: "VCR-01 — System A", vcr_code: "VCR-01", position_x: 100, position_y: 100, created_by: sr.id },
     { handover_plan_id: planId, name: "VCR-02 — System B", vcr_code: "VCR-02", position_x: 200, position_y: 200, created_by: sr.id },
-  ]).select("id,vcr_code");
+  ]);
   if (error) throw new Error(`ensureP2APoints: ${error.message}`);
-  return data as Array<{id:string;vcr_code:string}>;
+  const { data: after } = await svc.from("p2a_handover_points")
+    .select("id,vcr_code").eq("handover_plan_id", planId).order("vcr_code", { ascending: true });
+  return (after ?? []) as Array<{id:string;vcr_code:string}>;
 }
 
 const runR6: Scenario["run"] = async (ctx) => {
