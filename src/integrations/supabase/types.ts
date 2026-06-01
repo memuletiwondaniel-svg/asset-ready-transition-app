@@ -12510,6 +12510,8 @@ export type Database = {
       }
       user_tasks: {
         Row: {
+          confirmed_at: string | null
+          confirmed_by_sr_ora_engr: boolean
           created_at: string | null
           dedupe_key: string | null
           description: string | null
@@ -12517,6 +12519,7 @@ export type Database = {
           due_date: string | null
           id: string
           metadata: Json | null
+          parent_task_id: string | null
           priority: string
           progress_percentage: number | null
           source_plan_id: string | null
@@ -12531,6 +12534,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          confirmed_at?: string | null
+          confirmed_by_sr_ora_engr?: boolean
           created_at?: string | null
           dedupe_key?: string | null
           description?: string | null
@@ -12538,6 +12543,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           metadata?: Json | null
+          parent_task_id?: string | null
           priority: string
           progress_percentage?: number | null
           source_plan_id?: string | null
@@ -12552,6 +12558,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          confirmed_at?: string | null
+          confirmed_by_sr_ora_engr?: boolean
           created_at?: string | null
           dedupe_key?: string | null
           description?: string | null
@@ -12559,6 +12567,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           metadata?: Json | null
+          parent_task_id?: string | null
           priority?: string
           progress_percentage?: number | null
           source_plan_id?: string | null
@@ -12573,6 +12582,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_tasks_tenant_id_fkey"
             columns: ["tenant_id"]
