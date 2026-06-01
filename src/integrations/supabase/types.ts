@@ -13801,6 +13801,7 @@ export type Database = {
         }
         Returns: string
       }
+      current_user_has_role: { Args: { _role_label: string }; Returns: boolean }
       current_user_has_role_code: {
         Args: { _role_code: string }
         Returns: boolean
@@ -13991,6 +13992,8 @@ export type Database = {
         }
         Returns: Json
       }
+      orp_plan_is_approved: { Args: { _plan_id: string }; Returns: boolean }
+      p2a_plan_is_approved: { Args: { _plan_id: string }; Returns: boolean }
       purge_old_audit_logs: {
         Args: { retention_days_param?: number }
         Returns: number
@@ -14057,6 +14060,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      vcr_plan_is_approved: { Args: { _handover_id: string }; Returns: boolean }
       write_audit_log: {
         Args: {
           p_action: string

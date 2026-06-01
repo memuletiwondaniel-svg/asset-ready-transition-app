@@ -21,12 +21,17 @@ export interface P2AHandoverApprover {
   };
 }
 
+// Mig 6: VCR INSERT CHECK on p2a_handover_approvers restricts role_name to
+// the 4-role spec set { Construction Lead, Commissioning Lead,
+// Project Hub Lead, Dep. Plant Director }. 'ORA Lead' was previously seeded
+// but is outside this spec and would be rejected at write time, breaking
+// wizard initialization. Removed; gate fn requires exactly these 4 distinct
+// APPROVED roles to clear the handover.
 const DEFAULT_APPROVERS = [
-  { role_name: 'ORA Lead', display_order: 1 },
+  { role_name: 'Construction Lead', display_order: 1 },
   { role_name: 'Commissioning Lead', display_order: 2 },
-  { role_name: 'Construction Lead', display_order: 3 },
-  { role_name: 'Project Hub Lead', display_order: 4 },
-  { role_name: 'Dep. Plant Director', display_order: 5 },
+  { role_name: 'Project Hub Lead', display_order: 3 },
+  { role_name: 'Dep. Plant Director', display_order: 4 },
 ];
 
 export function useP2AHandoverApprovers(handoverId: string | null) {
