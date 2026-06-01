@@ -239,14 +239,25 @@ const runR5: Scenario["run"] = async (ctx) => {
   const planId = await ensureOrpPlan(svc, ctx);
   for (const role of ["Project Hub Lead", "Dep. Plant Director"] as const) {
     const u = ctx.users[role];
+    // Seed assertion BEFORE attempting the UPDATE — a missing seed would
+    // make the UPDATE silently affect 0 rows (no RLS error, no row matched)
+    // and the failure would surface as "leaf-task trigger didn't fire" when
+    // the real cause is upstream.
+    const seedErr = await assertSeed(svc, planId, role, u.id);
+    if (seedErr) {
+      return { status: "fail", expected: `${role} seed present before R5 approval`, observed: seedErr };
+    }
     const c = clientAs(ctx.anonUrl, ctx.anonKey, u.jwt);
-    const { error } = await c
+    const { error, count } = await c
       .from("orp_approvals")
-      .update({ status: "APPROVED", approved_at: new Date().toISOString() })
+      .update({ status: "APPROVED", approved_at: new Date().toISOString() }, { count: "exact" })
       .eq("orp_plan_id", planId)
       .eq("approver_role", role);
     if (error) {
       return { status: "fail", expected: `${role} UPDATE APPROVED allowed`, observed: error.message };
+    }
+    if ((count ?? 0) === 0) {
+      return { status: "fail", expected: `${role} UPDATE affects 1 row`, observed: "0 rows updated — RLS denied silently" };
     }
   }
 
