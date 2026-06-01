@@ -10940,6 +10940,7 @@ export type Database = {
       roles: {
         Row: {
           category_id: string | null
+          code: string
           created_at: string
           description: string | null
           display_order: number | null
@@ -10953,6 +10954,7 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
+          code: string
           created_at?: string
           description?: string | null
           display_order?: number | null
@@ -10966,6 +10968,7 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
+          code?: string
           created_at?: string
           description?: string | null
           display_order?: number | null
@@ -13782,6 +13785,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      current_user_has_role_code: {
+        Args: { _role_code: string }
+        Returns: boolean
       }
       delete_user_account: { Args: { target_user_id: string }; Returns: Json }
       ensure_reviewer_tasks_for_task: {
