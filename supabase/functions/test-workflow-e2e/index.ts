@@ -3,7 +3,8 @@
 // Contract:
 //   POST /test-workflow-e2e
 //     body: { mode?: "scaffold" | "full", scenarios?: string[] }
-//     auth: must include Bearer <jwt> of an authenticated admin user
+//     auth: accepts Bearer <jwt> of an authenticated admin user, or self-auths
+//           server-side with TEST_USER_EMAIL / TEST_USER_PASSWORD secrets
 //
 // Behavior:
 //   1. Provision: create test project (is_test_project=true) + 7 canonical-role users.
@@ -30,6 +31,36 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+async function resolveAuthHeader(supabaseUrl: string, anonKey: string, req: Request): Promise<string> {
+  const authHeader = req.headers.get("Authorization");
+  if (authHeader?.startsWith("Bearer ")) return authHeader;
+
+  const testEmail = Deno.env.get("TEST_USER_EMAIL");
+  const testPassword = Deno.env.get("TEST_USER_PASSWORD");
+  if (!testEmail || !testPassword) {
+    throw new Error("unauthorized: Authorization header missing and TEST_USER_EMAIL/TEST_USER_PASSWORD secrets are not configured");
+  }
+
+  const authResp = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: anonKey,
+    },
+    body: JSON.stringify({ email: testEmail, password: testPassword }),
+  });
+
+  const authBody = await authResp.json().catch(() => null);
+  const accessToken = authBody?.access_token;
+  if (!authResp.ok || !accessToken) {
+    console.error("M11 self-auth failed", { status: authResp.status, body: authBody });
+    throw new Error("unauthorized: harness self-authentication failed");
+  }
+
+  console.log("M11 auth: using server-side TEST_USER credentials");
+  return `Bearer ${accessToken}`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") {
@@ -42,17 +73,23 @@ serve(async (req) => {
   const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-  // --- auth guard: caller must be an authenticated admin ---
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
+  // --- auth guard: caller must resolve to an authenticated admin ---
+  let authHeader: string;
+  try {
+    authHeader = await resolveAuthHeader(SUPABASE_URL, ANON_KEY, req);
+  } catch (error) {
     return new Response(JSON.stringify({ error: "unauthorized" }), {
       status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
   const callerClient = createClient(SUPABASE_URL, ANON_KEY, {
     global: { headers: { Authorization: authHeader } },
   });
-  const { data: claims } = await callerClient.auth.getClaims(authHeader.replace("Bearer ", ""));
+  const { data: claims, error: claimsError } = await callerClient.auth.getClaims(authHeader.replace("Bearer ", ""));
+  if (claimsError) {
+    console.error("M11 claims lookup failed", claimsError);
+  }
   const callerId = claims?.claims?.sub as string | undefined;
   if (!callerId) {
     return new Response(JSON.stringify({ error: "unauthorized" }), {
