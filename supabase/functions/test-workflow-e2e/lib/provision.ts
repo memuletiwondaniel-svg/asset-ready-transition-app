@@ -63,6 +63,13 @@ export async function createUsersForRoles(
     if (createErr || !created?.user) {
       throw new Error(`createUser(${role}): ${createErr?.message ?? "no user"}`);
     }
+    // Register membership BEFORE signing in so is_harness_user() resolves true
+    // on the very first authenticated request. Service-role insert bypasses RLS.
+    const { error: memErr } = await svc
+      .from("harness_users")
+      .insert({ user_id: created.user.id, run_id: runId });
+    if (memErr) throw new Error(`harness_users insert(${role}): ${memErr.message}`);
+
     // Mint a real session JWT for this user so RLS sees them as authenticated.
     const userClient = createClient(anonUrl, anonKey);
     const { data: signed, error: signErr } = await userClient.auth.signInWithPassword({
@@ -73,6 +80,7 @@ export async function createUsersForRoles(
       throw new Error(`signIn(${role}): ${signErr?.message ?? "no session"}`);
     }
     out[role] = { id: created.user.id, email, jwt: signed.session.access_token };
+
   }
   return out;
 }
