@@ -520,7 +520,7 @@ async function ensureVCRFixtures(svc: SupabaseClient, ctx: any, pointId: string,
       handover_point_id: pointId,
       system_id: systemId,
       activity_name: `ITP Activity ${i + 1}`,
-      inspection_type: "Witness",
+      inspection_type: "WITNESS",
       display_order: i + 1,
     });
     if (error) return `p2a_itp_activities insert #${i}: ${error.message}`;
