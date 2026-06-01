@@ -106,21 +106,18 @@ async function ensureOrpPlan(svc: SupabaseClient, ctx: any): Promise<string> {
 const runR1: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
   const spec = SPEC.R1;
-  const sr = ctx.users[spec.assigneeRole];
-  // Team rows + project already exist from provisioning. The production
-  // trigger auto_create_ora_plan_task is attached to project_team_members
-  // (NOT projects) — that itself is a SPEC mismatch we record. The task
-  // should already have been created by the team insert in provisioning.
-  const rows = await findTask(svc, ctx.project.id, spec.action, sr.id);
+  const e = spec.expects[0];
+  const sr = ctx.users[e.assigneeRole];
+  const rows = await findTask(svc, ctx.project.id, e.action, sr.id);
   if (rows.length === 0) {
     return {
       status: "fail",
-      expected: { count: ">=1", action: spec.action, assignee: spec.assigneeRole },
+      expected: { count: ">=1", action: e.action, assignee: e.assigneeRole },
       observed: { count: 0, note: "no create_ora_plan task created for Sr ORA Engr after team assignment" },
     };
   }
   const task = rows[0];
-  const expectedTitle = expandTitle(spec.title, ctx.project.code);
+  const expectedTitle = expandTitle(e.title, ctx.project.code);
   const mismatches: string[] = [];
   if (task.title !== expectedTitle) {
     mismatches.push(`title: expected "${expectedTitle}", got "${task.title}"`);
@@ -128,10 +125,6 @@ const runR1: Scenario["run"] = async (ctx) => {
   if (task.status !== spec.status) {
     mismatches.push(`status: expected "${spec.status}", got "${task.status}"`);
   }
-  // Trigger-event note: SPEC originally said "projects INSERT"; the lean
-  // accepted in M10 keeps it on project_team_members INSERT (assignee must
-  // exist). The R1 catalog-resolution + title fix is what landed. Event is
-  // NOT recorded as a mismatch.
   if (mismatches.length > 0) {
     return {
       status: "fail",
@@ -142,15 +135,14 @@ const runR1: Scenario["run"] = async (ctx) => {
   return { status: "pass", observed: { taskId: task.id } };
 };
 
+
 // ── R2 ─────────────────────────────────────────────────────────────────────
 const runR2: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
   const spec = SPEC.R2;
+  const e = spec.expects[0];
   const planId = await ensureOrpPlan(svc, ctx);
   const sr = ctx.users["Sr ORA Engr"];
-  // Sr ORA Engr submits via per-role JWT — exercises Mig 6 UPDATE policy.
-  // count:"exact" so a 0-row RLS deny (e.g. profiles.role unset) surfaces
-  // here, not as a missing-seed mystery on R3/R4.
   const srClient = clientAs(ctx.anonUrl, ctx.anonKey, sr.jwt);
   const { error: upErr, count: upCount } = await srClient
     .from("orp_plans")
@@ -162,21 +154,21 @@ const runR2: Scenario["run"] = async (ctx) => {
   if ((upCount ?? 0) === 0) {
     return { status: "fail", expected: "Sr ORA Engr submit affects 1 row", observed: "0 rows updated — RLS denied silently" };
   }
-  // Seed assertion — R2's trigger should have seeded ORA Lead PENDING row.
-  const oraLead = ctx.users[spec.assigneeRole];
+  const oraLead = ctx.users[e.assigneeRole];
   const seedErr = await assertSeed(svc, planId, "ORA Lead", oraLead.id);
   if (seedErr) {
     return { status: "fail", expected: "ORA Lead orp_approvals seed after submit", observed: seedErr };
   }
-  const rows = await findTask(svc, ctx.project.id, spec.action, oraLead.id);
+  const rows = await findTask(svc, ctx.project.id, e.action, oraLead.id);
   if (rows.length === 0) {
     return {
       status: "fail",
-      expected: { count: ">=1", title: expandTitle(spec.title, ctx.project.code), assignee: spec.assigneeRole },
+      expected: { count: ">=1", title: expandTitle(e.title, ctx.project.code), assignee: e.assigneeRole },
       observed: { count: 0, note: "no trigger creates 'review_ora_plan' task for ORA Lead on submit" },
     };
   }
   return { status: "pass", observed: { taskId: rows[0].id } };
+
 };
 
 // ── R3 + R4 share setup: ORA Lead approves; expect PHL & DPD review tasks ─
@@ -200,8 +192,8 @@ function buildReviewRule(rule: "R3" | "R4"): Scenario["run"] {
   return async (ctx) => {
     const svc = svcOf(ctx);
     const spec = SPEC[rule];
+    const e = spec.expects[0];
     const planId = await ensureOrpPlan(svc, ctx);
-    // Only seed/approve ORA Lead once (R3 runs first; R4 finds existing APPROVED row).
     const { data: existing } = await svc
       .from("orp_approvals")
       .select("status")
@@ -214,22 +206,21 @@ function buildReviewRule(rule: "R3" | "R4"): Scenario["run"] {
         return { status: "fail", expected: "ORA Lead UPDATE APPROVED allowed", observed: err };
       }
     }
-    const assignee = ctx.users[spec.assigneeRole];
-    // Seed assertion — R3/R4's trigger should have seeded PHL+DPD PENDING rows
-    // when ORA Lead flipped APPROVED. A missing seed here = R5 can't approve.
-    const seedErr = await assertSeed(svc, planId, spec.assigneeRole, assignee.id);
+    const assignee = ctx.users[e.assigneeRole];
+    const seedErr = await assertSeed(svc, planId, e.assigneeRole, assignee.id);
     if (seedErr) {
-      return { status: "fail", expected: `${spec.assigneeRole} seed after ORA Lead approval`, observed: seedErr };
+      return { status: "fail", expected: `${e.assigneeRole} seed after ORA Lead approval`, observed: seedErr };
     }
-    const rows = await findTask(svc, ctx.project.id, spec.action, assignee.id);
+    const rows = await findTask(svc, ctx.project.id, e.action, assignee.id);
     if (rows.length === 0) {
       return {
         status: "fail",
-        expected: { title: expandTitle(spec.title, ctx.project.code), assignee: spec.assigneeRole, status: spec.status },
-        observed: { count: 0, note: `no trigger creates review_ora_plan task for ${spec.assigneeRole} after ORA Lead approval` },
+        expected: { title: expandTitle(e.title, ctx.project.code), assignee: e.assigneeRole, status: spec.status },
+        observed: { count: 0, note: `no trigger creates review_ora_plan task for ${e.assigneeRole} after ORA Lead approval` },
       };
     }
     return { status: "pass", observed: { taskId: rows[0].id } };
+
   };
 }
 
@@ -268,15 +259,17 @@ const runR5: Scenario["run"] = async (ctx) => {
     }
   }
 
-  const sr = ctx.users[spec.assigneeRole];
-  const rows = await findTask(svc, ctx.project.id, spec.action, sr.id);
+  const e = SPEC.R5.expects[0];
+  const sr = ctx.users[e.assigneeRole];
+  const rows = await findTask(svc, ctx.project.id, e.action, sr.id);
   if (rows.length === 0) {
     return {
       status: "fail",
-      expected: { count: ">=1", assignee: spec.assigneeRole, gate: spec.trigger },
+      expected: { count: ">=1", assignee: e.assigneeRole, gate: spec.trigger },
       observed: { count: 0, note: "leaf-task trigger did not fire after PHL+DPD APPROVED" },
     };
   }
+
   const t = rows[0];
   const expectedPrefix = `${ctx.project.code}: `;
   const mismatches: string[] = [];
