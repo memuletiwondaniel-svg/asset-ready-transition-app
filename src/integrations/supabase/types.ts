@@ -5323,6 +5323,7 @@ export type Database = {
           status: Database["public"]["Enums"]["orp_status"]
           tenant_id: string | null
           updated_at: string
+          version: number
           wizard_state: Json | null
         }
         Insert: {
@@ -5340,6 +5341,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["orp_status"]
           tenant_id?: string | null
           updated_at?: string
+          version?: number
           wizard_state?: Json | null
         }
         Update: {
@@ -5357,6 +5359,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["orp_status"]
           tenant_id?: string | null
           updated_at?: string
+          version?: number
           wizard_state?: Json | null
         }
         Relationships: [
@@ -6091,6 +6094,7 @@ export type Database = {
           status: Database["public"]["Enums"]["p2a_plan_status"]
           tenant_id: string | null
           updated_at: string
+          version: number
         }
         Insert: {
           created_at?: string
@@ -6110,6 +6114,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["p2a_plan_status"]
           tenant_id?: string | null
           updated_at?: string
+          version?: number
         }
         Update: {
           created_at?: string
@@ -6129,6 +6134,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["p2a_plan_status"]
           tenant_id?: string | null
           updated_at?: string
+          version?: number
         }
         Relationships: [
           {
@@ -6231,6 +6237,7 @@ export type Database = {
           target_date: string | null
           updated_at: string
           vcr_code: string
+          version: number
         }
         Insert: {
           completion_date?: string | null
@@ -6252,6 +6259,7 @@ export type Database = {
           target_date?: string | null
           updated_at?: string
           vcr_code: string
+          version?: number
         }
         Update: {
           completion_date?: string | null
@@ -6273,6 +6281,7 @@ export type Database = {
           target_date?: string | null
           updated_at?: string
           vcr_code?: string
+          version?: number
         }
         Relationships: [
           {
@@ -6540,6 +6549,62 @@ export type Database = {
             columns: ["handover_id"]
             isOneToOne: false
             referencedRelation: "p2a_handovers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_plan_approvals: {
+        Row: {
+          approver_role: string
+          approver_user_id: string | null
+          comments: string | null
+          created_at: string
+          cycle: number
+          decided_at: string | null
+          decided_by: string | null
+          display_order: number
+          handover_plan_id: string
+          id: string
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          approver_role: string
+          approver_user_id?: string | null
+          comments?: string | null
+          created_at?: string
+          cycle?: number
+          decided_at?: string | null
+          decided_by?: string | null
+          display_order?: number
+          handover_plan_id: string
+          id?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approver_role?: string
+          approver_user_id?: string | null
+          comments?: string | null
+          created_at?: string
+          cycle?: number
+          decided_at?: string | null
+          decided_by?: string | null
+          display_order?: number
+          handover_plan_id?: string
+          id?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_plan_approvals_handover_plan_id_fkey"
+            columns: ["handover_plan_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -12501,14 +12566,21 @@ export type Database = {
       }
       user_tasks: {
         Row: {
+          confirmed_at: string | null
+          confirmed_by_sr_ora_engr: boolean
           created_at: string | null
+          dedupe_key: string | null
           description: string | null
           display_order: number | null
           due_date: string | null
           id: string
           metadata: Json | null
+          parent_task_id: string | null
           priority: string
           progress_percentage: number | null
+          source_plan_id: string | null
+          source_plan_table: string | null
+          source_plan_version: number | null
           status: string
           sub_items: Json | null
           tenant_id: string | null
@@ -12518,14 +12590,21 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          confirmed_at?: string | null
+          confirmed_by_sr_ora_engr?: boolean
           created_at?: string | null
+          dedupe_key?: string | null
           description?: string | null
           display_order?: number | null
           due_date?: string | null
           id?: string
           metadata?: Json | null
+          parent_task_id?: string | null
           priority: string
           progress_percentage?: number | null
+          source_plan_id?: string | null
+          source_plan_table?: string | null
+          source_plan_version?: number | null
           status?: string
           sub_items?: Json | null
           tenant_id?: string | null
@@ -12535,14 +12614,21 @@ export type Database = {
           user_id: string
         }
         Update: {
+          confirmed_at?: string | null
+          confirmed_by_sr_ora_engr?: boolean
           created_at?: string | null
+          dedupe_key?: string | null
           description?: string | null
           display_order?: number | null
           due_date?: string | null
           id?: string
           metadata?: Json | null
+          parent_task_id?: string | null
           priority?: string
           progress_percentage?: number | null
+          source_plan_id?: string | null
+          source_plan_table?: string | null
+          source_plan_version?: number | null
           status?: string
           sub_items?: Json | null
           tenant_id?: string | null
@@ -12552,6 +12638,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_tasks_tenant_id_fkey"
             columns: ["tenant_id"]
