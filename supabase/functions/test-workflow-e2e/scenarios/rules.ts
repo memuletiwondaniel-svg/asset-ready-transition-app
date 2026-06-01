@@ -466,9 +466,78 @@ async function assertVCRApproverSeed(svc: SupabaseClient, pointId: string, role:
   return null;
 }
 
+// Counts seeded per role on first VCR point. Sr ORA Engr deliberately > 1
+// to prove cross-cutting C: counts are role-specific, not a generic 1-per.
+const VCR_FIXTURE_COUNTS: Record<string, number> = {
+  "Sr ORA Engr": 2,
+  "Construction Lead": 1,
+  "Commissioning Lead": 1,
+};
+const ITP_FIXTURE_COUNT = 3;
+
+async function ensureVCRFixtures(svc: SupabaseClient, ctx: any, pointId: string, planId: string): Promise<string | null> {
+  // 1) Delivering parties (R19/R21/R22a scope). Seeded counts intentionally vary per role.
+  for (const role of Object.keys(VCR_FIXTURE_COUNTS)) {
+    const userId = ctx.users[role].id;
+    const { count: existing } = await svc.from("vcr_item_delivering_parties")
+      .select("id", { count: "exact", head: true })
+      .eq("handover_point_id", pointId).eq("user_id", userId);
+    const need = VCR_FIXTURE_COUNTS[role] - (existing ?? 0);
+    for (let i = 0; i < need; i++) {
+      const { error } = await svc.from("vcr_item_delivering_parties")
+        .insert({ handover_point_id: pointId, user_id: userId, added_by: userId });
+      if (error) return `delivering_party insert (${role}#${i}): ${error.message}`;
+    }
+  }
+  // 2) p2a_systems row (FK for p2a_itp_activities). One per plan is enough.
+  let systemId: string | undefined;
+  const { data: sys } = await svc.from("p2a_systems")
+    .select("id").eq("handover_plan_id", planId).limit(1).maybeSingle();
+  if (sys?.id) {
+    systemId = sys.id as string;
+  } else {
+    const { data: ins, error: sErr } = await svc.from("p2a_systems").insert({
+      handover_plan_id: planId,
+      system_id: `M11-SYS-${ctx.runId}`,
+      name: `M11 Test System ${ctx.runId}`,
+      is_hydrocarbon: false,
+      completion_status: "NOT_STARTED",
+      completion_percentage: 0,
+      source_type: "MANUAL",
+      punchlist_a_count: 0, punchlist_b_count: 0,
+      itr_a_count: 0, itr_b_count: 0, itr_total_count: 0,
+    }).select("id").single();
+    if (sErr) return `p2a_systems insert: ${sErr.message}`;
+    systemId = ins!.id as string;
+  }
+  // 3) p2a_itp_activities (R22b sub-task source).
+  const { count: itpExisting } = await svc.from("p2a_itp_activities")
+    .select("id", { count: "exact", head: true })
+    .eq("handover_point_id", pointId);
+  const itpNeed = ITP_FIXTURE_COUNT - (itpExisting ?? 0);
+  for (let i = 0; i < itpNeed; i++) {
+    const { error } = await svc.from("p2a_itp_activities").insert({
+      handover_point_id: pointId,
+      system_id: systemId,
+      activity_name: `ITP Activity ${i + 1}`,
+      inspection_type: "Witness",
+      display_order: i + 1,
+    });
+    if (error) return `p2a_itp_activities insert #${i}: ${error.message}`;
+  }
+  return null;
+}
+
 const runR13: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
+  const planId = await ensureP2APlan(svc, ctx);
   const pt = await getFirstPoint(svc, ctx);
+
+  // Seed VCR fixtures BEFORE any lead approval, so the 4-of-4 trigger sees
+  // delivering parties + ITP activities at fan-out time (R19/R20/R21/R22).
+  const fixErr = await ensureVCRFixtures(svc, ctx, pt.id, planId);
+  if (fixErr) return { status: "fail", expected: "VCR fixtures (delivering parties + ITP + system)", observed: fixErr };
+
   const { error: upErr } = await svc.from("p2a_handover_points")
     .update({ execution_plan_status: "PENDING_APPROVAL",
               execution_plan_submitted_at: new Date().toISOString(),
@@ -488,8 +557,9 @@ const runR13: Scenario["run"] = async (ctx) => {
     expected: { title: expectedTitle, assignee: "ORA Lead" },
     observed: { count: rows.length, got: rows.map((r:any)=>r.title) },
   };
-  return { status: "pass", observed: { pointId: pt.id, taskId: match.id } };
+  return { status: "pass", observed: { pointId: pt.id, taskId: match.id, fixtures: { delivering: VCR_FIXTURE_COUNTS, itp: ITP_FIXTURE_COUNT } } };
 };
+
 
 async function approveVCRApprover(ctx: any, pointId: string, role: string): Promise<string | null> {
   const u = ctx.users[role];
@@ -622,42 +692,38 @@ const ruleList: Scenario[] = [
 
 
 // ══════════════════════════════════════════════════════════════════════════
-// R19 / R21 / R22a — checklist scoped via vcr_item_delivering_parties.
-// Seeds 1 delivering-party row per role on first point, then asserts exactly
-// 1 complete_checklist task exists assigned to that role's user.
+// R19 / R21 / R22a — checklist tasks scoped to vcr_item_delivering_parties.
+// Fixtures seeded in R13 (VCR_FIXTURE_COUNTS = 2 / 1 / 1) — proves count is
+// role-specific, not a generic one-per. Asserts exact count match.
 // ══════════════════════════════════════════════════════════════════════════
-async function seedDeliveringParty(svc: SupabaseClient, pointId: string, userId: string): Promise<string | null> {
-  const { data: existing } = await svc.from("vcr_item_delivering_parties")
-    .select("id").eq("handover_point_id", pointId).eq("user_id", userId).maybeSingle();
-  if (existing?.id) return null;
-  const { error } = await svc.from("vcr_item_delivering_parties")
-    .insert({ handover_point_id: pointId, user_id: userId, added_by: userId });
-  return error ? error.message : null;
-}
-
 function buildChecklistRule(rule: "R19" | "R21" | "R22a"): Scenario["run"] {
   const roleMap = { R19: "Sr ORA Engr", R21: "Construction Lead", R22a: "Commissioning Lead" } as const;
   return async (ctx) => {
     const svc = svcOf(ctx);
     const pt = await getFirstPoint(svc, ctx);
     const role = roleMap[rule];
+    const expected = VCR_FIXTURE_COUNTS[role];
     const u = ctx.users[role];
-    const seedErr = await seedDeliveringParty(svc, pt.id, u.id);
-    if (seedErr) return { status: "fail", expected: `seed delivering party for ${role}`, observed: seedErr };
     const rows = await findP2ATask(svc, ctx.project.id, "complete_checklist", u.id);
     const expectedTitle = `${ctx.project.code}: Complete ${pt.vcr_code} Checklist Items`;
-    const match = rows.find((r: any) => r.title === expectedTitle);
-    if (!match) return {
+    const matches = rows.filter((r: any) => r.title === expectedTitle && (r.metadata?.point_id === pt.id));
+    if (matches.length !== expected) return {
       status: "fail",
-      expected: { title: expectedTitle, assignee: role, count: ">=1 (per vcr_item_delivering_parties row)" },
-      observed: { count: rows.length, got: rows.map((r: any) => r.title), note: "no product trigger creates complete_checklist tasks scoped to delivering parties" },
+      expected: { title: expectedTitle, assignee: role, count: expected, note: "one task per vcr_item_delivering_parties row" },
+      observed: { count: matches.length, got: rows.map((r: any) => ({ t: r.title, dp: r.metadata?.delivering_party_id })) },
     };
-    return { status: "pass", observed: { taskId: match.id } };
+    // distinct delivering_party_id per task
+    const dpIds = new Set(matches.map((r: any) => r.metadata?.delivering_party_id));
+    if (dpIds.size !== expected) return {
+      status: "fail", expected: "distinct delivering_party_id per task",
+      observed: { uniqueDpIds: dpIds.size, count: matches.length },
+    };
+    return { status: "pass", observed: { count: matches.length, dpIds: [...dpIds] } };
   };
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// R20 — 2 CMMS deliverable parents → CMMS Lead.
+// R20 — 2 CMMS deliverable parents → CMMS Lead, each with 2 sub-tasks.
 // ══════════════════════════════════════════════════════════════════════════
 const CMMS_SPEC = [
   { action: "deliver_cmms",   title: "Deliver CMMS for" },
@@ -668,52 +734,128 @@ const runR20: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
   const pt = await getFirstPoint(svc, ctx);
   const cmms = ctx.users["CMMS Lead"];
+  const childCounts: Record<string, number> = {};
   const missing: string[] = [];
   for (const d of CMMS_SPEC) {
     const rows = await findP2ATask(svc, ctx.project.id, d.action, cmms.id);
     const expectedTitle = `${ctx.project.code}: ${d.title} ${pt.vcr_code}`;
-    if (!rows.find((r: any) => r.title === expectedTitle)) missing.push(d.action);
+    const parent = rows.find((r: any) => r.title === expectedTitle);
+    if (!parent) { missing.push(d.action); continue; }
+    const { count } = await svc.from("user_tasks").select("id", { count: "exact", head: true }).eq("parent_task_id", parent.id);
+    childCounts[d.action] = count ?? 0;
   }
   if (missing.length > 0) return {
     status: "fail",
     expected: { actions: CMMS_SPEC.map(d => d.action), assignee: "CMMS Lead" },
-    observed: { missing, note: "no product trigger creates CMMS deliverable fan-out for CMMS Lead" },
+    observed: { missing },
   };
-  return { status: "pass", observed: { vcr: pt.vcr_code, parents: 2 } };
+  const bad = Object.entries(childCounts).filter(([,n]) => n !== 2);
+  if (bad.length > 0) return { status: "fail", expected: "2 sub-tasks per CMMS parent", observed: { childCounts } };
+  return { status: "pass", observed: { vcr: pt.vcr_code, parents: 2, childCounts } };
 };
 
 // ══════════════════════════════════════════════════════════════════════════
-// R22 — Commissioning Lead: (a) checklist + (b) ITP rollup gated on
-// confirmed_by_sr_ora_engr.
+// R22 — Commissioning Lead: (a) checklist + (b) ITP handshake.
+// R22b asserts the FULL loop:
+//   1. parent + N sub-tasks exist (N = ITP_FIXTURE_COUNT), all with
+//      requires_sr_ora_confirmation='true'
+//   2. Commissioning Lead marks all sub-tasks completed → progress STILL 0
+//      (confirmed_by_sr_ora_engr still false) AND confirmation tasks created
+//      for Sr ORA Engr
+//   3. Sr ORA Engr sets confirmed_by_sr_ora_engr=true on all sub-tasks →
+//      parent rollup recomputes to 100%
 // ══════════════════════════════════════════════════════════════════════════
 const runR22: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
   const pt = await getFirstPoint(svc, ctx);
   const comm = ctx.users["Commissioning Lead"];
+  const sr = ctx.users["Sr ORA Engr"];
+
+  // R22a
   const checklistResult = await buildChecklistRule("R22a")(ctx);
   if (checklistResult.status === "fail") {
-    return { status: "fail", expected: "R22a checklist + R22b ITP both seeded", observed: { R22a: checklistResult.observed } };
+    return { status: "fail", expected: "R22a checklist correct + R22b handshake", observed: { R22a: checklistResult } };
   }
+
+  // R22b parent
   const itpRows = await findP2ATask(svc, ctx.project.id, "complete_itp", comm.id);
   const expectedItpTitle = `${ctx.project.code}: Complete ITP for ${pt.vcr_code}`;
   const itpParent = itpRows.find((r: any) => r.title === expectedItpTitle);
   if (!itpParent) return {
     status: "fail",
-    expected: { title: expectedItpTitle, assignee: "Commissioning Lead", action: "complete_itp", requires: "confirmed_by_sr_ora_engr gate on rollup" },
-    observed: { count: itpRows.length, got: itpRows.map((r: any) => r.title), note: "no product trigger creates complete_itp parent for Commissioning Lead" },
+    expected: { title: expectedItpTitle, assignee: "Commissioning Lead", action: "complete_itp" },
+    observed: { count: itpRows.length, got: itpRows.map((r: any) => r.title) },
   };
+
+  // sub-tasks
   const { data: children } = await svc.from("user_tasks")
-    .select("id,status,confirmed_by_sr_ora_engr,progress_percentage")
+    .select("id,status,confirmed_by_sr_ora_engr,metadata")
     .eq("parent_task_id", itpParent.id);
-  const { data: parentRow } = await svc.from("user_tasks").select("progress_percentage").eq("id", itpParent.id).maybeSingle();
-  return { status: "pass", observed: { R22a: "ok", R22b_parent: itpParent.id, children: children?.length ?? 0, parent_progress: parentRow?.progress_percentage ?? null } };
+  if (!children || children.length !== ITP_FIXTURE_COUNT) {
+    return { status: "fail", expected: `${ITP_FIXTURE_COUNT} ITP sub-tasks`, observed: { count: children?.length } };
+  }
+  const missingFlag = children.filter((c: any) => c.metadata?.requires_sr_ora_confirmation !== "true");
+  if (missingFlag.length > 0) {
+    return { status: "fail", expected: "all sub-tasks carry requires_sr_ora_confirmation='true'", observed: { missingFlag: missingFlag.length } };
+  }
+
+  // Step 1: Commissioning Lead completes every sub-task.
+  for (const c of children) {
+    const { error } = await svc.from("user_tasks").update({ status: "completed" }).eq("id", c.id);
+    if (error) return { status: "fail", expected: "Commissioning Lead complete sub-task", observed: error.message };
+  }
+  // progress STILL 0 (confirmed still false)
+  const { data: midParent } = await svc.from("user_tasks").select("progress_percentage").eq("id", itpParent.id).maybeSingle();
+  if ((midParent?.progress_percentage ?? -1) !== 0) {
+    return {
+      status: "fail",
+      expected: "parent progress=0 BEFORE Sr ORA Engr confirmation (sub-tasks don't count without confirmation)",
+      observed: { progress: midParent?.progress_percentage },
+    };
+  }
+  // Confirmation tasks for Sr ORA Engr should now exist (one per sub-task)
+  const confirmTasks = await findP2ATask(svc, ctx.project.id, "confirm_itp_activity", sr.id);
+  const pointConfirms = confirmTasks.filter((t: any) => t.metadata?.point_id === pt.id);
+  if (pointConfirms.length !== ITP_FIXTURE_COUNT) {
+    return {
+      status: "fail",
+      expected: `${ITP_FIXTURE_COUNT} confirm_itp_activity tasks for Sr ORA Engr`,
+      observed: { count: pointConfirms.length },
+    };
+  }
+
+  // Step 2: Sr ORA Engr confirms every sub-task.
+  for (const c of children) {
+    const { error } = await svc.from("user_tasks")
+      .update({ confirmed_by_sr_ora_engr: true, confirmed_at: new Date().toISOString() })
+      .eq("id", c.id);
+    if (error) return { status: "fail", expected: "Sr ORA Engr confirm sub-task", observed: error.message };
+  }
+  const { data: finalParent } = await svc.from("user_tasks").select("progress_percentage").eq("id", itpParent.id).maybeSingle();
+  if ((finalParent?.progress_percentage ?? -1) !== 100) {
+    return {
+      status: "fail",
+      expected: "parent progress=100 AFTER Sr ORA Engr confirmation",
+      observed: { progress: finalParent?.progress_percentage },
+    };
+  }
+
+  return { status: "pass", observed: {
+    R22a: checklistResult.observed,
+    R22b_parent: itpParent.id,
+    subTasks: children.length,
+    confirmTasksCreated: pointConfirms.length,
+    progressBeforeConfirm: midParent?.progress_percentage,
+    progressAfterConfirm: finalParent?.progress_percentage,
+  } };
 };
 
 
 export const ruleScenarios: Scenario[] = [
   ...ruleList,
-  { id: "R19", name: "VCR approved → checklist scoped to Sr ORA Engr",                    dependsOn: ["R18"], run: buildChecklistRule("R19") },
-  { id: "R20", name: "VCR approved → 2 CMMS deliverables → CMMS Lead",                    dependsOn: ["R18"], run: runR20 },
-  { id: "R21", name: "VCR approved → checklist scoped to Construction Lead",              dependsOn: ["R18"], run: buildChecklistRule("R21") },
-  { id: "R22", name: "VCR approved → Commissioning Lead checklist + ITP rollup",          dependsOn: ["R18"], run: runR22 },
+  { id: "R19", name: "VCR approved → checklist scoped to Sr ORA Engr (count=2)",          dependsOn: ["R18"], run: buildChecklistRule("R19") },
+  { id: "R20", name: "VCR approved → 2 CMMS deliverables (+2 sub-tasks each) → CMMS Lead", dependsOn: ["R18"], run: runR20 },
+  { id: "R21", name: "VCR approved → checklist scoped to Construction Lead (count=1)",    dependsOn: ["R18"], run: buildChecklistRule("R21") },
+  { id: "R22", name: "VCR approved → Comm Lead checklist + ITP handshake (pre/post confirm)", dependsOn: ["R18"], run: runR22 },
 ];
+

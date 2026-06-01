@@ -39,7 +39,7 @@ const runB: Scenario["run"] = async (ctx) => {
   return { status: "pass", observed: { approved: g1, unapproved: g2 } };
 };
 
-// ── C: scoping — three roles, three different checklist sets ────────────────
+// ── C: scoping — three roles, three different checklist sets (2/1/1) ──────
 const runC: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
   const { data: pts } = await svc.from("p2a_handover_points")
@@ -48,19 +48,28 @@ const runC: Scenario["run"] = async (ctx) => {
   if (!pt) return { status: "fail", expected: "first VCR point", observed: "none" };
   const rolesToCheck = ["Sr ORA Engr", "Construction Lead", "Commissioning Lead"] as const;
   const counts: Record<string, number> = {};
+  const dpIds: Record<string, string[]> = {};
   for (const role of rolesToCheck) {
     const u = ctx.users[role];
-    const { data } = await svc.from("user_tasks")
-      .select("id", { count: "exact", head: false })
+    const { data } = await svc.from("user_tasks").select("id,metadata")
       .filter("metadata->>action", "eq", "complete_checklist")
       .filter("metadata->>point_id", "eq", pt.id)
       .eq("user_id", u.id);
     counts[role] = data?.length ?? 0;
+    dpIds[role] = (data ?? []).map((r: any) => r.metadata?.delivering_party_id);
   }
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
-  if (total === 0) return { status: "fail", expected: "complete_checklist tasks scoped to each role's delivering parties", observed: { counts, note: "no complete_checklist tasks exist for any role (R19/R21/R22a not implemented)" } };
-  return { status: "pass", observed: { counts } };
+  if (total === 0) return { status: "fail", expected: "complete_checklist tasks scoped per role", observed: { counts } };
+  if (counts["Sr ORA Engr"] === counts["Construction Lead"]) {
+    return { status: "fail", expected: "Sr ORA Engr count != Construction Lead count (role-specific cardinality, not generic)", observed: { counts } };
+  }
+  const allIds = Object.values(dpIds).flat();
+  if (new Set(allIds).size !== allIds.length) {
+    return { status: "fail", expected: "delivering_party_id sets disjoint across roles", observed: { dpIds } };
+  }
+  return { status: "pass", observed: { counts, totalTasks: total } };
 };
+
 
 // ── D: rollup — cancelled_superseded excluded from denominator ──────────────
 const runD: Scenario["run"] = async (ctx) => {
