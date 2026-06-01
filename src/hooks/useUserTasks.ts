@@ -45,12 +45,13 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
   const partnerIds = await fetchB2BPartnerIds(userId);
   const effectiveUserIds = [userId, ...partnerIds];
 
-  // Single query fetches both regular tasks AND bundle tasks (previously two separate queries)
-  const { data: tasksData, error: tasksError } = await supabase
-    .from('user_tasks')
+  // Single query fetches both regular tasks AND bundle tasks (previously two separate queries).
+  // Reads bind to ora_activity_plan_v (M5 canonical view) — excludes 'cancelled' and
+  // 'cancelled_superseded' via is_active_task_status(). Writes still target user_tasks.
+  const { data: tasksData, error: tasksError } = await (supabase as any)
+    .from('ora_activity_plan_v')
     .select('id,title,description,due_date,priority,type,status,display_order,created_at,metadata,sub_items,progress_percentage,user_id')
     .in('user_id', effectiveUserIds)
-    .in('status', ['pending', 'in_progress', 'waiting', 'completed'])
     .order('display_order', { ascending: true })
     .order('priority', { ascending: false })
     .order('due_date', { ascending: true });

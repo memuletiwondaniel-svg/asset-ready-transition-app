@@ -11817,6 +11817,13 @@ export type Database = {
             foreignKeyName: "task_attachments_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
+            referencedRelation: "ora_activity_plan_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_attachments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
             referencedRelation: "user_tasks"
             referencedColumns: ["id"]
           },
@@ -11848,6 +11855,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "ora_activity_plan_v"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "task_comments_task_id_fkey"
             columns: ["task_id"]
@@ -11925,7 +11939,21 @@ export type Database = {
             foreignKeyName: "task_dependencies_depends_on_task_id_fkey"
             columns: ["depends_on_task_id"]
             isOneToOne: false
+            referencedRelation: "ora_activity_plan_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_dependencies_depends_on_task_id_fkey"
+            columns: ["depends_on_task_id"]
+            isOneToOne: false
             referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_dependencies_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "ora_activity_plan_v"
             referencedColumns: ["id"]
           },
           {
@@ -12021,6 +12049,13 @@ export type Database = {
             foreignKeyName: "task_documents_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: true
+            referencedRelation: "ora_activity_plan_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_documents_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
             referencedRelation: "user_tasks"
             referencedColumns: ["id"]
           },
@@ -12071,6 +12106,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "task_reviewers_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "ora_activity_plan_v"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "task_reviewers_task_id_fkey"
             columns: ["task_id"]
@@ -12641,6 +12683,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "ora_activity_plan_v"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_tasks_parent_task_id_fkey"
             columns: ["parent_task_id"]
@@ -13253,6 +13302,106 @@ export type Database = {
       }
     }
     Views: {
+      ora_activity_plan_v: {
+        Row: {
+          confirmed_at: string | null
+          confirmed_by_sr_ora_engr: boolean | null
+          created_at: string | null
+          dedupe_key: string | null
+          description: string | null
+          display_order: number | null
+          due_date: string | null
+          id: string | null
+          metadata: Json | null
+          parent_task_id: string | null
+          priority: string | null
+          progress_percentage: number | null
+          source_business_key: string | null
+          source_plan_id: string | null
+          source_plan_table: string | null
+          source_plan_version: number | null
+          status: string | null
+          sub_items: Json | null
+          tenant_id: string | null
+          title: string | null
+          type: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          confirmed_at?: string | null
+          confirmed_by_sr_ora_engr?: boolean | null
+          created_at?: string | null
+          dedupe_key?: string | null
+          description?: string | null
+          display_order?: number | null
+          due_date?: string | null
+          id?: string | null
+          metadata?: Json | null
+          parent_task_id?: string | null
+          priority?: string | null
+          progress_percentage?: number | null
+          source_business_key?: string | null
+          source_plan_id?: string | null
+          source_plan_table?: string | null
+          source_plan_version?: number | null
+          status?: string | null
+          sub_items?: Json | null
+          tenant_id?: string | null
+          title?: string | null
+          type?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          confirmed_at?: string | null
+          confirmed_by_sr_ora_engr?: boolean | null
+          created_at?: string | null
+          dedupe_key?: string | null
+          description?: string | null
+          display_order?: number | null
+          due_date?: string | null
+          id?: string | null
+          metadata?: Json | null
+          parent_task_id?: string | null
+          priority?: string | null
+          progress_percentage?: number | null
+          source_business_key?: string | null
+          source_plan_id?: string | null
+          source_plan_table?: string | null
+          source_plan_version?: number | null
+          status?: string | null
+          sub_items?: Json | null
+          tenant_id?: string | null
+          title?: string | null
+          type?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "ora_activity_plan_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "user_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_tasks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles_safe: {
         Row: {
           account_status: string | null
@@ -13800,7 +13949,17 @@ export type Database = {
         Returns: undefined
       }
       initiate_password_reset: { Args: { user_email: string }; Returns: string }
+      is_active_task_status: { Args: { _status: string }; Returns: boolean }
       is_b2b_partner_of: { Args: { target_user_id: string }; Returns: boolean }
+      is_child_task_complete: {
+        Args: {
+          _confirmed_by_sr_ora_engr: boolean
+          _metadata: Json
+          _status: string
+          _type: string
+        }
+        Returns: boolean
+      }
       is_feature_enabled: { Args: { p_feature_key: string }; Returns: boolean }
       offboard_user: {
         Args: {

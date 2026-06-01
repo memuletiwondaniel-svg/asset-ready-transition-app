@@ -26,9 +26,10 @@ export const useNewTaskCount = () => {
       const partnerIds = await fetchB2BPartnerIds(user.id);
       const effectiveUserIds = [user.id, ...partnerIds];
 
-      // Build query for pending/in_progress tasks
-      let query = supabase
-        .from('user_tasks')
+      // Build query for pending/in_progress tasks.
+      // Read binds to ora_activity_plan_v (M5) — cancelled + cancelled_superseded auto-excluded.
+      let query = (supabase as any)
+        .from('ora_activity_plan_v')
         .select('id', { count: 'exact', head: true })
         .in('user_id', effectiveUserIds)
         .in('status', ['pending', 'in_progress']);

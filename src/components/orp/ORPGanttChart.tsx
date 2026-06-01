@@ -531,8 +531,9 @@ export const ORPGanttChart: React.FC<ORPGanttChartProps> = ({ planId, deliverabl
     queryFn: async () => {
       if (activityIdsForTaskMap.length === 0) return {};
 
+      // Read binds to ora_activity_plan_v (M5) — cancelled + cancelled_superseded auto-excluded.
       const { data } = await (supabase as any)
-        .from('user_tasks')
+        .from('ora_activity_plan_v')
         .select('id, user_id, title, description, due_date, priority, type, status, display_order, created_at, metadata')
         .in('metadata->>ora_plan_activity_id', activityIdsForTaskMap);
 
