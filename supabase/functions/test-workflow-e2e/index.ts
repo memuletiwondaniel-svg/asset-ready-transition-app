@@ -91,7 +91,7 @@ serve(async (req) => {
       anonUrl: SUPABASE_URL,
       anonKey: ANON_KEY,
       users,
-      project: { id: project.id, code: `M11-${runId.slice(0, 8)}` },
+      project: { id: project.id, code: project.code },
       results: new Map(),
     };
 
