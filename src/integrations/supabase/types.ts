@@ -14249,7 +14249,12 @@ export type Database = {
       p2a_handover_point_status: "PENDING" | "IN_PROGRESS" | "READY" | "SIGNED"
       p2a_milestone_source: "MANUAL" | "PRIMAVERA_API"
       p2a_phase: "PAC" | "FAC"
-      p2a_plan_status: "DRAFT" | "ACTIVE" | "COMPLETED" | "ARCHIVED"
+      p2a_plan_status:
+        | "DRAFT"
+        | "ACTIVE"
+        | "COMPLETED"
+        | "ARCHIVED"
+        | "PENDING_APPROVAL"
       p2a_qualification_status: "PENDING" | "APPROVED" | "REJECTED"
       p2a_status: "DRAFT" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
       p2a_subsystem_status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
@@ -14595,7 +14600,13 @@ export const Constants = {
       p2a_handover_point_status: ["PENDING", "IN_PROGRESS", "READY", "SIGNED"],
       p2a_milestone_source: ["MANUAL", "PRIMAVERA_API"],
       p2a_phase: ["PAC", "FAC"],
-      p2a_plan_status: ["DRAFT", "ACTIVE", "COMPLETED", "ARCHIVED"],
+      p2a_plan_status: [
+        "DRAFT",
+        "ACTIVE",
+        "COMPLETED",
+        "ARCHIVED",
+        "PENDING_APPROVAL",
+      ],
       p2a_qualification_status: ["PENDING", "APPROVED", "REJECTED"],
       p2a_status: ["DRAFT", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
       p2a_subsystem_status: ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"],

@@ -296,6 +296,160 @@ const runR5: Scenario["run"] = async (ctx) => {
   return { status: "pass", observed: { taskId: t.id, count: rows.length } };
 };
 
+// ══════════════════════════════════════════════════════════════════════════
+// P2A WORKFLOW (R6–R12) — spec_v2 chain on p2a_handover_approvers
+// ══════════════════════════════════════════════════════════════════════════
+// Discriminator: spec rows carry metadata.contract='spec_v2' inside the
+// shared source='p2a_handover' namespace, so the 46 legacy rows can't
+// satisfy a spec assert by accident (C-narrow).
+async function findP2ATask(svc: SupabaseClient, projectId: string, action: string, userId?: string) {
+  let q = svc.from("user_tasks")
+    .select("id,user_id,title,status,type,priority,dedupe_key,metadata,created_at")
+    .filter("metadata->>source", "eq", "p2a_handover")
+    .filter("metadata->>contract", "eq", "spec_v2")
+    .filter("metadata->>project_id", "eq", projectId)
+    .filter("metadata->>action", "eq", action);
+  if (userId) q = q.eq("user_id", userId);
+  const { data, error } = await q;
+  if (error) throw new Error(`findP2ATask(${action}): ${error.message}`);
+  return data ?? [];
+}
+
+async function assertP2AApproverSeed(svc: SupabaseClient, planId: string, role: string, expectedUserId: string): Promise<string | null> {
+  const { data, error } = await svc.from("p2a_handover_approvers")
+    .select("status,user_id,cycle,stage")
+    .eq("handover_id", planId).eq("stage", "P2A").eq("role_name", role).eq("cycle", 1).maybeSingle();
+  if (error) return `seed lookup error: ${error.message}`;
+  if (!data) return `seed missing for role=${role} stage=P2A cycle=1`;
+  if (data.status !== "PENDING" && data.status !== "APPROVED") return `seed status=${data.status} (expected PENDING/APPROVED)`;
+  if (data.user_id !== expectedUserId) return `seed user_id=${data.user_id} (expected ${expectedUserId})`;
+  return null;
+}
+
+async function ensureP2APlan(svc: SupabaseClient, ctx: any): Promise<string> {
+  const sr = ctx.users["Sr ORA Engr"];
+  const existing = await svc.from("p2a_handover_plans").select("id").eq("project_id", ctx.project.id).eq("created_by", sr.id).maybeSingle();
+  if (existing.data?.id) return existing.data.id as string;
+  const { data, error } = await svc.from("p2a_handover_plans").insert({
+    project_id: ctx.project.id,
+    name: `M11 P2A Plan ${ctx.runId}`,
+    created_by: sr.id, status: "DRAFT", project_code: ctx.project.code,
+  }).select("id").single();
+  if (error) throw new Error(`ensureP2APlan: ${error.message}`);
+  return data!.id as string;
+}
+
+async function ensureP2APoints(svc: SupabaseClient, ctx: any, planId: string) {
+  const { data: existing } = await svc.from("p2a_handover_points").select("id,vcr_code").eq("handover_plan_id", planId);
+  if ((existing?.length ?? 0) >= 2) return existing as Array<{id:string;vcr_code:string}>;
+  const sr = ctx.users["Sr ORA Engr"];
+  const { data, error } = await svc.from("p2a_handover_points").insert([
+    { handover_plan_id: planId, name: "VCR-01 — System A", vcr_code: "VCR-01", position_x: 100, position_y: 100, created_by: sr.id },
+    { handover_plan_id: planId, name: "VCR-02 — System B", vcr_code: "VCR-02", position_x: 200, position_y: 200, created_by: sr.id },
+  ]).select("id,vcr_code");
+  if (error) throw new Error(`ensureP2APoints: ${error.message}`);
+  return data as Array<{id:string;vcr_code:string}>;
+}
+
+const runR6: Scenario["run"] = async (ctx) => {
+  const svc = svcOf(ctx);
+  const sr = ctx.users["Sr ORA Engr"];
+  const rows = await findP2ATask(svc, ctx.project.id, "develop_p2a_plan", sr.id);
+  if (rows.length === 0) return {
+    status: "fail",
+    expected: { title: `${ctx.project.code}: Develop P2A Plan`, assignee: "Sr ORA Engr" },
+    observed: { count: 0, note: "create_p2a_entry_task did not fire after orp_plan_is_approved=true" },
+  };
+  const expected = `${ctx.project.code}: Develop P2A Plan`;
+  if (rows[0].title !== expected) return { status: "fail", expected: { title: expected }, observed: { title: rows[0].title } };
+  return { status: "pass", observed: { taskId: rows[0].id } };
+};
+
+const runR7: Scenario["run"] = async (ctx) => {
+  const svc = svcOf(ctx);
+  const planId = await ensureP2APlan(svc, ctx);
+  const { error: upErr } = await svc.from("p2a_handover_plans").update({ status: "PENDING_APPROVAL" }).eq("id", planId);
+  if (upErr) return { status: "fail", expected: "submit allowed", observed: upErr.message };
+  const oraLead = ctx.users["ORA Lead"];
+  const seedErr = await assertP2AApproverSeed(svc, planId, "ORA Lead", oraLead.id);
+  if (seedErr) return { status: "fail", expected: "ORA Lead P2A seed after submit", observed: seedErr };
+  const rows = await findP2ATask(svc, ctx.project.id, "review_p2a_plan", oraLead.id);
+  if (rows.length === 0) return {
+    status: "fail",
+    expected: { title: `${ctx.project.code}: Review and Approve P2A Plan`, assignee: "ORA Lead" },
+    observed: { count: 0, note: "create_p2a_ora_lead_review did not fire" },
+  };
+  return { status: "pass", observed: { planId, taskId: rows[0].id } };
+};
+
+async function approveP2AAsOraLead(ctx: any, planId: string): Promise<string | null> {
+  const oraLead = ctx.users["ORA Lead"];
+  const c = clientAs(ctx.anonUrl, ctx.anonKey, oraLead.jwt);
+  const { error, count } = await c.from("p2a_handover_approvers")
+    .update({ status: "APPROVED", approved_at: new Date().toISOString() }, { count: "exact" })
+    .eq("handover_id", planId).eq("stage", "P2A").eq("role_name", "ORA Lead");
+  if (error) return error.message;
+  if ((count ?? 0) === 0) return "0 rows updated — RLS denied silently";
+  return null;
+}
+
+function buildP2ALeadRule(rule: "R8" | "R9" | "R10" | "R11"): Scenario["run"] {
+  const spec = SPEC[rule];
+  const role = spec.expects[0].assigneeRole;
+  const action = spec.expects[0].action;
+  return async (ctx) => {
+    const svc = svcOf(ctx);
+    const planId = await ensureP2APlan(svc, ctx);
+    const { data: existing } = await svc.from("p2a_handover_approvers")
+      .select("status").eq("handover_id", planId).eq("stage","P2A").eq("role_name","ORA Lead").maybeSingle();
+    if (!existing || existing.status !== "APPROVED") {
+      const err = await approveP2AAsOraLead(ctx, planId);
+      if (err) return { status: "fail", expected: "ORA Lead UPDATE APPROVED", observed: err };
+    }
+    const assignee = ctx.users[role];
+    const seedErr = await assertP2AApproverSeed(svc, planId, role, assignee.id);
+    if (seedErr) return { status: "fail", expected: `${role} seed`, observed: seedErr };
+    const rows = await findP2ATask(svc, ctx.project.id, action, assignee.id);
+    if (rows.length === 0) return {
+      status: "fail",
+      expected: { title: `${ctx.project.code}: Review and Approve P2A Plan`, assignee: role },
+      observed: { count: 0, note: `no ${action} task for ${role}` },
+    };
+    return { status: "pass", observed: { taskId: rows[0].id } };
+  };
+}
+
+const runR12: Scenario["run"] = async (ctx) => {
+  const svc = svcOf(ctx);
+  const planId = await ensureP2APlan(svc, ctx);
+  const points = await ensureP2APoints(svc, ctx, planId);
+  for (const role of ["Construction Lead","Commissioning Lead","Project Hub Lead","Dep. Plant Director"] as const) {
+    const u = ctx.users[role];
+    const seedErr = await assertP2AApproverSeed(svc, planId, role, u.id);
+    if (seedErr) return { status: "fail", expected: `${role} seed before R12`, observed: seedErr };
+    const { data: row } = await svc.from("p2a_handover_approvers")
+      .select("status").eq("handover_id", planId).eq("stage","P2A").eq("role_name", role).maybeSingle();
+    if (row?.status === "APPROVED") continue;
+    const c = clientAs(ctx.anonUrl, ctx.anonKey, u.jwt);
+    const { error, count } = await c.from("p2a_handover_approvers")
+      .update({ status: "APPROVED", approved_at: new Date().toISOString() }, { count: "exact" })
+      .eq("handover_id", planId).eq("stage","P2A").eq("role_name", role);
+    if (error) return { status: "fail", expected: `${role} UPDATE`, observed: error.message };
+    if ((count ?? 0) === 0) return { status: "fail", expected: `${role} affects 1 row`, observed: "0 rows — RLS denied" };
+  }
+  const sr = ctx.users["Sr ORA Engr"];
+  const rows = await findP2ATask(svc, ctx.project.id, "develop_vcr_plan", sr.id);
+  if (rows.length < points.length) return {
+    status: "fail",
+    expected: { count: points.length, per: "p2a_handover_points row", assignee: "Sr ORA Engr" },
+    observed: { count: rows.length, vcrs: points.map(p => p.vcr_code), got: rows.map((r:any)=>r.title) },
+  };
+  const titles = new Set(rows.map((r: any) => r.title));
+  const missing = points.filter(p => !titles.has(`${ctx.project.code}: Develop ${p.vcr_code} Plan`));
+  if (missing.length > 0) return { status: "fail", expected: "one Develop <vcr> Plan per VCR", observed: { missing: missing.map(m=>m.vcr_code) } };
+  return { status: "pass", observed: { count: rows.length, vcrs: points.map(p=>p.vcr_code) } };
+};
+
 // ──────────────────────────────────────────────────────────────────────────
 export const ruleScenarios: Scenario[] = [
   { id: "R1",  name: "Project created → Develop ORA Plan → Sr ORA Engr",                 run: runR1 },
@@ -304,22 +458,23 @@ export const ruleScenarios: Scenario[] = [
   { id: "R4",  name: "ORA Lead approves → review task → Dep. Plant Director",            dependsOn: ["R2"], run: buildReviewRule("R4") },
   { id: "R5",  name: "Both PHL+DPD approve → leaf-activity tasks → Sr ORA Engr",         dependsOn: ["R3", "R4"], run: runR5 },
 
-  // pending stubs
-  { id: "R6",  name: "P2A task fires on ORA approval (Develop P2A Plan)",                dependsOn: ["R5"], run: pending },
-  { id: "R7",  name: "Sr ORA Engr submits P2A → review → Construction Lead",             dependsOn: ["R6"], run: pending },
-  { id: "R8",  name: "Sr ORA Engr submits P2A → review → Commissioning Lead",            dependsOn: ["R6"], run: pending },
-  { id: "R9",  name: "Sr ORA Engr submits P2A → review → Project Hub Lead",              dependsOn: ["R6"], run: pending },
-  { id: "R10", name: "Sr ORA Engr submits P2A → review → Dep. Plant Director",           dependsOn: ["R6"], run: pending },
-  { id: "R11", name: "All four P2A approvals → handover tasks created per delivery row", dependsOn: ["R7","R8","R9","R10"], run: pending },
-  { id: "R12", name: "P2A approved → Create VCR → CMMS Lead",                            dependsOn: ["R11"], run: pending },
-  { id: "R13", name: "CMMS Lead submits VCR → review → Construction Lead",               dependsOn: ["R12"], run: pending },
-  { id: "R14", name: "CMMS Lead submits VCR → review → Commissioning Lead",              dependsOn: ["R12"], run: pending },
-  { id: "R15", name: "CMMS Lead submits VCR → review → Project Hub Lead",                dependsOn: ["R12"], run: pending },
-  { id: "R16", name: "CMMS Lead submits VCR → review → Dep. Plant Director",             dependsOn: ["R12"], run: pending },
-  { id: "R17", name: "All four VCR approvals → VCR Bundle tasks per delivering party",   dependsOn: ["R13","R14","R15","R16"], run: pending },
-  { id: "R18", name: "VCR Bundle approved by delivering party → deliverable tasks",      dependsOn: ["R17"], run: pending },
-  { id: "R19", name: "Deliverable rejected → Revise Deliverable task → owner",           dependsOn: ["R18"], run: pending },
-  { id: "R20", name: "All deliverables accepted → VCR finalize task → CMMS Lead",        dependsOn: ["R18"], run: pending },
-  { id: "R21", name: "VCR finalized → SOF task → Director (commission-scoped)",          dependsOn: ["R20"], run: pending },
-  { id: "R22", name: "SOF signed → ITP handshake task → Operations",                     dependsOn: ["R21"], run: pending },
+  { id: "R6",  name: "ORA approved → Develop P2A Plan → Sr ORA Engr",                    dependsOn: ["R5"], run: runR6 },
+  { id: "R7",  name: "Sr ORA Engr submits P2A → Review P2A Plan → ORA Lead",             dependsOn: ["R6"], run: runR7 },
+  { id: "R8",  name: "ORA Lead approves P2A → review → Construction Lead",               dependsOn: ["R7"], run: buildP2ALeadRule("R8") },
+  { id: "R9",  name: "ORA Lead approves P2A → review → Commissioning Lead",              dependsOn: ["R7"], run: buildP2ALeadRule("R9") },
+  { id: "R10", name: "ORA Lead approves P2A → review → Project Hub Lead",                dependsOn: ["R7"], run: buildP2ALeadRule("R10") },
+  { id: "R11", name: "ORA Lead approves P2A → review → Dep. Plant Director",             dependsOn: ["R7"], run: buildP2ALeadRule("R11") },
+  { id: "R12", name: "4-of-4 leads approve P2A → Develop VCR-XX Plan per VCR → Sr ORA Engr", dependsOn: ["R8","R9","R10","R11"], run: runR12 },
+
+  // chunks 2 & 3 pending
+  { id: "R13", name: "Sr ORA Engr submits VCR → review → ORA Lead",                       dependsOn: ["R12"], run: pending },
+  { id: "R14", name: "ORA Lead approves VCR → review → Construction Lead",                dependsOn: ["R13"], run: pending },
+  { id: "R15", name: "ORA Lead approves VCR → review → Commissioning Lead",               dependsOn: ["R13"], run: pending },
+  { id: "R16", name: "ORA Lead approves VCR → review → Project Hub Lead",                 dependsOn: ["R13"], run: pending },
+  { id: "R17", name: "ORA Lead approves VCR → review → Dep. Plant Director",              dependsOn: ["R13"], run: pending },
+  { id: "R18", name: "VCR approved → 5 deliverable parents → Sr ORA Engr",                dependsOn: ["R14","R15","R16","R17"], run: pending },
+  { id: "R19", name: "VCR approved → checklist scoped to Sr ORA Engr",                    dependsOn: ["R18"], run: pending },
+  { id: "R20", name: "VCR approved → 2 CMMS deliverables → CMMS Lead",                    dependsOn: ["R18"], run: pending },
+  { id: "R21", name: "VCR approved → checklist scoped to Construction Lead",              dependsOn: ["R18"], run: pending },
+  { id: "R22", name: "VCR approved → Commissioning Lead checklist + ITP rollup",          dependsOn: ["R18"], run: pending },
 ];
