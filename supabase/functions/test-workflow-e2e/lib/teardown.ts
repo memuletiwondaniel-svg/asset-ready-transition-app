@@ -44,6 +44,28 @@ export async function sweepByRunId(
     );
   }
 
+  // Collect harness user_ids BEFORE deleting membership/users so we can
+  // sweep profiles by an explicit id list. profiles.user_id is ON DELETE
+  // CASCADE from auth.users, but we delete profiles explicitly first so
+  // any failure is visible in `errors` instead of masked by the cascade —
+  // same defense-in-depth pattern as harness_users below.
+  let harnessUserIds: string[] = [];
+  try {
+    const { data: hu } = await svc
+      .from("harness_users")
+      .select("user_id")
+      .eq("run_id", runId);
+    harnessUserIds = (hu ?? []).map((r: any) => r.user_id as string);
+  } catch (e) {
+    errors.push(`harness_users lookup: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  if (harnessUserIds.length > 0) {
+    await safe("profiles", () =>
+      svc.from("profiles").delete({ count: "exact" }).in("user_id", harnessUserIds) as any,
+    );
+  }
+
   // Sweep harness_users by run_id explicitly. ON DELETE CASCADE on user_id
   // would also catch these when auth.users rows are deleted below, but the
   // explicit sweep guarantees zero orphan membership rows even if a user
