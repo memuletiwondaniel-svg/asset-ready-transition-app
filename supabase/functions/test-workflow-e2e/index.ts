@@ -72,6 +72,7 @@ serve(async (req) => {
   const projectIds: string[] = [];
   let users: RunContext["users"] = {};
   const results: ScenarioResult[] = [];
+  let fatalError: string | null = null;
 
   try {
     // Provision
@@ -90,7 +91,7 @@ serve(async (req) => {
       anonUrl: SUPABASE_URL,
       anonKey: ANON_KEY,
       users,
-      project: { id: project.id, code: `M11-${runId.slice(0, 8)}` },
+      project: { id: project.id, code: project.code },
       results: new Map(),
     };
 
@@ -98,19 +99,13 @@ serve(async (req) => {
       results.push(await runScenario(scn, ctx));
     }
   } catch (e) {
-    return new Response(
-      JSON.stringify({
-        runId,
-        error: e instanceof Error ? `${e.name}: ${e.message}` : String(e),
-        results,
-      }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    fatalError = e instanceof Error ? `${e.name}: ${e.message}\n${e.stack ?? ""}` : String(e);
+    console.error("M11 fatal:", fatalError);
   } finally {
     // Teardown ALWAYS runs — even on partial provision failure.
     const teardown = await sweepByRunId(svc, runId, projectIds);
     return new Response(
-      JSON.stringify({ runId, results, teardown }),
+      JSON.stringify({ runId, fatalError, results, teardown }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
