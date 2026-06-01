@@ -6010,7 +6010,9 @@ export type Database = {
           display_order: number
           handover_id: string
           id: string
+          point_id: string | null
           role_name: string
+          stage: string
           status: string | null
           user_id: string | null
         }
@@ -6022,7 +6024,9 @@ export type Database = {
           display_order: number
           handover_id: string
           id?: string
+          point_id?: string | null
           role_name: string
+          stage?: string
           status?: string | null
           user_id?: string | null
         }
@@ -6034,7 +6038,9 @@ export type Database = {
           display_order?: number
           handover_id?: string
           id?: string
+          point_id?: string | null
           role_name?: string
+          stage?: string
           status?: string | null
           user_id?: string | null
         }
@@ -6044,6 +6050,13 @@ export type Database = {
             columns: ["handover_id"]
             isOneToOne: false
             referencedRelation: "p2a_handover_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "p2a_handover_approvers_point_id_fkey"
+            columns: ["point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
           },
         ]
@@ -14093,7 +14106,7 @@ export type Database = {
           user_id: string
         }[]
       }
-      vcr_plan_is_approved: { Args: { _handover_id: string }; Returns: boolean }
+      vcr_plan_is_approved: { Args: { _point_id: string }; Returns: boolean }
       write_audit_log: {
         Args: {
           p_action: string
