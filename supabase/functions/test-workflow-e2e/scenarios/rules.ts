@@ -466,9 +466,78 @@ async function assertVCRApproverSeed(svc: SupabaseClient, pointId: string, role:
   return null;
 }
 
+// Counts seeded per role on first VCR point. Sr ORA Engr deliberately > 1
+// to prove cross-cutting C: counts are role-specific, not a generic 1-per.
+const VCR_FIXTURE_COUNTS: Record<string, number> = {
+  "Sr ORA Engr": 2,
+  "Construction Lead": 1,
+  "Commissioning Lead": 1,
+};
+const ITP_FIXTURE_COUNT = 3;
+
+async function ensureVCRFixtures(svc: SupabaseClient, ctx: any, pointId: string, planId: string): Promise<string | null> {
+  // 1) Delivering parties (R19/R21/R22a scope). Seeded counts intentionally vary per role.
+  for (const role of Object.keys(VCR_FIXTURE_COUNTS)) {
+    const userId = ctx.users[role].id;
+    const { count: existing } = await svc.from("vcr_item_delivering_parties")
+      .select("id", { count: "exact", head: true })
+      .eq("handover_point_id", pointId).eq("user_id", userId);
+    const need = VCR_FIXTURE_COUNTS[role] - (existing ?? 0);
+    for (let i = 0; i < need; i++) {
+      const { error } = await svc.from("vcr_item_delivering_parties")
+        .insert({ handover_point_id: pointId, user_id: userId, added_by: userId });
+      if (error) return `delivering_party insert (${role}#${i}): ${error.message}`;
+    }
+  }
+  // 2) p2a_systems row (FK for p2a_itp_activities). One per plan is enough.
+  let systemId: string | undefined;
+  const { data: sys } = await svc.from("p2a_systems")
+    .select("id").eq("handover_plan_id", planId).limit(1).maybeSingle();
+  if (sys?.id) {
+    systemId = sys.id as string;
+  } else {
+    const { data: ins, error: sErr } = await svc.from("p2a_systems").insert({
+      handover_plan_id: planId,
+      system_id: `M11-SYS-${ctx.runId}`,
+      name: `M11 Test System ${ctx.runId}`,
+      is_hydrocarbon: false,
+      completion_status: "NOT_STARTED",
+      completion_percentage: 0,
+      source_type: "MANUAL",
+      punchlist_a_count: 0, punchlist_b_count: 0,
+      itr_a_count: 0, itr_b_count: 0, itr_total_count: 0,
+    }).select("id").single();
+    if (sErr) return `p2a_systems insert: ${sErr.message}`;
+    systemId = ins!.id as string;
+  }
+  // 3) p2a_itp_activities (R22b sub-task source).
+  const { count: itpExisting } = await svc.from("p2a_itp_activities")
+    .select("id", { count: "exact", head: true })
+    .eq("handover_point_id", pointId);
+  const itpNeed = ITP_FIXTURE_COUNT - (itpExisting ?? 0);
+  for (let i = 0; i < itpNeed; i++) {
+    const { error } = await svc.from("p2a_itp_activities").insert({
+      handover_point_id: pointId,
+      system_id: systemId,
+      activity_name: `ITP Activity ${i + 1}`,
+      inspection_type: "Witness",
+      display_order: i + 1,
+    });
+    if (error) return `p2a_itp_activities insert #${i}: ${error.message}`;
+  }
+  return null;
+}
+
 const runR13: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
+  const planId = await ensureP2APlan(svc, ctx);
   const pt = await getFirstPoint(svc, ctx);
+
+  // Seed VCR fixtures BEFORE any lead approval, so the 4-of-4 trigger sees
+  // delivering parties + ITP activities at fan-out time (R19/R20/R21/R22).
+  const fixErr = await ensureVCRFixtures(svc, ctx, pt.id, planId);
+  if (fixErr) return { status: "fail", expected: "VCR fixtures (delivering parties + ITP + system)", observed: fixErr };
+
   const { error: upErr } = await svc.from("p2a_handover_points")
     .update({ execution_plan_status: "PENDING_APPROVAL",
               execution_plan_submitted_at: new Date().toISOString(),
@@ -488,8 +557,9 @@ const runR13: Scenario["run"] = async (ctx) => {
     expected: { title: expectedTitle, assignee: "ORA Lead" },
     observed: { count: rows.length, got: rows.map((r:any)=>r.title) },
   };
-  return { status: "pass", observed: { pointId: pt.id, taskId: match.id } };
+  return { status: "pass", observed: { pointId: pt.id, taskId: match.id, fixtures: { delivering: VCR_FIXTURE_COUNTS, itp: ITP_FIXTURE_COUNT } } };
 };
+
 
 async function approveVCRApprover(ctx: any, pointId: string, role: string): Promise<string | null> {
   const u = ctx.users[role];
