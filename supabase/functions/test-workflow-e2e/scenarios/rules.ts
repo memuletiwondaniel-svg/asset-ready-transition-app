@@ -140,11 +140,9 @@ const runR1: Scenario["run"] = async (ctx) => {
 const runR2: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
   const spec = SPEC.R2;
+  const e = spec.expects[0];
   const planId = await ensureOrpPlan(svc, ctx);
   const sr = ctx.users["Sr ORA Engr"];
-  // Sr ORA Engr submits via per-role JWT — exercises Mig 6 UPDATE policy.
-  // count:"exact" so a 0-row RLS deny (e.g. profiles.role unset) surfaces
-  // here, not as a missing-seed mystery on R3/R4.
   const srClient = clientAs(ctx.anonUrl, ctx.anonKey, sr.jwt);
   const { error: upErr, count: upCount } = await srClient
     .from("orp_plans")
@@ -156,21 +154,21 @@ const runR2: Scenario["run"] = async (ctx) => {
   if ((upCount ?? 0) === 0) {
     return { status: "fail", expected: "Sr ORA Engr submit affects 1 row", observed: "0 rows updated — RLS denied silently" };
   }
-  // Seed assertion — R2's trigger should have seeded ORA Lead PENDING row.
-  const oraLead = ctx.users[spec.assigneeRole];
+  const oraLead = ctx.users[e.assigneeRole];
   const seedErr = await assertSeed(svc, planId, "ORA Lead", oraLead.id);
   if (seedErr) {
     return { status: "fail", expected: "ORA Lead orp_approvals seed after submit", observed: seedErr };
   }
-  const rows = await findTask(svc, ctx.project.id, spec.action, oraLead.id);
+  const rows = await findTask(svc, ctx.project.id, e.action, oraLead.id);
   if (rows.length === 0) {
     return {
       status: "fail",
-      expected: { count: ">=1", title: expandTitle(spec.title, ctx.project.code), assignee: spec.assigneeRole },
+      expected: { count: ">=1", title: expandTitle(e.title, ctx.project.code), assignee: e.assigneeRole },
       observed: { count: 0, note: "no trigger creates 'review_ora_plan' task for ORA Lead on submit" },
     };
   }
   return { status: "pass", observed: { taskId: rows[0].id } };
+
 };
 
 // ── R3 + R4 share setup: ORA Lead approves; expect PHL & DPD review tasks ─
