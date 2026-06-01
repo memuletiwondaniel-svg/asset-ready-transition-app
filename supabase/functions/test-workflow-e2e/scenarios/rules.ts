@@ -596,7 +596,7 @@ const runR18: Scenario["run"] = async (ctx) => {
 };
 
 // ──────────────────────────────────────────────────────────────────────────
-export const ruleScenarios: Scenario[] = [
+const ruleList: Scenario[] = [
   { id: "R1",  name: "Project created → Develop ORA Plan → Sr ORA Engr",                 run: runR1 },
   { id: "R2",  name: "Sr ORA Engr submits → Review/Approve ORA Plan → ORA Lead",         dependsOn: ["R1"], run: runR2 },
   { id: "R3",  name: "ORA Lead approves → review task → Project Hub Lead",               dependsOn: ["R2"], run: buildReviewRule("R3") },
@@ -618,12 +618,8 @@ export const ruleScenarios: Scenario[] = [
   { id: "R17", name: "ORA Lead approves VCR → review → Dep. Plant Director",              dependsOn: ["R13"], run: buildVCRLeadRule("R17") },
   { id: "R18", name: "4-of-4 leads approve VCR → 5 deliverable parents (+2 sub-tasks) → Sr ORA Engr",
                dependsOn: ["R14","R15","R16","R17"], run: runR18 },
-
-  { id: "R19", name: "VCR approved → checklist scoped to Sr ORA Engr",                    dependsOn: ["R18"], run: buildChecklistRule("R19") },
-  { id: "R20", name: "VCR approved → 2 CMMS deliverables → CMMS Lead",                    dependsOn: ["R18"], run: runR20 },
-  { id: "R21", name: "VCR approved → checklist scoped to Construction Lead",              dependsOn: ["R18"], run: buildChecklistRule("R21") },
-  { id: "R22", name: "VCR approved → Commissioning Lead checklist + ITP rollup",          dependsOn: ["R18"], run: runR22 },
 ];
+
 
 // ══════════════════════════════════════════════════════════════════════════
 // R19 / R21 / R22a — checklist scoped via vcr_item_delivering_parties.
