@@ -12578,6 +12578,7 @@ export type Database = {
           parent_task_id: string | null
           priority: string
           progress_percentage: number | null
+          source_business_key: string | null
           source_plan_id: string | null
           source_plan_table: string | null
           source_plan_version: number | null
@@ -12602,6 +12603,7 @@ export type Database = {
           parent_task_id?: string | null
           priority: string
           progress_percentage?: number | null
+          source_business_key?: string | null
           source_plan_id?: string | null
           source_plan_table?: string | null
           source_plan_version?: number | null
@@ -12626,6 +12628,7 @@ export type Database = {
           parent_task_id?: string | null
           priority?: string
           progress_percentage?: number | null
+          source_business_key?: string | null
           source_plan_id?: string | null
           source_plan_table?: string | null
           source_plan_version?: number | null
