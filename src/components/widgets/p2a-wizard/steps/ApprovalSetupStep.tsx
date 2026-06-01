@@ -38,14 +38,15 @@ interface TeamMember {
 /**
  * Fixed approval sequence – hardcoded, not user-reorderable.
  * Phase 1 (parallel): ORA Lead, Construction Lead, Commissioning Lead
- * Phase 2 (after Phase 1): Project Hub Lead, Deputy Plant Director
+ * Phase 2 (after Phase 1): Project Hub Lead, Dep. Plant Director
+ * Labels are byte-identical to roles.name (Mig 5c validator).
  */
 const FIXED_APPROVER_ROLES = [
   { key: 'ora_lead', label: 'ORA Lead', order: 1, phase: 1 },
   { key: 'construction_lead', label: 'Construction Lead', order: 2, phase: 1 },
   { key: 'commissioning_lead', label: 'Commissioning Lead', order: 3, phase: 1 },
   { key: 'hub_lead', label: 'Project Hub Lead', order: 4, phase: 2 },
-  { key: 'deputy_plant_director', label: 'Deputy Plant Director', order: 5, phase: 2 },
+  { key: 'deputy_plant_director', label: 'Dep. Plant Director', order: 5, phase: 2 },
 ] as const;
 
 /** Match a team member role string to one of our fixed keys */
@@ -185,7 +186,7 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
         setTeamMembers(members);
 
         // Always populate from fixed roles on first load, or if there are issues
-        const deputyApprover = approvers.find(a => a.role_name === 'Deputy Plant Director');
+        const deputyApprover = approvers.find(a => a.role_name === 'Dep. Plant Director');
         const deputyNeedsUpdate = deputyApprover && !deputyApprover.user_id && deputyProfile;
         // Check if approvers exist but are missing profile data (loaded from draft)
         const approversMissingProfiles = approvers.length > 0 && approvers.some(a => a.user_id && !a.user_name);
@@ -214,7 +215,7 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
           });
           // Also handle deputy if needed
           if (deputyNeedsUpdate && deputyProfile) {
-            const idx = enriched.findIndex(a => a.role_name === 'Deputy Plant Director');
+            const idx = enriched.findIndex(a => a.role_name === 'Dep. Plant Director');
             if (idx >= 0) {
               enriched[idx] = {
                 ...enriched[idx],

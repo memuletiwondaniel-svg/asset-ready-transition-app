@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { slugifyRoleCode } from '@/lib/roles';
 
 export interface RoleCategory {
   id: string;
@@ -121,11 +122,8 @@ export const useAddRole = () => {
       throw new Error(`A role named "${name}" already exists`);
     }
 
-    // Mig 5b: roles.code is required (NOT NULL, UNIQUE, ^[A-Z][A-Z0-9_]*$).
-    const code = name
-      .replace(/[^A-Za-z0-9]+/g, '_')
-      .replace(/^_+|_+$/g, '')
-      .toUpperCase();
+    // Mig 5b: roles.code is required. Use shared slug helper (src/lib/roles).
+    const code = slugifyRoleCode(name);
 
     const { data, error } = await supabase
       .from('roles')

@@ -4819,6 +4819,7 @@ export type Database = {
           approver_user_id: string | null
           comments: string | null
           created_at: string
+          cycle: number
           id: string
           orp_plan_id: string
           status: Database["public"]["Enums"]["orp_approval_status"]
@@ -4829,6 +4830,7 @@ export type Database = {
           approver_user_id?: string | null
           comments?: string | null
           created_at?: string
+          cycle?: number
           id?: string
           orp_plan_id: string
           status?: Database["public"]["Enums"]["orp_approval_status"]
@@ -4839,6 +4841,7 @@ export type Database = {
           approver_user_id?: string | null
           comments?: string | null
           created_at?: string
+          cycle?: number
           id?: string
           orp_plan_id?: string
           status?: Database["public"]["Enums"]["orp_approval_status"]
@@ -5311,6 +5314,8 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          gate_model: string
+          gate_model_reason: string | null
           id: string
           is_active: boolean
           last_rejected_at: string | null
@@ -5329,6 +5334,8 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          gate_model?: string
+          gate_model_reason?: string | null
           id?: string
           is_active?: boolean
           last_rejected_at?: string | null
@@ -5347,6 +5354,8 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          gate_model?: string
+          gate_model_reason?: string | null
           id?: string
           is_active?: boolean
           last_rejected_at?: string | null
@@ -5979,6 +5988,7 @@ export type Database = {
           approved_at: string | null
           comments: string | null
           created_at: string | null
+          cycle: number
           display_order: number
           handover_id: string
           id: string
@@ -5990,6 +6000,7 @@ export type Database = {
           approved_at?: string | null
           comments?: string | null
           created_at?: string | null
+          cycle?: number
           display_order: number
           handover_id: string
           id?: string
@@ -6001,6 +6012,7 @@ export type Database = {
           approved_at?: string | null
           comments?: string | null
           created_at?: string | null
+          cycle?: number
           display_order?: number
           handover_id?: string
           id?: string
@@ -10948,6 +10960,7 @@ export type Database = {
           is_active: boolean
           is_b2b: boolean
           is_director: boolean | null
+          is_retired: boolean
           name: string
           parent_role_id: string | null
           updated_at: string
@@ -10962,6 +10975,7 @@ export type Database = {
           is_active?: boolean
           is_b2b?: boolean
           is_director?: boolean | null
+          is_retired?: boolean
           name: string
           parent_role_id?: string | null
           updated_at?: string
@@ -10976,6 +10990,7 @@ export type Database = {
           is_active?: boolean
           is_b2b?: boolean
           is_director?: boolean | null
+          is_retired?: boolean
           name?: string
           parent_role_id?: string | null
           updated_at?: string

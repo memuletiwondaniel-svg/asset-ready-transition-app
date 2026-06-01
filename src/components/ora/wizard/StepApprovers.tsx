@@ -129,7 +129,7 @@ export const StepApprovers: React.FC<Props> = ({ approvers, onApproversChange, p
       if (dpd) results.push({
         user_id: dpd.user_id, full_name: dpd.full_name || 'Unknown',
         position: dpd.position, avatar_url: dpd.avatar_url,
-        role_label: 'Deputy Plant Director',
+        role_label: 'Dep. Plant Director',
       });
 
       return results;
