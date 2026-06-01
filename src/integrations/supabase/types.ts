@@ -6553,6 +6553,62 @@ export type Database = {
           },
         ]
       }
+      p2a_plan_approvals: {
+        Row: {
+          approver_role: string
+          approver_user_id: string | null
+          comments: string | null
+          created_at: string
+          cycle: number
+          decided_at: string | null
+          decided_by: string | null
+          display_order: number
+          handover_plan_id: string
+          id: string
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          approver_role: string
+          approver_user_id?: string | null
+          comments?: string | null
+          created_at?: string
+          cycle?: number
+          decided_at?: string | null
+          decided_by?: string | null
+          display_order?: number
+          handover_plan_id: string
+          id?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approver_role?: string
+          approver_user_id?: string | null
+          comments?: string | null
+          created_at?: string
+          cycle?: number
+          decided_at?: string | null
+          decided_by?: string | null
+          display_order?: number
+          handover_plan_id?: string
+          id?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_plan_approvals_handover_plan_id_fkey"
+            columns: ["handover_plan_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_prerequisite_attachments: {
         Row: {
           created_at: string | null
