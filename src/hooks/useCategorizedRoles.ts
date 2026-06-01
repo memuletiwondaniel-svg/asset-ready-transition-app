@@ -121,11 +121,18 @@ export const useAddRole = () => {
       throw new Error(`A role named "${name}" already exists`);
     }
 
+    // Mig 5b: roles.code is required (NOT NULL, UNIQUE, ^[A-Z][A-Z0-9_]*$).
+    const code = name
+      .replace(/[^A-Za-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .toUpperCase();
+
     const { data, error } = await supabase
       .from('roles')
-      .insert({ name, description, category_id: categoryId, is_active: true, is_b2b: isB2b } as any)
+      .insert({ name, code, description, category_id: categoryId, is_active: true, is_b2b: isB2b } as any)
       .select()
       .single();
+
 
     if (error) throw error;
     return data;
