@@ -17,6 +17,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.52.0";
 import { CANONICAL_ROLES, createTestProject, createUsersForRoles } from "./lib/provision.ts";
+import { assignTeamRoles } from "./lib/teamSetup.ts";
 import { sweepByRunId } from "./lib/teardown.ts";
 import { runScenario } from "./lib/recorder.ts";
 import type { RunContext, ScenarioResult } from "./lib/types.ts";
@@ -78,6 +79,10 @@ serve(async (req) => {
     const phl = users["Project Hub Lead"];
     const project = await createTestProject(svc, runId, phl.id);
     projectIds.push(project.id);
+    // Assign canonical roles to project_team_members BEFORE running scenarios
+    // — R1's trigger (auto_create_ora_plan_task) fires on team-member INSERT,
+    // and R3/R4/R5's downstream role resolution reads this table.
+    await assignTeamRoles(svc, project.id, users);
 
     const ctx: RunContext = {
       runId,
