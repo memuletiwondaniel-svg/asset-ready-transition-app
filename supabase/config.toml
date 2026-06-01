@@ -135,3 +135,7 @@ verify_jwt = false
 
 [functions.ai-training-review]
 verify_jwt = false
+
+[functions.test-workflow-e2e]
+verify_jwt = false
+

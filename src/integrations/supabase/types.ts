@@ -13987,6 +13987,7 @@ export type Database = {
         Returns: boolean
       }
       is_feature_enabled: { Args: { p_feature_key: string }; Returns: boolean }
+      is_harness_user: { Args: never; Returns: boolean }
       offboard_user: {
         Args: {
           admin_user_id: string
@@ -13997,6 +13998,7 @@ export type Database = {
       }
       orp_plan_is_approved: { Args: { _plan_id: string }; Returns: boolean }
       p2a_plan_is_approved: { Args: { _plan_id: string }; Returns: boolean }
+      project_is_test: { Args: { _project_id: string }; Returns: boolean }
       purge_old_audit_logs: {
         Args: { retention_days_param?: number }
         Returns: number
