@@ -183,15 +183,17 @@ const runR2: Scenario["run"] = async (ctx) => {
 // 10c trigger create_ora_lead_review_task seeds the ORA Lead PENDING row on
 // orp_plans.status='PENDING_APPROVAL'. We only UPDATE it here via per-role
 // JWT to exercise the Mig 6 UPDATE policy.
-async function approveAsOraLead(ctx: any, planId: string) {
+async function approveAsOraLead(ctx: any, planId: string): Promise<string | null> {
   const oraLead = ctx.users["ORA Lead"];
   const c = clientAs(ctx.anonUrl, ctx.anonKey, oraLead.jwt);
-  const { error } = await c
+  const { error, count } = await c
     .from("orp_approvals")
-    .update({ status: "APPROVED", approved_at: new Date().toISOString() })
+    .update({ status: "APPROVED", approved_at: new Date().toISOString() }, { count: "exact" })
     .eq("orp_plan_id", planId)
     .eq("approver_role", "ORA Lead");
-  return error?.message ?? null;
+  if (error) return error.message;
+  if ((count ?? 0) === 0) return "0 rows updated — RLS denied silently (profiles.role / has_role)";
+  return null;
 }
 
 function buildReviewRule(rule: "R3" | "R4"): Scenario["run"] {
