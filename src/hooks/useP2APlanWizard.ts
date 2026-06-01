@@ -668,20 +668,12 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
       // Note: P2A approval tasks are now auto-created by DB trigger (trg_auto_create_p2a_approval_task)
       // when approvers are inserted into p2a_handover_approvers with a user_id
 
-      // Persist submission event for each round, with optional comment
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await client.from('p2a_approver_history').insert({
-          handover_id: planId,
-          user_id: user.id,
-          role_name: 'Submitter',
-          display_order: 0,
-          status: 'SUBMITTED',
-          approved_at: new Date().toISOString(),
-          comments: submissionComment?.trim() || null,
-          cycle: currentCycle,
-        });
-      }
+      // Mig 5c: removed the synthetic 'Submitter' insert into p2a_approver_history.
+      // 'Submitter' was not a real role (rejected by the catalog validator) and
+      // its permanent 'SUBMITTED' status would have broken the every-approved
+      // gate the moment it ever fired. Submitter identity is already recorded
+      // on p2a_handover_plans.created_by / submitted_by_user_id.
+      void submissionComment;
 
       return planId;
     },

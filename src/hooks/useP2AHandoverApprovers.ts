@@ -23,10 +23,10 @@ export interface P2AHandoverApprover {
 
 const DEFAULT_APPROVERS = [
   { role_name: 'ORA Lead', display_order: 1 },
-  { role_name: 'CSU Lead', display_order: 2 },
+  { role_name: 'Commissioning Lead', display_order: 2 },
   { role_name: 'Construction Lead', display_order: 3 },
   { role_name: 'Project Hub Lead', display_order: 4 },
-  { role_name: 'Deputy Plant Director', display_order: 5 },
+  { role_name: 'Dep. Plant Director', display_order: 5 },
 ];
 
 export function useP2AHandoverApprovers(handoverId: string | null) {
