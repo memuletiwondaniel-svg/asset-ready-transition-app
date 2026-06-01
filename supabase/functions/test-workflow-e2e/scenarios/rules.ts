@@ -106,21 +106,18 @@ async function ensureOrpPlan(svc: SupabaseClient, ctx: any): Promise<string> {
 const runR1: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
   const spec = SPEC.R1;
-  const sr = ctx.users[spec.assigneeRole];
-  // Team rows + project already exist from provisioning. The production
-  // trigger auto_create_ora_plan_task is attached to project_team_members
-  // (NOT projects) — that itself is a SPEC mismatch we record. The task
-  // should already have been created by the team insert in provisioning.
-  const rows = await findTask(svc, ctx.project.id, spec.action, sr.id);
+  const e = spec.expects[0];
+  const sr = ctx.users[e.assigneeRole];
+  const rows = await findTask(svc, ctx.project.id, e.action, sr.id);
   if (rows.length === 0) {
     return {
       status: "fail",
-      expected: { count: ">=1", action: spec.action, assignee: spec.assigneeRole },
+      expected: { count: ">=1", action: e.action, assignee: e.assigneeRole },
       observed: { count: 0, note: "no create_ora_plan task created for Sr ORA Engr after team assignment" },
     };
   }
   const task = rows[0];
-  const expectedTitle = expandTitle(spec.title, ctx.project.code);
+  const expectedTitle = expandTitle(e.title, ctx.project.code);
   const mismatches: string[] = [];
   if (task.title !== expectedTitle) {
     mismatches.push(`title: expected "${expectedTitle}", got "${task.title}"`);
@@ -128,10 +125,6 @@ const runR1: Scenario["run"] = async (ctx) => {
   if (task.status !== spec.status) {
     mismatches.push(`status: expected "${spec.status}", got "${task.status}"`);
   }
-  // Trigger-event note: SPEC originally said "projects INSERT"; the lean
-  // accepted in M10 keeps it on project_team_members INSERT (assignee must
-  // exist). The R1 catalog-resolution + title fix is what landed. Event is
-  // NOT recorded as a mismatch.
   if (mismatches.length > 0) {
     return {
       status: "fail",
@@ -141,6 +134,7 @@ const runR1: Scenario["run"] = async (ctx) => {
   }
   return { status: "pass", observed: { taskId: task.id } };
 };
+
 
 // ── R2 ─────────────────────────────────────────────────────────────────────
 const runR2: Scenario["run"] = async (ctx) => {
