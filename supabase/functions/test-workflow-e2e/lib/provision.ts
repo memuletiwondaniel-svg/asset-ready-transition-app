@@ -25,13 +25,16 @@ export async function createTestProject(
   runId: string,
   creatorUserId: string,
 ): Promise<{ id: string; code: string }> {
-  const code = `M11-${runId.slice(0, 8)}`;
+  // project_id_prefix is CHECK-constrained to ('DP','ST','MoC'); use 'DP'.
+  // Derive a numeric-only suffix from runId so project_code is `DP-<digits>`.
+  const num = parseInt(runId.replace(/[^0-9]/g, "").slice(0, 6) || "0", 10).toString().padStart(6, "9");
+  const code = `DP-${num}`;
   const { data, error } = await svc
     .from("projects")
     .insert({
       project_title: `M11 Harness ${runId}`,
-      project_id_prefix: "M11",
-      project_id_number: runId.slice(0, 6),
+      project_id_prefix: "DP",
+      project_id_number: num,
       is_active: true,
       is_test_project: true,           // REQUIRED — Mig 8 facet enforces this for harness writes
       created_by: creatorUserId,
