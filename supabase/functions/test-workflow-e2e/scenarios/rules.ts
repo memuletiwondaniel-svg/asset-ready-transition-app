@@ -99,12 +99,14 @@ const runR1: Scenario["run"] = async (ctx) => {
   if (task.status !== spec.status) {
     mismatches.push(`status: expected "${spec.status}", got "${task.status}"`);
   }
-  // The trigger itself fires on team-member insert, not project insert — record it.
-  mismatches.push(`trigger: SPEC "${spec.trigger}" but code attaches to project_team_members INSERT`);
+  // Trigger-event note: SPEC originally said "projects INSERT"; the lean
+  // accepted in M10 keeps it on project_team_members INSERT (assignee must
+  // exist). The R1 catalog-resolution + title fix is what landed. Event is
+  // NOT recorded as a mismatch.
   if (mismatches.length > 0) {
     return {
       status: "fail",
-      expected: { title: expectedTitle, status: spec.status, trigger: spec.trigger },
+      expected: { title: expectedTitle, status: spec.status },
       observed: { title: task.title, status: task.status, mismatches },
     };
   }
@@ -139,17 +141,11 @@ const runR2: Scenario["run"] = async (ctx) => {
 };
 
 // ── R3 + R4 share setup: ORA Lead approves; expect PHL & DPD review tasks ─
+// 10c trigger create_ora_lead_review_task seeds the ORA Lead PENDING row on
+// orp_plans.status='PENDING_APPROVAL'. We only UPDATE it here via per-role
+// JWT to exercise the Mig 6 UPDATE policy.
 async function approveAsOraLead(ctx: any, planId: string) {
-  const svc = svcOf(ctx);
   const oraLead = ctx.users["ORA Lead"];
-  // Seed PENDING orp_approvals row via service-role (no trigger does this).
-  await svc.from("orp_approvals").insert({
-    orp_plan_id: planId,
-    approver_role: "ORA Lead",
-    approver_user_id: oraLead.id,
-    status: "PENDING",
-  });
-  // Approve via per-role JWT to exercise Mig 6 UPDATE gate.
   const c = clientAs(ctx.anonUrl, ctx.anonKey, oraLead.jwt);
   const { error } = await c
     .from("orp_approvals")
@@ -191,19 +187,18 @@ function buildReviewRule(rule: "R3" | "R4"): Scenario["run"] {
 }
 
 // ── R5: join across PHL+DPD approvals → leaf tasks for Sr ORA Engr ────────
+// After R3/R4 pass, 10c trigger create_phl_dpd_review_tasks has seeded the
+// PHL + DPD PENDING orp_approvals rows. R5 UPDATEs them via per-role JWT;
+// the derived-status trigger (10b) flips orp_plans.status='APPROVED' THROUGH
+// the gate fn. The leaf-task trigger (10c, on orp_approvals) reads the gate
+// and creates the activity tasks. NO direct orp_plans.status write here —
+// that would trip the bypass guard (must-lock 4b).
 const runR5: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
   const spec = SPEC.R5;
   const planId = await ensureOrpPlan(svc, ctx);
-  // Seed PHL+DPD approvals; approve via per-role JWT (Mig 6 gate).
   for (const role of ["Project Hub Lead", "Dep. Plant Director"] as const) {
     const u = ctx.users[role];
-    await svc.from("orp_approvals").insert({
-      orp_plan_id: planId,
-      approver_role: role,
-      approver_user_id: u.id,
-      status: "PENDING",
-    });
     const c = clientAs(ctx.anonUrl, ctx.anonKey, u.jwt);
     const { error } = await c
       .from("orp_approvals")
@@ -214,13 +209,6 @@ const runR5: Scenario["run"] = async (ctx) => {
       return { status: "fail", expected: `${role} UPDATE APPROVED allowed`, observed: error.message };
     }
   }
-  // SPEC says the leaf trigger should join via orp_plan_is_approved(). It
-  // doesn't exist; the live trigger fires on orp_plans.status='APPROVED'.
-  // Surface the gap, then flip the status so we can still assert R5's title.
-  const planApprovedFnExists = await svc.rpc("orp_plan_is_approved", { p_plan_id: planId } as any);
-  const gateGap = (planApprovedFnExists as any)?.error?.message ?? null;
-
-  await svc.from("orp_plans").update({ status: "APPROVED" }).eq("id", planId);
 
   const sr = ctx.users[spec.assigneeRole];
   const rows = await findTask(svc, ctx.project.id, spec.action, sr.id);
@@ -228,11 +216,10 @@ const runR5: Scenario["run"] = async (ctx) => {
     return {
       status: "fail",
       expected: { count: ">=1", assignee: spec.assigneeRole, gate: spec.trigger },
-      observed: { count: 0, gateGap },
+      observed: { count: 0, note: "leaf-task trigger did not fire after PHL+DPD APPROVED" },
     };
   }
   const t = rows[0];
-  // SPEC title: "{projCode}: {activity}". Code: "{activity} – {projCode}".
   const expectedPrefix = `${ctx.project.code}: `;
   const mismatches: string[] = [];
   if (!t.title.startsWith(expectedPrefix)) {
@@ -241,16 +228,14 @@ const runR5: Scenario["run"] = async (ctx) => {
   if (t.status !== spec.status) {
     mismatches.push(`status: expected "${spec.status}", got "${t.status}"`);
   }
-  if (gateGap) {
-    mismatches.push(`gate fn missing: orp_plan_is_approved() — ${gateGap}`);
-  } else {
-    mismatches.push(`gate: SPEC requires orp_plan_is_approved() join; live trigger fires on orp_plans.status flip alone`);
+  if (mismatches.length > 0) {
+    return {
+      status: "fail",
+      expected: { titlePrefix: expectedPrefix, status: spec.status },
+      observed: { title: t.title, status: t.status, mismatches },
+    };
   }
-  return {
-    status: "fail",
-    expected: { titlePrefix: expectedPrefix, gate: spec.trigger, status: spec.status },
-    observed: { title: t.title, status: t.status, mismatches },
-  };
+  return { status: "pass", observed: { taskId: t.id, count: rows.length } };
 };
 
 // ──────────────────────────────────────────────────────────────────────────
