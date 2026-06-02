@@ -172,6 +172,17 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const [syncingInPanel, setSyncingInPanel] = useState(false);
   const [syncResultInPanel, setSyncResultInPanel] = useState<string | null>(null);
   const [syncingProjects, setSyncingProjects] = useState(false);
+  const [syncProjectFilter, setSyncProjectFilter] = useState('');
+  const [syncReadout, setSyncReadout] = useState<{
+    success: boolean;
+    scope: string | null;
+    available: string[];
+    withData: string[];
+    breakdown: Array<{ name: string; systems_found: number; matched: number }>;
+    totalFound: number;
+    totalUpdated: number;
+    error?: string;
+  } | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [showMethodSwitchDialog, setShowMethodSwitchDialog] = useState(false);
@@ -1272,15 +1283,39 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     disabled={!credentialsSaved || syncingProjects}
                     onClick={async () => {
                       setSyncingProjects(true);
+                      setSyncReadout(null);
                       try {
                         const syncFn = panelPlatform?.id === 'gocompletions' ? 'gohub-sync-counts' : 'sync-assai-projects';
-                        const { data, error } = await supabase.functions.invoke(syncFn);
+                        const body = panelPlatform?.id === 'gocompletions' && syncProjectFilter.trim()
+                          ? { projectFilter: syncProjectFilter.trim() }
+                          : undefined;
+                        const { data, error } = await supabase.functions.invoke(syncFn, body ? { body } : {});
                         if (error) throw error;
+
+                        if (panelPlatform?.id === 'gocompletions') {
+                          setSyncReadout({
+                            success: !!data?.success,
+                            scope: data?.scope ?? null,
+                            available: data?.available_projects || [],
+                            withData: data?.tiles_with_data || [],
+                            breakdown: data?.tile_breakdown || [],
+                            totalFound: data?.total_found || 0,
+                            totalUpdated: data?.total_updated || 0,
+                            error: data?.success ? undefined : (data?.error || 'Project sync failed'),
+                          });
+                        }
+
                         if (data?.success) {
-                          const msg = panelPlatform?.id === 'gocompletions'
-                            ? `GoCompletions sync complete`
-                            : `${data.projects_synced} projects synced from Assai`;
-                          toast.success(msg);
+                          if (panelPlatform?.id === 'gocompletions') {
+                            const tilesWithData: string[] = data.tiles_with_data || [];
+                            const totalTiles: number = (data.available_projects || []).length;
+                            const summary = tilesWithData.length
+                              ? `Synced ${tilesWithData.length}/${totalTiles} tile(s) — incl. ${tilesWithData.slice(0, 2).join(', ')}${tilesWithData.length > 2 ? '…' : ''} · ${data.total_found} systems`
+                              : `Scanned ${totalTiles} tile(s) · ${data.total_found} systems`;
+                            toast.success(summary);
+                          } else {
+                            toast.success(`${data.projects_synced} projects synced from Assai`);
+                          }
                         } else {
                           toast.error(data?.error || 'Project sync failed');
                         }
@@ -1290,12 +1325,59 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                         setSyncingProjects(false);
                       }
                     }}
-                    title={panelPlatform?.id === 'gocompletions' ? 'Sync system/subsystem data from GoCompletions' : 'Sync project metadata from Assai into ORSH'}
+                    title={panelPlatform?.id === 'gocompletions' ? 'Sync systems from all accessible GoCompletions tiles. Leave filter blank to sync everything.' : 'Sync project metadata from Assai into ORSH'}
                   >
                     {syncingProjects ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
                     Sync Projects
                   </Button>
                 </div>
+
+                {panelPlatform?.id === 'gocompletions' && (
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-muted-foreground flex items-center justify-between">
+                      <span>Scope filter (optional)</span>
+                      <span className="text-[10px] text-muted-foreground/70">Blank = sync all accessible tiles</span>
+                    </label>
+                    <Input
+                      value={syncProjectFilter}
+                      onChange={(e) => setSyncProjectFilter(e.target.value)}
+                      placeholder="e.g. DP-18F, BNGL, DP300"
+                      className="h-8 text-xs"
+                      disabled={syncingProjects}
+                    />
+                  </div>
+                )}
+
+                {panelPlatform?.id === 'gocompletions' && syncReadout && (
+                  <div className={cn(
+                    "rounded-md border p-3 space-y-2 text-xs",
+                    syncReadout.success ? "border-emerald-200 bg-emerald-50/50" : "border-amber-200 bg-amber-50/50"
+                  )}>
+                    <div className="font-medium text-foreground">
+                      {syncReadout.success
+                        ? `Synced ${syncReadout.totalFound} system(s)${syncReadout.scope ? ` matching "${syncReadout.scope}"` : ''}`
+                        : `Sync incomplete: ${syncReadout.error}`}
+                    </div>
+                    <div className="text-muted-foreground">
+                      <span className="font-medium">Tiles visible to this login ({syncReadout.available.length}):</span>{' '}
+                      {syncReadout.available.length ? syncReadout.available.join(', ') : '—'}
+                    </div>
+                    {syncReadout.breakdown.length > 0 && (
+                      <div className="space-y-0.5 pt-1 border-t border-border/40">
+                        {syncReadout.breakdown.map((t) => (
+                          <div key={t.name} className="flex items-center justify-between gap-2">
+                            <span className={cn("truncate", t.matched > 0 ? "text-foreground font-medium" : "text-muted-foreground")}>
+                              {t.matched > 0 ? '✓' : '·'} {t.name}
+                            </span>
+                            <span className="text-muted-foreground tabular-nums">
+                              {t.matched}/{t.systems_found}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           )}
