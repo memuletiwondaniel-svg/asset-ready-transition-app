@@ -142,6 +142,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                   </Button>
                 </div>
               </div>
+              )}
               {showStepList && (
                 <div className="flex gap-1.5 overflow-x-auto pb-2 px-3 scrollbar-none">
                   {steps.map((step, idx) => {
