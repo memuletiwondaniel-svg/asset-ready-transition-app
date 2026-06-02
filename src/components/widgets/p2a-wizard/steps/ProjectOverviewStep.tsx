@@ -9,7 +9,7 @@ interface ProjectOverviewStepProps {
   plantName?: string;
   milestones?: Array<{ id: string; name: string; target_date?: string }>;
   selectedApproach?: 'wizard' | 'workspace' | null;
-  onSelectApproach?: (approach: 'wizard' | 'workspace') => void;
+  onSelectApproach?: (approach: 'wizard' | 'workspace' | null) => void;
 }
 
 export const ProjectOverviewStep: React.FC<ProjectOverviewStepProps> = ({
