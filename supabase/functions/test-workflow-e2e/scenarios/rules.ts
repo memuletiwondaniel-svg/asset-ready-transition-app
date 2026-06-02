@@ -792,9 +792,9 @@ const runR20: Scenario["run"] = async (ctx) => {
     expected: { actions: CMMS_SPEC.map(d => d.action), assignee: "CMMS Lead" },
     observed: { missing },
   };
-  const bad = Object.entries(childCounts).filter(([,n]) => n !== 2);
-  if (bad.length > 0) return { status: "fail", expected: "2 sub-tasks per CMMS parent", observed: { childCounts } };
-  return { status: "pass", observed: { vcr: pt.vcr_code, parents: 2, childCounts } };
+  const bad = Object.entries(childCounts).filter(([action,n]) => n !== DELIVERABLE_DETAIL_COUNTS[action]);
+  if (bad.length > 0) return { status: "fail", expected: { rule: "child_count == seeded_detail_count per CMMS action", counts: { deliver_cmms: DELIVERABLE_DETAIL_COUNTS.deliver_cmms, deliver_spares: DELIVERABLE_DETAIL_COUNTS.deliver_spares } }, observed: { childCounts } };
+  return { status: "pass", observed: { vcr: pt.vcr_code, parents: 2, childCounts, expected: { deliver_cmms: DELIVERABLE_DETAIL_COUNTS.deliver_cmms, deliver_spares: DELIVERABLE_DETAIL_COUNTS.deliver_spares } } };
 };
 
 // ══════════════════════════════════════════════════════════════════════════
