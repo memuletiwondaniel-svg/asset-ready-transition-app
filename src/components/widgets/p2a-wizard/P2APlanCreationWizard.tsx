@@ -72,6 +72,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const isReviewMode = !!reviewTaskId;
   const [currentStep, setCurrentStep] = useState(0);
   const [useWizard, setUseWizard] = useState<boolean | null>(null);
+  const [selectedApproach, setSelectedApproach] = useState<'wizard' | 'workspace' | null>(null);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [isLoadingDraft, setIsLoadingDraft] = useState(false);
   const [requestChangeOpen, setRequestChangeOpen] = useState(false);
