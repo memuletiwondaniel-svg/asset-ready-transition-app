@@ -114,7 +114,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
         <div className="flex flex-col h-full overflow-hidden">
           {hasTopHeader && (
             <div className="shrink-0 border-b border-border/60 bg-card/40">
-              <div className="flex items-start justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4">
+              <div className="flex items-start justify-between gap-3 px-4 sm:px-5 py-2 sm:py-2.5">
                 <div className="min-w-0 flex-1">{topHeader}</div>
                 <div className="flex items-center gap-1 shrink-0">
                   {headerActions}
