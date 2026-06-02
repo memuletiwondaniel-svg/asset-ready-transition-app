@@ -469,24 +469,48 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
   return systems;
 }
 
-// ─── Filter variant builder ─────────────────────────────────
-// Project codes in ORSH (e.g. "DP-18F") may not appear verbatim in
-// GoCompletions system IDs. Build several normalized variants and
-// match if any one is found inside a normalized system_id.
-function buildFilterVariants(filter: string): string[] {
+// ─── Filter variants + confidence tiering ───────────────────
+// Tier rules (to avoid false positives like "18" matching "A1800"):
+//   STRONG: normalized system_id contains the full alphanumeric project code
+//           (e.g. "DP18F"), or contains a digits+letter tail of length >= 3
+//           (e.g. "18F") — these have enough specificity to auto-select.
+//   WEAK:   only a short variant matched (e.g. digits-only "18", or short
+//           digits-letter tail). Surface for manual confirmation only.
+
+interface FilterVariants {
+  raw: string;
+  alnum: string;       // "DP18F"
+  digitsTail: string;  // "18F"
+  digitsOnly: string;  // "18"
+}
+
+function buildFilterVariantSet(filter: string): FilterVariants {
   const raw = filter.toUpperCase().trim();
-  const alnum = raw.replace(/[^A-Z0-9]/g, "");           // "DP-18F" -> "DP18F"
-  const digitsTail = alnum.replace(/^[A-Z]+/, "");       // "DP18F"  -> "18F"
-  const digitsOnly = alnum.replace(/[^0-9]/g, "");       // "DP18F"  -> "18"
-  const out = new Set<string>();
-  for (const v of [raw.replace(/[^A-Z0-9]/g, ""), alnum, digitsTail, digitsOnly]) {
-    if (v && v.length >= 2) out.add(v);
-  }
-  return [...out];
+  const alnum = raw.replace(/[^A-Z0-9]/g, "");
+  const digitsTail = alnum.replace(/^[A-Z]+/, "");
+  const digitsOnly = alnum.replace(/[^0-9]/g, "");
+  return { raw, alnum, digitsTail, digitsOnly };
 }
 
 function normalizeSystemId(id: string): string {
   return id.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+type MatchTier = "strong" | "weak" | null;
+
+function classifyMatch(systemId: string, v: FilterVariants): MatchTier {
+  const norm = normalizeSystemId(systemId);
+  // Strong: full alnum project code (e.g. DP18F) embedded in the system_id
+  if (v.alnum && v.alnum.length >= 4 && norm.includes(v.alnum)) return "strong";
+  // Strong: digits+letter tail of length >= 3 (e.g. "18F", "100A")
+  if (v.digitsTail && v.digitsTail.length >= 3 && /[A-Z]/.test(v.digitsTail) && norm.includes(v.digitsTail)) {
+    return "strong";
+  }
+  // Weak: shorter digits-tail (e.g. "18F" length 3 already handled above; "9A" length 2 weak)
+  if (v.digitsTail && v.digitsTail.length >= 2 && norm.includes(v.digitsTail)) return "weak";
+  // Weak: digits-only (over-matches — needs human confirmation)
+  if (v.digitsOnly && v.digitsOnly.length >= 2 && norm.includes(v.digitsOnly)) return "weak";
+  return null;
 }
 
 // ─── Search a single project for matching systems ───────────
