@@ -275,6 +275,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     resetState();
     setCurrentStep(0);
     setUseWizard(null);
+    setSelectedApproach(null);
     setCompletedSteps(new Set());
     setReviewVisitedSteps(new Set());
     setReviewComment('');
