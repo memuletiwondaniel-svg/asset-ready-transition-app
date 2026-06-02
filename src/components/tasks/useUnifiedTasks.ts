@@ -415,7 +415,7 @@ export function useUnifiedTasks(userId: string) {
     });
 
     // Sort by smart priority score (highest first), then by due date, then by created
-    return tasks.sort((a, b) => {
+    const sorted = tasks.sort((a, b) => {
       if (a.isWaiting && !b.isWaiting) return 1;
       if (!a.isWaiting && b.isWaiting) return -1;
       const scoreDiff = b.smartPriority.score - a.smartPriority.score;
@@ -427,6 +427,35 @@ export function useUnifiedTasks(userId: string) {
       if (!aDue && bDue) return 1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
+
+    // Group by parent_task_id (single source of truth — fan-out triggers populate this FK).
+    // Children attach under their parent; only top-level tasks remain in the list.
+    const byUserTaskId = new Map<string, UnifiedTask>();
+    for (const ut of sorted) {
+      if (ut.userTask?.id) byUserTaskId.set(ut.userTask.id, ut);
+    }
+    const topLevel: UnifiedTask[] = [];
+    for (const ut of sorted) {
+      const pid = ut.parentTaskId;
+      if (pid && byUserTaskId.has(pid)) {
+        const parent = byUserTaskId.get(pid)!;
+        (parent.children ||= []).push(ut);
+      } else {
+        topLevel.push(ut);
+      }
+    }
+    // Sort children by display_order (then created)
+    for (const p of topLevel) {
+      if (p.children?.length) {
+        p.children.sort((a, b) => {
+          const ao = a.userTask?.display_order ?? 0;
+          const bo = b.userTask?.display_order ?? 0;
+          if (ao !== bo) return ao - bo;
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        });
+      }
+    }
+    return topLevel;
   }, [pssrs, approvals, activities, owlItems, bundleTasks, userTasks, oraActivityDates, p2aActivityProgress, isNewSinceLastLogin]);
 
   // Stabilization: never return an empty array if we previously had data
