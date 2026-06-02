@@ -693,10 +693,10 @@ const runR18: Scenario["run"] = async (ctx) => {
     expected: { parents: DELIVERABLE_SPEC.map(d=>d.action), assignee: "Sr ORA Engr" },
     observed: { missing },
   };
-  const badChild = Object.entries(childCounts).filter(([,n]) => n !== 2);
+  const badChild = Object.entries(childCounts).filter(([action,n]) => n !== DELIVERABLE_DETAIL_COUNTS[action]);
   if (badChild.length > 0) return {
     status: "fail",
-    expected: "2 sub-tasks per deliverable parent (rollup denominator > 0)",
+    expected: { rule: "child_count == seeded_detail_count per action", counts: DELIVERABLE_DETAIL_COUNTS },
     observed: { childCounts },
   };
   const badProgress = Object.entries(progress).filter(([,p]) => (p ?? 0) !== 0);
@@ -705,7 +705,7 @@ const runR18: Scenario["run"] = async (ctx) => {
     expected: "all deliverable parents at progress=0 (no children completed)",
     observed: { progress },
   };
-  return { status: "pass", observed: { pointId: pt.id, vcr: pt.vcr_code, parents: 5, subTasks: childCounts, progress } };
+  return { status: "pass", observed: { pointId: pt.id, vcr: pt.vcr_code, parents: 5, subTasks: childCounts, expected: DELIVERABLE_DETAIL_COUNTS, progress } };
 };
 
 // ──────────────────────────────────────────────────────────────────────────
