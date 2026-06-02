@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, Loader2, Send, LogOut, CheckCircle, XCircle } from 'lucide-react';
 
 interface WizardNavigationProps {
