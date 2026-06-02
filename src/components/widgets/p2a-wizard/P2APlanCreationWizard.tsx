@@ -29,6 +29,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface P2APlanCreationWizardProps {
   open: boolean;
@@ -619,7 +620,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     </div>
   );
 
-  // Full-width banner header — VCR-card inspired: mono uppercase code label, bold name, status pill
+  // Full-width banner header — title first, subtitle (project code · name) below in clean modern style
   const prettyProjectName = projectName && projectName !== projectCode
     ? projectName.replace(/\b\w+/g, (w) =>
         /^[A-Z0-9-]+$/.test(w) && w.length <= 4
@@ -631,20 +632,18 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const topHeaderContent = (
     <div className="flex items-center justify-between gap-4 min-w-0">
       <div className="min-w-0 flex-1">
-        <span
-          className="block text-[10px] uppercase tracking-[0.18em] font-extrabold text-muted-foreground/70 mb-1"
-          style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
-        >
-          {projectCode}{prettyProjectName ? ` · ${prettyProjectName}` : ''}
-        </span>
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="text-base sm:text-lg font-bold leading-tight text-foreground tracking-tight">
+          <h2 className="text-[15px] sm:text-base font-semibold leading-tight text-foreground tracking-tight">
             {headerTitle}
           </h2>
           <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-medium", statusChip.cls)}>
             {statusChip.label}
           </Badge>
         </div>
+        <p className="text-[12px] text-muted-foreground leading-snug mt-0.5 truncate">
+          <span className="font-medium text-foreground/80">{projectCode}</span>
+          {prettyProjectName ? <span className="text-muted-foreground/80"> — {prettyProjectName}</span> : null}
+        </p>
       </div>
     </div>
   );
@@ -652,23 +651,28 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   // Header actions — muted trash (red on hover) that deletes the P2A plan
   const headerActions = (
     <>
-      {existingPlan && existingPlan.status === 'DRAFT' && useWizard && (
+      {showWizardLayout && !isReviewMode && !isReadOnly && (
         <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Delete P2A Plan"
-              className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
-            </Button>
-          </AlertDialogTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Delete P2A Plan"
+                  className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </AlertDialogTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Delete</TooltipContent>
+          </Tooltip>
           <AlertDialogContent className="z-[150]">
             <AlertDialogHeader>
               <AlertDialogTitle>Delete P2A Plan?</AlertDialogTitle>

@@ -9,7 +9,7 @@ interface ProjectOverviewStepProps {
   plantName?: string;
   milestones?: Array<{ id: string; name: string; target_date?: string }>;
   selectedApproach?: 'wizard' | 'workspace' | null;
-  onSelectApproach?: (approach: 'wizard' | 'workspace') => void;
+  onSelectApproach?: (approach: 'wizard' | 'workspace' | null) => void;
 }
 
 export const ProjectOverviewStep: React.FC<ProjectOverviewStepProps> = ({
@@ -70,20 +70,15 @@ export const ProjectOverviewStep: React.FC<ProjectOverviewStepProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={() => onSelectApproach?.('wizard')}
+            onClick={() => onSelectApproach?.(isWizard ? (null as any) : 'wizard')}
             className={cn(
-              'group/approach relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border-2 transition-all duration-300 text-left overflow-hidden',
-              'hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_hsl(217,91%,60%,0.55)]',
+              'group/approach relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border transition-all duration-200 text-left overflow-hidden',
+              'hover:-translate-y-0.5',
               isWizard
-                ? 'border-blue-500 bg-blue-500/5 ring-2 ring-blue-500/20'
-                : 'border-border hover:border-blue-500/60 hover:bg-blue-500/[0.04]'
+                ? 'border-blue-500/70 bg-blue-500/[0.04] ring-1 ring-blue-500/15'
+                : 'border-border hover:border-blue-500/40 hover:bg-blue-500/[0.02]'
             )}
           >
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-0 opacity-0 group-hover/approach:opacity-100 transition-opacity duration-300"
-              style={{ background: 'linear-gradient(135deg, hsl(217 91% 60% / 0.08) 0%, transparent 60%)' }}
-            />
             {isWizard && (
               <span className="absolute top-2 right-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white z-10">
                 <Check className="w-3 h-3" />
@@ -91,40 +86,35 @@ export const ProjectOverviewStep: React.FC<ProjectOverviewStepProps> = ({
             )}
             <Wand2
               className={cn(
-                'h-7 w-7 transition-all duration-300 relative',
+                'h-7 w-7 transition-all duration-200 relative',
                 isWizard
-                  ? 'text-blue-500 scale-110'
-                  : 'text-muted-foreground group-hover/approach:text-blue-500 group-hover/approach:scale-110 group-hover/approach:-rotate-6'
+                  ? 'text-blue-500'
+                  : 'text-muted-foreground group-hover/approach:text-blue-500/80'
               )}
             />
             <div className="text-center relative">
               <div className={cn(
                 'text-sm font-semibold transition-colors',
-                isWizard ? 'text-blue-600 dark:text-blue-400' : 'group-hover/approach:text-blue-600 dark:group-hover/approach:text-blue-400'
+                isWizard ? 'text-blue-600 dark:text-blue-400' : 'text-foreground group-hover/approach:text-blue-600/90 dark:group-hover/approach:text-blue-400/90'
               )}>
                 Guided Wizard
               </div>
-              <div className="text-xs text-muted-foreground mt-0.5 group-hover/approach:text-foreground/70 transition-colors">
+              <div className="text-xs text-muted-foreground mt-0.5">
                 Step-by-step with guidance
               </div>
             </div>
           </button>
           <button
             type="button"
-            onClick={() => onSelectApproach?.('workspace')}
+            onClick={() => onSelectApproach?.(isWorkspace ? (null as any) : 'workspace')}
             className={cn(
-              'group/approach relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border-2 transition-all duration-300 text-left overflow-hidden',
-              'hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_hsl(262,83%,58%,0.55)]',
+              'group/approach relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border transition-all duration-200 text-left overflow-hidden',
+              'hover:-translate-y-0.5',
               isWorkspace
-                ? 'border-purple-500 bg-purple-500/5 ring-2 ring-purple-500/20'
-                : 'border-border hover:border-purple-500/60 hover:bg-purple-500/[0.04]'
+                ? 'border-purple-500/70 bg-purple-500/[0.04] ring-1 ring-purple-500/15'
+                : 'border-border hover:border-purple-500/40 hover:bg-purple-500/[0.02]'
             )}
           >
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-0 opacity-0 group-hover/approach:opacity-100 transition-opacity duration-300"
-              style={{ background: 'linear-gradient(135deg, hsl(262 83% 58% / 0.08) 0%, transparent 60%)' }}
-            />
             {isWorkspace && (
               <span className="absolute top-2 right-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-500 text-white z-10">
                 <Check className="w-3 h-3" />
@@ -132,20 +122,20 @@ export const ProjectOverviewStep: React.FC<ProjectOverviewStepProps> = ({
             )}
             <LayoutGrid
               className={cn(
-                'h-7 w-7 transition-all duration-300 relative',
+                'h-7 w-7 transition-all duration-200 relative',
                 isWorkspace
-                  ? 'text-purple-500 scale-110'
-                  : 'text-muted-foreground group-hover/approach:text-purple-500 group-hover/approach:scale-110'
+                  ? 'text-purple-500'
+                  : 'text-muted-foreground group-hover/approach:text-purple-500/80'
               )}
             />
             <div className="text-center relative">
               <div className={cn(
                 'text-sm font-semibold transition-colors',
-                isWorkspace ? 'text-purple-600 dark:text-purple-400' : 'group-hover/approach:text-purple-600 dark:group-hover/approach:text-purple-400'
+                isWorkspace ? 'text-purple-600 dark:text-purple-400' : 'text-foreground group-hover/approach:text-purple-600/90 dark:group-hover/approach:text-purple-400/90'
               )}>
                 Interactive Workspace
               </div>
-              <div className="text-xs text-muted-foreground mt-0.5 group-hover/approach:text-foreground/70 transition-colors">
+              <div className="text-xs text-muted-foreground mt-0.5">
                 Blank canvas for manual setup
               </div>
             </div>
