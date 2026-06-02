@@ -868,6 +868,17 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
     },
   });
 
+  // Silent autosave — no toast, used for eager + debounced background persistence
+  const saveDraftSilent = useCallback(async () => {
+    try {
+      await persistPlanToDatabase(projectId, projectCode, state, 'DRAFT');
+      invalidateQueries();
+    } catch (err) {
+      console.error('Autosave failed:', err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, projectCode, state]);
+
   return {
     state,
     updateState,
@@ -875,6 +886,7 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
     loadDraft,
     draftLoaded,
     saveDraft: saveDraft.mutateAsync,
+    saveDraftSilent,
     submitForApproval: submitForApproval.mutateAsync,
     deleteDraft: deleteDraft.mutateAsync,
     isSaving: saveDraft.isPending,
