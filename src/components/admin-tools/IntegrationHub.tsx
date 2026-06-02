@@ -178,7 +178,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     scope: string | null;
     available: string[];
     withData: string[];
-    breakdown: Array<{ name: string; systems_found: number; matched: number }>;
+    breakdown: Array<{ name: string; systems_found: number; matched: number; status?: 'ok' | 'empty' | 'load_failed' | 'error'; note?: string }>;
     totalFound: number;
     totalUpdated: number;
     error?: string;
@@ -1364,16 +1364,34 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
                     </div>
                     {syncReadout.breakdown.length > 0 && (
                       <div className="space-y-0.5 pt-1 border-t border-border/40">
-                        {syncReadout.breakdown.map((t) => (
-                          <div key={t.name} className="flex items-center justify-between gap-2">
-                            <span className={cn("truncate", t.matched > 0 ? "text-foreground font-medium" : "text-muted-foreground")}>
-                              {t.matched > 0 ? '✓' : '·'} {t.name}
-                            </span>
-                            <span className="text-muted-foreground tabular-nums">
-                              {t.matched}/{t.systems_found}
-                            </span>
-                          </div>
-                        ))}
+                        {syncReadout.breakdown.map((t) => {
+                          const status = t.status || (t.matched > 0 ? 'ok' : 'empty');
+                          const icon =
+                            status === 'ok' ? '✓' :
+                            status === 'empty' ? '○' :
+                            status === 'load_failed' ? '⚠' : '✕';
+                          const tone =
+                            status === 'ok' ? 'text-foreground font-medium' :
+                            status === 'empty' ? 'text-muted-foreground' :
+                            'text-amber-700';
+                          const right =
+                            status === 'load_failed' ? 'failed to load' :
+                            status === 'error' ? 'error' :
+                            `${t.matched}/${t.systems_found}`;
+                          return (
+                            <div key={t.name} className="flex items-center justify-between gap-2">
+                              <span className={cn("truncate", tone)} title={t.note}>
+                                {icon} {t.name}
+                              </span>
+                              <span className={cn("tabular-nums", status === 'load_failed' || status === 'error' ? 'text-amber-700' : 'text-muted-foreground')}>
+                                {right}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        <div className="pt-1.5 text-[10px] text-muted-foreground/80 flex gap-3">
+                          <span>✓ loaded · ○ empty · ⚠ failed to load · ✕ error</span>
+                        </div>
                       </div>
                     )}
                   </div>

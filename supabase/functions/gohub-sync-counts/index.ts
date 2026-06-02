@@ -355,7 +355,7 @@ Deno.serve(async (req) => {
     const allTiles = extractAllProjectTiles(homePageHtml);
     let currentCookies = loginCookies;
     let allRawData: any[] = [];
-    const tileBreakdown: Array<{ name: string; systems_found: number; matched: number }> = [];
+    const tileBreakdown: Array<{ name: string; systems_found: number; matched: number; status: 'ok' | 'empty' | 'load_failed' | 'error'; note?: string }> = [];
 
     if (allTiles.length === 0) {
       const { html: gridHtml, url: gridPageUrl, cookies: gridCookies } =
@@ -363,34 +363,54 @@ Deno.serve(async (req) => {
       const result = await fetchSystemsViaAsmx(gridCookies, gridPageUrl, gridHtml);
       allRawData = result.rawData;
       currentCookies = result.cookies;
-      tileBreakdown.push({ name: "(no tiles — direct grid)", systems_found: result.rawData.length, matched: result.rawData.length });
+      tileBreakdown.push({
+        name: "(no tiles — direct grid)",
+        systems_found: result.rawData.length,
+        matched: result.rawData.length,
+        status: result.rawData.length > 0 ? 'ok' : 'empty',
+      });
     } else {
       const searchTerms = projectFilter ? buildProjectSearchTerms(projectFilter) : [];
 
       for (let i = 0; i < allTiles.length; i++) {
         const tile = allTiles[i];
+        // FRESH LOGIN PER TILE — GoCompletions binds a session to a single
+        // active project tile, so re-using cookies across tiles silently
+        // returns the first tile's data (or empty). A fresh session per tile
+        // guarantees the postback actually switches project context.
         try {
-          let currentHomeHtml = homePageHtml;
-          let currentHomeUrl = homePageUrl;
+          const fresh = await loginGoCompletions(finalPortalUrl, username, password);
+          let tileCookies = fresh.cookies;
+          let tileHomeHtml = fresh.homePageHtml;
+          let tileHomeUrl = fresh.homePageUrl;
 
-          if (i > 0) {
-            const { html, url, cookies: refreshedCookies } = await followRedirects(finalPortalUrl, currentCookies);
-            currentCookies = refreshedCookies;
-            currentHomeHtml = html;
-            currentHomeUrl = url;
-            const refreshedTiles = extractAllProjectTiles(currentHomeHtml);
-            const matchingTile = refreshedTiles.find(t => t.name === tile.name);
-            if (matchingTile) {
-              tile.postbackTarget = matchingTile.postbackTarget;
-              tile.postbackArgument = matchingTile.postbackArgument;
-            }
+          // Re-resolve the tile postback against the fresh home page
+          const refreshedTiles = extractAllProjectTiles(tileHomeHtml);
+          const liveTile = refreshedTiles.find(t => t.name === tile.name) || tile;
+
+          let projectCookies: Record<string, string>;
+          let responseHtml: string;
+          let responseUrl: string;
+          try {
+            const sel = await selectProjectTile(tileCookies, tileHomeHtml, tileHomeUrl, liveTile);
+            projectCookies = sel.cookies;
+            responseHtml = sel.responseHtml;
+            responseUrl = sel.responseUrl;
+          } catch (selErr) {
+            console.log(`SyncCounts: Tile "${tile.name}" — select failed: ${selErr}`);
+            tileBreakdown.push({ name: tile.name, systems_found: 0, matched: 0, status: 'load_failed', note: 'tile select failed' });
+            continue;
           }
 
-          const { cookies: projectCookies, responseHtml, responseUrl } =
-            await selectProjectTile(currentCookies, currentHomeHtml, currentHomeUrl, tile);
-
-          const { html: gridHtml, url: gridPageUrl, cookies: gridCookies } =
-            await navigateToCompletionsGrid(projectCookies, finalPortalUrl, responseHtml, responseUrl);
+          let gridHtml: string, gridPageUrl: string, gridCookies: Record<string, string>;
+          try {
+            const grid = await navigateToCompletionsGrid(projectCookies, finalPortalUrl, responseHtml, responseUrl);
+            gridHtml = grid.html; gridPageUrl = grid.url; gridCookies = grid.cookies;
+          } catch (navErr) {
+            console.log(`SyncCounts: Tile "${tile.name}" — grid nav failed: ${navErr}`);
+            tileBreakdown.push({ name: tile.name, systems_found: 0, matched: 0, status: 'load_failed', note: 'grid navigation failed' });
+            continue;
+          }
 
           const result = await fetchSystemsViaAsmx(gridCookies, gridPageUrl, gridHtml);
           currentCookies = result.cookies;
@@ -423,17 +443,26 @@ Deno.serve(async (req) => {
               matchString(item.SubSystemDescription)
             );
           } else {
-            // No filter — take everything this tile exposes
             matched = flat;
           }
 
-          tileBreakdown.push({ name: tile.name, systems_found: flat.length, matched: matched.length });
-          console.log(`SyncCounts: Tile "${tile.name}" — ${flat.length} nodes, ${matched.length} kept`);
+          // Distinguish "tile loaded but empty" from "tile failed to load"
+          const status: 'ok' | 'empty' | 'load_failed' =
+            flat.length > 0 ? 'ok' : (result.rawData.length === 0 ? 'load_failed' : 'empty');
+
+          tileBreakdown.push({
+            name: tile.name,
+            systems_found: flat.length,
+            matched: matched.length,
+            status,
+            note: status === 'load_failed' ? 'ASMX returned no data — tile likely not active' : undefined,
+          });
+          console.log(`SyncCounts: Tile "${tile.name}" — ${flat.length} nodes, ${matched.length} kept, status=${status}`);
 
           if (matched.length > 0) allRawData.push(...matched);
         } catch (e) {
           console.log(`SyncCounts: Error in project "${tile.name}": ${e}`);
-          tileBreakdown.push({ name: tile.name, systems_found: 0, matched: 0 });
+          tileBreakdown.push({ name: tile.name, systems_found: 0, matched: 0, status: 'error', note: String(e).slice(0, 120) });
         }
       }
     }
