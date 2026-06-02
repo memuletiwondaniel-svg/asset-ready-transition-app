@@ -14040,6 +14040,7 @@ export type Database = {
         Args: { retention_days_param?: number }
         Returns: number
       }
+      reconcile_ora_plan_tasks: { Args: { p_plan_id: string }; Returns: Json }
       reject_user_account: {
         Args: { rejection_reason_text?: string; target_user_id: string }
         Returns: boolean
@@ -14056,6 +14057,7 @@ export type Database = {
         Args: { p_project_id: string; p_role_label: string }
         Returns: string
       }
+      revise_orp_plan: { Args: { p_plan_id: string }; Returns: Json }
       search_team_members: {
         Args: { search_term?: string }
         Returns: {
