@@ -645,13 +645,20 @@ const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string; projectId?:
       {readiness && status !== 'APPROVED' && (
         <div className="space-y-1">
           {[
-            { label: 'Training Plan', count: readiness.training },
-            { label: 'Procedures', count: readiness.procedures },
-            { label: 'Documentation', count: readiness.documentation },
+            {
+              label: 'Systems',
+              count: readiness.systems,
+              ok: readiness.systemsReady,
+              hint: !readiness.systemsFinalized && readiness.systems > 0 ? 'not finalized' : undefined,
+            },
+            { label: 'Training Plan', count: readiness.training, ok: readiness.training > 0 },
+            { label: 'Procedures', count: readiness.procedures, ok: readiness.procedures > 0 },
+            { label: 'Documentation', count: readiness.documentation, ok: readiness.documentation > 0 },
           ].map(item => (
             <div key={item.label} className="flex items-center gap-1.5 text-[10px]">
-              <div className={cn("w-1.5 h-1.5 rounded-full", item.count > 0 ? "bg-emerald-500" : "bg-muted-foreground/30")} />
+              <div className={cn("w-1.5 h-1.5 rounded-full", item.ok ? "bg-emerald-500" : "bg-muted-foreground/30")} />
               <span className="text-muted-foreground">{item.label}</span>
+              {item.hint && <span className="text-amber-600">· {item.hint}</span>}
               <span className={cn("ml-auto font-medium", item.count > 0 ? "text-foreground" : "text-muted-foreground/50")}>{item.count}</span>
             </div>
           ))}
