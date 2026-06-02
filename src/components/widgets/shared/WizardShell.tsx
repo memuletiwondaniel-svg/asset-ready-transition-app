@@ -52,10 +52,12 @@ interface WizardShellProps {
   isStepComplete: (idx: number) => boolean;
   /** Visited but incomplete = amber warning */
   isStepWarning?: (idx: number) => boolean;
-  /** Branded header content (icon + title + subtitle) */
+  /** Branded header content (icon + title + subtitle) — shown in sidebar/mobile header when topHeader is not provided */
   header: React.ReactNode;
   /** Actions in header area (delete, close buttons) */
   headerActions?: React.ReactNode;
+  /** Optional full-width top header band rendered above the sidebar+content row. When provided, replaces the sidebar/mobile compact header. */
+  topHeader?: React.ReactNode;
   /** Banners between header and content (rejection, review, read-only) */
   banners?: React.ReactNode;
   /** Content pinned above footer (notes textarea, etc.) */
