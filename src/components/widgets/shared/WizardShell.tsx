@@ -83,6 +83,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
   isStepWarning,
   header,
   headerActions,
+  topHeader,
   banners,
   pinnedFooterContent,
   children,
@@ -93,6 +94,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
   const isMobile = useIsMobile();
   const isLastStep = currentStep === steps.length - 1;
   const showStepList = steps.length > 0;
+  const hasTopHeader = !!topHeader;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
