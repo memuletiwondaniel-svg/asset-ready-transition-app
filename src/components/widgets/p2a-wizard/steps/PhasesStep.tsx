@@ -367,7 +367,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-medium">Handover Phases</h3>
+            <h3 className="text-sm font-medium">Define Phases</h3>
             <p className="text-xs text-muted-foreground">
               {phases.length === 0
                 ? 'Create phases to define when handovers are planned'

@@ -227,11 +227,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                                 : 'bg-background border border-border text-muted-foreground'
                         )}>
                           {idx + 1}
-                          {isComplete && !isActive && (
-                            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
-                              <Check className="w-2 h-2 text-white" strokeWidth={4} />
-                            </span>
-                          )}
+
                         </div>
                         <span className={cn(
                           'truncate text-xs',
