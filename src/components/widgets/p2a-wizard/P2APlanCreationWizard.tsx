@@ -246,6 +246,17 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     if (open) setBannerDismissed(false);
   }, [open]);
 
+  // Debounced autosave: silently persist state changes while user works inside the Guided Wizard
+  useEffect(() => {
+    if (!open || !useWizard || isReadOnly || isReviewMode || isLoadingDraft) return;
+    if (!draftLoaded && (state.systems.length === 0 && state.vcrs.length === 0 && state.phases.length === 0 && state.approvers.length === 0)) {
+      return;
+    }
+    const t = setTimeout(() => { void saveDraftSilent(); }, 1500);
+    return () => clearTimeout(t);
+  }, [open, useWizard, isReadOnly, isReviewMode, isLoadingDraft, draftLoaded, state, saveDraftSilent]);
+
+
   useEffect(() => {
     if (open && existingPlan && !draftLoaded && !isLoadingDraft) {
       setIsLoadingDraft(true);
