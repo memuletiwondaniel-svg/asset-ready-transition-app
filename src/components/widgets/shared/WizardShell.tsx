@@ -90,6 +90,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const isLastStep = currentStep === steps.length - 1;
+  const showStepList = steps.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -110,7 +111,6 @@ export const WizardShell: React.FC<WizardShellProps> = ({
           {/* ─── Mobile: Header + Pill Tabs ─── */}
           {isMobile ? (
             <div className="shrink-0 border-b border-border/60">
-              {/* Header row */}
               <div className="flex items-center justify-between px-3 pt-3 pb-2">
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   {header}
@@ -122,100 +122,109 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                   </Button>
                 </div>
               </div>
-              {/* Step pills */}
-              <div className="flex gap-1.5 overflow-x-auto pb-2 px-3 scrollbar-none">
-                {steps.map((step, idx) => {
-                  const isActive = idx === currentStep;
-                  const isComplete = isStepComplete(idx);
-                  const isWarning = isStepWarning?.(idx) ?? false;
-                  return (
-                    <button
-                      key={step.id}
-                      onClick={() => onStepChange(idx)}
-                      className={cn(
-                        'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap shrink-0 transition-all',
-                        isActive
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : isComplete
-                            ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
-                            : isWarning
-                              ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
-                              : 'bg-muted text-muted-foreground'
-                      )}
-                    >
-                      {isComplete && !isActive ? (
-                        <Check className="w-3 h-3" />
-                      ) : isWarning && !isActive ? (
-                        <AlertCircle className="w-3 h-3" />
-                      ) : (
-                        <span className="text-[10px]">{idx + 1}</span>
-                      )}
-                      {isActive && step.label}
-                    </button>
-                  );
-                })}
-              </div>
+              {showStepList && (
+                <div className="flex gap-1.5 overflow-x-auto pb-2 px-3 scrollbar-none">
+                  {steps.map((step, idx) => {
+                    const isActive = idx === currentStep;
+                    const isComplete = isStepComplete(idx);
+                    const isWarning = isStepWarning?.(idx) ?? false;
+                    return (
+                      <button
+                        key={step.id}
+                        onClick={() => onStepChange(idx)}
+                        className={cn(
+                          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap shrink-0 transition-all border',
+                          isActive
+                            ? 'bg-primary/10 text-primary border-primary/30'
+                            : isComplete
+                              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
+                              : isWarning
+                                ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
+                                : 'bg-muted text-muted-foreground border-transparent'
+                        )}
+                      >
+                        {isComplete && !isActive ? (
+                          <Check className="w-3 h-3" />
+                        ) : isWarning && !isActive ? (
+                          <AlertCircle className="w-3 h-3" />
+                        ) : (
+                          <span className="text-[10px]">{idx + 1}</span>
+                        )}
+                        {isActive && step.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ) : (
             /* ─── Desktop: Vertical Sidebar ─── */
-            <div className="w-56 shrink-0 bg-muted/30 border-r border-border/60 flex flex-col">
-              {/* Header in sidebar */}
-              <div className="p-4 pb-2 border-b border-border/40">
+            <div className="w-60 shrink-0 bg-muted/20 border-r border-border/60 flex flex-col">
+              <div className="p-4 border-b border-border/40">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">{header}</div>
                   <div className="flex items-center gap-0.5 shrink-0">{headerActions}</div>
                 </div>
               </div>
 
-              {/* Step list */}
-              <div className="flex-1 p-2 space-y-0.5 overflow-y-auto">
-                {steps.map((step, idx) => {
-                  const isActive = idx === currentStep;
-                  const isComplete = isStepComplete(idx);
-                  const isWarning = isStepWarning?.(idx) ?? false;
-                  const StepIcon = step.icon;
+              {showStepList ? (
+                <div className="flex-1 p-2 space-y-0.5 overflow-y-auto">
+                  {showStepList && (
+                    <div className="px-2 pt-1 pb-2">
+                      <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Navigate</p>
+                    </div>
+                  )}
+                  {steps.map((step, idx) => {
+                    const isActive = idx === currentStep;
+                    const isComplete = isStepComplete(idx);
+                    const isWarning = isStepWarning?.(idx) ?? false;
 
-                  return (
-                    <button
-                      key={step.id}
-                      onClick={() => onStepChange(idx)}
-                      className={cn(
-                        'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-all text-sm',
-                        isActive
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : isComplete
-                            ? 'hover:bg-muted/60 text-foreground'
-                            : isWarning
-                              ? 'hover:bg-amber-50 dark:hover:bg-amber-950/20 text-amber-700 dark:text-amber-400'
-                              : 'hover:bg-muted/40 text-muted-foreground'
-                      )}
-                    >
-                      <div className={cn(
-                        'w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-medium',
-                        isActive
-                          ? 'bg-primary-foreground/20 text-primary-foreground'
-                          : isComplete
-                            ? 'bg-emerald-500/10 text-emerald-500'
-                            : isWarning
-                              ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
-                              : 'bg-muted text-muted-foreground'
-                      )}>
-                        {isComplete && !isActive ? (
-                          <Check className="w-3 h-3" />
-                        ) : isWarning && !isActive ? (
-                          <AlertCircle className="w-3 h-3" />
-                        ) : (
-                          idx + 1
+                    return (
+                      <button
+                        key={step.id}
+                        onClick={() => onStepChange(idx)}
+                        className={cn(
+                          'group relative w-full flex items-center gap-2.5 pl-3 pr-3 py-2 rounded-md text-left transition-all text-sm border-l-2',
+                          isActive
+                            ? 'bg-primary/[0.08] text-foreground border-primary'
+                            : isComplete
+                              ? 'border-transparent hover:bg-muted/60 text-foreground'
+                              : isWarning
+                                ? 'border-transparent hover:bg-amber-50 dark:hover:bg-amber-950/20 text-amber-700 dark:text-amber-400'
+                                : 'border-transparent hover:bg-muted/40 text-muted-foreground'
                         )}
-                      </div>
-                      <span className="truncate text-xs font-medium">{step.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+                      >
+                        <div className={cn(
+                          'w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[11px] font-semibold transition-colors',
+                          isComplete && !isActive
+                            ? 'bg-emerald-500 text-white border border-emerald-500'
+                            : isActive
+                              ? 'bg-primary text-primary-foreground border border-primary'
+                              : isWarning
+                                ? 'bg-background border border-amber-400 text-amber-700 dark:text-amber-400'
+                                : 'bg-background border border-border text-muted-foreground'
+                        )}>
+                          {isComplete && !isActive ? (
+                            <Check className="w-3 h-3" strokeWidth={3} />
+                          ) : (
+                            idx + 1
+                          )}
+                        </div>
+                        <span className={cn(
+                          'truncate text-xs',
+                          isActive ? 'font-semibold' : 'font-medium'
+                        )}>
+                          {step.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex-1" />
+              )}
 
-              {/* Sidebar footer */}
-              {showStepCount && (
+              {showStepCount && showStepList && (
                 <div className="px-4 py-3 border-t border-border/40">
                   <p className="text-[10px] text-muted-foreground">
                     Step {currentStep + 1} of {steps.length}
