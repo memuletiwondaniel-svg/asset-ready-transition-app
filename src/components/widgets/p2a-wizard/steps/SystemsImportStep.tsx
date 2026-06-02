@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 import {
   Plus,
@@ -14,13 +15,15 @@ import {
   Edit2,
   Check,
   ChevronRight,
-  Lightbulb,
+  Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CMSImportModal } from './CMSImportModal';
 import { ExcelUploadModal } from './ExcelUploadModal';
 import { AddSystemModal } from './AddSystemModal';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { isAPIConfigured } from '@/lib/api-config-storage';
 
 
 
