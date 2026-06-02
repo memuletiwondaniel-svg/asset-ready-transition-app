@@ -502,36 +502,11 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
 //     digits+letter tail matched. These over-match (1800, 218, 18A in
 //     unrelated projects) so they are confirmation-only — never auto-selected.
 
-interface FilterVariants {
-  raw: string;
-  alnum: string;       // "DP18F" — the canonical project token
-  digitsTail: string;  // "18F"   — confirmation-only fragment
-  digitsOnly: string;  // "18"    — confirmation-only fragment
-}
-
-function buildFilterVariantSet(filter: string): FilterVariants {
-  const raw = filter.toUpperCase().trim();
-  const alnum = raw.replace(/[^A-Z0-9]/g, "");
-  const digitsTail = alnum.replace(/^[A-Z]+/, "");
-  const digitsOnly = alnum.replace(/[^0-9]/g, "");
-  return { raw, alnum, digitsTail, digitsOnly };
-}
-
-function normalizeSystemId(id: string): string {
-  return id.toUpperCase().replace(/[^A-Z0-9]/g, "");
-}
-
-type MatchTier = "strong" | "weak" | null;
-
-function classifyMatch(systemId: string, v: FilterVariants): MatchTier {
-  const norm = normalizeSystemId(systemId);
-  // STRONG: full normalized project token embedded anywhere in the id.
-  if (v.alnum && v.alnum.length >= 3 && norm.includes(v.alnum)) return "strong";
-  // WEAK: only a bare fragment matches — over-matches, confirmation-only.
-  if (v.digitsTail && v.digitsTail.length >= 2 && norm.includes(v.digitsTail)) return "weak";
-  if (v.digitsOnly && v.digitsOnly.length >= 2 && norm.includes(v.digitsOnly)) return "weak";
-  return null;
-}
+// Filter variants, normalization and tier classification now live in
+// _shared/gohub-normalize.ts (used by gohub-import, gohub-sync-counts,
+// and gohub-health-check) so the matching rules cannot drift between them.
+const buildFilterVariantSet = buildFilterVariants;
+const normalizeSystemId = normalizeId;
 
 // ─── Fetch every system for an already-loaded grid (no tile select) ──
 
