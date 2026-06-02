@@ -381,12 +381,22 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
 
   return (
     <div className="flex flex-col gap-3 p-4 h-full">
+      {/* ── Preliminary banner ────────────────────────────── */}
+      <div className="shrink-0 rounded-md border border-dashed border-amber-500/40 bg-amber-500/5 px-3 py-2">
+        <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-snug">
+          <span className="font-semibold">Preliminary system assignment — optional.</span>{' '}
+          This is a first-pass tentative mapping to shape the P2A plan. The final, authoritative
+          system list is confirmed later in each VCR's Execution Plan. You can submit the P2A plan
+          without completing this step.
+        </p>
+      </div>
+
       {/* ── Header ────────────────────────────────────────── */}
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <h3 className="text-sm font-medium">Map Systems to VCRs</h3>
+          <h3 className="text-sm font-medium">Map Systems to VCRs (Preliminary)</h3>
           <p className="text-xs text-muted-foreground">
-            Assign each system or subsystem to a VCR
+            Optional — assign each system or subsystem to a VCR to seed the VCR plan
           </p>
         </div>
         {totalUnassigned > 0 && (
@@ -401,6 +411,7 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
           </Button>
         )}
       </div>
+
 
       {/* ── VCR Filter Chips ──────────────────────────────── */}
       <div className="flex flex-wrap gap-1.5 shrink-0">
