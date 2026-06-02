@@ -11,6 +11,7 @@ import {
   iterateProjectTilesFreshSession,
   type TileStatus,
 } from "../_shared/gohub-tile-iterator.ts";
+import { normalizeId } from "../_shared/gohub-normalize.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
