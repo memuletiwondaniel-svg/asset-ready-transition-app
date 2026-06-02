@@ -1019,10 +1019,10 @@ export const TaskKanbanBoard: React.FC<TaskKanbanBoardProps> = ({
       const meta = task.userTask?.metadata as Record<string, any> | undefined;
       const isRejected = meta?.outcome === 'rejected';
       return (
-        <DraggableKanbanCard
+        <KanbanCardWithChildren
           key={task.id}
           task={task}
-          onClick={() => handleTaskClick(task)}
+          onTaskClick={handleTaskClick}
           accentClass={isRejected ? 'border-l-destructive' : col.accent}
         />
       );
