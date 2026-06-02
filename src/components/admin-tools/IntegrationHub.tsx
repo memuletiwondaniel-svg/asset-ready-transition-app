@@ -213,7 +213,9 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
   const getStatusInfo = (platformId: string) => {
     if (platformId === 'gocompletions') {
-      return gocConfigured
+      const dbCred = getCredential('gocompletions');
+      const hasDb = !!dbCred?.password_encrypted;
+      return (hasDb || gocConfigured)
         ? { label: 'Credentials saved', variant: 'configured' as const }
         : { label: 'Not configured', variant: 'none' as const };
     }
@@ -224,15 +226,21 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
   const getConnectionMethodLabel = (platformId: string): string | null => {
     if (platformId === 'gocompletions') {
+      const dbCred = getCredential('gocompletions');
+      const dbMethod = mapDbMethodToUi(dbCred?.primary_method);
+      if (dbMethod === 'agent') return CONNECTION_METHOD_BADGE_LABELS.agent;
+      if (dbMethod === 'api') return CONNECTION_METHOD_BADGE_LABELS.api;
       const config = getAPIConfig('gocompletions');
       if (config?.interfaceMethod === 'agent') return CONNECTION_METHOD_BADGE_LABELS.agent;
       if (config?.interfaceMethod === 'api') return CONNECTION_METHOD_BADGE_LABELS.api;
-      return null;
+      // Default badge: Agent (Fred AI)
+      return dbCred ? CONNECTION_METHOD_BADGE_LABELS.agent : null;
     }
     const cred = getCredential(platformId);
     if (!cred) return null;
     return CONNECTION_METHOD_BADGE_LABELS.api;
   };
+
 
   const openPanel = (platform: Platform) => {
     setPanelPlatform(platform);
@@ -243,16 +251,28 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
     // Pre-populate from existing credentials
     if (platform.id === 'gocompletions') {
+      // Prefer DB credential (source of truth for edge functions), fall back to legacy localStorage.
+      const dbCred = getCredential('gocompletions');
+      const dbMethod = mapDbMethodToUi(dbCred?.primary_method);
       const config = getAPIConfig('gocompletions');
-      if (config?.interfaceMethod === 'agent') {
-        setConnectionMethod('agent');
+
+      // Default to AGENT (Fred AI) for GoCompletions unless explicitly set to API.
+      const resolvedMethod: ConnectionMethod =
+        dbMethod ?? (config?.interfaceMethod as ConnectionMethod | undefined) ?? 'agent';
+      setConnectionMethod(resolvedMethod);
+
+      if (resolvedMethod === 'agent') {
         setFormData(prev => ({
-          ...prev, base_url: '', username: '', password: '', api_key: '', header_name: 'X-API-Key',
+          ...prev,
+          base_url: '', api_key: '', header_name: 'X-API-Key',
           client_id: '', client_secret: '', token_url: '', project_code_field: '', sync_enabled: false,
-          platform_url: '', auth_token: '', automation_enabled: true,
+          platform_url: dbCred?.base_url || config?.rpaCredentials?.portalUrl || '',
+          username: dbCred?.username_encrypted || config?.rpaCredentials?.username || '',
+          password: '',
+          auth_token: '', automation_enabled: true,
         }));
+        setHasStoredCredentials(!!dbCred?.password_encrypted || !!config?.rpaCredentials?.password);
       } else if (config?.apiCredentials) {
-        setConnectionMethod('api');
         setFormData(prev => ({
           ...prev,
           base_url: config.apiCredentials!.endpointUrl || '',
@@ -266,9 +286,9 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
           platform_url: '', auth_token: '', automation_enabled: false, header_name: 'X-API-Key',
         }));
       } else {
-        setConnectionMethod('api');
         resetFormData();
       }
+
     } else {
       const existing = getCredential(platform.id);
       if (existing) {
