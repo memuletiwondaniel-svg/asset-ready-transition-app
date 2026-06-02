@@ -207,6 +207,25 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] }),
   });
 
+  const finalizeMutation = useMutation({
+    mutationFn: async (finalize: boolean) => {
+      const { error } = await (supabase as any)
+        .from('p2a_handover_points')
+        .update({
+          systems_finalized_at: finalize ? new Date().toISOString() : null,
+          systems_finalized_by: finalize ? user?.id ?? null : null,
+        })
+        .eq('id', vcrId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, finalize) => {
+      queryClient.invalidateQueries({ queryKey: ['vcr-systems-meta', vcrId] });
+      queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
+      toast.success(finalize ? 'Systems finalized for this VCR' : 'Systems re-opened for editing');
+    },
+    onError: (e: any) => toast.error(e?.message || 'Failed to update finalize state'),
+  });
+
   const handleSync = async () => {
     if (!planId) return;
     setSyncing(true);
