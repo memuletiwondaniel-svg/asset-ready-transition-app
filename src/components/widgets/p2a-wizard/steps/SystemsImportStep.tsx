@@ -78,10 +78,13 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
   projectCode,
 }) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCMSModal, setShowCMSModal] = useState(false);
   const [showExcelModal, setShowExcelModal] = useState(false);
+  const cmsConfigured = isAPIConfigured('gocompletions');
+
 
   const handleAddSystem = (system: WizardSystem) => {
     onSystemsChange([...systems, system]);
