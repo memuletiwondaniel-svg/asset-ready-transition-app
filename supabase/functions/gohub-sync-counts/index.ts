@@ -2,7 +2,6 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
   loginGoCompletions,
   extractAllProjectTiles,
-  selectProjectTile,
   navigateToCompletionsGrid,
   callAsmxMethod,
   followRedirects,
@@ -11,6 +10,10 @@ import {
   parseCookiesFromResponse,
   getGoCompletionsCredentials,
 } from "../_shared/gocompletions-auth.ts";
+import {
+  iterateProjectTilesFreshSession,
+  type TileStatus,
+} from "../_shared/gohub-tile-iterator.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
