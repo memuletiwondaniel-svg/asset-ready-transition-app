@@ -49,12 +49,6 @@ interface SystemsImportStepProps {
   projectCode?: string;
 }
 
-function getProgressTextColor(progress: number): string {
-  if (progress >= 100) return 'text-emerald-600';
-  if (progress >= 60) return 'text-yellow-600';
-  if (progress >= 30) return 'text-orange-600';
-  return 'text-red-600';
-}
 
 function getSystemIdColor(systemId: string) {
   const str = systemId.replace(/-/g, '').toUpperCase();
