@@ -13,8 +13,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Wrench, Trash2, Calendar, User, Tag } from 'lucide-react';
+import { Plus, Wrench, Trash2, Calendar, User, Tag, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useProjectCMMSLead } from '@/hooks/useProjectCMMSLead';
 
 interface CMMSStepProps {
   vcrId: string;
