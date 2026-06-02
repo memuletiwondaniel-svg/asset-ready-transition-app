@@ -793,7 +793,19 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   ) : null;
 
   // Navigation props
-  const navigationProps = showWizardLayout ? {
+  // On landing: Next button only appears AFTER an approach is selected.
+  const landingNavigation = isLanding && selectedApproach
+    ? {
+        onBack: () => onOpenChange(false),
+        onNext: handleLandingNext,
+        onSaveAndExit: () => onOpenChange(false),
+        canGoBack: false,
+        canProceed: true,
+        saveAndExitLabel: 'Close',
+      }
+    : undefined;
+
+  const wizardNavigation = showWizardLayout ? {
     onBack: handleBack,
     onNext: handleNext,
     onSave: isReadOnly && !isReviewMode ? undefined : (!isReviewMode ? handleSave : undefined),
@@ -804,11 +816,13 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     isSubmitting: isSubmitting || isApproving,
     isSaving,
     canProceed: canProceed(),
-    canGoBack: currentStep > 0,
+    canGoBack: true,
     submitLabel: 'Submit for Approval',
     saveAndExitLabel: isReadOnly || isReviewMode ? 'Close' : undefined,
     isReviewMode,
   } : undefined;
+
+  const navigationProps = wizardNavigation ?? landingNavigation;
 
   return (
     <>
@@ -816,7 +830,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         open={open}
         onOpenChange={onOpenChange}
         dialogTitle={isReviewMode ? 'Review P2A Plan' : 'Develop P2A Plan'}
-        steps={WIZARD_STEPS}
+        steps={isLanding ? [] : WIZARD_STEPS}
         currentStep={currentStep}
         onStepChange={(idx) => {
           recalculateCompletedSteps();
