@@ -48,6 +48,8 @@ import { CriticalDocumentsStep } from './steps/CriticalDocumentsStep';
 import { RegistersLogsheetsStep } from './steps/RegistersLogsheetsStep';
 import { InspectionTestPlanStep } from './steps/InspectionTestPlanStep';
 import { ApproversStep } from './steps/ApproversStep';
+import { CMMSStep } from './steps/CMMSStep';
+import { SparesStep } from './steps/SparesStep';
 import { Layers } from 'lucide-react';
 
 interface VCRExecutionPlanWizardProps {
