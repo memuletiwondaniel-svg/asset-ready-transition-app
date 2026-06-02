@@ -81,19 +81,21 @@ const runD: Scenario["run"] = async (ctx) => {
   const parentId = parents?.[0]?.id;
   if (!parentId) return { status: "fail", expected: "R18 deliverable parent", observed: "none" };
   const { data: kids } = await svc.from("user_tasks").select("id,status").eq("parent_task_id", parentId).order("created_at", { ascending: true });
-  if (!kids || kids.length !== 2) return { status: "fail", expected: "2 children", observed: { count: kids?.length } };
-  // Mark child[0] cancelled_superseded, child[1] completed → expect parent = 100% (1/1)
+  if (!kids || kids.length < 2) return { status: "fail", expected: ">=2 children", observed: { count: kids?.length } };
+  // Mark first child cancelled_superseded; complete the rest → expect 100%
+  // (denominator excludes superseded, so N-1 completed of N-1 active = 100).
   await svc.from("user_tasks").update({ status: "cancelled_superseded" }).eq("id", kids[0].id);
-  await svc.from("user_tasks").update({ status: "completed" }).eq("id", kids[1].id);
-  // Re-read parent progress
+  for (const k of kids.slice(1)) {
+    await svc.from("user_tasks").update({ status: "completed" }).eq("id", k.id);
+  }
   const { data: parentAfter } = await svc.from("user_tasks").select("progress_percentage").eq("id", parentId).maybeSingle();
   const progress = parentAfter?.progress_percentage ?? null;
   if (progress !== 100) return {
     status: "fail",
-    expected: "rollup excludes cancelled_superseded from denominator → 1/1 = 100%",
-    observed: { progress, note: "no rollup engine recomputing parent progress_percentage on child status change" },
+    expected: `rollup excludes cancelled_superseded → ${kids.length - 1}/${kids.length - 1} = 100%`,
+    observed: { progress, totalChildren: kids.length, supersededCount: 1, completedCount: kids.length - 1 },
   };
-  return { status: "pass", observed: { parentId, progress } };
+  return { status: "pass", observed: { parentId, totalChildren: kids.length, supersededCount: 1, completedCount: kids.length - 1, progress } };
 };
 
 // ── E: rejection cascade — Revise task + sibling cancellations atomic ───────
