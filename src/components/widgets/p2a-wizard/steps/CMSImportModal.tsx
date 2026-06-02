@@ -103,6 +103,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
       setSearchedProjects([]);
       setProjectsWithResults([]);
       setFailedTiles([]);
+      setShowWeak(false);
       setSourceInfo(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
