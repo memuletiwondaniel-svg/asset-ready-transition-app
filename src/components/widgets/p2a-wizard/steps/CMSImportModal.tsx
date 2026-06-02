@@ -368,7 +368,6 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                   </section>
                 )}
               </div>
-              </div>
             </div>
           )}
 
