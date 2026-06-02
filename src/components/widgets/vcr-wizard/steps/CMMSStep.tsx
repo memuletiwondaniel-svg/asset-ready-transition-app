@@ -72,7 +72,7 @@ export const CMMSStep: React.FC<CMMSStepProps> = ({ vcrId }) => {
         title: item.title.trim(),
         asset_tag: item.asset_tag.trim() || null,
         description: item.description.trim() || null,
-        responsible_person: item.responsible_person.trim() || null,
+        responsible_person: cmmsLead?.full_name ?? null,
         target_date: item.target_date || null,
         status: item.status,
         display_order: items.length,
