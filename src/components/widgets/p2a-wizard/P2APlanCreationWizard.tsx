@@ -345,24 +345,20 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     }
   };
 
-  // Step completion uses 0-indexed steps now
-  // Steps: 0=Overview, 1=Systems, 2=VCRs, 3=Mapping, 4=Phases, 5=Approvers, 6=Review
+  // Steps (0-indexed): 0=Systems, 1=VCRs, 2=Mapping, 3=Phases, 4=Approvers, 5=Review
   const isStepComplete = (idx: number): boolean => {
     switch (idx) {
-      case 0: return useWizard === true;
-      case 1: return state.systems.length > 0;
-      case 2: return state.vcrs.length > 0;
-      case 3: return Object.values(state.mappings).some(arr => arr.length > 0);
-      case 4: return state.phases.length > 0;
-      case 5: return state.approvers.length > 0;
-      case 6: return currentStep > idx;
+      case 0: return state.systems.length > 0;
+      case 1: return state.vcrs.length > 0;
+      case 2: return Object.values(state.mappings).some(arr => arr.length > 0);
+      case 3: return state.phases.length > 0;
+      case 4: return state.approvers.length > 0;
+      case 5: return currentStep > idx;
       default: return false;
     }
   };
 
   const isStepWarning = (idx: number): boolean => {
-    // A step is "warning" if the user has been past it but it's not complete
-    if (idx === 0) return false;
     const hasBeenPast = currentStep > idx;
     return hasBeenPast && !isStepComplete(idx);
   };
@@ -370,9 +366,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const recalculateCompletedSteps = () => {
     const newCompleted = new Set<number>();
     for (let i = 0; i < WIZARD_STEPS.length - 1; i++) {
-      if (isStepComplete(i)) {
-        newCompleted.add(i);
-      }
+      if (isStepComplete(i)) newCompleted.add(i);
     }
     setCompletedSteps(newCompleted);
   };
@@ -396,7 +390,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
   const handleChooseWizard = () => {
     setUseWizard(true);
-    setCurrentStep(1);
+    setCurrentStep(0);
   };
 
   const handleChooseWorkspace = async () => {
@@ -409,10 +403,21 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     onOpenWorkspace?.();
   };
 
+  // Landing-page Next: act on the currently selected approach
+  const handleLandingNext = () => {
+    if (selectedApproach === 'wizard') {
+      handleChooseWizard();
+    } else if (selectedApproach === 'workspace') {
+      handleChooseWorkspace();
+    }
+  };
+
   const handleBack = () => {
     recalculateCompletedSteps();
-    if (currentStep === 1 && useWizard) {
+    if (currentStep === 0 && useWizard) {
+      // Return to landing
       setUseWizard(null);
+      setSelectedApproach(null);
       setCurrentStep(0);
     } else {
       setCurrentStep(prev => Math.max(prev - 1, 0));
