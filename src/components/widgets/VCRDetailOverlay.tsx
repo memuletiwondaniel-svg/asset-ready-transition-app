@@ -580,6 +580,13 @@ const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string; projectId?:
   const cfg = statusConfig[status] || statusConfig.DRAFT;
 
   const handleSubmit = async () => {
+    if (!readiness?.systemsReady) {
+      const reason = (readiness?.systems || 0) === 0
+        ? 'Add at least one system to this VCR before submitting.'
+        : 'Systems must be finalized in the VCR Systems step before submitting for approval.';
+      toast.error(reason);
+      return;
+    }
     setUpdating(true);
     const client = supabase as any;
     await client.from('p2a_handover_points').update({
@@ -587,6 +594,7 @@ const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string; projectId?:
       execution_plan_submitted_at: new Date().toISOString(),
     }).eq('id', vcrId);
     queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
+    queryClient.invalidateQueries({ queryKey: ['vcr-execution-readiness', vcrId] });
     setUpdating(false);
   };
 
