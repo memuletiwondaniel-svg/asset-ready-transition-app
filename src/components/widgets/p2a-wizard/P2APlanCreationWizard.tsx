@@ -640,7 +640,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             {statusChip.label}
           </Badge>
         </div>
-        <p className="text-[12px] leading-snug mt-1 truncate flex items-center gap-2">
+        <p className="text-[12px] leading-snug mt-2 truncate flex items-center gap-2">
           <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground font-medium text-[10px] tracking-wide uppercase border border-border/60">{projectCode}</span>
           {prettyProjectName ? <span className="text-muted-foreground">{prettyProjectName}</span> : null}
         </p>
