@@ -280,7 +280,8 @@ const KanbanCardContent: React.FC<{
   dragHandleProps?: Record<string, any>;
   isOverlay?: boolean;
   accentClass?: string;
-}> = ({ task, onClick, dragHandleProps, isOverlay, accentClass }) => {
+  isChild?: boolean;
+}> = ({ task, onClick, dragHandleProps, isOverlay, accentClass, isChild }) => {
   const navigate = useNavigate();
   const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
