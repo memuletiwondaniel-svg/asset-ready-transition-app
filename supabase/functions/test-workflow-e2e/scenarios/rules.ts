@@ -861,10 +861,10 @@ const runR22: Scenario["run"] = async (ctx) => {
   // Confirmation tasks for Sr ORA Engr should now exist (one per sub-task)
   const confirmTasks = await findP2ATask(svc, ctx.project.id, "confirm_itp_activity", sr.id);
   const pointConfirms = confirmTasks.filter((t: any) => t.metadata?.point_id === pt.id);
-  if (pointConfirms.length !== ITP_FIXTURE_COUNT) {
+  if (pointConfirms.length !== ITP_ALL) {
     return {
       status: "fail",
-      expected: `${ITP_FIXTURE_COUNT} confirm_itp_activity tasks for Sr ORA Engr`,
+      expected: `${ITP_ALL} confirm_itp_activity tasks for Sr ORA Engr`,
       observed: { count: pointConfirms.length },
     };
   }
