@@ -35,7 +35,14 @@ interface CompletionsSystem {
   progress: number;
   is_hydrocarbon: boolean;
   source_project?: string;
+  match_tier?: "strong" | "weak";
   subsystems: CompletionsSubsystem[];
+}
+
+interface SampleEntry {
+  source_project: string;
+  system_id: string;
+  name: string;
 }
 
 // ─── Strategy 1: ASMX WebMethod ─────────────────────────────
@@ -469,24 +476,48 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
   return systems;
 }
 
-// ─── Filter variant builder ─────────────────────────────────
-// Project codes in ORSH (e.g. "DP-18F") may not appear verbatim in
-// GoCompletions system IDs. Build several normalized variants and
-// match if any one is found inside a normalized system_id.
-function buildFilterVariants(filter: string): string[] {
+// ─── Filter variants + confidence tiering ───────────────────
+// Tier rules (to avoid false positives like "18" matching "A1800"):
+//   STRONG: normalized system_id contains the full alphanumeric project code
+//           (e.g. "DP18F"), or contains a digits+letter tail of length >= 3
+//           (e.g. "18F") — these have enough specificity to auto-select.
+//   WEAK:   only a short variant matched (e.g. digits-only "18", or short
+//           digits-letter tail). Surface for manual confirmation only.
+
+interface FilterVariants {
+  raw: string;
+  alnum: string;       // "DP18F"
+  digitsTail: string;  // "18F"
+  digitsOnly: string;  // "18"
+}
+
+function buildFilterVariantSet(filter: string): FilterVariants {
   const raw = filter.toUpperCase().trim();
-  const alnum = raw.replace(/[^A-Z0-9]/g, "");           // "DP-18F" -> "DP18F"
-  const digitsTail = alnum.replace(/^[A-Z]+/, "");       // "DP18F"  -> "18F"
-  const digitsOnly = alnum.replace(/[^0-9]/g, "");       // "DP18F"  -> "18"
-  const out = new Set<string>();
-  for (const v of [raw.replace(/[^A-Z0-9]/g, ""), alnum, digitsTail, digitsOnly]) {
-    if (v && v.length >= 2) out.add(v);
-  }
-  return [...out];
+  const alnum = raw.replace(/[^A-Z0-9]/g, "");
+  const digitsTail = alnum.replace(/^[A-Z]+/, "");
+  const digitsOnly = alnum.replace(/[^0-9]/g, "");
+  return { raw, alnum, digitsTail, digitsOnly };
 }
 
 function normalizeSystemId(id: string): string {
   return id.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+type MatchTier = "strong" | "weak" | null;
+
+function classifyMatch(systemId: string, v: FilterVariants): MatchTier {
+  const norm = normalizeSystemId(systemId);
+  // Strong: full alnum project code (e.g. DP18F) embedded in the system_id
+  if (v.alnum && v.alnum.length >= 4 && norm.includes(v.alnum)) return "strong";
+  // Strong: digits+letter tail of length >= 3 (e.g. "18F", "100A")
+  if (v.digitsTail && v.digitsTail.length >= 3 && /[A-Z]/.test(v.digitsTail) && norm.includes(v.digitsTail)) {
+    return "strong";
+  }
+  // Weak: shorter digits-tail (e.g. "18F" length 3 already handled above; "9A" length 2 weak)
+  if (v.digitsTail && v.digitsTail.length >= 2 && norm.includes(v.digitsTail)) return "weak";
+  // Weak: digits-only (over-matches — needs human confirmation)
+  if (v.digitsOnly && v.digitsOnly.length >= 2 && norm.includes(v.digitsOnly)) return "weak";
+  return null;
 }
 
 // ─── Search a single project for matching systems ───────────
@@ -497,8 +528,8 @@ async function searchProjectForSystems(
   homePageUrl: string,
   portalUrl: string,
   tile: ProjectTile,
-  projectFilter: string,
-  sampleSink?: { ids: string[] }
+  variants: FilterVariants,
+  sampleSink?: { entries: SampleEntry[] }
 ): Promise<{ systems: CompletionsSystem[]; cookies: Record<string, string> }> {
   try {
     const { cookies: projectCookies, responseHtml, responseUrl } =
@@ -519,25 +550,30 @@ async function searchProjectForSystems(
       }
     }
 
-    // Diagnostic sample so error messages can show what GoHub actually returned
-    if (sampleSink && allSystems.length > 0) {
-      for (const s of allSystems.slice(0, 8)) {
-        if (sampleSink.ids.length < 40) sampleSink.ids.push(`${tile.name}: ${s.system_id}`);
+    // Collect a sample so the UI can offer a manual pick-list when no matches
+    if (sampleSink) {
+      for (const s of allSystems) {
+        if (sampleSink.entries.length >= 200) break;
+        sampleSink.entries.push({
+          source_project: tile.name,
+          system_id: s.system_id,
+          name: s.name,
+        });
       }
     }
 
-    if (allSystems.length > 0 && projectFilter) {
-      const variants = buildFilterVariants(projectFilter);
-      console.log(`GoHub[${tile.name}]: ${allSystems.length} systems found. variants=${JSON.stringify(variants)} sample=${allSystems.slice(0, 5).map(s => s.system_id).join(",")}`);
-      const filtered = allSystems.filter(s => {
-        const norm = normalizeSystemId(s.system_id);
-        return variants.some(v => norm.includes(v));
-      });
-      for (const sys of filtered) sys.source_project = tile.name;
-      return { systems: filtered, cookies: gridCookies };
-    }
+    if (allSystems.length === 0) return { systems: [], cookies: gridCookies };
 
-    return { systems: [], cookies: gridCookies };
+    console.log(`GoHub[${tile.name}]: ${allSystems.length} systems found. variants=${JSON.stringify(variants)} sample=${allSystems.slice(0, 5).map(s => s.system_id).join(",")}`);
+    const matched: CompletionsSystem[] = [];
+    for (const sys of allSystems) {
+      const tier = classifyMatch(sys.system_id, variants);
+      if (!tier) continue;
+      sys.match_tier = tier;
+      sys.source_project = tile.name;
+      matched.push(sys);
+    }
+    return { systems: matched, cookies: gridCookies };
   } catch (error) {
     console.error(`GoHub: Error searching project "${tile.name}":`, error);
     return { systems: [], cookies };
@@ -646,6 +682,22 @@ Deno.serve(async (req) => {
     // Step 2: Extract project tiles (shared module)
     const allTiles = extractAllProjectTiles(homePageHtml);
 
+    const variants = buildFilterVariantSet(projectFilter);
+    const sampleSink = { entries: [] as SampleEntry[] };
+
+    const toCandidate = (sys: CompletionsSystem, idx: number) => ({
+      id: `gohub-${Date.now()}-${idx}`,
+      system_id: sys.system_id,
+      name: sys.name,
+      description: sys.description,
+      is_hydrocarbon: sys.is_hydrocarbon,
+      progress: sys.progress,
+      subsystems: sys.subsystems || [],
+      source: "gohub",
+      source_project: sys.source_project,
+      tier: sys.match_tier || "weak",
+    });
+
     if (allTiles.length === 0) {
       console.log("GoHub: No project tiles found. Attempting direct grid access...");
       try {
@@ -656,30 +708,33 @@ Deno.serve(async (req) => {
         if (systems.length === 0) systems = await tryPageMethod(gridCookies, gridPageUrl);
         if (systems.length === 0) systems = extractFromHtml(gridHtml);
 
-        const variants = buildFilterVariants(projectFilter);
-        const filtered = systems.filter(s => {
-          const norm = normalizeSystemId(s.system_id);
-          return variants.some(v => norm.includes(v));
-        });
-
-        if (filtered.length > 0) {
-          const topLevel = inferHierarchy(filtered);
-          const result = topLevel.map((sys, index) => ({
-            id: `gohub-${Date.now()}-${index}`,
-            system_id: sys.system_id,
-            name: sys.name,
-            description: sys.description,
-            is_hydrocarbon: sys.is_hydrocarbon,
-            progress: sys.progress,
-            subsystems: sys.subsystems || [],
-            source: "gohub",
-          }));
-
-          return new Response(
-            JSON.stringify({ success: true, systems: result, total: result.length, project_filter: projectFilter, searched_projects: ["direct"] }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+        for (const s of systems) {
+          if (sampleSink.entries.length >= 200) break;
+          sampleSink.entries.push({ source_project: "direct", system_id: s.system_id, name: s.name });
         }
+        const matched: CompletionsSystem[] = [];
+        for (const sys of systems) {
+          const tier = classifyMatch(sys.system_id, variants);
+          if (!tier) continue;
+          sys.match_tier = tier;
+          sys.source_project = "direct";
+          matched.push(sys);
+        }
+
+        const topLevel = inferHierarchy(matched);
+        const candidates = topLevel.map(toCandidate);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            candidates,
+            sample: sampleSink.entries.slice(0, 60),
+            project_filter: projectFilter,
+            variants,
+            searched_projects: ["direct"],
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       } catch (e) {
         console.log(`GoHub: Direct grid access fallback failed: ${e}`);
       }
@@ -688,12 +743,10 @@ Deno.serve(async (req) => {
     }
 
     // Step 3: Search ALL projects
-    const variants = buildFilterVariants(projectFilter);
     console.log(`GoHub: Will search ${allTiles.length} projects for "${projectFilter}" (variants=${JSON.stringify(variants)})`);
     const allMatchingSystems: CompletionsSystem[] = [];
     const searchedProjects: string[] = [];
     const projectsWithResults: string[] = [];
-    const sampleSink = { ids: [] as string[] };
     let currentCookies = loginCookies;
 
     for (let i = 0; i < allTiles.length; i++) {
@@ -721,7 +774,7 @@ Deno.serve(async (req) => {
       }
 
       const { systems: matchedSystems, cookies: updatedCookies } = await searchProjectForSystems(
-        currentCookies, currentHomeHtml, currentHomeUrl, finalPortalUrl, tile, projectFilter, sampleSink
+        currentCookies, currentHomeHtml, currentHomeUrl, finalPortalUrl, tile, variants, sampleSink
       );
       currentCookies = updatedCookies;
 
@@ -731,44 +784,30 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (allMatchingSystems.length === 0) {
-      const sampleHint = sampleSink.ids.length > 0
-        ? `\n\nSample of systems GoHub returned:\n${sampleSink.ids.slice(0, 12).join("\n")}`
-        : "\n\nGoHub returned no systems from any project (the Completions Grid may be empty for this login).";
-      throw new Error(
-        `No systems matching "${projectFilter}" (tried variants: ${variants.join(", ")}) across ${searchedProjects.length} GoHub projects.${sampleHint}`
-      );
+    // Deduplicate matches by system_id (keep strongest tier)
+    const dedupMap = new Map<string, CompletionsSystem>();
+    for (const sys of allMatchingSystems) {
+      const existing = dedupMap.get(sys.system_id);
+      if (!existing) { dedupMap.set(sys.system_id, sys); continue; }
+      if (existing.match_tier !== "strong" && sys.match_tier === "strong") {
+        dedupMap.set(sys.system_id, sys);
+      }
     }
+    const uniqueSystems = [...dedupMap.values()];
 
+    // If multiple systems matched only via short/digits variants, treat as ambiguous (downgrade strong-by-digits)
+    // (Tier was already set by classifyMatch; nothing to downgrade here since classifyMatch is conservative.)
 
-    // Deduplicate
-    const seen = new Set<string>();
-    const uniqueSystems = allMatchingSystems.filter(sys => {
-      if (seen.has(sys.system_id)) return false;
-      seen.add(sys.system_id);
-      return true;
-    });
-
-    // Infer hierarchy
     const topLevel = inferHierarchy(uniqueSystems);
-
-    const result = topLevel.map((sys, index) => ({
-      id: `gohub-${Date.now()}-${index}`,
-      system_id: sys.system_id,
-      name: sys.name,
-      description: sys.description,
-      is_hydrocarbon: sys.is_hydrocarbon,
-      progress: sys.progress,
-      subsystems: sys.subsystems || [],
-      source: "gohub",
-    }));
+    const candidates = topLevel.map(toCandidate);
 
     return new Response(
       JSON.stringify({
         success: true,
-        systems: result,
-        total: result.length,
+        candidates,
+        sample: sampleSink.entries.slice(0, 60),
         project_filter: projectFilter,
+        variants,
         searched_projects: searchedProjects,
         projects_with_results: projectsWithResults,
       }),
