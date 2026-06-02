@@ -45,7 +45,28 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
     return meta?.source === 'ora_workflow';
   });
 
-  const filteredOraWorkflowTasks = oraWorkflowTasks.filter(t => {
+  // Group children under parents (parent_task_id is the single source of truth
+  // for fan-out children created by R18/R20/R22b triggers).
+  const oraTaskById = new Map<string, UserTask>();
+  for (const t of oraWorkflowTasks) oraTaskById.set(t.id, t);
+  const oraChildrenByParent = new Map<string, UserTask[]>();
+  const oraTopLevel: UserTask[] = [];
+  for (const t of oraWorkflowTasks) {
+    const pid = t.parent_task_id;
+    if (pid && oraTaskById.has(pid)) {
+      const arr = oraChildrenByParent.get(pid) || [];
+      arr.push(t);
+      oraChildrenByParent.set(pid, arr);
+    } else {
+      oraTopLevel.push(t);
+    }
+  }
+  // Sort children by display_order
+  for (const arr of oraChildrenByParent.values()) {
+    arr.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+  }
+
+  const filteredOraWorkflowTasks = oraTopLevel.filter(t => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
