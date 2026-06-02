@@ -528,8 +528,8 @@ async function searchProjectForSystems(
   homePageUrl: string,
   portalUrl: string,
   tile: ProjectTile,
-  projectFilter: string,
-  sampleSink?: { ids: string[] }
+  variants: FilterVariants,
+  sampleSink?: { entries: SampleEntry[] }
 ): Promise<{ systems: CompletionsSystem[]; cookies: Record<string, string> }> {
   try {
     const { cookies: projectCookies, responseHtml, responseUrl } =
@@ -550,25 +550,30 @@ async function searchProjectForSystems(
       }
     }
 
-    // Diagnostic sample so error messages can show what GoHub actually returned
-    if (sampleSink && allSystems.length > 0) {
-      for (const s of allSystems.slice(0, 8)) {
-        if (sampleSink.ids.length < 40) sampleSink.ids.push(`${tile.name}: ${s.system_id}`);
+    // Collect a sample so the UI can offer a manual pick-list when no matches
+    if (sampleSink) {
+      for (const s of allSystems) {
+        if (sampleSink.entries.length >= 200) break;
+        sampleSink.entries.push({
+          source_project: tile.name,
+          system_id: s.system_id,
+          name: s.name,
+        });
       }
     }
 
-    if (allSystems.length > 0 && projectFilter) {
-      const variants = buildFilterVariants(projectFilter);
-      console.log(`GoHub[${tile.name}]: ${allSystems.length} systems found. variants=${JSON.stringify(variants)} sample=${allSystems.slice(0, 5).map(s => s.system_id).join(",")}`);
-      const filtered = allSystems.filter(s => {
-        const norm = normalizeSystemId(s.system_id);
-        return variants.some(v => norm.includes(v));
-      });
-      for (const sys of filtered) sys.source_project = tile.name;
-      return { systems: filtered, cookies: gridCookies };
-    }
+    if (allSystems.length === 0) return { systems: [], cookies: gridCookies };
 
-    return { systems: [], cookies: gridCookies };
+    console.log(`GoHub[${tile.name}]: ${allSystems.length} systems found. variants=${JSON.stringify(variants)} sample=${allSystems.slice(0, 5).map(s => s.system_id).join(",")}`);
+    const matched: CompletionsSystem[] = [];
+    for (const sys of allSystems) {
+      const tier = classifyMatch(sys.system_id, variants);
+      if (!tier) continue;
+      sys.match_tier = tier;
+      sys.source_project = tile.name;
+      matched.push(sys);
+    }
+    return { systems: matched, cookies: gridCookies };
   } catch (error) {
     console.error(`GoHub: Error searching project "${tile.name}":`, error);
     return { systems: [], cookies };
