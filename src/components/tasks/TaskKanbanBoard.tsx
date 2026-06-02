@@ -484,7 +484,10 @@ const KanbanCardContent: React.FC<{
 
       {/* Title + View in Gantt */}
       <div className="flex items-start justify-between gap-1">
-        <p className="text-sm font-medium text-foreground leading-snug mb-1.5 break-words overflow-hidden flex-1">
+        <p className={cn(
+          "font-medium text-foreground leading-snug break-words overflow-hidden flex-1",
+          isChild ? "text-xs mb-0.5" : "text-sm mb-1.5"
+        )}>
           {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
         </p>
         {isOraActivity && oraPlanId && oraActivityCode && (
