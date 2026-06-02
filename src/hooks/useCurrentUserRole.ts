@@ -8,18 +8,10 @@ export interface CurrentUserRole {
   isLoading: boolean;
 }
 
-// Roles allowed to create VCRs
+// Roles allowed to create VCRs — must match the canonical roles.name used by
+// RLS (current_user_has_role('Sr ORA Engr')) so UI and DB agree.
 const VCR_CREATOR_ROLES = [
-  'ORA Engineer',
-  'ORA Lead',
-  'ORA Engr.',
-  'ORA Engr',
-  'Snr ORA Engr',
-  'Snr ORA Engr.',
-  'Snr. ORA Engr.',
-  'Snr. ORA Engr',
-  'Senior ORA Engr.',
-  'Senior ORA Engineer',
+  'Sr ORA Engr',
 ];
 
 // Director roles that should only have SOF access (no project creation, etc.)
