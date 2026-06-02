@@ -484,6 +484,21 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   };
 
   const handleSubmit = async () => {
+    // Mandatory steps: 1 (Create VCRs), 3 (Define Phases), 4 (Select Approvers)
+    const mandatory: { idx: number; label: string; reason: string }[] = [
+      { idx: 1, label: 'Create VCRs', reason: 'add at least one VCR' },
+      { idx: 3, label: 'Define Phases', reason: 'define at least one phase' },
+      { idx: 4, label: 'Select Approvers', reason: 'select at least one approver' },
+    ];
+    const missing = mandatory.filter(m => !isStepComplete(m.idx));
+    if (missing.length > 0) {
+      const first = missing[0];
+      toast.error('Cannot submit — required steps incomplete', {
+        description: missing.map(m => `• ${m.label}: ${m.reason}`).join('\n'),
+      });
+      setCurrentStep(first.idx);
+      return;
+    }
     try {
       await submitForApproval(submissionComment || undefined);
       await syncWizardProgress(WIZARD_STEPS.length - 1, true);
@@ -494,6 +509,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
       // Error handled in hook
     }
   };
+
 
   const canProceed = () => true;
 
