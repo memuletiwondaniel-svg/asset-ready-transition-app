@@ -65,11 +65,12 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sampleSelected, setSampleSelected] = useState<Set<string>>(new Set());
   const [sampleFilter, setSampleFilter] = useState('');
+  const [searchedProjects, setSearchedProjects] = useState<string[]>([]);
+  const [projectsWithResults, setProjectsWithResults] = useState<string[]>([]);
 
   useEffect(() => {
     if (open && phase === 'idle') void runImport();
     if (!open) {
-      // reset state on close
       setPhase('idle');
       setErrorMessage('');
       setCandidates([]);
@@ -77,6 +78,8 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
       setSelected(new Set());
       setSampleSelected(new Set());
       setSampleFilter('');
+      setSearchedProjects([]);
+      setProjectsWithResults([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
