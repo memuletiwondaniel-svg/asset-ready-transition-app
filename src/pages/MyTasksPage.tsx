@@ -97,58 +97,82 @@ const MyTasksPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto">
-            {/* Group by dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8">
-                  {groupBy === 'project' ? <FolderOpen className="h-4 w-4" /> : <Layers className="h-4 w-4" />}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setGroupBy('none')}>
-                  {t.noGrouping || 'No Grouping'}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setGroupBy('project')}>
-                  <FolderOpen className="h-3.5 w-3.5 mr-2" />
-                  {t.groupByProject || 'By Project'}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setGroupBy('category')}>
-                  <Layers className="h-3.5 w-3.5 mr-2" />
-                  {t.groupByCategory || 'By Category'}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <TooltipProvider delayDuration={200}>
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto">
+              {/* Group by dropdown */}
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 border-transparent bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground hover:border-border transition-colors"
+                      >
+                        {groupBy === 'project' ? <FolderOpen className="h-4 w-4" /> : <Layers className="h-4 w-4" />}
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Grouping</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setGroupBy('none')}>
+                    {t.noGrouping || 'No Grouping'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setGroupBy('project')}>
+                    <FolderOpen className="h-3.5 w-3.5 mr-2" /> {t.groupByProject || 'By Project'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setGroupBy('category')}>
+                    <Layers className="h-3.5 w-3.5 mr-2" /> {t.groupByCategory || 'By Category'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-            {/* View toggle */}
-            <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as ViewMode)} size="sm">
-              <ToggleGroupItem value="kanban" aria-label={t.boardView || 'Board view'} className="px-2">
-                <Kanban className="h-4 w-4" />
-              </ToggleGroupItem>
-              <ToggleGroupItem value="table" aria-label="Table view" className="px-2">
-                <TableProperties className="h-4 w-4" />
-              </ToggleGroupItem>
-            </ToggleGroup>
+              {/* Consolidated view toggle — shows the view you'll switch TO */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setViewMode(viewMode === 'kanban' ? 'table' : 'kanban')}
+                    aria-label={viewMode === 'kanban' ? 'Switch to table view' : 'Switch to kanban view'}
+                    className="h-8 w-8 border-transparent bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground hover:border-border transition-colors"
+                  >
+                    {viewMode === 'kanban' ? <TableProperties className="h-4 w-4" /> : <Kanban className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{viewMode === 'kanban' ? 'Table View' : 'Kanban View'}</TooltipContent>
+              </Tooltip>
 
-            {/* Spacer */}
-            <div className="w-4" />
+              {/* Spacer */}
+              <div className="w-4" />
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-                  <Plus className="h-3.5 w-3.5" /> {t.addActivity || 'Add Activity'}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => { setAddActivityMode('catalog'); setAddActivityOpen(true); }}>
-                  <BookOpen className="h-4 w-4 mr-2" /> {t.fromCatalog || 'From Catalog'}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => { setAddActivityMode('custom'); setAddActivityOpen(true); }}>
-                  <PenLine className="h-4 w-4 mr-2" /> {t.customActivity || 'Custom Activity'}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 text-xs border-border/60 bg-transparent text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> {t.addActivity || 'Add Activity'}
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Add Activity</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => { setAddActivityMode('catalog'); setAddActivityOpen(true); }}>
+                    <BookOpen className="h-4 w-4 mr-2" /> {t.fromCatalog || 'From Catalog'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setAddActivityMode('custom'); setAddActivityOpen(true); }}>
+                    <PenLine className="h-4 w-4 mr-2" /> {t.customActivity || 'Custom Activity'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </TooltipProvider>
         </div>
 
         {/* Content */}
