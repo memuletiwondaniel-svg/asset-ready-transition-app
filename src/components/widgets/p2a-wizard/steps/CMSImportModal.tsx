@@ -243,18 +243,38 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                       ? `Found ${strong.length} confirmed match${strong.length === 1 ? '' : 'es'} for ${projectCode}`
                       : `No project named "${projectCode}" exists in GoCompletions`}
                   </p>
-                  <ul className="space-y-0.5 text-muted-foreground">
+                  <ul className="space-y-1 text-muted-foreground">
                     <li>
                       <span className="text-foreground/70">Searched:</span>{' '}
                       {searchedProjects.length > 0 ? (
                         <span className="font-medium text-foreground">
-                          {searchedProjects.length} GoHub project{searchedProjects.length === 1 ? '' : 's'} —{' '}
-                          {searchedProjects.slice(0, 3).join(', ')}
-                          {searchedProjects.length > 3 ? `, +${searchedProjects.length - 3} more` : ''}
+                          {searchedProjects.length} GoHub project{searchedProjects.length === 1 ? '' : 's'}
                         </span>
                       ) : (
                         <span>direct grid access</span>
                       )}
+                      {searchedProjects.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {searchedProjects.map(p => (
+                            <Badge
+                              key={p}
+                              variant="outline"
+                              className={cn(
+                                'text-[10px] font-normal',
+                                projectsWithResults.includes(p) && 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30'
+                              )}
+                            >
+                              {p}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </li>
+                    <li>
+                      <span className="text-foreground/70">Match rule:</span>{' '}
+                      <code className="text-[11px] bg-muted px-1 rounded">
+                        normalize(system_id).includes("{(projectCode || '').toUpperCase().replace(/[^A-Z0-9]/gi, '')}")
+                      </code>
                     </li>
                     <li>
                       <span className="text-foreground/70">Strong matches:</span>{' '}
@@ -271,20 +291,23 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                     )}
                   </ul>
                   {strong.length === 0 && (
-                    <div className="mt-2 pt-2 border-t border-amber-200/60 dark:border-amber-900/40">
-                      <p className="font-medium text-foreground mb-1">What would you like to do?</p>
+                    <div className="mt-2 pt-2 border-t border-amber-200/60 dark:border-amber-900/40 space-y-2">
+                      <p className="text-foreground">
+                        The matcher scanned every system_id in the {searchedProjects.length || 'visible'} project
+                        {searchedProjects.length === 1 ? '' : 's'} above and none contained
+                        {' '}<code className="text-[11px] bg-muted px-1 rounded">{(projectCode || '').toUpperCase().replace(/[^A-Z0-9]/gi, '')}</code>
+                        {' '}after normalization. The most likely cause is an <span className="font-medium">access
+                        issue</span>: the GoHub login configured in Admin → Integrations cannot see the area where
+                        {' '}{projectCode}'s systems live (e.g. DP-18F sits under <span className="font-medium">WEST QURNA (WQ)</span>;
+                        if WQ is not in the searched list above, that area is not reachable with the current
+                        credentials).
+                      </p>
+                      <p className="font-medium text-foreground">Options:</p>
                       <ul className="list-disc pl-4 space-y-0.5">
-                        <li>
-                          Confirm any <span className="font-medium">possible matches</span> below that actually
-                          belong to {projectCode}, or
-                        </li>
-                        <li>
-                          Pick from the <span className="font-medium">available systems</span> list, or
-                        </li>
-                        <li>
-                          Cancel and either update the GoHub credentials in Admin → Integrations (if a different
-                          login is needed), or import via Excel / Add Manually instead.
-                        </li>
+                        <li>Confirm any <span className="font-medium">possible matches</span> below that genuinely belong to {projectCode}.</li>
+                        <li>Pick from the <span className="font-medium">available systems</span> list further down.</li>
+                        <li>Update GoHub credentials in Admin → Integrations to a login that can see {projectCode}'s area, then retry.</li>
+                        <li>Or import via Excel / Add Manually instead.</li>
                       </ul>
                     </div>
                   )}
