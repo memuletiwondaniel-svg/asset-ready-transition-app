@@ -72,3 +72,23 @@ Add CMMS Lead to role registry; assign Rule 20 deliverables to it.
 No UI redesign beyond data-source rebinding; no non-ORSH widget changes; no auth/provider changes.
 
 Approve to begin.
+## M11 closure — explicit residuals
+
+### Residual (UI-layer, deferred)
+- **Parent/child expand in My Tasks / Activity List / Gantt** — the three read
+  surfaces bind to `ora_activity_plan_v` and render parent rollup % correctly,
+  but they nest children via the legacy `sub_items` jsonb column, NOT via
+  `parent_task_id` FK rows. R18 / R20 / R22b parents and their data-derived
+  children therefore appear as flat sibling rows rather than as a collapsible
+  tree under the parent. Data + rollup are verified correct end-to-end; only
+  the visual nesting affordance is missing. Fix when budgeted: group by
+  `parent_task_id` + disclosure widget across the three surfaces.
+
+### Data-entry UI follow-up (informational)
+- `p2a_vcr_critical_docs`, `p2a_vcr_cmms`, `p2a_vcr_spares` were added so the
+  R18/R20 fan-out can derive sub-task count from real rows (1:1 with
+  training/procedures/registers). No data-entry UI exists yet for these three
+  tables. Zero rows produces zero children — that is the correct behavior, not
+  a defect — but a Sr ORA Engr cannot currently populate them outside the
+  harness or direct SQL. Add screens analogous to the existing VCR training /
+  procedures editors when the workflow needs them.
