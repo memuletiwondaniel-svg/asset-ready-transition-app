@@ -65,11 +65,12 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sampleSelected, setSampleSelected] = useState<Set<string>>(new Set());
   const [sampleFilter, setSampleFilter] = useState('');
+  const [searchedProjects, setSearchedProjects] = useState<string[]>([]);
+  const [projectsWithResults, setProjectsWithResults] = useState<string[]>([]);
 
   useEffect(() => {
     if (open && phase === 'idle') void runImport();
     if (!open) {
-      // reset state on close
       setPhase('idle');
       setErrorMessage('');
       setCandidates([]);
@@ -77,6 +78,8 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
       setSelected(new Set());
       setSampleSelected(new Set());
       setSampleFilter('');
+      setSearchedProjects([]);
+      setProjectsWithResults([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -112,6 +115,8 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
       const incomingSample: SampleEntry[] = Array.isArray(data.sample) ? data.sample : [];
       setCandidates(incoming);
       setSample(incomingSample);
+      setSearchedProjects(Array.isArray(data.searched_projects) ? data.searched_projects : []);
+      setProjectsWithResults(Array.isArray(data.projects_with_results) ? data.projects_with_results : []);
       // Pre-select STRONG matches only
       setSelected(new Set(incoming.filter(c => c.tier === 'strong').map(c => c.system_id)));
       setSampleSelected(new Set());
@@ -224,6 +229,67 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
           {phase === 'review' && (
             <ScrollArea className="flex-1 min-h-0 -mx-1 px-1">
               <div className="space-y-4 pr-2">
+                {/* Findings summary — surface what we actually searched and matched */}
+                <section
+                  className={cn(
+                    'rounded-lg border p-3 text-xs',
+                    strong.length > 0
+                      ? 'bg-emerald-50/60 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900/40'
+                      : 'bg-amber-50/60 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/40'
+                  )}
+                >
+                  <p className="font-semibold text-sm mb-1.5">
+                    {strong.length > 0
+                      ? `Found ${strong.length} confirmed match${strong.length === 1 ? '' : 'es'} for ${projectCode}`
+                      : `No project named "${projectCode}" exists in GoCompletions`}
+                  </p>
+                  <ul className="space-y-0.5 text-muted-foreground">
+                    <li>
+                      <span className="text-foreground/70">Searched:</span>{' '}
+                      {searchedProjects.length > 0 ? (
+                        <span className="font-medium text-foreground">
+                          {searchedProjects.length} GoHub project{searchedProjects.length === 1 ? '' : 's'} —{' '}
+                          {searchedProjects.slice(0, 3).join(', ')}
+                          {searchedProjects.length > 3 ? `, +${searchedProjects.length - 3} more` : ''}
+                        </span>
+                      ) : (
+                        <span>direct grid access</span>
+                      )}
+                    </li>
+                    <li>
+                      <span className="text-foreground/70">Strong matches:</span>{' '}
+                      <span className="font-medium text-foreground">{strong.length}</span>
+                      {' · '}
+                      <span className="text-foreground/70">Weak (need confirmation):</span>{' '}
+                      <span className="font-medium text-foreground">{weak.length}</span>
+                    </li>
+                    {projectsWithResults.length > 0 && (
+                      <li>
+                        <span className="text-foreground/70">Hits came from:</span>{' '}
+                        <span className="font-medium text-foreground">{projectsWithResults.join(', ')}</span>
+                      </li>
+                    )}
+                  </ul>
+                  {strong.length === 0 && (
+                    <div className="mt-2 pt-2 border-t border-amber-200/60 dark:border-amber-900/40">
+                      <p className="font-medium text-foreground mb-1">What would you like to do?</p>
+                      <ul className="list-disc pl-4 space-y-0.5">
+                        <li>
+                          Confirm any <span className="font-medium">possible matches</span> below that actually
+                          belong to {projectCode}, or
+                        </li>
+                        <li>
+                          Pick from the <span className="font-medium">available systems</span> list, or
+                        </li>
+                        <li>
+                          Cancel and either update the GoHub credentials in Admin → Integrations (if a different
+                          login is needed), or import via Excel / Add Manually instead.
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </section>
+
                 {/* Strong matches */}
                 {strong.length > 0 && (
                   <section>
@@ -277,18 +343,6 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                   </section>
                 )}
 
-                {/* Empty + sample picker */}
-                {strong.length === 0 && weak.length === 0 && (
-                  <section>
-                    <div className="rounded-lg border border-dashed bg-muted/30 p-3 mb-3">
-                      <p className="text-sm font-medium">No automatic matches found</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        We couldn't confidently match your project code <span className="font-mono">{projectCode}</span>.
-                        Pick the systems that belong to this project from the list below.
-                      </p>
-                    </div>
-                  </section>
-                )}
 
                 {/* Sample selector — always available when we have data */}
                 {sample.length > 0 && (
