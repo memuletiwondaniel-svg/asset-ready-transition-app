@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, Trash2, AlertTriangle, Edit3, Eye, XCircle, RotateCcw, MessageSquare, X } from 'lucide-react';
+import { Loader2, AlertTriangle, Edit3, Eye, XCircle, RotateCcw, MessageSquare, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
