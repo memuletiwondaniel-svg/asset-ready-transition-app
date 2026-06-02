@@ -473,10 +473,22 @@ const VCR_FIXTURE_COUNTS: Record<string, number> = {
   "Construction Lead": 1,
   "Commissioning Lead": 1,
 };
-const ITP_FIXTURE_COUNT = 3;
+const ITP_FIXTURE_COUNT = 3;           // WITNESS rows (R22b + R18 witness/hold)
+const ITP_NA_FIXTURE_COUNT = 1;         // NA rows — R18 witness/hold MUST exclude
+// R18 / R20 detail counts. Intentionally varied per table to prove fan-out is
+// data-derived (not fixed 2). complete_witness_hold filters ITP to W|H only.
+const DELIVERABLE_DETAIL_COUNTS: Record<string, number> = {
+  deliver_training:             5,
+  deliver_procedures:           3,
+  deliver_critical_docs:        2,
+  deliver_procedures_registers: 4,
+  complete_witness_hold:        ITP_FIXTURE_COUNT,
+  deliver_cmms:                 2,
+  deliver_spares:               3,
+};
 
 async function ensureVCRFixtures(svc: SupabaseClient, ctx: any, pointId: string, planId: string): Promise<string | null> {
-  // 1) Delivering parties (R19/R21/R22a scope). Seeded counts intentionally vary per role.
+  // 1) Delivering parties (R19/R21/R22a scope).
   for (const role of Object.keys(VCR_FIXTURE_COUNTS)) {
     const userId = ctx.users[role].id;
     const { count: existing } = await svc.from("vcr_item_delivering_parties")
@@ -489,7 +501,7 @@ async function ensureVCRFixtures(svc: SupabaseClient, ctx: any, pointId: string,
       if (error) return `delivering_party insert (${role}#${i}): ${error.message}`;
     }
   }
-  // 2) p2a_systems row (FK for p2a_itp_activities). One per plan is enough.
+  // 2) p2a_systems row (FK for p2a_itp_activities).
   let systemId: string | undefined;
   const { data: sys } = await svc.from("p2a_systems")
     .select("id").eq("handover_plan_id", planId).limit(1).maybeSingle();
@@ -510,20 +522,51 @@ async function ensureVCRFixtures(svc: SupabaseClient, ctx: any, pointId: string,
     if (sErr) return `p2a_systems insert: ${sErr.message}`;
     systemId = ins!.id as string;
   }
-  // 3) p2a_itp_activities (R22b sub-task source).
-  const { count: itpExisting } = await svc.from("p2a_itp_activities")
+  // 3a) ITP WITNESS rows
+  const { count: itpW } = await svc.from("p2a_itp_activities")
     .select("id", { count: "exact", head: true })
-    .eq("handover_point_id", pointId);
-  const itpNeed = ITP_FIXTURE_COUNT - (itpExisting ?? 0);
-  for (let i = 0; i < itpNeed; i++) {
+    .eq("handover_point_id", pointId).eq("inspection_type", "WITNESS");
+  for (let i = (itpW ?? 0); i < ITP_FIXTURE_COUNT; i++) {
     const { error } = await svc.from("p2a_itp_activities").insert({
-      handover_point_id: pointId,
-      system_id: systemId,
+      handover_point_id: pointId, system_id: systemId,
       activity_name: `ITP Activity ${i + 1}`,
-      inspection_type: "WITNESS",
-      display_order: i + 1,
+      inspection_type: "WITNESS", display_order: i + 1,
     });
-    if (error) return `p2a_itp_activities insert #${i}: ${error.message}`;
+    if (error) return `p2a_itp_activities WITNESS #${i}: ${error.message}`;
+  }
+  // 3b) ITP NA row — proves R18 witness_hold filter excludes it
+  const { count: itpNA } = await svc.from("p2a_itp_activities")
+    .select("id", { count: "exact", head: true })
+    .eq("handover_point_id", pointId).eq("inspection_type", "NA");
+  for (let i = (itpNA ?? 0); i < ITP_NA_FIXTURE_COUNT; i++) {
+    const { error } = await svc.from("p2a_itp_activities").insert({
+      handover_point_id: pointId, system_id: systemId,
+      activity_name: `ITP NA ${i + 1}`,
+      inspection_type: "NA", display_order: 100 + i,
+    });
+    if (error) return `p2a_itp_activities NA #${i}: ${error.message}`;
+  }
+  // 4) R18/R20 detail rows — varied counts per table
+  const seeds: Array<[string, number]> = [
+    ["p2a_vcr_training",              DELIVERABLE_DETAIL_COUNTS.deliver_training],
+    ["p2a_vcr_procedures",            DELIVERABLE_DETAIL_COUNTS.deliver_procedures],
+    ["p2a_vcr_critical_docs",         DELIVERABLE_DETAIL_COUNTS.deliver_critical_docs],
+    ["p2a_vcr_operational_registers", DELIVERABLE_DETAIL_COUNTS.deliver_procedures_registers],
+    ["p2a_vcr_cmms",                  DELIVERABLE_DETAIL_COUNTS.deliver_cmms],
+    ["p2a_vcr_spares",                DELIVERABLE_DETAIL_COUNTS.deliver_spares],
+  ];
+  for (const [table, n] of seeds) {
+    const { count: existing } = await svc.from(table)
+      .select("id", { count: "exact", head: true })
+      .eq("handover_point_id", pointId);
+    for (let i = (existing ?? 0); i < n; i++) {
+      const { error } = await svc.from(table).insert({
+        handover_point_id: pointId,
+        title: `M11 ${table} #${i + 1}`,
+        display_order: i + 1,
+      });
+      if (error) return `${table} insert #${i}: ${error.message}`;
+    }
   }
   return null;
 }
