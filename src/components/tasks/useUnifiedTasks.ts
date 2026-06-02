@@ -196,8 +196,8 @@ export function useUnifiedTasks(userId: string) {
       let resolvedProgress = isP2aCreationTask
         ? (p2aActivityProgress[t.id] ?? 0)
         : isP2aApprovalTask
-          ? (meta?.completion_percentage ?? undefined)
-          : (oraAct as any)?.completion_percentage ?? meta?.completion_percentage ?? undefined;
+          ? (meta?.completion_percentage ?? (t as any).progress_percentage ?? undefined)
+          : (oraAct as any)?.completion_percentage ?? meta?.completion_percentage ?? (t as any).progress_percentage ?? undefined;
 
       // Guard: if the P2A plan is in DRAFT status (or ORA activity is IN_PROGRESS),
       // progress cannot exceed 86% (95% = submitted, 100% = approved).
