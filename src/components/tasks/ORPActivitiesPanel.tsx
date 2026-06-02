@@ -173,51 +173,108 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
       emptyMessage="No ORA activities assigned"
       onViewAll={() => navigate('/operation-readiness')}
     >
-      {/* ORA Workflow Action Items (from user_tasks) */}
+      {/* ORA Workflow Action Items (from user_tasks) — nested via parent_task_id */}
       {filteredOraWorkflowTasks.map((task, index) => {
         const isNew = isNewSinceLastLogin(task.created_at);
-        const daysPending = Math.floor(
-          (Date.now() - new Date(task.created_at).getTime()) / (1000 * 60 * 60 * 24)
-        );
         const meta = task.metadata as Record<string, any> | null;
+        const children = oraChildrenByParent.get(task.id) || [];
+        const hasChildren = children.length > 0;
+        const isOpen = expandedParents.has(task.id);
+        const pct = Math.round(task.progress_percentage ?? 0);
 
         return (
-          <div
-            key={task.id}
-            className={cn(
-              "p-3 rounded-lg border transition-all cursor-pointer group/item",
-              "hover:shadow-sm hover:border-primary/20",
-              "bg-card/50",
-              isNew && "border-l-2 border-l-primary",
-              "animate-fade-in"
-            )}
-            style={{ animationDelay: `${index * 50}ms` }}
-            onClick={() => setSelectedTask(task)}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="secondary" className="text-[10px] bg-purple-500/10 text-purple-600">Action</Badge>
-                  <span className="font-medium text-sm truncate">{task.title}</span>
-                  {isNew && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary shrink-0">
-                      NEW
-                    </Badge>
+          <div key={task.id} className="space-y-1.5">
+            <div
+              className={cn(
+                "p-3 rounded-lg border transition-all cursor-pointer group/item",
+                "hover:shadow-sm hover:border-primary/20",
+                "bg-card/50",
+                isNew && "border-l-2 border-l-primary",
+                "animate-fade-in"
+              )}
+              style={{ animationDelay: `${index * 50}ms` }}
+              onClick={() => setSelectedTask(task)}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-1.5 flex-1 min-w-0">
+                  {hasChildren ? (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); toggleExpand(task.id); }}
+                      className="mt-0.5 p-0.5 -ml-1 rounded hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                      aria-label={isOpen ? 'Collapse sub-tasks' : 'Expand sub-tasks'}
+                      title={`${children.length} sub-task${children.length === 1 ? '' : 's'}`}
+                    >
+                      {isOpen
+                        ? <ChevronDown className="h-3.5 w-3.5" />
+                        : <ChevronRight className="h-3.5 w-3.5" />}
+                    </button>
+                  ) : (
+                    <span className="inline-block w-[18px] shrink-0" />
                   )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="secondary" className="text-[10px] bg-purple-500/10 text-purple-600">Action</Badge>
+                      <span className="font-medium text-sm truncate">{task.title}</span>
+                      {isNew && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary shrink-0">
+                          NEW
+                        </Badge>
+                      )}
+                      {hasChildren && (
+                        <span className="text-[10px] text-muted-foreground">
+                          {pct}% · {children.length} sub-task{children.length === 1 ? '' : 's'}
+                        </span>
+                      )}
+                    </div>
+                    {task.description && (
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">{task.description}</p>
+                    )}
+                    {meta?.project_name && (
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        Project: {meta.project_name}
+                      </p>
+                    )}
+                    {hasChildren && (
+                      <Progress value={pct} className="h-1 mt-1.5" />
+                    )}
+                  </div>
                 </div>
-                {task.description && (
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">{task.description}</p>
-                )}
-                {meta?.project_name && (
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">
-                    Project: {meta.project_name}
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {getPriorityBadge(task.priority)}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {getPriorityBadge(task.priority)}
+                </div>
               </div>
             </div>
+
+            {hasChildren && isOpen && (
+              <div className="ml-6 pl-2 border-l-2 border-border/40 space-y-1.5">
+                {children.map(child => {
+                  const childMeta = child.metadata as Record<string, any> | null;
+                  const childPct = Math.round(child.progress_percentage ?? 0);
+                  const isDone = child.status === 'completed';
+                  return (
+                    <div
+                      key={child.id}
+                      className={cn(
+                        "p-2.5 rounded-md border bg-background/60 cursor-pointer transition-all hover:border-primary/20 hover:shadow-sm",
+                        isDone && "opacity-70"
+                      )}
+                      onClick={() => setSelectedTask(child)}
+                    >
+                      <div className="flex items-center justify-between gap-2 min-w-0">
+                        <div className="min-w-0 flex-1">
+                          <span className="text-xs font-medium truncate block">{child.title}</span>
+                          {child.description && (
+                            <span className="text-[11px] text-muted-foreground truncate block">{child.description}</span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground shrink-0">{childPct}%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       })}
