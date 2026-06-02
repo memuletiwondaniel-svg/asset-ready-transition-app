@@ -150,38 +150,60 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-2 p-4 h-full">
-      <div className="flex items-center justify-between shrink-0">
+    <div className="flex flex-col gap-3 p-4 h-full">
+      {/* Header */}
+      <div className="flex items-start justify-between shrink-0">
         <div>
-          <h3 className="text-sm font-medium">Systems</h3>
-          <p className="text-xs text-muted-foreground">
-            Import or manually add systems for handover
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold">Systems</h3>
+            <Badge variant="secondary" className="text-[10px] font-medium px-1.5 py-0 h-4">Optional</Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {systems.length === 0
+              ? 'No systems assigned yet. Import now or skip and assign later.'
+              : 'Import or manually add systems for handover'}
           </p>
         </div>
-        <Badge variant="outline">{systems.length} systems</Badge>
+        <Badge variant="outline" className="shrink-0">{systems.length} systems</Badge>
       </div>
 
       {/* Import options */}
       <div className="grid grid-cols-3 gap-3 shrink-0">
+        {/* CMS Import — calm not-configured state when unavailable */}
         <button
           onClick={() => {
-            if (!isAPIConfigured('gocompletions')) {
-              toast({
-                title: 'GoCompletions not configured',
-                description: 'Please configure GoCompletions in Administration > APIs first.',
-                variant: 'destructive',
-              });
-              return;
-            }
+            if (!cmsConfigured) return;
             setShowCMSModal(true);
           }}
-          className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md transition-all duration-200"
+          disabled={!cmsConfigured}
+          className={cn(
+            "group relative flex flex-col items-center gap-2 p-4 rounded-xl border bg-card transition-all duration-200 text-left",
+            cmsConfigured
+              ? "border-border hover:bg-accent/50 hover:border-primary/30 hover:shadow-md cursor-pointer"
+              : "border-dashed border-border/70 opacity-80 cursor-not-allowed"
+          )}
         >
-          <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
-            <Database className="h-4 w-4 text-amber-600" />
+          <div className={cn(
+            "w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
+            cmsConfigured ? "bg-amber-500/10 group-hover:bg-amber-500/20" : "bg-muted"
+          )}>
+            <Database className={cn("h-4 w-4", cmsConfigured ? "text-amber-600" : "text-muted-foreground")} />
           </div>
           <span className="font-medium text-xs">CMS Import</span>
-          <span className="text-[10px] text-muted-foreground leading-tight text-center">Sync from GoHub</span>
+          {cmsConfigured ? (
+            <span className="text-[10px] text-muted-foreground leading-tight text-center">Sync from GoHub</span>
+          ) : (
+            <span className="text-[10px] text-muted-foreground leading-tight text-center">
+              Not configured
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); navigate('/admin?tab=apis'); }}
+                className="block mx-auto mt-0.5 text-primary hover:underline inline-flex items-center gap-0.5"
+              >
+                <Settings2 className="h-2.5 w-2.5" /> Set up in Admin
+              </button>
+            </span>
+          )}
         </button>
         <button
           onClick={() => setShowExcelModal(true)}
@@ -205,15 +227,23 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         </button>
       </div>
 
-      {/* Systems List - fills remaining space */}
-      <div className="border rounded-lg flex-1 min-h-0">
+      {/* Systems List / guided empty state */}
+      <div className="border rounded-lg flex-1 min-h-0 bg-muted/20">
         <ScrollArea className="h-full">
           <div className="p-1.5 space-y-1">
             {systems.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Database className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No systems added yet</p>
-                <p className="text-xs mt-0.5">Import or add systems above</p>
+              <div className="flex flex-col items-center justify-center text-center py-10 px-6">
+                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                  <Database className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-medium">No systems yet</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+                  Pick an import method above to get started, or continue to the next step and assign systems later.
+                </p>
+                <div className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-background border border-border/70 rounded-full px-2.5 py-1">
+                  <Info className="h-3 w-3" />
+                  This step is optional — you can skip it.
+                </div>
               </div>
             ) : (
               systems.map((system) => (
@@ -231,6 +261,7 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
           </div>
         </ScrollArea>
       </div>
+
 
       {/* CMS Import Modal */}
       <CMSImportModal
