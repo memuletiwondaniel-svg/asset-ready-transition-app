@@ -98,3 +98,16 @@ Approve to begin.
   a defect — but a Sr ORA Engr cannot currently populate them outside the
   harness or direct SQL. Add screens analogous to the existing VCR training /
   procedures editors when the workflow needs them.
+
+### Systems-assignment: preliminary (P2A) vs final (VCR)
+- One source of truth: `p2a_handover_point_systems` keyed by `handover_point_id`.
+- P2A "Assign Systems (Preliminary)" is optional, labelled as a draft seed.
+- New columns on `p2a_handover_points`: `systems_finalized_at`, `systems_finalized_by`.
+- VCR Systems step shows a Finalize action; finalizing makes the VCR plan the
+  authoritative owner of its system list.
+- P2A re-submit (`useP2APlanWizard.persistP2APlan`) preserves any VCR with
+  `systems_finalized_at IS NOT NULL` — skips deleting that VCR row and its
+  mappings, and skips re-inserting it (seed-once, then independent).
+- VCR Execution Plan submit (`VCRDetailOverlay`) is blocked until the VCR has
+  at least one system AND `systems_finalized_at` is set. Readiness panel now
+  shows a Systems row.
