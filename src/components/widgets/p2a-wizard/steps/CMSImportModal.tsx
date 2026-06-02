@@ -262,6 +262,33 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                       <> · <span className="text-amber-700 dark:text-amber-400">{failedTiles.length} tile{failedTiles.length === 1 ? '' : 's'} failed to load</span></>
                     )}
                   </p>
+                  {sourceInfo && (
+                    <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          'text-[10px] font-normal',
+                          sourceInfo.served === 'live' && 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30',
+                          sourceInfo.served === 'catalog' && 'border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/30',
+                          sourceInfo.served === 'merged' && 'border-violet-300 bg-violet-50 text-violet-700 dark:bg-violet-950/30',
+                        )}
+                      >
+                        Source: {sourceInfo.served}
+                      </Badge>
+                      <span className="text-muted-foreground">
+                        live {sourceInfo.live_strong} · catalog {sourceInfo.catalog_strong}
+                        {sourceInfo.catalog_synced_at && (
+                          <> · synced {formatRelative(sourceInfo.catalog_synced_at)}</>
+                        )}
+                      </span>
+                    </p>
+                  )}
+                  {sourceInfo?.disagreement && (
+                    <p className="mt-2 text-[11px] rounded border border-amber-300 bg-amber-50 dark:bg-amber-950/30 px-2 py-1.5 text-amber-800 dark:text-amber-300">
+                      <span className="font-semibold">Live and catalog disagree:</span> live returned {sourceInfo.live_strong},
+                      catalog has {sourceInfo.catalog_strong}. Served {sourceInfo.served} (union dedup'd by normalized id) so nothing is silently dropped.
+                    </p>
+                  )}
                   {strong.length === 0 && (
                     <p className="mt-2 text-foreground">
                       {failedTiles.length > 0
