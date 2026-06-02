@@ -451,6 +451,29 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
     onOpenChange(isOpen);
   };
 
+  // VCR Plan status query — MUST run before any early return to keep hook order stable
+  const _metaVcrIdEarly = task?.metadata?.vcr_id as string | undefined;
+  const _isVcrDeliveryPlanTaskEarly = (task?.type === 'vcr_delivery_plan' || task?.metadata?.action === 'create_vcr_delivery_plan');
+  const { data: vcrPlanStepCounts } = useQuery({
+    queryKey: ['vcr-plan-draft-check', _metaVcrIdEarly],
+    queryFn: async () => {
+      if (!_metaVcrIdEarly) return { hasDraft: false, status: 'DRAFT' as string };
+      const [hpResult, training, procedures, criticalDocs, registers, logsheets] = await Promise.all([
+        (supabase as any).from('p2a_handover_points').select('execution_plan_status').eq('id', _metaVcrIdEarly).maybeSingle(),
+        (supabase as any).from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', _metaVcrIdEarly),
+        (supabase as any).from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', _metaVcrIdEarly),
+        (supabase as any).from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', _metaVcrIdEarly),
+        (supabase as any).from('p2a_vcr_register_selections').select('id', { count: 'exact', head: true }).eq('handover_point_id', _metaVcrIdEarly),
+        (supabase as any).from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', _metaVcrIdEarly),
+      ]);
+      const totalItems = (training.count || 0) + (procedures.count || 0) + (criticalDocs.count || 0) + (registers.count || 0) + (logsheets.count || 0);
+      const status = hpResult.data?.execution_plan_status || 'DRAFT';
+      return { hasDraft: totalItems > 0, status };
+    },
+    enabled: !!_metaVcrIdEarly && _isVcrDeliveryPlanTaskEarly,
+    staleTime: 0,
+  });
+
   if (!task) return null;
 
   const planStatus = (task.metadata?.plan_status as string || '').toUpperCase();
@@ -475,29 +498,8 @@ export const TaskDetailSheet: React.FC<TaskDetailSheetProps> = ({
   const pssrId = task.metadata?.pssr_id as string | undefined;
   const isOraReviewTask = task.type === 'ora_plan_review';
   const isOraActivityTask = task.type === 'ora_activity' || task.metadata?.action === 'complete_ora_activity';
-  const isVcrDeliveryPlanTask = (task.type === 'vcr_delivery_plan' || task.metadata?.action === 'create_vcr_delivery_plan');
-  const metaVcrId = task.metadata?.vcr_id as string | undefined;
-
-  // VCR Plan status query
-  const { data: vcrPlanStepCounts } = useQuery({
-    queryKey: ['vcr-plan-draft-check', metaVcrId],
-    queryFn: async () => {
-      if (!metaVcrId) return { hasDraft: false, status: 'DRAFT' as string };
-      const [hpResult, training, procedures, criticalDocs, registers, logsheets] = await Promise.all([
-        (supabase as any).from('p2a_handover_points').select('execution_plan_status').eq('id', metaVcrId).maybeSingle(),
-        (supabase as any).from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
-        (supabase as any).from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
-        (supabase as any).from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
-        (supabase as any).from('p2a_vcr_register_selections').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
-        (supabase as any).from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', metaVcrId),
-      ]);
-      const totalItems = (training.count || 0) + (procedures.count || 0) + (criticalDocs.count || 0) + (registers.count || 0) + (logsheets.count || 0);
-      const status = hpResult.data?.execution_plan_status || 'DRAFT';
-      return { hasDraft: totalItems > 0, status };
-    },
-    enabled: !!metaVcrId && isVcrDeliveryPlanTask,
-    staleTime: 0,
-  });
+  const isVcrDeliveryPlanTask = _isVcrDeliveryPlanTaskEarly;
+  const metaVcrId = _metaVcrIdEarly;
 
   const vcrHasDraft = vcrPlanStepCounts?.hasDraft || false;
   const vcrPlanStatus = vcrPlanStepCounts?.status || 'DRAFT';
