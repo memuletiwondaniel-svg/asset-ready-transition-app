@@ -493,7 +493,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
       );
     }
 
-    if (currentStep === 0 || useWizard === null) {
+    if (!useWizard) {
       return (
         <ProjectOverviewStep
           projectId={projectId}
@@ -501,14 +501,14 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           projectName={projectName}
           plantName={plantName}
           milestones={milestones}
-          onChooseWizard={handleChooseWizard}
-          onChooseWorkspace={handleChooseWorkspace}
+          selectedApproach={selectedApproach}
+          onSelectApproach={setSelectedApproach}
         />
       );
     }
 
     switch (currentStep) {
-      case 1:
+      case 0:
         return (
           <SystemsImportStep
             systems={state.systems}
@@ -516,7 +516,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             projectCode={projectCode}
           />
         );
-      case 2:
+      case 1:
         return (
           <VCRCreationStep
             vcrs={state.vcrs}
@@ -524,7 +524,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             onVCRsChange={(vcrs) => updateState('vcrs', vcrs)}
           />
         );
-      case 3:
+      case 2:
         return (
           <SystemMappingStep
             systems={state.systems}
@@ -533,7 +533,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             onMappingsChange={(mappings) => updateState('mappings', mappings)}
           />
         );
-      case 4:
+      case 3:
         return (
           <PhasesStep
             vcrs={state.vcrs}
@@ -549,7 +549,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             onOpenFullWorkspace={handleChooseWorkspace}
           />
         );
-      case 5:
+      case 4:
         return (
           <ApprovalSetupStep
             approvers={state.approvers}
@@ -558,7 +558,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
             onApproversChange={(approvers) => updateState('approvers', approvers)}
           />
         );
-      case 6:
+      case 5:
         return (
           <WorkspacePreviewStep
             systems={state.systems}
@@ -574,35 +574,39 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     }
   };
 
-  // Whether to show full wizard layout (not overview)
-  const showWizardLayout = useWizard && currentStep > 0 && !isLoadingDraft;
+  // Wizard layout is shown once user has chosen the Guided Wizard
+  const isLanding = !useWizard;
+  const showWizardLayout = useWizard === true && !isLoadingDraft;
   const isLastStep = currentStep === WIZARD_STEPS.length - 1;
 
-  // Header content
+  // Status chip for header
+  const statusChip = (() => {
+    if (isReviewMode) return { label: 'In Review', cls: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800' };
+    if (existingPlan?.status === 'ACTIVE') return { label: 'Pending Approval', cls: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800' };
+    if (existingPlan && ['COMPLETED', 'APPROVED'].includes(existingPlan.status)) return { label: 'Approved', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' };
+    return { label: 'Draft', cls: 'bg-muted text-muted-foreground border-border' };
+  })();
+
+  const headerTitle = isReviewMode ? 'Review P2A Plan' : 'Develop P2A Plan';
+  const projectSubtitle = projectName && projectName !== projectCode ? `${projectCode} · ${projectName}` : projectCode;
+
+  // VCR-style stacked header — code chip + status, big title, subtitle
   const headerContent = (
-    <div className="flex items-center gap-2.5 min-w-0">
-      <div className="relative shrink-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/40 to-amber-500/40 rounded-xl blur-sm" />
-        <div className="relative p-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500">
-          <Key className="h-4 w-4 text-white" />
-        </div>
+    <div className="flex flex-col gap-2 min-w-0">
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <Badge className="text-[10px] font-mono font-semibold border-0 px-2 py-0.5 bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">
+          P2A
+        </Badge>
+        <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-medium", statusChip.cls)}>
+          {statusChip.label}
+        </Badge>
       </div>
-      <div className="min-w-0">
-        <h2 className="text-sm font-semibold truncate">
-          {isReviewMode
-            ? 'Review P2A Plan'
-            : existingPlan && ['ACTIVE'].includes(existingPlan.status)
-              ? 'P2A Plan — Pending Approval'
-              : existingPlan && ['COMPLETED', 'APPROVED'].includes(existingPlan.status)
-                ? 'P2A Plan — Approved'
-                : 'Develop P2A Plan'}
-        </h2>
-        <p className="text-[10px] text-muted-foreground">
-          {projectName && projectName !== projectCode
-            ? `${projectCode}: ${projectName}`
-            : projectCode}
-        </p>
-      </div>
+      <h2 className="text-[15px] font-black leading-tight text-foreground line-clamp-2">
+        {headerTitle}
+      </h2>
+      <p className="text-[10px] text-muted-foreground truncate uppercase tracking-wide font-medium">
+        {projectSubtitle}
+      </p>
     </div>
   );
 
