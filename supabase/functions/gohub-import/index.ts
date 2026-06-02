@@ -477,18 +477,30 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
 }
 
 // ─── Filter variants + confidence tiering ───────────────────
-// Tier rules (to avoid false positives like "18" matching "A1800"):
-//   STRONG: normalized system_id contains the full alphanumeric project code
-//           (e.g. "DP18F"), or contains a digits+letter tail of length >= 3
-//           (e.g. "18F") — these have enough specificity to auto-select.
-//   WEAK:   only a short variant matched (e.g. digits-only "18", or short
-//           digits-letter tail). Surface for manual confirmation only.
+//
+// Matching contract (per ORSH spec):
+//   GoCompletions system_ids commonly follow [LOCATION]-[PROJECT_ID]-[SYSTEM_NO]
+//     e.g. C014-DP18F-622  (CS7 / DP-18F / system 622)
+//   but not all ids follow that shape (e.g. N004-A1800 has no DP code).
+//
+//   Normalization: strip ALL non-alphanumerics and uppercase.
+//     "DP-18F" / "DP 18F" / "DP-18-F" / "dp18f"  → "DP18F"
+//     "C014-DP18F-622"                            → "C014DP18F622"
+//
+//   STRONG match: normalized project token (len >= 3) is a substring of
+//     the normalized system_id.  "DP18F" ⊂ "C014DP18F622" → STRONG.
+//     This is %DP18F% behaviour, applied across the full system list of
+//     every searched area — NOT anchored to segment-2 position.
+//
+//   WEAK match: only a bare digits-only fragment ("18") or a 2-char
+//     digits+letter tail matched. These over-match (1800, 218, 18A in
+//     unrelated projects) so they are confirmation-only — never auto-selected.
 
 interface FilterVariants {
   raw: string;
-  alnum: string;       // "DP18F"
-  digitsTail: string;  // "18F"
-  digitsOnly: string;  // "18"
+  alnum: string;       // "DP18F" — the canonical project token
+  digitsTail: string;  // "18F"   — confirmation-only fragment
+  digitsOnly: string;  // "18"    — confirmation-only fragment
 }
 
 function buildFilterVariantSet(filter: string): FilterVariants {
@@ -507,15 +519,10 @@ type MatchTier = "strong" | "weak" | null;
 
 function classifyMatch(systemId: string, v: FilterVariants): MatchTier {
   const norm = normalizeSystemId(systemId);
-  // Strong: full alnum project code (e.g. DP18F) embedded in the system_id
-  if (v.alnum && v.alnum.length >= 4 && norm.includes(v.alnum)) return "strong";
-  // Strong: digits+letter tail of length >= 3 (e.g. "18F", "100A")
-  if (v.digitsTail && v.digitsTail.length >= 3 && /[A-Z]/.test(v.digitsTail) && norm.includes(v.digitsTail)) {
-    return "strong";
-  }
-  // Weak: shorter digits-tail (e.g. "18F" length 3 already handled above; "9A" length 2 weak)
+  // STRONG: full normalized project token embedded anywhere in the id.
+  if (v.alnum && v.alnum.length >= 3 && norm.includes(v.alnum)) return "strong";
+  // WEAK: only a bare fragment matches — over-matches, confirmation-only.
   if (v.digitsTail && v.digitsTail.length >= 2 && norm.includes(v.digitsTail)) return "weak";
-  // Weak: digits-only (over-matches — needs human confirmation)
   if (v.digitsOnly && v.digitsOnly.length >= 2 && norm.includes(v.digitsOnly)) return "weak";
   return null;
 }
