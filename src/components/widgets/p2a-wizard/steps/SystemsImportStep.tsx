@@ -101,14 +101,14 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
   };
 
   const handleCMSImport = (importedSystems: WizardSystem[]) => {
+    if (!importedSystems.length) return;
     // Deduplicate: merge by system_id, keeping existing entries and deduplicating subsystems
     const existingMap = new Map(systems.map(s => [s.system_id, s]));
     const newSystems: WizardSystem[] = [];
-    
+
     for (const imported of importedSystems) {
       const existing = existingMap.get(imported.system_id);
       if (existing) {
-        // Merge subsystems (deduplicate by subsystem system_id)
         if (imported.subsystems?.length) {
           const existingSubs = existing.subsystems || [];
           const existingSubIds = new Set(existingSubs.map(s => s.system_id));
@@ -118,7 +118,6 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
           }
         }
       } else {
-        // Deduplicate subsystems within the imported system itself
         if (imported.subsystems?.length) {
           const seen = new Set<string>();
           imported.subsystems = imported.subsystems.filter(s => {
@@ -131,11 +130,13 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         newSystems.push(imported);
       }
     }
-    
+
     onSystemsChange([...systems, ...newSystems]);
     toast({
-      title: 'GoHub Import',
-      description: `Successfully imported ${importedSystems.length} systems from GoHub`,
+      title: 'Imported from GoCompletions',
+      description: `Added ${newSystems.length} ${newSystems.length === 1 ? 'system' : 'systems'}${
+        importedSystems.length !== newSystems.length ? ` (${importedSystems.length - newSystems.length} already present)` : ''
+      }`,
     });
   };
 
