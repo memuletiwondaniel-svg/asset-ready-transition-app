@@ -177,7 +177,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
             </div>
           ) : (
             /* ─── Desktop: Vertical Sidebar ─── */
-            <div className="w-60 shrink-0 bg-muted/20 border-r border-border/60 flex flex-col">
+            <div className="w-52 shrink-0 bg-muted/20 border-r border-border/60 flex flex-col">
               {!hasTopHeader && (
                 <div className="p-4 border-b border-border/40">
                   <div className="flex items-start justify-between gap-2">
