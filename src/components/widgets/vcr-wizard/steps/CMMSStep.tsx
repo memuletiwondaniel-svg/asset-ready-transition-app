@@ -177,7 +177,7 @@ export const CMMSStep: React.FC<CMMSStepProps> = ({ vcrId }) => {
       )}
 
       <Sheet open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) setForm(EMPTY_FORM); }}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto z-[150]" overlayClassName="z-[150]">
           <SheetHeader>
             <SheetTitle>Add CMMS Item</SheetTitle>
           </SheetHeader>
