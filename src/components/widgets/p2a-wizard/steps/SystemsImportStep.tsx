@@ -437,9 +437,9 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
             </span>
           )}
         </div>
-        {hasProgress && (
-          <span className={cn("text-[10px] font-semibold tabular-nums shrink-0", getProgressTextColor(system.progress!))}>
-            {Math.round(system.progress!)}%
+        {hasSubsystems && (
+          <span className="text-[9px] text-muted-foreground shrink-0">
+            {system.subsystems!.length} sub
           </span>
         )}
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
