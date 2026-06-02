@@ -97,24 +97,150 @@ const runD: Scenario["run"] = async (ctx) => {
 };
 
 // ── E: rejection cascade — Revise task + sibling cancellations atomic ───────
+// Isolated reject sandbox at ORA / P2A / VCR. Each level uses FRESH
+// plans/points so the R6–R22 chain (plan #1 / point VCR-01) is untouched.
+// Spec cross_cutting.E: REJECT must (1) cancel sibling PENDING approver
+// rows of the same cycle and (2) create a "Revise <Plan>" user_task for
+// Sr ORA Engr. If the product cascade doesn't fire, this RED-fails by
+// design — caller fixes at root, scenario is unchanged.
 const runE: Scenario["run"] = async (ctx) => {
   const svc = svcOf(ctx);
-  const { data: pts } = await svc.from("p2a_handover_points")
-    .select("id,handover_plan_id").order("vcr_code", { ascending: true }).limit(1);
-  const pt = pts?.[0];
-  if (!pt) return { status: "fail", expected: "first VCR point", observed: "none" };
-  // Try a fresh REJECT on the unapproved point's P2A plan via Construction Lead
-  const planId = pt.handover_plan_id;
-  const constr = ctx.users["Construction Lead"];
-  const c = clientAs(ctx.anonUrl, ctx.anonKey, constr.jwt);
-  // Skip if already APPROVED (it is — R12 approved). Test via direct DB on a sibling
   const sr = ctx.users["Sr ORA Engr"];
-  // Look for any 'revise_p2a_plan' or 'revise_vcr_plan' task for Sr ORA Engr — should be 0 since no rejection happened
-  const { data: revise } = await svc.from("user_tasks").select("id")
-    .filter("metadata->>action", "in", '("revise_p2a_plan","revise_vcr_plan")')
-    .eq("user_id", sr.id);
-  // E is impl-validation: we report pending unless we trigger one. Skip the destructive REJECT (would corrupt R6-R22 deps).
-  return { status: "fail", expected: "Reject path produces Revise task + cancels sibling pendings atomically", observed: { note: "harness does not exercise REJECT (would corrupt R6–R22 chain); product trigger sync_p2a_rejection_to_plan exists but cascade-to-Revise-task untested. Marked fail pending dedicated REJECT scenario in isolated runId.", reviseFound: revise?.length ?? 0 } };
+  const oraLead = ctx.users["ORA Lead"];
+  const phl = ctx.users["Project Hub Lead"];
+  const constr = ctx.users["Construction Lead"];
+  const results: Record<string, any> = {};
+
+  const tryApprove = async (jwt: string, table: string, build: (q: any) => any): Promise<string | null> => {
+    const c = clientAs(ctx.anonUrl, ctx.anonKey, jwt);
+    const { error, count } = await build(c.from(table).update({ status: "APPROVED", approved_at: new Date().toISOString() }, { count: "exact" }));
+    if (error) return error.message;
+    if ((count ?? 0) === 0) return "0 rows";
+    return null;
+  };
+  const tryReject = async (jwt: string, table: string, build: (q: any) => any, comments: string): Promise<string | null> => {
+    const c = clientAs(ctx.anonUrl, ctx.anonKey, jwt);
+    const { error, count } = await build(c.from(table).update({ status: "REJECTED", approved_at: new Date().toISOString(), comments }, { count: "exact" }));
+    if (error) return error.message;
+    if ((count ?? 0) === 0) return "0 rows";
+    return null;
+  };
+
+  // ────────────────────────────────── E-ORA ────────────────────────────────
+  {
+    const { data: planE, error: pErr } = await svc.from("orp_plans").insert({
+      project_id: ctx.project.id, phase: "ASSESS_SELECT",
+      ora_engineer_id: sr.id, created_by: sr.id, status: "DRAFT", is_active: false,
+    }).select("id").single();
+    if (pErr) return { status: "fail", expected: "E-ORA isolated plan create", observed: pErr.message };
+    await svc.from("ora_plan_activities").insert({
+      orp_plan_id: planE.id, name: "E-ORA sandbox", activity_code: "ORA-E1",
+      status: "NOT_STARTED", completion_percentage: 0,
+    });
+    await svc.from("orp_plans").update({ status: "PENDING_APPROVAL" }).eq("id", planE.id);
+    const aErr = await tryApprove(oraLead.jwt, "orp_approvals",
+      (q) => q.eq("orp_plan_id", planE.id).eq("approver_role", "ORA Lead"));
+    if (aErr) return { status: "fail", expected: "E-ORA ORA Lead APPROVE", observed: aErr };
+    const rErr = await tryReject(phl.jwt, "orp_approvals",
+      (q) => q.eq("orp_plan_id", planE.id).eq("approver_role", "Project Hub Lead"), "E-ORA reject");
+    if (rErr) return { status: "fail", expected: "E-ORA PHL REJECT", observed: rErr };
+    const { data: dpd } = await svc.from("orp_approvals")
+      .select("status").eq("orp_plan_id", planE.id).eq("approver_role", "Dep. Plant Director").eq("cycle", 1).maybeSingle();
+    const { data: revise } = await svc.from("user_tasks").select("id,title,status")
+      .filter("metadata->>action", "eq", "revise_ora_plan")
+      .filter("metadata->>plan_id", "eq", planE.id)
+      .eq("user_id", sr.id);
+    results.ORA = {
+      planId: planE.id,
+      siblingDpd: dpd ? dpd.status : "deleted",
+      siblingsCancelled: !dpd || dpd.status !== "PENDING",
+      reviseTaskCount: revise?.length ?? 0,
+      reviseTaskTitle: revise?.[0]?.title ?? null,
+    };
+  }
+
+  // ────────────────────────────────── E-P2A ────────────────────────────────
+  {
+    const { data: planE, error: pErr } = await svc.from("p2a_handover_plans").insert({
+      project_id: ctx.project.id, name: `E-P2A sandbox ${ctx.runId}`,
+      created_by: sr.id, status: "DRAFT", project_code: ctx.project.code,
+    }).select("id").single();
+    if (pErr) return { status: "fail", expected: "E-P2A isolated plan create", observed: pErr.message };
+    await svc.from("p2a_handover_plans").update({ status: "PENDING_APPROVAL" }).eq("id", planE.id);
+    const aErr = await tryApprove(oraLead.jwt, "p2a_handover_approvers",
+      (q) => q.eq("handover_id", planE.id).eq("stage", "P2A").eq("role_name", "ORA Lead"));
+    if (aErr) return { status: "fail", expected: "E-P2A ORA Lead APPROVE", observed: aErr };
+    const rErr = await tryReject(constr.jwt, "p2a_handover_approvers",
+      (q) => q.eq("handover_id", planE.id).eq("stage", "P2A").eq("role_name", "Construction Lead"),
+      "E-P2A reject");
+    if (rErr) return { status: "fail", expected: "E-P2A Construction Lead REJECT", observed: rErr };
+    const { data: siblings } = await svc.from("p2a_handover_approvers")
+      .select("role_name,status").eq("handover_id", planE.id).eq("stage", "P2A").eq("cycle", 1)
+      .in("role_name", ["Commissioning Lead", "Project Hub Lead", "Dep. Plant Director"]);
+    const stillPending = (siblings ?? []).filter((r: any) => r.status === "PENDING");
+    const { data: revise } = await svc.from("user_tasks").select("id,title,status")
+      .filter("metadata->>action", "eq", "revise_p2a_plan")
+      .filter("metadata->>plan_id", "eq", planE.id)
+      .eq("user_id", sr.id);
+    results.P2A = {
+      planId: planE.id,
+      siblingsRemaining: siblings?.length ?? 0,
+      siblingsStillPending: stillPending.length,
+      siblingsCancelled: stillPending.length === 0,
+      reviseTaskCount: revise?.length ?? 0,
+      reviseTaskTitle: revise?.[0]?.title ?? null,
+    };
+  }
+
+  // ────────────────────────────────── E-VCR ────────────────────────────────
+  // Use VCR-02 (R6–R22 chain only touched VCR-01) on the chain's P2A plan.
+  {
+    const { data: pts } = await svc.from("p2a_handover_points")
+      .select("id,vcr_code,handover_plan_id").order("vcr_code", { ascending: true });
+    const pt2 = (pts ?? [])[1];
+    if (!pt2) return { status: "fail", expected: "VCR-02 point", observed: { found: pts?.length } };
+    await svc.from("p2a_handover_points")
+      .update({ execution_plan_status: "PENDING_APPROVAL",
+                execution_plan_submitted_at: new Date().toISOString(),
+                execution_plan_submitted_by: sr.id })
+      .eq("id", pt2.id);
+    const aErr = await tryApprove(oraLead.jwt, "p2a_handover_approvers",
+      (q) => q.eq("point_id", pt2.id).eq("stage", "VCR").eq("role_name", "ORA Lead"));
+    if (aErr) return { status: "fail", expected: "E-VCR ORA Lead APPROVE", observed: aErr };
+    const rErr = await tryReject(constr.jwt, "p2a_handover_approvers",
+      (q) => q.eq("point_id", pt2.id).eq("stage", "VCR").eq("role_name", "Construction Lead"),
+      "E-VCR reject");
+    if (rErr) return { status: "fail", expected: "E-VCR Construction Lead REJECT", observed: rErr };
+    const { data: siblings } = await svc.from("p2a_handover_approvers")
+      .select("role_name,status").eq("point_id", pt2.id).eq("stage", "VCR").eq("cycle", 1)
+      .in("role_name", ["Commissioning Lead", "Project Hub Lead", "Dep. Plant Director"]);
+    const stillPending = (siblings ?? []).filter((r: any) => r.status === "PENDING");
+    const { data: revise } = await svc.from("user_tasks").select("id,title,status,metadata")
+      .filter("metadata->>action", "eq", "revise_vcr_plan")
+      .filter("metadata->>point_id", "eq", pt2.id)
+      .eq("user_id", sr.id);
+    const { data: ptAfter } = await svc.from("p2a_handover_points")
+      .select("execution_plan_status").eq("id", pt2.id).maybeSingle();
+    results.VCR = {
+      pointId: pt2.id, vcrCode: pt2.vcr_code,
+      siblingsRemaining: siblings?.length ?? 0,
+      siblingsStillPending: stillPending.length,
+      siblingsCancelled: stillPending.length === 0,
+      reviseTaskCount: revise?.length ?? 0,
+      reviseTaskTitle: revise?.[0]?.title ?? null,
+      pointStatusAfter: ptAfter?.execution_plan_status,
+    };
+  }
+
+  const levelOk = (r: any) => r.siblingsCancelled === true && (r.reviseTaskCount ?? 0) >= 1;
+  const passed = ["ORA", "P2A", "VCR"].filter((k) => levelOk(results[k]));
+  const failed = ["ORA", "P2A", "VCR"].filter((k) => !levelOk(results[k]));
+  if (failed.length > 0) return {
+    status: "fail",
+    expected: "all 3 levels: sibling pendings cancelled + Revise task for Sr ORA Engr",
+    observed: { passed, failed, details: results },
+  };
+  return { status: "pass", observed: results };
 };
 
 // ── F: dedupe_key idempotency — replay APPROVE → no duplicate user_tasks ────
