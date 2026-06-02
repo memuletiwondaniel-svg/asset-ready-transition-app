@@ -13,8 +13,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Wrench, Trash2, Calendar, User, Tag } from 'lucide-react';
+import { Plus, Wrench, Trash2, Calendar, User, Tag, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useProjectCMMSLead } from '@/hooks/useProjectCMMSLead';
 
 interface CMMSStepProps {
   vcrId: string;
@@ -31,7 +33,6 @@ interface FormState {
   title: string;
   asset_tag: string;
   description: string;
-  responsible_person: string;
   target_date: string;
   status: string;
 }
@@ -40,7 +41,6 @@ const EMPTY_FORM: FormState = {
   title: '',
   asset_tag: '',
   description: '',
-  responsible_person: '',
   target_date: '',
   status: 'to_create',
 };
@@ -50,6 +50,7 @@ export const CMMSStep: React.FC<CMMSStepProps> = ({ vcrId }) => {
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const { data: cmmsLead, isLoading: leadLoading } = useProjectCMMSLead(vcrId);
 
   const { data: items = [] } = useQuery({
     queryKey: ['vcr-exec-cmms', vcrId],
@@ -71,7 +72,7 @@ export const CMMSStep: React.FC<CMMSStepProps> = ({ vcrId }) => {
         title: item.title.trim(),
         asset_tag: item.asset_tag.trim() || null,
         description: item.description.trim() || null,
-        responsible_person: item.responsible_person.trim() || null,
+        responsible_person: cmmsLead?.full_name ?? null,
         target_date: item.target_date || null,
         status: item.status,
         display_order: items.length,
@@ -108,7 +109,10 @@ export const CMMSStep: React.FC<CMMSStepProps> = ({ vcrId }) => {
     onError: (err: any) => toast.error(err?.message || 'Failed to remove'),
   });
 
-  const canSubmit = form.title.trim().length > 0 && !addItem.isPending;
+  const canSubmit = form.title.trim().length > 0 && !addItem.isPending && !!cmmsLead;
+
+  const leadInitials = (cmmsLead?.full_name || '?')
+    .split(/\s+/).map(s => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
 
   return (
     <div className="space-y-4">
@@ -196,7 +200,24 @@ export const CMMSStep: React.FC<CMMSStepProps> = ({ vcrId }) => {
             </div>
             <div>
               <Label>Responsible Person</Label>
-              <Input value={form.responsible_person} onChange={e => setForm({ ...form, responsible_person: e.target.value })} />
+              {leadLoading ? (
+                <div className="h-10 rounded-md border border-input bg-muted/30 animate-pulse" />
+              ) : cmmsLead ? (
+                <div className="flex items-center gap-2 h-10 rounded-md border border-input bg-muted/30 px-3">
+                  <Avatar className="h-6 w-6">
+                    {cmmsLead.avatar_url && <AvatarImage src={cmmsLead.avatar_url} alt={cmmsLead.full_name} />}
+                    <AvatarFallback className="text-[10px]">{leadInitials}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium truncate">{cmmsLead.full_name}</span>
+                  <Badge variant="secondary" className="ml-auto text-[9px]">CMMS Lead</Badge>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span>No CMMS Lead assigned to this project. Add a CMMS Lead in Project Team to enable this deliverable.</span>
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground mt-1">Auto-assigned to the project's CMMS Lead.</p>
             </div>
             <div>
               <Label>Target Date</Label>
