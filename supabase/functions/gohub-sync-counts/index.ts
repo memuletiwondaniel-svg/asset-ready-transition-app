@@ -342,25 +342,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!projectFilter) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Project code is required" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const { portalUrl: finalPortalUrl, username, password } = credentials;
-    console.log(`SyncCounts: Starting sync for project=${projectFilter}, systems=${(systemIds || []).length}`);
+    const scopeMode = projectFilter ? `filter="${projectFilter}"` : "ALL (no filter)";
+    console.log(`SyncCounts: Starting sync — scope=${scopeMode}, systems=${(systemIds || []).length}`);
 
     // Step 1: Login (using shared module)
     const { cookies: loginCookies, homePageHtml, homePageUrl } =
       await loginGoCompletions(finalPortalUrl, username, password);
     console.log("SyncCounts: Login successful");
 
-    // Step 2: Find matching project tile (using shared module)
+    // Step 2: Iterate every project tile the login can see
     const allTiles = extractAllProjectTiles(homePageHtml);
     let currentCookies = loginCookies;
     let allRawData: any[] = [];
+    const tileBreakdown: Array<{ name: string; systems_found: number; matched: number }> = [];
 
     if (allTiles.length === 0) {
       const { html: gridHtml, url: gridPageUrl, cookies: gridCookies } =
@@ -368,7 +363,10 @@ Deno.serve(async (req) => {
       const result = await fetchSystemsViaAsmx(gridCookies, gridPageUrl, gridHtml);
       allRawData = result.rawData;
       currentCookies = result.cookies;
+      tileBreakdown.push({ name: "(no tiles — direct grid)", systems_found: result.rawData.length, matched: result.rawData.length });
     } else {
+      const searchTerms = projectFilter ? buildProjectSearchTerms(projectFilter) : [];
+
       for (let i = 0; i < allTiles.length; i++) {
         const tile = allTiles[i];
         try {
@@ -397,25 +395,23 @@ Deno.serve(async (req) => {
           const result = await fetchSystemsViaAsmx(gridCookies, gridPageUrl, gridHtml);
           currentCookies = result.cookies;
 
-          if (result.rawData.length > 0) {
-            const searchTerms = buildProjectSearchTerms(projectFilter);
+          // Flatten SubSystem trees so nested systems are searchable
+          const flat: any[] = [];
+          const walk = (nodes: any[]) => {
+            for (const n of nodes || []) {
+              if (!n || typeof n !== "object") continue;
+              flat.push(n);
+              const kids = n.SubSystem || n.SubSystems || n.Children || n.children;
+              if (Array.isArray(kids) && kids.length) walk(kids);
+            }
+          };
+          walk(result.rawData);
 
-            // Flatten SubSystem trees so nested systems are searchable
-            const flat: any[] = [];
-            const walk = (nodes: any[]) => {
-              for (const n of nodes || []) {
-                if (!n || typeof n !== "object") continue;
-                flat.push(n);
-                const kids = n.SubSystem || n.SubSystems || n.Children || n.children;
-                if (Array.isArray(kids) && kids.length) walk(kids);
-              }
-            };
-            walk(result.rawData);
-
+          let matched: any[];
+          if (projectFilter) {
             const matchString = (v: any) =>
               v != null && searchTerms.some((term) => String(v).toUpperCase().includes(term));
-
-            const matching = flat.filter((item: any) =>
+            matched = flat.filter((item: any) =>
               matchString(item.Number) ||
               matchString(item.SystemNumber) ||
               matchString(item.Name) ||
@@ -426,26 +422,24 @@ Deno.serve(async (req) => {
               matchString(item.SubSystemName) ||
               matchString(item.SubSystemDescription)
             );
-
-            console.log(`SyncCounts: Tile "${tile.name}" - flattened ${flat.length} nodes, ${matching.length} match "${projectFilter}"`);
-            if (matching.length === 0 && flat.length > 0) {
-              const sampleNumbers = flat.slice(0, 5).map(x => x.Number || x.SystemNumber || x.Name).join(" | ");
-              console.log(`SyncCounts:   sample numbers: ${sampleNumbers}`);
-            }
-
-            if (matching.length > 0) {
-              allRawData.push(...matching);
-            }
+          } else {
+            // No filter — take everything this tile exposes
+            matched = flat;
           }
+
+          tileBreakdown.push({ name: tile.name, systems_found: flat.length, matched: matched.length });
+          console.log(`SyncCounts: Tile "${tile.name}" — ${flat.length} nodes, ${matched.length} kept`);
+
+          if (matched.length > 0) allRawData.push(...matched);
         } catch (e) {
           console.log(`SyncCounts: Error in project "${tile.name}": ${e}`);
+          tileBreakdown.push({ name: tile.name, systems_found: 0, matched: 0 });
         }
       }
     }
 
-    if (allRawData.length === 0) {
-      // Fallback: query the SubSystem picker used by GoHub Reports filters.
-      // This searches all subsystems in the BGC instance (e.g. C017-DP300-100-01).
+    // Fallback only meaningful when a filter was supplied
+    if (allRawData.length === 0 && projectFilter) {
       console.log(`SyncCounts: No matches via CompletionsGrid — trying SubSystem picker for "${projectFilter}"`);
       const pickerResult = await fetchSubSystemsByFilter(currentCookies, finalPortalUrl, projectFilter);
       currentCookies = pickerResult.cookies;
@@ -463,14 +457,20 @@ Deno.serve(async (req) => {
       }
     }
 
+    const tileNames = allTiles.map(t => t.name).filter(Boolean);
+    const tilesWithData = tileBreakdown.filter(t => t.matched > 0).map(t => t.name);
+
     if (allRawData.length === 0) {
-      const tileNames = (allTiles || []).map(t => t.name).filter(Boolean);
       const tileList = tileNames.length ? tileNames.join(", ") : "none";
+      const errorMsg = projectFilter
+        ? `No systems found matching "${projectFilter}". Scanned ${tileNames.length} tile(s): ${tileList}. The login may not have access to the tile containing this project.`
+        : `Login succeeded but no systems were returned from any of ${tileNames.length} tile(s): ${tileList}.`;
       return new Response(
         JSON.stringify({
           success: false,
-          error: `No systems found matching "${projectFilter}" in GoCompletions. Available GoCompletions projects: ${tileList}. This Lovable project may not be linked to a GoCompletions tile — verify the project code or map it under Admin → Integrations.`,
+          error: errorMsg,
           available_projects: tileNames,
+          tile_breakdown: tileBreakdown,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
