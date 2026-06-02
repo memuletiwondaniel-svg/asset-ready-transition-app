@@ -60,15 +60,15 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
             size="sm"
             onClick={onSaveAndExit}
             disabled={isSaving || isSubmitting}
-            className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
+            className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 transition-colors"
           >
             {isSaving ? (
               <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1 animate-spin" />
             ) : (
               <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
             )}
-            <span className="hidden sm:inline">{saveAndExitLabel || 'Save & Exit'}</span>
-            <span className="sm:hidden">{saveAndExitLabel === 'Close' ? 'Close' : 'Exit'}</span>
+            <span className="hidden sm:inline">{saveAndExitLabel || 'Save and Close'}</span>
+            <span className="sm:hidden">{saveAndExitLabel === 'Close' ? 'Close' : 'Save'}</span>
           </Button>
         )}
       </div>
