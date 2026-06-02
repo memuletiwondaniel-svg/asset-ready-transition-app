@@ -469,6 +469,26 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
   return systems;
 }
 
+// ─── Filter variant builder ─────────────────────────────────
+// Project codes in ORSH (e.g. "DP-18F") may not appear verbatim in
+// GoCompletions system IDs. Build several normalized variants and
+// match if any one is found inside a normalized system_id.
+function buildFilterVariants(filter: string): string[] {
+  const raw = filter.toUpperCase().trim();
+  const alnum = raw.replace(/[^A-Z0-9]/g, "");           // "DP-18F" -> "DP18F"
+  const digitsTail = alnum.replace(/^[A-Z]+/, "");       // "DP18F"  -> "18F"
+  const digitsOnly = alnum.replace(/[^0-9]/g, "");       // "DP18F"  -> "18"
+  const out = new Set<string>();
+  for (const v of [raw.replace(/[^A-Z0-9]/g, ""), alnum, digitsTail, digitsOnly]) {
+    if (v && v.length >= 2) out.add(v);
+  }
+  return [...out];
+}
+
+function normalizeSystemId(id: string): string {
+  return id.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
 // ─── Search a single project for matching systems ───────────
 
 async function searchProjectForSystems(
@@ -477,7 +497,8 @@ async function searchProjectForSystems(
   homePageUrl: string,
   portalUrl: string,
   tile: ProjectTile,
-  projectFilter: string
+  projectFilter: string,
+  sampleSink?: { ids: string[] }
 ): Promise<{ systems: CompletionsSystem[]; cookies: Record<string, string> }> {
   try {
     const { cookies: projectCookies, responseHtml, responseUrl } =
@@ -498,9 +519,20 @@ async function searchProjectForSystems(
       }
     }
 
+    // Diagnostic sample so error messages can show what GoHub actually returned
+    if (sampleSink && allSystems.length > 0) {
+      for (const s of allSystems.slice(0, 8)) {
+        if (sampleSink.ids.length < 40) sampleSink.ids.push(`${tile.name}: ${s.system_id}`);
+      }
+    }
+
     if (allSystems.length > 0 && projectFilter) {
-      const filterUpper = projectFilter.toUpperCase();
-      const filtered = allSystems.filter(s => s.system_id.toUpperCase().includes(filterUpper));
+      const variants = buildFilterVariants(projectFilter);
+      console.log(`GoHub[${tile.name}]: ${allSystems.length} systems found. variants=${JSON.stringify(variants)} sample=${allSystems.slice(0, 5).map(s => s.system_id).join(",")}`);
+      const filtered = allSystems.filter(s => {
+        const norm = normalizeSystemId(s.system_id);
+        return variants.some(v => norm.includes(v));
+      });
       for (const sys of filtered) sys.source_project = tile.name;
       return { systems: filtered, cookies: gridCookies };
     }
