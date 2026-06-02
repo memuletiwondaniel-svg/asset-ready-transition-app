@@ -349,20 +349,71 @@ Deno.serve(async (req) => {
     const scopeMode = projectFilter ? `filter="${projectFilter}"` : "ALL (no filter)";
     console.log(`SyncCounts: Starting sync — scope=${scopeMode}, systems=${(systemIds || []).length}`);
 
-    // Step 1: Login (using shared module)
-    const { cookies: loginCookies, homePageHtml, homePageUrl } =
-      await loginGoCompletions(finalPortalUrl, username, password);
-    console.log("SyncCounts: Login successful");
-
-    // Step 2: Iterate every project tile the login can see
-    const allTiles = extractAllProjectTiles(homePageHtml);
-    let currentCookies = loginCookies;
+    let currentCookies: Record<string, string> = {};
     let allRawData: any[] = [];
-    const tileBreakdown: Array<{ name: string; systems_found: number; matched: number; status: 'ok' | 'empty' | 'load_failed' | 'error'; note?: string }> = [];
+    const tileBreakdown: Array<{ name: string; systems_found: number; matched: number; status: TileStatus; note?: string }> = [];
+    const searchTerms = projectFilter ? buildProjectSearchTerms(projectFilter) : [];
+
+    // FRESH LOGIN PER TILE via shared helper (same iteration used by gohub-import)
+    interface TileResult { flat: any[]; matched: any[]; rawCount: number }
+    const iteration = await iterateProjectTilesFreshSession<TileResult>(
+      finalPortalUrl,
+      username,
+      password,
+      async ({ cookies, gridPageUrl, gridHtml }) => {
+        const result = await fetchSystemsViaAsmx(cookies, gridPageUrl, gridHtml);
+        currentCookies = result.cookies;
+
+        // Flatten SubSystem trees so nested systems are searchable
+        const flat: any[] = [];
+        const walk = (nodes: any[]) => {
+          for (const n of nodes || []) {
+            if (!n || typeof n !== "object") continue;
+            flat.push(n);
+            const kids = n.SubSystem || n.SubSystems || n.Children || n.children;
+            if (Array.isArray(kids) && kids.length) walk(kids);
+          }
+        };
+        walk(result.rawData);
+
+        let matched: any[];
+        if (projectFilter) {
+          const matchString = (v: any) =>
+            v != null && searchTerms.some((term) => String(v).toUpperCase().includes(term));
+          matched = flat.filter((item: any) =>
+            matchString(item.Number) ||
+            matchString(item.SystemNumber) ||
+            matchString(item.Name) ||
+            matchString(item.SystemId) ||
+            matchString(item.Id) ||
+            matchString(item.Description) ||
+            matchString(item.SubSystemNumber) ||
+            matchString(item.SubSystemName) ||
+            matchString(item.SubSystemDescription)
+          );
+        } else {
+          matched = flat;
+        }
+
+        // "ok" if anything came back; "load_failed" if ASMX returned nothing;
+        // "empty" if it returned a structure but flattened to zero.
+        const status: "ok" | "empty" | "load_failed" =
+          flat.length > 0 ? "ok" : (result.rawData.length === 0 ? "load_failed" : "empty");
+
+        return {
+          result: { flat, matched, rawCount: result.rawData.length },
+          status,
+        };
+      },
+      { logPrefix: "SyncCounts" },
+    );
+
+    const allTiles = iteration.tiles;
 
     if (allTiles.length === 0) {
+      // No tiles on the home page — try direct grid access
       const { html: gridHtml, url: gridPageUrl, cookies: gridCookies } =
-        await navigateToCompletionsGrid(loginCookies, finalPortalUrl, homePageHtml, homePageUrl);
+        await navigateToCompletionsGrid(iteration.initialCookies, finalPortalUrl, iteration.homePageHtml, iteration.homePageUrl);
       const result = await fetchSystemsViaAsmx(gridCookies, gridPageUrl, gridHtml);
       allRawData = result.rawData;
       currentCookies = result.cookies;
@@ -370,105 +421,25 @@ Deno.serve(async (req) => {
         name: "(no tiles — direct grid)",
         systems_found: result.rawData.length,
         matched: result.rawData.length,
-        status: result.rawData.length > 0 ? 'ok' : 'empty',
+        status: result.rawData.length > 0 ? "ok" : "load_failed",
       });
     } else {
-      const searchTerms = projectFilter ? buildProjectSearchTerms(projectFilter) : [];
-
-      for (let i = 0; i < allTiles.length; i++) {
-        const tile = allTiles[i];
-        // FRESH LOGIN PER TILE — GoCompletions binds a session to a single
-        // active project tile, so re-using cookies across tiles silently
-        // returns the first tile's data (or empty). A fresh session per tile
-        // guarantees the postback actually switches project context.
-        try {
-          const fresh = await loginGoCompletions(finalPortalUrl, username, password);
-          let tileCookies = fresh.cookies;
-          let tileHomeHtml = fresh.homePageHtml;
-          let tileHomeUrl = fresh.homePageUrl;
-
-          // Re-resolve the tile postback against the fresh home page
-          const refreshedTiles = extractAllProjectTiles(tileHomeHtml);
-          const liveTile = refreshedTiles.find(t => t.name === tile.name) || tile;
-
-          let projectCookies: Record<string, string>;
-          let responseHtml: string;
-          let responseUrl: string;
-          try {
-            const sel = await selectProjectTile(tileCookies, tileHomeHtml, tileHomeUrl, liveTile);
-            projectCookies = sel.cookies;
-            responseHtml = sel.responseHtml;
-            responseUrl = sel.responseUrl;
-          } catch (selErr) {
-            console.log(`SyncCounts: Tile "${tile.name}" — select failed: ${selErr}`);
-            tileBreakdown.push({ name: tile.name, systems_found: 0, matched: 0, status: 'load_failed', note: 'tile select failed' });
-            continue;
-          }
-
-          let gridHtml: string, gridPageUrl: string, gridCookies: Record<string, string>;
-          try {
-            const grid = await navigateToCompletionsGrid(projectCookies, finalPortalUrl, responseHtml, responseUrl);
-            gridHtml = grid.html; gridPageUrl = grid.url; gridCookies = grid.cookies;
-          } catch (navErr) {
-            console.log(`SyncCounts: Tile "${tile.name}" — grid nav failed: ${navErr}`);
-            tileBreakdown.push({ name: tile.name, systems_found: 0, matched: 0, status: 'load_failed', note: 'grid navigation failed' });
-            continue;
-          }
-
-          const result = await fetchSystemsViaAsmx(gridCookies, gridPageUrl, gridHtml);
-          currentCookies = result.cookies;
-
-          // Flatten SubSystem trees so nested systems are searchable
-          const flat: any[] = [];
-          const walk = (nodes: any[]) => {
-            for (const n of nodes || []) {
-              if (!n || typeof n !== "object") continue;
-              flat.push(n);
-              const kids = n.SubSystem || n.SubSystems || n.Children || n.children;
-              if (Array.isArray(kids) && kids.length) walk(kids);
-            }
-          };
-          walk(result.rawData);
-
-          let matched: any[];
-          if (projectFilter) {
-            const matchString = (v: any) =>
-              v != null && searchTerms.some((term) => String(v).toUpperCase().includes(term));
-            matched = flat.filter((item: any) =>
-              matchString(item.Number) ||
-              matchString(item.SystemNumber) ||
-              matchString(item.Name) ||
-              matchString(item.SystemId) ||
-              matchString(item.Id) ||
-              matchString(item.Description) ||
-              matchString(item.SubSystemNumber) ||
-              matchString(item.SubSystemName) ||
-              matchString(item.SubSystemDescription)
-            );
-          } else {
-            matched = flat;
-          }
-
-          // Distinguish "tile loaded but empty" from "tile failed to load"
-          const status: 'ok' | 'empty' | 'load_failed' =
-            flat.length > 0 ? 'ok' : (result.rawData.length === 0 ? 'load_failed' : 'empty');
-
-          tileBreakdown.push({
-            name: tile.name,
-            systems_found: flat.length,
-            matched: matched.length,
-            status,
-            note: status === 'load_failed' ? 'ASMX returned no data — tile likely not active' : undefined,
-          });
-          console.log(`SyncCounts: Tile "${tile.name}" — ${flat.length} nodes, ${matched.length} kept, status=${status}`);
-
-          if (matched.length > 0) allRawData.push(...matched);
-        } catch (e) {
-          console.log(`SyncCounts: Error in project "${tile.name}": ${e}`);
-          tileBreakdown.push({ name: tile.name, systems_found: 0, matched: 0, status: 'error', note: String(e).slice(0, 120) });
-        }
+      for (const outcome of iteration.outcomes) {
+        const r = outcome.result;
+        const flatCount = r?.flat.length || 0;
+        const matchedCount = r?.matched.length || 0;
+        tileBreakdown.push({
+          name: outcome.name,
+          systems_found: flatCount,
+          matched: matchedCount,
+          status: outcome.status,
+          note: outcome.note,
+        });
+        console.log(`SyncCounts: Tile "${outcome.name}" — ${flatCount} nodes, ${matchedCount} kept, status=${outcome.status}`);
+        if (matchedCount > 0) allRawData.push(...(r?.matched || []));
       }
     }
+
 
     // Fallback only meaningful when a filter was supplied
     if (allRawData.length === 0 && projectFilter) {
