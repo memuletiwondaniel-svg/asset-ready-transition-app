@@ -48,8 +48,8 @@ interface P2APlanCreationWizardProps {
 const WIZARD_STEPS: WizardShellStep[] = [
   { id: 'systems', label: 'Select Systems' },
   { id: 'vcrs', label: 'Create VCRs' },
-  { id: 'mapping', label: 'Assign Systems (Preliminary)' },
-  { id: 'phases', label: 'Handover Phases' },
+  { id: 'mapping', label: 'Assign Systems' },
+  { id: 'phases', label: 'Define Phases' },
   { id: 'approvers', label: 'Select Approvers' },
   { id: 'review', label: 'Review and Submit' },
 ];
