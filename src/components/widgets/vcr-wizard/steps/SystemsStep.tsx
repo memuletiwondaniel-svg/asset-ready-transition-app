@@ -46,6 +46,7 @@ interface SystemRow {
 
 export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
@@ -53,19 +54,27 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
   const [pickerSelection, setPickerSelection] = useState<Record<string, true>>({});
   const [syncing, setSyncing] = useState(false);
 
-  // Resolve handover_plan_id from VCR
-  const { data: planId } = useQuery({
-    queryKey: ['vcr-plan-id', vcrId],
+  // Resolve handover_plan_id + finalize state from VCR
+  const { data: vcrMeta } = useQuery({
+    queryKey: ['vcr-systems-meta', vcrId],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('p2a_handover_points')
-        .select('handover_plan_id')
+        .select('handover_plan_id, systems_finalized_at, systems_finalized_by, execution_plan_status')
         .eq('id', vcrId)
         .maybeSingle();
       if (error) throw error;
-      return data?.handover_plan_id as string | undefined;
+      return data as {
+        handover_plan_id?: string;
+        systems_finalized_at?: string | null;
+        systems_finalized_by?: string | null;
+        execution_plan_status?: string;
+      } | null;
     },
   });
+  const planId = vcrMeta?.handover_plan_id;
+  const isFinalized = !!vcrMeta?.systems_finalized_at;
+  const isLocked = vcrMeta?.execution_plan_status === 'APPROVED';
 
   // Load assigned + all systems with subsystems
   const { data: rows = [], isLoading } = useQuery({
