@@ -115,6 +115,8 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
       const incomingSample: SampleEntry[] = Array.isArray(data.sample) ? data.sample : [];
       setCandidates(incoming);
       setSample(incomingSample);
+      setSearchedProjects(Array.isArray(data.searched_projects) ? data.searched_projects : []);
+      setProjectsWithResults(Array.isArray(data.projects_with_results) ? data.projects_with_results : []);
       // Pre-select STRONG matches only
       setSelected(new Set(incoming.filter(c => c.tier === 'strong').map(c => c.system_id)));
       setSampleSelected(new Set());
