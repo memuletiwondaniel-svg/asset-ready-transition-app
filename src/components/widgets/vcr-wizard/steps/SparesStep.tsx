@@ -34,7 +34,6 @@ interface FormState {
   part_number: string;
   quantity: string;
   description: string;
-  responsible_person: string;
   target_date: string;
   status: string;
 }
@@ -44,7 +43,6 @@ const EMPTY_FORM: FormState = {
   part_number: '',
   quantity: '',
   description: '',
-  responsible_person: '',
   target_date: '',
   status: 'to_order',
 };
@@ -54,6 +52,7 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const { data: cmmsLead, isLoading: leadLoading } = useProjectCMMSLead(vcrId);
 
   const { data: items = [] } = useQuery({
     queryKey: ['vcr-exec-spares', vcrId],
