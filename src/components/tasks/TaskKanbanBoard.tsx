@@ -534,6 +534,52 @@ const DroppableColumn: React.FC<{
   );
 };
 
+// ─── Card With Children (parent_task_id nesting) ──────────────────
+const KanbanCardWithChildren: React.FC<{
+  task: UnifiedTask;
+  accentClass?: string;
+  onTaskClick: (task: UnifiedTask) => void;
+}> = ({ task, accentClass, onTaskClick }) => {
+  const [expanded, setExpanded] = useState(false);
+  const children = task.children || [];
+  const hasChildren = children.length > 0;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="relative">
+        <DraggableKanbanCard
+          task={task}
+          onClick={() => onTaskClick(task)}
+          accentClass={accentClass}
+        />
+        {hasChildren && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
+            className="absolute top-1.5 right-1.5 z-10 p-1 rounded hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors bg-card/80 backdrop-blur-sm border border-border/40"
+            aria-label={expanded ? 'Collapse sub-tasks' : 'Expand sub-tasks'}
+            title={`${children.length} sub-task${children.length === 1 ? '' : 's'}`}
+          >
+            {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+          </button>
+        )}
+      </div>
+      {hasChildren && expanded && (
+        <div className="ml-4 pl-2 border-l-2 border-border/40 space-y-1.5">
+          {children.map(child => (
+            <DraggableKanbanCard
+              key={child.id}
+              task={child}
+              onClick={() => onTaskClick(child)}
+              accentClass={accentClass}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Project Group ─────────────────────────────────────────────────
 const ProjectGroup: React.FC<{
   projectName: string;
@@ -551,7 +597,7 @@ const ProjectGroup: React.FC<{
       </CollapsibleTrigger>
       <CollapsibleContent className="space-y-2">
         {tasks.map(task => (
-          <DraggableKanbanCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
+          <KanbanCardWithChildren key={task.id} task={task} onTaskClick={onTaskClick} />
         ))}
       </CollapsibleContent>
     </Collapsible>
