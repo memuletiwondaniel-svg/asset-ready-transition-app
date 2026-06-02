@@ -659,14 +659,6 @@ Deno.serve(async (req) => {
 
     console.log(`GoHub import: portal=${finalPortalUrl}, filter=${projectFilter}`);
 
-    // Step 1: Login (shared module)
-    const { cookies: loginCookies, homePageHtml, homePageUrl } =
-      await loginGoCompletions(finalPortalUrl, username, password);
-    console.log("GoHub: Login successful");
-
-    // Step 2: Extract project tiles (shared module)
-    const allTiles = extractAllProjectTiles(homePageHtml);
-
     const variants = buildFilterVariantSet(projectFilter);
     const sampleSink = { entries: [] as SampleEntry[] };
 
@@ -683,29 +675,56 @@ Deno.serve(async (req) => {
       tier: sys.match_tier || "weak",
     });
 
+    // ── Iterate every tile with a FRESH login per tile (shared helper).
+    // Same iteration used by gohub-sync-counts so the two cannot diverge.
+    const iteration = await iterateProjectTilesFreshSession<CompletionsSystem[]>(
+      finalPortalUrl,
+      username,
+      password,
+      async ({ tile, cookies, gridPageUrl, gridHtml }) => {
+        const systems = await fetchAllSystemsFromGrid(cookies, gridPageUrl, gridHtml);
+
+        // Collect a sample so the UI can offer a manual pick-list when no matches
+        for (const s of systems) {
+          if (sampleSink.entries.length >= 200) break;
+          sampleSink.entries.push({
+            source_project: tile.name,
+            system_id: s.system_id,
+            name: s.name,
+          });
+        }
+
+        if (systems.length === 0) {
+          return { result: [], status: "load_failed" as const };
+        }
+        console.log(
+          `GoHub[${tile.name}]: ${systems.length} systems found. variants=${JSON.stringify(variants)} sample=${systems.slice(0, 5).map((s) => s.system_id).join(",")}`,
+        );
+        const matched = matchSystems(systems, variants, tile.name);
+        return { result: matched, status: "ok" as const };
+      },
+      { logPrefix: "GoHubImport" },
+    );
+
+    const allTiles = iteration.tiles;
+
     if (allTiles.length === 0) {
       console.log("GoHub: No project tiles found. Attempting direct grid access...");
       try {
         const { html: gridHtml, url: gridPageUrl, cookies: gridCookies } =
-          await navigateToCompletionsGrid(loginCookies, finalPortalUrl, homePageHtml, homePageUrl);
+          await navigateToCompletionsGrid(
+            iteration.initialCookies,
+            finalPortalUrl,
+            iteration.homePageHtml,
+            iteration.homePageUrl,
+          );
 
-        let systems = await tryAsmxWebMethod(gridCookies, gridPageUrl, gridHtml);
-        if (systems.length === 0) systems = await tryPageMethod(gridCookies, gridPageUrl);
-        if (systems.length === 0) systems = extractFromHtml(gridHtml);
-
+        const systems = await fetchAllSystemsFromGrid(gridCookies, gridPageUrl, gridHtml);
         for (const s of systems) {
           if (sampleSink.entries.length >= 200) break;
           sampleSink.entries.push({ source_project: "direct", system_id: s.system_id, name: s.name });
         }
-        const matched: CompletionsSystem[] = [];
-        for (const sys of systems) {
-          const tier = classifyMatch(sys.system_id, variants);
-          if (!tier) continue;
-          sys.match_tier = tier;
-          sys.source_project = "direct";
-          matched.push(sys);
-        }
-
+        const matched = matchSystems(systems, variants, "direct");
         const topLevel = inferHierarchy(matched);
         const candidates = topLevel.map(toCandidate);
 
@@ -717,6 +736,7 @@ Deno.serve(async (req) => {
             project_filter: projectFilter,
             variants,
             searched_projects: ["direct"],
+            tile_breakdown: [{ name: "direct", status: systems.length > 0 ? "ok" : "load_failed", systems_found: systems.length, matched: matched.length }],
           }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -727,47 +747,24 @@ Deno.serve(async (req) => {
       throw new Error("No project tiles found on the GoHub home page.");
     }
 
-    // Step 3: Search ALL projects
-    console.log(`GoHub: Will search ${allTiles.length} projects for "${projectFilter}" (variants=${JSON.stringify(variants)})`);
+    // Aggregate matched systems and per-tile diagnostics
+    console.log(`GoHub: Searched ${allTiles.length} tiles for "${projectFilter}" (variants=${JSON.stringify(variants)})`);
     const allMatchingSystems: CompletionsSystem[] = [];
-    const searchedProjects: string[] = [];
+    const searchedProjects: string[] = iteration.outcomes.map((o) => o.name);
     const projectsWithResults: string[] = [];
-    let currentCookies = loginCookies;
-
-    for (let i = 0; i < allTiles.length; i++) {
-      const tile = allTiles[i];
-      searchedProjects.push(tile.name);
-
-      let currentHomeHtml = homePageHtml;
-      let currentHomeUrl = homePageUrl;
-
-      if (i > 0) {
-        try {
-          const { html, url, cookies: refreshedCookies } = await followRedirects(finalPortalUrl, currentCookies);
-          currentCookies = refreshedCookies;
-          currentHomeHtml = html;
-          currentHomeUrl = url;
-          const refreshedTiles = extractAllProjectTiles(currentHomeHtml);
-          const matchingTile = refreshedTiles.find(t => t.name === tile.name);
-          if (matchingTile) {
-            tile.postbackTarget = matchingTile.postbackTarget;
-            tile.postbackArgument = matchingTile.postbackArgument;
-          }
-        } catch (e) {
-          console.log(`GoHub: Could not refresh home page for project ${tile.name}: ${e}`);
-        }
+    const tileBreakdown = iteration.outcomes.map((o) => {
+      const matchedHere = o.result?.length || 0;
+      if (matchedHere > 0) {
+        projectsWithResults.push(o.name);
+        allMatchingSystems.push(...(o.result || []));
       }
-
-      const { systems: matchedSystems, cookies: updatedCookies } = await searchProjectForSystems(
-        currentCookies, currentHomeHtml, currentHomeUrl, finalPortalUrl, tile, variants, sampleSink
-      );
-      currentCookies = updatedCookies;
-
-      if (matchedSystems.length > 0) {
-        allMatchingSystems.push(...matchedSystems);
-        projectsWithResults.push(tile.name);
-      }
-    }
+      return {
+        name: o.name,
+        status: o.status as TileStatus,
+        note: o.note,
+        matched: matchedHere,
+      };
+    });
 
     // Deduplicate matches by system_id (keep strongest tier)
     const dedupMap = new Map<string, CompletionsSystem>();
@@ -780,11 +777,11 @@ Deno.serve(async (req) => {
     }
     const uniqueSystems = [...dedupMap.values()];
 
-    // If multiple systems matched only via short/digits variants, treat as ambiguous (downgrade strong-by-digits)
-    // (Tier was already set by classifyMatch; nothing to downgrade here since classifyMatch is conservative.)
-
     const topLevel = inferHierarchy(uniqueSystems);
     const candidates = topLevel.map(toCandidate);
+
+    // Tiles that genuinely failed to switch (vs. legitimately empty/no-match)
+    const failedTiles = tileBreakdown.filter((t) => t.status === "load_failed" || t.status === "error");
 
     return new Response(
       JSON.stringify({
@@ -795,6 +792,8 @@ Deno.serve(async (req) => {
         variants,
         searched_projects: searchedProjects,
         projects_with_results: projectsWithResults,
+        tile_breakdown: tileBreakdown,
+        failed_tiles: failedTiles.map((t) => t.name),
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
