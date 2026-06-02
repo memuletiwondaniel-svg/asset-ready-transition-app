@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   HelpCircle,
   Search,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -80,6 +81,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   const [searchedProjects, setSearchedProjects] = useState<string[]>([]);
   const [projectsWithResults, setProjectsWithResults] = useState<string[]>([]);
   const [failedTiles, setFailedTiles] = useState<string[]>([]);
+  const [showWeak, setShowWeak] = useState(false);
   const [sourceInfo, setSourceInfo] = useState<{
     served: 'live' | 'catalog' | 'merged';
     live_strong: number;
@@ -101,6 +103,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
       setSearchedProjects([]);
       setProjectsWithResults([]);
       setFailedTiles([]);
+      setShowWeak(false);
       setSourceInfo(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -336,30 +339,40 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                   </section>
                 )}
 
-                {/* Weak / ambiguous */}
+                {/* Weak / ambiguous — collapsed by default */}
                 {weak.length > 0 && (
                   <section>
-                    <div className="flex items-center gap-2 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowWeak(v => !v)}
+                      className="w-full flex items-center gap-2 p-2 rounded-md border border-amber-200 bg-amber-50/40 hover:bg-amber-50 dark:bg-amber-950/10 dark:border-amber-900/40 transition-colors"
+                    >
+                      <ChevronRight className={cn('h-4 w-4 text-amber-600 transition-transform', showWeak && 'rotate-90')} />
                       <HelpCircle className="h-4 w-4 text-amber-600" />
-                      <h4 className="text-sm font-semibold">Possible matches — needs confirmation</h4>
-                      <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
+                      <span className="text-sm font-medium">
+                        {weak.length} possible match{weak.length === 1 ? '' : 'es'} — needs review
+                      </span>
+                      <Badge variant="outline" className="ml-auto text-[10px] bg-amber-50 text-amber-700 border-amber-200">
                         Not selected
                       </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      These only partially match your project code (digits or a short tail). Tick the ones that
-                      actually belong to your scope.
-                    </p>
-                    <div className="space-y-1.5">
-                      {weak.map(c => (
-                        <CandidateRow
-                          key={c.system_id}
-                          candidate={c}
-                          checked={selected.has(c.system_id)}
-                          onToggle={() => toggle(c.system_id, selected, setSelected)}
-                        />
-                      ))}
-                    </div>
+                    </button>
+                    {showWeak && (
+                      <>
+                        <p className="text-xs text-muted-foreground mt-2 mb-2">
+                          These only partially match your project code. Tick the ones that actually belong to your scope.
+                        </p>
+                        <div className="space-y-1.5">
+                          {weak.map(c => (
+                            <CandidateRow
+                              key={c.system_id}
+                              candidate={c}
+                              checked={selected.has(c.system_id)}
+                              onToggle={() => toggle(c.system_id, selected, setSelected)}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </section>
                 )}
 
@@ -465,26 +478,59 @@ const CandidateRow: React.FC<{
   checked: boolean;
   onToggle: () => void;
 }> = ({ candidate, checked, onToggle }) => {
+  const [expanded, setExpanded] = useState(false);
+  const subs = candidate.subsystems ?? [];
+  const hasSubs = subs.length > 0;
+
   return (
-    <label
+    <div
       className={cn(
-        'flex items-center gap-2.5 p-2 rounded-md border cursor-pointer transition-colors',
-        checked ? 'bg-primary/5 border-primary/30' : 'bg-card hover:bg-muted/50 border-border',
+        'rounded-md border transition-colors',
+        checked ? 'bg-primary/5 border-primary/30' : 'bg-card border-border hover:bg-muted/40',
       )}
     >
-      <Checkbox checked={checked} onCheckedChange={onToggle} />
-      <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted border shrink-0">
-        {candidate.system_id}
-      </span>
-      <span className="text-xs font-medium truncate flex-1">{candidate.name}</span>
-      {candidate.source_project && (
-        <span className="text-[10px] text-muted-foreground shrink-0">{candidate.source_project}</span>
+      <div className="flex items-center gap-2.5 p-2">
+        <Checkbox
+          checked={checked}
+          onCheckedChange={onToggle}
+          aria-label={`Select ${candidate.name}`}
+        />
+        <button
+          type="button"
+          onClick={() => hasSubs && setExpanded(v => !v)}
+          className={cn(
+            'flex items-center gap-2.5 flex-1 min-w-0 text-left',
+            hasSubs && 'cursor-pointer',
+          )}
+          disabled={!hasSubs}
+        >
+          <span className="text-sm font-medium truncate flex-1">{candidate.name}</span>
+          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground border border-border/50 shrink-0">
+            {candidate.system_id}
+          </span>
+          {hasSubs && (
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
+              <span>{subs.length}</span>
+              <ChevronRight className={cn('h-3 w-3 transition-transform', expanded && 'rotate-90')} />
+            </span>
+          )}
+        </button>
+      </div>
+      {expanded && hasSubs && (
+        <div className="px-2 pb-2 pl-9 space-y-1">
+          {subs.map((s, i) => (
+            <div
+              key={`${s.system_id ?? i}`}
+              className="flex items-center gap-2 text-[11px] text-muted-foreground"
+            >
+              <span className="font-mono px-1.5 py-0.5 rounded bg-muted/40 border border-border/40">
+                {s.system_id ?? `#${i + 1}`}
+              </span>
+              <span className="truncate">{s.name ?? ''}</span>
+            </div>
+          ))}
+        </div>
       )}
-      {candidate.subsystems && candidate.subsystems.length > 0 && (
-        <span className="text-[10px] text-muted-foreground shrink-0">
-          {candidate.subsystems.length} sub
-        </span>
-      )}
-    </label>
+    </div>
   );
 };
