@@ -113,7 +113,10 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
     onError: (err: any) => toast.error(err?.message || 'Failed to remove'),
   });
 
-  const canSubmit = form.title.trim().length > 0 && !addItem.isPending;
+  const canSubmit = form.title.trim().length > 0 && !addItem.isPending && !!cmmsLead;
+
+  const leadInitials = (cmmsLead?.full_name || '?')
+    .split(/\s+/).map(s => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
 
   return (
     <div className="space-y-4">
