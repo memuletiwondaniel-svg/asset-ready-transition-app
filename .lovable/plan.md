@@ -84,6 +84,12 @@ Approve to begin.
   the visual nesting affordance is missing. Fix when budgeted: group by
   `parent_task_id` + disclosure widget across the three surfaces.
 
+### Cosmetic known item (informational)
+- `profiles.position` displays the stale string "Snr. ORA Engr." in a few places.
+  The actual role resolution uses `profiles.role` (UUID FK → `roles.id` →
+  `roles.name = 'Sr ORA Engr'`), which is already canonical and aligned with RLS.
+  The display label is cosmetic only; no functional mismatch.
+
 ### Data-entry UI follow-up (informational)
 - `p2a_vcr_critical_docs`, `p2a_vcr_cmms`, `p2a_vcr_spares` were added so the
   R18/R20 fan-out can derive sub-task count from real rows (1:1 with
