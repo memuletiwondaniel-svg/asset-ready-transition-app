@@ -24,6 +24,8 @@ export interface UserTask {
   display_order: number;
   created_at: string;
   metadata: any;
+  parent_task_id?: string | null;
+  progress_percentage?: number | null;
   blocking_tasks?: string[];
   blocked_by_tasks?: string[];
 }
