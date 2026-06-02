@@ -519,6 +519,10 @@ Deno.serve(async (req) => {
         updated_systems: updatedSystems,
         total_found: counts.length,
         total_updated: updatedSystems.length,
+        scope: projectFilter || null,
+        available_projects: tileNames,
+        tiles_with_data: tilesWithData,
+        tile_breakdown: tileBreakdown,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
