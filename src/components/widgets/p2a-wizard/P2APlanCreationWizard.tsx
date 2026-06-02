@@ -45,14 +45,14 @@ interface P2APlanCreationWizardProps {
   onReject?: (comment: string) => void;
 }
 
+// Guided wizard steps (Overview is the landing page, NOT a step)
 const WIZARD_STEPS: WizardShellStep[] = [
-  { id: 'overview', label: 'Overview' },
   { id: 'systems', label: 'Select Systems' },
   { id: 'vcrs', label: 'Create VCRs' },
   { id: 'mapping', label: 'Assign Systems' },
   { id: 'phases', label: 'Handover Phases' },
-  { id: 'approvers', label: 'Selected Approvers' },
-  { id: 'review', label: 'Review & Submit' },
+  { id: 'approvers', label: 'Select Approvers' },
+  { id: 'review', label: 'Review and Submit' },
 ];
 
 export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
