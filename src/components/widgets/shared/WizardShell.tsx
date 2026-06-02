@@ -118,9 +118,6 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                 <div className="min-w-0 flex-1">{topHeader}</div>
                 <div className="flex items-center gap-1 shrink-0">
                   {headerActions}
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onOpenChange(false)}>
-                    <X className="w-4 h-4" />
-                  </Button>
                 </div>
               </div>
             </div>
