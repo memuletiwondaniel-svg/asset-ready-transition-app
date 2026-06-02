@@ -72,42 +72,82 @@ export const ProjectOverviewStep: React.FC<ProjectOverviewStepProps> = ({
             type="button"
             onClick={() => onSelectApproach?.('wizard')}
             className={cn(
-              'relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border-2 transition-all text-left',
+              'group/approach relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border-2 transition-all duration-300 text-left overflow-hidden',
+              'hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_hsl(217,91%,60%,0.55)]',
               isWizard
-                ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                : 'border-border hover:border-primary/40 hover:bg-muted/40'
+                ? 'border-blue-500 bg-blue-500/5 ring-2 ring-blue-500/20'
+                : 'border-border hover:border-blue-500/60 hover:bg-blue-500/[0.04]'
             )}
           >
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 opacity-0 group-hover/approach:opacity-100 transition-opacity duration-300"
+              style={{ background: 'linear-gradient(135deg, hsl(217 91% 60% / 0.08) 0%, transparent 60%)' }}
+            />
             {isWizard && (
-              <span className="absolute top-2 right-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground">
+              <span className="absolute top-2 right-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white z-10">
                 <Check className="w-3 h-3" />
               </span>
             )}
-            <Wand2 className={cn('h-7 w-7', isWizard ? 'text-primary' : 'text-muted-foreground')} />
-            <div className="text-center">
-              <div className="text-sm font-semibold">Guided Wizard</div>
-              <div className="text-xs text-muted-foreground mt-0.5">Step-by-step with guidance</div>
+            <Wand2
+              className={cn(
+                'h-7 w-7 transition-all duration-300 relative',
+                isWizard
+                  ? 'text-blue-500 scale-110'
+                  : 'text-muted-foreground group-hover/approach:text-blue-500 group-hover/approach:scale-110 group-hover/approach:-rotate-6'
+              )}
+            />
+            <div className="text-center relative">
+              <div className={cn(
+                'text-sm font-semibold transition-colors',
+                isWizard ? 'text-blue-600 dark:text-blue-400' : 'group-hover/approach:text-blue-600 dark:group-hover/approach:text-blue-400'
+              )}>
+                Guided Wizard
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5 group-hover/approach:text-foreground/70 transition-colors">
+                Step-by-step with guidance
+              </div>
             </div>
           </button>
           <button
             type="button"
             onClick={() => onSelectApproach?.('workspace')}
             className={cn(
-              'relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border-2 transition-all text-left',
+              'group/approach relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border-2 transition-all duration-300 text-left overflow-hidden',
+              'hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_hsl(262,83%,58%,0.55)]',
               isWorkspace
-                ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                : 'border-border hover:border-primary/40 hover:bg-muted/40'
+                ? 'border-purple-500 bg-purple-500/5 ring-2 ring-purple-500/20'
+                : 'border-border hover:border-purple-500/60 hover:bg-purple-500/[0.04]'
             )}
           >
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 opacity-0 group-hover/approach:opacity-100 transition-opacity duration-300"
+              style={{ background: 'linear-gradient(135deg, hsl(262 83% 58% / 0.08) 0%, transparent 60%)' }}
+            />
             {isWorkspace && (
-              <span className="absolute top-2 right-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground">
+              <span className="absolute top-2 right-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-purple-500 text-white z-10">
                 <Check className="w-3 h-3" />
               </span>
             )}
-            <LayoutGrid className={cn('h-7 w-7', isWorkspace ? 'text-primary' : 'text-muted-foreground')} />
-            <div className="text-center">
-              <div className="text-sm font-semibold">Interactive Workspace</div>
-              <div className="text-xs text-muted-foreground mt-0.5">Blank canvas for manual setup</div>
+            <LayoutGrid
+              className={cn(
+                'h-7 w-7 transition-all duration-300 relative',
+                isWorkspace
+                  ? 'text-purple-500 scale-110'
+                  : 'text-muted-foreground group-hover/approach:text-purple-500 group-hover/approach:scale-110'
+              )}
+            />
+            <div className="text-center relative">
+              <div className={cn(
+                'text-sm font-semibold transition-colors',
+                isWorkspace ? 'text-purple-600 dark:text-purple-400' : 'group-hover/approach:text-purple-600 dark:group-hover/approach:text-purple-400'
+              )}>
+                Interactive Workspace
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5 group-hover/approach:text-foreground/70 transition-colors">
+                Blank canvas for manual setup
+              </div>
             </div>
           </button>
         </div>
