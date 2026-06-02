@@ -52,6 +52,18 @@ interface CMSImportModalProps {
 
 type Phase = 'idle' | 'loading' | 'review' | 'error';
 
+function formatRelative(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!isFinite(ms) || ms < 0) return 'just now';
+  const m = Math.round(ms / 60_000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.round(h / 24);
+  return `${d}d ago`;
+}
+
 export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   open,
   onOpenChange,
@@ -68,6 +80,13 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   const [searchedProjects, setSearchedProjects] = useState<string[]>([]);
   const [projectsWithResults, setProjectsWithResults] = useState<string[]>([]);
   const [failedTiles, setFailedTiles] = useState<string[]>([]);
+  const [sourceInfo, setSourceInfo] = useState<{
+    served: 'live' | 'catalog' | 'merged';
+    live_strong: number;
+    catalog_strong: number;
+    disagreement: boolean;
+    catalog_synced_at: string | null;
+  } | null>(null);
 
   useEffect(() => {
     if (open && phase === 'idle') void runImport();
@@ -82,6 +101,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
       setSearchedProjects([]);
       setProjectsWithResults([]);
       setFailedTiles([]);
+      setSourceInfo(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -120,6 +140,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
       setSearchedProjects(Array.isArray(data.searched_projects) ? data.searched_projects : []);
       setProjectsWithResults(Array.isArray(data.projects_with_results) ? data.projects_with_results : []);
       setFailedTiles(Array.isArray(data.failed_tiles) ? data.failed_tiles : []);
+      setSourceInfo(data.source && typeof data.source === 'object' ? data.source : null);
       // Pre-select STRONG matches only
       setSelected(new Set(incoming.filter(c => c.tier === 'strong').map(c => c.system_id)));
       setSampleSelected(new Set());
@@ -253,6 +274,33 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                       <> · <span className="text-amber-700 dark:text-amber-400">{failedTiles.length} tile{failedTiles.length === 1 ? '' : 's'} failed to load</span></>
                     )}
                   </p>
+                  {sourceInfo && (
+                    <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          'text-[10px] font-normal',
+                          sourceInfo.served === 'live' && 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30',
+                          sourceInfo.served === 'catalog' && 'border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/30',
+                          sourceInfo.served === 'merged' && 'border-violet-300 bg-violet-50 text-violet-700 dark:bg-violet-950/30',
+                        )}
+                      >
+                        Source: {sourceInfo.served}
+                      </Badge>
+                      <span className="text-muted-foreground">
+                        live {sourceInfo.live_strong} · catalog {sourceInfo.catalog_strong}
+                        {sourceInfo.catalog_synced_at && (
+                          <> · synced {formatRelative(sourceInfo.catalog_synced_at)}</>
+                        )}
+                      </span>
+                    </p>
+                  )}
+                  {sourceInfo?.disagreement && (
+                    <p className="mt-2 text-[11px] rounded border border-amber-300 bg-amber-50 dark:bg-amber-950/30 px-2 py-1.5 text-amber-800 dark:text-amber-300">
+                      <span className="font-semibold">Live and catalog disagree:</span> live returned {sourceInfo.live_strong},
+                      catalog has {sourceInfo.catalog_strong}. Served {sourceInfo.served} (union dedup'd by normalized id) so nothing is silently dropped.
+                    </p>
+                  )}
                   {strong.length === 0 && (
                     <p className="mt-2 text-foreground">
                       {failedTiles.length > 0

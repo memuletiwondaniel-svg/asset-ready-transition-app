@@ -12,6 +12,13 @@ import {
   iterateProjectTilesFreshSession,
   type TileStatus,
 } from "../_shared/gohub-tile-iterator.ts";
+import {
+  buildFilterVariants,
+  classifyMatch,
+  normalizeId,
+  type FilterVariants,
+  type MatchTier,
+} from "../_shared/gohub-normalize.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -495,36 +502,11 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
 //     digits+letter tail matched. These over-match (1800, 218, 18A in
 //     unrelated projects) so they are confirmation-only — never auto-selected.
 
-interface FilterVariants {
-  raw: string;
-  alnum: string;       // "DP18F" — the canonical project token
-  digitsTail: string;  // "18F"   — confirmation-only fragment
-  digitsOnly: string;  // "18"    — confirmation-only fragment
-}
-
-function buildFilterVariantSet(filter: string): FilterVariants {
-  const raw = filter.toUpperCase().trim();
-  const alnum = raw.replace(/[^A-Z0-9]/g, "");
-  const digitsTail = alnum.replace(/^[A-Z]+/, "");
-  const digitsOnly = alnum.replace(/[^0-9]/g, "");
-  return { raw, alnum, digitsTail, digitsOnly };
-}
-
-function normalizeSystemId(id: string): string {
-  return id.toUpperCase().replace(/[^A-Z0-9]/g, "");
-}
-
-type MatchTier = "strong" | "weak" | null;
-
-function classifyMatch(systemId: string, v: FilterVariants): MatchTier {
-  const norm = normalizeSystemId(systemId);
-  // STRONG: full normalized project token embedded anywhere in the id.
-  if (v.alnum && v.alnum.length >= 3 && norm.includes(v.alnum)) return "strong";
-  // WEAK: only a bare fragment matches — over-matches, confirmation-only.
-  if (v.digitsTail && v.digitsTail.length >= 2 && norm.includes(v.digitsTail)) return "weak";
-  if (v.digitsOnly && v.digitsOnly.length >= 2 && norm.includes(v.digitsOnly)) return "weak";
-  return null;
-}
+// Filter variants, normalization and tier classification now live in
+// _shared/gohub-normalize.ts (used by gohub-import, gohub-sync-counts,
+// and gohub-health-check) so the matching rules cannot drift between them.
+const buildFilterVariantSet = buildFilterVariants;
+const normalizeSystemId = normalizeId;
 
 // ─── Fetch every system for an already-loaded grid (no tile select) ──
 
@@ -763,22 +745,151 @@ Deno.serve(async (req) => {
       };
     });
 
-    // Deduplicate matches by system_id (keep strongest tier)
-    const dedupMap = new Map<string, CompletionsSystem>();
+    // Deduplicate live matches by system_id (keep strongest tier)
+    const liveMap = new Map<string, CompletionsSystem & { _origin: "live" }>();
     for (const sys of allMatchingSystems) {
-      const existing = dedupMap.get(sys.system_id);
-      if (!existing) { dedupMap.set(sys.system_id, sys); continue; }
+      const tagged = { ...sys, _origin: "live" as const };
+      const existing = liveMap.get(sys.system_id);
+      if (!existing) { liveMap.set(sys.system_id, tagged); continue; }
       if (existing.match_tier !== "strong" && sys.match_tier === "strong") {
-        dedupMap.set(sys.system_id, sys);
+        liveMap.set(sys.system_id, tagged);
       }
     }
-    const uniqueSystems = [...dedupMap.values()];
+    const liveStrong = [...liveMap.values()].filter((s) => s.match_tier === "strong");
+
+    // ── CATALOG GUARD: query persisted catalog and compare against live.
+    // Catalog comparison is the PRIMARY trust check — a partial live crawl
+    // returning fewer rows than catalog has is the most dangerous failure
+    // mode (non-zero but incomplete). Always look at catalog first.
+    let catalogStrong: Array<{
+      tile_name: string;
+      system_id: string;
+      name: string | null;
+      normalized_id: string;
+      raw: unknown;
+      synced_at: string;
+    }> = [];
+    let catalogSyncedAt: string | null = null;
+    try {
+      if (variants.alnum && variants.alnum.length >= 3) {
+        const { data: catRows, error: catErr } = await supabase
+          .from("gohub_synced_systems")
+          .select("tile_name, system_id, name, normalized_id, raw, synced_at")
+          .ilike("normalized_id", `%${variants.alnum}%`)
+          .limit(2000);
+        if (catErr) {
+          console.log(`GoHub: catalog query error: ${catErr.message}`);
+        } else if (catRows) {
+          catalogStrong = catRows;
+          catalogSyncedAt = catRows.reduce<string | null>(
+            (acc, r) => (!acc || r.synced_at > acc ? r.synced_at : acc),
+            null,
+          );
+        }
+      }
+    } catch (e) {
+      console.log(`GoHub: catalog lookup failed: ${e}`);
+    }
+
+    // Decide source: live | catalog | merged
+    // Rule: if catalog has materially more strong matches than live (>10%
+    // gap OR live=0 while catalog>0), distrust live. Merge by default when
+    // both have data so we keep live's freshness AND catalog's coverage.
+    const liveCount = liveStrong.length;
+    const catCount = catalogStrong.length;
+    const materiallyFewer =
+      catCount > 0 && (liveCount === 0 || liveCount < catCount * 0.9);
+    const disagreement =
+      catCount > 0 && liveCount > 0 && Math.abs(liveCount - catCount) > Math.max(2, catCount * 0.05);
+
+    // Build a unified map keyed by normalized_id so dedup survives spelling drift.
+    type MergedRow = {
+      system_id: string;
+      name: string;
+      description: string;
+      is_hydrocarbon: boolean;
+      progress?: number;
+      subsystems: CompletionsSubsystem[];
+      source_project?: string;
+      match_tier: "strong" | "weak";
+      origin: "live" | "catalog" | "both";
+    };
+    const merged = new Map<string, MergedRow>();
+
+    const shouldUseCatalog = materiallyFewer || liveCount === 0;
+    const shouldUseLive = !materiallyFewer || liveCount > 0;
+
+    if (shouldUseLive) {
+      for (const s of liveMap.values()) {
+        const key = normalizeId(s.system_id);
+        merged.set(key, {
+          system_id: s.system_id,
+          name: s.name,
+          description: s.description,
+          is_hydrocarbon: s.is_hydrocarbon,
+          progress: s.progress,
+          subsystems: s.subsystems || [],
+          source_project: s.source_project,
+          match_tier: (s.match_tier || "weak") as "strong" | "weak",
+          origin: "live",
+        });
+      }
+    }
+    if (shouldUseCatalog) {
+      for (const r of catalogStrong) {
+        const key = r.normalized_id;
+        const raw = (r.raw && typeof r.raw === "object" ? r.raw : {}) as Record<string, unknown>;
+        const isHC = /\b(gas|oil|fuel|hydrocarbon|flare)\b/i.test(
+          `${r.name || ""} ${r.system_id}`,
+        );
+        if (merged.has(key)) {
+          const ex = merged.get(key)!;
+          ex.origin = "both";
+        } else {
+          merged.set(key, {
+            system_id: r.system_id,
+            name: r.name || r.system_id,
+            description: `Imported from GoCompletions catalog (${r.tile_name})`,
+            is_hydrocarbon: isHC,
+            progress: typeof raw.Complete === "number" ? raw.Complete as number : undefined,
+            subsystems: [],
+            source_project: r.tile_name,
+            match_tier: "strong",
+            origin: "catalog",
+          });
+        }
+      }
+    }
+
+    const uniqueSystems: CompletionsSystem[] = [...merged.values()].map((m) => ({
+      system_id: m.system_id,
+      name: m.name,
+      description: m.description,
+      progress: m.progress ?? 0,
+      is_hydrocarbon: m.is_hydrocarbon,
+      subsystems: m.subsystems,
+      source_project: m.source_project,
+      match_tier: m.match_tier,
+    }));
 
     const topLevel = inferHierarchy(uniqueSystems);
-    const candidates = topLevel.map(toCandidate);
+    const candidates = topLevel.map((c, i) => {
+      const key = normalizeId(c.system_id);
+      const m = merged.get(key);
+      return { ...toCandidate(c, i), origin: m?.origin || "live" };
+    });
 
     // Tiles that genuinely failed to switch (vs. legitimately empty/no-match)
     const failedTiles = tileBreakdown.filter((t) => t.status === "load_failed" || t.status === "error");
+
+    const servedFrom: "live" | "catalog" | "merged" =
+      shouldUseLive && shouldUseCatalog ? "merged"
+        : shouldUseCatalog ? "catalog"
+          : "live";
+
+    console.log(
+      `GoHub: served=${servedFrom} live_strong=${liveCount} catalog_strong=${catCount} disagreement=${disagreement} catalog_synced_at=${catalogSyncedAt}`,
+    );
 
     return new Response(
       JSON.stringify({
@@ -791,6 +902,13 @@ Deno.serve(async (req) => {
         projects_with_results: projectsWithResults,
         tile_breakdown: tileBreakdown,
         failed_tiles: failedTiles.map((t) => t.name),
+        source: {
+          served: servedFrom,
+          live_strong: liveCount,
+          catalog_strong: catCount,
+          disagreement,
+          catalog_synced_at: catalogSyncedAt,
+        },
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

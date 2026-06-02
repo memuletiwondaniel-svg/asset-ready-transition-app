@@ -11,6 +11,7 @@ import {
   iterateProjectTilesFreshSession,
   type TileStatus,
 } from "../_shared/gohub-tile-iterator.ts";
+import { normalizeId } from "../_shared/gohub-normalize.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -435,10 +436,79 @@ Deno.serve(async (req) => {
         console.log(`SyncCounts: Tile "${outcome.name}" — ${flatCount} nodes, ${matchedCount} kept, status=${outcome.status}`);
         if (matchedCount > 0) allRawData.push(...(r?.matched || []));
       }
+
+      // ── Persist EVERY system from every successfully-loaded tile to the
+      // catalog (gohub_synced_systems). This is what gohub-import falls back
+      // to (or merges with) when a live crawl is partial. Critically:
+      //   - We ONLY touch the catalog for tiles whose status is "ok",
+      //     never for "load_failed"/"error" — that would erase good rows
+      //     when the upstream session is flaky.
+      //   - For each ok tile we delete prior rows for that tile and re-insert,
+      //     so removed systems get cleaned up.
+      const catalogWriteErrors: string[] = [];
+      for (const outcome of iteration.outcomes) {
+        if (outcome.status !== "ok") continue;
+        const flat = outcome.result?.flat || [];
+        if (flat.length === 0) continue;
+
+        const rows: Array<{
+          tile_name: string;
+          system_id: string;
+          normalized_id: string;
+          name: string | null;
+          raw: unknown;
+        }> = [];
+        const seenIds = new Set<string>();
+        for (const item of flat) {
+          if (!item || typeof item !== "object") continue;
+          const sysId = String(
+            item.Number || item.SystemNumber || item.Name || item.SubSystemName ||
+            item.SystemId || item.system_id || item.Id || item.CODE || ""
+          );
+          if (!sysId || seenIds.has(sysId)) continue;
+          seenIds.add(sysId);
+          const name = String(
+            item.Description || item.SystemDescription || item.SubSystemDescription ||
+            item.Title || item.NAME || sysId
+          );
+          rows.push({
+            tile_name: outcome.name,
+            system_id: sysId,
+            normalized_id: normalizeId(sysId),
+            name,
+            raw: item,
+          });
+        }
+        if (rows.length === 0) continue;
+
+        // Replace the tile's catalog rows atomically-ish: delete then insert.
+        const { error: delErr } = await adminClient
+          .from("gohub_synced_systems")
+          .delete()
+          .eq("tile_name", outcome.name);
+        if (delErr) {
+          catalogWriteErrors.push(`${outcome.name}: delete ${delErr.message}`);
+          continue;
+        }
+        // chunked insert to stay under PostgREST payload limits
+        const CHUNK = 500;
+        for (let i = 0; i < rows.length; i += CHUNK) {
+          const slice = rows.slice(i, i + CHUNK);
+          const { error: insErr } = await adminClient
+            .from("gohub_synced_systems")
+            .insert(slice);
+          if (insErr) {
+            catalogWriteErrors.push(`${outcome.name}: insert ${insErr.message}`);
+            break;
+          }
+        }
+        console.log(`SyncCounts: catalog wrote ${rows.length} systems for tile "${outcome.name}"`);
+      }
+      if (catalogWriteErrors.length > 0) {
+        console.log(`SyncCounts: catalog write errors: ${catalogWriteErrors.join(" | ")}`);
+      }
     }
 
-
-    // Fallback only meaningful when a filter was supplied
     if (allRawData.length === 0 && projectFilter) {
       console.log(`SyncCounts: No matches via CompletionsGrid — trying SubSystem picker for "${projectFilter}"`);
       const pickerResult = await fetchSubSystemsByFilter(currentCookies, finalPortalUrl, projectFilter);

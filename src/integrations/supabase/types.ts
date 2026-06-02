@@ -2735,6 +2735,36 @@ export type Database = {
         }
         Relationships: []
       }
+      gohub_synced_systems: {
+        Row: {
+          id: string
+          name: string | null
+          normalized_id: string
+          raw: Json | null
+          synced_at: string
+          system_id: string
+          tile_name: string
+        }
+        Insert: {
+          id?: string
+          name?: string | null
+          normalized_id: string
+          raw?: Json | null
+          synced_at?: string
+          system_id: string
+          tile_name: string
+        }
+        Update: {
+          id?: string
+          name?: string | null
+          normalized_id?: string
+          raw?: Json | null
+          synced_at?: string
+          system_id?: string
+          tile_name?: string
+        }
+        Relationships: []
+      }
       handover_certificate_templates: {
         Row: {
           certificate_type: string
@@ -14115,6 +14145,14 @@ export type Database = {
       }
       get_user_permissions: { Args: { _user_id: string }; Returns: string[] }
       get_user_tenant_id: { Args: never; Returns: string }
+      gohub_catalog_freshness: {
+        Args: never
+        Returns: {
+          last_synced_at: string
+          system_count: number
+          tile_name: string
+        }[]
+      }
       has_permission: {
         Args: {
           _permission: Database["public"]["Enums"]["app_permission"]
