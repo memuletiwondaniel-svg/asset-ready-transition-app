@@ -392,6 +392,10 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const handleChooseWizard = () => {
     setUseWizard(true);
     setCurrentStep(0);
+    // Eagerly create the DRAFT row so the project card shows "Continue P2A Plan" + delete on next visit
+    if (!isReadOnly && !isReviewMode) {
+      void saveDraftSilent();
+    }
   };
 
   const handleChooseWorkspace = async () => {
