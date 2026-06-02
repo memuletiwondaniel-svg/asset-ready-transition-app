@@ -88,7 +88,7 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vcr-exec-spares'] });
       queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts'] });
-      toast.success('Spare part added');
+      toast.success('2Y spare added');
       setAddOpen(false);
       setForm(EMPTY_FORM);
     },
@@ -106,7 +106,7 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vcr-exec-spares'] });
       queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts'] });
-      toast.success('Spare part removed');
+      toast.success('2Y spare removed');
       setDeleteTarget(null);
     },
     onError: (err: any) => toast.error(err?.message || 'Failed to remove'),
