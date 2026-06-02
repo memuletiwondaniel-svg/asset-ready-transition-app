@@ -35,6 +35,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   ChevronRight,
+  ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isPast, isToday, differenceInDays } from 'date-fns';
