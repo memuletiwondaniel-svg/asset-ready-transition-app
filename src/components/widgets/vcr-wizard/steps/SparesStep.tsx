@@ -235,7 +235,7 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent className="z-[150]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Spare Part</AlertDialogTitle>
+            <AlertDialogTitle>Delete 2Y Spare</AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
