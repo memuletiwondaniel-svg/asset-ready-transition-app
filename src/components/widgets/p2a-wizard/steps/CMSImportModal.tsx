@@ -81,6 +81,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   const [searchedProjects, setSearchedProjects] = useState<string[]>([]);
   const [projectsWithResults, setProjectsWithResults] = useState<string[]>([]);
   const [failedTiles, setFailedTiles] = useState<string[]>([]);
+  const [showWeak, setShowWeak] = useState(false);
   const [sourceInfo, setSourceInfo] = useState<{
     served: 'live' | 'catalog' | 'merged';
     live_strong: number;
