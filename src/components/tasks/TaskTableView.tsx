@@ -246,7 +246,7 @@ export const TaskTableView: React.FC<TaskTableViewProps> = ({ searchQuery, userI
             </TableHeader>
             <TableBody>
               {tasks.map(task => (
-                <SimpleRow key={task.id} task={task} visible={visible} onClick={() => handleTaskClick(task)} />
+                <ExpandableRow key={task.id} task={task} visible={visible} onClick={handleTaskClick} />
               ))}
             </TableBody>
           </Table>
