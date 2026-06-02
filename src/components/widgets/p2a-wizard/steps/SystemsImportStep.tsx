@@ -224,62 +224,95 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         </div>
       )}
 
-      {/* Import options — tightly coupled to the empty state above */}
-      <div className="grid grid-cols-3 gap-3 shrink-0">
-        <TooltipProvider delayDuration={200}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => setShowCMSModal(true)}
-                className={cn(
-                  "group relative flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-200 text-left",
-                  cmsConfigured
-                    ? "border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5"
-                    : "border-dashed border-border/60 bg-muted/30 opacity-75 hover:opacity-100 hover:bg-muted/50"
-                )}
-              >
-                <div className={cn(
-                  "w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
-                  cmsConfigured
-                    ? "bg-amber-500/10 group-hover:bg-amber-500/20"
-                    : "bg-muted"
-                )}>
-                  <Database className={cn("h-4 w-4", cmsConfigured ? "text-amber-600" : "text-muted-foreground")} />
-                </div>
-                <span className={cn("font-medium text-xs", !cmsConfigured && "text-muted-foreground")}>CMS Import</span>
-                <span className="text-[10px] text-muted-foreground leading-tight text-center">
-                  Import from GoCompletions CMS
-                </span>
-              </button>
-            </TooltipTrigger>
-            {!cmsConfigured && (
-              <TooltipContent side="top" className="max-w-xs text-xs">
-                GoCompletions integration isn't configured yet. An admin can connect it in Admin → Integrations.
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
-        <button
-          onClick={() => setShowExcelModal(true)}
-          className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-        >
-          <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-            <Upload className="h-4 w-4 text-emerald-600" />
-          </div>
-          <span className="font-medium text-xs">Upload Excel</span>
-          <span className="text-[10px] text-muted-foreground leading-tight text-center">Import spreadsheet</span>
-        </button>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-        >
-          <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
-            <Plus className="h-4 w-4 text-blue-600" />
-          </div>
-          <span className="font-medium text-xs">Add Manually</span>
-          <span className="text-[10px] text-muted-foreground leading-tight text-center">Enter details</span>
-        </button>
-      </div>
+      {/* Import options — large cards when empty, compact action row once systems exist */}
+      {systems.length === 0 ? (
+        <div className="grid grid-cols-3 gap-3 shrink-0">
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setShowCMSModal(true)}
+                  className={cn(
+                    "group relative flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-200 text-left",
+                    cmsConfigured
+                      ? "border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5"
+                      : "border-dashed border-border/60 bg-muted/30 opacity-75 hover:opacity-100 hover:bg-muted/50"
+                  )}
+                >
+                  <div className={cn(
+                    "w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
+                    cmsConfigured ? "bg-amber-500/10 group-hover:bg-amber-500/20" : "bg-muted"
+                  )}>
+                    <Database className={cn("h-4 w-4", cmsConfigured ? "text-amber-600" : "text-muted-foreground")} />
+                  </div>
+                  <span className={cn("font-medium text-xs", !cmsConfigured && "text-muted-foreground")}>CMS Import</span>
+                  <span className="text-[10px] text-muted-foreground leading-tight text-center">
+                    Import from GoCompletions CMS
+                  </span>
+                </button>
+              </TooltipTrigger>
+              {!cmsConfigured && (
+                <TooltipContent side="top" className="max-w-xs text-xs">
+                  GoCompletions integration isn't configured yet. An admin can connect it in Admin → Integrations.
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+          <button
+            onClick={() => setShowExcelModal(true)}
+            className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+          >
+            <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+              <Upload className="h-4 w-4 text-emerald-600" />
+            </div>
+            <span className="font-medium text-xs">Upload Excel</span>
+            <span className="text-[10px] text-muted-foreground leading-tight text-center">Import spreadsheet</span>
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+          >
+            <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+              <Plus className="h-4 w-4 text-blue-600" />
+            </div>
+            <span className="font-medium text-xs">Add Manually</span>
+            <span className="text-[10px] text-muted-foreground leading-tight text-center">Enter details</span>
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <span className="text-[11px] uppercase tracking-wider text-muted-foreground mr-1">Add more:</span>
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCMSModal(true)}
+                  disabled={!cmsConfigured}
+                  className="h-8 gap-1.5"
+                >
+                  <Database className="h-3.5 w-3.5 text-amber-600" />
+                  <span className="text-xs">CMS Import</span>
+                </Button>
+              </TooltipTrigger>
+              {!cmsConfigured && (
+                <TooltipContent side="top" className="max-w-xs text-xs">
+                  GoCompletions integration isn't configured yet.
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+          <Button variant="outline" size="sm" onClick={() => setShowExcelModal(true)} className="h-8 gap-1.5">
+            <Upload className="h-3.5 w-3.5 text-emerald-600" />
+            <span className="text-xs">Upload Excel</span>
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowAddModal(true)} className="h-8 gap-1.5">
+            <Plus className="h-3.5 w-3.5 text-blue-600" />
+            <span className="text-xs">Add Manually</span>
+          </Button>
+        </div>
+      )}
 
 
 
