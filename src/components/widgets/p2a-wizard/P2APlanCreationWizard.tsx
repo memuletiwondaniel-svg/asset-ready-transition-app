@@ -350,7 +350,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     switch (idx) {
       case 0: return state.systems.length > 0;
       case 1: return state.vcrs.length > 0;
-      case 2: return Object.values(state.mappings).some(arr => arr.length > 0);
+      case 2: return true; // Preliminary mapping — optional, never blocks or warns
       case 3: return state.phases.length > 0;
       case 4: return state.approvers.length > 0;
       case 5: return currentStep > idx;
