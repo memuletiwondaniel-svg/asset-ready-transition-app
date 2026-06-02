@@ -368,7 +368,8 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                   </section>
                 )}
               </div>
-            </ScrollArea>
+              </div>
+            </div>
           )}
 
           {/* footer info bar */}
