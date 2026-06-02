@@ -609,9 +609,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const headerContent = (
     <div className="flex flex-col gap-1 min-w-0">
       <div className="flex items-center gap-1.5 flex-wrap">
-        <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-medium", statusChip.cls)}>
-          {statusChip.label}
-        </Badge>
+        {statusChip.label !== 'Draft' && (
+          <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-medium", statusChip.cls)}>
+            {statusChip.label}
+          </Badge>
+        )}
       </div>
       <h2 className="text-[14px] font-bold leading-tight text-foreground line-clamp-2">
         {headerTitle}
