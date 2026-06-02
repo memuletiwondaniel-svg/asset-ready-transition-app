@@ -33,7 +33,6 @@ interface FormState {
   title: string;
   asset_tag: string;
   description: string;
-  responsible_person: string;
   target_date: string;
   status: string;
 }
@@ -42,7 +41,6 @@ const EMPTY_FORM: FormState = {
   title: '',
   asset_tag: '',
   description: '',
-  responsible_person: '',
   target_date: '',
   status: 'to_create',
 };
