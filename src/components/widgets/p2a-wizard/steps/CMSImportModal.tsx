@@ -67,6 +67,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   const [sampleFilter, setSampleFilter] = useState('');
   const [searchedProjects, setSearchedProjects] = useState<string[]>([]);
   const [projectsWithResults, setProjectsWithResults] = useState<string[]>([]);
+  const [failedTiles, setFailedTiles] = useState<string[]>([]);
 
   useEffect(() => {
     if (open && phase === 'idle') void runImport();
