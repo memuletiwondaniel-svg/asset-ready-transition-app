@@ -68,6 +68,13 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   const [searchedProjects, setSearchedProjects] = useState<string[]>([]);
   const [projectsWithResults, setProjectsWithResults] = useState<string[]>([]);
   const [failedTiles, setFailedTiles] = useState<string[]>([]);
+  const [sourceInfo, setSourceInfo] = useState<{
+    served: 'live' | 'catalog' | 'merged';
+    live_strong: number;
+    catalog_strong: number;
+    disagreement: boolean;
+    catalog_synced_at: string | null;
+  } | null>(null);
 
   useEffect(() => {
     if (open && phase === 'idle') void runImport();
@@ -82,6 +89,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
       setSearchedProjects([]);
       setProjectsWithResults([]);
       setFailedTiles([]);
+      setSourceInfo(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
