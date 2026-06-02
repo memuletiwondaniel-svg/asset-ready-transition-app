@@ -609,9 +609,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const headerContent = (
     <div className="flex flex-col gap-1 min-w-0">
       <div className="flex items-center gap-1.5 flex-wrap">
-        <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-medium", statusChip.cls)}>
-          {statusChip.label}
-        </Badge>
+        {statusChip.label !== 'Draft' && (
+          <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-medium", statusChip.cls)}>
+            {statusChip.label}
+          </Badge>
+        )}
       </div>
       <h2 className="text-[14px] font-bold leading-tight text-foreground line-clamp-2">
         {headerTitle}
@@ -635,9 +637,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           <h2 className="text-lg sm:text-xl font-semibold leading-none text-foreground tracking-tight">
             {headerTitle}
           </h2>
-          <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-medium", statusChip.cls)}>
-            {statusChip.label}
-          </Badge>
+          {statusChip.label !== 'Draft' && (
+            <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-medium", statusChip.cls)}>
+              {statusChip.label}
+            </Badge>
+          )}
         </div>
         <p className="text-[12px] leading-snug mt-2 truncate flex items-center gap-2">
           <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground font-medium text-[10px] tracking-wide uppercase border border-border/60">{projectCode}</span>
