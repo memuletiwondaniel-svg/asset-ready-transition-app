@@ -688,10 +688,12 @@ Deno.serve(async (req) => {
     }
 
     // Step 3: Search ALL projects
-    console.log(`GoHub: Will search ${allTiles.length} projects for systems matching "${projectFilter}"`);
+    const variants = buildFilterVariants(projectFilter);
+    console.log(`GoHub: Will search ${allTiles.length} projects for "${projectFilter}" (variants=${JSON.stringify(variants)})`);
     const allMatchingSystems: CompletionsSystem[] = [];
     const searchedProjects: string[] = [];
     const projectsWithResults: string[] = [];
+    const sampleSink = { ids: [] as string[] };
     let currentCookies = loginCookies;
 
     for (let i = 0; i < allTiles.length; i++) {
@@ -719,7 +721,7 @@ Deno.serve(async (req) => {
       }
 
       const { systems: matchedSystems, cookies: updatedCookies } = await searchProjectForSystems(
-        currentCookies, currentHomeHtml, currentHomeUrl, finalPortalUrl, tile, projectFilter
+        currentCookies, currentHomeHtml, currentHomeUrl, finalPortalUrl, tile, projectFilter, sampleSink
       );
       currentCookies = updatedCookies;
 
@@ -730,10 +732,14 @@ Deno.serve(async (req) => {
     }
 
     if (allMatchingSystems.length === 0) {
+      const sampleHint = sampleSink.ids.length > 0
+        ? `\n\nSample of systems GoHub returned:\n${sampleSink.ids.slice(0, 12).join("\n")}`
+        : "\n\nGoHub returned no systems from any project (the Completions Grid may be empty for this login).";
       throw new Error(
-        `No systems matching "${projectFilter}" found across ${searchedProjects.length} GoHub projects (${searchedProjects.join(", ")}).`
+        `No systems matching "${projectFilter}" (tried variants: ${variants.join(", ")}) across ${searchedProjects.length} GoHub projects.${sampleHint}`
       );
     }
+
 
     // Deduplicate
     const seen = new Set<string>();
