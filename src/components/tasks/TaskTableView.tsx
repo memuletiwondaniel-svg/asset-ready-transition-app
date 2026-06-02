@@ -388,18 +388,21 @@ const SimpleRow: React.FC<{
         "group cursor-pointer transition-colors",
         "hover:bg-accent/40",
         task.isWaiting && "opacity-50 cursor-default",
-        task.isNew && "bg-primary/[0.02]",
-        depth > 0 && "bg-muted/20",
+        task.isNew && depth === 0 && "bg-primary/[0.02]",
+        depth > 0 && "bg-transparent hover:bg-muted/30",
       )}
     >
       {visible.map((col, idx) => (
-        <TableCell key={col.id} className="py-2.5 px-4">
+        <TableCell key={col.id} className={cn(depth > 0 ? "py-1.5 px-4" : "py-2.5 px-4")}>
           {renderCell(col, idx === 0)}
         </TableCell>
       ))}
-      <TableCell className="py-2.5 px-2 w-10">
-        <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
-      </TableCell>
+      {depth === 0 && (
+        <TableCell className="py-2.5 px-2 w-10">
+          <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
+        </TableCell>
+      )}
+      {depth > 0 && <TableCell className="py-1.5 px-2 w-10" />}
     </TableRow>
   );
 };
