@@ -478,26 +478,59 @@ const CandidateRow: React.FC<{
   checked: boolean;
   onToggle: () => void;
 }> = ({ candidate, checked, onToggle }) => {
+  const [expanded, setExpanded] = useState(false);
+  const subs = candidate.subsystems ?? [];
+  const hasSubs = subs.length > 0;
+
   return (
-    <label
+    <div
       className={cn(
-        'flex items-center gap-2.5 p-2 rounded-md border cursor-pointer transition-colors',
-        checked ? 'bg-primary/5 border-primary/30' : 'bg-card hover:bg-muted/50 border-border',
+        'rounded-md border transition-colors',
+        checked ? 'bg-primary/5 border-primary/30' : 'bg-card border-border hover:bg-muted/40',
       )}
     >
-      <Checkbox checked={checked} onCheckedChange={onToggle} />
-      <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted border shrink-0">
-        {candidate.system_id}
-      </span>
-      <span className="text-xs font-medium truncate flex-1">{candidate.name}</span>
-      {candidate.source_project && (
-        <span className="text-[10px] text-muted-foreground shrink-0">{candidate.source_project}</span>
+      <div className="flex items-center gap-2.5 p-2">
+        <Checkbox
+          checked={checked}
+          onCheckedChange={onToggle}
+          aria-label={`Select ${candidate.name}`}
+        />
+        <button
+          type="button"
+          onClick={() => hasSubs && setExpanded(v => !v)}
+          className={cn(
+            'flex items-center gap-2.5 flex-1 min-w-0 text-left',
+            hasSubs && 'cursor-pointer',
+          )}
+          disabled={!hasSubs}
+        >
+          <span className="text-sm font-medium truncate flex-1">{candidate.name}</span>
+          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground border border-border/50 shrink-0">
+            {candidate.system_id}
+          </span>
+          {hasSubs && (
+            <span className="flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
+              <span>{subs.length}</span>
+              <ChevronRight className={cn('h-3 w-3 transition-transform', expanded && 'rotate-90')} />
+            </span>
+          )}
+        </button>
+      </div>
+      {expanded && hasSubs && (
+        <div className="px-2 pb-2 pl-9 space-y-1">
+          {subs.map((s, i) => (
+            <div
+              key={`${s.subsystem_id ?? s.id ?? i}`}
+              className="flex items-center gap-2 text-[11px] text-muted-foreground"
+            >
+              <span className="font-mono px-1.5 py-0.5 rounded bg-muted/40 border border-border/40">
+                {s.subsystem_id ?? s.id ?? `#${i + 1}`}
+              </span>
+              <span className="truncate">{s.name ?? ''}</span>
+            </div>
+          ))}
+        </div>
       )}
-      {candidate.subsystems && candidate.subsystems.length > 0 && (
-        <span className="text-[10px] text-muted-foreground shrink-0">
-          {candidate.subsystems.length} sub
-        </span>
-      )}
-    </label>
+    </div>
   );
 };
