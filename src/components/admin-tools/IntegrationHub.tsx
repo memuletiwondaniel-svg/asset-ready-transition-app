@@ -172,6 +172,17 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
   const [syncingInPanel, setSyncingInPanel] = useState(false);
   const [syncResultInPanel, setSyncResultInPanel] = useState<string | null>(null);
   const [syncingProjects, setSyncingProjects] = useState(false);
+  const [syncProjectFilter, setSyncProjectFilter] = useState('');
+  const [syncReadout, setSyncReadout] = useState<{
+    success: boolean;
+    scope: string | null;
+    available: string[];
+    withData: string[];
+    breakdown: Array<{ name: string; systems_found: number; matched: number }>;
+    totalFound: number;
+    totalUpdated: number;
+    error?: string;
+  } | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [showMethodSwitchDialog, setShowMethodSwitchDialog] = useState(false);
