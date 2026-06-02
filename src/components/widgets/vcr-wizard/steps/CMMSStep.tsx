@@ -50,6 +50,7 @@ export const CMMSStep: React.FC<CMMSStepProps> = ({ vcrId }) => {
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const { data: cmmsLead, isLoading: leadLoading } = useProjectCMMSLead(vcrId);
 
   const { data: items = [] } = useQuery({
     queryKey: ['vcr-exec-cmms', vcrId],
