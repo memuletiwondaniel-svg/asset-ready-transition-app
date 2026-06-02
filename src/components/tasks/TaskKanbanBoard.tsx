@@ -575,11 +575,11 @@ const KanbanCardWithChildren: React.FC<{
       {hasChildren && expanded && (
         <div className="ml-4 pl-2 border-l-2 border-border/40 space-y-1.5">
           {children.map(child => (
-            <DraggableKanbanCard
+            <KanbanCardContent
               key={child.id}
               task={child}
               onClick={() => onTaskClick(child)}
-              accentClass={accentClass}
+              isChild
             />
           ))}
         </div>
