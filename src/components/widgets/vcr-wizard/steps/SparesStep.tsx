@@ -184,9 +184,9 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
       )}
 
       <Sheet open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) setForm(EMPTY_FORM); }}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto z-[150]" overlayClassName="z-[150]">
           <SheetHeader>
-            <SheetTitle>Add Spare Part</SheetTitle>
+            <SheetTitle>Add 2Y Spare</SheetTitle>
           </SheetHeader>
           <div className="space-y-4 mt-4">
             <div>
