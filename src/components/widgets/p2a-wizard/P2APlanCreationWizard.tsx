@@ -633,7 +633,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     <div className="flex items-center justify-between gap-4 min-w-0">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="text-base sm:text-lg font-semibold leading-tight text-foreground tracking-tight -mt-1">
+          <h2 className="text-lg sm:text-xl font-semibold leading-none text-foreground tracking-tight">
             {headerTitle}
           </h2>
           <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-medium", statusChip.cls)}>
