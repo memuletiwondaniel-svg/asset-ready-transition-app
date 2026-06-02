@@ -52,10 +52,12 @@ interface WizardShellProps {
   isStepComplete: (idx: number) => boolean;
   /** Visited but incomplete = amber warning */
   isStepWarning?: (idx: number) => boolean;
-  /** Branded header content (icon + title + subtitle) */
+  /** Branded header content (icon + title + subtitle) — shown in sidebar/mobile header when topHeader is not provided */
   header: React.ReactNode;
   /** Actions in header area (delete, close buttons) */
   headerActions?: React.ReactNode;
+  /** Optional full-width top header band rendered above the sidebar+content row. When provided, replaces the sidebar/mobile compact header. */
+  topHeader?: React.ReactNode;
   /** Banners between header and content (rejection, review, read-only) */
   banners?: React.ReactNode;
   /** Content pinned above footer (notes textarea, etc.) */
@@ -81,6 +83,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
   isStepWarning,
   header,
   headerActions,
+  topHeader,
   banners,
   pinnedFooterContent,
   children,
@@ -91,6 +94,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
   const isMobile = useIsMobile();
   const isLastStep = currentStep === steps.length - 1;
   const showStepList = steps.length > 0;
+  const hasTopHeader = !!topHeader;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -107,11 +111,27 @@ export const WizardShell: React.FC<WizardShellProps> = ({
           </DialogHeader>
         </VisuallyHidden>
 
-        <div className={cn("flex h-full overflow-hidden", isMobile ? "flex-col" : "")}>
+        <div className="flex flex-col h-full overflow-hidden">
+          {hasTopHeader && (
+            <div className="shrink-0 border-b border-border/60 bg-card/40">
+              <div className="flex items-start justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4">
+                <div className="min-w-0 flex-1">{topHeader}</div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {headerActions}
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onOpenChange(false)}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        <div className={cn("flex flex-1 min-h-0 overflow-hidden", isMobile ? "flex-col" : "")}>
           {/* ─── Mobile: Header + Pill Tabs ─── */}
           {isMobile ? (
             <div className="shrink-0 border-b border-border/60">
+              {!hasTopHeader && (
               <div className="flex items-center justify-between px-3 pt-3 pb-2">
+
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   {header}
                 </div>
@@ -122,6 +142,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                   </Button>
                 </div>
               </div>
+              )}
               {showStepList && (
                 <div className="flex gap-1.5 overflow-x-auto pb-2 px-3 scrollbar-none">
                   {steps.map((step, idx) => {
@@ -160,12 +181,14 @@ export const WizardShell: React.FC<WizardShellProps> = ({
           ) : (
             /* ─── Desktop: Vertical Sidebar ─── */
             <div className="w-60 shrink-0 bg-muted/20 border-r border-border/60 flex flex-col">
-              <div className="p-4 border-b border-border/40">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">{header}</div>
-                  <div className="flex items-center gap-0.5 shrink-0">{headerActions}</div>
+              {!hasTopHeader && (
+                <div className="p-4 border-b border-border/40">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">{header}</div>
+                    <div className="flex items-center gap-0.5 shrink-0">{headerActions}</div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {showStepList ? (
                 <div className="flex-1 p-2 space-y-0.5 overflow-y-auto">
@@ -270,6 +293,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
               />
             ) : null}
           </div>
+        </div>
         </div>
       </DialogContent>
     </Dialog>
