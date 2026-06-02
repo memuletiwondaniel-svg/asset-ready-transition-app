@@ -56,6 +56,9 @@ export interface UnifiedTask {
   kanbanColumn: 'todo' | 'in_progress' | 'waiting' | 'done';
   // Flag for tasks that went through external approval (ORA Plan, P2A Plan)
   isApprovalProtected?: boolean;
+  // Parent/child nesting (parent_task_id from user_tasks)
+  parentTaskId?: string | null;
+  children?: UnifiedTask[];
 }
 
 export const FILTER_OPTIONS: { value: CategoryFilter; label: string }[] = [
