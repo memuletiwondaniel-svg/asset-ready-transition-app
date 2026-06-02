@@ -14,16 +14,14 @@ import {
   Edit2,
   Check,
   ChevronRight,
-  Info,
-  Settings2,
+  Lightbulb,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CMSImportModal } from './CMSImportModal';
 import { ExcelUploadModal } from './ExcelUploadModal';
 import { AddSystemModal } from './AddSystemModal';
 import { useToast } from '@/components/ui/use-toast';
-import { isAPIConfigured } from '@/lib/api-config-storage';
-import { useNavigate } from 'react-router-dom';
+
 
 
 export interface WizardSubsystem {
