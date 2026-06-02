@@ -12,6 +12,8 @@ import {
   ClipboardList,
   ScrollText,
   UserCheck,
+  Wrench,
+  Package,
 } from 'lucide-react';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
 
