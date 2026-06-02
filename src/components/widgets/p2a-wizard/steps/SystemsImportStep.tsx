@@ -150,33 +150,58 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
     onSystemsChange([...systems, ...mockSystems]);
   };
 
+  const [cmsConfigured, setCmsConfigured] = useState<boolean>(() => isAPIConfigured('gocompletions'));
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('dms_sync_credentials')
+          .select('id')
+          .eq('dms_platform', 'gocompletions')
+          .limit(1);
+        if (!cancelled && !error && data && data.length > 0) {
+          setCmsConfigured(true);
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   return (
-    <div className="flex flex-col gap-4 p-4 h-full">
+    <div className="flex flex-col gap-3 p-4 h-full">
       {/* Header */}
-      <div className="flex items-start justify-between shrink-0">
-        <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold">Systems</h3>
-          <Badge variant="secondary" className="text-[10px] font-medium px-1.5 py-0 h-4">Optional</Badge>
-        </div>
+      <div className="flex items-center justify-between shrink-0">
+        <h3 className="text-sm font-semibold">Systems</h3>
         {systems.length > 0 && (
           <Badge variant="outline" className="shrink-0">{systems.length} systems</Badge>
         )}
       </div>
 
-      {/* Systems list OR clean empty state (no border/frame) */}
+      {/* Systems list OR prominent empty state tightly coupled with the action cards */}
       {systems.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center py-8 shrink-0">
-          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-            <Database className="h-5 w-5 text-muted-foreground" />
+        <div className="flex flex-col items-center text-center pt-6 pb-2 shrink-0">
+          <div className="w-16 h-16 rounded-2xl bg-muted/70 flex items-center justify-center mb-4 ring-1 ring-border/60">
+            <Database className="h-7 w-7 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium">No systems yet</p>
-          <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+          <p className="text-lg font-semibold tracking-tight">No systems yet</p>
+          <p className="text-sm text-muted-foreground mt-1.5 max-w-md">
             Pick an import method below to get started, or continue to the next step and assign systems later.
           </p>
-          <div className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
-            This step is optional — you can skip it.
-          </div>
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground/80 cursor-help">
+                  <Info className="h-3.5 w-3.5 text-muted-foreground/70" />
+                  This step is optional — you can skip it.
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs text-xs">
+                Systems can be assigned now or later in the wizard. Skipping won't block submission.
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       ) : (
         <div className="border rounded-lg flex-1 min-h-0 bg-muted/20">
@@ -198,23 +223,44 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         </div>
       )}
 
-      {/* Import options — beneath the empty state */}
+      {/* Import options — tightly coupled to the empty state above */}
       <div className="grid grid-cols-3 gap-3 shrink-0">
-        <button
-          onClick={() => setShowCMSModal(true)}
-          className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card transition-colors text-left"
-        >
-          <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
-            <Database className="h-4 w-4 text-amber-600" />
-          </div>
-          <span className="font-medium text-xs">CMS Import</span>
-          <span className="text-[10px] text-muted-foreground leading-tight text-center">
-            Import from GoCompletions CMS
-          </span>
-        </button>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setShowCMSModal(true)}
+                className={cn(
+                  "group relative flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-200 text-left",
+                  cmsConfigured
+                    ? "border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5"
+                    : "border-dashed border-border/60 bg-muted/30 opacity-75 hover:opacity-100 hover:bg-muted/50"
+                )}
+              >
+                <div className={cn(
+                  "w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
+                  cmsConfigured
+                    ? "bg-amber-500/10 group-hover:bg-amber-500/20"
+                    : "bg-muted"
+                )}>
+                  <Database className={cn("h-4 w-4", cmsConfigured ? "text-amber-600" : "text-muted-foreground")} />
+                </div>
+                <span className={cn("font-medium text-xs", !cmsConfigured && "text-muted-foreground")}>CMS Import</span>
+                <span className="text-[10px] text-muted-foreground leading-tight text-center">
+                  Import from GoCompletions CMS
+                </span>
+              </button>
+            </TooltipTrigger>
+            {!cmsConfigured && (
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                GoCompletions integration isn't configured yet. An admin can connect it in Admin → Integrations.
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
         <button
           onClick={() => setShowExcelModal(true)}
-          className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md transition-all duration-200"
+          className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
         >
           <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
             <Upload className="h-4 w-4 text-emerald-600" />
@@ -224,7 +270,7 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         </button>
         <button
           onClick={() => setShowAddModal(true)}
-          className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md transition-all duration-200"
+          className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
         >
           <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
             <Plus className="h-4 w-4 text-blue-600" />
@@ -233,6 +279,7 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
           <span className="text-[10px] text-muted-foreground leading-tight text-center">Enter details</span>
         </button>
       </div>
+
 
 
 
