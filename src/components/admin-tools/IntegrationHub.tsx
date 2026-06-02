@@ -213,7 +213,9 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
   const getStatusInfo = (platformId: string) => {
     if (platformId === 'gocompletions') {
-      return gocConfigured
+      const dbCred = getCredential('gocompletions');
+      const hasDb = !!dbCred?.password_encrypted;
+      return (hasDb || gocConfigured)
         ? { label: 'Credentials saved', variant: 'configured' as const }
         : { label: 'Not configured', variant: 'none' as const };
     }
@@ -224,15 +226,21 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
 
   const getConnectionMethodLabel = (platformId: string): string | null => {
     if (platformId === 'gocompletions') {
+      const dbCred = getCredential('gocompletions');
+      const dbMethod = mapDbMethodToUi(dbCred?.primary_method);
+      if (dbMethod === 'agent') return CONNECTION_METHOD_BADGE_LABELS.agent;
+      if (dbMethod === 'api') return CONNECTION_METHOD_BADGE_LABELS.api;
       const config = getAPIConfig('gocompletions');
       if (config?.interfaceMethod === 'agent') return CONNECTION_METHOD_BADGE_LABELS.agent;
       if (config?.interfaceMethod === 'api') return CONNECTION_METHOD_BADGE_LABELS.api;
-      return null;
+      // Default badge: Agent (Fred AI)
+      return dbCred ? CONNECTION_METHOD_BADGE_LABELS.agent : null;
     }
     const cred = getCredential(platformId);
     if (!cred) return null;
     return CONNECTION_METHOD_BADGE_LABELS.api;
   };
+
 
   const openPanel = (platform: Platform) => {
     setPanelPlatform(platform);
