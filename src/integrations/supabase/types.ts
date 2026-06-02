@@ -7000,6 +7000,59 @@ export type Database = {
           },
         ]
       }
+      p2a_vcr_cmms: {
+        Row: {
+          asset_tag: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number
+          handover_point_id: string
+          id: string
+          responsible_person: string | null
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          asset_tag?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          handover_point_id: string
+          id?: string
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          asset_tag?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          handover_point_id?: string
+          id?: string
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_cmms_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       p2a_vcr_critical_docs: {
         Row: {
           catalog_id: string | null
@@ -7799,6 +7852,62 @@ export type Database = {
           {
             foreignKeyName: "p2a_vcr_relationships_target_vcr_id_fkey"
             columns: ["target_vcr_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      p2a_vcr_spares: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number
+          handover_point_id: string
+          id: string
+          part_number: string | null
+          quantity: number | null
+          responsible_person: string | null
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          handover_point_id: string
+          id?: string
+          part_number?: string | null
+          quantity?: number | null
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number
+          handover_point_id?: string
+          id?: string
+          part_number?: string | null
+          quantity?: number | null
+          responsible_person?: string | null
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "p2a_vcr_spares_handover_point_id_fkey"
+            columns: ["handover_point_id"]
             isOneToOne: false
             referencedRelation: "p2a_handover_points"
             referencedColumns: ["id"]
