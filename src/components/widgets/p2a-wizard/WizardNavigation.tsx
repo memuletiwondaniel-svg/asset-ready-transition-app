@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronLeft, ChevronRight, Loader2, Send, LogOut, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Send, LogOut, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 
 interface WizardNavigationProps {
   currentStep: number;
@@ -13,8 +13,10 @@ interface WizardNavigationProps {
   onSubmit?: () => void;
   onApprove?: () => void;
   onReject?: () => void;
+  onDelete?: () => void;
   isSubmitting?: boolean;
   isSaving?: boolean;
+  isDeleting?: boolean;
   canProceed?: boolean;
   canGoBack?: boolean;
   submitLabel?: string;
