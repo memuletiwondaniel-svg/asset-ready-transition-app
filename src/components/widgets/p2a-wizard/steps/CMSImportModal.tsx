@@ -339,30 +339,40 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                   </section>
                 )}
 
-                {/* Weak / ambiguous */}
+                {/* Weak / ambiguous — collapsed by default */}
                 {weak.length > 0 && (
                   <section>
-                    <div className="flex items-center gap-2 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowWeak(v => !v)}
+                      className="w-full flex items-center gap-2 p-2 rounded-md border border-amber-200 bg-amber-50/40 hover:bg-amber-50 dark:bg-amber-950/10 dark:border-amber-900/40 transition-colors"
+                    >
+                      <ChevronRight className={cn('h-4 w-4 text-amber-600 transition-transform', showWeak && 'rotate-90')} />
                       <HelpCircle className="h-4 w-4 text-amber-600" />
-                      <h4 className="text-sm font-semibold">Possible matches — needs confirmation</h4>
-                      <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
+                      <span className="text-sm font-medium">
+                        {weak.length} possible match{weak.length === 1 ? '' : 'es'} — needs review
+                      </span>
+                      <Badge variant="outline" className="ml-auto text-[10px] bg-amber-50 text-amber-700 border-amber-200">
                         Not selected
                       </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      These only partially match your project code (digits or a short tail). Tick the ones that
-                      actually belong to your scope.
-                    </p>
-                    <div className="space-y-1.5">
-                      {weak.map(c => (
-                        <CandidateRow
-                          key={c.system_id}
-                          candidate={c}
-                          checked={selected.has(c.system_id)}
-                          onToggle={() => toggle(c.system_id, selected, setSelected)}
-                        />
-                      ))}
-                    </div>
+                    </button>
+                    {showWeak && (
+                      <>
+                        <p className="text-xs text-muted-foreground mt-2 mb-2">
+                          These only partially match your project code. Tick the ones that actually belong to your scope.
+                        </p>
+                        <div className="space-y-1.5">
+                          {weak.map(c => (
+                            <CandidateRow
+                              key={c.system_id}
+                              candidate={c}
+                              checked={selected.has(c.system_id)}
+                              onToggle={() => toggle(c.system_id, selected, setSelected)}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </section>
                 )}
 
