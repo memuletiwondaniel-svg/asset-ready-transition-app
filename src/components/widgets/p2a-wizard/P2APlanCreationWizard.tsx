@@ -252,12 +252,13 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         .then((hasDraft) => {
           if (hasDraft) {
             setUseWizard(true);
+            setSelectedApproach('wizard');
             if (isReviewMode) {
-              setCurrentStep(1);
+              setCurrentStep(0);
             } else if (['ACTIVE', 'COMPLETED', 'APPROVED'].includes(existingPlan.status)) {
               setCurrentStep(WIZARD_STEPS.length - 1);
             } else {
-              setCurrentStep(1);
+              setCurrentStep(0);
             }
           }
         })
