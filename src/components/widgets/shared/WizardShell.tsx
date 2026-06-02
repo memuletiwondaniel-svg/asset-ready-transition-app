@@ -28,8 +28,10 @@ export interface WizardShellNavigationProps {
   onSubmit?: () => void;
   onApprove?: () => void;
   onReject?: () => void;
+  onDelete?: () => void;
   isSubmitting?: boolean;
   isSaving?: boolean;
+  isDeleting?: boolean;
   canProceed?: boolean;
   canGoBack?: boolean;
   submitLabel?: string;
