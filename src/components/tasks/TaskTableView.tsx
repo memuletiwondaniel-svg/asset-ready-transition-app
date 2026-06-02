@@ -364,6 +364,10 @@ const SimpleRow: React.FC<{
         );
 
       case 'progress':
+        // Child rows: leaves have no rollup, status pill is the source of truth
+        if (depth > 0) {
+          return <span className="text-muted-foreground/40 text-xs">—</span>;
+        }
         if (task.totalItems != null && task.totalItems > 0) {
           const pct = task.totalItems > 0 ? Math.round((task.completedItems || 0) / task.totalItems * 100) : 0;
           return <span className="text-xs text-muted-foreground">{pct}%</span>;

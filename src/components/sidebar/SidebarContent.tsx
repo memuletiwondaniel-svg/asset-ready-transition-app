@@ -245,12 +245,12 @@ export const SidebarContent = memo<SidebarContentProps>(({
                         isActive ? "text-primary" : "text-muted-foreground"
                       )} />
                       {item.section === 'ask-orsh' && unreadChatCount > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-semibold text-primary-foreground">
+                        <span className="absolute top-0.5 right-0.5 flex h-3.5 min-w-3.5 px-0.5 items-center justify-center rounded-full bg-primary text-[8px] font-semibold text-primary-foreground leading-none">
                           {unreadChatCount}
                         </span>
                       )}
                       {item.section === 'my-tasks' && newTaskCount > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-0.5 items-center justify-center rounded-full bg-destructive text-[9px] font-semibold text-destructive-foreground">
+                        <span className="absolute top-0.5 right-0.5 flex h-3.5 min-w-3.5 px-0.5 items-center justify-center rounded-full bg-destructive text-[8px] font-semibold text-destructive-foreground leading-none">
                           {newTaskCount}
                         </span>
                       )}
