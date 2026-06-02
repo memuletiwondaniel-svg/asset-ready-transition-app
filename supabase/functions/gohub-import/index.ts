@@ -35,7 +35,14 @@ interface CompletionsSystem {
   progress: number;
   is_hydrocarbon: boolean;
   source_project?: string;
+  match_tier?: "strong" | "weak";
   subsystems: CompletionsSubsystem[];
+}
+
+interface SampleEntry {
+  source_project: string;
+  system_id: string;
+  name: string;
 }
 
 // ─── Strategy 1: ASMX WebMethod ─────────────────────────────
