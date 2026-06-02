@@ -230,9 +230,9 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
           )}
 
           {phase === 'review' && (
-            <ScrollArea className="flex-1 min-h-0 -mx-1 px-1">
+            <div className="flex-1 min-h-0 -mx-1 px-1 overflow-y-auto overscroll-contain">
               <div className="space-y-4 pr-2">
-                {/* Findings summary — surface what we actually searched and matched */}
+                {/* Findings summary — concise */}
                 <section
                   className={cn(
                     'rounded-lg border p-3 text-xs',
@@ -241,93 +241,24 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                       : 'bg-amber-50/60 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/40'
                   )}
                 >
-                  <p className="font-semibold text-sm mb-1.5">
+                  <p className="font-semibold text-sm">
                     {strong.length > 0
-                      ? `Found ${strong.length} confirmed match${strong.length === 1 ? '' : 'es'} for ${projectCode}`
-                      : `No project named "${projectCode}" exists in GoCompletions`}
+                      ? `Found ${strong.length} match${strong.length === 1 ? '' : 'es'} for ${projectCode}`
+                      : `No matches for "${projectCode}"`}
                   </p>
-                  <ul className="space-y-1 text-muted-foreground">
-                    <li>
-                      <span className="text-foreground/70">Searched:</span>{' '}
-                      {searchedProjects.length > 0 ? (
-                        <span className="font-medium text-foreground">
-                          {searchedProjects.length} GoHub project{searchedProjects.length === 1 ? '' : 's'}
-                        </span>
-                      ) : (
-                        <span>direct grid access</span>
-                      )}
-                      {searchedProjects.length > 0 && (
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {searchedProjects.map(p => (
-                            <Badge
-                              key={p}
-                              variant="outline"
-                              className={cn(
-                                'text-[10px] font-normal',
-                                projectsWithResults.includes(p) && 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30'
-                              )}
-                            >
-                              {p}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </li>
-                    <li>
-                      <span className="text-foreground/70">Match rule:</span>{' '}
-                      <code className="text-[11px] bg-muted px-1 rounded">
-                        normalize(system_id).includes("{(projectCode || '').toUpperCase().replace(/[^A-Z0-9]/gi, '')}")
-                      </code>
-                    </li>
-                    <li>
-                      <span className="text-foreground/70">Strong matches:</span>{' '}
-                      <span className="font-medium text-foreground">{strong.length}</span>
-                      {' · '}
-                      <span className="text-foreground/70">Weak (need confirmation):</span>{' '}
-                      <span className="font-medium text-foreground">{weak.length}</span>
-                    </li>
-                    {projectsWithResults.length > 0 && (
-                      <li>
-                        <span className="text-foreground/70">Hits came from:</span>{' '}
-                        <span className="font-medium text-foreground">{projectsWithResults.join(', ')}</span>
-                      </li>
-                    )}
+                  <p className="mt-1 text-muted-foreground">
+                    Searched {searchedProjects.length || 0} GoHub project{searchedProjects.length === 1 ? '' : 's'}
+                    {weak.length > 0 && <> · {weak.length} possible match{weak.length === 1 ? '' : 'es'} below</>}
                     {failedTiles.length > 0 && (
-                      <li>
-                        <span className="text-foreground/70">Tiles that failed to load:</span>{' '}
-                        <span className="font-medium text-amber-700 dark:text-amber-400">{failedTiles.join(', ')}</span>
-                      </li>
+                      <> · <span className="text-amber-700 dark:text-amber-400">{failedTiles.length} tile{failedTiles.length === 1 ? '' : 's'} failed to load</span></>
                     )}
-                  </ul>
+                  </p>
                   {strong.length === 0 && (
-                    <div className="mt-2 pt-2 border-t border-amber-200/60 dark:border-amber-900/40 space-y-2">
-                      <p className="text-foreground">
-                        The matcher scanned every system_id in the {searchedProjects.length || 'visible'} tile
-                        {searchedProjects.length === 1 ? '' : 's'} above and none contained
-                        {' '}<code className="text-[11px] bg-muted px-1 rounded">{(projectCode || '').toUpperCase().replace(/[^A-Z0-9]/gi, '')}</code>
-                        {' '}after normalization.
-                        {failedTiles.length > 0 ? (
-                          <>
-                            {' '}Note: <span className="font-medium">{failedTiles.length}</span> tile{failedTiles.length === 1 ? '' : 's'}
-                            {' '}({failedTiles.join(', ')}) failed to load on this run — its systems were NOT scanned.
-                            Retry the import; transient session issues sometimes clear on a second attempt.
-                          </>
-                        ) : (
-                          <>
-                            {' '}Every reachable tile loaded successfully, so the project code likely doesn't exist
-                            under this exact spelling in GoCompletions — try a variant (e.g. <code className="text-[11px] bg-muted px-1 rounded">DP18F</code> vs <code className="text-[11px] bg-muted px-1 rounded">DP-18F</code>),
-                            or pick from the available systems below.
-                          </>
-                        )}
-                      </p>
-                      <p className="font-medium text-foreground">Options:</p>
-                      <ul className="list-disc pl-4 space-y-0.5">
-                        <li>Confirm any <span className="font-medium">possible matches</span> below that genuinely belong to {projectCode}.</li>
-                        <li>Pick from the <span className="font-medium">available systems</span> list further down.</li>
-                        <li>Try a different project-code spelling and re-run.</li>
-                        <li>Or import via Excel / Add Manually instead.</li>
-                      </ul>
-                    </div>
+                    <p className="mt-2 text-foreground">
+                      {failedTiles.length > 0
+                        ? 'Some tiles failed — retry, or pick manually below.'
+                        : 'Try a different spelling, confirm a possible match below, or pick from available systems.'}
+                    </p>
                   )}
                 </section>
 
