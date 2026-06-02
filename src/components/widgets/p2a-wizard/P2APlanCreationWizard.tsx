@@ -851,6 +851,27 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         </div>
       </WizardShell>
 
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="z-[150]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete P2A Plan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the P2A Plan draft including all systems, VCRs, phases, and approvers. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteDraft}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Plan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Request Change confirmation dialog */}
       <AlertDialog open={requestChangeOpen} onOpenChange={setRequestChangeOpen}>
         <AlertDialogContent className="z-[150]">
