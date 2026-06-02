@@ -280,7 +280,8 @@ const KanbanCardContent: React.FC<{
   dragHandleProps?: Record<string, any>;
   isOverlay?: boolean;
   accentClass?: string;
-}> = ({ task, onClick, dragHandleProps, isOverlay, accentClass }) => {
+  isChild?: boolean;
+}> = ({ task, onClick, dragHandleProps, isOverlay, accentClass, isChild }) => {
   const navigate = useNavigate();
   const dateAnnotation = getDateAnnotation(task);
   const sp = task.smartPriority;
@@ -299,19 +300,21 @@ const KanbanCardContent: React.FC<{
     <Card
       onClick={onClick}
       className={cn(
-        "p-3 cursor-pointer transition-all duration-200 rounded-lg group border-l-[3px]",
-        "border border-border/60 bg-card shadow-[0_1px_3px_0_rgb(0,0,0,0.04)]",
-        "hover:-translate-y-0.5 hover:shadow-md hover:border-border",
-        accentClass || 'border-l-border',
+        isChild ? "p-2 cursor-pointer rounded-md group border-l-2" : "p-3 cursor-pointer transition-all duration-200 rounded-lg group border-l-[3px]",
+        isChild
+          ? "border-0 border-l-border/50 bg-muted/30 shadow-none hover:bg-muted/50"
+          : "border border-border/60 bg-card shadow-[0_1px_3px_0_rgb(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-md hover:border-border",
+        !isChild && (accentClass || 'border-l-border'),
+        isChild && 'border-l-border/50',
         task.isWaiting && 'opacity-50',
-        task.isNew && 'ring-1 ring-primary/15',
+        task.isNew && !isChild && 'ring-1 ring-primary/15',
         isOverlay && 'shadow-xl ring-2 ring-primary/20 rotate-[2deg] scale-[1.03]',
       )}
     >
       {/* Row 1: drag handle + project ID left, status right */}
-      <div className="flex items-center justify-between gap-1.5 mb-1.5">
+      <div className={cn("flex items-center justify-between gap-1.5", isChild ? "mb-1" : "mb-1.5")}>
         <div className="flex items-center gap-1.5 min-w-0">
-          {dragHandleProps && (
+          {!isChild && dragHandleProps && (
             <button
               {...dragHandleProps}
               onClick={(e) => e.stopPropagation()}
@@ -320,10 +323,12 @@ const KanbanCardContent: React.FC<{
               <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
           )}
-          {task.project ? (
-            <span className="text-[10px] font-medium font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.project}</span>
-          ) : (
-            <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
+          {!isChild && (
+            task.project ? (
+              <span className="text-[10px] font-medium font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded truncate max-w-[100px]">{task.project}</span>
+            ) : (
+              <span className="text-[10px] text-muted-foreground">{task.categoryLabel}</span>
+            )
           )}
           {task.isNew && (
             <span className="text-[8px] font-semibold text-primary bg-primary/8 px-1 rounded">NEW</span>
@@ -479,7 +484,10 @@ const KanbanCardContent: React.FC<{
 
       {/* Title + View in Gantt */}
       <div className="flex items-start justify-between gap-1">
-        <p className="text-sm font-medium text-foreground leading-snug mb-1.5 break-words overflow-hidden flex-1">
+        <p className={cn(
+          "font-medium text-foreground leading-snug break-words overflow-hidden flex-1",
+          isChild ? "text-xs mb-0.5" : "text-sm mb-1.5"
+        )}>
           {task.project ? task.title.replace(new RegExp(`\\s*[–\\-]\\s*${task.project.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '') : task.title}
         </p>
         {isOraActivity && oraPlanId && oraActivityCode && (
@@ -567,11 +575,11 @@ const KanbanCardWithChildren: React.FC<{
       {hasChildren && expanded && (
         <div className="ml-4 pl-2 border-l-2 border-border/40 space-y-1.5">
           {children.map(child => (
-            <DraggableKanbanCard
+            <KanbanCardContent
               key={child.id}
               task={child}
               onClick={() => onTaskClick(child)}
-              accentClass={accentClass}
+              isChild
             />
           ))}
         </div>
