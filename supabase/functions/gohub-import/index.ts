@@ -469,6 +469,26 @@ function parsePageMethodResponse(text: string): CompletionsSystem[] {
   return systems;
 }
 
+// ─── Filter variant builder ─────────────────────────────────
+// Project codes in ORSH (e.g. "DP-18F") may not appear verbatim in
+// GoCompletions system IDs. Build several normalized variants and
+// match if any one is found inside a normalized system_id.
+function buildFilterVariants(filter: string): string[] {
+  const raw = filter.toUpperCase().trim();
+  const alnum = raw.replace(/[^A-Z0-9]/g, "");           // "DP-18F" -> "DP18F"
+  const digitsTail = alnum.replace(/^[A-Z]+/, "");       // "DP18F"  -> "18F"
+  const digitsOnly = alnum.replace(/[^0-9]/g, "");       // "DP18F"  -> "18"
+  const out = new Set<string>();
+  for (const v of [raw.replace(/[^A-Z0-9]/g, ""), alnum, digitsTail, digitsOnly]) {
+    if (v && v.length >= 2) out.add(v);
+  }
+  return [...out];
+}
+
+function normalizeSystemId(id: string): string {
+  return id.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
 // ─── Search a single project for matching systems ───────────
 
 async function searchProjectForSystems(
@@ -477,7 +497,8 @@ async function searchProjectForSystems(
   homePageUrl: string,
   portalUrl: string,
   tile: ProjectTile,
-  projectFilter: string
+  projectFilter: string,
+  sampleSink?: { ids: string[] }
 ): Promise<{ systems: CompletionsSystem[]; cookies: Record<string, string> }> {
   try {
     const { cookies: projectCookies, responseHtml, responseUrl } =
@@ -498,9 +519,20 @@ async function searchProjectForSystems(
       }
     }
 
+    // Diagnostic sample so error messages can show what GoHub actually returned
+    if (sampleSink && allSystems.length > 0) {
+      for (const s of allSystems.slice(0, 8)) {
+        if (sampleSink.ids.length < 40) sampleSink.ids.push(`${tile.name}: ${s.system_id}`);
+      }
+    }
+
     if (allSystems.length > 0 && projectFilter) {
-      const filterUpper = projectFilter.toUpperCase();
-      const filtered = allSystems.filter(s => s.system_id.toUpperCase().includes(filterUpper));
+      const variants = buildFilterVariants(projectFilter);
+      console.log(`GoHub[${tile.name}]: ${allSystems.length} systems found. variants=${JSON.stringify(variants)} sample=${allSystems.slice(0, 5).map(s => s.system_id).join(",")}`);
+      const filtered = allSystems.filter(s => {
+        const norm = normalizeSystemId(s.system_id);
+        return variants.some(v => norm.includes(v));
+      });
       for (const sys of filtered) sys.source_project = tile.name;
       return { systems: filtered, cookies: gridCookies };
     }
@@ -624,8 +656,11 @@ Deno.serve(async (req) => {
         if (systems.length === 0) systems = await tryPageMethod(gridCookies, gridPageUrl);
         if (systems.length === 0) systems = extractFromHtml(gridHtml);
 
-        const filterUpper = projectFilter.toUpperCase();
-        const filtered = systems.filter(s => s.system_id.toUpperCase().includes(filterUpper));
+        const variants = buildFilterVariants(projectFilter);
+        const filtered = systems.filter(s => {
+          const norm = normalizeSystemId(s.system_id);
+          return variants.some(v => norm.includes(v));
+        });
 
         if (filtered.length > 0) {
           const topLevel = inferHierarchy(filtered);
@@ -653,10 +688,12 @@ Deno.serve(async (req) => {
     }
 
     // Step 3: Search ALL projects
-    console.log(`GoHub: Will search ${allTiles.length} projects for systems matching "${projectFilter}"`);
+    const variants = buildFilterVariants(projectFilter);
+    console.log(`GoHub: Will search ${allTiles.length} projects for "${projectFilter}" (variants=${JSON.stringify(variants)})`);
     const allMatchingSystems: CompletionsSystem[] = [];
     const searchedProjects: string[] = [];
     const projectsWithResults: string[] = [];
+    const sampleSink = { ids: [] as string[] };
     let currentCookies = loginCookies;
 
     for (let i = 0; i < allTiles.length; i++) {
@@ -684,7 +721,7 @@ Deno.serve(async (req) => {
       }
 
       const { systems: matchedSystems, cookies: updatedCookies } = await searchProjectForSystems(
-        currentCookies, currentHomeHtml, currentHomeUrl, finalPortalUrl, tile, projectFilter
+        currentCookies, currentHomeHtml, currentHomeUrl, finalPortalUrl, tile, projectFilter, sampleSink
       );
       currentCookies = updatedCookies;
 
@@ -695,10 +732,14 @@ Deno.serve(async (req) => {
     }
 
     if (allMatchingSystems.length === 0) {
+      const sampleHint = sampleSink.ids.length > 0
+        ? `\n\nSample of systems GoHub returned:\n${sampleSink.ids.slice(0, 12).join("\n")}`
+        : "\n\nGoHub returned no systems from any project (the Completions Grid may be empty for this login).";
       throw new Error(
-        `No systems matching "${projectFilter}" found across ${searchedProjects.length} GoHub projects (${searchedProjects.join(", ")}).`
+        `No systems matching "${projectFilter}" (tried variants: ${variants.join(", ")}) across ${searchedProjects.length} GoHub projects.${sampleHint}`
       );
     }
+
 
     // Deduplicate
     const seen = new Set<string>();

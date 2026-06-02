@@ -52,7 +52,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
         throw new Error('You must be logged in to import from GoHub');
       }
 
-      const cleanProjectCode = projectCode?.replace(/-/g, '') || '';
+      const cleanProjectCode = (projectCode || '').trim();
 
       const response = await supabase.functions.invoke('gohub-import', {
         body: {
@@ -119,6 +119,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
     <Dialog open={open} onOpenChange={resetAndClose}>
       <DialogContent
         className="sm:max-w-lg z-[200]"
+        overlayClassName="z-[199] bg-black/70 backdrop-blur-sm"
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
