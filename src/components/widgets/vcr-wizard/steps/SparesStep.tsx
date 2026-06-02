@@ -88,7 +88,7 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vcr-exec-spares'] });
       queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts'] });
-      toast.success('Spare part added');
+      toast.success('2Y spare added');
       setAddOpen(false);
       setForm(EMPTY_FORM);
     },
@@ -106,7 +106,7 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vcr-exec-spares'] });
       queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts'] });
-      toast.success('Spare part removed');
+      toast.success('2Y spare removed');
       setDeleteTarget(null);
     },
     onError: (err: any) => toast.error(err?.message || 'Failed to remove'),
@@ -117,10 +117,10 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Badge variant="outline">{items.length} spare parts</Badge>
+        <Badge variant="outline">{items.length} 2Y spares</Badge>
         {items.length > 0 && (
           <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
-            <Plus className="w-4 h-4" /> Add Spare Part
+            <Plus className="w-4 h-4" /> Add 2Y Spare
           </Button>
         )}
       </div>
@@ -131,10 +131,10 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
             <div className="w-14 h-14 rounded-full bg-teal-500/10 flex items-center justify-center mb-3">
               <Package className="w-7 h-7 text-teal-500" />
             </div>
-            <h3 className="font-medium">No Spare Parts</h3>
-            <p className="text-xs text-muted-foreground mt-1">Add spare parts required for this VCR.</p>
+            <h3 className="font-medium">No 2Y Spares</h3>
+            <p className="text-xs text-muted-foreground mt-1">Add 2-year operating spares required for this VCR.</p>
             <Button size="sm" onClick={() => setAddOpen(true)} className="mt-3 gap-1.5">
-              <Plus className="w-4 h-4" /> Add First Spare Part
+              <Plus className="w-4 h-4" /> Add First 2Y Spare
             </Button>
           </CardContent>
         </Card>
@@ -184,9 +184,9 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
       )}
 
       <Sheet open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) setForm(EMPTY_FORM); }}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto z-[150]" overlayClassName="z-[150]">
           <SheetHeader>
-            <SheetTitle>Add Spare Part</SheetTitle>
+            <SheetTitle>Add 2Y Spare</SheetTitle>
           </SheetHeader>
           <div className="space-y-4 mt-4">
             <div>
@@ -235,7 +235,7 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent className="z-[150]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Spare Part</AlertDialogTitle>
+            <AlertDialogTitle>Delete 2Y Spare</AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
