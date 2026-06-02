@@ -289,17 +289,38 @@ const SimpleRow: React.FC<{
   task: UnifiedTask;
   visible: ColumnConfig[];
   onClick: () => void;
-}> = ({ task, visible, onClick }) => {
+  depth?: number;
+  hasChildren?: boolean;
+  expanded?: boolean;
+  onToggleExpand?: () => void;
+}> = ({ task, visible, onClick, depth = 0, hasChildren = false, expanded = false, onToggleExpand }) => {
   const Icon = task.icon;
   const dueDate = task.dueDate || task.endDate;
   const isOverdue = dueDate && isPast(new Date(dueDate)) && !isToday(new Date(dueDate));
   const isDueToday = dueDate && isToday(new Date(dueDate));
 
-  const renderCell = (col: ColumnConfig) => {
+  const renderCell = (col: ColumnConfig, isFirst: boolean) => {
     switch (col.id) {
       case 'task':
         return (
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div
+            className="flex items-center gap-2.5 min-w-0"
+            style={depth > 0 ? { paddingLeft: depth * 20 } : undefined}
+          >
+            {hasChildren ? (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onToggleExpand?.(); }}
+                className="shrink-0 p-0.5 -ml-1 rounded hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={expanded ? 'Collapse sub-tasks' : 'Expand sub-tasks'}
+              >
+                {expanded
+                  ? <ChevronDown className="h-3.5 w-3.5" />
+                  : <ChevronRight className="h-3.5 w-3.5" />}
+              </button>
+            ) : depth > 0 ? null : (
+              <span className="inline-block w-[18px] shrink-0" />
+            )}
             <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", task.categoryColor)}>
               <Icon className="h-3.5 w-3.5" />
             </div>
@@ -366,16 +387,50 @@ const SimpleRow: React.FC<{
         "hover:bg-accent/40",
         task.isWaiting && "opacity-50 cursor-default",
         task.isNew && "bg-primary/[0.02]",
+        depth > 0 && "bg-muted/20",
       )}
     >
-      {visible.map(col => (
+      {visible.map((col, idx) => (
         <TableCell key={col.id} className="py-2.5 px-4">
-          {renderCell(col)}
+          {renderCell(col, idx === 0)}
         </TableCell>
       ))}
       <TableCell className="py-2.5 px-2 w-10">
         <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
       </TableCell>
     </TableRow>
+  );
+};
+
+// ─── Expandable Row (parent + collapsible children via parent_task_id) ───
+const ExpandableRow: React.FC<{
+  task: UnifiedTask;
+  visible: ColumnConfig[];
+  onClick: (task: UnifiedTask) => void;
+}> = ({ task, visible, onClick }) => {
+  const [expanded, setExpanded] = useState(false);
+  const children = task.children || [];
+  const hasChildren = children.length > 0;
+
+  return (
+    <>
+      <SimpleRow
+        task={task}
+        visible={visible}
+        onClick={() => onClick(task)}
+        hasChildren={hasChildren}
+        expanded={expanded}
+        onToggleExpand={() => setExpanded(v => !v)}
+      />
+      {hasChildren && expanded && children.map(child => (
+        <SimpleRow
+          key={child.id}
+          task={child}
+          visible={visible}
+          onClick={() => onClick(child)}
+          depth={1}
+        />
+      ))}
+    </>
   );
 };
