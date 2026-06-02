@@ -520,11 +520,11 @@ const CandidateRow: React.FC<{
         <div className="px-2 pb-2 pl-9 space-y-1">
           {subs.map((s, i) => (
             <div
-              key={`${s.subsystem_id ?? s.id ?? i}`}
+              key={`${s.system_id ?? i}`}
               className="flex items-center gap-2 text-[11px] text-muted-foreground"
             >
               <span className="font-mono px-1.5 py-0.5 rounded bg-muted/40 border border-border/40">
-                {s.subsystem_id ?? s.id ?? `#${i + 1}`}
+                {s.system_id ?? `#${i + 1}`}
               </span>
               <span className="truncate">{s.name ?? ''}</span>
             </div>
