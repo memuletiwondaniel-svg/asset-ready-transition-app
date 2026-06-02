@@ -76,7 +76,7 @@ export const SparesStep: React.FC<SparesStepProps> = ({ vcrId }) => {
         part_number: item.part_number.trim() || null,
         quantity: Number.isFinite(qty as number) ? qty : null,
         description: item.description.trim() || null,
-        responsible_person: item.responsible_person.trim() || null,
+        responsible_person: cmmsLead?.full_name ?? null,
         target_date: item.target_date || null,
         status: item.status,
         display_order: items.length,
