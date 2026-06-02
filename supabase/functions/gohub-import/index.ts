@@ -1,7 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
-  loginGoCompletions,
-  extractAllProjectTiles,
   navigateToCompletionsGrid,
   resolveAsmxServiceUrl,
   formatCookies,
@@ -9,7 +7,6 @@ import {
   BROWSER_UA,
   decodeHtmlEntities,
   getGoCompletionsCredentials,
-  type ProjectTile,
 } from "../_shared/gocompletions-auth.ts";
 import {
   iterateProjectTilesFreshSession,
