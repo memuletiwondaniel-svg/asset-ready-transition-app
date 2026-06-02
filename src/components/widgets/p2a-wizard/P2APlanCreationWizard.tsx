@@ -588,11 +588,11 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   })();
 
   const headerTitle = isReviewMode ? 'Review P2A Plan' : 'Develop P2A Plan';
-  const projectSubtitle = projectName && projectName !== projectCode ? `${projectCode} · ${projectName}` : projectCode;
+  const headerSubtitle = 'Plan to Activate — handover readiness plan';
 
-  // VCR-style stacked header — code chip + status, big title, subtitle
+  // Compact header used as fallback (mobile / when topHeader not rendered)
   const headerContent = (
-    <div className="flex flex-col gap-2 min-w-0">
+    <div className="flex flex-col gap-1 min-w-0">
       <div className="flex items-center gap-1.5 flex-wrap">
         <Badge className="text-[10px] font-mono font-semibold border-0 px-2 py-0.5 bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">
           P2A
@@ -601,14 +601,62 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           {statusChip.label}
         </Badge>
       </div>
-      <h2 className="text-[15px] font-black leading-tight text-foreground line-clamp-2">
+      <h2 className="text-[15px] font-bold leading-tight text-foreground line-clamp-2">
         {headerTitle}
       </h2>
-      <p className="text-[10px] text-muted-foreground truncate uppercase tracking-wide font-medium">
-        {projectSubtitle}
-      </p>
     </div>
   );
+
+  // Full-width banner header — VCR-style: title leads, chips to side, project meta as labelled chips
+  const topHeaderContent = (
+    <div className="flex flex-col gap-2 min-w-0">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl sm:text-2xl font-bold leading-tight text-foreground tracking-tight">
+            {headerTitle}
+          </h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            {headerSubtitle}
+          </p>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0 pt-1">
+          <Badge className="text-[10px] font-mono font-semibold border-0 px-2 py-0.5 bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">
+            P2A
+          </Badge>
+          <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-medium", statusChip.cls)}>
+            {statusChip.label}
+          </Badge>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 flex-wrap pt-1">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Project</span>
+          <span className="font-mono text-xs font-semibold text-foreground bg-muted/60 px-1.5 py-0.5 rounded">
+            {projectCode}
+          </span>
+        </div>
+        {projectName && projectName !== projectCode && (
+          <>
+            <span className="text-muted-foreground/40">·</span>
+            <span className="text-xs sm:text-sm text-foreground/80 truncate">
+              {projectName.replace(/\b\w+/g, (w) =>
+                /^[A-Z0-9-]+$/.test(w) && w.length <= 4
+                  ? w
+                  : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+              )}
+            </span>
+          </>
+        )}
+        {plantName && (
+          <>
+            <span className="text-muted-foreground/40">·</span>
+            <span className="text-xs text-muted-foreground">{plantName}</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
 
   // Header actions (delete draft)
   const headerActions = (
