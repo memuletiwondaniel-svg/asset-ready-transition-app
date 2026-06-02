@@ -529,64 +529,40 @@ function classifyMatch(systemId: string, v: FilterVariants): MatchTier {
   return null;
 }
 
-// ─── Search a single project for matching systems ───────────
+// ─── Fetch every system for an already-loaded grid (no tile select) ──
 
-async function searchProjectForSystems(
+async function fetchAllSystemsFromGrid(
   cookies: Record<string, string>,
-  homePageHtml: string,
-  homePageUrl: string,
-  portalUrl: string,
-  tile: ProjectTile,
-  variants: FilterVariants,
-  sampleSink?: { entries: SampleEntry[] }
-): Promise<{ systems: CompletionsSystem[]; cookies: Record<string, string> }> {
-  try {
-    const { cookies: projectCookies, responseHtml, responseUrl } =
-      await selectProjectTile(cookies, homePageHtml, homePageUrl, tile);
+  gridPageUrl: string,
+  gridHtml: string,
+): Promise<CompletionsSystem[]> {
+  let systems = await tryAsmxWebMethod(cookies, gridPageUrl, gridHtml);
+  if (systems.length === 0) systems = await tryPageMethod(cookies, gridPageUrl);
+  if (systems.length === 0) systems = extractFromHtml(gridHtml);
 
-    const { html: gridHtml, url: gridPageUrl, cookies: gridCookies } =
-      await navigateToCompletionsGrid(projectCookies, portalUrl, responseHtml, responseUrl);
-
-    let allSystems: CompletionsSystem[] = [];
-    allSystems = await tryAsmxWebMethod(gridCookies, gridPageUrl, gridHtml);
-    if (allSystems.length === 0) allSystems = await tryPageMethod(gridCookies, gridPageUrl);
-    if (allSystems.length === 0) allSystems = extractFromHtml(gridHtml);
-
-    if (allSystems.length > 0) {
-      const needsEnrichment = allSystems.some(s => s.subsystems.length === 0);
-      if (needsEnrichment) {
-        allSystems = await enrichSystemsWithSubsystems(allSystems, gridCookies, gridPageUrl, gridHtml);
-      }
+  if (systems.length > 0) {
+    const needsEnrichment = systems.some((s) => s.subsystems.length === 0);
+    if (needsEnrichment) {
+      systems = await enrichSystemsWithSubsystems(systems, cookies, gridPageUrl, gridHtml);
     }
-
-    // Collect a sample so the UI can offer a manual pick-list when no matches
-    if (sampleSink) {
-      for (const s of allSystems) {
-        if (sampleSink.entries.length >= 200) break;
-        sampleSink.entries.push({
-          source_project: tile.name,
-          system_id: s.system_id,
-          name: s.name,
-        });
-      }
-    }
-
-    if (allSystems.length === 0) return { systems: [], cookies: gridCookies };
-
-    console.log(`GoHub[${tile.name}]: ${allSystems.length} systems found. variants=${JSON.stringify(variants)} sample=${allSystems.slice(0, 5).map(s => s.system_id).join(",")}`);
-    const matched: CompletionsSystem[] = [];
-    for (const sys of allSystems) {
-      const tier = classifyMatch(sys.system_id, variants);
-      if (!tier) continue;
-      sys.match_tier = tier;
-      sys.source_project = tile.name;
-      matched.push(sys);
-    }
-    return { systems: matched, cookies: gridCookies };
-  } catch (error) {
-    console.error(`GoHub: Error searching project "${tile.name}":`, error);
-    return { systems: [], cookies };
   }
+  return systems;
+}
+
+function matchSystems(
+  systems: CompletionsSystem[],
+  variants: FilterVariants,
+  sourceProject: string,
+): CompletionsSystem[] {
+  const matched: CompletionsSystem[] = [];
+  for (const sys of systems) {
+    const tier = classifyMatch(sys.system_id, variants);
+    if (!tier) continue;
+    sys.match_tier = tier;
+    sys.source_project = sourceProject;
+    matched.push(sys);
+  }
+  return matched;
 }
 
 // ─── Hierarchy inference ────────────────────────────────────
