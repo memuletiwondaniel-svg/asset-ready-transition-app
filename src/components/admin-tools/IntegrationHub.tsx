@@ -178,7 +178,7 @@ const IntegrationHub: React.FC<IntegrationHubProps> = ({ onBack }) => {
     scope: string | null;
     available: string[];
     withData: string[];
-    breakdown: Array<{ name: string; systems_found: number; matched: number }>;
+    breakdown: Array<{ name: string; systems_found: number; matched: number; status?: 'ok' | 'empty' | 'load_failed' | 'error'; note?: string }>;
     totalFound: number;
     totalUpdated: number;
     error?: string;
