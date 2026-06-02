@@ -52,7 +52,7 @@ const fetchUserTasks = async (userId: string): Promise<FetchResult> => {
   // 'cancelled_superseded' via is_active_task_status(). Writes still target user_tasks.
   const { data: tasksData, error: tasksError } = await (supabase as any)
     .from('ora_activity_plan_v')
-    .select('id,title,description,due_date,priority,type,status,display_order,created_at,metadata,sub_items,progress_percentage,user_id')
+    .select('id,title,description,due_date,priority,type,status,display_order,created_at,metadata,sub_items,progress_percentage,user_id,parent_task_id')
     .in('user_id', effectiveUserIds)
     .order('display_order', { ascending: true })
     .order('priority', { ascending: false })
