@@ -343,18 +343,6 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                   </section>
                 )}
 
-                {/* Empty + sample picker */}
-                {strong.length === 0 && weak.length === 0 && (
-                  <section>
-                    <div className="rounded-lg border border-dashed bg-muted/30 p-3 mb-3">
-                      <p className="text-sm font-medium">No automatic matches found</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        We couldn't confidently match your project code <span className="font-mono">{projectCode}</span>.
-                        Pick the systems that belong to this project from the list below.
-                      </p>
-                    </div>
-                  </section>
-                )}
 
                 {/* Sample selector — always available when we have data */}
                 {sample.length > 0 && (
