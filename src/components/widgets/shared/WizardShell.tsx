@@ -181,12 +181,14 @@ export const WizardShell: React.FC<WizardShellProps> = ({
           ) : (
             /* ─── Desktop: Vertical Sidebar ─── */
             <div className="w-60 shrink-0 bg-muted/20 border-r border-border/60 flex flex-col">
-              <div className="p-4 border-b border-border/40">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">{header}</div>
-                  <div className="flex items-center gap-0.5 shrink-0">{headerActions}</div>
+              {!hasTopHeader && (
+                <div className="p-4 border-b border-border/40">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">{header}</div>
+                    <div className="flex items-center gap-0.5 shrink-0">{headerActions}</div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {showStepList ? (
                 <div className="flex-1 p-2 space-y-0.5 overflow-y-auto">
