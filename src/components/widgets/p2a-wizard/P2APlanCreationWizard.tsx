@@ -887,6 +887,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         isStepComplete={isStepComplete}
         isStepWarning={isStepWarning}
         header={headerContent}
+        topHeader={topHeaderContent}
         headerActions={headerActions}
         banners={bannerContent}
         pinnedFooterContent={pinnedFooter}
