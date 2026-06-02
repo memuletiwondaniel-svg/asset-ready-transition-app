@@ -830,12 +830,14 @@ const runR22: Scenario["run"] = async (ctx) => {
     observed: { count: itpRows.length, got: itpRows.map((r: any) => r.title) },
   };
 
-  // sub-tasks
+  // sub-tasks — R22b fans ALL p2a_itp_activities (W + H + NA), unlike R18
+  // which filters to W|H. Expected = WITNESS + NA fixtures.
+  const ITP_ALL = ITP_FIXTURE_COUNT + ITP_NA_FIXTURE_COUNT;
   const { data: children } = await svc.from("user_tasks")
     .select("id,status,confirmed_by_sr_ora_engr,metadata")
     .eq("parent_task_id", itpParent.id);
-  if (!children || children.length !== ITP_FIXTURE_COUNT) {
-    return { status: "fail", expected: `${ITP_FIXTURE_COUNT} ITP sub-tasks`, observed: { count: children?.length } };
+  if (!children || children.length !== ITP_ALL) {
+    return { status: "fail", expected: `${ITP_ALL} ITP sub-tasks (all inspection_types)`, observed: { count: children?.length } };
   }
   const missingFlag = children.filter((c: any) => c.metadata?.requires_sr_ora_confirmation !== "true");
   if (missingFlag.length > 0) {
