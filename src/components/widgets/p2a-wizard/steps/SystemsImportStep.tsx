@@ -148,60 +148,66 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-3 p-4 h-full">
+    <div className="flex flex-col gap-4 p-4 h-full">
       {/* Header */}
       <div className="flex items-start justify-between shrink-0">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold">Systems</h3>
-            <Badge variant="secondary" className="text-[10px] font-medium px-1.5 py-0 h-4">Optional</Badge>
-          </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {systems.length === 0
-              ? 'No systems assigned yet. Import now or skip and assign later.'
-              : 'Import or manually add systems for handover'}
-          </p>
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold">Systems</h3>
+          <Badge variant="secondary" className="text-[10px] font-medium px-1.5 py-0 h-4">Optional</Badge>
         </div>
-        <Badge variant="outline" className="shrink-0">{systems.length} systems</Badge>
+        {systems.length > 0 && (
+          <Badge variant="outline" className="shrink-0">{systems.length} systems</Badge>
+        )}
       </div>
 
-      {/* Import options */}
+      {/* Systems list OR clean empty state (no border/frame) */}
+      {systems.length === 0 ? (
+        <div className="flex flex-col items-center justify-center text-center py-8 shrink-0">
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+            <Database className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <p className="text-sm font-medium">No systems yet</p>
+          <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+            Pick an import method below to get started, or continue to the next step and assign systems later.
+          </p>
+          <div className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
+            This step is optional — you can skip it.
+          </div>
+        </div>
+      ) : (
+        <div className="border rounded-lg flex-1 min-h-0 bg-muted/20">
+          <ScrollArea className="h-full">
+            <div className="p-1.5 space-y-1">
+              {systems.map((system) => (
+                <SystemListItem
+                  key={system.id}
+                  system={system}
+                  isEditing={editingId === system.id}
+                  onEdit={() => setEditingId(system.id)}
+                  onCancelEdit={() => setEditingId(null)}
+                  onUpdate={(updates) => handleUpdateSystem(system.id, updates)}
+                  onRemove={() => handleRemoveSystem(system.id)}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
+
+      {/* Import options — beneath the empty state */}
       <div className="grid grid-cols-3 gap-3 shrink-0">
-        {/* CMS Import — calm not-configured state when unavailable */}
         <button
-          onClick={() => {
-            if (!cmsConfigured) return;
-            setShowCMSModal(true);
-          }}
-          disabled={!cmsConfigured}
-          className={cn(
-            "group relative flex flex-col items-center gap-2 p-4 rounded-xl border bg-card transition-all duration-200 text-left",
-            cmsConfigured
-              ? "border-border hover:bg-accent/50 hover:border-primary/30 hover:shadow-md cursor-pointer"
-              : "border-dashed border-border/70 opacity-80 cursor-not-allowed"
-          )}
+          onClick={() => setShowCMSModal(true)}
+          className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card transition-colors text-left"
         >
-          <div className={cn(
-            "w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
-            cmsConfigured ? "bg-amber-500/10 group-hover:bg-amber-500/20" : "bg-muted"
-          )}>
-            <Database className={cn("h-4 w-4", cmsConfigured ? "text-amber-600" : "text-muted-foreground")} />
+          <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
+            <Database className="h-4 w-4 text-amber-600" />
           </div>
           <span className="font-medium text-xs">CMS Import</span>
-          {cmsConfigured ? (
-            <span className="text-[10px] text-muted-foreground leading-tight text-center">Sync from GoHub</span>
-          ) : (
-            <span className="text-[10px] text-muted-foreground leading-tight text-center">
-              Not configured
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); navigate('/admin?tab=apis'); }}
-                className="block mx-auto mt-0.5 text-primary hover:underline inline-flex items-center gap-0.5"
-              >
-                <Settings2 className="h-2.5 w-2.5" /> Set up in Admin
-              </button>
-            </span>
-          )}
+          <span className="text-[10px] text-muted-foreground leading-tight text-center">
+            Import from GoCompletions CMS
+          </span>
         </button>
         <button
           onClick={() => setShowExcelModal(true)}
@@ -225,40 +231,6 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         </button>
       </div>
 
-      {/* Systems List / guided empty state */}
-      <div className="border rounded-lg flex-1 min-h-0 bg-muted/20">
-        <ScrollArea className="h-full">
-          <div className="p-1.5 space-y-1">
-            {systems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center text-center py-10 px-6">
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-                  <Database className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <p className="text-sm font-medium">No systems yet</p>
-                <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-                  Pick an import method above to get started, or continue to the next step and assign systems later.
-                </p>
-                <div className="mt-3 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground bg-background border border-border/70 rounded-full px-2.5 py-1">
-                  <Info className="h-3 w-3" />
-                  This step is optional — you can skip it.
-                </div>
-              </div>
-            ) : (
-              systems.map((system) => (
-                <SystemListItem
-                  key={system.id}
-                  system={system}
-                  isEditing={editingId === system.id}
-                  onEdit={() => setEditingId(system.id)}
-                  onCancelEdit={() => setEditingId(null)}
-                  onUpdate={(updates) => handleUpdateSystem(system.id, updates)}
-                  onRemove={() => handleRemoveSystem(system.id)}
-                />
-              ))
-            )}
-          </div>
-        </ScrollArea>
-      </div>
 
 
       {/* CMS Import Modal */}
