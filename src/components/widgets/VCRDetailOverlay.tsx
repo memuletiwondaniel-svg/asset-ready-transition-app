@@ -544,16 +544,28 @@ const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string; projectId?:
     queryKey: ['vcr-execution-readiness', vcrId],
     queryFn: async () => {
       const client = supabase as any;
-      const [training, procedures, documentation] = await Promise.all([
+      const [training, procedures, documentation, systems, vcrRow] = await Promise.all([
         client.from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
         client.from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
         client.from('p2a_vcr_documentation').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+        client.from('p2a_handover_point_systems').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+        client.from('p2a_handover_points').select('systems_finalized_at').eq('id', vcrId).maybeSingle(),
       ]);
+      const systemsCount = systems.count || 0;
+      const systemsFinalized = !!vcrRow.data?.systems_finalized_at;
+      const systemsReady = systemsCount > 0 && systemsFinalized;
       return {
         training: training.count || 0,
         procedures: procedures.count || 0,
         documentation: documentation.count || 0,
-        isReady: (training.count || 0) > 0 && (procedures.count || 0) > 0 && (documentation.count || 0) > 0,
+        systems: systemsCount,
+        systemsFinalized,
+        systemsReady,
+        isReady:
+          (training.count || 0) > 0 &&
+          (procedures.count || 0) > 0 &&
+          (documentation.count || 0) > 0 &&
+          systemsReady,
       };
     },
   });
