@@ -67,6 +67,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   const [sampleFilter, setSampleFilter] = useState('');
   const [searchedProjects, setSearchedProjects] = useState<string[]>([]);
   const [projectsWithResults, setProjectsWithResults] = useState<string[]>([]);
+  const [failedTiles, setFailedTiles] = useState<string[]>([]);
 
   useEffect(() => {
     if (open && phase === 'idle') void runImport();
@@ -80,6 +81,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
       setSampleFilter('');
       setSearchedProjects([]);
       setProjectsWithResults([]);
+      setFailedTiles([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -117,6 +119,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
       setSample(incomingSample);
       setSearchedProjects(Array.isArray(data.searched_projects) ? data.searched_projects : []);
       setProjectsWithResults(Array.isArray(data.projects_with_results) ? data.projects_with_results : []);
+      setFailedTiles(Array.isArray(data.failed_tiles) ? data.failed_tiles : []);
       // Pre-select STRONG matches only
       setSelected(new Set(incoming.filter(c => c.tier === 'strong').map(c => c.system_id)));
       setSampleSelected(new Set());
@@ -289,24 +292,39 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                         <span className="font-medium text-foreground">{projectsWithResults.join(', ')}</span>
                       </li>
                     )}
+                    {failedTiles.length > 0 && (
+                      <li>
+                        <span className="text-foreground/70">Tiles that failed to load:</span>{' '}
+                        <span className="font-medium text-amber-700 dark:text-amber-400">{failedTiles.join(', ')}</span>
+                      </li>
+                    )}
                   </ul>
                   {strong.length === 0 && (
                     <div className="mt-2 pt-2 border-t border-amber-200/60 dark:border-amber-900/40 space-y-2">
                       <p className="text-foreground">
-                        The matcher scanned every system_id in the {searchedProjects.length || 'visible'} project
+                        The matcher scanned every system_id in the {searchedProjects.length || 'visible'} tile
                         {searchedProjects.length === 1 ? '' : 's'} above and none contained
                         {' '}<code className="text-[11px] bg-muted px-1 rounded">{(projectCode || '').toUpperCase().replace(/[^A-Z0-9]/gi, '')}</code>
-                        {' '}after normalization. The most likely cause is an <span className="font-medium">access
-                        issue</span>: the GoHub login configured in Admin → Integrations cannot see the area where
-                        {' '}{projectCode}'s systems live (e.g. DP-18F sits under <span className="font-medium">WEST QURNA (WQ)</span>;
-                        if WQ is not in the searched list above, that area is not reachable with the current
-                        credentials).
+                        {' '}after normalization.
+                        {failedTiles.length > 0 ? (
+                          <>
+                            {' '}Note: <span className="font-medium">{failedTiles.length}</span> tile{failedTiles.length === 1 ? '' : 's'}
+                            {' '}({failedTiles.join(', ')}) failed to load on this run — its systems were NOT scanned.
+                            Retry the import; transient session issues sometimes clear on a second attempt.
+                          </>
+                        ) : (
+                          <>
+                            {' '}Every reachable tile loaded successfully, so the project code likely doesn't exist
+                            under this exact spelling in GoCompletions — try a variant (e.g. <code className="text-[11px] bg-muted px-1 rounded">DP18F</code> vs <code className="text-[11px] bg-muted px-1 rounded">DP-18F</code>),
+                            or pick from the available systems below.
+                          </>
+                        )}
                       </p>
                       <p className="font-medium text-foreground">Options:</p>
                       <ul className="list-disc pl-4 space-y-0.5">
                         <li>Confirm any <span className="font-medium">possible matches</span> below that genuinely belong to {projectCode}.</li>
                         <li>Pick from the <span className="font-medium">available systems</span> list further down.</li>
-                        <li>Update GoHub credentials in Admin → Integrations to a login that can see {projectCode}'s area, then retry.</li>
+                        <li>Try a different project-code spelling and re-run.</li>
                         <li>Or import via Excel / Add Manually instead.</li>
                       </ul>
                     </div>
