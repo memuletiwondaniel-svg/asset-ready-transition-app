@@ -99,6 +99,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     loadDraft,
     draftLoaded,
     saveDraft,
+    saveDraftSilent,
     submitForApproval,
     deleteDraft,
     isSaving,
@@ -244,6 +245,17 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   useEffect(() => {
     if (open) setBannerDismissed(false);
   }, [open]);
+
+  // Debounced autosave: silently persist state changes while user works inside the Guided Wizard
+  useEffect(() => {
+    if (!open || !useWizard || isReadOnly || isReviewMode || isLoadingDraft) return;
+    if (!draftLoaded && (state.systems.length === 0 && state.vcrs.length === 0 && state.phases.length === 0 && state.approvers.length === 0)) {
+      return;
+    }
+    const t = setTimeout(() => { void saveDraftSilent(); }, 1500);
+    return () => clearTimeout(t);
+  }, [open, useWizard, isReadOnly, isReviewMode, isLoadingDraft, draftLoaded, state, saveDraftSilent]);
+
 
   useEffect(() => {
     if (open && existingPlan && !draftLoaded && !isLoadingDraft) {
@@ -391,6 +403,10 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const handleChooseWizard = () => {
     setUseWizard(true);
     setCurrentStep(0);
+    // Eagerly create the DRAFT row so the project card shows "Continue P2A Plan" + delete on next visit
+    if (!isReadOnly && !isReviewMode) {
+      void saveDraftSilent();
+    }
   };
 
   const handleChooseWorkspace = async () => {
