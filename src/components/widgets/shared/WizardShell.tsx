@@ -294,6 +294,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
             ) : null}
           </div>
         </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
