@@ -283,6 +283,7 @@ export function useUnifiedTasks(userId: string) {
           isWorkflowTask,
         }),
         isApprovalProtected,
+        parentTaskId: t.parent_task_id ?? null,
       });
     });
 
