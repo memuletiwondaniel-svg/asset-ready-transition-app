@@ -169,13 +169,15 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const { data: stepCounts = {} } = useQuery({
     queryKey: ['vcr-wizard-step-counts', vcr.id],
     queryFn: async () => {
-      const [systems, training, procedures, criticalDocs, registers, logsheets] = await Promise.all([
+      const [systems, training, procedures, criticalDocs, registers, logsheets, cmms, spares] = await Promise.all([
         (supabase as any).from('p2a_handover_point_systems').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_register_selections').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
+        (supabase as any).from('p2a_vcr_cmms').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
+        (supabase as any).from('p2a_vcr_spares').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
       ]);
       return {
         0: systems.count || 0,
@@ -183,6 +185,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         3: procedures.count || 0,
         4: criticalDocs.count || 0,
         5: (registers.count || 0) + (logsheets.count || 0),
+        6: cmms.count || 0,
+        7: spares.count || 0,
       } as Record<number, number>;
     },
     enabled: open,
@@ -190,8 +194,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
-    // VCR Items (1), ITP (6), Approvers (7) — completion based on visit
-    if (idx === 1 || idx === 6 || idx === 7) return visitedSteps.has(idx);
+    // VCR Items (1), ITP (8), Approvers (9) — completion based on visit
+    if (idx === 1 || idx === 8 || idx === 9) return visitedSteps.has(idx);
     return (stepCounts[idx] || 0) > 0;
   };
 
@@ -236,8 +240,10 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 3: return <ProceduresStep vcrId={vcr.id} />;
       case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={projectCode} />;
       case 5: return <RegistersLogsheetsStep vcrId={vcr.id} />;
-      case 6: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 7: return <ApproversStep vcrId={vcr.id} />;
+      case 6: return <CMMSStep vcrId={vcr.id} />;
+      case 7: return <SparesStep vcrId={vcr.id} />;
+      case 8: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 9: return <ApproversStep vcrId={vcr.id} />;
       default: return null;
     }
   };
