@@ -396,7 +396,6 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
     );
   }
 
-  const hasProgress = typeof system.progress === 'number';
   const idColors = getSystemIdColor(system.system_id);
 
   return (
