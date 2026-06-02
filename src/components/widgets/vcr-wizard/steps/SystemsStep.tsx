@@ -17,10 +17,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Search, Layers, Trash2, Flame, Snowflake, ChevronRight, ChevronDown,
-  Plus, RefreshCw,
+  Plus, RefreshCw, CheckCircle2, Info, Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 
 interface SystemsStepProps {
   vcrId: string;
