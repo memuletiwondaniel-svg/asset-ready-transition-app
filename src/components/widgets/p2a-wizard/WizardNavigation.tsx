@@ -85,6 +85,30 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
             <TooltipContent side="top">Close & Exit</TooltipContent>
           </Tooltip>
         )}
+        {onDelete && (
+          <>
+            <div className="w-px h-5 bg-border/60 mx-0.5" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onDelete}
+                  disabled={isDeleting}
+                  aria-label="Delete P2A Plan"
+                  className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Delete</TooltipContent>
+            </Tooltip>
+          </>
+        )}
       </div>
 
       <div className="flex items-center gap-1.5 sm:gap-2">
