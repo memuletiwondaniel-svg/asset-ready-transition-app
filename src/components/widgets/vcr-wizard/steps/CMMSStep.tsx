@@ -200,7 +200,24 @@ export const CMMSStep: React.FC<CMMSStepProps> = ({ vcrId }) => {
             </div>
             <div>
               <Label>Responsible Person</Label>
-              <Input value={form.responsible_person} onChange={e => setForm({ ...form, responsible_person: e.target.value })} />
+              {leadLoading ? (
+                <div className="h-10 rounded-md border border-input bg-muted/30 animate-pulse" />
+              ) : cmmsLead ? (
+                <div className="flex items-center gap-2 h-10 rounded-md border border-input bg-muted/30 px-3">
+                  <Avatar className="h-6 w-6">
+                    {cmmsLead.avatar_url && <AvatarImage src={cmmsLead.avatar_url} alt={cmmsLead.full_name} />}
+                    <AvatarFallback className="text-[10px]">{leadInitials}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium truncate">{cmmsLead.full_name}</span>
+                  <Badge variant="secondary" className="ml-auto text-[9px]">CMMS Lead</Badge>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span>No CMMS Lead assigned to this project. Add a CMMS Lead in Project Team to enable this deliverable.</span>
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground mt-1">Auto-assigned to the project's CMMS Lead.</p>
             </div>
             <div>
               <Label>Target Date</Label>
