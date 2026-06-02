@@ -36,6 +36,12 @@ export const ORPActivitiesPanel: React.FC<ORPActivitiesPanelProps> = ({
   const { tasks: userTasks, loading: tasksLoading, updateTaskStatus } = useUserTasks();
   const { isNewSinceLastLogin } = useUserLastLogin();
   const [selectedTask, setSelectedTask] = useState<UserTask | null>(null);
+  const [expandedParents, setExpandedParents] = useState<Set<string>>(new Set());
+  const toggleExpand = (id: string) => setExpandedParents(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
 
   const isLoading = orpLoading || tasksLoading;
 
