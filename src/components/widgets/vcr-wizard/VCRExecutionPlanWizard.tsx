@@ -66,11 +66,13 @@ const STEPS: WizardShellStep[] = [
   { id: 'procedures', label: 'Procedures', icon: BookOpen, color: 'text-emerald-500' },
   { id: 'critical-docs', label: 'Critical Documents', icon: FileText, color: 'text-amber-500' },
   { id: 'registers-logsheets', label: 'Registers & Logsheets', icon: ClipboardList, color: 'text-cyan-500' },
+  { id: 'cmms', label: 'CMMS', icon: Wrench, color: 'text-amber-500' },
+  { id: 'spares', label: 'Spares', icon: Package, color: 'text-teal-500' },
   { id: 'itp', label: 'Inspection Test Plan', icon: ClipboardList, color: 'text-orange-500' },
   { id: 'approvers', label: 'Approvers', icon: UserCheck, color: 'text-primary' },
 ];
 
-const TOTAL_STEPS = STEPS.length; // 8
+const TOTAL_STEPS = STEPS.length; // 10
 const DRAFT_COMPLETE_PROGRESS = 83;
 
 export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
