@@ -474,9 +474,6 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
                 {sub.system_id}
               </span>
               <span className="truncate flex-1 text-muted-foreground text-[10px]">{sub.name}</span>
-              <span className="text-[9px] font-medium tabular-nums shrink-0 text-muted-foreground">
-                {Math.round(sub.progress)}%
-              </span>
               {/* Spacer matching the width of the parent's hover action buttons */}
               <div className="w-[52px] shrink-0" />
             </div>
