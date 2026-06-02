@@ -1,10 +1,7 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
-  loginGoCompletions,
-  extractAllProjectTiles,
-  navigateToCompletionsGrid,
   callAsmxMethod,
-  followRedirects,
+  navigateToCompletionsGrid,
   formatCookies,
   BROWSER_UA,
   parseCookiesFromResponse,
