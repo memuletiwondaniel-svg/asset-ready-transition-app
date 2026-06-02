@@ -210,7 +210,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                           isActive
                             ? 'bg-primary/[0.08] text-foreground'
                             : isComplete
-                              ? 'hover:bg-muted/60 text-foreground'
+                              ? 'hover:bg-emerald-500/[0.06] text-emerald-600 dark:text-emerald-400'
                               : isWarning
                                 ? 'hover:bg-amber-50 dark:hover:bg-amber-950/20 text-amber-700 dark:text-amber-400'
                                 : 'hover:bg-muted/40 text-muted-foreground'
@@ -219,7 +219,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                         <div className={cn(
                           'relative w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[11px] font-semibold transition-colors',
                           isComplete && !isActive
-                            ? 'bg-background border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                            ? 'bg-background border border-emerald-500 text-emerald-600 dark:text-emerald-400'
                             : isActive
                               ? 'bg-primary text-primary-foreground border border-primary'
                               : isWarning
