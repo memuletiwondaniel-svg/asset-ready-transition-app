@@ -340,6 +340,7 @@ const SimpleRow: React.FC<{
         );
 
       case 'project':
+        if (depth > 0) return <span className="text-muted-foreground/40 text-xs">—</span>;
         return task.project
           ? <ProjectIdBadge size="sm" projectId={task.project}>{task.project}</ProjectIdBadge>
           : <span className="text-muted-foreground/40 text-xs">—</span>;
