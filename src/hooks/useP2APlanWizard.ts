@@ -379,25 +379,45 @@ async function persistPlanToDatabase(
     }
   }
 
-  // Delete existing VCRs and their system mappings
+  // Delete existing VCRs and their system mappings — BUT preserve any VCR whose
+  // systems have been finalized in the VCR plan. Once finalized, the VCR plan is
+  // the authoritative owner of its system list; P2A re-submit must not reach back
+  // and overwrite it (seed-once, then independent).
   const { data: existingVCRs } = await client
     .from('p2a_handover_points')
-    .select('id')
+    .select('id, systems_finalized_at')
     .eq('handover_plan_id', planId);
 
-  if (existingVCRs && existingVCRs.length > 0) {
-    const existingVCRIds = existingVCRs.map((v: any) => v.id);
+  const finalizedVcrIds = new Set<string>(
+    (existingVCRs || [])
+      .filter((v: any) => v.systems_finalized_at)
+      .map((v: any) => v.id)
+  );
+  const deletableVcrIds = (existingVCRs || [])
+    .filter((v: any) => !v.systems_finalized_at)
+    .map((v: any) => v.id);
+
+  if (deletableVcrIds.length > 0) {
     await client.from('p2a_handover_point_systems')
       .delete()
-      .in('handover_point_id', existingVCRIds);
+      .in('handover_point_id', deletableVcrIds);
     await client.from('p2a_handover_points')
       .delete()
-      .eq('handover_plan_id', planId);
+      .in('id', deletableVcrIds);
+  }
+  if (finalizedVcrIds.size > 0) {
+    console.info(`[P2A-PERSIST] Preserved ${finalizedVcrIds.size} finalized VCR(s); their system mappings were not touched.`);
   }
 
   // Create VCRs using the same code format as the wizard UI
   // Format: VCR-{projectCode}-{seq} e.g. VCR-DP300-01
   const cleanProjectCode = projectCode.replace(/-/g, '');
+
+  // Fetch preserved (finalized) VCR codes so we don't try to recreate them
+  const { data: finalizedVcrRows } = finalizedVcrIds.size > 0
+    ? await client.from('p2a_handover_points').select('vcr_code').in('id', Array.from(finalizedVcrIds))
+    : { data: [] as any[] };
+  const finalizedVcrCodes = new Set<string>((finalizedVcrRows || []).map((r: any) => r.vcr_code));
 
   for (let i = 0; i < state.vcrs.length; i++) {
     const vcr = state.vcrs[i];
@@ -406,6 +426,12 @@ async function persistPlanToDatabase(
 
     // Use the wizard-generated code if available, otherwise generate it
     const vcrCode = vcr.code || `VCR-${cleanProjectCode}-${String(i + 1).padStart(2, '0')}`;
+
+    // Skip VCRs whose systems were finalized in the VCR plan — preserved as-is.
+    if (finalizedVcrCodes.has(vcrCode)) {
+      continue;
+    }
+
 
     const { data: savedVCR, error } = await client
       .from('p2a_handover_points')

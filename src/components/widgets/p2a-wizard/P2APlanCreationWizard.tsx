@@ -49,7 +49,7 @@ interface P2APlanCreationWizardProps {
 const WIZARD_STEPS: WizardShellStep[] = [
   { id: 'systems', label: 'Select Systems' },
   { id: 'vcrs', label: 'Create VCRs' },
-  { id: 'mapping', label: 'Assign Systems' },
+  { id: 'mapping', label: 'Assign Systems (Preliminary)' },
   { id: 'phases', label: 'Handover Phases' },
   { id: 'approvers', label: 'Select Approvers' },
   { id: 'review', label: 'Review and Submit' },
@@ -350,7 +350,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     switch (idx) {
       case 0: return state.systems.length > 0;
       case 1: return state.vcrs.length > 0;
-      case 2: return Object.values(state.mappings).some(arr => arr.length > 0);
+      case 2: return true; // Preliminary mapping — optional, never blocks or warns
       case 3: return state.phases.length > 0;
       case 4: return state.approvers.length > 0;
       case 5: return currentStep > idx;

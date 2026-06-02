@@ -6281,6 +6281,8 @@ export type Database = {
           position_x: number
           position_y: number
           status: Database["public"]["Enums"]["p2a_handover_point_status"]
+          systems_finalized_at: string | null
+          systems_finalized_by: string | null
           target_date: string | null
           updated_at: string
           vcr_code: string
@@ -6304,6 +6306,8 @@ export type Database = {
           position_x?: number
           position_y?: number
           status?: Database["public"]["Enums"]["p2a_handover_point_status"]
+          systems_finalized_at?: string | null
+          systems_finalized_by?: string | null
           target_date?: string | null
           updated_at?: string
           vcr_code: string
@@ -6327,6 +6331,8 @@ export type Database = {
           position_x?: number
           position_y?: number
           status?: Database["public"]["Enums"]["p2a_handover_point_status"]
+          systems_finalized_at?: string | null
+          systems_finalized_by?: string | null
           target_date?: string | null
           updated_at?: string
           vcr_code?: string

@@ -17,10 +17,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Search, Layers, Trash2, Flame, Snowflake, ChevronRight, ChevronDown,
-  Plus, RefreshCw,
+  Plus, RefreshCw, CheckCircle2, Info, Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 
 interface SystemsStepProps {
   vcrId: string;
@@ -45,6 +46,7 @@ interface SystemRow {
 
 export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
@@ -52,19 +54,27 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
   const [pickerSelection, setPickerSelection] = useState<Record<string, true>>({});
   const [syncing, setSyncing] = useState(false);
 
-  // Resolve handover_plan_id from VCR
-  const { data: planId } = useQuery({
-    queryKey: ['vcr-plan-id', vcrId],
+  // Resolve handover_plan_id + finalize state from VCR
+  const { data: vcrMeta } = useQuery({
+    queryKey: ['vcr-systems-meta', vcrId],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('p2a_handover_points')
-        .select('handover_plan_id')
+        .select('handover_plan_id, systems_finalized_at, systems_finalized_by, execution_plan_status')
         .eq('id', vcrId)
         .maybeSingle();
       if (error) throw error;
-      return data?.handover_plan_id as string | undefined;
+      return data as {
+        handover_plan_id?: string;
+        systems_finalized_at?: string | null;
+        systems_finalized_by?: string | null;
+        execution_plan_status?: string;
+      } | null;
     },
   });
+  const planId = vcrMeta?.handover_plan_id;
+  const isFinalized = !!vcrMeta?.systems_finalized_at;
+  const isLocked = vcrMeta?.execution_plan_status === 'APPROVED';
 
   // Load assigned + all systems with subsystems
   const { data: rows = [], isLoading } = useQuery({
@@ -197,6 +207,25 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] }),
   });
 
+  const finalizeMutation = useMutation({
+    mutationFn: async (finalize: boolean) => {
+      const { error } = await (supabase as any)
+        .from('p2a_handover_points')
+        .update({
+          systems_finalized_at: finalize ? new Date().toISOString() : null,
+          systems_finalized_by: finalize ? user?.id ?? null : null,
+        })
+        .eq('id', vcrId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, finalize) => {
+      queryClient.invalidateQueries({ queryKey: ['vcr-systems-meta', vcrId] });
+      queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
+      toast.success(finalize ? 'Systems finalized for this VCR' : 'Systems re-opened for editing');
+    },
+    onError: (e: any) => toast.error(e?.message || 'Failed to update finalize state'),
+  });
+
   const handleSync = async () => {
     if (!planId) return;
     setSyncing(true);
@@ -238,7 +267,54 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
 
   return (
     <div className="space-y-4">
+      {/* ── Finalize banner ───────────────────────────────────────── */}
+      {isFinalized ? (
+        <div className="flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="text-[12px] leading-snug flex-1">
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400">Systems finalized.</span>{' '}
+            <span className="text-muted-foreground">
+              This list is the source of truth for the VCR. P2A plan edits will not overwrite it.
+            </span>
+          </div>
+          {!isLocked && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs"
+              onClick={() => finalizeMutation.mutate(false)}
+              disabled={finalizeMutation.isPending}
+            >
+              Re-open
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2">
+          <Info className="w-4 h-4 text-amber-600 shrink-0" />
+          <div className="text-[12px] leading-snug flex-1">
+            <span className="font-semibold text-amber-700 dark:text-amber-400">
+              {rows.length > 0 ? 'Pre-populated from preliminary P2A assignment.' : 'No systems assigned yet.'}
+            </span>{' '}
+            <span className="text-muted-foreground">
+              Review, adjust, then finalize. Finalizing is required before submitting the VCR Execution Plan for approval.
+            </span>
+          </div>
+          <Button
+            size="sm"
+            className="h-7 text-xs gap-1.5"
+            onClick={() => finalizeMutation.mutate(true)}
+            disabled={finalizeMutation.isPending || rows.length === 0}
+            title={rows.length === 0 ? 'Add at least one system before finalizing' : 'Mark this system list as final'}
+          >
+            <Lock className="w-3 h-3" />
+            Finalize
+          </Button>
+        </div>
+      )}
+
       <div className="flex items-center gap-3 flex-wrap">
+
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input

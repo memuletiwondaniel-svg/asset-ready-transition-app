@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ProjectVCR } from '@/hooks/useProjectVCRs';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
@@ -544,16 +545,28 @@ const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string; projectId?:
     queryKey: ['vcr-execution-readiness', vcrId],
     queryFn: async () => {
       const client = supabase as any;
-      const [training, procedures, documentation] = await Promise.all([
+      const [training, procedures, documentation, systems, vcrRow] = await Promise.all([
         client.from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
         client.from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
         client.from('p2a_vcr_documentation').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+        client.from('p2a_handover_point_systems').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+        client.from('p2a_handover_points').select('systems_finalized_at').eq('id', vcrId).maybeSingle(),
       ]);
+      const systemsCount = systems.count || 0;
+      const systemsFinalized = !!vcrRow.data?.systems_finalized_at;
+      const systemsReady = systemsCount > 0 && systemsFinalized;
       return {
         training: training.count || 0,
         procedures: procedures.count || 0,
         documentation: documentation.count || 0,
-        isReady: (training.count || 0) > 0 && (procedures.count || 0) > 0 && (documentation.count || 0) > 0,
+        systems: systemsCount,
+        systemsFinalized,
+        systemsReady,
+        isReady:
+          (training.count || 0) > 0 &&
+          (procedures.count || 0) > 0 &&
+          (documentation.count || 0) > 0 &&
+          systemsReady,
       };
     },
   });
@@ -568,6 +581,13 @@ const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string; projectId?:
   const cfg = statusConfig[status] || statusConfig.DRAFT;
 
   const handleSubmit = async () => {
+    if (!readiness?.systemsReady) {
+      const reason = (readiness?.systems || 0) === 0
+        ? 'Add at least one system to this VCR before submitting.'
+        : 'Systems must be finalized in the VCR Systems step before submitting for approval.';
+      toast.error(reason);
+      return;
+    }
     setUpdating(true);
     const client = supabase as any;
     await client.from('p2a_handover_points').update({
@@ -575,6 +595,7 @@ const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string; projectId?:
       execution_plan_submitted_at: new Date().toISOString(),
     }).eq('id', vcrId);
     queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
+    queryClient.invalidateQueries({ queryKey: ['vcr-execution-readiness', vcrId] });
     setUpdating(false);
   };
 
@@ -624,13 +645,20 @@ const ExecutionPlanStatus: React.FC<{ vcrId: string; status: string; projectId?:
       {readiness && status !== 'APPROVED' && (
         <div className="space-y-1">
           {[
-            { label: 'Training Plan', count: readiness.training },
-            { label: 'Procedures', count: readiness.procedures },
-            { label: 'Documentation', count: readiness.documentation },
+            {
+              label: 'Systems',
+              count: readiness.systems,
+              ok: readiness.systemsReady,
+              hint: !readiness.systemsFinalized && readiness.systems > 0 ? 'not finalized' : undefined,
+            },
+            { label: 'Training Plan', count: readiness.training, ok: readiness.training > 0 },
+            { label: 'Procedures', count: readiness.procedures, ok: readiness.procedures > 0 },
+            { label: 'Documentation', count: readiness.documentation, ok: readiness.documentation > 0 },
           ].map(item => (
             <div key={item.label} className="flex items-center gap-1.5 text-[10px]">
-              <div className={cn("w-1.5 h-1.5 rounded-full", item.count > 0 ? "bg-emerald-500" : "bg-muted-foreground/30")} />
+              <div className={cn("w-1.5 h-1.5 rounded-full", item.ok ? "bg-emerald-500" : "bg-muted-foreground/30")} />
               <span className="text-muted-foreground">{item.label}</span>
+              {item.hint && <span className="text-amber-600">· {item.hint}</span>}
               <span className={cn("ml-auto font-medium", item.count > 0 ? "text-foreground" : "text-muted-foreground/50")}>{item.count}</span>
             </div>
           ))}
