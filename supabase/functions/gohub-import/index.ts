@@ -656,8 +656,11 @@ Deno.serve(async (req) => {
         if (systems.length === 0) systems = await tryPageMethod(gridCookies, gridPageUrl);
         if (systems.length === 0) systems = extractFromHtml(gridHtml);
 
-        const filterUpper = projectFilter.toUpperCase();
-        const filtered = systems.filter(s => s.system_id.toUpperCase().includes(filterUpper));
+        const variants = buildFilterVariants(projectFilter);
+        const filtered = systems.filter(s => {
+          const norm = normalizeSystemId(s.system_id);
+          return variants.some(v => norm.includes(v));
+        });
 
         if (filtered.length > 0) {
           const topLevel = inferHierarchy(filtered);
