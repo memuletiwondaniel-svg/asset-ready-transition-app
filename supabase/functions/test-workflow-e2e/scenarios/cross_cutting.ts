@@ -267,8 +267,147 @@ const runF: Scenario["run"] = async (ctx) => {
 };
 
 // ── G: revision diff — ORA-Lead-only re-approve; diff by (source_plan_id, source_business_key) ──
-const runG: Scenario["run"] = async () => {
-  return { status: "fail", expected: "revise approved P2A → ORA-Lead-only re-approval gate + diff reconcile (kept/new/superseded) on (source_plan_id, source_business_key)", observed: { note: "no product trigger implements ORA-Lead-only re-approval gate or diff reconciliation across versions. Schema (source_plan_id, source_business_key, source_plan_version) is present on user_tasks but no engine consumes it." } };
+// ── G: revision diff — ORA-Lead-only re-approve; diff by (source_plan_id, source_business_key) ──
+// Isolated sandbox like E. Build a fresh ORA plan, full-panel approve, advance
+// progress on one task, REVISE: add+remove+rename (key stays). ORA-Lead-only
+// re-approve. Assert: unchanged keeps progress; renamed keeps task+progress
+// (matched by business key, not label); added has new task; removed is
+// cancelled_superseded (not deleted, still queryable); rollup denominators
+// correctly exclude superseded.
+const runG: Scenario["run"] = async (ctx) => {
+  const svc = svcOf(ctx);
+  const sr = ctx.users["Sr ORA Engr"];
+  const oraLead = ctx.users["ORA Lead"];
+  const phl = ctx.users["Project Hub Lead"];
+  const dpd = ctx.users["Dep. Plant Director"];
+
+  const approveAs = async (jwt: string, role: string, planId: string): Promise<string | null> => {
+    const c = clientAs(ctx.anonUrl, ctx.anonKey, jwt);
+    const { error, count } = await c.from("orp_approvals")
+      .update({ status: "APPROVED", approved_at: new Date().toISOString() }, { count: "exact" })
+      .eq("orp_plan_id", planId).eq("approver_role", role).eq("status", "PENDING");
+    if (error) return `${role} approve error: ${error.message}`;
+    if ((count ?? 0) === 0) return `${role} approve 0 rows`;
+    return null;
+  };
+
+  // 1. Create isolated plan + 4 leaf activities (A,B,C,D)
+  const { data: plan, error: pErr } = await svc.from("orp_plans").insert({
+    project_id: ctx.project.id, phase: "ASSESS_SELECT",
+    ora_engineer_id: sr.id, created_by: sr.id, status: "DRAFT", is_active: false, version: 1,
+  }).select("id").single();
+  if (pErr) return { status: "fail", expected: "G isolated plan", observed: pErr.message };
+
+  const codes = ["G-A", "G-B", "G-C", "G-D"];
+  for (const code of codes) {
+    const { error: aErr } = await svc.from("ora_plan_activities").insert({
+      orp_plan_id: plan.id, name: `${code} original`, activity_code: code,
+      status: "NOT_STARTED", completion_percentage: 0,
+    });
+    if (aErr) return { status: "fail", expected: `seed ${code}`, observed: aErr.message };
+  }
+
+  // 2. Full-panel approve v1 (ORA Lead → PHL → DPD).
+  await svc.from("orp_plans").update({ status: "PENDING_APPROVAL" }).eq("id", plan.id);
+  for (const [jwt, role] of [[oraLead.jwt, "ORA Lead"], [phl.jwt, "Project Hub Lead"], [dpd.jwt, "Dep. Plant Director"]] as const) {
+    const err = await approveAs(jwt, role, plan.id);
+    if (err) return { status: "fail", expected: `v1 ${role} approve`, observed: err };
+  }
+  const { data: v1Tasks } = await svc.from("user_tasks")
+    .select("id,title,source_business_key,source_plan_version,status,progress_percentage")
+    .eq("source_plan_id", plan.id)
+    .filter("metadata->>action", "eq", "complete_ora_activity");
+  if (!v1Tasks || v1Tasks.length !== 4) {
+    return { status: "fail", expected: "4 v1 tasks tagged by source_plan_id", observed: { count: v1Tasks?.length, tasks: v1Tasks } };
+  }
+
+  // 3. Advance progress on G-B (will survive unchanged) and G-C (will be renamed).
+  const taskB = v1Tasks.find((t: any) => t.source_business_key === "G-B")!;
+  const taskC = v1Tasks.find((t: any) => t.source_business_key === "G-C")!;
+  const taskD = v1Tasks.find((t: any) => t.source_business_key === "G-D")!;
+  await svc.from("user_tasks").update({ progress_percentage: 60, status: "in_progress" }).eq("id", taskB.id);
+  await svc.from("user_tasks").update({ progress_percentage: 30 }).eq("id", taskC.id);
+
+  // 4. Revise: REMOVE G-D, RENAME G-C (key stays), ADD G-E. G-A/G-B unchanged.
+  await svc.from("ora_plan_activities").delete().eq("orp_plan_id", plan.id).eq("activity_code", "G-D");
+  await svc.from("ora_plan_activities").update({ name: "G-C renamed label" })
+    .eq("orp_plan_id", plan.id).eq("activity_code", "G-C");
+  await svc.from("ora_plan_activities").insert({
+    orp_plan_id: plan.id, name: "G-E newly added", activity_code: "G-E",
+    status: "NOT_STARTED", completion_percentage: 0,
+  });
+
+  // 5. Kick off revision cycle (bumps version, seeds ORA Lead row + task).
+  const { data: revData, error: revErr } = await svc.rpc("revise_orp_plan", { p_plan_id: plan.id });
+  if (revErr) return { status: "fail", expected: "revise_orp_plan rpc", observed: revErr.message };
+  const newVer = (revData as any)?.new_version;
+  if (newVer !== 2) return { status: "fail", expected: "new_version=2", observed: revData };
+
+  // 6. ORA-Lead-only re-approve at cycle 2.
+  const c = clientAs(ctx.anonUrl, ctx.anonKey, oraLead.jwt);
+  const { error: rUErr, count: rUCnt } = await c.from("orp_approvals")
+    .update({ status: "APPROVED", approved_at: new Date().toISOString() }, { count: "exact" })
+    .eq("orp_plan_id", plan.id).eq("approver_role", "ORA Lead").eq("cycle", 2).eq("status", "PENDING");
+  if (rUErr) return { status: "fail", expected: "ORA Lead re-approve v2", observed: rUErr.message };
+  if ((rUCnt ?? 0) !== 1) return { status: "fail", expected: "1 ORA Lead v2 row approved", observed: { count: rUCnt } };
+
+  const { data: planAfter } = await svc.from("orp_plans").select("status,version").eq("id", plan.id).maybeSingle();
+  if (planAfter?.status !== "APPROVED" || planAfter?.version !== 2) {
+    return { status: "fail", expected: "plan APPROVED at v2 from ORA-Lead-only re-approval", observed: planAfter };
+  }
+
+  // 7. Diff assertions
+  const { data: after } = await svc.from("user_tasks")
+    .select("id,title,source_business_key,source_plan_version,status,progress_percentage")
+    .eq("source_plan_id", plan.id)
+    .filter("metadata->>action", "eq", "complete_ora_activity");
+  const byKey: Record<string, any> = {};
+  for (const t of after ?? []) byKey[t.source_business_key as string] = t;
+
+  const fails: string[] = [];
+  if (!byKey["G-A"] || byKey["G-A"].status === "cancelled_superseded") fails.push("G-A missing/superseded");
+  if (byKey["G-A"]?.source_plan_version !== 2) fails.push(`G-A version=${byKey["G-A"]?.source_plan_version}, want 2`);
+
+  if (byKey["G-B"]?.id !== taskB.id) fails.push("G-B task id changed (must match by business key, not recreate)");
+  if (byKey["G-B"]?.progress_percentage !== 60) fails.push(`G-B progress=${byKey["G-B"]?.progress_percentage}, want 60 (preserved)`);
+  if (byKey["G-B"]?.source_plan_version !== 2) fails.push(`G-B version=${byKey["G-B"]?.source_plan_version}, want 2`);
+
+  if (byKey["G-C"]?.id !== taskC.id) fails.push("G-C task id changed (rename must NOT look like delete+create)");
+  if (byKey["G-C"]?.progress_percentage !== 30) fails.push(`G-C progress=${byKey["G-C"]?.progress_percentage}, want 30 (preserved through rename)`);
+  if (!String(byKey["G-C"]?.title ?? "").includes("G-C renamed label")) fails.push(`G-C title not refreshed: ${byKey["G-C"]?.title}`);
+
+  const dRow = byKey["G-D"];
+  if (!dRow) fails.push("G-D missing (must be retained as cancelled_superseded for audit)");
+  else {
+    if (dRow.id !== taskD.id) fails.push("G-D task id changed");
+    if (dRow.status !== "cancelled_superseded") fails.push(`G-D status=${dRow.status}, want cancelled_superseded`);
+  }
+
+  if (!byKey["G-E"]) fails.push("G-E new task not created");
+  if (byKey["G-E"]?.source_plan_version !== 2) fails.push(`G-E version=${byKey["G-E"]?.source_plan_version}, want 2`);
+
+  if (fails.length > 0) {
+    return { status: "fail", expected: "kept/renamed preserve progress; added created; removed superseded (not deleted)",
+             observed: { fails, after: byKey } };
+  }
+
+  // 8. PHL should NOT have a v2 review task (ORA-Lead-only gate)
+  const { data: phlV2 } = await svc.from("user_tasks").select("id,dedupe_key")
+    .filter("metadata->>plan_id", "eq", plan.id)
+    .filter("metadata->>approver_role", "eq", "Project Hub Lead")
+    .like("dedupe_key", "review_ora_plan:%:Project Hub Lead:2");
+  if ((phlV2 ?? []).length > 0) {
+    return { status: "fail", expected: "ORA-Lead-only re-approval — no PHL v2 review task", observed: { phlV2Count: phlV2?.length } };
+  }
+
+  return { status: "pass", observed: {
+    planId: plan.id, newVersion: newVer,
+    diff: {
+      kept_unchanged: ["G-A", "G-B"], renamed_kept: ["G-C"],
+      added: ["G-E"], superseded_not_deleted: ["G-D"],
+    },
+    progressPreserved: { "G-B": byKey["G-B"]?.progress_percentage, "G-C": byKey["G-C"]?.progress_percentage },
+  } };
 };
 
 // ── H: RLS — wrong-role write deny, DELETE deny, legacy gate auto-true ──────
