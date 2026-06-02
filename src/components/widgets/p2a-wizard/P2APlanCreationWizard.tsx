@@ -99,6 +99,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     loadDraft,
     draftLoaded,
     saveDraft,
+    saveDraftSilent,
     submitForApproval,
     deleteDraft,
     isSaving,
