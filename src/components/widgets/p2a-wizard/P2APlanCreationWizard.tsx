@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, Trash2, AlertTriangle, Edit3, Eye, XCircle, RotateCcw, MessageSquare, X } from 'lucide-react';
+import { Loader2, AlertTriangle, Edit3, Eye, XCircle, RotateCcw, MessageSquare, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -27,9 +27,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface P2APlanCreationWizardProps {
   open: boolean;
@@ -81,6 +79,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const [reviewComment, setReviewComment] = useState('');
   const [submissionComment, setSubmissionComment] = useState('');
   const [isApproving, setIsApproving] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const queryClient = useQueryClient();
 
@@ -649,52 +648,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     </div>
   );
 
-  // Header actions — muted trash (red on hover) that deletes the P2A plan
-  const headerActions = (
-    <>
-      {showWizardLayout && !isReviewMode && !isReadOnly && (
-        <AlertDialog>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Delete P2A Plan"
-                  className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                </Button>
-              </AlertDialogTrigger>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Delete</TooltipContent>
-          </Tooltip>
-          <AlertDialogContent className="z-[150]">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete P2A Plan?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete the P2A Plan draft including all systems, VCRs, phases, and approvers. This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteDraft}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Delete Plan
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-    </>
-  );
+  const headerActions = undefined;
 
   // Banners
   const bannerContent = showWizardLayout ? (
@@ -858,8 +812,10 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     onSubmit: !isReviewMode && isLastStep && !isReadOnly && (!existingPlan || existingPlan.status === 'DRAFT') ? handleSubmit : undefined,
     onApprove: isReviewMode ? handleReviewApprove : undefined,
     onReject: isReviewMode ? handleReviewReject : undefined,
+    onDelete: !isReviewMode && !isReadOnly ? () => setDeleteDialogOpen(true) : undefined,
     isSubmitting: isSubmitting || isApproving,
     isSaving,
+    isDeleting,
     canProceed: canProceed(),
     canGoBack: true,
     submitLabel: 'Submit for Approval',
@@ -894,6 +850,27 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           {renderStepContent()}
         </div>
       </WizardShell>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="z-[150]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete P2A Plan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the P2A Plan draft including all systems, VCRs, phases, and approvers. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteDraft}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Plan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Request Change confirmation dialog */}
       <AlertDialog open={requestChangeOpen} onOpenChange={setRequestChangeOpen}>

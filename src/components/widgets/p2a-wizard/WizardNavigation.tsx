@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronLeft, ChevronRight, Loader2, Send, LogOut, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Send, LogOut, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 
 interface WizardNavigationProps {
   currentStep: number;
@@ -13,8 +13,10 @@ interface WizardNavigationProps {
   onSubmit?: () => void;
   onApprove?: () => void;
   onReject?: () => void;
+  onDelete?: () => void;
   isSubmitting?: boolean;
   isSaving?: boolean;
+  isDeleting?: boolean;
   canProceed?: boolean;
   canGoBack?: boolean;
   submitLabel?: string;
@@ -32,8 +34,10 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
   onSubmit,
   onApprove,
   onReject,
+  onDelete,
   isSubmitting = false,
   isSaving = false,
+  isDeleting = false,
   canProceed = true,
   canGoBack = true,
   submitLabel = 'Submit',
@@ -80,6 +84,30 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
             </TooltipTrigger>
             <TooltipContent side="top">Close & Exit</TooltipContent>
           </Tooltip>
+        )}
+        {onDelete && (
+          <>
+            <div className="w-px h-5 bg-border/60 mx-0.5" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onDelete}
+                  disabled={isDeleting}
+                  aria-label="Delete P2A Plan"
+                  className="h-8 w-8 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Delete</TooltipContent>
+            </Tooltip>
+          </>
         )}
       </div>
 

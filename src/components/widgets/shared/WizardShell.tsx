@@ -28,8 +28,10 @@ export interface WizardShellNavigationProps {
   onSubmit?: () => void;
   onApprove?: () => void;
   onReject?: () => void;
+  onDelete?: () => void;
   isSubmitting?: boolean;
   isSaving?: boolean;
+  isDeleting?: boolean;
   canProceed?: boolean;
   canGoBack?: boolean;
   submitLabel?: string;
@@ -270,7 +272,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
 
             {/* Footer Navigation */}
             {customFooter ? customFooter : navigation ? (
-              <WizardNavigation
+            <WizardNavigation
                 currentStep={currentStep + 1}
                 totalSteps={steps.length}
                 onBack={navigation.onBack}
@@ -280,8 +282,10 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                 onSubmit={navigation.onSubmit}
                 onApprove={navigation.onApprove}
                 onReject={navigation.onReject}
+                onDelete={navigation.onDelete}
                 isSubmitting={navigation.isSubmitting}
                 isSaving={navigation.isSaving}
+                isDeleting={navigation.isDeleting}
                 canProceed={navigation.canProceed}
                 canGoBack={navigation.canGoBack}
                 submitLabel={navigation.submitLabel}
