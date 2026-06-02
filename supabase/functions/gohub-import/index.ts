@@ -682,6 +682,22 @@ Deno.serve(async (req) => {
     // Step 2: Extract project tiles (shared module)
     const allTiles = extractAllProjectTiles(homePageHtml);
 
+    const variants = buildFilterVariantSet(projectFilter);
+    const sampleSink = { entries: [] as SampleEntry[] };
+
+    const toCandidate = (sys: CompletionsSystem, idx: number) => ({
+      id: `gohub-${Date.now()}-${idx}`,
+      system_id: sys.system_id,
+      name: sys.name,
+      description: sys.description,
+      is_hydrocarbon: sys.is_hydrocarbon,
+      progress: sys.progress,
+      subsystems: sys.subsystems || [],
+      source: "gohub",
+      source_project: sys.source_project,
+      tier: sys.match_tier || "weak",
+    });
+
     if (allTiles.length === 0) {
       console.log("GoHub: No project tiles found. Attempting direct grid access...");
       try {
@@ -692,30 +708,33 @@ Deno.serve(async (req) => {
         if (systems.length === 0) systems = await tryPageMethod(gridCookies, gridPageUrl);
         if (systems.length === 0) systems = extractFromHtml(gridHtml);
 
-        const variants = buildFilterVariants(projectFilter);
-        const filtered = systems.filter(s => {
-          const norm = normalizeSystemId(s.system_id);
-          return variants.some(v => norm.includes(v));
-        });
-
-        if (filtered.length > 0) {
-          const topLevel = inferHierarchy(filtered);
-          const result = topLevel.map((sys, index) => ({
-            id: `gohub-${Date.now()}-${index}`,
-            system_id: sys.system_id,
-            name: sys.name,
-            description: sys.description,
-            is_hydrocarbon: sys.is_hydrocarbon,
-            progress: sys.progress,
-            subsystems: sys.subsystems || [],
-            source: "gohub",
-          }));
-
-          return new Response(
-            JSON.stringify({ success: true, systems: result, total: result.length, project_filter: projectFilter, searched_projects: ["direct"] }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+        for (const s of systems) {
+          if (sampleSink.entries.length >= 200) break;
+          sampleSink.entries.push({ source_project: "direct", system_id: s.system_id, name: s.name });
         }
+        const matched: CompletionsSystem[] = [];
+        for (const sys of systems) {
+          const tier = classifyMatch(sys.system_id, variants);
+          if (!tier) continue;
+          sys.match_tier = tier;
+          sys.source_project = "direct";
+          matched.push(sys);
+        }
+
+        const topLevel = inferHierarchy(matched);
+        const candidates = topLevel.map(toCandidate);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            candidates,
+            sample: sampleSink.entries.slice(0, 60),
+            project_filter: projectFilter,
+            variants,
+            searched_projects: ["direct"],
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       } catch (e) {
         console.log(`GoHub: Direct grid access fallback failed: ${e}`);
       }
@@ -724,12 +743,10 @@ Deno.serve(async (req) => {
     }
 
     // Step 3: Search ALL projects
-    const variants = buildFilterVariants(projectFilter);
     console.log(`GoHub: Will search ${allTiles.length} projects for "${projectFilter}" (variants=${JSON.stringify(variants)})`);
     const allMatchingSystems: CompletionsSystem[] = [];
     const searchedProjects: string[] = [];
     const projectsWithResults: string[] = [];
-    const sampleSink = { ids: [] as string[] };
     let currentCookies = loginCookies;
 
     for (let i = 0; i < allTiles.length; i++) {
@@ -757,7 +774,7 @@ Deno.serve(async (req) => {
       }
 
       const { systems: matchedSystems, cookies: updatedCookies } = await searchProjectForSystems(
-        currentCookies, currentHomeHtml, currentHomeUrl, finalPortalUrl, tile, projectFilter, sampleSink
+        currentCookies, currentHomeHtml, currentHomeUrl, finalPortalUrl, tile, variants, sampleSink
       );
       currentCookies = updatedCookies;
 
@@ -767,44 +784,30 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (allMatchingSystems.length === 0) {
-      const sampleHint = sampleSink.ids.length > 0
-        ? `\n\nSample of systems GoHub returned:\n${sampleSink.ids.slice(0, 12).join("\n")}`
-        : "\n\nGoHub returned no systems from any project (the Completions Grid may be empty for this login).";
-      throw new Error(
-        `No systems matching "${projectFilter}" (tried variants: ${variants.join(", ")}) across ${searchedProjects.length} GoHub projects.${sampleHint}`
-      );
+    // Deduplicate matches by system_id (keep strongest tier)
+    const dedupMap = new Map<string, CompletionsSystem>();
+    for (const sys of allMatchingSystems) {
+      const existing = dedupMap.get(sys.system_id);
+      if (!existing) { dedupMap.set(sys.system_id, sys); continue; }
+      if (existing.match_tier !== "strong" && sys.match_tier === "strong") {
+        dedupMap.set(sys.system_id, sys);
+      }
     }
+    const uniqueSystems = [...dedupMap.values()];
 
+    // If multiple systems matched only via short/digits variants, treat as ambiguous (downgrade strong-by-digits)
+    // (Tier was already set by classifyMatch; nothing to downgrade here since classifyMatch is conservative.)
 
-    // Deduplicate
-    const seen = new Set<string>();
-    const uniqueSystems = allMatchingSystems.filter(sys => {
-      if (seen.has(sys.system_id)) return false;
-      seen.add(sys.system_id);
-      return true;
-    });
-
-    // Infer hierarchy
     const topLevel = inferHierarchy(uniqueSystems);
-
-    const result = topLevel.map((sys, index) => ({
-      id: `gohub-${Date.now()}-${index}`,
-      system_id: sys.system_id,
-      name: sys.name,
-      description: sys.description,
-      is_hydrocarbon: sys.is_hydrocarbon,
-      progress: sys.progress,
-      subsystems: sys.subsystems || [],
-      source: "gohub",
-    }));
+    const candidates = topLevel.map(toCandidate);
 
     return new Response(
       JSON.stringify({
         success: true,
-        systems: result,
-        total: result.length,
+        candidates,
+        sample: sampleSink.entries.slice(0, 60),
         project_filter: projectFilter,
+        variants,
         searched_projects: searchedProjects,
         projects_with_results: projectsWithResults,
       }),
