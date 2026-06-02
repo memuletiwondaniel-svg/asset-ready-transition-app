@@ -267,7 +267,54 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
 
   return (
     <div className="space-y-4">
+      {/* ── Finalize banner ───────────────────────────────────────── */}
+      {isFinalized ? (
+        <div className="flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/5 px-3 py-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="text-[12px] leading-snug flex-1">
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400">Systems finalized.</span>{' '}
+            <span className="text-muted-foreground">
+              This list is the source of truth for the VCR. P2A plan edits will not overwrite it.
+            </span>
+          </div>
+          {!isLocked && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs"
+              onClick={() => finalizeMutation.mutate(false)}
+              disabled={finalizeMutation.isPending}
+            >
+              Re-open
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2">
+          <Info className="w-4 h-4 text-amber-600 shrink-0" />
+          <div className="text-[12px] leading-snug flex-1">
+            <span className="font-semibold text-amber-700 dark:text-amber-400">
+              {rows.length > 0 ? 'Pre-populated from preliminary P2A assignment.' : 'No systems assigned yet.'}
+            </span>{' '}
+            <span className="text-muted-foreground">
+              Review, adjust, then finalize. Finalizing is required before submitting the VCR Execution Plan for approval.
+            </span>
+          </div>
+          <Button
+            size="sm"
+            className="h-7 text-xs gap-1.5"
+            onClick={() => finalizeMutation.mutate(true)}
+            disabled={finalizeMutation.isPending || rows.length === 0}
+            title={rows.length === 0 ? 'Add at least one system before finalizing' : 'Mark this system list as final'}
+          >
+            <Lock className="w-3 h-3" />
+            Finalize
+          </Button>
+        </div>
+      )}
+
       <div className="flex items-center gap-3 flex-wrap">
+
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
