@@ -52,7 +52,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
         throw new Error('You must be logged in to import from GoHub');
       }
 
-      const cleanProjectCode = projectCode?.replace(/-/g, '') || '';
+      const cleanProjectCode = (projectCode || '').trim();
 
       const response = await supabase.functions.invoke('gohub-import', {
         body: {
