@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -63,6 +64,7 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
   onDone,
   onOpenWorkspace,
 }) => {
+  const [swappedRoles, setSwappedRoles] = useState<Record<string, boolean>>({});
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) { onDone(); return; }
     onOpenChange(nextOpen);
@@ -127,8 +129,8 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden">
-        <div className="flex flex-col items-center text-center px-8 pt-7 pb-4">
-          <div className="h-11 w-11 rounded-full bg-emerald-500/15 flex items-center justify-center mb-3">
+        <div className="flex flex-col items-center text-center px-8 pt-4 pb-3">
+          <div className="h-10 w-10 rounded-full bg-emerald-500/15 flex items-center justify-center mb-2">
             <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <h2 className="text-lg font-semibold">Submitted for approval</h2>
@@ -151,51 +153,73 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
             {rosterLoading && stages.length === 0 ? (
               <p className="text-xs text-muted-foreground py-2">Loading approvers…</p>
             ) : (
-              <div className="space-y-4">
-                {stages.map(({ approver, stageNum, status }) => {
-                  const partner = partnerByRole.get(approver.role_name);
-                  const S = statusStyles[status];
-                  const hasUser = !!approver.user_id;
-                  return (
-                    <div key={approver.id} className="flex items-center gap-3 text-sm">
-                      <span className="text-[10px] font-semibold text-muted-foreground tabular-nums w-5 shrink-0">
-                        {stageNum}.
-                      </span>
-                      <Avatar className="h-9 w-9 shrink-0">
-                        <AvatarImage src={resolveAvatarUrl(approver.user_avatar)} alt={approver.user_name || approver.role_name} />
-                        <AvatarFallback className="text-[10px]">
-                          {hasUser ? getInitials(approver.user_name) : <CircleDashed className="h-3.5 w-3.5" />}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-semibold truncate leading-tight">
-                          {hasUser ? approver.user_name : approver.role_name}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground truncate mt-0.5">
-                          {hasUser ? approver.role_name : 'no holder assigned'}
-                        </div>
-                      </div>
-                      {partner && (
-                        <span
-                          className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0"
-                          title={`Either partner can approve: ${approver.user_name} or ${partner.full_name}`}
-                        >
-                          B2B
+              <TooltipProvider delayDuration={150}>
+                <div className="space-y-4">
+                  {stages.map(({ approver, stageNum, status }) => {
+                    const partner = partnerByRole.get(approver.role_name);
+                    const S = statusStyles[status];
+                    const hasUser = !!approver.user_id;
+                    const swapped = !!swappedRoles[approver.role_name];
+                    const displayName = swapped && partner ? partner.full_name : approver.user_name;
+                    return (
+                      <div key={approver.id} className="flex items-center gap-3 text-sm">
+                        <span className="text-[10px] font-semibold text-muted-foreground tabular-nums w-5 shrink-0">
+                          {stageNum}.
                         </span>
-                      )}
-                      <Badge
-                        variant="outline"
-                        className={cn('rounded-full px-2.5 py-0.5 text-xs font-normal shrink-0', hasUser ? S.cls : statusStyles.REJECTED.cls)}
-                      >
-                        {hasUser ? S.label : 'Not assigned'}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
+                        <Avatar className="h-9 w-9 shrink-0">
+                          <AvatarImage src={resolveAvatarUrl(approver.user_avatar)} alt={displayName || approver.role_name} />
+                          <AvatarFallback className="text-[10px]">
+                            {hasUser ? getInitials(displayName) : <CircleDashed className="h-3.5 w-3.5" />}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="font-semibold truncate leading-tight">
+                              {hasUser ? displayName : approver.role_name}
+                            </span>
+                            {partner && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setSwappedRoles((prev) => ({
+                                        ...prev,
+                                        [approver.role_name]: !prev[approver.role_name],
+                                      }))
+                                    }
+                                    className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors"
+                                    aria-label="Swap B2B approver"
+                                  >
+                                    B2B
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">
+                                  Click to swap approver ·{' '}
+                                  {swapped ? approver.user_name : partner.full_name}
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground truncate mt-0.5">
+                            {hasUser ? approver.role_name : 'no holder assigned'}
+                          </div>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className={cn('rounded-full px-2.5 py-0.5 text-xs font-normal shrink-0', hasUser ? S.cls : statusStyles.REJECTED.cls)}
+                        >
+                          {hasUser ? S.label : 'Not assigned'}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              </TooltipProvider>
             )}
           </div>
         </div>
+
 
         <div className="px-8 flex items-center justify-between text-xs">
           <span className="text-muted-foreground">Status</span>
