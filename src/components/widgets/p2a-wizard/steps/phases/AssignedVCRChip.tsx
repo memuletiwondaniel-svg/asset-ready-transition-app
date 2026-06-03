@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, X, Box, Flame } from 'lucide-react';
+import { GripVertical, X } from 'lucide-react';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
 import { WizardVCR } from '../VCRCreationStep';
@@ -88,10 +88,11 @@ export const AssignedVCRChip: React.FC<AssignedVCRChipProps> = ({ vcr, vcrIndex,
         <div className="space-y-0.5">
           {vcrSystems.map(sys => (
             <div key={sys.id} className="flex items-center gap-1.5 px-1.5 py-1 rounded-md hover:bg-muted/50">
-              <Box className="h-3 w-3 text-muted-foreground shrink-0" />
               <span className="text-[11px] font-medium truncate flex-1">{sys.name}</span>
               {sys.is_hydrocarbon && (
-                <Flame className="h-3 w-3 text-orange-500 shrink-0" />
+                <span className="text-[9px] font-medium px-1.5 py-0 rounded border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400 shrink-0 leading-tight">
+                  HC
+                </span>
               )}
             </div>
           ))}
