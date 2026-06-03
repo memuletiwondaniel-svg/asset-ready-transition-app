@@ -113,6 +113,7 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
   onApproversChange,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const { data: allProfileUsers } = useProfileUsers();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [showAddRow, setShowAddRow] = useState(false);
   const [newRoleName, setNewRoleName] = useState('');
