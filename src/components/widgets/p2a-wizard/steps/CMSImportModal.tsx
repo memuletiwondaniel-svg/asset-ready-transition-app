@@ -21,10 +21,8 @@ import {
   HelpCircle,
   Search,
   ChevronRight,
-  Flame,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { WizardSystem, WizardSubsystem } from './SystemsImportStep';
 
@@ -80,10 +78,12 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sampleSelected, setSampleSelected] = useState<Set<string>>(new Set());
   const [sampleFilter, setSampleFilter] = useState('');
+  const [strongFilter, setStrongFilter] = useState('');
   const [searchedProjects, setSearchedProjects] = useState<string[]>([]);
   const [projectsWithResults, setProjectsWithResults] = useState<string[]>([]);
   const [failedTiles, setFailedTiles] = useState<string[]>([]);
   const [showWeak, setShowWeak] = useState(false);
+  const [showSample, setShowSample] = useState(false);
   const [sourceInfo, setSourceInfo] = useState<{
     served: 'live' | 'catalog' | 'merged';
     live_strong: number;
@@ -102,10 +102,12 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
       setSelected(new Set());
       setSampleSelected(new Set());
       setSampleFilter('');
+      setStrongFilter('');
       setSearchedProjects([]);
       setProjectsWithResults([]);
       setFailedTiles([]);
       setShowWeak(false);
+      setShowSample(false);
       setSourceInfo(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -159,6 +161,13 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
 
   const strong = useMemo(() => candidates.filter(c => c.tier === 'strong'), [candidates]);
   const weak = useMemo(() => candidates.filter(c => c.tier === 'weak'), [candidates]);
+  const filteredStrong = useMemo(() => {
+    const q = strongFilter.trim().toLowerCase();
+    if (!q) return strong;
+    return strong.filter(c =>
+      c.system_id.toLowerCase().includes(q) || c.name.toLowerCase().includes(q),
+    );
+  }, [strong, strongFilter]);
 
   const toggle = (id: string, set: Set<string>, setter: (s: Set<string>) => void) => {
     const next = new Set(set);
@@ -324,12 +333,21 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                       <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
                         Pre-selected
                       </Badge>
+                      <span className="ml-auto text-[10px] text-muted-foreground">
+                        {filteredStrong.length} of {strong.length}
+                      </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      These system IDs contain your full project code. Uncheck any you don't want.
-                    </p>
-                    <div className="space-y-1.5">
-                      {strong.map(c => (
+                    <div className="relative mb-2">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input
+                        placeholder="Filter matches by ID or name…"
+                        value={strongFilter}
+                        onChange={(e) => setStrongFilter(e.target.value)}
+                        className="h-8 pl-7 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      {filteredStrong.map(c => (
                         <CandidateRow
                           key={c.system_id}
                           candidate={c}
@@ -337,6 +355,9 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                           onToggle={() => toggle(c.system_id, selected, setSelected)}
                         />
                       ))}
+                      {filteredStrong.length === 0 && (
+                        <p className="text-xs text-muted-foreground text-center py-3">No matches for "{strongFilter}".</p>
+                      )}
                     </div>
                   </section>
                 )}
@@ -379,57 +400,67 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                 )}
 
 
-                {/* Sample selector — always available when we have data */}
-                {sample.length > 0 && (
-                  <section>
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-semibold">
-                        {strong.length + weak.length > 0 ? 'Or pick from all available systems' : 'Available systems in GoHub'}
-                      </h4>
-                      <span className="text-[10px] text-muted-foreground">
-                        {filteredSample.length} of {sample.length}
-                      </span>
-                    </div>
-                    <div className="relative mb-2">
-                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                      <Input
-                        placeholder="Search by ID, name or project…"
-                        value={sampleFilter}
-                        onChange={(e) => setSampleFilter(e.target.value)}
-                        className="h-8 pl-7 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1 max-h-64 overflow-y-auto rounded-md border bg-muted/20 p-1">
-                      {filteredSample.map(s => {
-                        const checked = sampleSelected.has(s.system_id);
-                        const alreadyCandidate = selected.has(s.system_id);
-                        return (
-                          <label
-                            key={`${s.source_project}-${s.system_id}`}
-                            className={cn(
-                              'flex items-center gap-2 px-2 py-1 rounded cursor-pointer hover:bg-muted/60 text-xs',
-                              alreadyCandidate && 'opacity-50',
-                            )}
-                          >
-                            <Checkbox
-                              checked={checked || alreadyCandidate}
-                              disabled={alreadyCandidate}
-                              onCheckedChange={() => toggle(s.system_id, sampleSelected, setSampleSelected)}
+                {/* Sample selector — collapsed by default */}
+                {sample.length > 0 && (() => {
+                  const noMatches = strong.length + weak.length === 0;
+                  const expanded = showSample || noMatches;
+                  const label = noMatches ? 'Available systems in GoHub' : 'Pick from all available systems';
+                  return (
+                    <section>
+                      <button
+                        type="button"
+                        onClick={() => setShowSample(v => !v)}
+                        className="w-full flex items-center gap-2 p-2 rounded-md border border-border bg-muted/30 hover:bg-muted/50 transition-colors"
+                      >
+                        <ChevronRight className={cn('h-4 w-4 text-muted-foreground transition-transform', expanded && 'rotate-90')} />
+                        <span className="text-sm font-medium">{label}</span>
+                        <span className="ml-auto text-[10px] text-muted-foreground">({sample.length})</span>
+                      </button>
+                      {expanded && (
+                        <>
+                          <div className="relative mt-2 mb-2">
+                            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                            <Input
+                              placeholder="Search by ID, name or project…"
+                              value={sampleFilter}
+                              onChange={(e) => setSampleFilter(e.target.value)}
+                              className="h-8 pl-7 text-xs"
                             />
-                            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-background border shrink-0">
-                              {s.system_id}
-                            </span>
-                            <span className="truncate flex-1">{s.name}</span>
-                            <span className="text-[10px] text-muted-foreground shrink-0">{s.source_project}</span>
-                          </label>
-                        );
-                      })}
-                      {filteredSample.length === 0 && (
-                        <p className="text-xs text-muted-foreground text-center py-4">No systems match your search.</p>
+                          </div>
+                          <div className="space-y-1 max-h-64 overflow-y-auto rounded-md border bg-muted/20 p-1">
+                            {filteredSample.map(s => {
+                              const checked = sampleSelected.has(s.system_id);
+                              const alreadyCandidate = selected.has(s.system_id);
+                              return (
+                                <label
+                                  key={`${s.source_project}-${s.system_id}`}
+                                  className={cn(
+                                    'flex items-center gap-2 px-2 py-1 rounded cursor-pointer hover:bg-muted/60 text-xs',
+                                    alreadyCandidate && 'opacity-50',
+                                  )}
+                                >
+                                  <Checkbox
+                                    checked={checked || alreadyCandidate}
+                                    disabled={alreadyCandidate}
+                                    onCheckedChange={() => toggle(s.system_id, sampleSelected, setSampleSelected)}
+                                  />
+                                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-background border shrink-0">
+                                    {s.system_id}
+                                  </span>
+                                  <span className="truncate flex-1">{s.name}</span>
+                                  <span className="text-[10px] text-muted-foreground shrink-0">{s.source_project}</span>
+                                </label>
+                              );
+                            })}
+                            {filteredSample.length === 0 && (
+                              <p className="text-xs text-muted-foreground text-center py-4">No systems match your search.</p>
+                            )}
+                          </div>
+                        </>
                       )}
-                    </div>
-                  </section>
-                )}
+                    </section>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -493,35 +524,27 @@ const CandidateRow: React.FC<{
           : 'bg-card border-border hover:bg-muted/40',
       )}
     >
-      <div className="flex items-center gap-2.5 p-2">
+      <div className="flex items-center gap-2 px-2 py-1">
         <Checkbox
           checked={checked}
           onCheckedChange={onToggle}
           aria-label={`Select ${candidate.name}`}
-          className="data-[state=checked]:bg-primary/70 data-[state=checked]:border-primary/70 data-[state=checked]:text-primary-foreground"
+          className="h-3.5 w-3.5 data-[state=checked]:bg-primary/70 data-[state=checked]:border-primary/70 data-[state=checked]:text-primary-foreground"
         />
         <button
           type="button"
           onClick={() => hasSubs && setExpanded(v => !v)}
           className={cn(
-            'flex items-center gap-2.5 flex-1 min-w-0 text-left',
+            'flex items-center gap-2 flex-1 min-w-0 text-left',
             hasSubs && 'cursor-pointer',
           )}
           disabled={!hasSubs}
         >
           <span className="text-sm font-medium truncate flex-1">{candidate.name}</span>
           {candidate.is_hydrocarbon && (
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border border-orange-200 bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:border-orange-900/40 dark:text-orange-300 shrink-0">
-                    <Flame className="h-2.5 w-2.5" />
-                    HC
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top">Hydrocarbon System</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:border-amber-900/40 dark:text-amber-300 shrink-0">
+              Hydrocarbon
+            </span>
           )}
           <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground border border-border/50 shrink-0">
             {candidate.system_id}
