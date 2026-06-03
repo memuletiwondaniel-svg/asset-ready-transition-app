@@ -491,18 +491,18 @@ const CandidateRow: React.FC<{
           : 'bg-card border-border hover:bg-muted/40',
       )}
     >
-      <div className="flex items-center gap-2.5 p-2">
+      <div className="flex items-center gap-2 px-2 py-1">
         <Checkbox
           checked={checked}
           onCheckedChange={onToggle}
           aria-label={`Select ${candidate.name}`}
-          className="data-[state=checked]:bg-primary/70 data-[state=checked]:border-primary/70 data-[state=checked]:text-primary-foreground"
+          className="h-3.5 w-3.5 data-[state=checked]:bg-primary/70 data-[state=checked]:border-primary/70 data-[state=checked]:text-primary-foreground"
         />
         <button
           type="button"
           onClick={() => hasSubs && setExpanded(v => !v)}
           className={cn(
-            'flex items-center gap-2.5 flex-1 min-w-0 text-left',
+            'flex items-center gap-2 flex-1 min-w-0 text-left',
             hasSubs && 'cursor-pointer',
           )}
           disabled={!hasSubs}
