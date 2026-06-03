@@ -400,7 +400,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
         projectId={projectId}
         projectName={projectCode}
         projectNumber={projectCode}
-        readOnly={p2aPlanByProject?.status === 'ACTIVE'}
+        readOnly={planIsLocked}
       />
 
       {/* P2A Plan Summary Dialog */}
@@ -469,10 +469,10 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {p2aPlanByProject?.status === 'ACTIVE' ? 'Delete submitted P2A Plan?' : 'Delete Draft P2A Plan?'}
+              {planIsLocked ? 'Delete submitted P2A Plan?' : 'Delete Draft P2A Plan?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {p2aPlanByProject?.status === 'ACTIVE'
+              {planIsLocked
                 ? 'This will permanently delete the submitted P2A handover plan and cancel all pending approval tasks for its approvers. This action cannot be undone.'
                 : 'This will permanently delete the draft P2A handover plan including all systems, VCRs, phases, and approvers. This action cannot be undone.'}
             </AlertDialogDescription>
