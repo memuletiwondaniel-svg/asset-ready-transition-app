@@ -2,10 +2,13 @@ import React, { useMemo } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, CheckCircle2, Clock, X as XIcon, ExternalLink } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Check, CheckCircle2, Clock, X as XIcon, ExternalLink, CircleDashed } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
-import type { WizardApprover } from './steps/ApprovalSetupStep';
+import { useP2AApproverRoster } from '@/hooks/useP2AApproverRoster';
+import { FIXED_APPROVER_ROLES, type WizardApprover } from './steps/ApprovalSetupStep';
 import type { WizardSystem } from './steps/SystemsImportStep';
 import type { WizardVCR } from './steps/VCRCreationStep';
 import type { WizardPhase } from './steps/PhasesStep';
@@ -27,18 +30,29 @@ interface Props {
 
 const normalize = (p?: string | null) => (p || '').toLowerCase().replace(/\s+/g, ' ').trim();
 
-type ApprovalStatus = 'APPROVED' | 'REJECTED' | 'PENDING';
+type ApprovalStatus = 'APPROVED' | 'REJECTED' | 'PENDING' | 'UPCOMING';
 
-const statusStyles: Record<ApprovalStatus, { icon: React.ComponentType<{ className?: string }>; label: string; cls: string }> = {
-  APPROVED: { icon: Check, label: 'Approved', cls: 'text-emerald-600 dark:text-emerald-400' },
-  REJECTED: { icon: XIcon, label: 'Rejected', cls: 'text-destructive' },
-  PENDING:  { icon: Clock, label: 'Pending',  cls: 'text-amber-600 dark:text-amber-400' },
+const statusStyles: Record<ApprovalStatus, { label: string; cls: string }> = {
+  APPROVED: { label: 'Approved', cls: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30' },
+  REJECTED: { label: 'Rejected', cls: 'bg-destructive/10 text-destructive border-destructive/30' },
+  PENDING:  { label: 'Pending',  cls: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30' },
+  UPCOMING: { label: 'Upcoming', cls: 'bg-muted text-muted-foreground border-border' },
+};
+
+const getInitials = (name?: string | null) => {
+  if (!name) return '?';
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+};
+
+const resolveAvatarUrl = (avatarUrl?: string | null): string | undefined => {
+  if (!avatarUrl) return undefined;
+  if (avatarUrl.startsWith('http')) return avatarUrl;
+  return supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
 };
 
 export const SubmissionSuccessDialog: React.FC<Props> = ({
   open,
   onOpenChange,
-  planId,
   projectId,
   projectCode,
   projectName,
@@ -50,59 +64,65 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
   onOpenWorkspace,
 }) => {
   const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) {
-      onDone();
-      return;
-    }
+    if (!nextOpen) { onDone(); return; }
     onOpenChange(nextOpen);
   };
 
   const { data: profileUsers } = useProfileUsers();
+  const { roster, isLoading: rosterLoading } = useP2AApproverRoster(projectId);
 
-  // REAL-RECORDS-ONLY. Earlier versions of this modal fell back to a
-  // computed "canonical roster" when the plan had no persisted approver
-  // rows — which fabricated a task count (e.g. "4 of 5") even though
-  // zero tasks existed in user_tasks. That hid plans like DP-18F whose
-  // submit path silently produced no approver rows or tasks. The modal
-  // now renders ONLY what's actually persisted, so an empty plan shows
-  // "0 approval tasks" honestly.
-  const savedApprovers = useMemo(
-    () => approvers
-      .slice()
-      .sort((a, b) => a.display_order - b.display_order),
-    [approvers]
-  );
-
-  const assignedApprovers = savedApprovers;
-  const assignedRows = useMemo(() => assignedApprovers.filter(a => !!a.user_id), [assignedApprovers]);
-  const unassignedRows = useMemo(() => assignedApprovers.filter(a => !a.user_id), [assignedApprovers]);
-
-  const statusByApproverId = useMemo(() => {
+  // Status by role_name from persisted approver rows (real tasks).
+  const statusByRole = useMemo(() => {
     const m = new Map<string, ApprovalStatus>();
-    assignedApprovers.forEach(a => {
+    approvers.forEach((a) => {
+      if (!a.user_id) return;
       const s = ((a as any).status || 'PENDING').toUpperCase();
-      m.set(a.id, (s === 'APPROVED' || s === 'REJECTED' ? s : 'PENDING') as ApprovalStatus);
+      m.set(a.role_name, (s === 'APPROVED' || s === 'REJECTED' ? s : 'PENDING') as ApprovalStatus);
     });
     return m;
-  }, [assignedApprovers]);
+  }, [approvers]);
 
-  const approverPartner = useMemo(() => {
+  // Build full 5-stage view from canonical roster; fall back to roles when roster is still loading.
+  const stages = useMemo(() => {
+    const source: WizardApprover[] =
+      roster.length > 0
+        ? roster
+        : FIXED_APPROVER_ROLES.map((r) => ({
+            id: `approver-${r.key}`,
+            role_name: r.label,
+            display_order: r.order,
+            status: 'PENDING' as const,
+          }));
+
+    return source
+      .slice()
+      .sort((a, b) => a.display_order - b.display_order)
+      .map((a) => {
+        const meta = FIXED_APPROVER_ROLES.find((r) => r.label === a.role_name);
+        const status: ApprovalStatus = statusByRole.get(a.role_name) ?? 'UPCOMING';
+        return { approver: a, stageNum: meta?.order ?? a.display_order, phase: meta?.phase ?? 1, status };
+      });
+  }, [roster, statusByRole]);
+
+  // Deputy B2B partner detection (same logic as before, now driven by roster).
+  const partnerByRole = useMemo(() => {
     const map = new Map<string, { full_name: string } | null>();
     if (!profileUsers) return map;
-    assignedApprovers.forEach(a => {
-      const me = profileUsers.find((u: any) => u.user_id === a.user_id);
+    stages.forEach(({ approver }) => {
+      if (!approver.user_id) { map.set(approver.role_name, null); return; }
+      const me = profileUsers.find((u: any) => u.user_id === approver.user_id);
       const myPos = normalize(me?.position);
-      if (!myPos) { map.set(a.id, null); return; }
+      if (!myPos) { map.set(approver.role_name, null); return; }
       const sharing = profileUsers.filter((u: any) => normalize(u.position) === myPos);
-      const others = sharing.filter((u: any) => u.user_id !== a.user_id);
-      map.set(a.id, sharing.length === 2 && others.length === 1 ? { full_name: others[0].full_name } : null);
+      const others = sharing.filter((u: any) => u.user_id !== approver.user_id);
+      map.set(approver.role_name, sharing.length === 2 && others.length === 1 ? { full_name: others[0].full_name } : null);
     });
     return map;
-  }, [profileUsers, assignedApprovers]);
+  }, [profileUsers, stages]);
 
-  const taskCount = assignedApprovers.filter(a => !!a.user_id).length;
-  const approvedCount = assignedApprovers.filter(a => !!a.user_id && statusByApproverId.get(a.id) === 'APPROVED').length;
-  const hcCount = systems.filter(s => (s as any).is_hydrocarbon).length;
+  const totalAssigned = stages.filter(s => !!s.approver.user_id).length;
+  const approvedCount = stages.filter(s => s.status === 'APPROVED').length;
+  const hcCount = systems.filter((s) => (s as any).is_hydrocarbon).length;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -117,81 +137,63 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
           </p>
         </div>
 
-        {/* Roster — always visible */}
         <div className="mx-6 mb-4 rounded-lg border border-border bg-muted/30">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
             <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span className="text-sm font-medium flex-1">
-              {taskCount} approval {taskCount === 1 ? 'task' : 'tasks'} created and assigned
+              {stages.length} approvers · {totalAssigned} assigned
             </span>
-            {taskCount > 0 && (
-              <span className="text-[11px] text-muted-foreground tabular-nums">
-                {approvedCount}/{taskCount} approved
-              </span>
-            )}
+            <span className="text-[11px] text-muted-foreground tabular-nums">
+              {approvedCount}/{stages.length} approved
+            </span>
           </div>
 
-          <div className="px-3 py-2 max-h-72 overflow-y-auto">
-            <div className="space-y-2">
-              {assignedRows.map(a => {
-                const partner = approverPartner.get(a.id);
-                const status: ApprovalStatus = statusByApproverId.get(a.id) ?? 'PENDING';
-                const S = statusStyles[status];
-                return (
-                  <div key={a.id} className="flex items-center gap-3 text-sm py-0.5">
-                    <div className="min-w-0 flex-1">
-                      <div className="font-semibold truncate leading-tight">{a.user_name}</div>
-                      <div className="text-xs text-muted-foreground truncate">{a.role_name}</div>
-                    </div>
-                    {partner && (
-                      <span
-                        className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0"
-                        title={`Either partner can approve: ${a.user_name} or ${partner.full_name}`}
-                      >
-                        B2B
+          <div className="px-3 py-2 max-h-80 overflow-y-auto">
+            {rosterLoading && stages.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">Loading approvers…</p>
+            ) : (
+              <div className="space-y-2">
+                {stages.map(({ approver, stageNum, status }) => {
+                  const partner = partnerByRole.get(approver.role_name);
+                  const S = statusStyles[status];
+                  const hasUser = !!approver.user_id;
+                  return (
+                    <div key={approver.id} className="flex items-center gap-2.5 text-sm py-1">
+                      <span className="text-[10px] font-semibold text-muted-foreground tabular-nums w-6 shrink-0">
+                        {stageNum}.
                       </span>
-                    )}
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        'rounded-full px-2.5 py-0.5 text-xs font-normal shrink-0',
-                        status === 'APPROVED' && 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
-                        status === 'REJECTED' && 'bg-destructive/10 text-destructive border-destructive/30',
-                        status === 'PENDING'  && 'bg-muted text-muted-foreground border-border',
-                      )}
-                    >
-                      {S.label}
-                    </Badge>
-                  </div>
-                );
-              })}
-            </div>
-
-            {unassignedRows.length > 0 && (
-              <>
-                <div className="my-2 border-t border-dashed border-border" />
-                <div className="space-y-2">
-                  {unassignedRows.map(a => (
-                    <div key={a.id} className="flex items-center gap-3 text-sm py-0.5">
+                      <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarImage src={resolveAvatarUrl(approver.user_avatar)} alt={approver.user_name || approver.role_name} />
+                        <AvatarFallback className="text-[10px]">
+                          {hasUser ? getInitials(approver.user_name) : <CircleDashed className="h-3.5 w-3.5" />}
+                        </AvatarFallback>
+                      </Avatar>
                       <div className="min-w-0 flex-1">
-                        <div className="font-semibold truncate leading-tight">{a.role_name}</div>
-                        <div className="text-xs text-muted-foreground truncate">no holder assigned</div>
+                        <div className="font-semibold truncate leading-tight">
+                          {hasUser ? approver.user_name : approver.role_name}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {hasUser ? approver.role_name : 'no holder assigned'}
+                        </div>
                       </div>
+                      {partner && (
+                        <span
+                          className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0"
+                          title={`Either partner can approve: ${approver.user_name} or ${partner.full_name}`}
+                        >
+                          B2B
+                        </span>
+                      )}
                       <Badge
                         variant="outline"
-                        className="rounded-full px-2.5 py-0.5 text-xs font-normal shrink-0 bg-destructive/10 text-destructive border-destructive/30 gap-1"
+                        className={cn('rounded-full px-2.5 py-0.5 text-xs font-normal shrink-0', hasUser ? S.cls : statusStyles.REJECTED.cls)}
                       >
-                        <XIcon className="h-3 w-3" />
-                        Not assigned
+                        {hasUser ? S.label : 'Not assigned'}
                       </Badge>
                     </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {assignedRows.length === 0 && unassignedRows.length === 0 && (
-              <p className="text-xs text-muted-foreground py-1">No approvers assigned.</p>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
