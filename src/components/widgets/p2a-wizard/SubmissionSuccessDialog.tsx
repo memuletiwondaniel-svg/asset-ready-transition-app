@@ -129,14 +129,15 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
 
   const totalAssigned = stages.filter(s => !!s.approver.user_id).length;
   const approvedCount = stages.filter(s => s.status === 'APPROVED').length;
+  const activeStageIndex = stages.findIndex(s => s.status === 'PENDING');
   
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden">
         <div className="flex flex-col items-center text-center px-8 pt-4 pb-3">
-          <div className="h-10 w-10 rounded-full bg-emerald-500/15 flex items-center justify-center mb-2">
-            <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+            <Send className="h-5 w-5 text-primary" />
           </div>
           <h2 className="text-lg font-semibold">Submitted for approval</h2>
           <p className="text-xs text-muted-foreground mt-1 tabular-nums">
