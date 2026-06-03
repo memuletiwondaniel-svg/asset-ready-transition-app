@@ -333,12 +333,21 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                       <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
                         Pre-selected
                       </Badge>
+                      <span className="ml-auto text-[10px] text-muted-foreground">
+                        {filteredStrong.length} of {strong.length}
+                      </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      These system IDs contain your full project code. Uncheck any you don't want.
-                    </p>
-                    <div className="space-y-1.5">
-                      {strong.map(c => (
+                    <div className="relative mb-2">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input
+                        placeholder="Filter matches by ID or name…"
+                        value={strongFilter}
+                        onChange={(e) => setStrongFilter(e.target.value)}
+                        className="h-8 pl-7 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      {filteredStrong.map(c => (
                         <CandidateRow
                           key={c.system_id}
                           candidate={c}
@@ -346,6 +355,9 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                           onToggle={() => toggle(c.system_id, selected, setSelected)}
                         />
                       ))}
+                      {filteredStrong.length === 0 && (
+                        <p className="text-xs text-muted-foreground text-center py-3">No matches for "{strongFilter}".</p>
+                      )}
                     </div>
                   </section>
                 )}
