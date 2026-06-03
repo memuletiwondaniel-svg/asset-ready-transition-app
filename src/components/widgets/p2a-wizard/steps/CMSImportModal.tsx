@@ -573,10 +573,10 @@ const CandidateRow: React.FC<{
               key={`${s.system_id ?? i}`}
               className="flex items-center gap-2 text-[11px] text-muted-foreground"
             >
-              <span className="font-mono px-1.5 py-0.5 rounded bg-muted/40 border border-border/40">
+              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted/40 border border-border/40 shrink-0 w-[160px] truncate tabular-nums">
                 {s.system_id ?? `#${i + 1}`}
               </span>
-              <span className="truncate">{s.name ?? ''}</span>
+              <span className="truncate flex-1 min-w-0">{s.name ?? ''}</span>
             </div>
           ))}
         </div>
