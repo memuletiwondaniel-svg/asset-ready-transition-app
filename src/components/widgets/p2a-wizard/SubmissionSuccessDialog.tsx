@@ -126,8 +126,8 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
-        <div className="flex flex-col items-center text-center px-6 pt-6 pb-3">
+      <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden">
+        <div className="flex flex-col items-center text-center px-8 pt-7 pb-4">
           <div className="h-11 w-11 rounded-full bg-emerald-500/15 flex items-center justify-center mb-3">
             <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
           </div>
@@ -137,32 +137,31 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
           </p>
         </div>
 
-        <div className="mx-6 mb-4 rounded-lg border border-border bg-muted/30">
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+        <div className="mx-8 mb-4 rounded-lg border border-border bg-muted/30">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border">
             <span className="text-sm font-medium flex-1">
-              {stages.length} approvers · {totalAssigned} assigned
+              {totalAssigned} assigned
             </span>
             <span className="text-[11px] text-muted-foreground tabular-nums">
               {approvedCount}/{stages.length} approved
             </span>
           </div>
 
-          <div className="px-3 py-2 max-h-80 overflow-y-auto">
+          <div className="px-4 py-3 max-h-96 overflow-y-auto">
             {rosterLoading && stages.length === 0 ? (
               <p className="text-xs text-muted-foreground py-2">Loading approvers…</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-4">
                 {stages.map(({ approver, stageNum, status }) => {
                   const partner = partnerByRole.get(approver.role_name);
                   const S = statusStyles[status];
                   const hasUser = !!approver.user_id;
                   return (
-                    <div key={approver.id} className="flex items-center gap-2.5 text-sm py-1">
-                      <span className="text-[10px] font-semibold text-muted-foreground tabular-nums w-6 shrink-0">
+                    <div key={approver.id} className="flex items-center gap-3 text-sm">
+                      <span className="text-[10px] font-semibold text-muted-foreground tabular-nums w-5 shrink-0">
                         {stageNum}.
                       </span>
-                      <Avatar className="h-8 w-8 shrink-0">
+                      <Avatar className="h-9 w-9 shrink-0">
                         <AvatarImage src={resolveAvatarUrl(approver.user_avatar)} alt={approver.user_name || approver.role_name} />
                         <AvatarFallback className="text-[10px]">
                           {hasUser ? getInitials(approver.user_name) : <CircleDashed className="h-3.5 w-3.5" />}
@@ -172,7 +171,7 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
                         <div className="font-semibold truncate leading-tight">
                           {hasUser ? approver.user_name : approver.role_name}
                         </div>
-                        <div className="text-xs text-muted-foreground truncate">
+                        <div className="text-[11px] text-muted-foreground truncate mt-0.5">
                           {hasUser ? approver.role_name : 'no holder assigned'}
                         </div>
                       </div>
@@ -198,7 +197,7 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
           </div>
         </div>
 
-        <div className="px-6 flex items-center justify-between text-xs">
+        <div className="px-8 flex items-center justify-between text-xs">
           <span className="text-muted-foreground">Status</span>
           <Badge
             variant="outline"
@@ -208,14 +207,12 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
           </Badge>
         </div>
 
-        <div className="mx-6 mt-3 pt-3 border-t border-border flex items-center justify-center gap-x-4 gap-y-1 flex-wrap text-xs text-muted-foreground tabular-nums">
+        <div className="mx-8 mt-3 pt-3 border-t border-border flex items-center justify-center gap-x-4 gap-y-1 flex-wrap text-xs text-muted-foreground tabular-nums">
           <span>{systems.length} systems</span>
           <span className="opacity-40">·</span>
           <span>{vcrs.length} VCRs</span>
           <span className="opacity-40">·</span>
           <span>{phases.length} phases</span>
-          <span className="opacity-40">·</span>
-          <span>{hcCount} HC</span>
         </div>
 
         <div className="flex items-center gap-2 px-6 py-4 mt-4">
