@@ -50,7 +50,7 @@ const STATES: Record<P2APlanStatus, P2APlanUIState> = {
   PENDING_APPROVAL: {
     badgeLabel: 'Awaiting Approval',
     badgeClass: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
-    helperText: 'Awaiting approval',
+    helperText: 'Your plan is awaiting approval from the assigned approvers.',
     primaryLabel: 'View P2A Plan',
     primaryAction: 'view',
     isLocked: true,
