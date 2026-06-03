@@ -766,13 +766,13 @@ const EditItemForm: React.FC<{
 
   const { members: explicitDeliveringParties, addMember, removeMember } = useVCRItemDeliveringParties({ vcrItemId: item.id, handoverPointId: vcrId });
 
-  // Build role IDs including family expansion (e.g., ORA Engr → Snr ORA Engr)
-  const allRoleIds = [...new Set([deliveringParty, ...approvingParties].filter(Boolean))];
-  
-  // Expand role families: map role IDs to role names, get families, resolve back to IDs
+  // Build delivering role IDs with family expansion (e.g., ORA Engr → Snr ORA Engr).
+  // Approving parties are resolved separately via the shared org_role_holders-first hook.
+  const deliveringRoleIds = deliveringParty ? [deliveringParty] : [];
+
   const expandedRoleIds = React.useMemo(() => {
     const expanded = new Set<string>();
-    allRoleIds.forEach(roleId => {
+    deliveringRoleIds.forEach(roleId => {
       expanded.add(roleId);
       const roleName = roles.find(r => r.id === roleId)?.name;
       if (roleName) {
@@ -783,38 +783,29 @@ const EditItemForm: React.FC<{
       }
     });
     return [...expanded];
-  }, [allRoleIds.join(','), roles]);
+  }, [deliveringRoleIds.join(','), roles]);
 
-  // Resolve users filtered by project location
+  // Resolve delivering candidates filtered by project location (unchanged behaviour).
   const { data: resolvedUsers = [] } = useQuery({
-    queryKey: ['edit-form-users', expandedRoleIds.sort().join(','), projectId, projectLocationCtx?.hubName],
+    queryKey: ['edit-form-delivering-users', expandedRoleIds.sort().join(','), projectId, projectLocationCtx?.hubName],
     queryFn: async () => {
       if (expandedRoleIds.length === 0) return [];
-      
-      // Fetch ALL profiles matching any of the expanded roles
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, full_name, avatar_url, role, position, hub')
         .in('role', expandedRoleIds)
         .eq('is_active', true);
-      
       if (!profiles || profiles.length === 0) return [];
-
-      // Filter by project location context
       const filtered = profiles.filter((p: any) => {
-        if (!projectLocationCtx) return true; // No context = show all
-        
+        if (!projectLocationCtx) return true;
         const roleName = roles.find(r => r.id === p.role)?.name || '';
-        // ORA roles use portfolio matching; hub-specific roles use hub matching
         const usePortfolio = requiresPortfolio(roleName) && !requiresHub(roleName);
-        
         return profileMatchesProjectLocation(
           { position: p.position, hub: p.hub },
           projectLocationCtx,
           usePortfolio
         );
       });
-
       return filtered.map((p: any) => ({
         user_id: p.user_id,
         full_name: p.full_name,
@@ -826,14 +817,42 @@ const EditItemForm: React.FC<{
     enabled: expandedRoleIds.length > 0,
   });
 
+  // SHARED resolver: approving-party holders come from org_role_holders FIRST
+  // (seeded global / B2B holders are authoritative). Roles without a seeded
+  // entry fall back to the same project-location filter used for delivering.
+  const { data: approvingHoldersById = {} } = useApprovingPartyHoldersByIds({
+    roles,
+    roleIds: approvingParties,
+    expandFamily: true,
+    scopeKey: `vcr|${projectId || ''}|${projectLocationCtx?.hubName || ''}`,
+    fallbackFilter: (p, roleName) => {
+      if (!projectLocationCtx) return true;
+      const usePortfolio = requiresPortfolio(roleName) && !requiresHub(roleName);
+      return profileMatchesProjectLocation(
+        { position: p.position, hub: p.hub },
+        projectLocationCtx,
+        usePortfolio,
+      );
+    },
+  });
+
   const getUsersForRole = (roleId: string) => {
-    // Include users from the same role family
+    // Delivering uses local family-expanded resolution.
     const roleName = roles.find(r => r.id === roleId)?.name;
     const familyNames = roleName ? getRoleFamilyNames(roleName) : [];
     const familyRoleIds = new Set(roles.filter(r => familyNames.includes(r.name)).map(r => r.id));
     familyRoleIds.add(roleId);
     return resolvedUsers.filter(u => familyRoleIds.has(u.role_id));
   };
+
+  const getApprovingUsersForRole = (roleId: string): ResolvedUser[] =>
+    (approvingHoldersById[roleId] || []).map(h => ({
+      user_id: h.user_id,
+      full_name: h.full_name,
+      avatar_url: h.avatar_url,
+      role_id: h.role_id,
+      position: h.position,
+    }));
   const getRoleName = (roleId: string) => roles.find(r => r.id === roleId)?.name || 'Unknown';
 
   const roleDeliveringUsers = deliveringParty ? getUsersForRole(deliveringParty) : [];
