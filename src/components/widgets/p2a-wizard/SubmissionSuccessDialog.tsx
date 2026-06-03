@@ -56,32 +56,16 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
     [approvers]
   );
 
-  // Pull persisted approval rows for this plan (when present) so status is real.
-  const { data: approvalRows } = useQuery({
-    queryKey: ['p2a-plan-approvals', planId, open],
-    enabled: !!planId && open,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client = supabase as any;
-      const { data, error } = await client
-        .from('p2a_plan_approvals')
-        .select('approver_user_id, status, decided_at')
-        .eq('handover_plan_id', planId);
-      if (error) throw error;
-      return (data || []) as Array<{ approver_user_id: string; status: string; decided_at: string | null }>;
-    },
-  });
-
-  const statusByUser = useMemo(() => {
+  // Status comes from p2a_handover_approvers.status on each WizardApprover row
+  // (loaded fresh via loadP2ADraft when the modal opens). No second query needed.
+  const statusByApproverId = useMemo(() => {
     const m = new Map<string, ApprovalStatus>();
-    (approvalRows || []).forEach(r => {
-      const s = (r.status || '').toUpperCase();
-      if (s === 'APPROVED' || s === 'REJECTED' || s === 'PENDING') m.set(r.approver_user_id, s as ApprovalStatus);
+    assignedApprovers.forEach(a => {
+      const s = ((a as any).status || 'PENDING').toUpperCase();
+      m.set(a.id, (s === 'APPROVED' || s === 'REJECTED' ? s : 'PENDING') as ApprovalStatus);
     });
     return m;
-  }, [approvalRows]);
+  }, [assignedApprovers]);
 
   const approverPartner = useMemo(() => {
     const map = new Map<string, { full_name: string } | null>();
