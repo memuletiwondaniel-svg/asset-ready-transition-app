@@ -111,3 +111,11 @@ Approve to begin.
 - VCR Execution Plan submit (`VCRDetailOverlay`) is blocked until the VCR has
   at least one system AND `systems_finalized_at` is set. Readiness panel now
   shows a Systems row.
+
+## Known cosmetic drift (org-role seeding, 2026-06-03) — not blocking
+- `Static TA2 - Project` email handle: `BGC-ENG-LEAD-MECHANICAL-TA2` (says MECHANICAL, role is STATIC).
+- `Process TA2 - Asset` email handle: `BGC-Head-of-Process-Optimzation` (typo "Optimzation"; doesn't say "Process TA2").
+- `Dep. Plant Director - UQ` email handle: `BGC-UQ-Senior-Ops-Engineer` (doesn't say "Deputy-Director").
+- `Engr. Manager - Asset` (profiles.position) vs canonical `Engr. Manager (Asset)` (roles.name) — uses ` - ` vs ` (…)`. Resolver agnostic; logged for future normalization.
+- `Plant Director - CS` = profile "TBC Director" — known vacancy, intentionally un-seeded in org_role_holders.
+- `MCI TA2 - Project` — no holder; intentionally un-seeded.
