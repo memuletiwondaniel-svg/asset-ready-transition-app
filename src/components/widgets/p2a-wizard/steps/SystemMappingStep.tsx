@@ -482,22 +482,7 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
             <span className="text-[10px] uppercase tracking-wide font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
               Optional
             </span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="text-muted-foreground/70 hover:text-foreground transition-colors"
-                  aria-label="About preliminary assignment"
-                >
-                  <Info className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs text-xs leading-snug">
-                This is a first-pass tentative mapping. The authoritative system list
-                is confirmed later in each VCR's Execution Plan. You can submit the
-                P2A plan without completing this step.
-              </TooltipContent>
-            </Tooltip>
+          </div>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
             Tentative mapping to seed the VCR plans — finalized later in each VCR's Execution Plan.
