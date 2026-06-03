@@ -49,7 +49,6 @@ export const UnassignedVCRPanel: React.FC<UnassignedVCRPanelProps> = ({
       {/* Header */}
       <div className="p-3 pb-2 border-b border-border">
         <div className="flex items-center gap-2">
-          <PackageOpen className="w-4 h-4 text-muted-foreground shrink-0" />
           <h3 className="font-semibold text-sm flex-1">VCRs</h3>
           {sortedPoints.length > 0 && (
             <span className="text-[10px] text-muted-foreground">
