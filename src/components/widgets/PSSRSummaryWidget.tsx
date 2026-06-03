@@ -298,9 +298,11 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                         size="sm"
                         className="text-xs gap-1.5"
                         onClick={() => {
-                          if (p2aPlanByProject.status === 'COMPLETED') {
+                          // Existing plan (ACTIVE/COMPLETED/APPROVED) → read-only workspace.
+                          // Never open the create-wizard when a plan already exists.
+                          if (['COMPLETED', 'APPROVED', 'ACTIVE'].includes(p2aPlanByProject.status)) {
                             setShowP2AWorkspace(true);
-                          } else {
+                          } else if (p2aPlanByProject.status === 'DRAFT') {
                             setShowP2APlanWizard(true);
                           }
                         }}
