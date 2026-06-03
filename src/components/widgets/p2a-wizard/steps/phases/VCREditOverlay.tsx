@@ -24,13 +24,14 @@ import {
   Pencil,
   Check,
   X,
+  CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardVCR } from '../VCRCreationStep';
 import { WizardPhase } from '../PhasesStep';
 import { WizardSystem, WizardSubsystem } from '../SystemsImportStep';
-import { getVCRIdStyle } from './DraggableVCRChip';
 import { shortVCRCode } from './vcrDisplayUtils';
+
 
 const SUB_SEP = '::sub::';
 const makeSubKey = (systemId: string, subSystemId: string) =>
