@@ -9,7 +9,6 @@ import {
   Check,
   X,
   Zap,
-  Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardSystem, WizardSubsystem } from './SystemsImportStep';
@@ -270,6 +269,25 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
     [systems],
   );
 
+  // ── Scroll to top on step entry ────────────────────────────
+  // Without this, navigating back into Step 3 lands mid-list because the
+  // nearest scrollable ancestor retains its previous scrollTop.
+  const rootRef = React.useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    let node: HTMLElement | null = el.parentElement;
+    while (node) {
+      const style = window.getComputedStyle(node);
+      if (/(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight) {
+        node.scrollTop = 0;
+        break;
+      }
+      node = node.parentElement;
+    }
+    window.scrollTo({ top: 0 });
+  }, []);
+
   // ── Auto-clean stale mappings ──────────────────────────────
   useEffect(() => {
     let hasStale = false;
@@ -473,7 +491,7 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
 
   return (
     <TooltipProvider delayDuration={150}>
-    <div className="flex flex-col gap-3 p-4 h-full">
+    <div ref={rootRef} className="flex flex-col gap-3 p-4 h-full">
       {/* ── Header ────────────────────────────────────────── */}
       <div className="flex items-start justify-between shrink-0 gap-3">
         <div className="min-w-0">
@@ -482,22 +500,6 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
             <span className="text-[10px] uppercase tracking-wide font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
               Optional
             </span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="text-muted-foreground/70 hover:text-foreground transition-colors"
-                  aria-label="About preliminary assignment"
-                >
-                  <Info className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs text-xs leading-snug">
-                This is a first-pass tentative mapping. The authoritative system list
-                is confirmed later in each VCR's Execution Plan. You can submit the
-                P2A plan without completing this step.
-              </TooltipContent>
-            </Tooltip>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
             Tentative mapping to seed the VCR plans — finalized later in each VCR's Execution Plan.
@@ -584,7 +586,7 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
         </div>
         <div className="h-1.5 rounded-full bg-muted overflow-hidden">
           <div
-            className="h-full rounded-full bg-primary transition-all duration-300"
+            className="h-full rounded-full bg-primary/40 transition-all duration-300"
             style={{ width: `${totalMappable > 0 ? (totalMapped / totalMappable) * 100 : 0}%` }}
           />
         </div>

@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Loader2,
   RefreshCw,
   Clock,
@@ -13,6 +19,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useProfileUsers } from '@/hooks/useProfileUsers';
 
 export interface WizardApprover {
   id: string;
@@ -49,11 +56,27 @@ const FIXED_APPROVER_ROLES = [
   { key: 'deputy_plant_director', label: 'Dep. Plant Director', order: 5, phase: 2 },
 ] as const;
 
-/** Match a team member role string to one of our fixed keys */
+
+/**
+ * Match a team member role string to one of our fixed approver keys.
+ * Aligns with the canonical role catalog used by resolve_project_role_user
+ * but ALSO accepts the known label-drift variants stored on legacy projects
+ * (Snr. ORA Engr. / Sr ORA Engr) so the senior ORA approver always resolves
+ * even when the project team uses an Engr. variant rather than "ORA Lead".
+ */
 const matchRoleKey = (teamRole: string): string | null => {
   const r = teamRole.toLowerCase().trim();
 
-  if (r.includes('ora lead') || r === 'ora lead') return 'ora_lead';
+  // ORA approver: canonical "ORA Lead" + drift variants (Snr./Sr/Senior ORA Engr.)
+  if (
+    r === 'ora lead' ||
+    r.includes('ora lead') ||
+    r.includes('snr. ora') ||
+    r.includes('snr ora') ||
+    r.includes('sr ora') ||
+    r.includes('senior ora')
+  )
+    return 'ora_lead';
   if (r.includes('construction lead') || r === 'construction lead') return 'construction_lead';
   if (
     r.includes('commissioning lead') ||
@@ -90,6 +113,7 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
   onApproversChange,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const { data: allProfileUsers } = useProfileUsers();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [showAddRow, setShowAddRow] = useState(false);
   const [newRoleName, setNewRoleName] = useState('');
@@ -354,8 +378,30 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
         <div className="space-y-2 ml-4">
           {approvers.map((approver) => {
             const hasUser = !!approver.user_id;
+
+            // ── B2B partner detection ──
+            // Mirrors the resolver pattern used in WizardStepProjectTeam:
+            // if exactly one other active user shares this user's exact position
+            // (normalized), treat them as the B2B counterpart and allow a swap.
+            let partner: { user_id: string; full_name: string; avatar_url?: string; position?: string } | null = null;
+            if (hasUser && allProfileUsers) {
+              const normalize = (p?: string | null) => (p || '').toLowerCase().replace(/\s+/g, ' ').trim();
+              const me = allProfileUsers.find((u: any) => u.user_id === approver.user_id);
+              const myPos = normalize(me?.position);
+              if (myPos) {
+                const sharing = allProfileUsers.filter((u: any) => normalize(u.position) === myPos);
+                const others = sharing.filter((u: any) => u.user_id !== approver.user_id);
+                if (sharing.length === 2 && others.length === 1) {
+                  partner = others[0];
+                }
+              }
+            }
+
             return (
-              <div key={approver.id} className="group flex items-center gap-3 p-3.5 rounded-lg border bg-card hover:bg-muted/40 hover:shadow-sm transition-all duration-200 max-w-md cursor-default">
+              <div
+                key={approver.id}
+                className="group flex items-center gap-3 p-3.5 rounded-lg border border-border bg-card hover:bg-accent/40 hover:border-primary/40 hover:shadow-md hover:-translate-y-px transition-all duration-200 max-w-md cursor-default"
+              >
                 <Avatar className="h-9 w-9 shrink-0">
                   <AvatarImage src={resolveAvatarUrl(approver.user_avatar)} />
                   <AvatarFallback className="text-xs bg-muted">
@@ -365,7 +411,41 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
                 <div className="flex-1 min-w-0">
                   {hasUser ? (
                     <>
-                      <span className="text-sm font-medium">{approver.user_name}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-medium truncate">{approver.user_name}</span>
+                        {partner && (
+                          <TooltipProvider delayDuration={150}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const next = approvers.map(a =>
+                                      a.id === approver.id
+                                        ? {
+                                            ...a,
+                                            user_id: partner!.user_id,
+                                            user_name: partner!.full_name,
+                                            user_avatar: partner!.avatar_url,
+                                          }
+                                        : a
+                                    );
+                                    onApproversChange(next);
+                                  }}
+                                  className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 hover:bg-amber-200 dark:hover:bg-amber-900/60 cursor-pointer transition-colors"
+                                  title={`Switch to B2B: ${partner.full_name}`}
+                                >
+                                  B2B
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
+                                Click to switch to B2B: {partner.full_name}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground truncate">{approver.role_name}</p>
                     </>
                   ) : (
@@ -410,9 +490,9 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
             </div>
           ) : (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="gap-1.5 text-xs mt-1"
+              className="gap-1.5 text-xs mt-1 text-muted-foreground border border-dashed border-border/70 hover:text-primary-foreground hover:bg-primary hover:border-primary hover:shadow-sm transition-all"
               onClick={() => setShowAddRow(true)}
             >
               <Plus className="h-3.5 w-3.5" />
