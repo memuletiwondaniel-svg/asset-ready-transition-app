@@ -111,8 +111,8 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
     return map;
   }, [profileUsers, assignedApprovers]);
 
-  const taskCount = savedApprovers.length > 0 ? savedApprovers.length : assignedApprovers.filter(a => a.user_id).length;
-  const approvedCount = assignedApprovers.filter(a => statusByApproverId.get(a.id) === 'APPROVED').length;
+  const taskCount = assignedApprovers.filter(a => !!a.user_id).length;
+  const approvedCount = assignedApprovers.filter(a => !!a.user_id && statusByApproverId.get(a.id) === 'APPROVED').length;
   const hcCount = systems.filter(s => (s as any).is_hydrocarbon).length;
 
   return (
