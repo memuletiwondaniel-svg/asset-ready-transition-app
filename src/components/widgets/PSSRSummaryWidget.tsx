@@ -479,9 +479,13 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
       <AlertDialog open={showDeleteP2ADraft} onOpenChange={setShowDeleteP2ADraft}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Draft P2A Plan?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {p2aPlanByProject?.status === 'ACTIVE' ? 'Delete submitted P2A Plan?' : 'Delete Draft P2A Plan?'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the draft P2A handover plan including all systems, VCRs, phases, and approvers. This action cannot be undone.
+              {p2aPlanByProject?.status === 'ACTIVE'
+                ? 'This will permanently delete the submitted P2A handover plan and cancel all pending approval tasks for its approvers. This action cannot be undone.'
+                : 'This will permanently delete the draft P2A handover plan including all systems, VCRs, phases, and approvers. This action cannot be undone.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -494,6 +498,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 try {
                   await deleteP2ADraft();
                   setShowDeleteP2ADraft(false);
+                  setShowP2ASubmission(false);
                 } catch {
                   // toast handled in hook
                 }
@@ -504,6 +509,24 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {p2aPlanByProject && (
+        <SubmissionSuccessDialog
+          open={showP2ASubmission}
+          onOpenChange={setShowP2ASubmission}
+          projectCode={projectCode}
+          projectName={projectName}
+          systems={p2aWizardState.systems}
+          vcrs={p2aWizardState.vcrs}
+          phases={p2aWizardState.phases}
+          approvers={p2aWizardState.approvers}
+          onDone={() => setShowP2ASubmission(false)}
+          onOpenWorkspace={() => {
+            setShowP2ASubmission(false);
+            setShowP2AWorkspace(true);
+          }}
+        />
+      )}
 
     </>
   );
