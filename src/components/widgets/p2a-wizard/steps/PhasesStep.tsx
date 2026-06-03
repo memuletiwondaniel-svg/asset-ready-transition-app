@@ -100,6 +100,7 @@ interface PhasesStepProps {
   vcrPhaseAssignments: Record<string, string>;
   mappings: Record<string, string[]>;
   milestones?: Array<{ id: string; name: string; target_date?: string }>;
+  projectId?: string;
   onPhasesChange: (phases: WizardPhase[]) => void;
   onVCRPhaseAssignmentsChange: (assignments: Record<string, string>) => void;
   onVCRsChange: (vcrs: WizardVCR[]) => void;
@@ -114,6 +115,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
   vcrPhaseAssignments,
   mappings,
   milestones = [],
+  projectId,
   onPhasesChange,
   onVCRPhaseAssignmentsChange,
   onVCRsChange,
@@ -468,6 +470,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         milestones={milestones}
+        projectId={projectId}
         editingPhase={editingPhase}
         onSave={editingPhase ? handleEditPhase : handleCreatePhase}
       />
