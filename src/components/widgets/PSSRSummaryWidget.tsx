@@ -289,10 +289,11 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                           </Badge>
                         </button>
                       )}
-                      <p className="text-xs text-muted-foreground max-w-xs">
+                      <p className="text-xs text-muted-foreground max-w-xs text-center">
                         {planUIState.helperText}
                       </p>
-                      <div className="relative flex items-center justify-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="h-8 w-8 shrink-0" aria-hidden />
                         <Button
                           variant="secondary"
                           size="sm"
@@ -302,17 +303,19 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                           <ExternalLink className="h-3.5 w-3.5" />
                           {planUIState.primaryLabel}
                         </Button>
-                        {canCreateVCR && planIsLocked && !planIsApproved && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute left-full ml-2 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => { e.stopPropagation(); setShowDeleteP2ADraft(true); }}
-                            aria-label="Delete submitted P2A plan"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
+                        <div className="h-8 w-8 shrink-0 flex items-center justify-center">
+                          {canCreateVCR && planIsLocked && !planIsApproved && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => { e.stopPropagation(); setShowDeleteP2ADraft(true); }}
+                              aria-label="Delete submitted P2A plan"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </>
