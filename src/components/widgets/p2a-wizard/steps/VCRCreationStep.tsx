@@ -100,8 +100,9 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                 <div
                   key={vcr.id}
                   className={cn(
-                    "group p-3 rounded-lg border bg-card transition-all",
-                    "hover:bg-muted/40 hover:border-primary/30 hover:shadow-sm",
+                    "group relative p-3 rounded-lg border bg-card transition-all duration-200",
+                    "hover:bg-muted/40 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5",
+                    "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-r before:bg-primary before:opacity-0 before:transition-opacity hover:before:opacity-100",
                     editingId === vcr.id && "ring-2 ring-primary"
                   )}
                 >
