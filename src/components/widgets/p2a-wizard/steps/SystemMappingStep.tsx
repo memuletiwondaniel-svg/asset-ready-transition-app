@@ -270,6 +270,25 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
     [systems],
   );
 
+  // ── Scroll to top on step entry ────────────────────────────
+  // Without this, navigating back into Step 3 lands mid-list because the
+  // nearest scrollable ancestor retains its previous scrollTop.
+  const rootRef = React.useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    let node: HTMLElement | null = el.parentElement;
+    while (node) {
+      const style = window.getComputedStyle(node);
+      if (/(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight) {
+        node.scrollTop = 0;
+        break;
+      }
+      node = node.parentElement;
+    }
+    window.scrollTo({ top: 0 });
+  }, []);
+
   // ── Auto-clean stale mappings ──────────────────────────────
   useEffect(() => {
     let hasStale = false;
