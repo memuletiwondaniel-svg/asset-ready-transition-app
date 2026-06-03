@@ -64,7 +64,7 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
   onDone,
   onOpenWorkspace,
 }) => {
-  const [swappedRoles, setSwappedRoles] = useState<Record<string, boolean>>({});
+  // Read-only submission view: deputy row always shows the assigned holder; no swap state.
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) { onDone(); return; }
     onOpenChange(nextOpen);
