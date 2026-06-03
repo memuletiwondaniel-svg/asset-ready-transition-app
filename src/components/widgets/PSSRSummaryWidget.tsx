@@ -274,8 +274,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                   </>
                 ) : (
                   <>
-                    <p className="text-xs opacity-70 mb-5">{planUIState.helperText}</p>
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="relative flex items-center justify-center w-full">
                       <Button
                         variant="secondary"
                         size="sm"
@@ -285,6 +284,21 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                         <ExternalLink className="h-3.5 w-3.5" />
                         {planUIState.primaryLabel}
                       </Button>
+                      {headerStatusLabel && (
+                        <button
+                          type="button"
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={handleP2AStatusClick}
+                          className="absolute right-0 top-1/2 -translate-y-1/2 cursor-pointer z-10"
+                          title="View approvers"
+                        >
+                          <Badge variant="outline" className={cn("text-[10px] h-5 px-2 hover:opacity-80 transition-opacity", headerStatusClass)}>
+                            {headerStatusLabel}
+                          </Badge>
+                        </button>
+                      )}
+                    </div>
                       {canCreateVCR && planIsLocked && !planIsApproved && (
                         <Button
                           variant="ghost"
