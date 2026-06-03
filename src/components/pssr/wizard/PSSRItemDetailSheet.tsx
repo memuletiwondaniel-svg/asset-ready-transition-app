@@ -48,6 +48,7 @@ import { ChecklistItem } from '@/hooks/usePSSRChecklistLibrary';
 import { ChecklistItemOverride } from './ChecklistItemEditDialog';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useApprovingPartyHoldersByNames } from '@/hooks/useApprovingPartyHolders';
 
 interface PSSRItemDetailSheetProps {
   open: boolean;
@@ -136,117 +137,107 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
   // Parse current delivering role name
   const currentDeliveringRole = (formData.responsible || '').trim();
 
-  // Resolve role names to Asset-level profiles
+  // Delivering-party resolution (kept here — PSSR delivering is per-plant and
+  // not stored in org_role_holders). Approving parties now resolve via the
+  // shared org_role_holders-first hook below.
   const { data: resolvedParties } = useQuery({
-    queryKey: ['pssr-item-parties', item?.id, formData.responsible, formData.approvers],
+    queryKey: ['pssr-item-delivering', item?.id, formData.responsible, plantName, fieldName],
     queryFn: async () => {
-      if (!item) return { delivering: [] as ResolvedMember[], approving: {} as Record<string, ResolvedMember[]>, roleNameToId: {} as Record<string, string> };
+      if (!item) return { delivering: [] as ResolvedMember[], roleNameToId: {} as Record<string, string>, locationMatched: [] as string[] };
 
       const responsibleText = formData.responsible || '';
-      const approversText = formData.approvers || '';
-
       const deliveringRoles = responsibleText ? responsibleText.split(',').map(r => r.trim()).filter(Boolean) : [];
-      const approvingRoles = approversText ? approversText.split(',').map(r => r.trim()).filter(Boolean) : [];
-      const allRoleNames = [...new Set([...deliveringRoles, ...approvingRoles])];
+      if (deliveringRoles.length === 0) return { delivering: [], roleNameToId: {}, locationMatched: [] };
 
-      if (allRoleNames.length === 0) return { delivering: [], approving: {}, roleNameToId: {} };
-
-      const { data: roles } = await supabase
+      const { data: rolesData } = await supabase
         .from('roles')
         .select('id, name')
         .eq('is_active', true);
-
-      if (!roles) return { delivering: [], approving: {}, roleNameToId: {} };
+      if (!rolesData) return { delivering: [], roleNameToId: {}, locationMatched: [] };
 
       const roleNameToId: Record<string, string> = {};
       const roleIdToName: Record<string, string> = {};
-      roles.forEach(r => {
+      rolesData.forEach(r => {
         roleNameToId[r.name.toLowerCase()] = r.id;
         roleIdToName[r.id] = r.name;
-      });
-
-      const matchedRoleIds = allRoleNames
-        .map(name => roleNameToId[name.toLowerCase()])
-        .filter(Boolean);
-
-      if (matchedRoleIds.length === 0) return { delivering: [], approving: {}, roleNameToId };
-
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, avatar_url, role, position')
-        .in('role', matchedRoleIds)
-        .eq('is_active', true);
-
-      if (!profiles) return { delivering: [], approving: {}, roleNameToId };
-
-      // For TA2 roles, filter to Asset-level staff only for disciplines that have
-      // separate Asset/Project designations. MCI, Civil, and Tech Safety TA2s serve
-      // both Asset and Project so they are always included (no position suffix).
-      const sharedDisciplines = ['mci', 'civil', 'tech safety'];
-      const assetProfiles = profiles.filter((p: any) => {
-        const pos = (p.position || '').toLowerCase();
-        const roleName = roleIdToName[p.role] || '';
-        if (roleName.toLowerCase().includes('ta2')) {
-          const isShared = sharedDisciplines.some(d => roleName.toLowerCase().includes(d));
-          if (isShared) return true; // shared disciplines — include all
-          // For split disciplines, only include Asset-level (exclude Project)
-          return !pos.includes('project');
-        }
-        return true;
-      });
-
-      const toMember = (p: any): ResolvedMember => ({
-        user_id: p.user_id,
-        full_name: p.full_name || '',
-        avatar_url: p.avatar_url,
-        position: p.position || '',
-        role_name: roleIdToName[p.role] || '',
       });
 
       const deliveringRoleIds = deliveringRoles
         .map(name => roleNameToId[name.toLowerCase()])
         .filter(Boolean);
-      
-      // Filter delivering members by PSSR location — only show members at the PSSR's plant/field
-      const allDeliveringProfiles = assetProfiles.filter((p: any) => deliveringRoleIds.includes(p.role));
-      const allDeliveringMembers = allDeliveringProfiles.map(toMember);
-      
+      if (deliveringRoleIds.length === 0) return { delivering: [], roleNameToId, locationMatched: [] };
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url, role, position')
+        .in('role', deliveringRoleIds)
+        .eq('is_active', true);
+      if (!profiles) return { delivering: [], roleNameToId, locationMatched: [] };
+
+      const sharedDisciplines = ['mci', 'civil', 'tech safety'];
+      const assetFiltered = profiles.filter((p: any) => {
+        const pos = (p.position || '').toLowerCase();
+        const roleName = roleIdToName[p.role] || '';
+        if (roleName.toLowerCase().includes('ta2')) {
+          const isShared = sharedDisciplines.some(d => roleName.toLowerCase().includes(d));
+          if (isShared) return true;
+          return !pos.includes('project');
+        }
+        return true;
+      });
+
+      const allDeliveringMembers: ResolvedMember[] = assetFiltered.map((p: any) => ({
+        user_id: p.user_id,
+        full_name: p.full_name || '',
+        avatar_url: p.avatar_url,
+        position: p.position || '',
+        role_name: roleIdToName[p.role] || '',
+      }));
+
       const locationMatched: string[] = [];
       let delivering: ResolvedMember[];
-      
       if (plantName) {
         const plantLower = plantName.toLowerCase();
         const fieldLower = fieldName?.toLowerCase() || '';
-        
-        // Only include members whose position matches the PSSR location
         delivering = allDeliveringMembers.filter(member => {
           const pos = member.position.toLowerCase();
           if (!pos.includes(plantLower)) return false;
-          // If field is specified, also check field match
           if (fieldLower && !pos.includes(fieldLower)) return false;
           return true;
         });
-        
-        // All shown members are location-matched for auto-selection
         delivering.forEach(m => locationMatched.push(m.user_id));
       } else {
         delivering = allDeliveringMembers;
       }
 
-      const approving: Record<string, ResolvedMember[]> = {};
-      approvingRoles.forEach(roleName => {
-        const roleId = roleNameToId[roleName.toLowerCase()];
-        if (!roleId) return;
-        const members = assetProfiles
-          .filter((p: any) => p.role === roleId)
-          .map(toMember);
-        approving[roleName] = members;
-      });
-
-      return { delivering, approving, roleNameToId, locationMatched };
+      return { delivering, roleNameToId, locationMatched };
     },
     enabled: open && !!item,
   });
+
+  // SHARED resolver: approving parties read org_role_holders FIRST (Asset TA2s
+  // + shared MCI/Civil/Tech-Safety come from the seeded global/B2B rows).
+  // Roles with no org_role_holders entry fall back to the same TA2-Asset
+  // profiles filter PSSR has always used. Holder changes in
+  // org_role_holders now propagate to this editor automatically.
+  const sharedTA2Disciplines = ['mci', 'civil', 'tech safety'];
+  const { data: approvingByName = {} } = useApprovingPartyHoldersByNames({
+    roles: allRoles,
+    roleNames: currentApprovingRoles,
+    expandFamily: false,
+    scopeKey: `pssr|asset|${plantName || ''}`,
+    fallbackFilter: (p, roleName) => {
+      const rn = roleName.toLowerCase();
+      if (rn.includes('ta2')) {
+        const isShared = sharedTA2Disciplines.some(d => rn.includes(d));
+        if (isShared) return true;
+        return !(p.position || '').toLowerCase().includes('project');
+      }
+      return true;
+    },
+    enabled: open && !!item,
+  });
+
   // Auto-select location-matched or single delivering member
   useEffect(() => {
     const matched = resolvedParties?.locationMatched;
@@ -312,7 +303,20 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
   };
 
   const deliveringMembers = resolvedParties?.delivering || [];
-  const approvingGroups = resolvedParties?.approving || {};
+  // approvingGroups now resolves from the shared org_role_holders-first hook.
+  const approvingGroups: Record<string, ResolvedMember[]> = useMemo(() => {
+    const out: Record<string, ResolvedMember[]> = {};
+    currentApprovingRoles.forEach(name => {
+      out[name] = (approvingByName[name] || []).map(h => ({
+        user_id: h.user_id,
+        full_name: h.full_name,
+        avatar_url: h.avatar_url,
+        position: h.position || '',
+        role_name: h.role_name,
+      }));
+    });
+    return out;
+  }, [approvingByName, currentApprovingRoles]);
 
   // Filter roles not already in approving list for "Add" popover
   const availableRoles = allRoles.filter(
