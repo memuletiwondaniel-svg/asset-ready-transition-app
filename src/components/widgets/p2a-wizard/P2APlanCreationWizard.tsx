@@ -945,6 +945,28 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Post-submit success confirmation modal */}
+      <SubmissionSuccessDialog
+        open={submitSuccessOpen}
+        onOpenChange={setSubmitSuccessOpen}
+        projectCode={projectCode}
+        projectName={projectName}
+        systems={state.systems}
+        vcrs={state.vcrs}
+        phases={state.phases}
+        approvers={state.approvers}
+        onDone={() => {
+          setSubmitSuccessOpen(false);
+          handleClose();
+          onSuccess?.();
+        }}
+        onOpenWorkspace={onOpenWorkspace ? () => {
+          setSubmitSuccessOpen(false);
+          handleClose();
+          onOpenWorkspace();
+        } : undefined}
+      />
     </>
   );
 };
