@@ -6,6 +6,8 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { X, Key, Cable, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { P2AHandoverWorkspace } from '@/components/p2a-workspace/P2AHandoverWorkspace';
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
+import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
+import { SubmissionSuccessDialog } from './p2a-wizard/SubmissionSuccessDialog';
 import { cn } from '@/lib/utils';
 
 import { getP2APlanUIState } from '@/lib/p2aPlanStatus';
