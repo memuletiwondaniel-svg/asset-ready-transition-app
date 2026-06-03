@@ -4,8 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, CheckCircle2, Clock, X as XIcon, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
 import type { WizardApprover } from './steps/ApprovalSetupStep';
 import type { WizardSystem } from './steps/SystemsImportStep';
