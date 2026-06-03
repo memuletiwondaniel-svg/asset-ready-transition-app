@@ -254,7 +254,7 @@ async function persistPlanToDatabase(
   projectId: string,
   projectCode: string,
   state: P2APlanWizardState,
-  status: 'DRAFT' | 'ACTIVE',
+  status: 'DRAFT' | 'PENDING_APPROVAL',
 ) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
