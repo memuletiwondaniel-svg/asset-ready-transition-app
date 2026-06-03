@@ -6,9 +6,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { cn } from '@/lib/utils';
 import { WizardVCR } from '../VCRCreationStep';
 import { WizardSystem } from '../SystemsImportStep';
-import { getVCRIdStyle } from './DraggableVCRChip';
 import { shortVCRCode } from './vcrDisplayUtils';
-import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 
 interface AssignedVCRChipProps {
   vcr: WizardVCR;
@@ -17,9 +15,11 @@ interface AssignedVCRChipProps {
   onVCRClick?: (vcr: WizardVCR) => void;
   /** Systems assigned to this VCR (for hover popover) */
   vcrSystems?: WizardSystem[];
+  /** Optional Tailwind class for phase-derived accent (e.g. left border tint) */
+  phaseAccentClass?: string;
 }
 
-export const AssignedVCRChip: React.FC<AssignedVCRChipProps> = ({ vcr, vcrIndex, onUnassign, onVCRClick, vcrSystems }) => {
+export const AssignedVCRChip: React.FC<AssignedVCRChipProps> = ({ vcr, vcrIndex, onUnassign, onVCRClick, vcrSystems, phaseAccentClass }) => {
   const {
     attributes,
     listeners,
