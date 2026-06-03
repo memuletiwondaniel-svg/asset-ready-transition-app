@@ -386,9 +386,11 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
                 Open Workspace
               </Button>
             )}
-            <Button size="sm" className="h-7 text-xs gap-1" onClick={handleOpenCreate}>
-              <Plus className="h-3.5 w-3.5" /> Add Phase
-            </Button>
+            {phases.length > 0 && (
+              <Button size="sm" className="h-7 text-xs gap-1" onClick={handleOpenCreate}>
+                <Plus className="h-3.5 w-3.5" /> Add Phase
+              </Button>
+            )}
           </div>
         </div>
 
