@@ -51,6 +51,14 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
   onDone,
   onOpenWorkspace,
 }) => {
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      onDone();
+      return;
+    }
+    onOpenChange(nextOpen);
+  };
+
   const { data: profileUsers } = useProfileUsers();
   const fixedRoleLabels = useMemo(() => FIXED_APPROVER_ROLES.map((role) => role.label), []);
   const { data: resolvedProjectRoles } = useProjectRoleUsers(projectId, fixedRoleLabels);
@@ -106,7 +114,7 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
   const hcCount = systems.filter(s => (s as any).is_hydrocarbon).length;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
         <div className="flex flex-col items-center text-center px-6 pt-6 pb-3">
           <div className="h-11 w-11 rounded-full bg-emerald-500/15 flex items-center justify-center mb-3">
