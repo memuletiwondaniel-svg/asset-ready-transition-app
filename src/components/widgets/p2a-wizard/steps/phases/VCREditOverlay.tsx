@@ -24,13 +24,14 @@ import {
   Pencil,
   Check,
   X,
+  CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardVCR } from '../VCRCreationStep';
 import { WizardPhase } from '../PhasesStep';
 import { WizardSystem, WizardSubsystem } from '../SystemsImportStep';
-import { getVCRIdStyle } from './DraggableVCRChip';
 import { shortVCRCode } from './vcrDisplayUtils';
+
 
 const SUB_SEP = '::sub::';
 const makeSubKey = (systemId: string, subSystemId: string) =>
@@ -171,8 +172,19 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
   }, [systems, mappings, vcrMappings]);
 
   const renderSystemRow = (system: WizardSystem, section: 'assigned' | 'available') => {
-    const hasSubsystems = system.subsystems && system.subsystems.length > 0;
+    const hasSubsystems = !!(system.subsystems && system.subsystems.length > 0);
     const isExpanded = expandedSystems.has(system.id);
+
+    const rowGrid = 'grid grid-cols-[0.875rem_0.875rem_1fr_5.5rem] items-center gap-2 px-3 py-2 rounded-md transition-colors';
+
+    const hcPill = system.is_hydrocarbon && (
+      <span
+        title="Hydrocarbon system"
+        className="text-[9px] font-medium px-1.5 py-0 rounded border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400 leading-tight shrink-0"
+      >
+        HC
+      </span>
+    );
 
     if (!hasSubsystems) {
       const isChecked = vcrMappings.includes(system.id);
@@ -183,58 +195,49 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
         <div
           key={system.id}
           className={cn(
-            'grid grid-cols-[0.875rem_0.875rem_1fr_2.25rem_3rem] items-center gap-2 px-3 py-2 rounded-md transition-colors',
-            isOwnedElsewhere ? 'opacity-40' : 'cursor-pointer hover:bg-muted/50',
-            isChecked && 'bg-primary/5',
+            rowGrid,
+            isOwnedElsewhere ? 'opacity-40' : 'cursor-pointer hover:bg-muted/40',
           )}
           onClick={!isOwnedElsewhere ? () => toggleKey(system.id) : undefined}
         >
           <span />
           <Checkbox checked={isChecked} disabled={!!isOwnedElsewhere} className="h-3.5 w-3.5" />
-          <span className="text-sm truncate min-w-0">{system.name}</span>
-          <div className="flex justify-end">
-            {system.is_hydrocarbon && (
-              <span
-                title="Hydrocarbon system"
-                className="text-[9px] font-medium px-1.5 py-0 rounded border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400 leading-tight"
-              >
-                HC
-              </span>
-            )}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-sm truncate">{system.name}</span>
+            {hcPill}
           </div>
-          <span className="text-[10px] text-muted-foreground tabular-nums text-right">—</span>
+          <span />
         </div>
       );
     }
 
-    // System with subsystems
     const subKeys = system.subsystems!.map(sub => makeSubKey(system.id, sub.system_id));
     const assignedHere = subKeys.filter(k => vcrMappings.includes(k));
     const selectableKeys = subKeys.filter(k => {
       const owner = keyOwnerMap.get(k);
       return !owner || owner === vcr.id;
     });
-    const allChecked = selectableKeys.length > 0 && assignedHere.length === selectableKeys.length;
-    const someChecked = assignedHere.length > 0 && !allChecked;
+    const total = selectableKeys.length;
+    const mapped = assignedHere.length;
+    const allChecked = total > 0 && mapped === total;
+    const someChecked = mapped > 0 && !allChecked;
     const lockedCount = subKeys.length - selectableKeys.length;
+    const pct = total > 0 ? Math.round((mapped / total) * 100) : 0;
     const countTitle =
       lockedCount > 0
-        ? `${assignedHere.length} of ${selectableKeys.length} available subsystems mapped here (${lockedCount} owned by other VCRs · ${subKeys.length} total)`
-        : `${assignedHere.length} of ${subKeys.length} subsystems mapped here`;
+        ? `${mapped} of ${total} available subsystems mapped here (${lockedCount} owned by other VCRs · ${subKeys.length} total)`
+        : `${mapped} of ${total} subsystems mapped here`;
 
     return (
       <div key={system.id}>
         <div
-          className={cn(
-            'grid grid-cols-[0.875rem_0.875rem_1fr_2.25rem_3rem] items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors hover:bg-muted/50',
-            assignedHere.length > 0 && 'bg-primary/5',
-          )}
+          className={cn(rowGrid, 'cursor-pointer hover:bg-muted/40')}
           onClick={() => toggleExpand(system.id)}
         >
           {isExpanded ? (
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronDown className="h-3 w-3 text-muted-foreground/50" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
           )}
           <Checkbox
             checked={allChecked ? true : someChecked ? 'indeterminate' : false}
@@ -242,26 +245,35 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
             onClick={(e) => e.stopPropagation()}
             className="h-3.5 w-3.5"
           />
-          <span className="text-sm truncate min-w-0">{system.name}</span>
-          <div className="flex justify-end">
-            {system.is_hydrocarbon && (
-              <span
-                title="Hydrocarbon system"
-                className="text-[9px] font-medium px-1.5 py-0 rounded border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400 leading-tight"
-              >
-                HC
-              </span>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-sm truncate">{system.name}</span>
+            {hcPill}
+          </div>
+          <div className="flex items-center justify-end gap-1.5" title={countTitle}>
+            {allChecked ? (
+              <>
+                <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-500" />
+                <span className="text-[10px] text-muted-foreground tabular-nums">
+                  {mapped}/{total}
+                </span>
+              </>
+            ) : (
+              <>
+                <div className="h-1 w-10 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full bg-muted-foreground/40 rounded-full transition-all"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="text-[10px] text-muted-foreground tabular-nums">
+                  {mapped}/{total}
+                </span>
+              </>
             )}
           </div>
-          <span
-            className="text-[10px] text-muted-foreground tabular-nums text-right"
-            title={countTitle}
-          >
-            {assignedHere.length}/{selectableKeys.length}
-          </span>
         </div>
         {isExpanded && (
-          <div className="ml-6 border-l-2 border-muted pl-2 space-y-0.5 py-0.5">
+          <div className="ml-6 border-l border-muted pl-2 space-y-0.5 py-0.5">
             {system.subsystems!.map(sub => {
               const key = makeSubKey(system.id, sub.system_id);
               const isChecked = vcrMappings.includes(key);
@@ -274,7 +286,6 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
                   className={cn(
                     'flex items-center gap-2 px-2 py-1.5 rounded transition-colors',
                     isOwnedElsewhere ? 'opacity-40' : 'cursor-pointer hover:bg-muted/40',
-                    isChecked && 'bg-primary/5',
                   )}
                   onClick={!isOwnedElsewhere ? () => toggleKey(key) : undefined}
                 >
@@ -290,6 +301,7 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
     );
   };
 
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -300,12 +312,10 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
         {/* Header */}
         <SheetHeader className="px-4 pt-4 pb-3 border-b shrink-0">
           <div className="flex items-center gap-2">
-            <span
-              className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border"
-              style={getVCRIdStyle(vcrIndex)}
-            >
+            <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border border-border bg-muted/40 text-muted-foreground">
               {shortVCRCode(vcr.code)}
             </span>
+
             <SheetTitle className="text-base sr-only">Edit VCR</SheetTitle>
           </div>
           {/* Editable name */}
@@ -339,11 +349,11 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
           )}
         </SheetHeader>
 
-        {/* Phase assignment */}
-        <div className="px-4 py-3 border-b shrink-0 space-y-1.5">
-          <Label className="text-xs text-muted-foreground uppercase tracking-wider">Phase</Label>
+        {/* Phase assignment — quiet inline select */}
+        <div className="px-4 py-3 border-b shrink-0 flex items-center gap-3">
+          <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium shrink-0">Phase</Label>
           <Select value={currentPhaseId || 'none'} onValueChange={handlePhaseChange}>
-            <SelectTrigger className="h-8 text-sm">
+            <SelectTrigger className="h-7 text-sm border-transparent bg-muted/40 hover:bg-muted/60 focus:ring-1 focus:ring-ring/40 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-50">
               <SelectValue placeholder="Unassigned" />
             </SelectTrigger>
             <SelectContent className="z-[150]">
@@ -354,6 +364,7 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
             </SelectContent>
           </Select>
         </div>
+
 
         {/* Systems */}
         <div className="flex-1 min-h-0 flex flex-col">
@@ -368,16 +379,8 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
 
           <ScrollArea className="flex-1 px-4 pb-4">
             <div className="space-y-0.5">
-              {(assigned.length > 0 || available.length > 0) && (
-                <div className="grid grid-cols-[0.875rem_0.875rem_1fr_2.25rem_3rem] items-center gap-2 px-3 pb-1 text-[9px] font-medium uppercase tracking-wider text-muted-foreground/70">
-                  <span />
-                  <span />
-                  <span>System</span>
-                  <span className="text-right">Class</span>
-                  <span className="text-right" title="Subsystems mapped to this VCR / available to this VCR">Mapped</span>
-                </div>
-              )}
               {assigned.length > 0 && (
+
                 <div className="mb-2">
                   <p className="text-[10px] font-medium text-primary uppercase tracking-wider px-3 pb-1">
                     Assigned ({assigned.length})
