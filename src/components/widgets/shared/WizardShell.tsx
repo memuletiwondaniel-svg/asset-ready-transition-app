@@ -85,6 +85,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
   onStepChange,
   isStepComplete,
   isStepWarning,
+  isStepOptional,
   header,
   headerActions,
   topHeader,
