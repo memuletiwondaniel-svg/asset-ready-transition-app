@@ -94,6 +94,31 @@ VCR item editor (`VCRItemsStep.tsx`) + PSSR item editor (`PSSRItemDetailSheet.ts
 - Do all roles fit a family?
 - How does `role_family` interact with the Project/Asset scope dimension?
 
+## P2A sequential approval chain — fixes applied (2026-06-03)
+
+### DONE
+
+1. **Submit-status fix.** `persistPlanToDatabase` submit case now writes `status='PENDING_APPROVAL'` (was `'ACTIVE'`). The approvers-write block is gated to `DRAFT` only so submits no longer race the trigger. Draft save unchanged.
+   - File: `src/hooks/useP2APlanWizard.ts`
+
+2. **DP-18F repair.** Flipped `ACTIVE` → `PENDING_APPROVAL` on plan `290bbdf6-a112-44af-b5ae-e5ef08df305a`; `trg_create_p2a_ora_lead_review` fired silently; 1 ORA Lead approver row + 1 approval task created (sequential design — remaining approvers fan out only on ORA Lead approval).
+   - File: `supabase/migrations/20260603184234_b9cfc009-2f5b-45f7-8d8c-abd61674fdbe.sql`
+
+3. **Centralized plan-status UI mapping.** New `src/lib/p2aPlanStatus.ts` with `getP2APlanUIState(status)` — exhaustive over the `p2a_plan_status` enum (`DRAFT|PENDING_APPROVAL|ACTIVE|COMPLETED|ARCHIVED`), unknown falls back to `DRAFT` (never a permissive 'approved'). `PSSRSummaryWidget` and `P2AWorkspaceOverlay` both derive label/helper/route/`isLocked` from it. Fixed the "approved/Continue/dead-button/draft" fall-through on the workspace card.
+   - File: `src/lib/p2aPlanStatus.ts`
+
+4. **Modal renders real persisted records only.** Removed the fallback in `SubmissionSuccessDialog` that fabricated approver counts from wizard state when no persisted rows existed. The modal now renders ONLY what is actually in `p2a_handover_approvers` / `user_tasks`, so an empty plan shows "0 approval tasks" honestly.
+   - File: `src/components/widgets/p2a-wizard/SubmissionSuccessDialog.tsx`
+
+5. **Approver-resolution consolidation (P2A scope only).** New single resolver `resolve_p2a_approver` (+ `resolve_p2a_approver_profile` RPC) wrapping the existing lookups (`resolve_project_role_user` for the 4 leads, `find_deputy_plant_director` for the deputy). Both triggers (`create_p2a_ora_lead_review`, `create_p2a_lead_reviews`) and the client roster (`useP2AApproverRoster.ts`) call it; the duplicated client-side deputy branch is removed. B2B deputy = one shared `user_tasks` row (single-holder UUID) surfaced to the partner via `fetchB2BPartnerIds` — no schema change. Verified end-to-end on a throwaway CS-plant plan: sequential fan-out produces 5 rows, deputy as one shared task, either partner closes it once.
+   - Files: `supabase/migrations/20260603190832_73dad9ac-8875-4be8-a847-c9fa165a760f.sql`, `src/hooks/useP2AApproverRoster.ts`
+
+### DEFERRED / DEBT
+
+A. `resolve_p2a_approver` is a **contained P2A-specific** resolver that still leans on `find_deputy_plant_director`'s by-name `profiles` scan. This is deliberate debt: the real role-resolution consolidation (Bucket 3 `role_family` → Bucket 2 `roles.position` → Bucket 1 resolver swaps) should **absorb** `resolve_p2a_approver` rather than leave it as a separate island. The Bucket-3 work must fold this in.
+
+B. **Approvals modal still models a flat parallel chain** ("0 of N", all approvers shown as Pending at once) but the backend is **sequential** (ORA Lead stage 1; the other 4 fan out only on ORA Lead approval). Modal redesign owed: show real stages, render the deputy as one B2B card. Queued as the next UI item after Bucket-3 consolidation.
+
 ## M11 closure — explicit residuals
 
 ### Residual (UI-layer, deferred)
