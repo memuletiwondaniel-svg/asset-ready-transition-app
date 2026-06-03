@@ -7,17 +7,21 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Check, Plus, Save, Search } from 'lucide-react';
+import { Check, Plus, Save, Search, BookPlus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardPhase } from '../PhasesStep';
+import { useProjectMilestoneTypes } from '@/hooks/useProjectMilestoneTypes';
+import { useProjectMilestones } from '@/hooks/useProjects';
 
 interface PhaseFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   milestones: Array<{ id: string; name: string; target_date?: string }>;
+  projectId?: string;
   /** Pass an existing phase to edit, or null to create */
   editingPhase: WizardPhase | null;
   onSave: (data: { name: string; description: string; milestoneIds: string[] }) => void;
