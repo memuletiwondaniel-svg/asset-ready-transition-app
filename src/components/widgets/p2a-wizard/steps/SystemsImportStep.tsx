@@ -401,7 +401,7 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
           isExpanded && "rotate-90"
         )} />
 
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border/60 bg-muted/40 text-muted-foreground">
+        <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border/60 bg-muted/40 text-muted-foreground w-[160px] truncate">
           {system.system_id}
         </span>
         <span className="font-medium text-xs truncate flex-1 min-w-0">{system.name}</span>
