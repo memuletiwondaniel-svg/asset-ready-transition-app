@@ -1218,6 +1218,7 @@ const AddItemForm: React.FC<{
         full_name: p.full_name,
         avatar_url: p.avatar_url,
         role_id: p.role,
+        position: p.position ?? null,
       })) as ResolvedUser[];
     },
     enabled: expandedRoleIds.length > 0,
