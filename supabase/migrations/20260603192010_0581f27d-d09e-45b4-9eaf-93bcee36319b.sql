@@ -1,0 +1,2 @@
+DELETE FROM public.p2a_handover_approvers WHERE handover_id = '11111111-1111-1111-1111-111111111111';
+DELETE FROM public.p2a_handover_plans WHERE id = '11111111-1111-1111-1111-111111111111';
