@@ -119,7 +119,10 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
 
         {/* Description */}
         {phase.description && (
-          <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+          <p
+            className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed cursor-help"
+            title={phase.description}
+          >
             {phase.description}
           </p>
         )}
@@ -156,6 +159,7 @@ export const PhaseCard: React.FC<PhaseCardProps> = ({
                     onUnassign={onUnassignVCR}
                     onVCRClick={onVCRClick}
                     vcrSystems={getVCRSystems(vcr.id)}
+                    phaseAccentClass={colors.leftAccent}
                   />
                 );
               })
