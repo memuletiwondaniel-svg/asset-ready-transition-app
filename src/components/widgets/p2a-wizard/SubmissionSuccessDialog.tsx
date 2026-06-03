@@ -122,7 +122,7 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
 
   const totalAssigned = stages.filter(s => !!s.approver.user_id).length;
   const approvedCount = stages.filter(s => s.status === 'APPROVED').length;
-  const hcCount = systems.filter((s) => (s as any).is_hydrocarbon).length;
+  
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
