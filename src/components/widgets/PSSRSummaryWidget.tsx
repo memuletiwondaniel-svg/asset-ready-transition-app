@@ -292,23 +292,36 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                     <p className="text-xs opacity-70 mb-5">
                       {p2aPlanByProject.status === 'ACTIVE' ? 'Your plan is awaiting approval' : 'Your plan has been approved'}
                     </p>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="text-xs gap-1.5"
-                      onClick={() => {
-                        if (p2aPlanByProject.status === 'COMPLETED') {
-                          setShowP2AWorkspace(true);
-                        } else {
-                          setShowP2APlanWizard(true);
-                        }
-                      }}
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      {['COMPLETED', 'APPROVED', 'ACTIVE'].includes(p2aPlanByProject.status)
-                        ? 'View P2A Plan'
-                        : 'Continue P2A Plan'}
-                    </Button>
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="text-xs gap-1.5"
+                        onClick={() => {
+                          if (p2aPlanByProject.status === 'COMPLETED') {
+                            setShowP2AWorkspace(true);
+                          } else {
+                            setShowP2APlanWizard(true);
+                          }
+                        }}
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        {['COMPLETED', 'APPROVED', 'ACTIVE'].includes(p2aPlanByProject.status)
+                          ? 'View P2A Plan'
+                          : 'Continue P2A Plan'}
+                      </Button>
+                      {canCreateVCR && p2aPlanByProject.status === 'ACTIVE' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => { e.stopPropagation(); setShowDeleteP2ADraft(true); }}
+                          aria-label="Delete submitted P2A plan"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </>
                 )}
               </div>
