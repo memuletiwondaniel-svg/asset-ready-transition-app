@@ -85,6 +85,8 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
   }, [resolvedProjectRoles]);
 
   const assignedApprovers = savedApprovers.length > 0 ? savedApprovers : canonicalFallbackApprovers;
+  const assignedRows = useMemo(() => assignedApprovers.filter(a => !!a.user_id), [assignedApprovers]);
+  const unassignedRows = useMemo(() => assignedApprovers.filter(a => !a.user_id), [assignedApprovers]);
 
   const statusByApproverId = useMemo(() => {
     const m = new Map<string, ApprovalStatus>();
@@ -109,8 +111,8 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
     return map;
   }, [profileUsers, assignedApprovers]);
 
-  const taskCount = savedApprovers.length > 0 ? savedApprovers.length : assignedApprovers.filter(a => a.user_id).length;
-  const approvedCount = assignedApprovers.filter(a => statusByApproverId.get(a.id) === 'APPROVED').length;
+  const taskCount = assignedApprovers.filter(a => !!a.user_id).length;
+  const approvedCount = assignedApprovers.filter(a => !!a.user_id && statusByApproverId.get(a.id) === 'APPROVED').length;
   const hcCount = systems.filter(s => (s as any).is_hydrocarbon).length;
 
   return (
@@ -140,36 +142,66 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
             )}
           </div>
 
-          <div className="px-3 py-2 space-y-1.5 max-h-64 overflow-y-auto">
-            {assignedApprovers.map(a => {
-              const partner = approverPartner.get(a.id);
-              const status: ApprovalStatus = statusByApproverId.get(a.id) ?? 'PENDING';
-              const S = statusStyles[status];
-              const Icon = S.icon;
-              return (
-                <div key={a.id} className="flex items-center gap-2 text-sm py-0.5">
-                  <span className={cn('h-4 w-4 rounded-full flex items-center justify-center shrink-0', status === 'APPROVED' ? 'bg-emerald-500/15' : status === 'REJECTED' ? 'bg-destructive/15' : 'bg-amber-500/15')}>
-                    <Icon className={cn('h-3 w-3', S.cls)} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium truncate">{a.user_name || 'Not assigned'}</div>
-                    <div className="text-xs text-muted-foreground truncate">{a.role_name}</div>
-                  </div>
-                  {partner && (
-                    <span
-                      className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0"
-                      title={`Either partner can approve: ${a.user_name} or ${partner.full_name}`}
+          <div className="px-3 py-2 max-h-72 overflow-y-auto">
+            <div className="space-y-2">
+              {assignedRows.map(a => {
+                const partner = approverPartner.get(a.id);
+                const status: ApprovalStatus = statusByApproverId.get(a.id) ?? 'PENDING';
+                const S = statusStyles[status];
+                return (
+                  <div key={a.id} className="flex items-center gap-3 text-sm py-0.5">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold truncate leading-tight">{a.user_name}</div>
+                      <div className="text-xs text-muted-foreground truncate">{a.role_name}</div>
+                    </div>
+                    {partner && (
+                      <span
+                        className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0"
+                        title={`Either partner can approve: ${a.user_name} or ${partner.full_name}`}
+                      >
+                        B2B
+                      </span>
+                    )}
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        'rounded-full px-2.5 py-0.5 text-xs font-normal shrink-0',
+                        status === 'APPROVED' && 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
+                        status === 'REJECTED' && 'bg-destructive/10 text-destructive border-destructive/30',
+                        status === 'PENDING'  && 'bg-muted text-muted-foreground border-border',
+                      )}
                     >
-                      B2B
-                    </span>
-                  )}
-                  <span className={cn('text-[10px] font-medium uppercase tracking-wider tabular-nums w-16 text-right shrink-0', S.cls)}>
-                    {S.label}
-                  </span>
+                      {S.label}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+
+            {unassignedRows.length > 0 && (
+              <>
+                <div className="my-2 border-t border-dashed border-border" />
+                <div className="space-y-2">
+                  {unassignedRows.map(a => (
+                    <div key={a.id} className="flex items-center gap-3 text-sm py-0.5">
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold truncate leading-tight">{a.role_name}</div>
+                        <div className="text-xs text-muted-foreground truncate">no holder assigned</div>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className="rounded-full px-2.5 py-0.5 text-xs font-normal shrink-0 bg-destructive/10 text-destructive border-destructive/30 gap-1"
+                      >
+                        <XIcon className="h-3 w-3" />
+                        Not assigned
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
-              );
-            })}
-            {assignedApprovers.length === 0 && (
+              </>
+            )}
+
+            {assignedRows.length === 0 && unassignedRows.length === 0 && (
               <p className="text-xs text-muted-foreground py-1">No approvers assigned.</p>
             )}
           </div>
