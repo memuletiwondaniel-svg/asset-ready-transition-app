@@ -303,7 +303,20 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
   };
 
   const deliveringMembers = resolvedParties?.delivering || [];
-  const approvingGroups = resolvedParties?.approving || {};
+  // approvingGroups now resolves from the shared org_role_holders-first hook.
+  const approvingGroups: Record<string, ResolvedMember[]> = React.useMemo(() => {
+    const out: Record<string, ResolvedMember[]> = {};
+    currentApprovingRoles.forEach(name => {
+      out[name] = (approvingByName[name] || []).map(h => ({
+        user_id: h.user_id,
+        full_name: h.full_name,
+        avatar_url: h.avatar_url,
+        position: h.position || '',
+        role_name: h.role_name,
+      }));
+    });
+    return out;
+  }, [approvingByName, currentApprovingRoles]);
 
   // Filter roles not already in approving list for "Add" popover
   const availableRoles = allRoles.filter(
