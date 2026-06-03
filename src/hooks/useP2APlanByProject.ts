@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface P2APlanSummary {
   id: string;
   name: string;
-  status: 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
+  status: 'DRAFT' | 'PENDING_APPROVAL' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
   created_at: string;
   updated_at: string;
   project_id: string;
