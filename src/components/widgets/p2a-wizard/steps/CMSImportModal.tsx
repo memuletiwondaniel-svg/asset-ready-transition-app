@@ -400,57 +400,67 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
                 )}
 
 
-                {/* Sample selector — always available when we have data */}
-                {sample.length > 0 && (
-                  <section>
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-semibold">
-                        {strong.length + weak.length > 0 ? 'Or pick from all available systems' : 'Available systems in GoHub'}
-                      </h4>
-                      <span className="text-[10px] text-muted-foreground">
-                        {filteredSample.length} of {sample.length}
-                      </span>
-                    </div>
-                    <div className="relative mb-2">
-                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                      <Input
-                        placeholder="Search by ID, name or project…"
-                        value={sampleFilter}
-                        onChange={(e) => setSampleFilter(e.target.value)}
-                        className="h-8 pl-7 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1 max-h-64 overflow-y-auto rounded-md border bg-muted/20 p-1">
-                      {filteredSample.map(s => {
-                        const checked = sampleSelected.has(s.system_id);
-                        const alreadyCandidate = selected.has(s.system_id);
-                        return (
-                          <label
-                            key={`${s.source_project}-${s.system_id}`}
-                            className={cn(
-                              'flex items-center gap-2 px-2 py-1 rounded cursor-pointer hover:bg-muted/60 text-xs',
-                              alreadyCandidate && 'opacity-50',
-                            )}
-                          >
-                            <Checkbox
-                              checked={checked || alreadyCandidate}
-                              disabled={alreadyCandidate}
-                              onCheckedChange={() => toggle(s.system_id, sampleSelected, setSampleSelected)}
+                {/* Sample selector — collapsed by default */}
+                {sample.length > 0 && (() => {
+                  const noMatches = strong.length + weak.length === 0;
+                  const expanded = showSample || noMatches;
+                  const label = noMatches ? 'Available systems in GoHub' : 'Pick from all available systems';
+                  return (
+                    <section>
+                      <button
+                        type="button"
+                        onClick={() => setShowSample(v => !v)}
+                        className="w-full flex items-center gap-2 p-2 rounded-md border border-border bg-muted/30 hover:bg-muted/50 transition-colors"
+                      >
+                        <ChevronRight className={cn('h-4 w-4 text-muted-foreground transition-transform', expanded && 'rotate-90')} />
+                        <span className="text-sm font-medium">{label}</span>
+                        <span className="ml-auto text-[10px] text-muted-foreground">({sample.length})</span>
+                      </button>
+                      {expanded && (
+                        <>
+                          <div className="relative mt-2 mb-2">
+                            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                            <Input
+                              placeholder="Search by ID, name or project…"
+                              value={sampleFilter}
+                              onChange={(e) => setSampleFilter(e.target.value)}
+                              className="h-8 pl-7 text-xs"
                             />
-                            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-background border shrink-0">
-                              {s.system_id}
-                            </span>
-                            <span className="truncate flex-1">{s.name}</span>
-                            <span className="text-[10px] text-muted-foreground shrink-0">{s.source_project}</span>
-                          </label>
-                        );
-                      })}
-                      {filteredSample.length === 0 && (
-                        <p className="text-xs text-muted-foreground text-center py-4">No systems match your search.</p>
+                          </div>
+                          <div className="space-y-1 max-h-64 overflow-y-auto rounded-md border bg-muted/20 p-1">
+                            {filteredSample.map(s => {
+                              const checked = sampleSelected.has(s.system_id);
+                              const alreadyCandidate = selected.has(s.system_id);
+                              return (
+                                <label
+                                  key={`${s.source_project}-${s.system_id}`}
+                                  className={cn(
+                                    'flex items-center gap-2 px-2 py-1 rounded cursor-pointer hover:bg-muted/60 text-xs',
+                                    alreadyCandidate && 'opacity-50',
+                                  )}
+                                >
+                                  <Checkbox
+                                    checked={checked || alreadyCandidate}
+                                    disabled={alreadyCandidate}
+                                    onCheckedChange={() => toggle(s.system_id, sampleSelected, setSampleSelected)}
+                                  />
+                                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-background border shrink-0">
+                                    {s.system_id}
+                                  </span>
+                                  <span className="truncate flex-1">{s.name}</span>
+                                  <span className="text-[10px] text-muted-foreground shrink-0">{s.source_project}</span>
+                                </label>
+                              );
+                            })}
+                            {filteredSample.length === 0 && (
+                              <p className="text-xs text-muted-foreground text-center py-4">No systems match your search.</p>
+                            )}
+                          </div>
+                        </>
                       )}
-                    </div>
-                  </section>
-                )}
+                    </section>
+                  );
+                })()}
               </div>
             </div>
           )}
