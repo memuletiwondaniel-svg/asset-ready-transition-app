@@ -731,6 +731,7 @@ interface ResolvedUser {
   full_name: string;
   avatar_url: string | null;
   role_id: string;
+  position: string | null;
 }
 
 interface OverridePayload {
