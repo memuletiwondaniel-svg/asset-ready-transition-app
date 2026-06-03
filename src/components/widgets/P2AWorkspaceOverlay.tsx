@@ -8,6 +8,8 @@ import { P2AHandoverWorkspace } from '@/components/p2a-workspace/P2AHandoverWork
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
 import { cn } from '@/lib/utils';
 
+import { getP2APlanUIState } from '@/lib/p2aPlanStatus';
+
 interface P2AWorkspaceOverlayProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -17,40 +19,6 @@ interface P2AWorkspaceOverlayProps {
   projectNumber?: string;
   readOnly?: boolean;
 }
-
-const getStatusConfig = (status?: string) => {
-  switch (status) {
-    case 'DRAFT':
-      return {
-        label: 'Draft',
-        className: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/30',
-      };
-    case 'ACTIVE':
-    case 'IN_PROGRESS':
-    case 'IN_REVIEW':
-      return {
-        label: 'In Review',
-        className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
-      };
-    case 'COMPLETED':
-    case 'APPROVED':
-      return {
-        label: 'Approved',
-        className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
-      };
-    case 'ARCHIVED':
-      return {
-        label: 'Archived',
-        className: 'bg-muted text-muted-foreground border-border',
-      };
-    default:
-      return {
-        label: 'Draft',
-        className: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/30',
-      };
-  }
-};
-
 export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
   open,
   onOpenChange,
@@ -63,7 +31,8 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
   const [showMapping, setShowMapping] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1.0);
   const { plan } = useP2AHandoverPlan(projectId, 'project_id');
-  const statusConfig = getStatusConfig(plan?.status);
+  const planUIState = getP2APlanUIState(plan?.status);
+  const statusConfig = { label: planUIState.badgeLabel, className: planUIState.badgeClass };
 
   const handleZoomIn = () => setZoomLevel(prev => Math.min(1.2, Math.round((prev + 0.1) * 10) / 10));
   const handleZoomOut = () => setZoomLevel(prev => Math.max(0.4, Math.round((prev - 0.1) * 10) / 10));
@@ -82,7 +51,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
               </div>
             </div>
             <h2 className="text-base font-semibold text-foreground">
-              {readOnly || ['COMPLETED', 'APPROVED'].includes(plan?.status || '')
+              {readOnly || planUIState.isLocked
                 ? `${projectNumber ? projectNumber + ' ' : ''}P2A Plan`
                 : 'Develop P2A Plan'}
             </h2>

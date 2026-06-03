@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { useCanCreateVCRPermission } from '@/hooks/usePermissions';
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
 import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
+import { getP2APlanUIState } from '@/lib/p2aPlanStatus';
 
 interface PSSRSummaryWidgetProps {
   projectId: string;
@@ -123,8 +124,11 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const { data: p2aPlanByProject, isLoading: p2aPlanLoading } = useP2APlanByProject(projectId);
   const isLoading = pssrsLoading || vcrsLoading || p2aPlanLoading;
 
+  // Canonical status → UI derivation. All consumers in this widget read from here.
+  const planUIState = getP2APlanUIState(p2aPlanByProject?.status);
   // Plan is approved when status is COMPLETED
-  const planIsApproved = p2aPlanByProject?.status === 'COMPLETED';
+  const planIsApproved = planUIState.isApproved;
+  const planIsLocked = planUIState.isLocked;
   const hasPlan = !!p2aPlanByProject;
   // Map project milestones to the format the wizard expects
   const wizardMilestones = (projectMilestones || []).map(m => ({
@@ -157,25 +161,34 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   const hasContent = (pssrs && pssrs.length > 0) || allVCRs.length > 0;
 
-  const handleP2AHeaderClick = () => {
+  // Single dispatcher for the primary CTA / header click. Routes by the
+  // canonical action — never branches on raw status here.
+  const openPlanByAction = () => {
     if (!p2aPlanByProject) {
       if (oraApproved && canCreateVCR) setShowP2APlanWizard(true);
       return;
     }
-    if (p2aPlanByProject.status === 'DRAFT') {
-      setShowP2APlanWizard(true);
-    } else if (p2aPlanByProject.status === 'COMPLETED') {
-      // Approved → go straight into workspace
-      setShowP2AWorkspace(true);
-    } else {
-      setShowP2ASummary(true);
+    switch (planUIState.primaryAction) {
+      case 'edit':
+        // Only DRAFT — never opens for a submitted plan.
+        setShowP2APlanWizard(true);
+        break;
+      case 'view':
+        // PENDING_APPROVAL / ACTIVE / COMPLETED / ARCHIVED → read-only workspace.
+        setShowP2AWorkspace(true);
+        break;
+      case 'create':
+        if (canCreateVCR) setShowP2APlanWizard(true);
+        break;
     }
   };
+
+  const handleP2AHeaderClick = () => openPlanByAction();
 
   const handleP2AStatusClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!p2aPlanByProject) return;
-    if (p2aPlanByProject.status === 'ACTIVE' || p2aPlanByProject.status === 'COMPLETED') {
+    if (planIsLocked) {
       await loadP2ADraft();
       setShowP2ASubmission(true);
     } else {
@@ -183,21 +196,8 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
     }
   };
 
-  const headerStatusLabel = !p2aPlanByProject
-    ? null
-    : p2aPlanByProject.status === 'COMPLETED'
-      ? 'Approved'
-      : p2aPlanByProject.status === 'ACTIVE'
-        ? 'In Review'
-        : 'Draft';
-
-  const headerStatusClass = !p2aPlanByProject
-    ? ''
-    : p2aPlanByProject.status === 'COMPLETED'
-      ? 'bg-green-500/10 text-green-600 border-green-500/20'
-      : p2aPlanByProject.status === 'ACTIVE'
-        ? 'bg-amber-50 text-amber-700 border-amber-200'
-        : 'bg-muted text-muted-foreground border-border';
+  const headerStatusLabel = hasPlan ? planUIState.badgeLabel : null;
+  const headerStatusClass = hasPlan ? planUIState.badgeClass : '';
 
   return (
     <>
@@ -259,20 +259,20 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               </div>
             ) : p2aPlanByProject ? (
               <div className="text-center py-8 text-muted-foreground">
-                {p2aPlanByProject.status === 'DRAFT' ? (
+                {planUIState.primaryAction === 'edit' ? (
                   <>
                     <p className="text-sm font-medium mb-1">Draft in Progress</p>
-                    <p className="text-xs opacity-70 mb-4">Continue setting up your handover plan</p>
+                    <p className="text-xs opacity-70 mb-4">{planUIState.helperText}</p>
                     {canCreateVCR && (
                       <div className="flex items-center justify-center gap-2">
                         <Button
                           variant="secondary"
                           size="sm"
                           className="gap-1.5 group/cta"
-                          onClick={() => setShowP2APlanWizard(true)}
+                          onClick={openPlanByAction}
                         >
                           <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover/cta:text-green-600 transition-colors" />
-                          Continue P2A Plan
+                          {planUIState.primaryLabel}
                         </Button>
                         <Button
                           variant="ghost"
@@ -285,34 +285,21 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                         </Button>
                       </div>
                     )}
-
                   </>
                 ) : (
                   <>
-                    <p className="text-xs opacity-70 mb-5">
-                      {p2aPlanByProject.status === 'ACTIVE' ? 'Your plan is awaiting approval' : 'Your plan has been approved'}
-                    </p>
+                    <p className="text-xs opacity-70 mb-5">{planUIState.helperText}</p>
                     <div className="flex items-center justify-center gap-2">
                       <Button
                         variant="secondary"
                         size="sm"
                         className="text-xs gap-1.5"
-                        onClick={() => {
-                          // Existing plan (ACTIVE/COMPLETED/APPROVED) → read-only workspace.
-                          // Never open the create-wizard when a plan already exists.
-                          if (['COMPLETED', 'APPROVED', 'ACTIVE'].includes(p2aPlanByProject.status)) {
-                            setShowP2AWorkspace(true);
-                          } else if (p2aPlanByProject.status === 'DRAFT') {
-                            setShowP2APlanWizard(true);
-                          }
-                        }}
+                        onClick={openPlanByAction}
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
-                        {['COMPLETED', 'APPROVED', 'ACTIVE'].includes(p2aPlanByProject.status)
-                          ? 'View P2A Plan'
-                          : 'Continue P2A Plan'}
+                        {planUIState.primaryLabel}
                       </Button>
-                      {canCreateVCR && p2aPlanByProject.status === 'ACTIVE' && (
+                      {canCreateVCR && planIsLocked && !planIsApproved && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -413,7 +400,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
         projectId={projectId}
         projectName={projectCode}
         projectNumber={projectCode}
-        readOnly={p2aPlanByProject?.status === 'ACTIVE'}
+        readOnly={planIsLocked}
       />
 
       {/* P2A Plan Summary Dialog */}
@@ -482,10 +469,10 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {p2aPlanByProject?.status === 'ACTIVE' ? 'Delete submitted P2A Plan?' : 'Delete Draft P2A Plan?'}
+              {planIsLocked ? 'Delete submitted P2A Plan?' : 'Delete Draft P2A Plan?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {p2aPlanByProject?.status === 'ACTIVE'
+              {planIsLocked
                 ? 'This will permanently delete the submitted P2A handover plan and cancel all pending approval tasks for its approvers. This action cannot be undone.'
                 : 'This will permanently delete the draft P2A handover plan including all systems, VCRs, phases, and approvers. This action cannot be undone.'}
             </AlertDialogDescription>
