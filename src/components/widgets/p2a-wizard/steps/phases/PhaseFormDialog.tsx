@@ -151,9 +151,9 @@ export const PhaseFormDialog: React.FC<PhaseFormDialogProps> = ({
             />
           </div>
 
-          {/* Milestone selector — pulled from project_milestones */}
-          {milestones.length > 0 ? (
-            <div className="rounded-lg border bg-muted/30 p-3 space-y-2.5">
+          {/* Milestone selector — pulled from project_milestones (+ add from catalogue) */}
+          <div className="rounded-lg border bg-muted/30 p-3 space-y-2.5">
+            <div className="flex items-start justify-between gap-2">
               <div>
                 <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Applicable Milestones
@@ -162,80 +162,198 @@ export const PhaseFormDialog: React.FC<PhaseFormDialogProps> = ({
                   Select milestones that fall within this phase
                 </p>
               </div>
-
-              {/* Search */}
-              {milestones.length > 4 && (
-                <div className="relative">
-                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input
-                    value={query}
-                    onChange={e => setQuery(e.target.value)}
-                    placeholder="Search milestones..."
-                    className="h-8 pl-7 text-xs bg-background"
-                  />
-                </div>
+              {projectId && (
+                <Popover open={catalogueOpen} onOpenChange={setCatalogueOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[11px] gap-1 bg-background"
+                    >
+                      <BookPlus className="h-3.5 w-3.5" />
+                      Add from catalogue
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="end"
+                    side="bottom"
+                    className="w-80 p-0 z-[160]"
+                  >
+                    <div className="p-2 border-b">
+                      <div className="relative">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                        <Input
+                          value={catalogueQuery}
+                          onChange={e => setCatalogueQuery(e.target.value)}
+                          placeholder="Search catalogue..."
+                          className="h-8 pl-7 text-xs"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto p-1">
+                      {(() => {
+                        const existingNames = new Set(
+                          milestones.map(m => m.name.toLowerCase().trim())
+                        );
+                        const cq = catalogueQuery.trim().toLowerCase();
+                        const available = (milestoneTypes || []).filter(t => {
+                          const composed = t.code && t.name && t.code !== t.name
+                            ? `${t.code} - ${t.name}`
+                            : (t.name || t.code);
+                          const alreadyOnProject =
+                            existingNames.has((t.name || '').toLowerCase().trim()) ||
+                            existingNames.has((t.code || '').toLowerCase().trim()) ||
+                            existingNames.has(composed.toLowerCase().trim());
+                          if (alreadyOnProject) return false;
+                          if (!cq) return true;
+                          return (
+                            (t.code || '').toLowerCase().includes(cq) ||
+                            (t.name || '').toLowerCase().includes(cq) ||
+                            (t.description || '').toLowerCase().includes(cq)
+                          );
+                        });
+                        if (available.length === 0) {
+                          return (
+                            <p className="text-[11px] text-muted-foreground py-6 text-center px-3">
+                              {(milestoneTypes || []).length === 0
+                                ? 'Catalogue is empty.'
+                                : cq
+                                  ? `Nothing in catalogue matches "${catalogueQuery}".`
+                                  : 'All catalogue milestones are already on this project.'}
+                            </p>
+                          );
+                        }
+                        return available.map(t => {
+                          const milestoneName = t.code && t.name && t.code !== t.name
+                            ? `${t.code} - ${t.name}`
+                            : (t.name || t.code);
+                          const busy = addingTypeId === t.id && isAdding;
+                          return (
+                            <button
+                              key={t.id}
+                              type="button"
+                              disabled={busy || isAdding}
+                              onClick={() => {
+                                if (!projectId) return;
+                                setAddingTypeId(t.id);
+                                addMilestone({
+                                  project_id: projectId,
+                                  milestone_name: milestoneName,
+                                  milestone_date: new Date().toISOString().slice(0, 10),
+                                  status: 'NOT_STARTED',
+                                } as any);
+                              }}
+                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left hover:bg-accent/60 transition-colors disabled:opacity-50"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-baseline gap-1.5 flex-wrap">
+                                  <span className="text-xs font-semibold text-foreground truncate">
+                                    {t.code || t.name}
+                                  </span>
+                                  {t.name && t.code && t.code !== t.name && (
+                                    <span className="text-[11px] text-muted-foreground truncate">
+                                      · {t.name}
+                                    </span>
+                                  )}
+                                </div>
+                                {t.description && (
+                                  <p className="text-[10px] text-muted-foreground/80 truncate mt-0.5">
+                                    {t.description}
+                                  </p>
+                                )}
+                              </div>
+                              {busy ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground shrink-0" />
+                              ) : (
+                                <Plus className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              )}
+                            </button>
+                          );
+                        });
+                      })()}
+                    </div>
+                    <div className="px-3 py-2 border-t bg-muted/30 text-[10px] text-muted-foreground">
+                      Added with today's date — update the date later from the project page.
+                    </div>
+                  </PopoverContent>
+                </Popover>
               )}
+            </div>
 
-              <div className="max-h-56 overflow-y-auto -mx-1 px-1 space-y-1">
-                {filteredMilestones.length === 0 ? (
-                  <p className="text-[11px] text-muted-foreground py-3 text-center">
-                    No milestones match "{query}"
-                  </p>
-                ) : (
-                  filteredMilestones.map(m => {
-                    const selected = selectedMilestones.includes(m.id);
-                    const { acronym, full } = parseMilestoneName(m.name);
-                    const dateLabel = formatDate(m.target_date);
-                    return (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => toggleMilestone(m.id)}
+            {/* Search project milestones */}
+            {milestones.length > 4 && (
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  placeholder="Search milestones..."
+                  className="h-8 pl-7 text-xs bg-background"
+                />
+              </div>
+            )}
+
+            <div className="max-h-56 overflow-y-auto -mx-1 px-1 space-y-1">
+              {milestones.length === 0 ? (
+                <p className="text-[11px] text-muted-foreground py-4 text-center">
+                  No project milestones yet. Use{' '}
+                  <span className="font-medium">Add from catalogue</span> to attach one.
+                </p>
+              ) : filteredMilestones.length === 0 ? (
+                <p className="text-[11px] text-muted-foreground py-3 text-center">
+                  No milestones match "{query}"
+                </p>
+              ) : (
+                filteredMilestones.map(m => {
+                  const selected = selectedMilestones.includes(m.id);
+                  const { acronym, full } = parseMilestoneName(m.name);
+                  const dateLabel = formatDate(m.target_date);
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => toggleMilestone(m.id)}
+                      className={cn(
+                        'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-left transition-colors border',
+                        selected
+                          ? 'bg-primary/10 border-primary/40 hover:bg-primary/15'
+                          : 'bg-background border-transparent hover:bg-accent/60'
+                      )}
+                    >
+                      <div
                         className={cn(
-                          'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-left transition-colors border',
+                          'h-4 w-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-colors',
                           selected
-                            ? 'bg-primary/10 border-primary/40 hover:bg-primary/15'
-                            : 'bg-background border-transparent hover:bg-accent/60'
+                            ? 'bg-primary border-primary text-primary-foreground'
+                            : 'border-muted-foreground/40'
                         )}
                       >
-                        <div
-                          className={cn(
-                            'h-4 w-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-colors',
-                            selected
-                              ? 'bg-primary border-primary text-primary-foreground'
-                              : 'border-muted-foreground/40'
-                          )}
-                        >
-                          {selected && <Check className="h-3 w-3" strokeWidth={3} />}
-                        </div>
-                        <div className="flex-1 min-w-0 flex items-baseline gap-1.5 flex-wrap">
-                          <span className="text-xs font-semibold text-foreground truncate">
-                            {acronym}
-                          </span>
-                          {full && (
-                            <span className="text-[11px] text-muted-foreground truncate">
-                              · {full}
-                            </span>
-                          )}
-                        </div>
-                        {dateLabel && (
-                          <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-                            {dateLabel}
+                        {selected && <Check className="h-3 w-3" strokeWidth={3} />}
+                      </div>
+                      <div className="flex-1 min-w-0 flex items-baseline gap-1.5 flex-wrap">
+                        <span className="text-xs font-semibold text-foreground truncate">
+                          {acronym}
+                        </span>
+                        {full && (
+                          <span className="text-[11px] text-muted-foreground truncate">
+                            · {full}
                           </span>
                         )}
-                      </button>
-                    );
-                  })
-                )}
-              </div>
+                      </div>
+                      {dateLabel && (
+                        <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                          {dateLabel}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })
+              )}
             </div>
-          ) : (
-            <div className="rounded-lg border border-dashed bg-muted/20 p-3 text-center">
-              <p className="text-[11px] text-muted-foreground">
-                No project milestones defined yet. Add milestones to this project to link them to phases.
-              </p>
-            </div>
-          )}
+          </div>
+
         </div>
 
         <DialogFooter>
