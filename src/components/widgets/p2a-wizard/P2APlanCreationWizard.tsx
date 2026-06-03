@@ -11,6 +11,7 @@ import { SystemMappingStep } from './steps/SystemMappingStep';
 import { PhasesStep, WizardPhase } from './steps/PhasesStep';
 import { WorkspacePreviewStep } from './steps/WorkspacePreviewStep';
 import { ApprovalSetupStep, WizardApprover } from './steps/ApprovalSetupStep';
+import { SubmissionSuccessDialog } from './SubmissionSuccessDialog';
 
 import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
 import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
@@ -80,6 +81,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   const [submissionComment, setSubmissionComment] = useState('');
   const [isApproving, setIsApproving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [submitSuccessOpen, setSubmitSuccessOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const queryClient = useQueryClient();
 
@@ -506,9 +508,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     try {
       await submitForApproval(submissionComment || undefined);
       await syncWizardProgress(WIZARD_STEPS.length - 1, true);
-      handleClose();
-      onSuccess?.();
-      toast.success('P2A Plan submitted for approval!');
+      setSubmitSuccessOpen(true);
     } catch (error) {
       // Error handled in hook
     }
@@ -945,6 +945,28 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Post-submit success confirmation modal */}
+      <SubmissionSuccessDialog
+        open={submitSuccessOpen}
+        onOpenChange={setSubmitSuccessOpen}
+        projectCode={projectCode}
+        projectName={projectName}
+        systems={state.systems}
+        vcrs={state.vcrs}
+        phases={state.phases}
+        approvers={state.approvers}
+        onDone={() => {
+          setSubmitSuccessOpen(false);
+          handleClose();
+          onSuccess?.();
+        }}
+        onOpenWorkspace={onOpenWorkspace ? () => {
+          setSubmitSuccessOpen(false);
+          handleClose();
+          onOpenWorkspace();
+        } : undefined}
+      />
     </>
   );
 };
