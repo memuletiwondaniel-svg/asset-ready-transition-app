@@ -50,6 +50,7 @@ export const PhaseFormDialog: React.FC<PhaseFormDialogProps> = ({
   open,
   onOpenChange,
   milestones,
+  projectId,
   editingPhase,
   onSave,
 }) => {
@@ -57,6 +58,12 @@ export const PhaseFormDialog: React.FC<PhaseFormDialogProps> = ({
   const [description, setDescription] = useState('');
   const [selectedMilestones, setSelectedMilestones] = useState<string[]>([]);
   const [query, setQuery] = useState('');
+  const [catalogueOpen, setCatalogueOpen] = useState(false);
+  const [catalogueQuery, setCatalogueQuery] = useState('');
+  const [addingTypeId, setAddingTypeId] = useState<string | null>(null);
+
+  const { milestoneTypes } = useProjectMilestoneTypes();
+  const { addMilestone, isAdding } = useProjectMilestones(projectId);
 
   useEffect(() => {
     if (open) {
