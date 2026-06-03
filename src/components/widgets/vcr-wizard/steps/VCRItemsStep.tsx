@@ -49,7 +49,24 @@ import {
   Ban,
   Undo2,
   Info,
+  Trash2,
 } from 'lucide-react';
+
+/**
+ * Detect a B2B-paired role: exactly two active holders whose normalized
+ * `position` strings match byte-for-byte. Mirrors the rule in
+ * `useB2BPartner` / ApprovalSetupStep — do NOT re-derive elsewhere.
+ *
+ * Display-only: the underlying approval semantics are unchanged — both
+ * holders remain assigned; either one closing the task completes it.
+ */
+const isB2BPairUsers = (users: Array<{ position?: string | null }>): boolean => {
+  if (!users || users.length !== 2) return false;
+  const norm = (p?: string | null) => (p || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const a = norm(users[0]?.position);
+  const b = norm(users[1]?.position);
+  return !!a && a === b;
+};
 import { cn } from '@/lib/utils';
 import { getVCRCategoryConfig, VCR_CATEGORY_ORDER } from '@/lib/vcrCategoryConfig';
 import { toast } from 'sonner';
