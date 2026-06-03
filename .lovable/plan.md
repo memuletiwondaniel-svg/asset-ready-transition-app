@@ -141,3 +141,14 @@ VCR item editor (`VCRItemsStep.tsx`) + PSSR item editor (`PSSRItemDetailSheet.ts
 - `Engr. Manager - Asset` (profiles.position) vs canonical `Engr. Manager (Asset)` (roles.name) — uses ` - ` vs ` (…)`. Resolver agnostic; logged for future normalization.
 - `Plant Director - CS` = profile "TBC Director" — known vacancy, intentionally un-seeded in org_role_holders.
 - `MCI TA2 - Project` — no holder; intentionally un-seeded.
+
+## Design principle — COLOR-KEY RULE (settled)
+
+One color system per screen, mapped to what THAT screen is about (Option A).
+
+- Color is a categorization KEY; it only works if it maps to ONE dimension per screen.
+- The active color key = the categorization the screen is FOR. Everything else on that screen goes neutral, so two keys never compete.
+- Examples: Step 3 (Assign Systems to VCRs) → VCR-color is the key (VCR chips/pills colored, systematic, stable); Step 4 (Define Phases) → PHASE-color is the key (phase card/pill + assigned-VCR left accent colored), VCR ID chips NEUTRAL there.
+- Within a screen, the color key is systematic + derived from stable identity (same entity = same color, not per-render).
+- NOT Option B: VCR color is not a global persistent identity across all screens — it's the active key only where VCR is the subject. So a given entity's color may differ by screen, and that's intended (the screen's purpose dictates the key).
+- Default when unsure: neutral. Add a color key only when the screen has one clear categorization the user scans by.
