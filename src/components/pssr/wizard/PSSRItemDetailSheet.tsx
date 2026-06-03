@@ -506,6 +506,7 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
                   {currentApprovingRoles.map((roleName) => {
                     const members = approvingGroups[roleName] || [];
                     const isExpanded = expandedRoles.has(roleName);
+                    const b2b = isB2BPairMembers(members);
                     return (
                       <Collapsible
                         key={roleName}
@@ -530,6 +531,15 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
                                   isExpanded && "rotate-90"
                                 )} />
                                 <span className="font-semibold text-sm tracking-tight text-foreground/90 truncate">{roleName}</span>
+                                {b2b && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[9px] font-semibold tracking-wider px-1.5 py-0 h-4 ml-1 shrink-0 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                                    title="Back-to-back pair — either holder can close the approval"
+                                  >
+                                    B2B
+                                  </Badge>
+                                )}
                                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-normal ml-1 shrink-0 text-muted-foreground/50">
                                   {members.length}
                                 </Badge>
@@ -538,12 +548,13 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
                             <button
                               type="button"
                               onClick={() => handleRemoveApprover(roleName)}
-                              className="opacity-0 group-hover:opacity-100 transition-all p-1 rounded-full hover:bg-destructive/10 text-destructive/70 hover:text-destructive shrink-0 ml-2"
+                              className="opacity-0 group-hover:opacity-100 transition-all p-1 rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive shrink-0 ml-2"
                               title={`Remove ${roleName}`}
                             >
-                              <X className="h-3.5 w-3.5" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </div>
+
                           <CollapsibleContent>
                             <div className="px-3 pb-3 pt-0">
                               {members.length > 0 ? (
