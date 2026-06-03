@@ -165,9 +165,8 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
                     const partner = partnerByRole.get(approver.role_name);
                     const S = statusStyles[status];
                     const hasUser = !!approver.user_id;
-                    const swapped = !!swappedRoles[approver.role_name];
-                    const displayName = swapped && partner ? partner.full_name : approver.user_name;
-                    const displayAvatar = swapped && partner ? partner.avatar_url : approver.user_avatar;
+                    const displayName = approver.user_name;
+                    const displayAvatar = approver.user_avatar;
                     const isActive = idx === activeStageIndex;
                     const isApproved = status === 'APPROVED' || status === 'REJECTED';
                     const isUpcoming = !isActive && !isApproved;
@@ -188,7 +187,6 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
                           {stageNum}
                         </span>
                         <Avatar
-                          key={`${approver.role_name}-${swapped ? 'p' : 'm'}`}
                           className={cn(
                             'h-9 w-9 shrink-0',
                             isActive && 'ring-2 ring-amber-500/40 ring-offset-2 ring-offset-background',
@@ -212,23 +210,15 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
                             {partner && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSwappedRoles((prev) => ({
-                                        ...prev,
-                                        [approver.role_name]: !prev[approver.role_name],
-                                      }));
-                                    }}
-                                    className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 hover:bg-amber-200 dark:hover:bg-amber-900/60 cursor-pointer transition-colors"
-                                    title={`Click to switch to B2B: ${swapped ? approver.user_name : partner.full_name}`}
+                                  <span
+                                    className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 cursor-default"
+                                    title="Back-to-back pair — either holder can close the approval"
                                   >
                                     B2B
-                                  </button>
+                                  </span>
                                 </TooltipTrigger>
-                                <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
-                                  Click to switch to B2B: {swapped ? approver.user_name : partner.full_name}
+                                <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs max-w-[240px]">
+                                  Back-to-back pair — either {approver.user_name || 'holder'} or {partner.full_name} can close the approval.
                                 </TooltipContent>
                               </Tooltip>
                             )}
