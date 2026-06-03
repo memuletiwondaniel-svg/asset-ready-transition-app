@@ -59,7 +59,7 @@ export const PhaseFormDialog: React.FC<PhaseFormDialogProps> = ({
   const [query, setQuery] = useState('');
   const [catalogueOpen, setCatalogueOpen] = useState(false);
   const [catalogueQuery, setCatalogueQuery] = useState('');
-  const [addingTypeId, setAddingTypeId] = useState<string | null>(null);
+  const [catalogueSelected, setCatalogueSelected] = useState<string[]>([]);
 
   const { milestoneTypes } = useProjectMilestoneTypes();
   const { addMilestone, isAdding } = useProjectMilestones(projectId);
