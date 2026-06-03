@@ -82,7 +82,7 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
   }, [profileUsers, assignedApprovers]);
 
   const taskCount = assignedApprovers.length;
-  const approvedCount = assignedApprovers.filter(a => statusByUser.get(a.user_id!) === 'APPROVED').length;
+  const approvedCount = assignedApprovers.filter(a => statusByApproverId.get(a.id) === 'APPROVED').length;
   const hcCount = systems.filter(s => (s as any).is_hydrocarbon).length;
 
   return (
@@ -115,7 +115,7 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
           <div className="px-3 py-2 space-y-1.5 max-h-64 overflow-y-auto">
             {assignedApprovers.map(a => {
               const partner = approverPartner.get(a.id);
-              const status: ApprovalStatus = statusByUser.get(a.user_id!) ?? 'PENDING';
+              const status: ApprovalStatus = statusByApproverId.get(a.id) ?? 'PENDING';
               const S = statusStyles[status];
               const Icon = S.icon;
               return (
