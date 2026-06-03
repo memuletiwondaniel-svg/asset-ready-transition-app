@@ -51,7 +51,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
               </div>
             </div>
             <h2 className="text-base font-semibold text-foreground">
-              {readOnly || ['COMPLETED', 'APPROVED'].includes(plan?.status || '')
+              {readOnly || planUIState.isLocked
                 ? `${projectNumber ? projectNumber + ' ' : ''}P2A Plan`
                 : 'Develop P2A Plan'}
             </h2>
