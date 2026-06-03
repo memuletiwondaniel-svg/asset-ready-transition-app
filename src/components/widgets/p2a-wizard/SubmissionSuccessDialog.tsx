@@ -5,9 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Check, CheckCircle2, Clock, X as XIcon, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
-import { useProjectRoleUsers } from '@/hooks/useProjectRoleUsers';
+import { useP2AApproverRoster } from '@/hooks/useP2AApproverRoster';
 import type { WizardApprover } from './steps/ApprovalSetupStep';
-import { FIXED_APPROVER_ROLES } from './steps/ApprovalSetupStep';
 import type { WizardSystem } from './steps/SystemsImportStep';
 import type { WizardVCR } from './steps/VCRCreationStep';
 import type { WizardPhase } from './steps/PhasesStep';
@@ -60,29 +59,25 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
   };
 
   const { data: profileUsers } = useProfileUsers();
-  const fixedRoleLabels = useMemo(() => FIXED_APPROVER_ROLES.map((role) => role.label), []);
-  const { data: resolvedProjectRoles } = useProjectRoleUsers(projectId, fixedRoleLabels);
+  const { roster: canonicalRoster } = useP2AApproverRoster(projectId);
 
   const savedApprovers = useMemo(
     () => approvers.filter(a => !!a.user_id).sort((a, b) => a.display_order - b.display_order),
     [approvers]
   );
 
+  // Fallback used when the submitted plan has no persisted approver rows
+  // (historical plans submitted before Dep. Plant Director was wired into
+  // the wizard's fixed roster). Uses the SAME two-RPC composite as the
+  // wizard roster — resolve_project_role_user + find_deputy_plant_director —
+  // so the read path cannot diverge from creation.
   const canonicalFallbackApprovers = useMemo<WizardApprover[]>(() => {
-    if (!resolvedProjectRoles) return [];
-    return FIXED_APPROVER_ROLES.map((role) => {
-      const resolved = resolvedProjectRoles[role.label];
-      return {
-        id: `fallback-${role.key}`,
-        role_name: role.label,
-        display_order: role.order,
-        status: 'PENDING',
-        user_id: resolved?.user_id,
-        user_name: resolved?.full_name || 'Not assigned',
-        user_avatar: resolved?.avatar_url ?? undefined,
-      };
-    });
-  }, [resolvedProjectRoles]);
+    return canonicalRoster.map((a) => ({
+      ...a,
+      id: `fallback-${a.id}`,
+      user_name: a.user_name || 'Not assigned',
+    }));
+  }, [canonicalRoster]);
 
   const assignedApprovers = savedApprovers.length > 0 ? savedApprovers : canonicalFallbackApprovers;
   const assignedRows = useMemo(() => assignedApprovers.filter(a => !!a.user_id), [assignedApprovers]);
