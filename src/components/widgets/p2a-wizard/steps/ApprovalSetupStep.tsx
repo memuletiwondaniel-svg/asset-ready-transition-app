@@ -43,7 +43,7 @@ export interface WizardApprover {
  * lives in this component: who-holds-role-X-on-project-Y is decided in
  * exactly one place (the RPC), shared with backend triggers.
  */
-const FIXED_APPROVER_ROLES = [
+export const FIXED_APPROVER_ROLES = [
   { key: 'ora_lead', label: 'ORA Lead', order: 1, phase: 1 },
   { key: 'construction_lead', label: 'Construction Lead', order: 2, phase: 1 },
   { key: 'commissioning_lead', label: 'Commissioning Lead', order: 3, phase: 1 },

@@ -5,7 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Check, CheckCircle2, Clock, X as XIcon, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
+import { useProjectRoleUsers } from '@/hooks/useProjectRoleUsers';
 import type { WizardApprover } from './steps/ApprovalSetupStep';
+import { FIXED_APPROVER_ROLES } from './steps/ApprovalSetupStep';
 import type { WizardSystem } from './steps/SystemsImportStep';
 import type { WizardVCR } from './steps/VCRCreationStep';
 import type { WizardPhase } from './steps/PhasesStep';
@@ -14,6 +16,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   planId?: string;
+  projectId?: string;
   projectCode: string;
   projectName?: string;
   systems: WizardSystem[];
@@ -38,6 +41,7 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
   open,
   onOpenChange,
   planId,
+  projectId,
   projectCode,
   projectName,
   systems,
@@ -47,15 +51,41 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
   onDone,
   onOpenWorkspace,
 }) => {
-  const { data: profileUsers } = useProfileUsers();
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      onDone();
+      return;
+    }
+    onOpenChange(nextOpen);
+  };
 
-  const assignedApprovers = useMemo(
+  const { data: profileUsers } = useProfileUsers();
+  const fixedRoleLabels = useMemo(() => FIXED_APPROVER_ROLES.map((role) => role.label), []);
+  const { data: resolvedProjectRoles } = useProjectRoleUsers(projectId, fixedRoleLabels);
+
+  const savedApprovers = useMemo(
     () => approvers.filter(a => !!a.user_id).sort((a, b) => a.display_order - b.display_order),
     [approvers]
   );
 
-  // Status comes from p2a_handover_approvers.status on each WizardApprover row
-  // (loaded fresh via loadP2ADraft when the modal opens). No second query needed.
+  const canonicalFallbackApprovers = useMemo<WizardApprover[]>(() => {
+    if (!resolvedProjectRoles) return [];
+    return FIXED_APPROVER_ROLES.map((role) => {
+      const resolved = resolvedProjectRoles[role.label];
+      return {
+        id: `fallback-${role.key}`,
+        role_name: role.label,
+        display_order: role.order,
+        status: 'PENDING',
+        user_id: resolved?.user_id,
+        user_name: resolved?.full_name || 'Not assigned',
+        user_avatar: resolved?.avatar_url ?? undefined,
+      };
+    });
+  }, [resolvedProjectRoles]);
+
+  const assignedApprovers = savedApprovers.length > 0 ? savedApprovers : canonicalFallbackApprovers;
+
   const statusByApproverId = useMemo(() => {
     const m = new Map<string, ApprovalStatus>();
     assignedApprovers.forEach(a => {
@@ -79,12 +109,12 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
     return map;
   }, [profileUsers, assignedApprovers]);
 
-  const taskCount = assignedApprovers.length;
+  const taskCount = savedApprovers.length > 0 ? savedApprovers.length : assignedApprovers.filter(a => a.user_id).length;
   const approvedCount = assignedApprovers.filter(a => statusByApproverId.get(a.id) === 'APPROVED').length;
   const hcCount = systems.filter(s => (s as any).is_hydrocarbon).length;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
         <div className="flex flex-col items-center text-center px-6 pt-6 pb-3">
           <div className="h-11 w-11 rounded-full bg-emerald-500/15 flex items-center justify-center mb-3">
@@ -121,7 +151,10 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
                   <span className={cn('h-4 w-4 rounded-full flex items-center justify-center shrink-0', status === 'APPROVED' ? 'bg-emerald-500/15' : status === 'REJECTED' ? 'bg-destructive/15' : 'bg-amber-500/15')}>
                     <Icon className={cn('h-3 w-3', S.cls)} />
                   </span>
-                  <span className="font-medium truncate">{a.user_name}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium truncate">{a.user_name || 'Not assigned'}</div>
+                    <div className="text-xs text-muted-foreground truncate">{a.role_name}</div>
+                  </div>
                   {partner && (
                     <span
                       className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0"
@@ -130,9 +163,6 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
                       B2B
                     </span>
                   )}
-                  <span className="text-xs text-muted-foreground ml-auto truncate max-w-[55%] text-right">
-                    {partner ? 'either partner' : a.role_name}
-                  </span>
                   <span className={cn('text-[10px] font-medium uppercase tracking-wider tabular-nums w-16 text-right shrink-0', S.cls)}>
                     {S.label}
                   </span>
@@ -166,11 +196,8 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
         </div>
 
         <div className="flex items-center gap-2 px-6 py-4 mt-4">
-          <Button variant="outline" className="flex-1" onClick={onDone}>
-            Done
-          </Button>
           {onOpenWorkspace && (
-            <Button className="flex-1 gap-1.5" onClick={onOpenWorkspace}>
+            <Button className="w-full gap-1.5" onClick={onOpenWorkspace}>
               <ExternalLink className="h-3.5 w-3.5" />
               Open workspace
             </Button>

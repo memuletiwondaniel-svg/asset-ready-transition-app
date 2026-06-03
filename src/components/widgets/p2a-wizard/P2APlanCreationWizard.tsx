@@ -950,6 +950,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
       <SubmissionSuccessDialog
         open={submitSuccessOpen}
         onOpenChange={setSubmitSuccessOpen}
+        projectId={projectId}
         projectCode={projectCode}
         projectName={projectName}
         systems={state.systems}
