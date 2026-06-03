@@ -386,8 +386,6 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
     );
   }
 
-  const idColors = getSystemIdColor(system.system_id);
-
   return (
     <div className="space-y-0">
       <div
@@ -402,29 +400,36 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
         )} />
 
         <div className="flex-1 min-w-0 flex items-center gap-3">
-          <span
-            className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-semibold tabular-nums tracking-wide shrink-0 leading-none border"
-            style={{ background: idColors.bg, borderColor: idColors.border, color: idColors.text }}
-          >
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border/60 bg-muted/40 text-muted-foreground">
             {system.system_id}
           </span>
           <span className="font-medium text-xs truncate">{system.name}</span>
-          {system.is_hydrocarbon && (
-            <Badge variant="outline" className="text-[9px] bg-orange-50 text-orange-700 border-orange-200 shrink-0 py-0 px-1">
-              HC
-            </Badge>
-          )}
-          {hasSubsystems && (
-            <span className="text-[9px] text-muted-foreground shrink-0">
-              {system.subsystems!.length} sub
-            </span>
-          )}
         </div>
+
+        {system.is_hydrocarbon && (
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant="outline"
+                  className="text-[9px] bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-300 dark:border-orange-900/40 shrink-0 py-0 px-1.5 cursor-help"
+                >
+                  HC
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                Hydrocarbon System
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
         {hasSubsystems && (
-          <span className="text-[9px] text-muted-foreground shrink-0">
+          <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">
             {system.subsystems!.length} sub
           </span>
         )}
+
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
             size="icon"
