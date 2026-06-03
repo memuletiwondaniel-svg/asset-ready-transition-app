@@ -162,122 +162,17 @@ export const PhaseFormDialog: React.FC<PhaseFormDialogProps> = ({
                 </p>
               </div>
               {projectId && (
-                <Popover open={catalogueOpen} onOpenChange={setCatalogueOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-[11px] gap-1 bg-background"
-                    >
-                      <BookPlus className="h-3.5 w-3.5" />
-                      Add from catalogue
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    align="end"
-                    side="bottom"
-                    className="w-80 p-0 z-[160]"
-                  >
-                    <div className="p-2 border-b">
-                      <div className="relative">
-                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                        <Input
-                          value={catalogueQuery}
-                          onChange={e => setCatalogueQuery(e.target.value)}
-                          placeholder="Search catalogue..."
-                          className="h-8 pl-7 text-xs"
-                          autoFocus
-                        />
-                      </div>
-                    </div>
-                    <div className="max-h-64 overflow-y-auto p-1">
-                      {(() => {
-                        const existingNames = new Set(
-                          milestones.map(m => m.name.toLowerCase().trim())
-                        );
-                        const cq = catalogueQuery.trim().toLowerCase();
-                        const available = (milestoneTypes || []).filter(t => {
-                          const composed = t.code && t.name && t.code !== t.name
-                            ? `${t.code} - ${t.name}`
-                            : (t.name || t.code);
-                          const alreadyOnProject =
-                            existingNames.has((t.name || '').toLowerCase().trim()) ||
-                            existingNames.has((t.code || '').toLowerCase().trim()) ||
-                            existingNames.has(composed.toLowerCase().trim());
-                          if (alreadyOnProject) return false;
-                          if (!cq) return true;
-                          return (
-                            (t.code || '').toLowerCase().includes(cq) ||
-                            (t.name || '').toLowerCase().includes(cq) ||
-                            (t.description || '').toLowerCase().includes(cq)
-                          );
-                        });
-                        if (available.length === 0) {
-                          return (
-                            <p className="text-[11px] text-muted-foreground py-6 text-center px-3">
-                              {(milestoneTypes || []).length === 0
-                                ? 'Catalogue is empty.'
-                                : cq
-                                  ? `Nothing in catalogue matches "${catalogueQuery}".`
-                                  : 'All catalogue milestones are already on this project.'}
-                            </p>
-                          );
-                        }
-                        return available.map(t => {
-                          const milestoneName = t.code && t.name && t.code !== t.name
-                            ? `${t.code} - ${t.name}`
-                            : (t.name || t.code);
-                          const busy = addingTypeId === t.id && isAdding;
-                          return (
-                            <button
-                              key={t.id}
-                              type="button"
-                              disabled={busy || isAdding}
-                              onClick={() => {
-                                if (!projectId) return;
-                                setAddingTypeId(t.id);
-                                addMilestone({
-                                  project_id: projectId,
-                                  milestone_name: milestoneName,
-                                  milestone_date: new Date().toISOString().slice(0, 10),
-                                  status: 'NOT_STARTED',
-                                } as any);
-                              }}
-                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left hover:bg-accent/60 transition-colors disabled:opacity-50"
-                            >
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-baseline gap-1.5 flex-wrap">
-                                  <span className="text-xs font-semibold text-foreground truncate">
-                                    {t.code || t.name}
-                                  </span>
-                                  {t.name && t.code && t.code !== t.name && (
-                                    <span className="text-[11px] text-muted-foreground truncate">
-                                      · {t.name}
-                                    </span>
-                                  )}
-                                </div>
-                                {t.description && (
-                                  <p className="text-[10px] text-muted-foreground/80 truncate mt-0.5">
-                                    {t.description}
-                                  </p>
-                                )}
-                              </div>
-                              {busy ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground shrink-0" />
-                              ) : (
-                                <Plus className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                              )}
-                            </button>
-                          );
-                        });
-                      })()}
-                    </div>
-                    <div className="px-3 py-2 border-t bg-muted/30 text-[10px] text-muted-foreground">
-                      Added with today's date — update the date later from the project page.
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setCatalogueSelected([]); setCatalogueQuery(''); setCatalogueOpen(true); }}
+                  className="h-7 text-[11px] gap-1.5 px-2 text-muted-foreground hover:text-foreground hover:bg-accent"
+                  title="Add milestones from catalogue"
+                >
+                  <BookPlus className="h-3.5 w-3.5" />
+                  Add from catalogue
+                </Button>
               )}
             </div>
 
