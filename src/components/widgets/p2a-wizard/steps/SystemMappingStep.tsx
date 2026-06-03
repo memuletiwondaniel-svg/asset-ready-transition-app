@@ -9,7 +9,6 @@ import {
   Check,
   X,
   Zap,
-  Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardSystem, WizardSubsystem } from './SystemsImportStep';
