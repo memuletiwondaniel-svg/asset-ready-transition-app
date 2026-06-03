@@ -85,6 +85,8 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
   }, [resolvedProjectRoles]);
 
   const assignedApprovers = savedApprovers.length > 0 ? savedApprovers : canonicalFallbackApprovers;
+  const assignedRows = useMemo(() => assignedApprovers.filter(a => !!a.user_id), [assignedApprovers]);
+  const unassignedRows = useMemo(() => assignedApprovers.filter(a => !a.user_id), [assignedApprovers]);
 
   const statusByApproverId = useMemo(() => {
     const m = new Map<string, ApprovalStatus>();
