@@ -254,7 +254,7 @@ async function persistPlanToDatabase(
   projectId: string,
   projectCode: string,
   state: P2APlanWizardState,
-  status: 'DRAFT' | 'ACTIVE',
+  status: 'DRAFT' | 'PENDING_APPROVAL',
 ) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
@@ -502,8 +502,16 @@ async function persistPlanToDatabase(
     }
   }
 
-  // Save approvers
-  if (state.approvers.length > 0) {
+  // Save approvers — DRAFT ONLY.
+  //
+  // The P2A approval flow is sequential: on submit (status →
+  // 'PENDING_APPROVAL') the DB trigger `trg_create_p2a_ora_lead_review`
+  // owns p2a_handover_approvers and creates exactly ONE ORA Lead row +
+  // one approval task. Phase-2 leads fan out later via
+  // `trg_create_p2a_lead_reviews` when ORA Lead approves. If we wrote
+  // wizard-state approvers here for the submit case we would race the
+  // trigger and reinstate the forbidden "5 parallel tasks" model.
+  if (status === 'DRAFT' && state.approvers.length > 0) {
     // Clean up any existing approval tasks for this plan before re-creating approvers
     // This prevents duplicates when a plan is re-submitted after draft revert
     await client
@@ -635,7 +643,7 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
 
   const submitForApproval = useMutation({
     mutationFn: async (submissionComment?: string) => {
-      const planId = await persistPlanToDatabase(projectId, projectCode, state, 'ACTIVE');
+      const planId = await persistPlanToDatabase(projectId, projectCode, state, 'PENDING_APPROVAL');
       const client = supabase as any;
 
       // Determine cycle number for this new submission
