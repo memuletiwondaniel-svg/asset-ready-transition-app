@@ -212,7 +212,6 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
                                 <TooltipTrigger asChild>
                                   <span
                                     className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 cursor-default"
-                                    title="Back-to-back pair — either holder can close the approval"
                                   >
                                     B2B
                                   </span>
