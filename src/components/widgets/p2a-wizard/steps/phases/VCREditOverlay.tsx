@@ -183,17 +183,26 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
         <div
           key={system.id}
           className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-md transition-colors',
+            'grid grid-cols-[0.875rem_0.875rem_1fr_2.25rem_3rem] items-center gap-2 px-3 py-2 rounded-md transition-colors',
             isOwnedElsewhere ? 'opacity-40' : 'cursor-pointer hover:bg-muted/50',
             isChecked && 'bg-primary/5',
           )}
           onClick={!isOwnedElsewhere ? () => toggleKey(system.id) : undefined}
         >
+          <span />
           <Checkbox checked={isChecked} disabled={!!isOwnedElsewhere} className="h-3.5 w-3.5" />
-          <span className="text-sm flex-1 truncate">{system.name}</span>
-          {system.is_hydrocarbon && (
-            <span className="text-[9px] font-semibold px-1 py-0.5 rounded bg-orange-100 text-orange-700 border border-orange-200">HC</span>
-          )}
+          <span className="text-sm truncate min-w-0">{system.name}</span>
+          <div className="flex justify-end">
+            {system.is_hydrocarbon && (
+              <span
+                title="Hydrocarbon system"
+                className="text-[9px] font-medium px-1.5 py-0 rounded border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400 leading-tight"
+              >
+                HC
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] text-muted-foreground tabular-nums text-right">—</span>
         </div>
       );
     }
@@ -207,20 +216,25 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
     });
     const allChecked = selectableKeys.length > 0 && assignedHere.length === selectableKeys.length;
     const someChecked = assignedHere.length > 0 && !allChecked;
+    const lockedCount = subKeys.length - selectableKeys.length;
+    const countTitle =
+      lockedCount > 0
+        ? `${assignedHere.length} of ${selectableKeys.length} available subsystems mapped here (${lockedCount} owned by other VCRs · ${subKeys.length} total)`
+        : `${assignedHere.length} of ${subKeys.length} subsystems mapped here`;
 
     return (
       <div key={system.id}>
         <div
           className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors hover:bg-muted/50',
+            'grid grid-cols-[0.875rem_0.875rem_1fr_2.25rem_3rem] items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors hover:bg-muted/50',
             assignedHere.length > 0 && 'bg-primary/5',
           )}
           onClick={() => toggleExpand(system.id)}
         >
           {isExpanded ? (
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
           )}
           <Checkbox
             checked={allChecked ? true : someChecked ? 'indeterminate' : false}
@@ -228,11 +242,23 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
             onClick={(e) => e.stopPropagation()}
             className="h-3.5 w-3.5"
           />
-          <span className="text-sm flex-1 truncate">{system.name}</span>
-          {system.is_hydrocarbon && (
-            <span className="text-[9px] font-semibold px-1 py-0.5 rounded bg-orange-100 text-orange-700 border border-orange-200">HC</span>
-          )}
-          <span className="text-[10px] text-muted-foreground tabular-nums">{assignedHere.length}/{subKeys.length}</span>
+          <span className="text-sm truncate min-w-0">{system.name}</span>
+          <div className="flex justify-end">
+            {system.is_hydrocarbon && (
+              <span
+                title="Hydrocarbon system"
+                className="text-[9px] font-medium px-1.5 py-0 rounded border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400 leading-tight"
+              >
+                HC
+              </span>
+            )}
+          </div>
+          <span
+            className="text-[10px] text-muted-foreground tabular-nums text-right"
+            title={countTitle}
+          >
+            {assignedHere.length}/{selectableKeys.length}
+          </span>
         </div>
         {isExpanded && (
           <div className="ml-6 border-l-2 border-muted pl-2 space-y-0.5 py-0.5">
