@@ -312,12 +312,10 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
         {/* Header */}
         <SheetHeader className="px-4 pt-4 pb-3 border-b shrink-0">
           <div className="flex items-center gap-2">
-            <span
-              className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border"
-              style={getVCRIdStyle(vcrIndex)}
-            >
+            <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border border-border bg-muted/40 text-muted-foreground">
               {shortVCRCode(vcr.code)}
             </span>
+
             <SheetTitle className="text-base sr-only">Edit VCR</SheetTitle>
           </div>
           {/* Editable name */}
