@@ -394,43 +394,31 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
         className={cn("group flex items-center gap-2 py-1.5 px-2.5 rounded-md border bg-card hover:bg-muted/50 transition-colors", hasSubsystems && "cursor-pointer")}
         onClick={() => hasSubsystems && setIsExpanded(!isExpanded)}
       >
-        {/* Expand chevron — always rendered for alignment, invisible if no subsystems */}
+        {/* Left disclosure chevron — muted secondary affordance, always rendered for alignment */}
         <ChevronRight className={cn(
-          "h-3 w-3 shrink-0 transition-transform duration-200",
-          hasSubsystems ? "text-muted-foreground" : "invisible",
+          "h-3.5 w-3.5 shrink-0 transition-transform duration-200",
+          hasSubsystems ? "text-muted-foreground/70" : "invisible",
           isExpanded && "rotate-90"
         )} />
 
-        <div className="flex-1 min-w-0 flex items-center gap-3">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border/60 bg-muted/40 text-muted-foreground">
-            {system.system_id}
-          </span>
-          <span className="font-medium text-xs truncate">{system.name}</span>
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border/60 bg-muted/40 text-muted-foreground">
+          {system.system_id}
+        </span>
+        <span className="font-medium text-xs truncate flex-1 min-w-0">{system.name}</span>
+
+        {/* Fixed-width classification column — keeps Hydrocarbon labels aligned */}
+        <div className="w-[88px] shrink-0 flex justify-end">
+          {system.is_hydrocarbon && (
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:border-amber-900/40 dark:text-amber-300">
+              Hydrocarbon
+            </span>
+          )}
         </div>
 
-        {system.is_hydrocarbon && (
-          <TooltipProvider delayDuration={150}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge
-                  variant="outline"
-                  className="text-[9px] bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-300 dark:border-orange-900/40 shrink-0 py-0 px-1.5 cursor-help"
-                >
-                  HC
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs">
-                Hydrocarbon System
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-
-        {hasSubsystems && (
-          <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">
-            {system.subsystems!.length} sub
-          </span>
-        )}
+        {/* Fixed-width subsystem count column */}
+        <span className="text-[10px] text-muted-foreground shrink-0 w-[96px] text-right tabular-nums">
+          {hasSubsystems ? `${system.subsystems!.length} ${system.subsystems!.length === 1 ? 'subsystem' : 'subsystems'}` : ''}
+        </span>
 
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
