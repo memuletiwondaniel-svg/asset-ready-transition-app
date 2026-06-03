@@ -64,6 +64,7 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
   onDone,
   onOpenWorkspace,
 }) => {
+  const [swappedRoles, setSwappedRoles] = useState<Record<string, boolean>>({});
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) { onDone(); return; }
     onOpenChange(nextOpen);
