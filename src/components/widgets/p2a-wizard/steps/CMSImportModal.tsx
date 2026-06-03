@@ -525,40 +525,49 @@ const CandidateRow: React.FC<{
       )}
     >
       <div className="flex items-center gap-2 px-2 py-1">
+        {/* Left disclosure chevron — secondary affordance, muted */}
+        <button
+          type="button"
+          onClick={() => hasSubs && setExpanded(v => !v)}
+          disabled={!hasSubs}
+          aria-label={hasSubs ? (expanded ? 'Collapse subsystems' : 'Expand subsystems') : undefined}
+          className={cn(
+            'flex items-center justify-center w-4 h-4 shrink-0 rounded',
+            hasSubs ? 'text-muted-foreground/70 hover:text-foreground' : 'invisible',
+          )}
+        >
+          <ChevronRight className={cn('h-3.5 w-3.5 transition-transform', expanded && 'rotate-90')} />
+        </button>
         <Checkbox
           checked={checked}
           onCheckedChange={onToggle}
           aria-label={`Select ${candidate.name}`}
           className="h-3.5 w-3.5 data-[state=checked]:bg-primary/70 data-[state=checked]:border-primary/70 data-[state=checked]:text-primary-foreground"
         />
-        <button
-          type="button"
-          onClick={() => hasSubs && setExpanded(v => !v)}
-          className={cn(
-            'flex items-center gap-2 flex-1 min-w-0 text-left',
-            hasSubs && 'cursor-pointer',
-          )}
-          disabled={!hasSubs}
+        <span
+          className="text-sm font-medium truncate flex-1 min-w-0 cursor-pointer"
+          onClick={onToggle}
         >
-          <span className="text-sm font-medium truncate flex-1">{candidate.name}</span>
+          {candidate.name}
+        </span>
+        {/* Fixed-width classification column — keeps Hydrocarbon labels aligned */}
+        <div className="w-[88px] shrink-0 flex justify-end">
           {candidate.is_hydrocarbon && (
-            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:border-amber-900/40 dark:text-amber-300 shrink-0">
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:border-amber-900/40 dark:text-amber-300">
               Hydrocarbon
             </span>
           )}
-          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground border border-border/50 shrink-0">
-            {candidate.system_id}
-          </span>
-          {hasSubs && (
-            <span className="flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
-              <span>{subs.length}</span>
-              <ChevronRight className={cn('h-3 w-3 transition-transform', expanded && 'rotate-90')} />
-            </span>
-          )}
-        </button>
+        </div>
+        <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground border border-border/50 shrink-0 w-[120px] text-center">
+          {candidate.system_id}
+        </span>
+        {/* Fixed-width subsystem count column */}
+        <span className="text-[10px] text-muted-foreground shrink-0 w-[88px] text-right tabular-nums">
+          {hasSubs ? `${subs.length} ${subs.length === 1 ? 'subsystem' : 'subsystems'}` : ''}
+        </span>
       </div>
       {expanded && hasSubs && (
-        <div className="px-2 pb-2 pl-9 space-y-1">
+        <div className="px-2 pb-2 pl-11 space-y-1">
           {subs.map((s, i) => (
             <div
               key={`${s.system_id ?? i}`}
