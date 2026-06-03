@@ -178,6 +178,21 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
           />
         </div>
       </DialogContent>
+      {plan?.id && (
+        <SubmissionSuccessDialog
+          open={showSubmission}
+          onOpenChange={setShowSubmission}
+          planId={plan.id}
+          projectId={projectId}
+          projectCode={projectNumber || ''}
+          projectName={projectName}
+          systems={p2aWizardState.systems}
+          vcrs={p2aWizardState.vcrs}
+          phases={p2aWizardState.phases}
+          approvers={p2aWizardState.approvers}
+          onDone={() => setShowSubmission(false)}
+        />
+      )}
     </Dialog>
   );
 };
