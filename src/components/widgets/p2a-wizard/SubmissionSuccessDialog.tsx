@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Check, CheckCircle2, Clock, X as XIcon, ExternalLink, CircleDashed } from 'lucide-react';
+import { Check, ExternalLink, CircleDashed } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
