@@ -516,6 +516,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
         <SubmissionSuccessDialog
           open={showP2ASubmission}
           onOpenChange={setShowP2ASubmission}
+          planId={p2aPlanByProject.id}
           projectCode={projectCode}
           projectName={projectName}
           systems={p2aWizardState.systems}
