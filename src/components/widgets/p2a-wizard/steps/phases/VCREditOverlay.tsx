@@ -349,11 +349,11 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
           )}
         </SheetHeader>
 
-        {/* Phase assignment */}
-        <div className="px-4 py-3 border-b shrink-0 space-y-1.5">
-          <Label className="text-xs text-muted-foreground uppercase tracking-wider">Phase</Label>
+        {/* Phase assignment — quiet inline select */}
+        <div className="px-4 py-3 border-b shrink-0 flex items-center gap-3">
+          <Label className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium shrink-0">Phase</Label>
           <Select value={currentPhaseId || 'none'} onValueChange={handlePhaseChange}>
-            <SelectTrigger className="h-8 text-sm">
+            <SelectTrigger className="h-7 text-sm border-transparent bg-muted/40 hover:bg-muted/60 focus:ring-1 focus:ring-ring/40 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-50">
               <SelectValue placeholder="Unassigned" />
             </SelectTrigger>
             <SelectContent className="z-[150]">
@@ -364,6 +364,7 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
             </SelectContent>
           </Select>
         </div>
+
 
         {/* Systems */}
         <div className="flex-1 min-h-0 flex flex-col">
