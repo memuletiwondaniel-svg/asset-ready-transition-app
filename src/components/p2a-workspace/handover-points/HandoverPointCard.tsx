@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { GripVertical, Box, Flame } from 'lucide-react';
+import { GripVertical, Box } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
