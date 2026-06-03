@@ -17,7 +17,6 @@ import {
   Search, 
   ChevronDown, 
   ChevronRight,
-  Layers,
   Database,
   Upload,
   MoreVertical,
