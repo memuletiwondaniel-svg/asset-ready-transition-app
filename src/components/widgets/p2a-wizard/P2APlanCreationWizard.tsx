@@ -358,11 +358,14 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   };
 
   // Steps (0-indexed): 0=Systems, 1=VCRs, 2=Mapping, 3=Phases, 4=Approvers, 5=Review
+  // OPTIONAL steps: 0 (Select Systems) and 2 (Assign Systems) — never gate forward nav or submit
+  const isStepOptional = (idx: number): boolean => idx === 0 || idx === 2;
+
   const isStepComplete = (idx: number): boolean => {
     switch (idx) {
       case 0: return state.systems.length > 0;
       case 1: return state.vcrs.length > 0;
-      case 2: return true; // Preliminary mapping — optional, never blocks or warns
+      case 2: return Object.values(state.mappings || {}).some(arr => Array.isArray(arr) && arr.length > 0);
       case 3: return state.phases.length > 0;
       case 4: return state.approvers.length > 0;
       case 5: return currentStep > idx;
@@ -371,6 +374,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
   };
 
   const isStepWarning = (idx: number): boolean => {
+    if (isStepOptional(idx)) return false; // optional steps never show warning
     const hasBeenPast = currentStep > idx;
     return hasBeenPast && !isStepComplete(idx);
   };
