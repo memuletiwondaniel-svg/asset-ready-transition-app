@@ -172,9 +172,15 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
     }
   };
 
-  const handleP2AStatusClick = (e: React.MouseEvent) => {
+  const handleP2AStatusClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (p2aPlanByProject) setShowP2AApprovals(true);
+    if (!p2aPlanByProject) return;
+    if (p2aPlanByProject.status === 'ACTIVE' || p2aPlanByProject.status === 'COMPLETED') {
+      await loadP2ADraft();
+      setShowP2ASubmission(true);
+    } else {
+      setShowP2AApprovals(true);
+    }
   };
 
   const headerStatusLabel = !p2aPlanByProject
