@@ -259,20 +259,20 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               </div>
             ) : p2aPlanByProject ? (
               <div className="text-center py-8 text-muted-foreground">
-                {p2aPlanByProject.status === 'DRAFT' ? (
+                {planUIState.primaryAction === 'edit' ? (
                   <>
                     <p className="text-sm font-medium mb-1">Draft in Progress</p>
-                    <p className="text-xs opacity-70 mb-4">Continue setting up your handover plan</p>
+                    <p className="text-xs opacity-70 mb-4">{planUIState.helperText}</p>
                     {canCreateVCR && (
                       <div className="flex items-center justify-center gap-2">
                         <Button
                           variant="secondary"
                           size="sm"
                           className="gap-1.5 group/cta"
-                          onClick={() => setShowP2APlanWizard(true)}
+                          onClick={openPlanByAction}
                         >
                           <Pencil className="h-3.5 w-3.5 text-muted-foreground group-hover/cta:text-green-600 transition-colors" />
-                          Continue P2A Plan
+                          {planUIState.primaryLabel}
                         </Button>
                         <Button
                           variant="ghost"
@@ -285,34 +285,21 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                         </Button>
                       </div>
                     )}
-
                   </>
                 ) : (
                   <>
-                    <p className="text-xs opacity-70 mb-5">
-                      {p2aPlanByProject.status === 'ACTIVE' ? 'Your plan is awaiting approval' : 'Your plan has been approved'}
-                    </p>
+                    <p className="text-xs opacity-70 mb-5">{planUIState.helperText}</p>
                     <div className="flex items-center justify-center gap-2">
                       <Button
                         variant="secondary"
                         size="sm"
                         className="text-xs gap-1.5"
-                        onClick={() => {
-                          // Existing plan (ACTIVE/COMPLETED/APPROVED) → read-only workspace.
-                          // Never open the create-wizard when a plan already exists.
-                          if (['COMPLETED', 'APPROVED', 'ACTIVE'].includes(p2aPlanByProject.status)) {
-                            setShowP2AWorkspace(true);
-                          } else if (p2aPlanByProject.status === 'DRAFT') {
-                            setShowP2APlanWizard(true);
-                          }
-                        }}
+                        onClick={openPlanByAction}
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
-                        {['COMPLETED', 'APPROVED', 'ACTIVE'].includes(p2aPlanByProject.status)
-                          ? 'View P2A Plan'
-                          : 'Continue P2A Plan'}
+                        {planUIState.primaryLabel}
                       </Button>
-                      {canCreateVCR && p2aPlanByProject.status === 'ACTIVE' && (
+                      {canCreateVCR && planIsLocked && !planIsApproved && (
                         <Button
                           variant="ghost"
                           size="icon"
