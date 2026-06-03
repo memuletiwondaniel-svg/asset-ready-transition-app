@@ -865,6 +865,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
         }}
         isStepComplete={isStepComplete}
         isStepWarning={isStepWarning}
+        isStepOptional={isStepOptional}
         header={headerContent}
         topHeader={topHeaderContent}
         headerActions={headerActions}
