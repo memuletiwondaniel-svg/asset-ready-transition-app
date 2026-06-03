@@ -281,7 +281,6 @@ export const SystemsPanel: React.FC<SystemsPanelProps> = ({
               </>
             ) : (
               <>
-                <Layers className="w-4 h-4 text-muted-foreground shrink-0" />
                 <h3 className="font-semibold text-sm flex-1">Systems</h3>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
