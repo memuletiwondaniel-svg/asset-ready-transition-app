@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Check, ExternalLink, CircleDashed } from 'lucide-react';
+import { Check, ExternalLink, CircleDashed, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
@@ -129,14 +129,15 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
 
   const totalAssigned = stages.filter(s => !!s.approver.user_id).length;
   const approvedCount = stages.filter(s => s.status === 'APPROVED').length;
+  const activeStageIndex = stages.findIndex(s => s.status === 'PENDING');
   
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden">
         <div className="flex flex-col items-center text-center px-8 pt-4 pb-3">
-          <div className="h-10 w-10 rounded-full bg-emerald-500/15 flex items-center justify-center mb-2">
-            <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+            <Send className="h-5 w-5 text-primary" />
           </div>
           <h2 className="text-lg font-semibold">Submitted for approval</h2>
           <p className="text-xs text-muted-foreground mt-1 tabular-nums">
@@ -160,19 +161,39 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
             ) : (
               <TooltipProvider delayDuration={150}>
                 <div className="space-y-4">
-                  {stages.map(({ approver, stageNum, status }) => {
+                  {stages.map(({ approver, stageNum, status }, idx) => {
                     const partner = partnerByRole.get(approver.role_name);
                     const S = statusStyles[status];
                     const hasUser = !!approver.user_id;
                     const swapped = !!swappedRoles[approver.role_name];
                     const displayName = swapped && partner ? partner.full_name : approver.user_name;
                     const displayAvatar = swapped && partner ? partner.avatar_url : approver.user_avatar;
+                    const isActive = idx === activeStageIndex;
+                    const isApproved = status === 'APPROVED' || status === 'REJECTED';
+                    const isUpcoming = !isActive && !isApproved;
                     return (
-                      <div key={approver.id} className="flex items-center gap-3 text-sm">
-                        <span className="text-[10px] font-semibold text-muted-foreground tabular-nums w-5 shrink-0">
-                          {stageNum}.
+                      <div
+                        key={approver.id}
+                        className={cn(
+                          'flex items-center gap-3 text-sm transition-opacity',
+                          isUpcoming && 'opacity-50',
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'text-xs tabular-nums w-5 shrink-0 text-center',
+                            isActive ? 'font-bold text-foreground' : 'font-semibold text-muted-foreground',
+                          )}
+                        >
+                          {stageNum}
                         </span>
-                        <Avatar key={`${approver.role_name}-${swapped ? 'p' : 'm'}`} className="h-9 w-9 shrink-0">
+                        <Avatar
+                          key={`${approver.role_name}-${swapped ? 'p' : 'm'}`}
+                          className={cn(
+                            'h-9 w-9 shrink-0',
+                            isActive && 'ring-2 ring-amber-500/40 ring-offset-2 ring-offset-background',
+                          )}
+                        >
                           <AvatarImage src={resolveAvatarUrl(displayAvatar)} alt={displayName || approver.role_name} />
                           <AvatarFallback className="text-[10px]">
                             {hasUser ? getInitials(displayName) : <CircleDashed className="h-3.5 w-3.5" />}
@@ -180,7 +201,12 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
                         </Avatar>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="font-semibold truncate leading-tight">
+                            <span
+                              className={cn(
+                                'truncate leading-tight',
+                                isActive ? 'font-semibold text-foreground' : 'font-medium',
+                              )}
+                            >
                               {hasUser ? displayName : approver.role_name}
                             </span>
                             {partner && (
@@ -188,21 +214,21 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
                                 <TooltipTrigger asChild>
                                   <button
                                     type="button"
-                                    onClick={() =>
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       setSwappedRoles((prev) => ({
                                         ...prev,
                                         [approver.role_name]: !prev[approver.role_name],
-                                      }))
-                                    }
-                                    className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors"
-                                    aria-label="Swap B2B approver"
+                                      }));
+                                    }}
+                                    className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 hover:bg-amber-200 dark:hover:bg-amber-900/60 cursor-pointer transition-colors"
+                                    title={`Click to switch to B2B: ${swapped ? approver.user_name : partner.full_name}`}
                                   >
                                     B2B
                                   </button>
                                 </TooltipTrigger>
-                                <TooltipContent side="top" className="text-xs">
-                                  Click to swap approver ·{' '}
-                                  {swapped ? approver.user_name : partner.full_name}
+                                <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
+                                  Click to switch to B2B: {swapped ? approver.user_name : partner.full_name}
                                 </TooltipContent>
                               </Tooltip>
                             )}
@@ -213,7 +239,11 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
                         </div>
                         <Badge
                           variant="outline"
-                          className={cn('rounded-full px-2.5 py-0.5 text-xs font-normal shrink-0', hasUser ? S.cls : statusStyles.REJECTED.cls)}
+                          className={cn(
+                            'rounded-full px-2.5 py-0.5 text-xs shrink-0',
+                            hasUser ? S.cls : statusStyles.REJECTED.cls,
+                            isActive ? 'font-medium shadow-sm' : 'font-normal',
+                          )}
                         >
                           {hasUser ? S.label : 'Not assigned'}
                         </Badge>
