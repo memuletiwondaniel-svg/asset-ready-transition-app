@@ -32,13 +32,22 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
 }) => {
   const [showMapping, setShowMapping] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1.0);
+  const [showSubmission, setShowSubmission] = useState(false);
   const { plan } = useP2AHandoverPlan(projectId, 'project_id');
   const planUIState = getP2APlanUIState(plan?.status);
   const statusConfig = { label: planUIState.badgeLabel, className: planUIState.badgeClass };
+  const { loadDraft: loadP2ADraft, state: p2aWizardState } = useP2APlanWizard(projectId, projectNumber || '');
 
   const handleZoomIn = () => setZoomLevel(prev => Math.min(1.2, Math.round((prev + 0.1) * 10) / 10));
   const handleZoomOut = () => setZoomLevel(prev => Math.max(0.4, Math.round((prev - 0.1) * 10) / 10));
   const handleZoomReset = () => setZoomLevel(1.0);
+
+  const handleStatusClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!planUIState.isLocked || !plan?.id) return;
+    await loadP2ADraft();
+    setShowSubmission(true);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
