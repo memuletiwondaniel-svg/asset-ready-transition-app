@@ -14244,6 +14244,18 @@ export type Database = {
         Args: { item_unique_id: string; new_position: number }
         Returns: undefined
       }
+      resolve_p2a_approver: {
+        Args: { p_project_id: string; p_role_label: string }
+        Returns: string
+      }
+      resolve_p2a_approver_profile: {
+        Args: { p_project_id: string; p_role_label: string }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          user_id: string
+        }[]
+      }
       resolve_project_role_user: {
         Args: { p_project_id: string; p_role_label: string }
         Returns: string
