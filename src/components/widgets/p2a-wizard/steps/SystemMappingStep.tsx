@@ -663,7 +663,14 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
                       />
                     </div>
                   ) : mappedCount > 0 ? (
-                    <span className="text-[10px] text-muted-foreground italic">Mixed</span>
+                    <div onClick={e => e.stopPropagation()}>
+                      <MixedBadge
+                        vcrs={vcrs}
+                        childVcrIds={keys.map(k => keyOwnerMap.get(k)).filter(Boolean) as string[]}
+                        onBulkAssign={(vcrId) => assignSystemToVCR(system, vcrId)}
+                        vcrOriginalIndices={vcrOriginalIndices}
+                      />
+                    </div>
                   ) : (
                     <div onClick={e => e.stopPropagation()}>
                       <VCRPillSelector
