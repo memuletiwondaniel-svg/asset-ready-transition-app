@@ -470,6 +470,7 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         milestones={milestones}
+        projectId={projectId}
         editingPhase={editingPhase}
         onSave={editingPhase ? handleEditPhase : handleCreatePhase}
       />
