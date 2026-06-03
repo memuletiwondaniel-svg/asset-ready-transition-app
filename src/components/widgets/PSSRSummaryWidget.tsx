@@ -124,8 +124,11 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const { data: p2aPlanByProject, isLoading: p2aPlanLoading } = useP2APlanByProject(projectId);
   const isLoading = pssrsLoading || vcrsLoading || p2aPlanLoading;
 
+  // Canonical status → UI derivation. All consumers in this widget read from here.
+  const planUIState = getP2APlanUIState(p2aPlanByProject?.status);
   // Plan is approved when status is COMPLETED
-  const planIsApproved = p2aPlanByProject?.status === 'COMPLETED';
+  const planIsApproved = planUIState.isApproved;
+  const planIsLocked = planUIState.isLocked;
   const hasPlan = !!p2aPlanByProject;
   // Map project milestones to the format the wizard expects
   const wizardMilestones = (projectMilestones || []).map(m => ({
@@ -158,25 +161,34 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   const hasContent = (pssrs && pssrs.length > 0) || allVCRs.length > 0;
 
-  const handleP2AHeaderClick = () => {
+  // Single dispatcher for the primary CTA / header click. Routes by the
+  // canonical action — never branches on raw status here.
+  const openPlanByAction = () => {
     if (!p2aPlanByProject) {
       if (oraApproved && canCreateVCR) setShowP2APlanWizard(true);
       return;
     }
-    if (p2aPlanByProject.status === 'DRAFT') {
-      setShowP2APlanWizard(true);
-    } else if (p2aPlanByProject.status === 'COMPLETED') {
-      // Approved → go straight into workspace
-      setShowP2AWorkspace(true);
-    } else {
-      setShowP2ASummary(true);
+    switch (planUIState.primaryAction) {
+      case 'edit':
+        // Only DRAFT — never opens for a submitted plan.
+        setShowP2APlanWizard(true);
+        break;
+      case 'view':
+        // PENDING_APPROVAL / ACTIVE / COMPLETED / ARCHIVED → read-only workspace.
+        setShowP2AWorkspace(true);
+        break;
+      case 'create':
+        if (canCreateVCR) setShowP2APlanWizard(true);
+        break;
     }
   };
+
+  const handleP2AHeaderClick = () => openPlanByAction();
 
   const handleP2AStatusClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!p2aPlanByProject) return;
-    if (p2aPlanByProject.status === 'ACTIVE' || p2aPlanByProject.status === 'COMPLETED') {
+    if (planIsLocked) {
       await loadP2ADraft();
       setShowP2ASubmission(true);
     } else {
@@ -184,21 +196,8 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
     }
   };
 
-  const headerStatusLabel = !p2aPlanByProject
-    ? null
-    : p2aPlanByProject.status === 'COMPLETED'
-      ? 'Approved'
-      : p2aPlanByProject.status === 'ACTIVE'
-        ? 'In Review'
-        : 'Draft';
-
-  const headerStatusClass = !p2aPlanByProject
-    ? ''
-    : p2aPlanByProject.status === 'COMPLETED'
-      ? 'bg-green-500/10 text-green-600 border-green-500/20'
-      : p2aPlanByProject.status === 'ACTIVE'
-        ? 'bg-amber-50 text-amber-700 border-amber-200'
-        : 'bg-muted text-muted-foreground border-border';
+  const headerStatusLabel = hasPlan ? planUIState.badgeLabel : null;
+  const headerStatusClass = hasPlan ? planUIState.badgeClass : '';
 
   return (
     <>
