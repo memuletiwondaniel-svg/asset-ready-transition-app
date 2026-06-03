@@ -41,7 +41,7 @@ const STATES: Record<P2APlanStatus, P2APlanUIState> = {
   DRAFT: {
     badgeLabel: 'Draft',
     badgeClass: 'bg-muted text-muted-foreground border-border',
-    helperText: 'Continue setting up your handover plan',
+    helperText: 'Continue editing your plan and submit it for approval.',
     primaryLabel: 'Continue P2A Plan',
     primaryAction: 'edit',
     isLocked: false,
