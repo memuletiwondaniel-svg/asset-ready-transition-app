@@ -233,7 +233,7 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
             <div className="min-w-0">
               <DialogTitle>Import from GoCompletions</DialogTitle>
               <DialogDescription>
-                {projectCode ? `Searching GoHub for systems related to ${projectCode}` : 'Searching GoHub for systems'}
+                Import systems from GoCompletions{projectCode ? ` into ${projectCode}` : ''}
               </DialogDescription>
             </div>
           </div>
