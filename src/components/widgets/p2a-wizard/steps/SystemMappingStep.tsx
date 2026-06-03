@@ -387,30 +387,47 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="flex flex-col gap-3 p-4 h-full">
-      {/* ── Preliminary banner ────────────────────────────── */}
-      <div className="shrink-0 rounded-md border border-dashed border-amber-500/40 bg-amber-500/5 px-3 py-2">
-        <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-snug">
-          <span className="font-semibold">Preliminary system assignment — optional.</span>{' '}
-          This is a first-pass tentative mapping to shape the P2A plan. The final, authoritative
-          system list is confirmed later in each VCR's Execution Plan. You can submit the P2A plan
-          without completing this step.
-        </p>
-      </div>
-
       {/* ── Header ────────────────────────────────────────── */}
-      <div className="flex items-center justify-between shrink-0">
-        <div>
-          <h3 className="text-sm font-medium">Map Systems to VCRs (Preliminary)</h3>
-          <p className="text-xs text-muted-foreground">
-            Optional — assign each system or subsystem to a VCR to seed the VCR plan
+      <div className="flex items-start justify-between shrink-0 gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-medium">Map Systems to VCRs</h3>
+            <span className="text-[10px] uppercase tracking-wide font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+              Optional
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="text-muted-foreground/70 hover:text-foreground transition-colors"
+                  aria-label="About preliminary assignment"
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs text-xs leading-snug">
+                This is a first-pass tentative mapping. The authoritative system list
+                is confirmed later in each VCR's Execution Plan. You can submit the
+                P2A plan without completing this step.
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Tentative mapping to seed the VCR plans — finalized later in each VCR's Execution Plan.
           </p>
         </div>
         {totalUnassigned > 0 && (
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="text-xs gap-1.5 h-7"
+            className={cn(
+              'text-xs gap-1.5 h-7 shrink-0 border border-transparent',
+              'text-muted-foreground hover:text-primary-foreground',
+              'hover:bg-primary hover:border-primary hover:shadow-sm',
+              'transition-all',
+            )}
             onClick={handleAutoAssign}
           >
             <Zap className="h-3 w-3" />
