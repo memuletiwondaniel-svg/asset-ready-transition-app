@@ -203,6 +203,8 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                     const isActive = idx === currentStep;
                     const isComplete = isStepComplete(idx);
                     const isWarning = isStepWarning?.(idx) ?? false;
+                    const isOptional = isStepOptional?.(idx) ?? false;
+                    const showOptionalHint = isOptional && !isComplete && !isActive;
 
                     return (
                       <button
@@ -211,33 +213,43 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                         className={cn(
                           'group relative w-full flex items-center gap-2.5 pl-3 pr-3 py-2 rounded-md text-left transition-all text-sm',
                           isActive
-                            ? 'bg-primary/[0.08] text-foreground'
-                            : isComplete
-                              ? 'hover:bg-emerald-500/[0.06] text-emerald-600 dark:text-emerald-400'
-                              : isWarning
-                                ? 'hover:bg-amber-50 dark:hover:bg-amber-950/20 text-amber-700 dark:text-amber-400'
-                                : 'hover:bg-muted/40 text-muted-foreground'
+                            ? 'bg-primary/[0.08]'
+                            : 'hover:bg-muted/40'
                         )}
                       >
                         <div className={cn(
                           'relative w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[11px] font-semibold transition-colors',
-                          isComplete && !isActive
-                            ? 'bg-background border border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                            : isActive
-                              ? 'bg-primary text-primary-foreground border border-primary'
+                          isActive
+                            ? 'bg-primary text-primary-foreground border border-primary'
+                            : isComplete
+                              ? 'bg-background border border-emerald-500 text-emerald-600 dark:text-emerald-400'
                               : isWarning
                                 ? 'bg-background border border-amber-400 text-amber-700 dark:text-amber-400'
                                 : 'bg-background border border-border text-muted-foreground'
                         )}>
-                          {idx + 1}
-
+                          {isComplete && !isActive ? (
+                            <Check className="w-3 h-3" />
+                          ) : isWarning && !isActive ? (
+                            <AlertCircle className="w-3 h-3" />
+                          ) : (
+                            idx + 1
+                          )}
                         </div>
                         <span className={cn(
-                          'truncate text-xs',
-                          isActive ? 'font-semibold' : 'font-medium'
+                          'truncate text-xs flex-1 min-w-0',
+                          isActive
+                            ? 'font-semibold text-foreground'
+                            : isComplete || isWarning
+                              ? 'font-medium text-foreground'
+                              : 'font-medium text-muted-foreground'
                         )}>
                           {step.label}
                         </span>
+                        {showOptionalHint && (
+                          <span className="text-[9px] uppercase tracking-wide text-muted-foreground/70 shrink-0">
+                            Optional
+                          </span>
+                        )}
                       </button>
                     );
                   })}
