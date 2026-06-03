@@ -74,28 +74,38 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
   plantName,
   onApproversChange,
 }) => {
-  const [isLoading, setIsLoading] = useState(false);
   const { data: allProfileUsers } = useProfileUsers();
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [showAddRow, setShowAddRow] = useState(false);
   const [newRoleName, setNewRoleName] = useState('');
 
-  // Fetch team members and auto-populate approvers
-  useEffect(() => {
-    const fetchTeamMembers = async () => {
-      if (!projectId) return;
+  // Shared canonical resolver — same RPC as backend triggers.
+  const {
+    data: resolvedByLabel,
+    isLoading: rolesLoading,
+    refetch: refetchRoles,
+  } = useProjectRoleUsers(projectId, RPC_RESOLVED_LABELS);
 
-      setIsLoading(true);
+  // Deputy Plant Director is plant-scoped, not project-team-scoped.
+  // Resolved via the canonical `find_deputy_plant_director` SECURITY DEFINER
+  // RPC (shared path — no private label matching here either).
+  const [deputyDirector, setDeputyDirector] = useState<
+    { user_id: string; full_name: string; avatar_url?: string | null } | null
+  >(null);
+  const [deputyLoading, setDeputyLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!projectId) return;
+      setDeputyLoading(true);
       try {
-        // Resolve the project's plant name if not provided
-        let resolvedPlantName = plantName;
+        let resolvedPlantName = plantName || null;
         if (!resolvedPlantName) {
           const { data: projectData } = await supabase
             .from('projects')
             .select('plant_id')
             .eq('id', projectId)
             .single();
-          
           if (projectData?.plant_id) {
             const { data: plantData } = await supabase
               .from('plant')
@@ -105,181 +115,114 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
             resolvedPlantName = plantData?.name || null;
           }
         }
-        console.log('[P2A Approval] Resolved plant name:', resolvedPlantName);
-        const { data: teamData, error: teamError } = await supabase
-          .from('project_team_members')
-          .select('id, user_id, role, is_lead')
-          .eq('project_id', projectId);
-
-        if (teamError) throw teamError;
-
-        const userIds = Array.from(
-          new Set((teamData || []).map((m: any) => m.user_id).filter(Boolean))
+        if (!resolvedPlantName) {
+          if (!cancelled) setDeputyDirector(null);
+          return;
+        }
+        const { data: deputies } = await supabase.rpc(
+          'find_deputy_plant_director',
+          { plant_name_param: resolvedPlantName },
         );
-
-        // Also find Deputy Plant Director using SECURITY DEFINER function (bypasses RLS)
-        let deputyProfile: { user_id: string; full_name: string; avatar_url?: string } | null = null;
-        if (resolvedPlantName) {
-          const { data: deputies, error: deputyError } = await supabase
-            .rpc('find_deputy_plant_director', { plant_name_param: resolvedPlantName });
-
-          console.log('[P2A Approval] Deputy lookup result:', { deputies, deputyError, resolvedPlantName });
-
-          if (deputies && deputies.length > 0) {
-            deputyProfile = deputies[0];
-            // Add deputy user_id to the list for profile resolution
-            if (!userIds.includes(deputyProfile.user_id)) {
-              userIds.push(deputyProfile.user_id);
-            }
-          }
-        }
-
-        let profilesMap: Record<string, { full_name: string; avatar_url?: string }> = {};
-
-        if (userIds.length > 0) {
-          const results = await Promise.all(
-            userIds.map(async (userId) => {
-              const { data, error } = await (supabase as any).rpc('get_safe_profile_data', {
-                target_user_id: userId,
-              });
-              if (error || !data) return null;
-              const row = Array.isArray(data) ? data[0] : data;
-              if (!row?.user_id) return null;
-              return {
-                user_id: row.user_id as string,
-                full_name: row.full_name as string,
-                avatar_url: row.avatar_url as string | undefined,
-              };
-            })
-          );
-
-          profilesMap = results
-            .filter(Boolean)
-            .reduce((acc, p: any) => {
-              acc[p.user_id] = { full_name: p.full_name, avatar_url: p.avatar_url };
-              return acc;
-            }, {} as Record<string, { full_name: string; avatar_url?: string }>);
-        }
-
-        const members: TeamMember[] = (teamData || []).map((m: any) => ({
-          id: m.id,
-          user_id: m.user_id,
-          role: m.role,
-          is_lead: m.is_lead,
-          profile: profilesMap[m.user_id] || undefined,
-        }));
-
-        setTeamMembers(members);
-
-        // Always populate from fixed roles on first load, or if there are issues
-        const deputyApprover = approvers.find(a => a.role_name === 'Dep. Plant Director');
-        const deputyNeedsUpdate = deputyApprover && !deputyApprover.user_id && deputyProfile;
-        // Check if approvers exist but are missing profile data (loaded from draft)
-        const approversMissingProfiles = approvers.length > 0 && approvers.some(a => a.user_id && !a.user_name);
-
-        if (approvers.length === 0 || shouldRepopulate(approvers) || deputyNeedsUpdate) {
-          populateApproversFromTeam(members, deputyProfile ? {
-            user_id: deputyProfile.user_id,
-            full_name: profilesMap[deputyProfile.user_id]?.full_name || deputyProfile.full_name,
-            avatar_url: profilesMap[deputyProfile.user_id]?.avatar_url || deputyProfile.avatar_url,
-          } : null);
-        } else if (approversMissingProfiles) {
-          // Enrich existing approvers with profile data without resetting them
-          const enriched = approvers.map(a => {
-            if (a.user_id && !a.user_name) {
-              const profile = profilesMap[a.user_id];
-              if (profile) {
-                return { ...a, user_name: profile.full_name, user_avatar: profile.avatar_url };
-              }
-              // Try matching from team members
-              const teamMatch = members.find(m => m.user_id === a.user_id);
-              if (teamMatch?.profile) {
-                return { ...a, user_name: teamMatch.profile.full_name, user_avatar: teamMatch.profile.avatar_url };
-              }
-            }
-            return a;
-          });
-          // Also handle deputy if needed
-          if (deputyNeedsUpdate && deputyProfile) {
-            const idx = enriched.findIndex(a => a.role_name === 'Dep. Plant Director');
-            if (idx >= 0) {
-              enriched[idx] = {
-                ...enriched[idx],
-                user_id: deputyProfile.user_id,
-                user_name: profilesMap[deputyProfile.user_id]?.full_name || deputyProfile.full_name,
-                user_avatar: profilesMap[deputyProfile.user_id]?.avatar_url || deputyProfile.avatar_url,
-              };
-            }
-          }
-          onApproversChange(enriched);
-        }
-      } catch (error) {
-        console.error('Error fetching team members:', error);
-        if (approvers.length === 0) {
-          populateApproversFromTeam([], null);
-        }
+        if (cancelled) return;
+        setDeputyDirector(deputies?.[0] ?? null);
+      } catch (err) {
+        console.error('[P2A Approval] Deputy lookup failed:', err);
+        if (!cancelled) setDeputyDirector(null);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setDeputyLoading(false);
       }
     };
-
-    fetchTeamMembers();
+    run();
+    return () => {
+      cancelled = true;
+    };
   }, [projectId, plantName]);
 
-  /** Check if existing approvers look stale (e.g. have duplicate roles) */
-  const shouldRepopulate = (current: WizardApprover[]): boolean => {
-    const roleKeys = current.map(a => matchRoleKey(a.role_name)).filter(Boolean);
-    return new Set(roleKeys).size !== roleKeys.length; // duplicates detected
-  };
+  const isLoading = rolesLoading || deputyLoading;
 
-  const populateApproversFromTeam = (
-    members: TeamMember[],
-    deputyDirector: { user_id: string; full_name: string; avatar_url?: string } | null
-  ) => {
-    // Build a map: role key → best matching team member (first match wins, no duplicates)
-    const matchedUserIds = new Set<string>();
-
-    const approverList: WizardApprover[] = FIXED_APPROVER_ROLES.map((role) => {
-      // For Deputy Plant Director, use the plant-based lookup instead of team member matching
-      if (role.key === 'deputy_plant_director' && deputyDirector) {
-        matchedUserIds.add(deputyDirector.user_id);
+  // Build the canonical approver list from the shared resolver.
+  const canonicalApprovers = useMemo<WizardApprover[]>(() => {
+    if (!resolvedByLabel) return [];
+    return FIXED_APPROVER_ROLES.map((role) => {
+      if (role.key === 'deputy_plant_director') {
         return {
           id: `approver-${role.key}`,
           role_name: role.label,
           display_order: role.order,
-          user_id: deputyDirector.user_id,
-          user_name: deputyDirector.full_name,
-          user_avatar: deputyDirector.avatar_url,
+          user_id: deputyDirector?.user_id,
+          user_name: deputyDirector?.full_name,
+          user_avatar: deputyDirector?.avatar_url ?? undefined,
         };
       }
-
-      const match = members.find((m) => {
-        if (matchedUserIds.has(m.user_id)) return false;
-        return matchRoleKey(m.role) === role.key;
-      });
-
-      if (match) matchedUserIds.add(match.user_id);
-
+      const resolved = resolvedByLabel[role.label] ?? null;
       return {
         id: `approver-${role.key}`,
         role_name: role.label,
         display_order: role.order,
-        user_id: match?.user_id,
-        user_name: match?.profile?.full_name,
-        user_avatar: match?.profile?.avatar_url,
+        user_id: resolved?.user_id,
+        user_name: resolved?.full_name,
+        user_avatar: resolved?.avatar_url ?? undefined,
       };
     });
+  }, [resolvedByLabel, deputyDirector]);
 
-    onApproversChange(approverList);
-  };
+  // Sync resolver output → wizard state. Repopulates on first load, when
+  // existing approvers are stale (duplicate fixed-role labels), or when
+  // a slot is missing its resolved user. Custom approvers added by the
+  // user (role_name not in FIXED_APPROVER_ROLES) are preserved.
+  useEffect(() => {
+    if (isLoading || canonicalApprovers.length === 0) return;
+    const fixedLabels = new Set(FIXED_APPROVER_ROLES.map((r) => r.label));
+
+    const fixedSlotsInCurrent = approvers.filter((a) => fixedLabels.has(a.role_name));
+    const labelsSeen = fixedSlotsInCurrent.map((a) => a.role_name);
+    const hasDuplicates = new Set(labelsSeen).size !== labelsSeen.length;
+    const missingFixed = FIXED_APPROVER_ROLES.some(
+      (r) => !fixedSlotsInCurrent.some((a) => a.role_name === r.label),
+    );
+
+    const needsRepopulate =
+      approvers.length === 0 || hasDuplicates || missingFixed;
+
+    if (needsRepopulate) {
+      const customs = approvers.filter((a) => !fixedLabels.has(a.role_name));
+      onApproversChange([...canonicalApprovers, ...customs]);
+      return;
+    }
+
+    // Enrich-in-place: fill missing user_id / user_name on fixed slots
+    // from the canonical resolver without resetting custom approvers
+    // or wiping existing assignments.
+    let mutated = false;
+    const enriched = approvers.map((a) => {
+      if (!fixedLabels.has(a.role_name)) return a;
+      const canon = canonicalApprovers.find((c) => c.role_name === a.role_name);
+      if (!canon) return a;
+      if (!a.user_id && canon.user_id) {
+        mutated = true;
+        return { ...a, user_id: canon.user_id, user_name: canon.user_name, user_avatar: canon.user_avatar };
+      }
+      if (a.user_id && !a.user_name && canon.user_id === a.user_id) {
+        mutated = true;
+        return { ...a, user_name: canon.user_name, user_avatar: canon.user_avatar };
+      }
+      return a;
+    });
+    if (mutated) onApproversChange(enriched);
+  }, [isLoading, canonicalApprovers]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRefreshFromTeam = () => {
-    populateApproversFromTeam(teamMembers, null);
+    refetchRoles();
+    // Re-trigger deputy lookup by toggling effect via projectId dep is not
+    // possible; instead, force a fresh resolve here.
+    onApproversChange(canonicalApprovers);
   };
 
   const handleDeleteApprover = (id: string) => {
     onApproversChange(approvers.filter(a => a.id !== id));
   };
+
+
 
 
   const handleAddApprover = () => {
