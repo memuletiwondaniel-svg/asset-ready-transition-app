@@ -77,6 +77,7 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCMSModal, setShowCMSModal] = useState(false);
   const [showExcelModal, setShowExcelModal] = useState(false);
+  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
 
 
 
