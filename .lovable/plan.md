@@ -119,6 +119,8 @@ A. `resolve_p2a_approver` is a **contained P2A-specific** resolver that still le
 
 B. **Approvals modal still models a flat parallel chain** ("0 of N", all approvers shown as Pending at once) but the backend is **sequential** (ORA Lead stage 1; the other 4 fan out only on ORA Lead approval). Modal redesign owed: show real stages, render the deputy as one B2B card. Queued as the next UI item after Bucket-3 consolidation.
 
+C. **B2B badge consolidation** — four separate inline B2B-badge implementations exist with no shared component: `ApprovalSetupStep.tsx` (clickable, real approver swap, Radix tooltip), `VCRItemsStep.tsx` and `PSSRItemDetailSheet.tsx` (non-interactive Badge, native `title` "either holder can close the approval"), and `SubmissionSuccessDialog.tsx` (non-interactive after the 2026-06-03 fix). Each re-derives pair detection locally (`isB2BPairUsers` / `isB2BPairMembers` / inline normalize / `partnerByRole` memo); `useB2BPartner` exists but none of the four use it. Consolidate into one `B2BBadge` component (props: `pair`, optional `onSwap`, tooltip mode) backed by a single pair-resolution hook (`useB2BPartner` / `useApprovingPartyHolders`). Fold into the role-resolution consolidation effort alongside `resolve_p2a_approver`, not as a standalone tail task.
+
 ## M11 closure — explicit residuals
 
 ### Residual (UI-layer, deferred)
