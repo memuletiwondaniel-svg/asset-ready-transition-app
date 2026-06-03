@@ -21,6 +21,7 @@ interface WorkspacePreviewStepProps {
   mappings: Record<string, string[]>;
   vcrPhaseAssignments: Record<string, string>;
   approvers?: WizardApprover[];
+  onNavigateToMapping?: () => void;
 }
 
 const HCPill: React.FC<{ className?: string; label?: string }> = ({ className, label = 'Hydrocarbon' }) => (
