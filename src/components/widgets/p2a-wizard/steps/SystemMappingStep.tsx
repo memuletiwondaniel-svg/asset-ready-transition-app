@@ -492,7 +492,7 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
 
   return (
     <TooltipProvider delayDuration={150}>
-    <div className="flex flex-col gap-3 p-4 h-full">
+    <div ref={rootRef} className="flex flex-col gap-3 p-4 h-full">
       {/* ── Header ────────────────────────────────────────── */}
       <div className="flex items-start justify-between shrink-0 gap-3">
         <div className="min-w-0">
