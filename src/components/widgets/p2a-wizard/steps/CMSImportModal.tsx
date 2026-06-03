@@ -21,10 +21,8 @@ import {
   HelpCircle,
   Search,
   ChevronRight,
-  Flame,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { WizardSystem, WizardSubsystem } from './SystemsImportStep';
 
