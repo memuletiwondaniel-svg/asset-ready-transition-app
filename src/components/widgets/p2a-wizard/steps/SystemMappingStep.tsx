@@ -726,5 +726,6 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
         </div>
       </ScrollArea>
     </div>
+    </TooltipProvider>
   );
 };
