@@ -50,10 +50,26 @@ const FIXED_APPROVER_ROLES = [
 ] as const;
 
 /** Match a team member role string to one of our fixed keys */
+/**
+ * Match a team member role string to one of our fixed approver keys.
+ * Aligns with the canonical role catalog used by resolve_project_role_user
+ * but ALSO accepts the known label-drift variants stored on legacy projects
+ * (Snr. ORA Engr. / Sr ORA Engr) so the senior ORA approver always resolves
+ * even when the project team uses an Engr. variant rather than "ORA Lead".
+ */
 const matchRoleKey = (teamRole: string): string | null => {
   const r = teamRole.toLowerCase().trim();
 
-  if (r.includes('ora lead') || r === 'ora lead') return 'ora_lead';
+  // ORA approver: canonical "ORA Lead" + drift variants (Snr./Sr/Senior ORA Engr.)
+  if (
+    r === 'ora lead' ||
+    r.includes('ora lead') ||
+    r.includes('snr. ora') ||
+    r.includes('snr ora') ||
+    r.includes('sr ora') ||
+    r.includes('senior ora')
+  )
+    return 'ora_lead';
   if (r.includes('construction lead') || r === 'construction lead') return 'construction_lead';
   if (
     r.includes('commissioning lead') ||
