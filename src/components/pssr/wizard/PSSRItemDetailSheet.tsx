@@ -304,7 +304,7 @@ const PSSRItemDetailSheet: React.FC<PSSRItemDetailSheetProps> = ({
 
   const deliveringMembers = resolvedParties?.delivering || [];
   // approvingGroups now resolves from the shared org_role_holders-first hook.
-  const approvingGroups: Record<string, ResolvedMember[]> = React.useMemo(() => {
+  const approvingGroups: Record<string, ResolvedMember[]> = useMemo(() => {
     const out: Record<string, ResolvedMember[]> = {};
     currentApprovingRoles.forEach(name => {
       out[name] = (approvingByName[name] || []).map(h => ({
