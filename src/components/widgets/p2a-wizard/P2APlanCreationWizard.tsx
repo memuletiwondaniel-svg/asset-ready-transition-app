@@ -11,6 +11,7 @@ import { SystemMappingStep } from './steps/SystemMappingStep';
 import { PhasesStep, WizardPhase } from './steps/PhasesStep';
 import { WorkspacePreviewStep } from './steps/WorkspacePreviewStep';
 import { ApprovalSetupStep, WizardApprover } from './steps/ApprovalSetupStep';
+import { SubmissionSuccessDialog } from './SubmissionSuccessDialog';
 
 import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
 import { useP2APlanByProject } from '@/hooks/useP2APlanByProject';
