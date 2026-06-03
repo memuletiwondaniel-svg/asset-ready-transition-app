@@ -1204,12 +1204,11 @@ const AddItemForm: React.FC<{
   const [addApproverOpen, setAddApproverOpen] = useState(false);
   const [approverSearch, setApproverSearch] = useState('');
 
-  const allRoleIds = [...new Set([deliveringParty, ...approvingParties].filter(Boolean))];
-
-  // Expand role families
+  // Delivering-only family expansion (approving goes through the shared resolver).
+  const deliveringRoleIds = deliveringParty ? [deliveringParty] : [];
   const expandedRoleIds = React.useMemo(() => {
     const expanded = new Set<string>();
-    allRoleIds.forEach(roleId => {
+    deliveringRoleIds.forEach(roleId => {
       expanded.add(roleId);
       const roleName = roles.find(r => r.id === roleId)?.name;
       if (roleName) {
@@ -1220,21 +1219,18 @@ const AddItemForm: React.FC<{
       }
     });
     return [...expanded];
-  }, [allRoleIds.join(','), roles]);
+  }, [deliveringRoleIds.join(','), roles]);
 
   const { data: resolvedUsers = [] } = useQuery({
-    queryKey: ['add-form-users', expandedRoleIds.sort().join(','), projectId, projectLocationCtx?.hubName],
+    queryKey: ['add-form-delivering-users', expandedRoleIds.sort().join(','), projectId, projectLocationCtx?.hubName],
     queryFn: async () => {
       if (expandedRoleIds.length === 0) return [];
-
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, full_name, avatar_url, role, position, hub')
         .in('role', expandedRoleIds)
         .eq('is_active', true);
-
       if (!profiles || profiles.length === 0) return [];
-
       const filtered = profiles.filter((p: any) => {
         if (!projectLocationCtx) return true;
         const roleName = roles.find(r => r.id === p.role)?.name || '';
@@ -1245,7 +1241,6 @@ const AddItemForm: React.FC<{
           usePortfolio
         );
       });
-
       return filtered.map((p: any) => ({
         user_id: p.user_id,
         full_name: p.full_name,
@@ -1257,6 +1252,23 @@ const AddItemForm: React.FC<{
     enabled: expandedRoleIds.length > 0,
   });
 
+  // SHARED resolver — approving parties read org_role_holders first.
+  const { data: approvingHoldersById = {} } = useApprovingPartyHoldersByIds({
+    roles,
+    roleIds: approvingParties,
+    expandFamily: true,
+    scopeKey: `vcr-add|${projectId || ''}|${projectLocationCtx?.hubName || ''}`,
+    fallbackFilter: (p, roleName) => {
+      if (!projectLocationCtx) return true;
+      const usePortfolio = requiresPortfolio(roleName) && !requiresHub(roleName);
+      return profileMatchesProjectLocation(
+        { position: p.position, hub: p.hub },
+        projectLocationCtx,
+        usePortfolio,
+      );
+    },
+  });
+
   const getUsersForRole = (roleId: string) => {
     const roleName = roles.find(r => r.id === roleId)?.name;
     const familyNames = roleName ? getRoleFamilyNames(roleName) : [];
@@ -1264,6 +1276,14 @@ const AddItemForm: React.FC<{
     familyRoleIds.add(roleId);
     return resolvedUsers.filter(u => familyRoleIds.has(u.role_id));
   };
+  const getApprovingUsersForRole = (roleId: string): ResolvedUser[] =>
+    (approvingHoldersById[roleId] || []).map(h => ({
+      user_id: h.user_id,
+      full_name: h.full_name,
+      avatar_url: h.avatar_url,
+      role_id: h.role_id,
+      position: h.position,
+    }));
   const getRoleName = (roleId: string) => roles.find(r => r.id === roleId)?.name || 'Unknown';
   const removeApprover = (roleId: string) => setApprovingParties(prev => prev.filter(r => r !== roleId));
 
