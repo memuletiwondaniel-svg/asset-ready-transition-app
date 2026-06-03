@@ -89,9 +89,11 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
               <span className="text-muted-foreground font-mono truncate" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
                 {shortenVCR(handoverPoint.vcr_code || 'VCR-???')}
               </span>
-              <span className="font-medium text-muted-foreground shrink-0" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
-                {progress}%
-              </span>
+              {progress > 0 && (
+                <span className="font-medium text-muted-foreground shrink-0" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
+                  {progress}%
+                </span>
+              )}
             </div>
           </div>
         </div>
