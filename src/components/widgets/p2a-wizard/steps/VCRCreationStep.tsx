@@ -3,24 +3,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-
-import { Plus, Trash2, Edit2, Check, Key } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Plus, Trash2, Edit2, Check, Key, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AddVCRModal } from './AddVCRModal';
 import { shortVCRCode } from './phases/vcrDisplayUtils';
-
-// Subtle pastel hues for VCR ID badges (avoids red/amber/green status colors)
-const VCR_ID_HUES = [210, 260, 180, 320, 195, 280, 170, 300]; // blue, purple, teal, magenta, cyan, violet, sea, pink
-
-const getVCRIdStyle = (index: number) => {
-  const hue = VCR_ID_HUES[index % VCR_ID_HUES.length];
-  return {
-    backgroundColor: `hsl(${hue}, 40%, 94%)`,
-    color: `hsl(${hue}, 50%, 35%)`,
-    borderColor: `hsl(${hue}, 35%, 88%)`,
-  };
-};
 
 export interface WizardVCR {
   id: string;
@@ -28,6 +24,7 @@ export interface WizardVCR {
   reason: string;
   targetMilestone: string;
   code?: string;
+  assignedSystemIds?: string[];
 }
 
 interface VCRCreationStepProps {
@@ -43,6 +40,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
 }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<WizardVCR | null>(null);
 
   const generateVCRCode = (index: number) => {
     const cleanCode = projectCode.replace(/-/g, '');
@@ -53,32 +51,35 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
     onVCRsChange([...vcrs, vcr]);
   };
 
-  const handleRemoveVCR = (id: string) => {
-    const updated = vcrs.filter(v => v.id !== id);
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    const updated = vcrs.filter(v => v.id !== deleteTarget.id);
     onVCRsChange(updated.map((v, i) => ({ ...v, code: generateVCRCode(i) })));
+    setDeleteTarget(null);
   };
 
   const handleUpdateVCR = (id: string, updates: Partial<WizardVCR>) => {
     onVCRsChange(vcrs.map(v => v.id === id ? { ...v, ...updates } : v));
   };
 
-  // Always regenerate codes to ensure consistent format
   const vcrsByCode = vcrs.map((v, i) => ({ ...v, code: generateVCRCode(i) }));
-
 
   return (
     <div className="flex flex-col gap-3 p-4 h-full">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium">Verification Certificate of Readiness (VCRs)</h3>
+          <h3 className="text-sm font-medium">
+            Verification Certificates of Readiness{vcrs.length > 0 && (
+              <span className="text-muted-foreground font-normal"> ({vcrs.length})</span>
+            )}
+          </h3>
           <p className="text-xs text-muted-foreground">Create VCRs for logical handover of Systems</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline">{vcrs.length} VCR{vcrs.length !== 1 ? 's' : ''}</Badge>
+        {vcrs.length > 0 && (
           <Button size="sm" className="h-7 text-xs gap-1" onClick={() => setShowAddModal(true)}>
             <Plus className="h-3.5 w-3.5" /> Add VCR
           </Button>
-        </div>
+        )}
       </div>
 
       {/* VCR List */}
@@ -86,17 +87,21 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
         <ScrollArea className="flex-1">
           <div className="p-2 space-y-2">
             {vcrs.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Key className="h-8 w-8 mx-auto mb-2 opacity-40" />
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <Key className="h-8 w-8 mb-2 opacity-40" />
                 <p className="text-sm">No VCRs created yet</p>
-                <p className="text-xs mt-0.5">Add a VCR above to get started</p>
+                <p className="text-xs mt-0.5 mb-4">Add a VCR to get started</p>
+                <Button size="sm" className="gap-1" onClick={() => setShowAddModal(true)}>
+                  <Plus className="h-3.5 w-3.5" /> Add VCR
+                </Button>
               </div>
             ) : (
-              vcrsByCode.map((vcr, index) => (
+              vcrsByCode.map((vcr) => (
                 <div
                   key={vcr.id}
                   className={cn(
-                    "group p-3 rounded-lg border bg-card transition-all hover:bg-muted/40 hover:border-primary/20",
+                    "group p-3 rounded-lg border bg-card transition-all",
+                    "hover:bg-muted/40 hover:border-primary/30 hover:shadow-sm",
                     editingId === vcr.id && "ring-2 ring-primary"
                   )}
                 >
@@ -126,10 +131,7 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-sm">{vcr.name}</span>
-                          <span
-                            className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border"
-                            style={getVCRIdStyle(index)}
-                          >
+                          <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border bg-muted text-muted-foreground border-border">
                             {shortVCRCode(vcr.code)}
                           </span>
                         </div>
@@ -139,20 +141,22 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                           </p>
                         )}
                       </div>
-                      <div className="flex gap-1 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                         <Button
                           size="icon"
                           variant="ghost"
                           className="h-7 w-7"
                           onClick={() => setEditingId(vcr.id)}
+                          aria-label="Edit VCR"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7 text-destructive"
-                          onClick={() => handleRemoveVCR(vcr.id)}
+                          className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setDeleteTarget(vcr)}
+                          aria-label="Delete VCR"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
@@ -173,6 +177,45 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
         onAdd={handleAddVCR}
         generatedCode={generateVCRCode(vcrs.length)}
       />
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent
+          className="z-[300]"
+          overlayClassName="z-[299] bg-black/70 backdrop-blur-sm"
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Delete {deleteTarget?.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>This VCR will be removed from the draft plan.</p>
+                {(deleteTarget?.assignedSystemIds?.length ?? 0) > 0 && (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40 p-2 text-amber-800 dark:text-amber-200 text-sm">
+                    {deleteTarget?.assignedSystemIds?.length} system
+                    {deleteTarget?.assignedSystemIds?.length === 1 ? '' : 's'} currently assigned
+                    will be unassigned (returned to the Assign Systems pool).
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  This is a draft change — nothing is finalized until you submit the plan.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete VCR
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
