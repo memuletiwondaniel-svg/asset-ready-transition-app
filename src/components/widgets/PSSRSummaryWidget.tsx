@@ -220,20 +220,6 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               />
               <span className="truncate">P2A Handover</span>
             </button>
-            {headerStatusLabel && (
-              <button
-                type="button"
-                onPointerDown={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={handleP2AStatusClick}
-                className="shrink-0 cursor-pointer relative z-10"
-                title="View approvers"
-              >
-                <Badge variant="outline" className={cn("text-[10px] h-5 px-2 hover:opacity-80 transition-opacity", headerStatusClass)}>
-                  {headerStatusLabel}
-                </Badge>
-              </button>
-            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col space-y-3 pt-2 min-h-0">
@@ -288,8 +274,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                   </>
                 ) : (
                   <>
-                    <p className="text-xs opacity-70 mb-5">{planUIState.helperText}</p>
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="relative flex items-center justify-center w-full">
                       <Button
                         variant="secondary"
                         size="sm"
@@ -299,11 +284,25 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                         <ExternalLink className="h-3.5 w-3.5" />
                         {planUIState.primaryLabel}
                       </Button>
+                      {headerStatusLabel && (
+                        <button
+                          type="button"
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={handleP2AStatusClick}
+                          className="absolute right-0 top-1/2 -translate-y-1/2 cursor-pointer z-10"
+                          title="View approvers"
+                        >
+                          <Badge variant="outline" className={cn("text-[10px] h-5 px-2 hover:opacity-80 transition-opacity", headerStatusClass)}>
+                            {headerStatusLabel}
+                          </Badge>
+                        </button>
+                      )}
                       {canCreateVCR && planIsLocked && !planIsApproved && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="h-8 w-8 ml-2 text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={(e) => { e.stopPropagation(); setShowDeleteP2ADraft(true); }}
                           aria-label="Delete submitted P2A plan"
                         >
