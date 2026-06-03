@@ -6,6 +6,8 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { X, Key, Cable, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { P2AHandoverWorkspace } from '@/components/p2a-workspace/P2AHandoverWorkspace';
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
+import { useP2APlanWizard } from '@/hooks/useP2APlanWizard';
+import { SubmissionSuccessDialog } from './p2a-wizard/SubmissionSuccessDialog';
 import { cn } from '@/lib/utils';
 
 import { getP2APlanUIState } from '@/lib/p2aPlanStatus';
@@ -30,13 +32,22 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
 }) => {
   const [showMapping, setShowMapping] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1.0);
+  const [showSubmission, setShowSubmission] = useState(false);
   const { plan } = useP2AHandoverPlan(projectId, 'project_id');
   const planUIState = getP2APlanUIState(plan?.status);
   const statusConfig = { label: planUIState.badgeLabel, className: planUIState.badgeClass };
+  const { loadDraft: loadP2ADraft, state: p2aWizardState } = useP2APlanWizard(projectId, projectNumber || '');
 
   const handleZoomIn = () => setZoomLevel(prev => Math.min(1.2, Math.round((prev + 0.1) * 10) / 10));
   const handleZoomOut = () => setZoomLevel(prev => Math.max(0.4, Math.round((prev - 0.1) * 10) / 10));
   const handleZoomReset = () => setZoomLevel(1.0);
+
+  const handleStatusClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!planUIState.isLocked || !plan?.id) return;
+    await loadP2ADraft();
+    setShowSubmission(true);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -55,7 +66,17 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
                 ? `${projectNumber ? projectNumber + ' ' : ''}P2A Plan`
                 : 'Develop P2A Plan'}
             </h2>
-            <Badge variant="outline" className={cn("text-xs", statusConfig.className)}>
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-xs",
+                statusConfig.className,
+                planUIState.isLocked && "cursor-pointer hover:opacity-80 transition-opacity"
+              )}
+              onClick={planUIState.isLocked ? handleStatusClick : undefined}
+              role={planUIState.isLocked ? 'button' : undefined}
+              tabIndex={planUIState.isLocked ? 0 : undefined}
+            >
               {statusConfig.label}
             </Badge>
           </div>
@@ -157,6 +178,21 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
           />
         </div>
       </DialogContent>
+      {plan?.id && (
+        <SubmissionSuccessDialog
+          open={showSubmission}
+          onOpenChange={setShowSubmission}
+          planId={plan.id}
+          projectId={projectId}
+          projectCode={projectNumber || ''}
+          projectName={projectName}
+          systems={p2aWizardState.systems}
+          vcrs={p2aWizardState.vcrs}
+          phases={p2aWizardState.phases}
+          approvers={p2aWizardState.approvers}
+          onDone={() => setShowSubmission(false)}
+        />
+      )}
     </Dialog>
   );
 };
