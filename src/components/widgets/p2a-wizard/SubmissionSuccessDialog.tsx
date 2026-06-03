@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Check, CheckCircle2, Clock, X as XIcon, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
-import { useP2AApproverRoster } from '@/hooks/useP2AApproverRoster';
 import type { WizardApprover } from './steps/ApprovalSetupStep';
 import type { WizardSystem } from './steps/SystemsImportStep';
 import type { WizardVCR } from './steps/VCRCreationStep';
