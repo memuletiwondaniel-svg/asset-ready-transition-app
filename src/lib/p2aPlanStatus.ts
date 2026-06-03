@@ -69,7 +69,7 @@ const STATES: Record<P2APlanStatus, P2APlanUIState> = {
   COMPLETED: {
     badgeLabel: 'Approved',
     badgeClass: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
-    helperText: 'Your plan has been approved',
+    helperText: 'This plan has been approved.',
     primaryLabel: 'View P2A Plan',
     primaryAction: 'view',
     isLocked: true,
