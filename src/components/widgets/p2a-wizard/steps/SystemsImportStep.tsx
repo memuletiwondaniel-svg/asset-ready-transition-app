@@ -171,7 +171,18 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
       <div className="flex items-center justify-between shrink-0">
         <h3 className="text-sm font-semibold">Systems</h3>
         {systems.length > 0 && (
-          <Badge variant="outline" className="shrink-0">{systems.length} systems</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="shrink-0">{systems.length} systems</Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowClearAllConfirm(true)}
+              className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Clear all
+            </Button>
+          </div>
         )}
       </div>
 
