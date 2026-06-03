@@ -21,6 +21,7 @@ interface WorkspacePreviewStepProps {
   mappings: Record<string, string[]>;
   vcrPhaseAssignments: Record<string, string>;
   approvers?: WizardApprover[];
+  onNavigateToMapping?: () => void;
 }
 
 const HCPill: React.FC<{ className?: string; label?: string }> = ({ className, label = 'Hydrocarbon' }) => (
@@ -43,6 +44,7 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
   mappings,
   vcrPhaseAssignments,
   approvers = [],
+  onNavigateToMapping,
 }) => {
   const [unmappedOpen, setUnmappedOpen] = useState(false);
   const [unassignedOpen, setUnassignedOpen] = useState(false);
@@ -271,32 +273,43 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
 
         {unmappedSystems.length > 0 && (
           <Collapsible open={unmappedOpen} onOpenChange={setUnmappedOpen}>
-            <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5">
+            <div className="rounded-md border border-border bg-muted/30 px-2.5 py-1.5">
               <CollapsibleTrigger className="flex items-center justify-between w-full">
-                <div className="flex items-center gap-1.5">
-                  <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-                  <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                    {unmappedSystems.length} unmapped system{unmappedSystems.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
+                <span className="text-xs text-muted-foreground">
+                  {unmappedSystems.length} system{unmappedSystems.length !== 1 ? 's' : ''} not yet mapped
+                </span>
                 <ChevronDown
                   className={cn(
-                    'h-3.5 w-3.5 text-amber-600/70 dark:text-amber-400/70 transition-transform',
+                    'h-3.5 w-3.5 text-muted-foreground transition-transform',
                     unmappedOpen && 'rotate-180',
                   )}
                 />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {unmappedSystems.map(sys => (
-                    <span
-                      key={sys.id}
-                      className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded px-1.5 py-0.5"
-                    >
-                      {sys.name}
-                    </span>
-                  ))}
+                <div className="mt-2 max-h-28 overflow-y-auto pr-1">
+                  <div className="flex flex-wrap gap-1">
+                    {unmappedSystems.map(sys => (
+                      <span
+                        key={sys.id}
+                        className="text-[10px] bg-muted text-muted-foreground border border-border rounded px-1.5 py-0.5"
+                      >
+                        {sys.name}
+                      </span>
+                    ))}
+                  </div>
                 </div>
+                {onNavigateToMapping && (
+                  <div className="mt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={onNavigateToMapping}
+                      className="text-[11px] text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+                    >
+                      Review mapping
+                      <ArrowRight className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
               </CollapsibleContent>
             </div>
           </Collapsible>
