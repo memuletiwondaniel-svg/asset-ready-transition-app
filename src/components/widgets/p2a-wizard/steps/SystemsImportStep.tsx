@@ -50,21 +50,11 @@ interface SystemsImportStepProps {
 }
 
 
-function getSystemIdColor(systemId: string) {
-  const str = systemId.replace(/-/g, '').toUpperCase();
-  let hash = 5381;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
-  }
-  hash = Math.abs(hash);
-  const hueAnchors = [165, 180, 200, 220, 250, 280, 320];
-  const hue = (hueAnchors[hash % hueAnchors.length] + (((hash >> 8) % 25) - 12) + 360) % 360;
-  const sat = 35 + ((hash >> 12) % 10);
-  return {
-    bg: `hsl(${hue}, ${sat}%, 94%)`,
-    border: `hsl(${hue}, ${sat}%, 82%)`,
-    text: `hsl(${hue}, ${sat + 15}%, 35%)`,
-  };
+// Natural / alphanumeric comparator so -101, -101A, -101B, -102, -103 sort correctly
+// (and -1010 comes after -102, not between -101 and -102).
+const naturalCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+function compareSystemIds(a: string, b: string) {
+  return naturalCollator.compare(a ?? '', b ?? '');
 }
 
 export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
@@ -202,17 +192,19 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         <div className="border rounded-lg flex-1 min-h-0 bg-muted/20">
           <ScrollArea className="h-full">
             <div className="p-1.5 space-y-1">
-              {systems.map((system) => (
-                <SystemListItem
-                  key={system.id}
-                  system={system}
-                  isEditing={editingId === system.id}
-                  onEdit={() => setEditingId(system.id)}
-                  onCancelEdit={() => setEditingId(null)}
-                  onUpdate={(updates) => handleUpdateSystem(system.id, updates)}
-                  onRemove={() => handleRemoveSystem(system.id)}
-                />
-              ))}
+              {[...systems]
+                .sort((a, b) => compareSystemIds(a.system_id, b.system_id))
+                .map((system) => (
+                  <SystemListItem
+                    key={system.id}
+                    system={system}
+                    isEditing={editingId === system.id}
+                    onEdit={() => setEditingId(system.id)}
+                    onCancelEdit={() => setEditingId(null)}
+                    onUpdate={(updates) => handleUpdateSystem(system.id, updates)}
+                    onRemove={() => handleRemoveSystem(system.id)}
+                  />
+                ))}
             </div>
           </ScrollArea>
         </div>
@@ -396,8 +388,6 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
     );
   }
 
-  const idColors = getSystemIdColor(system.system_id);
-
   return (
     <div className="space-y-0">
       <div
@@ -412,29 +402,36 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
         )} />
 
         <div className="flex-1 min-w-0 flex items-center gap-3">
-          <span
-            className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-semibold tabular-nums tracking-wide shrink-0 leading-none border"
-            style={{ background: idColors.bg, borderColor: idColors.border, color: idColors.text }}
-          >
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border/60 bg-muted/40 text-muted-foreground">
             {system.system_id}
           </span>
           <span className="font-medium text-xs truncate">{system.name}</span>
-          {system.is_hydrocarbon && (
-            <Badge variant="outline" className="text-[9px] bg-orange-50 text-orange-700 border-orange-200 shrink-0 py-0 px-1">
-              HC
-            </Badge>
-          )}
-          {hasSubsystems && (
-            <span className="text-[9px] text-muted-foreground shrink-0">
-              {system.subsystems!.length} sub
-            </span>
-          )}
         </div>
+
+        {system.is_hydrocarbon && (
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant="outline"
+                  className="text-[9px] bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-300 dark:border-orange-900/40 shrink-0 py-0 px-1.5 cursor-help"
+                >
+                  HC
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                Hydrocarbon System
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
         {hasSubsystems && (
-          <span className="text-[9px] text-muted-foreground shrink-0">
+          <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">
             {system.subsystems!.length} sub
           </span>
         )}
+
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
             size="icon"
