@@ -1362,17 +1362,30 @@ const AddItemForm: React.FC<{
             <div className="space-y-2">
               {approvingParties.map(roleId => {
                 const users = getUsersForRole(roleId);
+                const b2b = isB2BPairUsers(users);
                 return (
                   <div key={roleId} className="border rounded-lg p-2.5 group/approver hover:border-primary/30 transition-colors">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-medium text-muted-foreground">{getRoleName(roleId)}</span>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-xs font-medium text-muted-foreground truncate">{getRoleName(roleId)}</span>
+                        {b2b && (
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] font-semibold tracking-wider px-1.5 py-0 h-4 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                            title="Back-to-back pair — either holder can close the approval"
+                          >
+                            B2B
+                          </Badge>
+                        )}
+                      </div>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-5 w-5 opacity-0 group-hover/approver:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                        className="h-5 w-5 opacity-0 group-hover/approver:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                         onClick={() => removeApprover(roleId)}
+                        title={`Remove ${getRoleName(roleId)}`}
                       >
-                        <X className="w-3 h-3" />
+                        <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
                     {users.length > 0 ? (
