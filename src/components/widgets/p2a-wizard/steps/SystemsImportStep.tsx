@@ -448,10 +448,10 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
               key={sub.system_id + idx}
               className="flex items-center gap-2 py-0.5 px-2 rounded text-xs"
             >
-              <span className="inline-flex items-center px-1 py-0.5 rounded text-[8px] font-medium tabular-nums tracking-wide shrink-0 leading-none border border-border bg-muted text-muted-foreground">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border bg-muted text-muted-foreground w-[160px] truncate">
                 {sub.system_id}
               </span>
-              <span className="truncate flex-1 text-muted-foreground text-[10px]">{sub.name}</span>
+              <span className="truncate flex-1 min-w-0 text-muted-foreground text-[10px]">{sub.name}</span>
               {/* Spacer matching the width of the parent's hover action buttons */}
               <div className="w-[52px] shrink-0" />
             </div>
