@@ -72,6 +72,28 @@ Add CMMS Lead to role registry; assign Rule 20 deliverables to it.
 No UI redesign beyond data-source rebinding; no non-ORSH widget changes; no auth/provider changes.
 
 Approve to begin.
+
+## Consolidation: org_role_holders as source of truth
+
+### DONE (2026-06-03)
+VCR item editor (`VCRItemsStep.tsx`) + PSSR item editor (`PSSRItemDetailSheet.tsx`) unified onto `org_role_holders` via `useApprovingPartyHolders` shared resolver.
+- Resolver reads `org_role_holders` first (authoritative for seeded/global/B2B roles); falls back to `profiles` position/role filter for non-global roles.
+- Scope-correct: PSSR pulls Asset-scope TAs, VCR pulls Project-scope TAs.
+- B2B pairs collapse to one badged card; "any-one-of-pair-closes" semantics preserved.
+- Propagation verified: edits to `org_role_holders` (e.g., swapping a B2B partner) reach both editors instantly.
+- The dual-source-of-truth gap for these two editors is CLOSED.
+
+### Remaining consolidation backlog
+~15 files still carry private role-matchers, grouped in 3 buckets. Recommended sequencing:
+1. **Bucket 3 — Catalog `role_family`** (schema change; do FIRST as its own verified step; may collapse several other files)
+2. **Bucket 2 — Needs a `roles.position` primitive built first**
+3. **Bucket 1 — Mechanical resolver swaps**
+
+### FLAG: Bucket 3 design questions (resolve before building)
+- What are the `role_family` values (the taxonomy)?
+- Do all roles fit a family?
+- How does `role_family` interact with the Project/Asset scope dimension?
+
 ## M11 closure — explicit residuals
 
 ### Residual (UI-layer, deferred)
