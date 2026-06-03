@@ -43,7 +43,6 @@ export const AssignedVCRChip: React.FC<AssignedVCRChipProps> = ({ vcr, vcrIndex,
       style={style}
       className={cn(
         'group/vcr flex items-center gap-1.5 p-1.5 rounded-md bg-background/80 border text-[11px] transition-colors hover:bg-background hover:shadow-sm cursor-grab active:cursor-grabbing',
-        phaseAccentClass && `border-l-2 ${phaseAccentClass}`,
         isDragging && 'opacity-30 scale-95 ring-2 ring-primary/20 shadow-inner z-50',
       )}
     >
