@@ -21,6 +21,7 @@ import { P2APlanSummaryDialog } from './P2APlanSummaryDialog';
 import { P2AApprovalsPanel } from './P2AApprovalsPanel';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { P2APlanCreationWizard } from './p2a-wizard/P2APlanCreationWizard';
+import { SubmissionSuccessDialog } from './p2a-wizard/SubmissionSuccessDialog';
 import { VCRDetailOverlayWidget } from './VCRDetailOverlay';
 import { VCRExecutionPlanWizard } from './vcr-wizard/VCRExecutionPlanWizard';
 import { cn } from '@/lib/utils';
