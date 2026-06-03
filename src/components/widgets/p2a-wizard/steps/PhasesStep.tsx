@@ -377,10 +377,10 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
           <div className="flex items-center gap-2">
             {onOpenFullWorkspace && (
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={onOpenFullWorkspace}
-                className="text-xs h-7 px-2.5 gap-1.5"
+                className="text-xs h-7 px-2.5 gap-1.5 text-muted-foreground border border-dashed border-border/70 hover:text-primary-foreground hover:bg-primary hover:border-primary hover:shadow-sm transition-all"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 Open Workspace
