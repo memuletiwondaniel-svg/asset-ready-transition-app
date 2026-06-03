@@ -8,6 +8,8 @@ import { P2AHandoverWorkspace } from '@/components/p2a-workspace/P2AHandoverWork
 import { useP2AHandoverPlan } from '@/components/p2a-workspace/hooks/useP2AHandoverPlan';
 import { cn } from '@/lib/utils';
 
+import { getP2APlanUIState } from '@/lib/p2aPlanStatus';
+
 interface P2AWorkspaceOverlayProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -17,9 +19,6 @@ interface P2AWorkspaceOverlayProps {
   projectNumber?: string;
   readOnly?: boolean;
 }
-
-const getStatusConfig = (status?: string) => {
-  switch (status) {
     case 'DRAFT':
       return {
         label: 'Draft',
