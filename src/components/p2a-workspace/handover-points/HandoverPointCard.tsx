@@ -130,7 +130,9 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
                 <Box className="h-3 w-3 text-muted-foreground shrink-0" />
                 <span className="text-[11px] font-medium truncate flex-1">{sys.name}</span>
                 {sys.is_hydrocarbon && (
-                  <Flame className="h-3 w-3 text-orange-500 shrink-0" />
+                  <span className="text-[9px] font-semibold px-1 py-0 rounded bg-amber-500/15 text-amber-700 dark:text-amber-400 shrink-0">
+                    HC
+                  </span>
                 )}
               </div>
             ))}
