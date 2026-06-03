@@ -21,6 +21,7 @@ import { P2APlanSummaryDialog } from './P2APlanSummaryDialog';
 import { P2AApprovalsPanel } from './P2AApprovalsPanel';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { P2APlanCreationWizard } from './p2a-wizard/P2APlanCreationWizard';
+import { SubmissionSuccessDialog } from './p2a-wizard/SubmissionSuccessDialog';
 import { VCRDetailOverlayWidget } from './VCRDetailOverlay';
 import { VCRExecutionPlanWizard } from './vcr-wizard/VCRExecutionPlanWizard';
 import { cn } from '@/lib/utils';
@@ -105,7 +106,13 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const [selectedVCR, setSelectedVCR] = useState<ProjectVCR | null>(null);
   const [wizardVCR, setWizardVCR] = useState<ProjectVCR | null>(null);
   const [showDeleteP2ADraft, setShowDeleteP2ADraft] = useState(false);
-  const { deleteDraft: deleteP2ADraft, isDeleting: isDeletingP2ADraft } = useP2APlanWizard(projectId, projectCode);
+  const [showP2ASubmission, setShowP2ASubmission] = useState(false);
+  const {
+    deleteDraft: deleteP2ADraft,
+    isDeleting: isDeletingP2ADraft,
+    loadDraft: loadP2ADraft,
+    state: p2aWizardState,
+  } = useP2APlanWizard(projectId, projectCode);
 
 
   // Get the first (active) ORA plan for this project
@@ -165,9 +172,15 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
     }
   };
 
-  const handleP2AStatusClick = (e: React.MouseEvent) => {
+  const handleP2AStatusClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (p2aPlanByProject) setShowP2AApprovals(true);
+    if (!p2aPlanByProject) return;
+    if (p2aPlanByProject.status === 'ACTIVE' || p2aPlanByProject.status === 'COMPLETED') {
+      await loadP2ADraft();
+      setShowP2ASubmission(true);
+    } else {
+      setShowP2AApprovals(true);
+    }
   };
 
   const headerStatusLabel = !p2aPlanByProject
@@ -279,23 +292,36 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                     <p className="text-xs opacity-70 mb-5">
                       {p2aPlanByProject.status === 'ACTIVE' ? 'Your plan is awaiting approval' : 'Your plan has been approved'}
                     </p>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="text-xs gap-1.5"
-                      onClick={() => {
-                        if (p2aPlanByProject.status === 'COMPLETED') {
-                          setShowP2AWorkspace(true);
-                        } else {
-                          setShowP2APlanWizard(true);
-                        }
-                      }}
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      {['COMPLETED', 'APPROVED', 'ACTIVE'].includes(p2aPlanByProject.status)
-                        ? 'View P2A Plan'
-                        : 'Continue P2A Plan'}
-                    </Button>
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="text-xs gap-1.5"
+                        onClick={() => {
+                          if (p2aPlanByProject.status === 'COMPLETED') {
+                            setShowP2AWorkspace(true);
+                          } else {
+                            setShowP2APlanWizard(true);
+                          }
+                        }}
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        {['COMPLETED', 'APPROVED', 'ACTIVE'].includes(p2aPlanByProject.status)
+                          ? 'View P2A Plan'
+                          : 'Continue P2A Plan'}
+                      </Button>
+                      {canCreateVCR && p2aPlanByProject.status === 'ACTIVE' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => { e.stopPropagation(); setShowDeleteP2ADraft(true); }}
+                          aria-label="Delete submitted P2A plan"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </>
                 )}
               </div>
@@ -453,9 +479,13 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
       <AlertDialog open={showDeleteP2ADraft} onOpenChange={setShowDeleteP2ADraft}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Draft P2A Plan?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {p2aPlanByProject?.status === 'ACTIVE' ? 'Delete submitted P2A Plan?' : 'Delete Draft P2A Plan?'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the draft P2A handover plan including all systems, VCRs, phases, and approvers. This action cannot be undone.
+              {p2aPlanByProject?.status === 'ACTIVE'
+                ? 'This will permanently delete the submitted P2A handover plan and cancel all pending approval tasks for its approvers. This action cannot be undone.'
+                : 'This will permanently delete the draft P2A handover plan including all systems, VCRs, phases, and approvers. This action cannot be undone.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -468,6 +498,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                 try {
                   await deleteP2ADraft();
                   setShowDeleteP2ADraft(false);
+                  setShowP2ASubmission(false);
                 } catch {
                   // toast handled in hook
                 }
@@ -478,6 +509,24 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {p2aPlanByProject && (
+        <SubmissionSuccessDialog
+          open={showP2ASubmission}
+          onOpenChange={setShowP2ASubmission}
+          projectCode={projectCode}
+          projectName={projectName}
+          systems={p2aWizardState.systems}
+          vcrs={p2aWizardState.vcrs}
+          phases={p2aWizardState.phases}
+          approvers={p2aWizardState.approvers}
+          onDone={() => setShowP2ASubmission(false)}
+          onOpenWorkspace={() => {
+            setShowP2ASubmission(false);
+            setShowP2AWorkspace(true);
+          }}
+        />
+      )}
 
     </>
   );
