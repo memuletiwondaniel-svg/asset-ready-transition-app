@@ -220,20 +220,6 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
               />
               <span className="truncate">P2A Handover</span>
             </button>
-            {headerStatusLabel && (
-              <button
-                type="button"
-                onPointerDown={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={handleP2AStatusClick}
-                className="shrink-0 cursor-pointer relative z-10"
-                title="View approvers"
-              >
-                <Badge variant="outline" className={cn("text-[10px] h-5 px-2 hover:opacity-80 transition-opacity", headerStatusClass)}>
-                  {headerStatusLabel}
-                </Badge>
-              </button>
-            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col space-y-3 pt-2 min-h-0">
