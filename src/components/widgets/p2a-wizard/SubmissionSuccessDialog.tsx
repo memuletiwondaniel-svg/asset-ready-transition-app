@@ -59,27 +59,22 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
   };
 
   const { data: profileUsers } = useProfileUsers();
-  const { roster: canonicalRoster } = useP2AApproverRoster(projectId);
 
+  // REAL-RECORDS-ONLY. Earlier versions of this modal fell back to a
+  // computed "canonical roster" when the plan had no persisted approver
+  // rows — which fabricated a task count (e.g. "4 of 5") even though
+  // zero tasks existed in user_tasks. That hid plans like DP-18F whose
+  // submit path silently produced no approver rows or tasks. The modal
+  // now renders ONLY what's actually persisted, so an empty plan shows
+  // "0 approval tasks" honestly.
   const savedApprovers = useMemo(
-    () => approvers.filter(a => !!a.user_id).sort((a, b) => a.display_order - b.display_order),
+    () => approvers
+      .slice()
+      .sort((a, b) => a.display_order - b.display_order),
     [approvers]
   );
 
-  // Fallback used when the submitted plan has no persisted approver rows
-  // (historical plans submitted before Dep. Plant Director was wired into
-  // the wizard's fixed roster). Uses the SAME two-RPC composite as the
-  // wizard roster — resolve_project_role_user + find_deputy_plant_director —
-  // so the read path cannot diverge from creation.
-  const canonicalFallbackApprovers = useMemo<WizardApprover[]>(() => {
-    return canonicalRoster.map((a) => ({
-      ...a,
-      id: `fallback-${a.id}`,
-      user_name: a.user_name || 'Not assigned',
-    }));
-  }, [canonicalRoster]);
-
-  const assignedApprovers = savedApprovers.length > 0 ? savedApprovers : canonicalFallbackApprovers;
+  const assignedApprovers = savedApprovers;
   const assignedRows = useMemo(() => assignedApprovers.filter(a => !!a.user_id), [assignedApprovers]);
   const unassignedRows = useMemo(() => assignedApprovers.filter(a => !a.user_id), [assignedApprovers]);
 
