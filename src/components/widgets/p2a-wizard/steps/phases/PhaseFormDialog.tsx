@@ -162,17 +162,14 @@ export const PhaseFormDialog: React.FC<PhaseFormDialogProps> = ({
                 </p>
               </div>
               {projectId && (
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
                   onClick={() => { setCatalogueSelected([]); setCatalogueQuery(''); setCatalogueOpen(true); }}
-                  className="h-7 text-[11px] gap-1.5 px-2 text-muted-foreground hover:text-foreground hover:bg-accent"
+                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
                   title="Add milestones from catalogue"
                 >
-                  <BookPlus className="h-3.5 w-3.5" />
                   Add from catalogue
-                </Button>
+                </button>
               )}
             </div>
 
