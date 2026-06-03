@@ -348,6 +348,34 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         onOpenChange={setShowAddModal}
         onAdd={handleAddSystem}
       />
+
+      {/* Clear-all confirmation */}
+      <AlertDialog open={showClearAllConfirm} onOpenChange={setShowClearAllConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove all {systems.length} systems?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This clears every system from your preliminary selection and returns you to the
+              empty state. Any VCR assignments made later in this draft will also lose these
+              systems. The plan draft itself is not deleted — you can re-import or add
+              systems again. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onSystemsChange([]);
+                setShowClearAllConfirm(false);
+                toast({ title: 'All systems removed', description: 'Returned to empty state.' });
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove all
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
