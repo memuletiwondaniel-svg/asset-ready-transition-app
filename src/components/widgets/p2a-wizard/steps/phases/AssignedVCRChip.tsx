@@ -37,14 +37,13 @@ export const AssignedVCRChip: React.FC<AssignedVCRChipProps> = ({ vcr, vcrIndex,
     transition,
   };
 
-  const vcrColor = getVCRColor(vcr.code);
-
   const chipContent = (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
         'group/vcr flex items-center gap-1.5 p-1.5 rounded-md bg-background/80 border text-[11px] transition-colors hover:bg-background hover:shadow-sm cursor-grab active:cursor-grabbing',
+        phaseAccentClass && `border-l-2 ${phaseAccentClass}`,
         isDragging && 'opacity-30 scale-95 ring-2 ring-primary/20 shadow-inner z-50',
       )}
     >
@@ -58,10 +57,7 @@ export const AssignedVCRChip: React.FC<AssignedVCRChipProps> = ({ vcr, vcrIndex,
         onClick={(e) => { e.stopPropagation(); onVCRClick?.(vcr); }}
       >
         <span className="truncate font-medium">{vcr.name}</span>
-        <span
-          className="text-[8px] font-mono px-1 py-px rounded border shrink-0 w-fit leading-tight"
-          style={getVCRIdStyle(vcrIndex >= 0 ? vcrIndex : 0)}
-        >
+        <span className="text-[8px] font-mono px-1 py-px rounded border shrink-0 w-fit leading-tight bg-muted/60 text-muted-foreground border-border/60">
           {shortVCRCode(vcr.code)}
         </span>
       </div>
