@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { GripVertical, Box, Flame } from 'lucide-react';
+import { GripVertical, Box } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2AHandoverPoint } from '../hooks/useP2AHandoverPoints';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
@@ -89,9 +89,11 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
               <span className="text-muted-foreground font-mono truncate" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
                 {shortenVCR(handoverPoint.vcr_code || 'VCR-???')}
               </span>
-              <span className="font-medium text-muted-foreground shrink-0" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
-                {progress}%
-              </span>
+              {progress > 0 && (
+                <span className="font-medium text-muted-foreground shrink-0" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
+                  {progress}%
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -128,7 +130,9 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
                 <Box className="h-3 w-3 text-muted-foreground shrink-0" />
                 <span className="text-[11px] font-medium truncate flex-1">{sys.name}</span>
                 {sys.is_hydrocarbon && (
-                  <Flame className="h-3 w-3 text-orange-500 shrink-0" />
+                  <span className="text-[9px] font-semibold px-1 py-0 rounded bg-amber-500/15 text-amber-700 dark:text-amber-400 shrink-0">
+                    HC
+                  </span>
                 )}
               </div>
             ))}

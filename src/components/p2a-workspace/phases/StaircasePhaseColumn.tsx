@@ -150,17 +150,8 @@ export const StaircasePhaseColumn: React.FC<StaircasePhaseColumnProps> = ({
     }
   };
 
-  // Subtle background colors for phase headers - cycle through muted palette
-  const phaseHeaderColors = [
-    'bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800/50 dark:to-slate-900/30',
-    'bg-gradient-to-r from-blue-50 to-slate-50 dark:from-blue-900/20 dark:to-slate-900/30',
-    'bg-gradient-to-r from-emerald-50 to-slate-50 dark:from-emerald-900/20 dark:to-slate-900/30',
-    'bg-gradient-to-r from-amber-50 to-slate-50 dark:from-amber-900/20 dark:to-slate-900/30',
-    'bg-gradient-to-r from-violet-50 to-slate-50 dark:from-violet-900/20 dark:to-slate-900/30',
-    'bg-gradient-to-r from-rose-50 to-slate-50 dark:from-rose-900/20 dark:to-slate-900/30',
-    'bg-gradient-to-r from-cyan-50 to-slate-50 dark:from-cyan-900/20 dark:to-slate-900/30',
-  ];
-  const headerColorClass = phaseHeaderColors[phaseIndex % phaseHeaderColors.length];
+  // Neutral phase header — phase identity comes from the label, not a per-phase tint.
+  const headerColorClass = 'bg-muted/40 dark:bg-muted/20';
 
   return (
     <>

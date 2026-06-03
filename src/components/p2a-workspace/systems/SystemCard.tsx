@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Flame, GripVertical } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P2ASystem } from '../hooks/useP2ASystems';
 import { useDraggable } from '@dnd-kit/core';
@@ -70,9 +70,12 @@ export const SystemCard: React.FC<SystemCardProps> = ({
         <div className="flex items-start relative" style={{ gap: 'calc(6px * var(--ws-zoom, 1))' }}>
           {/* HC Indicator or spacer for alignment */}
           {system.is_hydrocarbon ? (
-            <div className="rounded flex items-center justify-center shrink-0 mt-0.5 bg-orange-500/10 text-orange-500"
-              style={{ width: 'calc(16px * var(--ws-zoom, 1))', height: 'calc(16px * var(--ws-zoom-y, 1))' }}>
-              <Flame style={{ width: 'calc(10px * var(--ws-zoom, 1))', height: 'calc(10px * var(--ws-zoom-y, 1))' }} />
+            <div
+              className="rounded flex items-center justify-center shrink-0 mt-0.5 font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400"
+              style={{ width: 'calc(16px * var(--ws-zoom, 1))', height: 'calc(14px * var(--ws-zoom-y, 1))', fontSize: 'calc(8px * var(--ws-zoom-y, 1))', letterSpacing: '0.02em' }}
+              aria-label="Hydrocarbon"
+            >
+              HC
             </div>
           ) : (
             <div className="shrink-0" style={{ width: 'calc(16px * var(--ws-zoom, 1))', height: 'calc(16px * var(--ws-zoom-y, 1))' }} />

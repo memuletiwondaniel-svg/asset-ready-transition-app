@@ -82,58 +82,14 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
           </div>
           <div className="flex items-center gap-1">
             <TooltipProvider>
-              {/* Zoom Controls */}
-              <div className="flex items-center gap-0.5 mr-2 border-r border-border/40 pr-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleZoomOut}
-                      disabled={zoomLevel <= 0.4}
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                    >
-                      <ZoomOut className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">Zoom out</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleZoomReset}
-                      className="h-7 px-1.5 text-[10px] font-mono text-muted-foreground hover:text-foreground"
-                    >
-                      {Math.round(zoomLevel * 100)}%
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">Reset zoom</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleZoomIn}
-                      disabled={zoomLevel >= 1.2}
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                    >
-                      <ZoomIn className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">Zoom in</TooltipContent>
-                </Tooltip>
-              </div>
-
-              {/* Mapping Toggle */}
+              {/* Mapping Toggle — clearly pressable on/off */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant={showMapping ? "default" : "ghost"}
+                    variant={showMapping ? "default" : "outline"}
                     size="sm"
                     onClick={() => setShowMapping(!showMapping)}
+                    aria-pressed={showMapping}
                     className={cn(
                       "h-7 gap-1.5 text-xs",
                       showMapping
@@ -142,11 +98,11 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
                     )}
                   >
                     <Cable className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Mapping</span>
+                    <span className="hidden sm:inline">{showMapping ? 'Mapping on' : 'Show mapping'}</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
-                  {showMapping ? 'Hide connection diagram' : 'Show system-to-VCR connections'}
+                  {showMapping ? 'Hide system-to-VCR connections' : 'Show system-to-VCR connections'}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -168,7 +124,7 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
         </div>
 
         {/* Workspace Content */}
-        <div className="flex-1 overflow-hidden" style={{ height: 'calc(100vh - 16px - 45px)' }}>
+        <div className="flex-1 overflow-hidden relative" style={{ height: 'calc(100vh - 16px - 45px)' }}>
           <P2AHandoverWorkspace
             projectId={projectId}
             projectName={projectName}
@@ -176,6 +132,53 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
             showMapping={showMapping}
             zoomLevel={zoomLevel}
           />
+
+          {/* Demoted zoom control — quiet, floating in the canvas corner */}
+          <TooltipProvider>
+            <div className="absolute bottom-3 right-3 z-30 flex items-center gap-0.5 rounded-md border border-border/40 bg-background/70 backdrop-blur px-1 py-0.5 shadow-sm opacity-60 hover:opacity-100 transition-opacity">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleZoomOut}
+                    disabled={zoomLevel <= 0.4}
+                    className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                  >
+                    <ZoomOut className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Zoom out</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleZoomReset}
+                    className="h-6 px-1 text-[10px] font-mono text-muted-foreground hover:text-foreground"
+                  >
+                    {Math.round(zoomLevel * 100)}%
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Reset zoom</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleZoomIn}
+                    disabled={zoomLevel >= 1.2}
+                    className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                  >
+                    <ZoomIn className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Zoom in</TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
         </div>
       </DialogContent>
       {plan?.id && (
