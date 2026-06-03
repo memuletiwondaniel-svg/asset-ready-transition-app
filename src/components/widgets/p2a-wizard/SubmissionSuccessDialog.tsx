@@ -166,13 +166,14 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
                     const hasUser = !!approver.user_id;
                     const swapped = !!swappedRoles[approver.role_name];
                     const displayName = swapped && partner ? partner.full_name : approver.user_name;
+                    const displayAvatar = swapped && partner ? partner.avatar_url : approver.user_avatar;
                     return (
                       <div key={approver.id} className="flex items-center gap-3 text-sm">
                         <span className="text-[10px] font-semibold text-muted-foreground tabular-nums w-5 shrink-0">
                           {stageNum}.
                         </span>
-                        <Avatar className="h-9 w-9 shrink-0">
-                          <AvatarImage src={resolveAvatarUrl(approver.user_avatar)} alt={displayName || approver.role_name} />
+                        <Avatar key={`${approver.role_name}-${swapped ? 'p' : 'm'}`} className="h-9 w-9 shrink-0">
+                          <AvatarImage src={resolveAvatarUrl(displayAvatar)} alt={displayName || approver.role_name} />
                           <AvatarFallback className="text-[10px]">
                             {hasUser ? getInitials(displayName) : <CircleDashed className="h-3.5 w-3.5" />}
                           </AvatarFallback>
