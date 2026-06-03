@@ -17,6 +17,16 @@ import {
   ChevronRight,
   Info,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { CMSImportModal } from './CMSImportModal';
 import { ExcelUploadModal } from './ExcelUploadModal';
@@ -67,6 +77,7 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCMSModal, setShowCMSModal] = useState(false);
   const [showExcelModal, setShowExcelModal] = useState(false);
+  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
 
 
 
@@ -160,7 +171,18 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
       <div className="flex items-center justify-between shrink-0">
         <h3 className="text-sm font-semibold">Systems</h3>
         {systems.length > 0 && (
-          <Badge variant="outline" className="shrink-0">{systems.length} systems</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="shrink-0">{systems.length} systems</Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowClearAllConfirm(true)}
+              className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Clear all
+            </Button>
+          </div>
         )}
       </div>
 
@@ -326,6 +348,34 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         onOpenChange={setShowAddModal}
         onAdd={handleAddSystem}
       />
+
+      {/* Clear-all confirmation */}
+      <AlertDialog open={showClearAllConfirm} onOpenChange={setShowClearAllConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove all {systems.length} systems?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This clears every system from your preliminary selection and returns you to the
+              empty state. Any VCR assignments made later in this draft will also lose these
+              systems. The plan draft itself is not deleted — you can re-import or add
+              systems again. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onSystemsChange([]);
+                setShowClearAllConfirm(false);
+                toast({ title: 'All systems removed', description: 'Returned to empty state.' });
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove all
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
@@ -401,7 +451,7 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
           isExpanded && "rotate-90"
         )} />
 
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border/60 bg-muted/40 text-muted-foreground">
+        <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border/60 bg-muted/40 text-muted-foreground w-[160px] truncate">
           {system.system_id}
         </span>
         <span className="font-medium text-xs truncate flex-1 min-w-0">{system.name}</span>
