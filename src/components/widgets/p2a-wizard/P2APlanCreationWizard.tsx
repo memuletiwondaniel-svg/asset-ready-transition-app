@@ -508,9 +508,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     try {
       await submitForApproval(submissionComment || undefined);
       await syncWizardProgress(WIZARD_STEPS.length - 1, true);
-      handleClose();
-      onSuccess?.();
-      toast.success('P2A Plan submitted for approval!');
+      setSubmitSuccessOpen(true);
     } catch (error) {
       // Error handled in hook
     }
