@@ -21,8 +21,10 @@ import {
   HelpCircle,
   Search,
   ChevronRight,
+  Flame,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { WizardSystem, WizardSubsystem } from './SystemsImportStep';
 
@@ -486,7 +488,9 @@ const CandidateRow: React.FC<{
     <div
       className={cn(
         'rounded-md border transition-colors',
-        checked ? 'bg-primary/5 border-primary/30' : 'bg-card border-border hover:bg-muted/40',
+        checked
+          ? 'bg-card border-primary/20 hover:bg-muted/30'
+          : 'bg-card border-border hover:bg-muted/40',
       )}
     >
       <div className="flex items-center gap-2.5 p-2">
@@ -494,6 +498,7 @@ const CandidateRow: React.FC<{
           checked={checked}
           onCheckedChange={onToggle}
           aria-label={`Select ${candidate.name}`}
+          className="data-[state=checked]:bg-primary/70 data-[state=checked]:border-primary/70 data-[state=checked]:text-primary-foreground"
         />
         <button
           type="button"
@@ -505,6 +510,19 @@ const CandidateRow: React.FC<{
           disabled={!hasSubs}
         >
           <span className="text-sm font-medium truncate flex-1">{candidate.name}</span>
+          {candidate.is_hydrocarbon && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border border-orange-200 bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:border-orange-900/40 dark:text-orange-300 shrink-0">
+                    <Flame className="h-2.5 w-2.5" />
+                    HC
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top">Hydrocarbon System</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground border border-border/50 shrink-0">
             {candidate.system_id}
           </span>
