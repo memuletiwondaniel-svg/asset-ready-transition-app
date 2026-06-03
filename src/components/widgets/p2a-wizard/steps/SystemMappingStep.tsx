@@ -568,7 +568,7 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
         </div>
         <div className="h-1.5 rounded-full bg-muted overflow-hidden">
           <div
-            className="h-full rounded-full bg-primary transition-all duration-300"
+            className="h-full rounded-full bg-primary/40 transition-all duration-300"
             style={{ width: `${totalMappable > 0 ? (totalMapped / totalMappable) * 100 : 0}%` }}
           />
         </div>
