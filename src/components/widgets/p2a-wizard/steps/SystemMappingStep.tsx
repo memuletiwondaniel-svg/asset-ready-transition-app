@@ -9,6 +9,7 @@ import {
   Check,
   X,
   Zap,
+  Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardSystem, WizardSubsystem } from './SystemsImportStep';
@@ -19,6 +20,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // ── Mapping key helpers ──────────────────────────────────────
 const SUB_SEP = '::sub::';
@@ -155,6 +162,91 @@ const VCRPillSelector: React.FC<{
             </button>
           </>
         )}
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+// ── Mixed Badge (parent w/ children spread across multiple VCRs) ──
+const MixedBadge: React.FC<{
+  vcrs: WizardVCR[];
+  childVcrIds: string[];
+  onBulkAssign: (vcrId: string | null) => void;
+  vcrOriginalIndices: Map<string, number>;
+}> = ({ vcrs, childVcrIds, onBulkAssign, vcrOriginalIndices }) => {
+  const [open, setOpen] = useState(false);
+  const uniqueIds = Array.from(new Set(childVcrIds));
+  const dots = uniqueIds.slice(0, 4);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            'inline-flex items-center justify-between gap-1.5 px-2 py-1 rounded-md text-xs font-medium w-[180px]',
+            'border border-border bg-muted/60 text-muted-foreground',
+            'hover:bg-muted hover:text-foreground transition-all cursor-pointer',
+            'focus:outline-none focus:ring-1 focus:ring-primary/30',
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="flex items-center gap-1.5 min-w-0">
+            <span>Mixed</span>
+            <span className="flex items-center gap-0.5">
+              {dots.map((vid) => {
+                const idx = vcrOriginalIndices.get(vid) ?? 0;
+                const c = getVCRColor(idx);
+                return (
+                  <span
+                    key={vid}
+                    className="inline-block w-1.5 h-1.5 rounded-full"
+                    style={{ backgroundColor: c.dot }}
+                  />
+                );
+              })}
+              {uniqueIds.length > dots.length && (
+                <span className="text-[9px] ml-0.5">+{uniqueIds.length - dots.length}</span>
+              )}
+            </span>
+          </span>
+          <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-52 p-1 z-[150]"
+        align="end"
+        sideOffset={4}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wide">
+          Bulk-assign all to…
+        </div>
+        {vcrs.map(vcr => {
+          const idx = vcrOriginalIndices.get(vcr.id) ?? 0;
+          const c = getVCRColor(idx);
+          return (
+            <button
+              key={vcr.id}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-muted/60 transition-colors text-left"
+              onClick={() => { onBulkAssign(vcr.id); setOpen(false); }}
+            >
+              <span
+                className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0"
+                style={{ backgroundColor: c.bg, color: c.text }}
+              >
+                {shortVCRCode(vcr.code)}
+              </span>
+              <span className="flex-1 truncate font-medium">{vcr.name}</span>
+            </button>
+          );
+        })}
+        <div className="border-t my-1" />
+        <button
+          className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-destructive hover:bg-destructive/8 transition-colors"
+          onClick={() => { onBulkAssign(null); setOpen(false); }}
+        >
+          <X className="h-3 w-3" />
+          <span>Clear all child assignments</span>
+        </button>
       </PopoverContent>
     </Popover>
   );
@@ -380,30 +472,47 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="flex flex-col gap-3 p-4 h-full">
-      {/* ── Preliminary banner ────────────────────────────── */}
-      <div className="shrink-0 rounded-md border border-dashed border-amber-500/40 bg-amber-500/5 px-3 py-2">
-        <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-snug">
-          <span className="font-semibold">Preliminary system assignment — optional.</span>{' '}
-          This is a first-pass tentative mapping to shape the P2A plan. The final, authoritative
-          system list is confirmed later in each VCR's Execution Plan. You can submit the P2A plan
-          without completing this step.
-        </p>
-      </div>
-
       {/* ── Header ────────────────────────────────────────── */}
-      <div className="flex items-center justify-between shrink-0">
-        <div>
-          <h3 className="text-sm font-medium">Map Systems to VCRs (Preliminary)</h3>
-          <p className="text-xs text-muted-foreground">
-            Optional — assign each system or subsystem to a VCR to seed the VCR plan
+      <div className="flex items-start justify-between shrink-0 gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-medium">Map Systems to VCRs</h3>
+            <span className="text-[10px] uppercase tracking-wide font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+              Optional
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="text-muted-foreground/70 hover:text-foreground transition-colors"
+                  aria-label="About preliminary assignment"
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs text-xs leading-snug">
+                This is a first-pass tentative mapping. The authoritative system list
+                is confirmed later in each VCR's Execution Plan. You can submit the
+                P2A plan without completing this step.
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Tentative mapping to seed the VCR plans — finalized later in each VCR's Execution Plan.
           </p>
         </div>
         {totalUnassigned > 0 && (
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="text-xs gap-1.5 h-7"
+            className={cn(
+              'text-xs gap-1.5 h-7 shrink-0 border border-transparent',
+              'text-muted-foreground hover:text-primary-foreground',
+              'hover:bg-primary hover:border-primary hover:shadow-sm',
+              'transition-all',
+            )}
             onClick={handleAutoAssign}
           >
             <Zap className="h-3 w-3" />
@@ -554,7 +663,14 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
                       />
                     </div>
                   ) : mappedCount > 0 ? (
-                    <span className="text-[10px] text-muted-foreground italic">Mixed</span>
+                    <div onClick={e => e.stopPropagation()}>
+                      <MixedBadge
+                        vcrs={vcrs}
+                        childVcrIds={keys.map(k => keyOwnerMap.get(k)).filter(Boolean) as string[]}
+                        onBulkAssign={(vcrId) => assignSystemToVCR(system, vcrId)}
+                        vcrOriginalIndices={vcrOriginalIndices}
+                      />
+                    </div>
                   ) : (
                     <div onClick={e => e.stopPropagation()}>
                       <VCRPillSelector
@@ -583,7 +699,7 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
                             <span className="text-xs truncate text-muted-foreground">
                               {sub.name}
                             </span>
-                            <span className="text-[10px] font-mono text-muted-foreground/60 shrink-0">
+                            <span className="text-[9px] font-mono text-muted-foreground/50 shrink-0 px-1 py-0.5 rounded bg-muted/40">
                               {sub.system_id}
                             </span>
                           </div>
@@ -610,5 +726,6 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
         </div>
       </ScrollArea>
     </div>
+    </TooltipProvider>
   );
 };
