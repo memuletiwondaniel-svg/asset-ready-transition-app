@@ -172,7 +172,7 @@ export const ApprovalSetupStep: React.FC<ApprovalSetupStepProps> = ({
   // user (role_name not in FIXED_APPROVER_ROLES) are preserved.
   useEffect(() => {
     if (isLoading || canonicalApprovers.length === 0) return;
-    const fixedLabels = new Set(FIXED_APPROVER_ROLES.map((r) => r.label));
+    const fixedLabels = new Set<string>(FIXED_APPROVER_ROLES.map((r) => r.label));
 
     const fixedSlotsInCurrent = approvers.filter((a) => fixedLabels.has(a.role_name));
     const labelsSeen = fixedSlotsInCurrent.map((a) => a.role_name);
