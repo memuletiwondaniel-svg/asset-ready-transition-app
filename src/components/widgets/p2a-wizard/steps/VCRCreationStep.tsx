@@ -100,8 +100,9 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                 <div
                   key={vcr.id}
                   className={cn(
-                    "group p-3 rounded-lg border bg-card transition-all",
-                    "hover:bg-muted/40 hover:border-primary/30 hover:shadow-sm",
+                    "group relative p-3 rounded-lg border bg-card transition-all duration-200",
+                    "hover:bg-muted/40 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5",
+                    "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-r before:bg-primary before:opacity-0 before:transition-opacity hover:before:opacity-100",
                     editingId === vcr.id && "ring-2 ring-primary"
                   )}
                 >
@@ -130,8 +131,8 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-sm">{vcr.name}</span>
-                          <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border bg-muted text-muted-foreground border-border">
+                          <span className="font-semibold text-sm transition-colors group-hover:text-primary">{vcr.name}</span>
+                          <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border bg-muted text-muted-foreground border-border transition-all duration-200 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary group-hover:shadow-sm group-hover:scale-105">
                             {shortVCRCode(vcr.code)}
                           </span>
                         </div>
