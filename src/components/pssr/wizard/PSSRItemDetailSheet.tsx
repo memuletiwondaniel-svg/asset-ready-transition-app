@@ -27,7 +27,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RotateCcw, Save, ArrowRight, Plus, X, Search, ChevronRight } from 'lucide-react';
+import { RotateCcw, Save, ArrowRight, Plus, X, Search, ChevronRight, Trash2 } from 'lucide-react';
+
+/**
+ * B2B-paired role detector — mirrors `useB2BPartner` / ApprovalSetupStep:
+ * exactly two active holders whose normalized `position` strings match
+ * byte-for-byte. Display-only — both holders remain assigned approvers
+ * and either one closing the task completes it.
+ */
+const isB2BPairMembers = (members: Array<{ position?: string | null }>): boolean => {
+  if (!members || members.length !== 2) return false;
+  const norm = (p?: string | null) => (p || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const a = norm(members[0]?.position);
+  const b = norm(members[1]?.position);
+  return !!a && a === b;
+};
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { ChecklistItem } from '@/hooks/usePSSRChecklistLibrary';
