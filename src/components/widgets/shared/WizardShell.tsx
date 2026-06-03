@@ -54,6 +54,8 @@ interface WizardShellProps {
   isStepComplete: (idx: number) => boolean;
   /** Visited but incomplete = amber warning */
   isStepWarning?: (idx: number) => boolean;
+  /** Mark a step as optional (does not block submit; never shown green unless actually completed) */
+  isStepOptional?: (idx: number) => boolean;
   /** Branded header content (icon + title + subtitle) — shown in sidebar/mobile header when topHeader is not provided */
   header: React.ReactNode;
   /** Actions in header area (delete, close buttons) */
