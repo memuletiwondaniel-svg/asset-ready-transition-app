@@ -60,7 +60,7 @@ const STATES: Record<P2APlanStatus, P2APlanUIState> = {
     // Legacy "submitted / in review" status — same UX as PENDING_APPROVAL.
     badgeLabel: 'In Review',
     badgeClass: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
-    helperText: 'Your plan is awaiting approval',
+    helperText: 'Your plan is awaiting approval from the assigned approvers.',
     primaryLabel: 'View P2A Plan',
     primaryAction: 'view',
     isLocked: true,
