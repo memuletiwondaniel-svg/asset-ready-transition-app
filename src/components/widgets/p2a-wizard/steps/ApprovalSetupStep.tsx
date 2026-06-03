@@ -59,42 +59,22 @@ const FIXED_APPROVER_ROLES = [
 
 /**
  * Match a team member role string to one of our fixed approver keys.
- * Aligns with the canonical role catalog used by resolve_project_role_user
- * but ALSO accepts the known label-drift variants stored on legacy projects
- * (Snr. ORA Engr. / Sr ORA Engr) so the senior ORA approver always resolves
- * even when the project team uses an Engr. variant rather than "ORA Lead".
+ * Strictly aligned with the canonical roles catalog (Mig 5c validator).
+ *
+ * IMPORTANT: "Sr ORA Engr" / "Snr. ORA Engr." are DISTINCT roles from
+ * "ORA Lead" — the Sr ORA Engr DEVELOPS the plan; the ORA Lead REVIEWS /
+ * APPROVES it. They must never be conflated here (segregation of duties).
+ * If a project has no ORA Lead assigned, the slot stays "Not assigned"
+ * until the canonical role is assigned to the project team.
  */
 const matchRoleKey = (teamRole: string): string | null => {
   const r = teamRole.toLowerCase().trim();
 
-  // ORA approver: canonical "ORA Lead" + drift variants (Snr./Sr/Senior ORA Engr.)
-  if (
-    r === 'ora lead' ||
-    r.includes('ora lead') ||
-    r.includes('snr. ora') ||
-    r.includes('snr ora') ||
-    r.includes('sr ora') ||
-    r.includes('senior ora')
-  )
-    return 'ora_lead';
-  if (r.includes('construction lead') || r === 'construction lead') return 'construction_lead';
-  if (
-    r.includes('commissioning lead') ||
-    r.includes('csu lead') ||
-    r === 'commissioning lead'
-  )
-    return 'commissioning_lead';
-  if (
-    r.includes('hub lead') ||
-    r.includes('project hub lead') ||
-    r === 'hub lead'
-  )
-    return 'hub_lead';
-  if (
-    r.includes('deputy plant director') ||
-    r === 'deputy plant director'
-  )
-    return 'deputy_plant_director';
+  if (r === 'ora lead') return 'ora_lead';
+  if (r === 'construction lead') return 'construction_lead';
+  if (r === 'commissioning lead') return 'commissioning_lead';
+  if (r === 'project hub lead' || r === 'hub lead') return 'hub_lead';
+  if (r === 'dep. plant director' || r === 'deputy plant director') return 'deputy_plant_director';
 
   return null;
 };
