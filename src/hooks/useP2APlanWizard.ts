@@ -635,7 +635,7 @@ export function useP2APlanWizard(projectId: string, projectCode: string) {
 
   const submitForApproval = useMutation({
     mutationFn: async (submissionComment?: string) => {
-      const planId = await persistPlanToDatabase(projectId, projectCode, state, 'ACTIVE');
+      const planId = await persistPlanToDatabase(projectId, projectCode, state, 'PENDING_APPROVAL');
       const client = supabase as any;
 
       // Determine cycle number for this new submission
