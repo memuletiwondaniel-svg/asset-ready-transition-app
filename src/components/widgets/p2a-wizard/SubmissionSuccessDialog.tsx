@@ -108,7 +108,7 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
 
   // Deputy B2B partner detection (same logic as before, now driven by roster).
   const partnerByRole = useMemo(() => {
-    const map = new Map<string, { full_name: string } | null>();
+    const map = new Map<string, { full_name: string; avatar_url?: string | null; user_id?: string } | null>();
     if (!profileUsers) return map;
     stages.forEach(({ approver }) => {
       if (!approver.user_id) { map.set(approver.role_name, null); return; }
@@ -117,7 +117,12 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
       if (!myPos) { map.set(approver.role_name, null); return; }
       const sharing = profileUsers.filter((u: any) => normalize(u.position) === myPos);
       const others = sharing.filter((u: any) => u.user_id !== approver.user_id);
-      map.set(approver.role_name, sharing.length === 2 && others.length === 1 ? { full_name: others[0].full_name } : null);
+      map.set(
+        approver.role_name,
+        sharing.length === 2 && others.length === 1
+          ? { full_name: others[0].full_name, avatar_url: others[0].avatar_url, user_id: others[0].user_id }
+          : null
+      );
     });
     return map;
   }, [profileUsers, stages]);
@@ -161,13 +166,14 @@ export const SubmissionSuccessDialog: React.FC<Props> = ({
                     const hasUser = !!approver.user_id;
                     const swapped = !!swappedRoles[approver.role_name];
                     const displayName = swapped && partner ? partner.full_name : approver.user_name;
+                    const displayAvatar = swapped && partner ? partner.avatar_url : approver.user_avatar;
                     return (
                       <div key={approver.id} className="flex items-center gap-3 text-sm">
                         <span className="text-[10px] font-semibold text-muted-foreground tabular-nums w-5 shrink-0">
                           {stageNum}.
                         </span>
-                        <Avatar className="h-9 w-9 shrink-0">
-                          <AvatarImage src={resolveAvatarUrl(approver.user_avatar)} alt={displayName || approver.role_name} />
+                        <Avatar key={`${approver.role_name}-${swapped ? 'p' : 'm'}`} className="h-9 w-9 shrink-0">
+                          <AvatarImage src={resolveAvatarUrl(displayAvatar)} alt={displayName || approver.role_name} />
                           <AvatarFallback className="text-[10px]">
                             {hasUser ? getInitials(displayName) : <CircleDashed className="h-3.5 w-3.5" />}
                           </AvatarFallback>
