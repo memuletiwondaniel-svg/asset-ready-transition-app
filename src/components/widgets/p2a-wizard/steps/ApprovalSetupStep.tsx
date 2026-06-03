@@ -49,7 +49,7 @@ const FIXED_APPROVER_ROLES = [
   { key: 'deputy_plant_director', label: 'Dep. Plant Director', order: 5, phase: 2 },
 ] as const;
 
-/** Match a team member role string to one of our fixed keys */
+
 /**
  * Match a team member role string to one of our fixed approver keys.
  * Aligns with the canonical role catalog used by resolve_project_role_user
