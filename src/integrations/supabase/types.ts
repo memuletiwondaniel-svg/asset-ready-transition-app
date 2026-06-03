@@ -4016,6 +4016,41 @@ export type Database = {
           },
         ]
       }
+      org_role_holders: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          notes: string | null
+          role_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          notes?: string | null
+          role_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          notes?: string | null
+          role_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_role_holders_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: true
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ori_scores: {
         Row: {
           at_risk_count: number | null
@@ -11145,6 +11180,7 @@ export type Database = {
           is_active: boolean
           is_b2b: boolean
           is_director: boolean | null
+          is_global: boolean
           is_retired: boolean
           name: string
           parent_role_id: string | null
@@ -11160,6 +11196,7 @@ export type Database = {
           is_active?: boolean
           is_b2b?: boolean
           is_director?: boolean | null
+          is_global?: boolean
           is_retired?: boolean
           name: string
           parent_role_id?: string | null
@@ -11175,6 +11212,7 @@ export type Database = {
           is_active?: boolean
           is_b2b?: boolean
           is_director?: boolean | null
+          is_global?: boolean
           is_retired?: boolean
           name?: string
           parent_role_id?: string | null
