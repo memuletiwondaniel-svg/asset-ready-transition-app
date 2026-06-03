@@ -66,7 +66,17 @@ export const P2AWorkspaceOverlay: React.FC<P2AWorkspaceOverlayProps> = ({
                 ? `${projectNumber ? projectNumber + ' ' : ''}P2A Plan`
                 : 'Develop P2A Plan'}
             </h2>
-            <Badge variant="outline" className={cn("text-xs", statusConfig.className)}>
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-xs",
+                statusConfig.className,
+                planUIState.isLocked && "cursor-pointer hover:opacity-80 transition-opacity"
+              )}
+              onClick={planUIState.isLocked ? handleStatusClick : undefined}
+              role={planUIState.isLocked ? 'button' : undefined}
+              tabIndex={planUIState.isLocked ? 0 : undefined}
+            >
               {statusConfig.label}
             </Badge>
           </div>
