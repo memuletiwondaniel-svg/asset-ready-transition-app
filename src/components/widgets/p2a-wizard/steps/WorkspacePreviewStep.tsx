@@ -44,6 +44,7 @@ export const WorkspacePreviewStep: React.FC<WorkspacePreviewStepProps> = ({
   mappings,
   vcrPhaseAssignments,
   approvers = [],
+  onNavigateToMapping,
 }) => {
   const [unmappedOpen, setUnmappedOpen] = useState(false);
   const [unassignedOpen, setUnassignedOpen] = useState(false);
