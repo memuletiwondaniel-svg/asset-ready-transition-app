@@ -368,6 +368,15 @@ export const VCREditOverlay: React.FC<VCREditOverlayProps> = ({
 
           <ScrollArea className="flex-1 px-4 pb-4">
             <div className="space-y-0.5">
+              {(assigned.length > 0 || available.length > 0) && (
+                <div className="grid grid-cols-[0.875rem_0.875rem_1fr_2.25rem_3rem] items-center gap-2 px-3 pb-1 text-[9px] font-medium uppercase tracking-wider text-muted-foreground/70">
+                  <span />
+                  <span />
+                  <span>System</span>
+                  <span className="text-right">Class</span>
+                  <span className="text-right" title="Subsystems mapped to this VCR / available to this VCR">Mapped</span>
+                </div>
+              )}
               {assigned.length > 0 && (
                 <div className="mb-2">
                   <p className="text-[10px] font-medium text-primary uppercase tracking-wider px-3 pb-1">
