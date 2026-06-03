@@ -420,7 +420,15 @@ export const PhasesStep: React.FC<PhasesStepProps> = ({
               <div className="flex-1 flex flex-col items-center justify-center py-10 text-muted-foreground">
                 <Milestone className="h-8 w-8 mb-2 opacity-40" />
                 <p className="text-sm">No phases defined yet</p>
-                <p className="text-[11px] mt-1">Click "Add Phase" to get started</p>
+                <p className="text-[11px] mt-1 mb-4">Click "Add Phase" to get started</p>
+                <Button
+                  size="sm"
+                  onClick={handleOpenCreate}
+                  className="h-8 text-xs gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Phase
+                </Button>
               </div>
             )}
           </div>
