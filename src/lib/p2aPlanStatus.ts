@@ -41,7 +41,7 @@ const STATES: Record<P2APlanStatus, P2APlanUIState> = {
   DRAFT: {
     badgeLabel: 'Draft',
     badgeClass: 'bg-muted text-muted-foreground border-border',
-    helperText: 'Continue setting up your handover plan',
+    helperText: 'Continue editing your plan and submit it for approval.',
     primaryLabel: 'Continue P2A Plan',
     primaryAction: 'edit',
     isLocked: false,
@@ -50,7 +50,7 @@ const STATES: Record<P2APlanStatus, P2APlanUIState> = {
   PENDING_APPROVAL: {
     badgeLabel: 'Awaiting Approval',
     badgeClass: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
-    helperText: 'Awaiting approval',
+    helperText: 'Your plan is awaiting approval from the assigned approvers.',
     primaryLabel: 'View P2A Plan',
     primaryAction: 'view',
     isLocked: true,
@@ -60,7 +60,7 @@ const STATES: Record<P2APlanStatus, P2APlanUIState> = {
     // Legacy "submitted / in review" status — same UX as PENDING_APPROVAL.
     badgeLabel: 'In Review',
     badgeClass: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
-    helperText: 'Your plan is awaiting approval',
+    helperText: 'Your plan is awaiting approval from the assigned approvers.',
     primaryLabel: 'View P2A Plan',
     primaryAction: 'view',
     isLocked: true,
@@ -69,7 +69,7 @@ const STATES: Record<P2APlanStatus, P2APlanUIState> = {
   COMPLETED: {
     badgeLabel: 'Approved',
     badgeClass: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
-    helperText: 'Your plan has been approved',
+    helperText: 'This plan has been approved.',
     primaryLabel: 'View P2A Plan',
     primaryAction: 'view',
     isLocked: true,
