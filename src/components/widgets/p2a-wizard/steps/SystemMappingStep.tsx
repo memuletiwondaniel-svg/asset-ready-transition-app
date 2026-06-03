@@ -483,7 +483,6 @@ export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
               Optional
             </span>
           </div>
-          </div>
           <p className="text-xs text-muted-foreground mt-0.5">
             Tentative mapping to seed the VCR plans — finalized later in each VCR's Execution Plan.
           </p>
