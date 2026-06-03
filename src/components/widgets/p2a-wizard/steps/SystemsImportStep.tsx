@@ -50,21 +50,11 @@ interface SystemsImportStepProps {
 }
 
 
-function getSystemIdColor(systemId: string) {
-  const str = systemId.replace(/-/g, '').toUpperCase();
-  let hash = 5381;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
-  }
-  hash = Math.abs(hash);
-  const hueAnchors = [165, 180, 200, 220, 250, 280, 320];
-  const hue = (hueAnchors[hash % hueAnchors.length] + (((hash >> 8) % 25) - 12) + 360) % 360;
-  const sat = 35 + ((hash >> 12) % 10);
-  return {
-    bg: `hsl(${hue}, ${sat}%, 94%)`,
-    border: `hsl(${hue}, ${sat}%, 82%)`,
-    text: `hsl(${hue}, ${sat + 15}%, 35%)`,
-  };
+// Natural / alphanumeric comparator so -101, -101A, -101B, -102, -103 sort correctly
+// (and -1010 comes after -102, not between -101 and -102).
+const naturalCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+function compareSystemIds(a: string, b: string) {
+  return naturalCollator.compare(a ?? '', b ?? '');
 }
 
 export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
