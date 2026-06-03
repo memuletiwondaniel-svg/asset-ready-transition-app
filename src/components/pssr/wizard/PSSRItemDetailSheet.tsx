@@ -48,6 +48,7 @@ import { ChecklistItem } from '@/hooks/usePSSRChecklistLibrary';
 import { ChecklistItemOverride } from './ChecklistItemEditDialog';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useApprovingPartyHoldersByNames } from '@/hooks/useApprovingPartyHolders';
 
 interface PSSRItemDetailSheetProps {
   open: boolean;
