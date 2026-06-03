@@ -131,8 +131,8 @@ export const VCRCreationStep: React.FC<VCRCreationStepProps> = ({
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-sm">{vcr.name}</span>
-                          <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border bg-muted text-muted-foreground border-border">
+                          <span className="font-semibold text-sm transition-colors group-hover:text-primary">{vcr.name}</span>
+                          <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border bg-muted text-muted-foreground border-border transition-all duration-200 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary group-hover:shadow-sm group-hover:scale-105">
                             {shortVCRCode(vcr.code)}
                           </span>
                         </div>
