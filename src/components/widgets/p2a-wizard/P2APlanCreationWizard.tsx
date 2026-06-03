@@ -873,7 +873,7 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="z-[150]">
+        <AlertDialogContent className="z-[150]" overlayClassName="z-[149] bg-black/80 backdrop-blur-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete P2A Plan?</AlertDialogTitle>
             <AlertDialogDescription>
