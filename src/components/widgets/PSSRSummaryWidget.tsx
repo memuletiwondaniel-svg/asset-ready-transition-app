@@ -106,7 +106,13 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const [selectedVCR, setSelectedVCR] = useState<ProjectVCR | null>(null);
   const [wizardVCR, setWizardVCR] = useState<ProjectVCR | null>(null);
   const [showDeleteP2ADraft, setShowDeleteP2ADraft] = useState(false);
-  const { deleteDraft: deleteP2ADraft, isDeleting: isDeletingP2ADraft } = useP2APlanWizard(projectId, projectCode);
+  const [showP2ASubmission, setShowP2ASubmission] = useState(false);
+  const {
+    deleteDraft: deleteP2ADraft,
+    isDeleting: isDeletingP2ADraft,
+    loadDraft: loadP2ADraft,
+    state: p2aWizardState,
+  } = useP2APlanWizard(projectId, projectCode);
 
 
   // Get the first (active) ORA plan for this project
