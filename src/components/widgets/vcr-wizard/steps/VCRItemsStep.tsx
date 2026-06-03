@@ -1096,7 +1096,7 @@ const EditItemForm: React.FC<{
           {approvingParties.length > 0 ? (
             <div className="space-y-2">
               {approvingParties.map(roleId => {
-                const users = getUsersForRole(roleId);
+                const users = getApprovingUsersForRole(roleId);
                 const b2b = isB2BPairUsers(users);
                 return (
                   <div key={roleId} className="border rounded-lg p-2.5 group/approver hover:border-primary/30 transition-colors">
