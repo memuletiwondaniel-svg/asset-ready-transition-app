@@ -9,6 +9,7 @@ import {
   Check,
   X,
   Zap,
+  Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WizardSystem, WizardSubsystem } from './SystemsImportStep';
@@ -19,6 +20,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // ── Mapping key helpers ──────────────────────────────────────
 const SUB_SEP = '::sub::';
