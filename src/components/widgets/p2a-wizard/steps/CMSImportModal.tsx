@@ -161,6 +161,13 @@ export const CMSImportModal: React.FC<CMSImportModalProps> = ({
 
   const strong = useMemo(() => candidates.filter(c => c.tier === 'strong'), [candidates]);
   const weak = useMemo(() => candidates.filter(c => c.tier === 'weak'), [candidates]);
+  const filteredStrong = useMemo(() => {
+    const q = strongFilter.trim().toLowerCase();
+    if (!q) return strong;
+    return strong.filter(c =>
+      c.system_id.toLowerCase().includes(q) || c.name.toLowerCase().includes(q),
+    );
+  }, [strong, strongFilter]);
 
   const toggle = (id: string, set: Set<string>, setter: (s: Set<string>) => void) => {
     const next = new Set(set);
