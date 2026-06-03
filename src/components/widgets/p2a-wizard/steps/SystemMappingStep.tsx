@@ -167,6 +167,91 @@ const VCRPillSelector: React.FC<{
   );
 };
 
+// ── Mixed Badge (parent w/ children spread across multiple VCRs) ──
+const MixedBadge: React.FC<{
+  vcrs: WizardVCR[];
+  childVcrIds: string[];
+  onBulkAssign: (vcrId: string | null) => void;
+  vcrOriginalIndices: Map<string, number>;
+}> = ({ vcrs, childVcrIds, onBulkAssign, vcrOriginalIndices }) => {
+  const [open, setOpen] = useState(false);
+  const uniqueIds = Array.from(new Set(childVcrIds));
+  const dots = uniqueIds.slice(0, 4);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            'inline-flex items-center justify-between gap-1.5 px-2 py-1 rounded-md text-xs font-medium w-[180px]',
+            'border border-border bg-muted/60 text-muted-foreground',
+            'hover:bg-muted hover:text-foreground transition-all cursor-pointer',
+            'focus:outline-none focus:ring-1 focus:ring-primary/30',
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="flex items-center gap-1.5 min-w-0">
+            <span>Mixed</span>
+            <span className="flex items-center gap-0.5">
+              {dots.map((vid) => {
+                const idx = vcrOriginalIndices.get(vid) ?? 0;
+                const c = getVCRColor(idx);
+                return (
+                  <span
+                    key={vid}
+                    className="inline-block w-1.5 h-1.5 rounded-full"
+                    style={{ backgroundColor: c.dot }}
+                  />
+                );
+              })}
+              {uniqueIds.length > dots.length && (
+                <span className="text-[9px] ml-0.5">+{uniqueIds.length - dots.length}</span>
+              )}
+            </span>
+          </span>
+          <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-52 p-1 z-[150]"
+        align="end"
+        sideOffset={4}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wide">
+          Bulk-assign all to…
+        </div>
+        {vcrs.map(vcr => {
+          const idx = vcrOriginalIndices.get(vcr.id) ?? 0;
+          const c = getVCRColor(idx);
+          return (
+            <button
+              key={vcr.id}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-muted/60 transition-colors text-left"
+              onClick={() => { onBulkAssign(vcr.id); setOpen(false); }}
+            >
+              <span
+                className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0"
+                style={{ backgroundColor: c.bg, color: c.text }}
+              >
+                {shortVCRCode(vcr.code)}
+              </span>
+              <span className="flex-1 truncate font-medium">{vcr.name}</span>
+            </button>
+          );
+        })}
+        <div className="border-t my-1" />
+        <button
+          className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-destructive hover:bg-destructive/8 transition-colors"
+          onClick={() => { onBulkAssign(null); setOpen(false); }}
+        >
+          <X className="h-3 w-3" />
+          <span>Clear all child assignments</span>
+        </button>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 // ── Main Component ───────────────────────────────────────────
 export const SystemMappingStep: React.FC<SystemMappingStepProps> = ({
   systems,
