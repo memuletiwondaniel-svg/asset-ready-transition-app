@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfileUsers } from '@/hooks/useProfileUsers';
+import { useProjectRoleUsers } from '@/hooks/useProjectRoleUsers';
 
 export interface WizardApprover {
   id: string;
@@ -31,22 +32,16 @@ export interface WizardApprover {
   user_avatar?: string;
 }
 
-interface TeamMember {
-  id: string;
-  user_id: string;
-  role: string;
-  is_lead: boolean;
-  profile?: {
-    full_name: string;
-    avatar_url?: string;
-  };
-}
-
 /**
  * Fixed approval sequence – hardcoded, not user-reorderable.
  * Phase 1 (parallel): ORA Lead, Construction Lead, Commissioning Lead
  * Phase 2 (after Phase 1): Project Hub Lead, Dep. Plant Director
- * Labels are byte-identical to roles.name (Mig 5c validator).
+ *
+ * Labels MUST be byte-identical to roles.name (Mig 5c validator) — they
+ * are passed directly to the shared `resolve_project_role_user` RPC via
+ * the `useProjectRoleUsers` hook. NO private label/synonym matching
+ * lives in this component: who-holds-role-X-on-project-Y is decided in
+ * exactly one place (the RPC), shared with backend triggers.
  */
 const FIXED_APPROVER_ROLES = [
   { key: 'ora_lead', label: 'ORA Lead', order: 1, phase: 1 },
@@ -56,28 +51,15 @@ const FIXED_APPROVER_ROLES = [
   { key: 'deputy_plant_director', label: 'Dep. Plant Director', order: 5, phase: 2 },
 ] as const;
 
+// Labels we resolve via the shared RPC. Deputy Plant Director is
+// plant-scoped (not project-team-scoped) and uses its own canonical
+// SECURITY DEFINER RPC `find_deputy_plant_director` — also a shared
+// path, not a private matcher.
+const RPC_RESOLVED_LABELS = FIXED_APPROVER_ROLES
+  .filter((r) => r.key !== 'deputy_plant_director')
+  .map((r) => r.label);
 
-/**
- * Match a team member role string to one of our fixed approver keys.
- * Strictly aligned with the canonical roles catalog (Mig 5c validator).
- *
- * IMPORTANT: "Sr ORA Engr" / "Snr. ORA Engr." are DISTINCT roles from
- * "ORA Lead" — the Sr ORA Engr DEVELOPS the plan; the ORA Lead REVIEWS /
- * APPROVES it. They must never be conflated here (segregation of duties).
- * If a project has no ORA Lead assigned, the slot stays "Not assigned"
- * until the canonical role is assigned to the project team.
- */
-const matchRoleKey = (teamRole: string): string | null => {
-  const r = teamRole.toLowerCase().trim();
 
-  if (r === 'ora lead') return 'ora_lead';
-  if (r === 'construction lead') return 'construction_lead';
-  if (r === 'commissioning lead') return 'commissioning_lead';
-  if (r === 'project hub lead' || r === 'hub lead') return 'hub_lead';
-  if (r === 'dep. plant director' || r === 'deputy plant director') return 'deputy_plant_director';
-
-  return null;
-};
 
 interface ApprovalSetupStepProps {
   approvers: WizardApprover[];
