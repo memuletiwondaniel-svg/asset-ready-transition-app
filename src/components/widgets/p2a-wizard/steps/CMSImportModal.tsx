@@ -509,17 +509,9 @@ const CandidateRow: React.FC<{
         >
           <span className="text-sm font-medium truncate flex-1">{candidate.name}</span>
           {candidate.is_hydrocarbon && (
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border border-orange-200 bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:border-orange-900/40 dark:text-orange-300 shrink-0">
-                    <Flame className="h-2.5 w-2.5" />
-                    HC
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top">Hydrocarbon System</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:border-amber-900/40 dark:text-amber-300 shrink-0">
+              Hydrocarbon
+            </span>
           )}
           <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground border border-border/50 shrink-0">
             {candidate.system_id}
