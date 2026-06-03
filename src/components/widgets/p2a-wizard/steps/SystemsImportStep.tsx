@@ -192,17 +192,19 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
         <div className="border rounded-lg flex-1 min-h-0 bg-muted/20">
           <ScrollArea className="h-full">
             <div className="p-1.5 space-y-1">
-              {systems.map((system) => (
-                <SystemListItem
-                  key={system.id}
-                  system={system}
-                  isEditing={editingId === system.id}
-                  onEdit={() => setEditingId(system.id)}
-                  onCancelEdit={() => setEditingId(null)}
-                  onUpdate={(updates) => handleUpdateSystem(system.id, updates)}
-                  onRemove={() => handleRemoveSystem(system.id)}
-                />
-              ))}
+              {[...systems]
+                .sort((a, b) => compareSystemIds(a.system_id, b.system_id))
+                .map((system) => (
+                  <SystemListItem
+                    key={system.id}
+                    system={system}
+                    isEditing={editingId === system.id}
+                    onEdit={() => setEditingId(system.id)}
+                    onCancelEdit={() => setEditingId(null)}
+                    onUpdate={(updates) => handleUpdateSystem(system.id, updates)}
+                    onRemove={() => handleRemoveSystem(system.id)}
+                  />
+                ))}
             </div>
           </ScrollArea>
         </div>
