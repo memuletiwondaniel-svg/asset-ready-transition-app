@@ -74,6 +74,7 @@ import { useParams } from 'react-router-dom';
 import { useVCRItemDeliveringParties } from '@/hooks/useVCRItemDeliveringParties';
 import { getRegionKeywords, getPortfolio, profileMatchesProjectLocation, getRoleFamilyNames, type ProjectLocationContext } from '@/utils/hubRegionMapping';
 import { requiresPortfolio, requiresHub } from '@/utils/roleAssignmentConfig';
+import { useApprovingPartyHoldersByIds } from '@/hooks/useApprovingPartyHolders';
 
 interface VCRItemsStepProps {
   vcrId: string;
