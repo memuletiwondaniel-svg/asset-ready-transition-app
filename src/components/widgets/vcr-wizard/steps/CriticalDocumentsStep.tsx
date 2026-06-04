@@ -336,137 +336,159 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
   return (
     <TooltipProvider>
       <div className="flex flex-col h-full min-h-0 space-y-3">
-        {/* Header row */}
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className="space-y-0.5">
-            <h2 className="text-base font-semibold">Critical Documents</h2>
-            <p className="text-xs text-muted-foreground">
-              Select the Tier 1 and Tier 2 document types required for this VCR.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {totalCount > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="outline" className="cursor-default">
-                    {totalCount} required
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {totalCount - boundCount} type{totalCount - boundCount === 1 ? '' : 's'}, {boundCount} specific document{boundCount === 1 ? '' : 's'}
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {totalCount > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => setConfirmClearAll(true)}
-                  >
-                    <Trash2 className="w-4 h-4" />
+        {showCatalog ? (
+          <>
+            {/* Header row */}
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="space-y-0.5">
+                <h2 className="text-base font-semibold">Critical Documents</h2>
+                <p className="text-xs text-muted-foreground">
+                  Select the Tier 1 and Tier 2 document types required for this VCR.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {totalCount > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge variant="outline" className="cursor-default">
+                        {totalCount} required
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {totalCount - boundCount} type{totalCount - boundCount === 1 ? '' : 's'}, {boundCount} specific document{boundCount === 1 ? '' : 's'}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {totalCount > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => setConfirmClearAll(true)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Clear all selections</TooltipContent>
+                  </Tooltip>
+                )}
+                <Button variant="outline" size="sm" onClick={() => setAssaiOpen(true)} className="gap-1.5">
+                  <img src={assaiIcon} alt="" className="w-4 h-4 object-contain" /> Check Assai
+                </Button>
+              </div>
+            </div>
+
+            {/* Filter row */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Tabs value={tier} onValueChange={(v) => setTier(v as TierFilter)}>
+                <TabsList className="h-8">
+                  <TabsTrigger value="all" className="text-xs px-3 h-7">All</TabsTrigger>
+                  <TabsTrigger value="Tier 1" className="text-xs px-3 h-7">Tier 1</TabsTrigger>
+                  <TabsTrigger value="Tier 2" className="text-xs px-3 h-7">Tier 2</TabsTrigger>
+                  <TabsTrigger value="RLMU" className="text-xs px-3 h-7">RLMU</TabsTrigger>
+                </TabsList>
+              </Tabs>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5">
+                    Discipline
+                    {disciplines.length > 0 && (
+                      <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{disciplines.length}</Badge>
+                    )}
+                    <ChevronDown className="w-3 h-3" />
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">Clear all selections</TooltipContent>
-              </Tooltip>
-            )}
-            <Button variant="outline" size="sm" onClick={() => setAssaiOpen(true)} className="gap-1.5">
-              <img src={assaiIcon} alt="" className="w-4 h-4 object-contain" /> Check Assai
-            </Button>
-          </div>
-        </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-2 max-h-80 overflow-auto z-[200]" align="start">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium">Discipline</span>
+                    {disciplines.length > 0 && (
+                      <button onClick={() => setDisciplines([])} className="text-[11px] text-muted-foreground hover:text-foreground">Clear</button>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    {disciplineOptions.map((d) => (
+                      <label key={d.code} className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-muted cursor-pointer">
+                        <Checkbox
+                          checked={disciplines.includes(d.code)}
+                          onCheckedChange={() => setDisciplines((arr) => arr.includes(d.code) ? arr.filter((c) => c !== d.code) : [...arr, d.code])}
+                        />
+                        <span className="text-xs">{d.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
 
-        {/* Filter row */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Tabs value={tier} onValueChange={(v) => setTier(v as TierFilter)}>
-            <TabsList className="h-8">
-              <TabsTrigger value="all" className="text-xs px-3 h-7">All</TabsTrigger>
-              <TabsTrigger value="Tier 1" className="text-xs px-3 h-7">Tier 1</TabsTrigger>
-              <TabsTrigger value="Tier 2" className="text-xs px-3 h-7">Tier 2</TabsTrigger>
-              <TabsTrigger value="RLMU" className="text-xs px-3 h-7">RLMU</TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5">
-                Discipline
-                {disciplines.length > 0 && (
-                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{disciplines.length}</Badge>
+              <div className="relative ml-auto w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Search by code or name…"
+                  className="pl-9 pr-8 h-8 text-xs"
+                />
+                {searchInput && (
+                  <button onClick={() => setSearchInput('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 )}
-                <ChevronDown className="w-3 h-3" />
+              </div>
+            </div>
+
+            {/* List body — the only scroll surface */}
+            <div className="border border-border/60 rounded-md flex-1 min-h-0 overflow-y-auto">
+              {typesLoading || requirementsLoading ? (
+                <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" /> <span className="text-sm">Loading catalog…</span>
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">
+                  No document types match these filters.
+                </div>
+              ) : (
+                <DocTypeList items={filtered} isSelected={isSelected} onToggle={toggleType} savedTypeIds={savedTypeIds} />
+              )}
+            </div>
+
+            {/* Sticky footer */}
+            <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/60">
+              <span className="text-xs text-muted-foreground">
+                {totalCount} document type{totalCount === 1 ? '' : 's'} selected
+                {pendingChanges > 0 && (
+                  <span className="ml-2 text-amber-600">· {pendingChanges} unsaved change{pendingChanges === 1 ? '' : 's'}</span>
+                )}
+              </span>
+              <Button
+                size="sm"
+                disabled={pendingChanges === 0 || saveMutation.isPending}
+                onClick={() => saveMutation.mutate()}
+              >
+                {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-72 p-2 max-h-80 overflow-auto z-[200]" align="start">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium">Discipline</span>
-                {disciplines.length > 0 && (
-                  <button onClick={() => setDisciplines([])} className="text-[11px] text-muted-foreground hover:text-foreground">Clear</button>
-                )}
-              </div>
-              <div className="space-y-1">
-                {disciplineOptions.map((d) => (
-                  <label key={d.code} className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-muted cursor-pointer">
-                    <Checkbox
-                      checked={disciplines.includes(d.code)}
-                      onCheckedChange={() => setDisciplines((arr) => arr.includes(d.code) ? arr.filter((c) => c !== d.code) : [...arr, d.code])}
-                    />
-                    <span className="text-xs">{d.name}</span>
-                  </label>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          <div className="relative ml-auto w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search by code or name…"
-              className="pl-9 pr-8 h-8 text-xs"
-            />
-            {searchInput && (
-              <button onClick={() => setSearchInput('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <FileStack className="h-7 w-7 text-primary" />
+            </div>
+            <h2 className="text-lg font-semibold">No critical documents yet</h2>
+            <p className="mt-2 max-w-[460px] text-sm leading-relaxed text-muted-foreground">
+              Start by selecting the Tier 1 and Tier 2 document types required for this VCR, or check Assai to review mapped source documents first.
+            </p>
+            <div className="mt-6 flex items-center gap-3">
+              <Button size="lg" className="gap-2 shadow-sm" onClick={() => setBrowseCatalog(true)}>
+                <Plus className="h-4 w-4" /> Add first document
+              </Button>
+              <Button variant="outline" size="lg" onClick={() => setAssaiOpen(true)} className="gap-2">
+                <img src={assaiIcon} alt="" className="h-4 w-4 object-contain" /> Check Assai
+              </Button>
+            </div>
           </div>
-        </div>
-
-        {/* List body — the only scroll surface */}
-        <div className="border border-border/60 rounded-md flex-1 min-h-0 overflow-y-auto">
-          {typesLoading ? (
-            <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" /> <span className="text-sm">Loading catalog…</span>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              No document types match these filters.
-            </div>
-          ) : (
-            <DocTypeList items={filtered} isSelected={isSelected} onToggle={toggleType} savedTypeIds={savedTypeIds} />
-          )}
-        </div>
-
-        {/* Sticky footer */}
-        <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/60">
-          <span className="text-xs text-muted-foreground">
-            {totalCount} document type{totalCount === 1 ? '' : 's'} selected
-            {pendingChanges > 0 && (
-              <span className="ml-2 text-amber-600">· {pendingChanges} unsaved change{pendingChanges === 1 ? '' : 's'}</span>
-            )}
-          </span>
-          <Button
-            size="sm"
-            disabled={pendingChanges === 0 || saveMutation.isPending}
-            onClick={() => saveMutation.mutate()}
-          >
-            {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
-          </Button>
-        </div>
+        )}
 
         <CheckAssaiModal
           open={assaiOpen}
@@ -494,7 +516,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
         </AlertDialog>
 
         <AlertDialog open={confirmClearAll} onOpenChange={setConfirmClearAll}>
-          <AlertDialogContent>
+          <AlertDialogContent className="z-[220]" overlayClassName="z-[219] bg-black/80 backdrop-blur-sm">
             <AlertDialogHeader>
               <AlertDialogTitle>Clear all critical documents?</AlertDialogTitle>
               <AlertDialogDescription>
