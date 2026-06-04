@@ -51,6 +51,8 @@ import { ApproversStep } from './steps/ApproversStep';
 import { CMMSSparesStep } from './steps/CMMSSparesStep';
 import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
 import { Layers, CheckCircle2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
 
 interface VCRExecutionPlanWizardProps {
   open: boolean;
