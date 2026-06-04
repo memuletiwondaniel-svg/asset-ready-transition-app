@@ -50,6 +50,8 @@ Deno.serve(async (req) => {
     fred_direct_tagsearch: { found: false, returned: 0, total_available: 0, keys: [], sample: [] },
     fred_direct_punch: { count: 0, keys: [], sample: [] },
     errors: [],
+  };
+
 
   try {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
