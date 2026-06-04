@@ -285,9 +285,7 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                 saveAndExitLabel={navigation.saveAndExitLabel}
                 isReviewMode={navigation.isReviewMode}
                 nextMuted={
-                  !isLastStep &&
-                  !isStepComplete(currentStep) &&
-                  !(isStepOptional?.(currentStep) ?? false)
+                  !isLastStep && !isStepComplete(currentStep)
                 }
               />
             ) : null}
