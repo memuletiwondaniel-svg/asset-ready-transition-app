@@ -64,7 +64,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
     queryKey: ['vcr-confirmation-stats', vcrId],
     queryFn: async () => {
       const client = supabase as any;
-      const [systems, training, procedures, criticalDocs, registers, logsheets, cmms, spares] =
+      const [systems, training, procedures, criticalDocs, registers, logsheets, maintenance] =
         await Promise.all([
           client.from('p2a_handover_point_systems').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
           client.from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
@@ -72,8 +72,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
           client.from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
           client.from('p2a_vcr_register_selections').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
           client.from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
-          client.from('p2a_vcr_cmms').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
-          client.from('p2a_vcr_spares').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+          client.from('p2a_vcr_maintenance_deliverables').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId).eq('is_applicable', true),
         ]);
       return {
         systems: systems.count || 0,
@@ -82,8 +81,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
         criticalDocs: criticalDocs.count || 0,
         registers: registers.count || 0,
         logsheets: logsheets.count || 0,
-        cmms: cmms.count || 0,
-        spares: spares.count || 0,
+        maintenance: maintenance.count || 0,
       };
     },
   });
