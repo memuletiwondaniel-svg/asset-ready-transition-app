@@ -479,6 +479,10 @@ Deno.serve(async (req) => {
           array_length: arr.length,
           raw_excerpt: rawStr.slice(0, 2048),
         };
+        report.getsystems_diag = {
+          sync_call: { payload: {}, attempts: diagSync, returned_null: sysRespRaw === null },
+          fred_call: { payload: { itrClass: "All" }, attempts: diagFred, returned_null: fredRespRaw === null },
+        };
       }
       const bySub: Record<string, { total: number; complete: number }> = {};
       for (const sys of arr) {
