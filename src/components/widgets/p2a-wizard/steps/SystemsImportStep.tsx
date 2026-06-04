@@ -135,15 +135,27 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
     });
   };
 
-  const handleExcelUpload = (file: File) => {
-    toast({
-      title: 'Excel Upload',
-      description: `Processing ${file.name}...`,
-    });
-    const mockSystems: WizardSystem[] = [
-      { id: `excel-${Date.now()}-1`, system_id: 'SYS-XLS-001', name: 'Excel System 1', description: 'From Excel', is_hydrocarbon: false },
-    ];
-    onSystemsChange([...systems, ...mockSystems]);
+  const handleExcelUpload = async (file: File) => {
+    try {
+      const { parseSystemsExcel } = await import('./parseSystemsExcel');
+      const parsed = await parseSystemsExcel(file);
+      if (!parsed.length) {
+        toast({
+          title: 'No systems found',
+          description: 'The file had no rows we could map. Expecting columns like "System ID" and "Name".',
+          variant: 'destructive',
+        });
+        return;
+      }
+      handleCMSImport(parsed); // re-use dedup/merge logic
+      toast({
+        title: 'Excel imported',
+        description: `Parsed ${parsed.length} ${parsed.length === 1 ? 'row' : 'rows'} from ${file.name}.`,
+      });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to parse Excel file';
+      toast({ title: 'Excel parse failed', description: msg, variant: 'destructive' });
+    }
   };
 
   const [cmsConfigured, setCmsConfigured] = useState<boolean>(() => isAPIConfigured('gocompletions'));
