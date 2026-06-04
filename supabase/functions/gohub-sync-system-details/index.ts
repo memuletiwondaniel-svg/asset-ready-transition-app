@@ -461,7 +461,9 @@ Deno.serve(async (req) => {
     // (same trap class as TagSearch). Fred's handler now applies that fix
     // and groups by SubSystem,Discipline for DAC variants.
     if (!body.skip_certs) {
-      const certTypes = ["MCC", "MCC-DAC", "PCC", "PCDAC", "RFC", "RFSU", "RFOC"];
+      // Iterate the full contract (MCC, MCC-DAC, PCC, PCDAC, RFC, RFSU, RFOC, FAC).
+      // GUIDs/gate/groupBy come from HANDOVER_CERTS — do not hardcode here.
+      const certTypes = HANDOVER_CERTS.map((c) => c.cert_type);
       report.cert_pass.per_type = [] as any[];
       for (const certType of certTypes) {
         report.cert_pass.attempted++;
