@@ -156,6 +156,9 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
       plant_id: project.plant_id || '',
       field_id: project.field_id || '',
       station_id: project.station_id || '',
+      default_plant_code: project.default_plant_code ?? null,
+      default_site_code: project.default_site_code ?? null,
+      default_unit_code: project.default_unit_code ?? null,
     });
     setScopeDescription(project.project_scope || '');
     setScopeAttachments([]);
