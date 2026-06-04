@@ -49,8 +49,10 @@ import {
   Ban,
   Undo2,
   Info,
+  HelpCircle,
   Trash2,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 /**
  * Detect a B2B-paired role: exactly two active holders whose normalized
