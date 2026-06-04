@@ -318,15 +318,28 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
         {/* Pending SoF Items */}
         <div className="space-y-4">
         {pendingItems.map((item, index) => {
-          // Extract project code from PSSR ID (e.g., "PSSR-DP300-001" -> "DP300")
-          const pssrIdParts = item.pssr?.pssr_id?.replace('PSSR-', '').split('-') || ['DP217'];
-          const projectCode = pssrIdParts[0] || 'DP217'; // First part is the project code
-          // Display with hyphen for readability (DP-217), use raw for color (DP217)
-          const displayId = projectCode.match(/^([A-Z]+)(\d+)$/) 
+          const isVCR = item.source === 'VCR';
+          const openItem = () => {
+            if (isVCR) handleViewVCRSoF(item.project_id, item.vcr_id!);
+            else handleViewSoF(item.pssr_id!);
+          };
+          // For VCR: derive project code from project_name "DP-300 Compressor C and D"
+          // For PSSR: parse from PSSR ID "PSSR-DP300-001"
+          let projectCode = 'DP217';
+          if (isVCR) {
+            const m = (item.pssr?.project_name || '').match(/[A-Z]{2,}-?\d+/);
+            projectCode = m ? m[0].replace('-', '') : 'DP300';
+          } else {
+            const parts = item.pssr?.pssr_id?.replace('PSSR-', '').split('-') || ['DP217'];
+            projectCode = parts[0] || 'DP217';
+          }
+          const displayId = projectCode.match(/^([A-Z]+)(\d+)$/)
             ? `${projectCode.match(/^([A-Z]+)(\d+)$/)?.[1]}-${projectCode.match(/^([A-Z]+)(\d+)$/)?.[2]}`
             : projectCode;
-          const projectName = item.pssr?.project_name || 'HM Additional Compressors';
-          
+          const projectName = isVCR
+            ? (item.vcr_label || item.pssr?.asset || 'VCR')
+            : (item.pssr?.project_name || 'HM Additional Compressors');
+
           return (
             <Card
               key={item.id}
@@ -335,7 +348,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 "animate-fade-in"
               )}
               style={{ animationDelay: `${index * 100}ms` }}
-              onClick={() => handleViewSoF(item.pssr_id)}
+              onClick={openItem}
             >
               <CardContent className="p-5">
                 <div className="flex items-center justify-between gap-4">
@@ -350,7 +363,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                     </div>
                     <div className="flex items-center gap-2 mb-2">
                       <Badge variant="outline" className="text-xs">
-                        SoF
+                        {isVCR ? 'VCR SoF' : 'SoF'}
                       </Badge>
                       <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/20">
                         Pending
@@ -370,7 +383,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                     className="shrink-0 opacity-80 group-hover:opacity-100 transition-opacity"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleViewSoF(item.pssr_id);
+                      openItem();
                     }}
                   >
                     Review & Sign
@@ -380,6 +393,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
             </Card>
           );
         })}
+
 
           {/* Locked items - still waiting for other approvers */}
           {lockedItems.length > 0 && (
