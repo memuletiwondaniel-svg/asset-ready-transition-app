@@ -150,6 +150,9 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                   {steps.map((step, idx) => {
                     const isActive = idx === currentStep;
                     const isComplete = isStepComplete(idx);
+                    const isOptional = isStepOptional?.(idx) ?? false;
+                    const isSkippedMandatory =
+                      !isActive && !isComplete && !isOptional && (isStepWarning?.(idx) ?? false);
                     return (
                       <button
                         key={step.id}
@@ -159,18 +162,13 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                           isActive
                             ? 'bg-primary text-primary-foreground border-primary'
                             : isComplete
-                              ? 'bg-emerald-500 text-white border-emerald-500'
-                              : 'bg-transparent text-muted-foreground border-border'
+                              ? 'bg-transparent text-emerald-600 dark:text-emerald-400 border-emerald-500'
+                              : isSkippedMandatory
+                                ? 'bg-transparent text-amber-600 dark:text-amber-400 border-2 border-amber-500'
+                                : 'bg-transparent text-muted-foreground border-border'
                         )}
                       >
-                        <span className="relative inline-flex items-center justify-center w-4 h-4">
-                          <span className="text-[10px] font-semibold leading-none">{idx + 1}</span>
-                          {isComplete && !isActive && (
-                            <span className="absolute -top-1 -right-1.5 w-2.5 h-2.5 rounded-full bg-emerald-600 ring-2 ring-background flex items-center justify-center">
-                              <Check className="w-1.5 h-1.5 text-white" strokeWidth={4} />
-                            </span>
-                          )}
-                        </span>
+                        <span className="text-[10px] font-semibold leading-none">{idx + 1}</span>
                         {isActive && <span>{step.label}</span>}
                       </button>
                     );
