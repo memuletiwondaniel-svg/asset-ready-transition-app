@@ -34,6 +34,7 @@ export function useProjectIdAvailability(
         .select('id, project_title')
         .eq('project_id_prefix', prefix as any)
         .eq('project_id_number', debouncedNumber)
+        .eq('is_active', true)
         .maybeSingle();
       if (error && (error as any).code !== 'PGRST116') throw error;
       return (data as ProjectIdConflict) || null;
