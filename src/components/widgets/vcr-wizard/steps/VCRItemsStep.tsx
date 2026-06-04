@@ -991,10 +991,19 @@ const EditItemForm: React.FC<{
   const [deleteApproverTarget, setDeleteApproverTarget] = useState<{ roleId: string; name: string } | null>(null);
   const [memberPopoverRoleId, setMemberPopoverRoleId] = useState<string | null>(null);
   const [deliveringPopoverOpen, setDeliveringPopoverOpen] = useState(false);
+  const [expandedB2BKeys, setExpandedB2BKeys] = useState<Set<string>>(new Set());
+  const toggleB2BExpand = (key: string) => {
+    setExpandedB2BKeys(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
 
-  const guidancePreview = (guidanceNotes || '').split(/[.\n]/).find(s => s.trim().length > 0)?.trim() || 'No guidance provided';
-
-  // Renders a single party row: role title + B2B chip + primary avatar + +N badge
+  // Renders a single party row.
+  // Fixed column grid: [role label] [avatar] [name(s)] [B2B chip] [trash]
+  // When B2B chip is clicked the row reveals BOTH holders inline (name column
+  // becomes [name A] [avatar B] [name B]). B2B chip is the toggle.
   const renderPartyRow = (opts: {
     key: string;
     title: string;
@@ -1006,12 +1015,9 @@ const EditItemForm: React.FC<{
     popoverContent?: React.ReactNode;
   }) => {
     const primary = opts.users[0];
-    const overflow = Math.max(0, opts.users.length - 1);
+    const partner = opts.users[1];
+    const expanded = opts.isB2B && !!partner && expandedB2BKeys.has(opts.key);
     const allNames = opts.users.map(u => u.full_name).join(', ');
-    // Fixed column grid:
-    //   [role label] [avatar] [name] [B2B chip slot] [trash slot]
-    // Every column has a fixed width so avatars, names, chips, and trash icons
-    // line up vertically across every row. Empty slots stay reserved.
     return (
       <div
         key={opts.key}
@@ -1032,7 +1038,20 @@ const EditItemForm: React.FC<{
                       <AvatarImage src={getAvatarUrl(primary.avatar_url)} />
                       <AvatarFallback className="text-[9px]">{getInitials(primary.full_name)}</AvatarFallback>
                     </Avatar>
-                    <span className="text-xs truncate min-w-0 justify-self-start">{primary.full_name}</span>
+                    <span className="text-xs truncate min-w-0 justify-self-start hover:underline">
+                      {expanded && partner ? (
+                        <span className="inline-flex items-center gap-2">
+                          <span className="truncate">{primary.full_name}</span>
+                          <Avatar className="w-6 h-6 shrink-0">
+                            <AvatarImage src={getAvatarUrl(partner.avatar_url)} />
+                            <AvatarFallback className="text-[9px]">{getInitials(partner.full_name)}</AvatarFallback>
+                          </Avatar>
+                          <span className="truncate">{partner.full_name}</span>
+                        </span>
+                      ) : (
+                        primary.full_name
+                      )}
+                    </span>
                   </button>
                 </PopoverTrigger>
               </TooltipTrigger>
@@ -1068,13 +1087,26 @@ const EditItemForm: React.FC<{
 
         <div className="justify-self-start">
           {opts.isB2B && (
-            <Badge
-              variant="outline"
-              className="text-[9px] font-semibold tracking-wider px-1.5 py-0 h-4 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800"
-              title="Back-to-back pair — either holder can close the approval"
-            >
-              B2B
-            </Badge>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); toggleB2BExpand(opts.key); }}
+                  aria-pressed={expanded}
+                  className={cn(
+                    "inline-flex items-center justify-center text-[9px] font-semibold tracking-wider px-1.5 py-0 h-4 rounded-md border transition-colors cursor-pointer",
+                    expanded
+                      ? "bg-amber-200 text-amber-900 border-amber-400 ring-1 ring-amber-400 dark:bg-amber-800/60 dark:text-amber-100 dark:border-amber-600"
+                      : "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800"
+                  )}
+                >
+                  B2B
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                {expanded ? 'Hide partner holder' : 'Show both holders'}
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
 
