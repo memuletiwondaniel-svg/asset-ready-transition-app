@@ -248,9 +248,18 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
       const selectedDocIds = selections['__all__'] || [];
       if (selectedDocIds.length === 0) return;
 
-      // Get current user (tenant_id is handled by BEFORE INSERT trigger on vcr_document_requirements)
+      // Get current user. tenant_id is auto-set by trigger for vcr_document_requirements;
+      // for tables without that trigger (document_ingest_queue, orp_activity_log) we
+      // resolve tenant_id from the profiles table.
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id;
+      let tenantId: string | null = null;
+      if (userId) {
+        const { data: prof } = await (supabase as any)
+          .from('profiles').select('tenant_id').eq('id', userId).maybeSingle();
+        tenantId = prof?.tenant_id ?? null;
+      }
+
 
       // Fetch full doc type info for selected docs
       const { data: selectedDocTypes } = await supabase
