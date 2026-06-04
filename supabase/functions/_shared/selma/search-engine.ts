@@ -582,19 +582,23 @@ export async function paginateFilteredSearch(
       allDocs.push(doc);
     }
   }
-  
-  if (firstResult.docs.length < ctx.PAGE_CAP) return;
-  
-  const pageSize = firstResult.docs.length;
+
+  // V12.1 — gate on empirically detected page size (Assai caps at ~100 regardless of number_of_results).
+  // Fall back to first-page size if not yet detected (filtered sub-search called before primary sets it).
+  const detectedPageSize = ctx.detectedPageSize ?? firstResult.docs.length;
+  if (!ctx.detectedPageSize && firstResult.docs.length > 0) ctx.detectedPageSize = firstResult.docs.length;
+  if (firstResult.docs.length < detectedPageSize) return;
+
+  const pageSize = detectedPageSize;
   let startRow = pageSize + 1;
   let consecutiveEmpty = 0;
-  
+
   while (consecutiveEmpty < 2) {
     if (ctx.totalQueryCount >= ctx.MAX_TOTAL_QUERIES || (Date.now() - ctx.sweepStartTime) > ctx.SWEEP_TIME_GUARD_MS) break;
-    
+
     const pageResult = await executeFilteredSearch(ctx, params, extraFilters, startRow, firstResult);
     const newDocs = pageResult.docs.filter((d: any) => d.document_number && !seen.has(d.document_number));
-    
+
     if (newDocs.length === 0) {
       consecutiveEmpty++;
       if (startRow === pageSize + 1) break;
@@ -606,7 +610,9 @@ export async function paginateFilteredSearch(
       }
       console.info('paginateFilteredSearch: start_row=' + startRow + ' returned ' + newDocs.length + ' new docs (total: ' + allDocs.length + ')');
     }
-    
+
+    // Stop early if we've reached or exceeded the parsed total for this filter
+    if (pageResult.docs.length < pageSize) break;
     startRow += pageSize;
     if (startRow > 10000) break;
   }
