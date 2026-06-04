@@ -65,6 +65,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
   const [pendingRemovals, setPendingRemovals] = useState<Set<string>>(new Set());
   const [assaiOpen, setAssaiOpen] = useState(false);
   const [confirmRemoveBound, setConfirmRemoveBound] = useState<{ typeId: string; reqId: string } | null>(null);
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
 
   // Debounce search
   React.useEffect(() => {
