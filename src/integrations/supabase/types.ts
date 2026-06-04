@@ -2735,6 +2735,174 @@ export type Database = {
         }
         Relationships: []
       }
+      gohub_certificates: {
+        Row: {
+          actual_date: string | null
+          cert_type: string
+          created_at: string
+          discipline: string
+          id: string
+          last_synced_at: string
+          object_id: string
+          planned_date: string | null
+          project_code: string
+          raw: Json | null
+          signed_by: string | null
+          status: string | null
+          subsystem_number: string | null
+          system_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual_date?: string | null
+          cert_type: string
+          created_at?: string
+          discipline?: string
+          id?: string
+          last_synced_at?: string
+          object_id: string
+          planned_date?: string | null
+          project_code: string
+          raw?: Json | null
+          signed_by?: string | null
+          status?: string | null
+          subsystem_number?: string | null
+          system_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual_date?: string | null
+          cert_type?: string
+          created_at?: string
+          discipline?: string
+          id?: string
+          last_synced_at?: string
+          object_id?: string
+          planned_date?: string | null
+          project_code?: string
+          raw?: Json | null
+          signed_by?: string | null
+          status?: string | null
+          subsystem_number?: string | null
+          system_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gohub_itr_items: {
+        Row: {
+          ab_phase: string | null
+          created_at: string
+          discipline: string | null
+          id: string
+          itr_code: string
+          last_synced_at: string
+          project_code: string
+          raw: Json | null
+          status: string
+          subsystem_number: string
+          tag_code: string | null
+          tag_description: string | null
+          tag_guid: string
+          updated_at: string
+        }
+        Insert: {
+          ab_phase?: string | null
+          created_at?: string
+          discipline?: string | null
+          id?: string
+          itr_code: string
+          last_synced_at?: string
+          project_code: string
+          raw?: Json | null
+          status: string
+          subsystem_number: string
+          tag_code?: string | null
+          tag_description?: string | null
+          tag_guid: string
+          updated_at?: string
+        }
+        Update: {
+          ab_phase?: string | null
+          created_at?: string
+          discipline?: string | null
+          id?: string
+          itr_code?: string
+          last_synced_at?: string
+          project_code?: string
+          raw?: Json | null
+          status?: string
+          subsystem_number?: string
+          tag_code?: string | null
+          tag_description?: string | null
+          tag_guid?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gohub_punch_items: {
+        Row: {
+          accepted_by: string | null
+          accepted_date: string | null
+          category: string | null
+          cleared_date: string | null
+          created_at: string
+          description: string | null
+          discipline: string | null
+          id: string
+          item_no: number
+          itr: string | null
+          last_synced_at: string
+          location: string | null
+          project_code: string
+          punchlist: string
+          raw: Json | null
+          subsystem_number: string
+          tag: string | null
+          updated_at: string
+        }
+        Insert: {
+          accepted_by?: string | null
+          accepted_date?: string | null
+          category?: string | null
+          cleared_date?: string | null
+          created_at?: string
+          description?: string | null
+          discipline?: string | null
+          id?: string
+          item_no: number
+          itr?: string | null
+          last_synced_at?: string
+          location?: string | null
+          project_code: string
+          punchlist: string
+          raw?: Json | null
+          subsystem_number: string
+          tag?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accepted_by?: string | null
+          accepted_date?: string | null
+          category?: string | null
+          cleared_date?: string | null
+          created_at?: string
+          description?: string | null
+          discipline?: string | null
+          id?: string
+          item_no?: number
+          itr?: string | null
+          last_synced_at?: string
+          location?: string | null
+          project_code?: string
+          punchlist?: string
+          raw?: Json | null
+          subsystem_number?: string
+          tag?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gohub_synced_systems: {
         Row: {
           id: string
@@ -6955,6 +7123,9 @@ export type Database = {
           created_at: string
           display_order: number | null
           external_id: string | null
+          gohub_rollup_complete_itrs: number | null
+          gohub_rollup_synced_at: string | null
+          gohub_rollup_total_itrs: number | null
           handover_plan_id: string
           id: string
           is_hydrocarbon: boolean
@@ -6979,6 +7150,9 @@ export type Database = {
           created_at?: string
           display_order?: number | null
           external_id?: string | null
+          gohub_rollup_complete_itrs?: number | null
+          gohub_rollup_synced_at?: string | null
+          gohub_rollup_total_itrs?: number | null
           handover_plan_id: string
           id?: string
           is_hydrocarbon?: boolean
@@ -7003,6 +7177,9 @@ export type Database = {
           created_at?: string
           display_order?: number | null
           external_id?: string | null
+          gohub_rollup_complete_itrs?: number | null
+          gohub_rollup_synced_at?: string | null
+          gohub_rollup_total_itrs?: number | null
           handover_plan_id?: string
           id?: string
           is_hydrocarbon?: boolean
