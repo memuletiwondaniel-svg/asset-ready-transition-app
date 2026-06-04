@@ -647,9 +647,13 @@ export class GocSessionManager {
     return result;
   }
 
-  async callMethod(methodName: string, body: Record<string, any> = {}): Promise<any> {
+  async callMethod(
+    methodName: string,
+    body: Record<string, any> = {},
+    diag?: Array<{ url: string; status: number | null; contentType: string | null; body2kb: string; error?: string }>
+  ): Promise<any> {
     const grid = await this.getGridPage();
-    const result = await callAsmxMethod(grid.cookies, grid.url, grid.html, methodName, body);
+    const result = await callAsmxMethod(grid.cookies, grid.url, grid.html, methodName, body, diag);
     this.cookies = result.cookies;
     return result.data;
   }
