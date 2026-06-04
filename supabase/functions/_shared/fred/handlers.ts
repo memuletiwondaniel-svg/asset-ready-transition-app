@@ -434,8 +434,7 @@ export async function handleGetHandoverCertificateStatus(
         postbackFired = true;
       }
     }
-      }
-    }
+
 
 
 
