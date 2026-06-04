@@ -231,8 +231,8 @@ async function scrapeTagSearch(session: GocSessionManager, subsystem: string) {
 
 async function scrapePunch(session: GocSessionManager, subsystem: string) {
   const { html, url, cookies } = await session.navigateTo("GoCompletions/Completions/PunchlistItemSearch.aspx");
-  const target = findPostbackTarget(html);
   const sub = findSubSystemField(html);
+  const target = findPostbackTarget(html, sub.scopePrefix);
   if (!target || !sub.field) return { ok: false, reason: "no postback target or subsystem field", items: [] as any[] };
   const params: Record<string, string> = {
     [sub.field]: subsystem,
