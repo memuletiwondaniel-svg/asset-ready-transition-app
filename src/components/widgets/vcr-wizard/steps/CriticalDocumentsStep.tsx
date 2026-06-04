@@ -341,7 +341,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
                 <ChevronDown className="w-3 h-3" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-72 p-2 max-h-80 overflow-auto" align="start">
+            <PopoverContent className="w-72 p-2 max-h-80 overflow-auto z-[200]" align="start">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-medium">Discipline</span>
                 {disciplines.length > 0 && (
