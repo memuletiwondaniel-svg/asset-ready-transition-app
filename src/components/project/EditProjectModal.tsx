@@ -121,6 +121,9 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
     plant_id: '',
     field_id: '',
     station_id: '',
+    default_plant_code: null,
+    default_site_code: null,
+    default_unit_code: null,
   });
   const [scopeDescription, setScopeDescription] = useState('');
   const [scopeAttachments, setScopeAttachments] = useState<Attachment[]>([]);
