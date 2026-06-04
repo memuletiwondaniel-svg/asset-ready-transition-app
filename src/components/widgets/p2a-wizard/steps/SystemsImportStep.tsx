@@ -450,75 +450,33 @@ const SystemListItem: React.FC<SystemListItemProps> = ({
   }
 
   return (
-    <div className="space-y-0">
-      <div
-        className={cn("group flex items-center gap-2 py-1.5 px-2.5 rounded-md border bg-card hover:bg-muted/50 transition-colors", hasSubsystems && "cursor-pointer")}
-        onClick={() => hasSubsystems && setIsExpanded(!isExpanded)}
-      >
-        {/* Left disclosure chevron — muted secondary affordance, always rendered for alignment */}
-        <ChevronRight className={cn(
-          "h-3.5 w-3.5 shrink-0 transition-transform duration-200",
-          hasSubsystems ? "text-muted-foreground/70" : "invisible",
-          isExpanded && "rotate-90"
-        )} />
-
-        <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border/60 bg-muted/40 text-muted-foreground w-[160px] truncate">
-          {system.system_id}
-        </span>
-        <span className="font-medium text-xs truncate flex-1 min-w-0">{system.name}</span>
-
-        {/* Fixed-width classification column — keeps Hydrocarbon labels aligned */}
-        <div className="w-[88px] shrink-0 flex justify-end">
-          {system.is_hydrocarbon && (
-            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:border-amber-900/40 dark:text-amber-300">
-              Hydrocarbon
-            </span>
-          )}
-        </div>
-
-        {/* Fixed-width subsystem count column */}
-        <span className="text-[10px] text-muted-foreground shrink-0 w-[96px] text-right tabular-nums">
-          {hasSubsystems ? `${system.subsystems!.length} ${system.subsystems!.length === 1 ? 'subsystem' : 'subsystems'}` : ''}
-        </span>
-
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-6 w-6 shrink-0"
-            onClick={(e) => { e.stopPropagation(); onEdit(); }}
-          >
-            <Edit2 className="h-3 w-3" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-6 w-6 text-destructive shrink-0"
-            onClick={(e) => { e.stopPropagation(); onRemove(); }}
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Subsystems panel */}
-      {isExpanded && hasSubsystems && (
-        <div className="ml-5 pl-3 border-l-2 border-muted space-y-0.5 py-1">
+    <SystemRow
+      systemCode={system.system_id}
+      name={system.name}
+      isHydrocarbon={system.is_hydrocarbon}
+      hasSubsystems={hasSubsystems}
+      expanded={isExpanded}
+      onToggleExpand={() => setIsExpanded((v) => !v)}
+      onRemove={onRemove}
+      target="p2a"
+    >
+      {hasSubsystems && (
+        <div className="space-y-0">
           {system.subsystems!.map((sub, idx) => (
             <div
               key={sub.system_id + idx}
-              className="flex items-center gap-2 py-0.5 px-2 rounded text-xs"
+              className="flex items-center gap-2 py-1.5 px-2"
             >
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border bg-muted text-muted-foreground w-[160px] truncate">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border/50 bg-muted/30 text-muted-foreground max-w-[180px] truncate">
                 {sub.system_id}
               </span>
-              <span className="truncate flex-1 min-w-0 text-muted-foreground text-[10px]">{sub.name}</span>
-              {/* Spacer matching the width of the parent's hover action buttons */}
-              <div className="w-[52px] shrink-0" />
+              <span className="text-xs text-muted-foreground truncate flex-1 min-w-0">
+                {sub.name}
+              </span>
             </div>
           ))}
         </div>
       )}
-    </div>
+    </SystemRow>
   );
 };
