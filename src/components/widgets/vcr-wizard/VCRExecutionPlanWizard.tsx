@@ -385,6 +385,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       onStepChange={goToStep}
       isStepComplete={isStepComplete}
       isStepWarning={isStepWarning}
+      isStepOptional={isStepOptional}
       header={null}
       topHeader={topHeaderContent}
       navigation={{
