@@ -429,20 +429,28 @@ Deno.serve(async (req) => {
     }
 
     // ── Rollup snapshot from GetSystems (authoritative totals per §4) ──
+    // Unwrap aligned with _shared/fred/handlers handleGetCompletionStatus:
+    // top-level may be array OR { Items | data | results | Systems }.
+    // Subsystem children may be SubSystem | SubSystems | Subsystems | SubsystemList.
     try {
       const sysResp = await session.callMethod("GetSystems", {});
-      const arr: any[] = Array.isArray(sysResp) ? sysResp : (sysResp?.Items || sysResp?.data || []);
+      const arr: any[] = Array.isArray(sysResp)
+        ? sysResp
+        : (sysResp?.Items || sysResp?.data || sysResp?.results || sysResp?.Systems || []);
       const bySub: Record<string, { total: number; complete: number }> = {};
       for (const sys of arr) {
-        for (const sub of (sys.SubSystem || sys.SubSystems || [])) {
-          const num = String(sub.Number || sub.SubSystemNumber || "").trim();
+        const subs: any[] = sys.SubSystem || sys.SubSystems || sys.Subsystems
+          || sys.SubsystemList || sys.subSystems || [];
+        for (const sub of subs) {
+          const num = String(sub.Number || sub.SubSystemNumber || sub.Name || "").trim();
           if (!num) continue;
           bySub[num] = {
-            total: Number(sub.ITRs || 0),
-            complete: Number(sub.ITRsComp || sub.ITRsCompleted || 0),
+            total: Number(sub.ITRs ?? sub.TotalITRs ?? 0),
+            complete: Number(sub.ITRsComp ?? sub.ITRsCompleted ?? sub.CompleteITRs ?? 0),
           };
         }
       }
+      report.rollup_subsystems_seen = Object.keys(bySub).length;
       const now = new Date().toISOString();
       for (const ss of subsystems) {
         const r = bySub[ss];
