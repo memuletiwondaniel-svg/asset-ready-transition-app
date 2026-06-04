@@ -193,6 +193,7 @@ export const useProjects = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project-id-availability'] });
       toast({
         title: 'Success',
         description: 'Project deleted successfully',
