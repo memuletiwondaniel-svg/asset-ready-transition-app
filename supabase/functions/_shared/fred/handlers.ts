@@ -434,10 +434,9 @@ export async function handleGetHandoverCertificateStatus(
         postbackFired = true;
       }
     }
-      } else {
-        (args as any).__diag = { target: null, reason: "no_search_button" };
       }
     }
+
 
 
     // Filter by subsystem if specified (client-side belt + suspenders).
