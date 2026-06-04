@@ -247,8 +247,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   };
 
   const isStepOptional = (idx: number): boolean => {
-    // Witness & Hold Points is optional — never show amber warning when empty.
-    return idx === 1;
+    // Witness & Hold Points (1) and Registers & Logsheets (5) are optional — never show amber warning when empty.
+    return idx === 1 || idx === 5;
   };
 
   const isStepWarning = (idx: number): boolean => {
