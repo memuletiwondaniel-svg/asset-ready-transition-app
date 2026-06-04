@@ -16,7 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  Search, Trash2, Plus, RefreshCw, CheckCircle2, Lock, Database, Upload,
+  Search, Plus, RefreshCw, CheckCircle2, Lock, Database, Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
