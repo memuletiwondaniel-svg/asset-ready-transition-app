@@ -28,6 +28,7 @@ import {
   parseRadGridTable,
 } from "../_shared/gocompletions-auth.ts";
 import { handleGetHandoverCertificateStatus } from "../_shared/fred/handlers.ts";
+import { HANDOVER_CERTS } from "../_shared/gohub-contract.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
