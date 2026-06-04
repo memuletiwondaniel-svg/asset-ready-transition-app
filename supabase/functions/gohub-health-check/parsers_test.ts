@@ -10,7 +10,7 @@ import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.t
 import {
   parseRadGridTable,
   parseRadAjaxDelta,
-} from "../_shared/gocompletions-auth.ts";
+} from "../_shared/gohub-parsers.ts";
 import {
   cleanCellText,
   discoverSearchPostbackTarget,
