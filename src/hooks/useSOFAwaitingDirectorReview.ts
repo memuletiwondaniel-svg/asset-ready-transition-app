@@ -86,12 +86,12 @@ export const useSOFAwaitingDirectorReview = () => {
           .from('p2a_handover_plans')
           .select('id, project_id, project_code')
           .in('id', planIds);
-        const planMap = new Map((plans || []).map((p: any) => [p.id, p]));
-        const hpMap = new Map((hps || []).map((h: any) => [h.id, h]));
+        const planMap = new Map<string, any>((plans || []).map((p: any) => [p.id, p]));
+        const hpMap = new Map<string, any>((hps || []).map((h: any) => [h.id, h]));
 
         vcrResults = vcrApprovals.map((a: any) => {
-          const hp = hpMap.get(a.handover_point_id);
-          const plan = hp ? planMap.get(hp.handover_plan_id) : null;
+          const hp: any = hpMap.get(a.handover_point_id);
+          const plan: any = hp ? planMap.get(hp.handover_plan_id) : null;
           const label = hp ? `${hp.vcr_code} ${hp.name}` : 'VCR';
           return {
             id: a.id,
@@ -115,6 +115,7 @@ export const useSOFAwaitingDirectorReview = () => {
               : null,
           };
         });
+
       }
 
       return [...pssrResults, ...vcrResults];
