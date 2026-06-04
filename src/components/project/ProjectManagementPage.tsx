@@ -17,6 +17,10 @@ import { useHubs } from '@/hooks/useHubs';
 import { useProjectRegions } from '@/hooks/useProjectRegions';
 import { useLogActivity } from '@/hooks/useActivityLogs';
 import { supabase } from '@/integrations/supabase/client';
+import { useIsAdminPermission } from '@/hooks/usePermissions';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { AlertTriangle } from 'lucide-react';
 import { CreateProjectWizard } from './CreateProjectWizard';
 import { ViewProjectModal } from './ViewProjectModal';
 import { EditProjectModal } from './EditProjectModal';
@@ -93,7 +97,7 @@ const SortableProjectCard = ({ project, ...props }: any) => {
 
 const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translations }: ProjectManagementPageProps) => {
   const navigate = useNavigate();
-  const { projects, isLoading, deleteProject } = useProjects();
+  const { projects, isLoading, deleteProject, permanentlyDeleteProject } = useProjects();
   const { plants } = usePlants();
   const { stations } = useStations();
   const { data: hubs = [] } = useHubs();
@@ -118,6 +122,8 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   const [selectedPlant, setSelectedPlant] = useState('all');
   const [selectedHub, setSelectedHub] = useState('all');
   const [projectToDelete, setProjectToDelete] = useState<any>(null);
+  const [hardDelete, setHardDelete] = useState(false);
+  const { isAdmin } = useIsAdminPermission();
   
   // Get translations
   const t = translations || getCurrentTranslations(selectedLanguage);
@@ -270,19 +276,25 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
     if (!projectToDelete) return;
     
     try {
-      deleteProject(projectToDelete.id);
-      
+      if (hardDelete && isAdmin) {
+        permanentlyDeleteProject(projectToDelete.id);
+      } else {
+        deleteProject(projectToDelete.id);
+      }
+
       // Log activity
       logActivity({
         activityType: 'project_deleted',
-        description: `Deleted project: ${projectToDelete.project_id_prefix}${projectToDelete.project_id_number} - ${projectToDelete.project_title}`,
+        description: `${hardDelete && isAdmin ? 'Permanently deleted' : 'Deleted'} project: ${projectToDelete.project_id_prefix}${projectToDelete.project_id_number} - ${projectToDelete.project_title}`,
         metadata: {
           project_id: `${projectToDelete.project_id_prefix}${projectToDelete.project_id_number}`,
-          project_title: projectToDelete.project_title
+          project_title: projectToDelete.project_title,
+          hard_delete: hardDelete && isAdmin,
         }
       });
-      
+
       setProjectToDelete(null);
+      setHardDelete(false);
     } catch (error) {
       console.error('Error deleting project:', error);
     }
@@ -582,7 +594,15 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
       />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
+      <AlertDialog
+        open={!!projectToDelete}
+        onOpenChange={(open) => {
+          if (!open) {
+            setProjectToDelete(null);
+            setHardDelete(false);
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Project</AlertDialogTitle>
@@ -591,13 +611,35 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
               <span className="font-semibold text-foreground">
                 {projectToDelete?.project_id_prefix}{projectToDelete?.project_id_number} - {projectToDelete?.project_title}
               </span>
-              ? This action cannot be undone.
+              ? By default this is a soft delete and the project can be restored.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {isAdmin && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="hard-delete-admin"
+                  checked={hardDelete}
+                  onCheckedChange={(v) => setHardDelete(v === true)}
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="hard-delete-admin" className="text-sm font-medium cursor-pointer flex items-center gap-1.5">
+                    <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                    Permanently delete from backend (admin only)
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Hard-deletes the project and all related records (handover, milestones, documents, registers, DMS). Cannot be undone; frees the project ID for reuse immediately.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteProject} className="bg-destructive hover:bg-destructive/90">
-              Delete
+              {hardDelete && isAdmin ? 'Permanently Delete' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

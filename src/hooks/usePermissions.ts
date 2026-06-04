@@ -68,3 +68,12 @@ export const useCanPerformActionsPermission = () => {
   const { hasPermission, isLoading } = usePermissions();
   return { canPerformActions: !isLoading && hasPermission('create_project'), isLoading };
 };
+
+/**
+ * Whether the current user has admin-level access (gates destructive operations
+ * like permanent project deletion).
+ */
+export const useIsAdminPermission = () => {
+  const { hasPermission, isLoading } = usePermissions();
+  return { isAdmin: !isLoading && hasPermission('access_admin'), isLoading };
+};

@@ -11,7 +11,10 @@ import { CreateProjectWizard } from '@/components/project/CreateProjectWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useCanPerformActionsPermission } from '@/hooks/usePermissions';
+import { useCanPerformActionsPermission, useIsAdminPermission } from '@/hooks/usePermissions';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { AlertTriangle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,12 +46,14 @@ interface ProjectsHomePageProps {
 const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
   const navigate = useNavigate();
   useLanguage();
-  const { projects, isLoading, deleteProject, isDeleting } = useProjects();
+  const { projects, isLoading, deleteProject, permanentlyDeleteProject, isDeleting } = useProjects();
   const { canPerformActions } = useCanPerformActionsPermission();
+  const { isAdmin } = useIsAdminPermission();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'heatmap' | 'list'>('list');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [hardDelete, setHardDelete] = useState(false);
   const [qualProject, setQualProject] = useState<Project | null>(null);
   const queryClient = useQueryClient();
   const { prefs: tablePrefs, setPrefs: setTablePrefs, reset: resetTablePrefs } = useTablePreferences(
@@ -238,7 +243,15 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
 
       <CreateProjectWizard open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
 
-      <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
+      <AlertDialog
+        open={!!projectToDelete}
+        onOpenChange={(open) => {
+          if (!open) {
+            setProjectToDelete(null);
+            setHardDelete(false);
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this project?</AlertDialogTitle>
@@ -250,19 +263,46 @@ const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
               ) : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {isAdmin && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-2">
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="hard-delete-p2a"
+                  checked={hardDelete}
+                  onCheckedChange={(v) => setHardDelete(v === true)}
+                  disabled={isDeleting}
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="hard-delete-p2a" className="text-sm font-medium cursor-pointer flex items-center gap-1.5">
+                    <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                    Permanently delete from backend (admin only)
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Hard-deletes the project and all related records (handover, milestones, documents, registers, DMS data). This cannot be undone and frees the project ID for reuse immediately.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
-                if (projectToDelete) {
+                if (!projectToDelete) return;
+                if (hardDelete && isAdmin) {
+                  permanentlyDeleteProject(projectToDelete.id);
+                } else {
                   deleteProject(projectToDelete.id);
-                  setProjectToDelete(null);
                 }
+                setProjectToDelete(null);
+                setHardDelete(false);
               }}
             >
-              Delete
+              {hardDelete && isAdmin ? 'Permanently Delete' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

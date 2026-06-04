@@ -14230,6 +14230,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_hard_delete_project: {
+        Args: { _project_id: string }
+        Returns: undefined
+      }
       approve_user_account: {
         Args: { target_user_id: string }
         Returns: boolean

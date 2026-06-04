@@ -209,6 +209,31 @@ export const useProjects = () => {
     },
   });
 
+  const permanentlyDeleteProjectMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc('admin_hard_delete_project', {
+        _project_id: id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project-id-availability'] });
+      toast({
+        title: 'Permanently deleted',
+        description: 'Project and all related records were removed.',
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error permanently deleting project:', error);
+      toast({
+        title: 'Error',
+        description: error?.message || 'Failed to permanently delete project',
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
     projects,
     isLoading,
@@ -217,9 +242,11 @@ export const useProjects = () => {
     updateProject: updateProjectMutation.mutate,
     updateProjectAsync: updateProjectMutation.mutateAsync,
     deleteProject: deleteProjectMutation.mutate,
+    permanentlyDeleteProject: permanentlyDeleteProjectMutation.mutate,
+    permanentlyDeleteProjectAsync: permanentlyDeleteProjectMutation.mutateAsync,
     isCreating: createProjectMutation.isPending,
     isUpdating: updateProjectMutation.isPending,
-    isDeleting: deleteProjectMutation.isPending,
+    isDeleting: deleteProjectMutation.isPending || permanentlyDeleteProjectMutation.isPending,
   };
 };
 
