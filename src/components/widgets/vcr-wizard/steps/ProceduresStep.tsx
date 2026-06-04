@@ -205,6 +205,19 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
                           <h4 className="font-medium text-sm truncate">{item.title}</h4>
                           <Badge variant="outline" className="text-[10px]">{typeConfig.label}</Badge>
                         </div>
+                        {item.document_number ? (
+                          <p className="font-mono text-[10px] text-muted-foreground mt-0.5 truncate">
+                            {item.document_number}
+                          </p>
+                        ) : (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); assignNumber.mutate(item.id); }}
+                            disabled={assignNumber.isPending}
+                            className="text-[10px] text-primary hover:underline mt-0.5 disabled:opacity-50"
+                          >
+                            Assign number
+                          </button>
+                        )}
                         {item.description && (
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{item.description}</p>
                         )}
