@@ -116,10 +116,13 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       if (!plan?.project_id) return null;
       const { data: project } = await client
         .from('projects')
-        .select('project_code, project_title')
+        .select('project_id_prefix, project_id_number, project_title')
         .eq('id', plan.project_id)
         .maybeSingle();
-      return project || null;
+      if (!project) return null;
+      const code = [project.project_id_prefix, project.project_id_number]
+        .filter(Boolean).join('-');
+      return { project_code: code, project_title: project.project_title };
     },
   });
 
