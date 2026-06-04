@@ -108,14 +108,14 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
               <p className="text-sm text-muted-foreground">Multi-agent architecture, A2A protocol, model strategy, and continuous training framework</p>
               <div className="flex items-center gap-1.5 mt-1">
                 <Calendar className="h-3 w-3 text-muted-foreground/70" />
-                <span className="text-xs text-muted-foreground/70">Last updated: April 2026 — Hannah removed. Confirmed agent family: Bob, Selma, Fred, Ivan, Hannah, Alex.</span>
+                <span className="text-xs text-muted-foreground/70">Last updated: June 2026 — Live agents: Bob, Selma, Fred, Ivan. Planned: Hannah, Alex.</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-AI-Agent-Strategy" />
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-              v6.0 — March 2026
+              v6.1 — June 2026
             </Badge>
           </div>
         </div>
@@ -249,9 +249,9 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <div className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
                   <p className="text-xs">
-                    <strong className="text-foreground">CURRENT MODEL STRATEGY — Updated April 2026:</strong> All active ORSH agents (Bob, Selma, Fred, Ivan) 
-                    run on the Anthropic API with Claude Sonnet 4.5 (claude-sonnet-4-5). The migration from the Lovable AI Gateway was completed on 23 March 2026. 
-                    Hannah was retired in April 2026 — her orchestration responsibilities are now handled by Ivan (Technical Authority) and app-level workflows.
+                    <strong className="text-foreground">CURRENT MODEL STRATEGY — Updated June 2026:</strong> All active ORSH agents (Bob, Selma, Fred, Ivan)
+                    run on the Anthropic API with Claude Sonnet 4.5 (claude-sonnet-4-5). The migration from the Lovable AI Gateway was completed on 23 March 2026.
+                    Hannah (Training & Competence) and Alex (Maintenance) remain on the build roadmap; orchestration and Safe-to-Start synthesis are handled by Ivan today.
                     The Lovable AI Gateway has been completely removed from the ai-chat Edge Function. All LLM calls now go directly 
                     to https://api.anthropic.com/v1/messages using the ANTHROPIC_API_KEY stored as a Supabase Edge Function secret.
                   </p>
@@ -846,7 +846,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['Q1 2026', 'Advanced Document Tools (v4)', 'Cross-discipline, bulk status, trend analysis, task creation (11 tools)', 'Complete'],
                 ['Q1 2026', 'Autonomous Training + Quality Score (v5)', 'Auto-apply improvements, self-healing edge cases, quality scoring, ORA linkage (13 tools)', 'Complete'],
                 ['Q1 2026', 'Anthropic Migration (v6)', 'Claude Sonnet 4.5 migration, Selma naming, Document Intelligence build sequence', 'Complete'],
-                ['Q1 2026', 'Hannah Retired', 'P2A Handover agent removed — responsibilities split between Fred (hardware) and Ivan (readiness verdict)', 'Complete'],
+                ['Q1 2026', 'Orchestration consolidated under Ivan', 'Standalone P2A Handover agent retired; hardware concerns delegated to Fred, readiness verdict to Ivan', 'Complete'],
                 ['Q2 2026', 'Hannah (Training & Competence)', 'Competence management, OperatorSuite integration, training gap analysis (Claude Haiku)', 'Planned'],
                 ['Q2 2026', 'Alex (Maintenance & Inspection System Build)', 'Asset registers, CMMS data, inspection frameworks (Claude Haiku)', 'Planned'],
                 
