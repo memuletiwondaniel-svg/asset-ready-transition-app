@@ -2313,6 +2313,30 @@ export type Database = {
           },
         ]
       }
+      document_number_sequences: {
+        Row: {
+          created_at: string
+          document_type_code: string
+          last_used_seq: number
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_type_code: string
+          last_used_seq?: number
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_type_code?: string
+          last_used_seq?: number
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       document_packages: {
         Row: {
           created_at: string | null
@@ -7842,6 +7866,8 @@ export type Database = {
           created_by: string | null
           description: string | null
           display_order: number | null
+          document_number: string | null
+          document_number_assigned_at: string | null
           handover_point_id: string
           id: string
           procedure_type: string
@@ -7856,6 +7882,8 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           display_order?: number | null
+          document_number?: string | null
+          document_number_assigned_at?: string | null
           handover_point_id: string
           id?: string
           procedure_type?: string
@@ -7870,6 +7898,8 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           display_order?: number | null
+          document_number?: string | null
+          document_number_assigned_at?: string | null
           handover_point_id?: string
           id?: string
           procedure_type?: string
@@ -9521,6 +9551,9 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          default_plant_code: string | null
+          default_site_code: string | null
+          default_unit_code: string | null
           field_id: string | null
           hub_id: string | null
           id: string
@@ -9541,6 +9574,9 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          default_plant_code?: string | null
+          default_site_code?: string | null
+          default_unit_code?: string | null
           field_id?: string | null
           hub_id?: string | null
           id?: string
@@ -9561,6 +9597,9 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          default_plant_code?: string | null
+          default_site_code?: string | null
+          default_unit_code?: string | null
           field_id?: string | null
           hub_id?: string | null
           id?: string
@@ -14153,6 +14192,10 @@ export type Database = {
       approve_user_account: {
         Args: { target_user_id: string }
         Returns: boolean
+      }
+      assign_procedure_document_number: {
+        Args: { p_procedure_id: string }
+        Returns: string
       }
       backfill_missing_reviewer_tasks: { Args: never; Returns: number }
       calculate_ori_score: {

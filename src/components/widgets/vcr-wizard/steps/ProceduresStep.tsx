@@ -60,16 +60,44 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
 
   const addItem = useMutation({
     mutationFn: async (item: any) => {
-      const { error } = await (supabase as any)
+      const { data: inserted, error } = await (supabase as any)
         .from('p2a_vcr_procedures')
-        .insert({ ...item, handover_point_id: vcrId });
+        .insert({ ...item, handover_point_id: vcrId })
+        .select('id')
+        .single();
       if (error) throw error;
+      // Auto-assign placeholder document number (idempotent server-side).
+      // Soft-fail: if assignment errors, the row remains and the user can
+      // recover via the "Assign number" link on the card.
+      if (inserted?.id) {
+        const { error: rpcErr } = await (supabase as any).rpc(
+          'assign_procedure_document_number',
+          { p_procedure_id: inserted.id }
+        );
+        if (rpcErr) console.warn('Document number assignment failed', rpcErr);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vcr-exec-procedures'] });
       toast.success('Procedure added');
       setAddOpen(false);
     },
+  });
+
+  const assignNumber = useMutation({
+    mutationFn: async (procedureId: string) => {
+      const { data, error } = await (supabase as any).rpc(
+        'assign_procedure_document_number',
+        { p_procedure_id: procedureId }
+      );
+      if (error) throw error;
+      return data as string;
+    },
+    onSuccess: (docNo) => {
+      queryClient.invalidateQueries({ queryKey: ['vcr-exec-procedures'] });
+      if (docNo) toast.success(`Assigned ${docNo}`);
+    },
+    onError: (err: any) => toast.error(err?.message || 'Failed to assign number'),
   });
 
   const deleteItem = useMutation({
@@ -177,6 +205,19 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
                           <h4 className="font-medium text-sm truncate">{item.title}</h4>
                           <Badge variant="outline" className="text-[10px]">{typeConfig.label}</Badge>
                         </div>
+                        {item.document_number ? (
+                          <p className="font-mono text-[10px] text-muted-foreground mt-0.5 truncate">
+                            {item.document_number}
+                          </p>
+                        ) : (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); assignNumber.mutate(item.id); }}
+                            disabled={assignNumber.isPending}
+                            className="text-[10px] text-primary hover:underline mt-0.5 disabled:opacity-50"
+                          >
+                            Assign number
+                          </button>
+                        )}
                         {item.description && (
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{item.description}</p>
                         )}
@@ -282,6 +323,11 @@ const ProcedureDetailPanel: React.FC<{
             <div>
               <SheetTitle className="text-base font-semibold leading-tight">{item.title}</SheetTitle>
               <p className="text-xs text-muted-foreground mt-0.5">{typeConfig.label}</p>
+              {item.document_number && (
+                <p className="font-mono text-[11px] text-muted-foreground mt-1">
+                  {item.document_number}
+                </p>
+              )}
             </div>
           </div>
           <button
