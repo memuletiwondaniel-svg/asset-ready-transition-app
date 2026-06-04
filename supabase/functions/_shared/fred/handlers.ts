@@ -432,23 +432,12 @@ export async function handleGetHandoverCertificateStatus(
         pageHtml = resultHtml;
         rows = parseRadGridTable(pageHtml);
         postbackFired = true;
+        const theadMatch = resultHtml.match(/<thead[^>]*>([\s\S]*?)<\/thead>/i);
+        const rgHeaderMatch = resultHtml.match(/<tr[^>]*class="[^"]*rgHeader[^"]*"[^>]*>([\s\S]*?)<\/tr>/i);
         (args as any).__diag = {
-          target,
-          sub_field: subField.field,
-          panel_html_len: resultHtml.length,
-          has_rg_header: /rgHeader/i.test(resultHtml),
-          has_thead: /<thead\b/i.test(resultHtml),
-          rg_row_count: (resultHtml.match(/class="[^"]*\brgRow\b/gi) || []).length,
-          rg_alt_count: (resultHtml.match(/class="[^"]*\brgAltRow\b/gi) || []).length,
-          rg_master_open_count: (resultHtml.match(/class="[^"]*rgMasterTable/gi) || []).length,
           parsed_rows: rows.length,
-          first_row_keys: rows[0] ? Object.keys(rows[0]) : null,
-          first_row: rows[0] || null,
-          // raw HTML around the first rgRow occurrence to inspect cells
-          row_html_snip: (() => {
-            const m = resultHtml.match(/<tr[^>]*class="[^"]*\brgRow\b[^"]*"[^>]*>[\s\S]{0,1200}/);
-            return m ? m[0] : null;
-          })(),
+          thead_snip: theadMatch ? theadMatch[1].slice(0, 800) : null,
+          rg_header_snip: rgHeaderMatch ? rgHeaderMatch[1].slice(0, 800) : null,
         };
       } else {
         (args as any).__diag = { target: null, reason: "no_search_button" };
