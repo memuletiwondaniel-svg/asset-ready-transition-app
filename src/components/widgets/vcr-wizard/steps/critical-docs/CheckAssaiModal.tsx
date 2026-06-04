@@ -233,10 +233,11 @@ export const CheckAssaiModal: React.FC<CheckAssaiModalProps> = ({
 
           <Tabs value={filters.status} onValueChange={(v) => updateStatus(v as any)}>
             <TabsList className="h-8">
-              <TabsTrigger value="all" className="text-xs px-3 h-7">All Status</TabsTrigger>
-              <TabsTrigger value="Issued" className="text-xs px-3 h-7">Issued</TabsTrigger>
-              <TabsTrigger value="For Review" className="text-xs px-3 h-7">For Review</TabsTrigger>
-              <TabsTrigger value="Superseded" className="text-xs px-3 h-7">Superseded</TabsTrigger>
+              <TabsTrigger value="all" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">All Status</TabsTrigger>
+              <TabsTrigger value="Issued" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">Issued</TabsTrigger>
+              <TabsTrigger value="For Review" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">For Review</TabsTrigger>
+              <TabsTrigger value="Superseded" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">Superseded</TabsTrigger>
+
             </TabsList>
           </Tabs>
 
