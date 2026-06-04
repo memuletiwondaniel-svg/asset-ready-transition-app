@@ -22,6 +22,10 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { CMSImportModal } from '@/components/widgets/p2a-wizard/steps/CMSImportModal';
+import { ExcelUploadModal } from '@/components/widgets/p2a-wizard/steps/ExcelUploadModal';
+import { AddSystemModal } from '@/components/widgets/p2a-wizard/steps/AddSystemModal';
+import type { WizardSystem } from '@/components/widgets/p2a-wizard/steps/SystemsImportStep';
 
 interface SystemsStepProps {
   vcrId: string;
@@ -53,6 +57,10 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerSelection, setPickerSelection] = useState<Record<string, true>>({});
   const [syncing, setSyncing] = useState(false);
+  const [showCMSModal, setShowCMSModal] = useState(false);
+  const [showExcelModal, setShowExcelModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   // Resolve handover_plan_id + finalize state from VCR
   const { data: vcrMeta } = useQuery({
@@ -180,6 +188,92 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
     },
     onError: (e: any) => toast.error(e?.message || 'Failed to add systems'),
   });
+
+  /**
+   * Assign a batch of WizardSystem (from CMS / Excel / Manual) to this VCR.
+   * Two-step: (1) upsert into p2a_systems scoped to parent plan,
+   * (2) insert p2a_handover_point_systems rows for any not already linked.
+   */
+  const assignWizardSystems = async (incoming: WizardSystem[]) => {
+    if (!planId || !incoming.length) return;
+    setImporting(true);
+    try {
+      // 1) Upsert into p2a_systems (unique on system_id + handover_plan_id).
+      const rowsToUpsert = incoming.map(s => ({
+        handover_plan_id: planId,
+        system_id: s.system_id,
+        name: s.name,
+        is_hydrocarbon: !!s.is_hydrocarbon,
+        source_type: 'MANUAL' as const,
+      }));
+      const { data: upserted, error: upErr } = await (supabase as any)
+        .from('p2a_systems')
+        .upsert(rowsToUpsert, { onConflict: 'system_id,handover_plan_id', ignoreDuplicates: false })
+        .select('id, system_id');
+      if (upErr) throw upErr;
+
+      // Build system_id (text) → uuid map. Fall back to a fetch if upsert didn't return rows.
+      let codeToUuid = new Map<string, string>((upserted || []).map((r: any) => [r.system_id, r.id]));
+      const missingCodes = incoming.map(s => s.system_id).filter(c => !codeToUuid.has(c));
+      if (missingCodes.length) {
+        const { data: fetched } = await (supabase as any)
+          .from('p2a_systems')
+          .select('id, system_id')
+          .eq('handover_plan_id', planId)
+          .in('system_id', missingCodes);
+        for (const r of fetched || []) codeToUuid.set(r.system_id, r.id);
+      }
+
+      // 2) Skip systems already assigned at system-level to this VCR.
+      const newSystemUuids = Array.from(codeToUuid.values());
+      const { data: existing } = await (supabase as any)
+        .from('p2a_handover_point_systems')
+        .select('system_id, subsystem_id')
+        .eq('handover_point_id', vcrId)
+        .in('system_id', newSystemUuids);
+      const alreadyFullyAssigned = new Set(
+        (existing || []).filter((r: any) => !r.subsystem_id).map((r: any) => r.system_id)
+      );
+      const toLink = newSystemUuids.filter(uuid => !alreadyFullyAssigned.has(uuid));
+
+      // Remove any subsystem-level rows for systems we're about to fully assign.
+      if (toLink.length) {
+        await (supabase as any)
+          .from('p2a_handover_point_systems')
+          .delete()
+          .eq('handover_point_id', vcrId)
+          .in('system_id', toLink)
+          .not('subsystem_id', 'is', null);
+        const inserts = toLink.map(uuid => ({
+          handover_point_id: vcrId,
+          system_id: uuid,
+          subsystem_id: null,
+        }));
+        const { error: linkErr } = await (supabase as any)
+          .from('p2a_handover_point_systems')
+          .insert(inserts);
+        if (linkErr) throw linkErr;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-systems-picker'] });
+      const newCount = toLink.length;
+      const expandedPlan = incoming.length - alreadyFullyAssigned.size;
+      toast.success(
+        newCount === 0
+          ? 'All selected systems were already on this VCR'
+          : `Added ${newCount} ${newCount === 1 ? 'system' : 'systems'} to VCR${
+              expandedPlan > 0 && incoming.some(s => !codeToUuid.has(s.system_id) === false)
+                ? ''
+                : ''
+            }`
+      );
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to add systems');
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const deleteMutation = useMutation({
     mutationFn: async (assignmentId: string) => {
@@ -352,9 +446,9 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
               Pick an import method below to get started, or add systems to this VCR.
             </p>
           </div>
-          <div className="grid grid-cols-3 gap-3 shrink-0">
+          <div className="grid grid-cols-4 gap-3 shrink-0">
             <button
-              onClick={() => setPickerOpen(true)}
+              onClick={() => setShowCMSModal(true)}
               className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             >
               <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
@@ -366,7 +460,7 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
               </span>
             </button>
             <button
-              onClick={() => setPickerOpen(true)}
+              onClick={() => setShowExcelModal(true)}
               className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             >
               <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
@@ -376,7 +470,7 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
               <span className="text-[10px] text-muted-foreground leading-tight text-center">Import spreadsheet</span>
             </button>
             <button
-              onClick={() => setPickerOpen(true)}
+              onClick={() => setShowAddModal(true)}
               className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             >
               <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
@@ -384,6 +478,16 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
               </div>
               <span className="font-medium text-xs">Add Manually</span>
               <span className="text-[10px] text-muted-foreground leading-tight text-center">Enter details</span>
+            </button>
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
+                <Layers className="h-4 w-4 text-violet-600" />
+              </div>
+              <span className="font-medium text-xs">Pick from Plan</span>
+              <span className="text-[10px] text-muted-foreground leading-tight text-center">Already in P2A plan</span>
             </button>
           </div>
         </div>
@@ -495,6 +599,43 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
           </div>
         </ScrollArea>
       )}
+
+      {/* CMS Import */}
+      <CMSImportModal
+        open={showCMSModal}
+        onOpenChange={setShowCMSModal}
+        onImport={(systems) => { setShowCMSModal(false); void assignWizardSystems(systems); }}
+        projectCode={projectCode}
+      />
+
+      {/* Excel Upload */}
+      <ExcelUploadModal
+        open={showExcelModal}
+        onOpenChange={setShowExcelModal}
+        title="Upload Systems"
+        description="Import systems from an Excel spreadsheet (.xlsx, .xls, .csv)"
+        onUpload={async (file) => {
+          setShowExcelModal(false);
+          try {
+            const { parseSystemsExcel } = await import('@/components/widgets/p2a-wizard/steps/parseSystemsExcel');
+            const parsed = await parseSystemsExcel(file);
+            if (!parsed.length) {
+              toast.error('No systems found. Expecting columns like "System ID" and "Name".');
+              return;
+            }
+            await assignWizardSystems(parsed);
+          } catch (e: any) {
+            toast.error(e?.message || 'Failed to parse Excel file');
+          }
+        }}
+      />
+
+      {/* Manual Add */}
+      <AddSystemModal
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
+        onAdd={(system) => { setShowAddModal(false); void assignWizardSystems([system]); }}
+      />
 
       {/* Add System Picker */}
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
