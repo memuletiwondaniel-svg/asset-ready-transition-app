@@ -236,6 +236,39 @@ Deno.serve(async (req) => {
       report.dac.err = String(e?.message || e).slice(0, 300);
     }
 
+    // ── FRED-DIRECT confirmations (production-proven handlers) ─
+    try {
+      const r = await handleSearchCompletionsTags(
+        { project_code: projectCode, sub_system: subsystemNumber, max_results: 50 },
+        supa,
+      );
+      report.fred_direct_tagsearch = {
+        found: !!r.found,
+        returned: r.returned ?? (r.tags?.length || 0),
+        total_available: r.total_available ?? 0,
+        keys: r.tags?.[0] ? Object.keys(r.tags[0]) : [],
+        sample: (r.tags || []).slice(0, 5),
+        error: r.error || null,
+      };
+    } catch (e: any) {
+      report.errors.push("fred-tagsearch: " + String(e?.message || e).slice(0, 300));
+    }
+    try {
+      const r = await handleGetPunchlistDetails(
+        { project_code: projectCode, sub_system: subsystemNumber },
+        supa,
+      );
+      const items = r.items || r.punchlist_items || r.results || [];
+      report.fred_direct_punch = {
+        count: items.length,
+        keys: items[0] ? Object.keys(items[0]) : Object.keys(r).slice(0, 20),
+        sample: items.slice(0, 5),
+        raw_top: Object.keys(r).slice(0, 20),
+      };
+    } catch (e: any) {
+      report.errors.push("fred-punch: " + String(e?.message || e).slice(0, 300));
+    }
+
     return json(report);
   } catch (e: any) {
     report.errors.push("fatal: " + String(e?.message || e));
