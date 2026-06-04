@@ -14,6 +14,40 @@ import {
 } from "../gocompletions-auth.ts";
 import { lookupITRForEquipment } from "./itr-matrix.ts";
 
+// ─── HandoverSearch postback helpers ─────────────────────────
+//
+// HandoverSearch.aspx is the same WebForms RadButton/RadAjax pattern as
+// TagSearch/PunchlistItemSearch: query-string TypeID/HandoverGate/GroupBy
+// configure the form, but the grid is empty until a Search postback fires.
+// The page renders an inner <input name="..._input"> for the RadButton; the
+// real server-side postback target is the OUTER UniqueID (strip "_input").
+// Posting the "_input" name is treated as a plain reload → empty grid.
+function findHandoverPostbackTarget(html: string): string | null {
+  const targets: string[] = [];
+  const re = /<input[^>]*name=["']([^"']+SearchButton)_input["']/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) targets.push(m[1]);
+  if (!targets.length) return null;
+  const scoped = targets.find((t) => /PrimarySearchCriteria/i.test(t))
+    || targets.find((t) => /MasterRadPanelBar/i.test(t));
+  return scoped || targets[0];
+}
+
+function findHandoverSubsystemField(html: string): { field: string | null; clientState: string | null } {
+  const cands: string[] = [];
+  const re = /<input[^>]*name=["']([^"']*[Ss]ub[Ss]ystem[^"']*)["']/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) cands.push(m[1]);
+  const primary = cands.filter((c) => /PrimarySearchCriteria/i.test(c));
+  const pool = primary.length ? primary : cands;
+  const field = pool.find((c) => /SubSystemTextBox$/i.test(c))
+    || pool.find((c) => /\$SubSystem$/.test(c))
+    || pool.find((c) => /SubSystem_Input$/i.test(c))
+    || null;
+  const clientState = pool.find((c) => /SubSystem_ClientState$/i.test(c)) || null;
+  return { field, clientState };
+}
+
 // Known MCC TypeID GUID — others to be captured from live session
 const CERTIFICATE_TYPE_IDS: Record<string, string> = {
   MCC: "aafaeac5-e094-df11-b37f-0050ba0820b5",
@@ -366,21 +400,54 @@ export async function handleGetHandoverCertificateStatus(
       };
     }
 
-    // Build URL with TypeID GUID
+    // Build URL with TypeID GUID. DAC variants need per-discipline rows; use
+    // GroupBy=SubSystem,Discipline (collapsing to SubSystem hides the
+    // per-discipline fan-out the DAC handover actually tracks).
     const session = await getSession(supabaseClient, projectCode);
-    const pagePath = `GoCompletions/Handovers/HandoverSearch.aspx?TypeID=${typeId}&HandoverGate=${gate}&GroupBy=SubSystem&IsPartialHandover=False&IsMultiHandover=False&IsProcedure=False&HasInterimDate=False&AdditionalFilters=`;
-    const { html } = await session.navigateTo(pagePath);
+    const isDac = /DAC$/i.test(certType);
+    const groupBy = isDac ? "SubSystem,Discipline" : "SubSystem";
+    const pagePath = `GoCompletions/Handovers/HandoverSearch.aspx?TypeID=${typeId}&HandoverGate=${gate}&GroupBy=${encodeURIComponent(groupBy)}&IsPartialHandover=False&IsMultiHandover=False&IsProcedure=False&HasInterimDate=False&AdditionalFilters=`;
+    const navResp = await session.navigateTo(pagePath);
+    let pageHtml = navResp.html;
+    const pageUrl = navResp.url;
+    const pageCookies = navResp.cookies;
 
-    const rows = parseRadGridTable(html);
+    let rows = parseRadGridTable(pageHtml);
+    let postbackFired = false;
+    // Initial load shows an empty grid until Search posts back. Apply the
+    // `_input`-stripped postback fix (same RadButton trap as TagSearch).
+    if (rows.length === 0) {
+      const target = findHandoverPostbackTarget(pageHtml);
+      const subField = findHandoverSubsystemField(pageHtml);
+      if (target) {
+        const params: Record<string, string> = {
+          __EVENTTARGET: target,
+          __EVENTARGUMENT: "",
+        };
+        if (args.sub_system && subField.field) {
+          params[subField.field] = args.sub_system;
+          if (subField.clientState) {
+            params[subField.clientState] = JSON.stringify({
+              value: args.sub_system, text: args.sub_system, enabled: true,
+            });
+          }
+        }
+        const { html: resultHtml } = await postWithViewState(pageCookies, pageUrl, pageHtml, params);
+        pageHtml = resultHtml;
+        rows = parseRadGridTable(pageHtml);
+        postbackFired = true;
+      }
+    }
 
-    // Filter by subsystem if specified
+    // Filter by subsystem if specified (client-side belt + suspenders).
     let filtered = rows;
     if (args.sub_system) {
       filtered = rows.filter(r => {
-        const subSys = (r["Sub System"] || r.SubSystem || r.sub_system || "");
+        const subSys = String(r["Sub System"] || r.SubSystem || r.sub_system || "");
         return subSys.includes(args.sub_system);
       });
     }
+
 
     await logFredMetric(supabaseClient, {
       user_id: userId,
@@ -396,9 +463,12 @@ export async function handleGetHandoverCertificateStatus(
       project: projectCode,
       certificate_type: certType,
       total_certificates: filtered.length,
-      certificates: filtered.slice(0, 100).map(r => ({
+      postback_fired: postbackFired,
+      group_by: groupBy,
+      certificates: filtered.slice(0, 200).map(r => ({
         certificate_ref: r[certType] || r.Certificate || r.Ref || Object.values(r)[0],
         sub_system: r["Sub System"] || r.SubSystem,
+        discipline: r.Discipline || r["Discipline"] || null,
         tags: r.Tags,
         itrs: r.ITRs,
         outstanding_itrs: r["Outstanding ITRs"] || r.OutstandingITRs,
