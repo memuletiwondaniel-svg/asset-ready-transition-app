@@ -426,12 +426,24 @@ export async function handleGetHandoverCertificateStatus(
           }
         }
         // RadAjax async partial postback (see postRadAjaxAsync docs).
-        const { html: resultHtml } = await postRadAjaxAsync(
+        const { html: resultHtml, rawDelta } = await postRadAjaxAsync(
           pageCookies, pageUrl, pageHtml, target, extra
         );
         pageHtml = resultHtml;
         rows = parseRadGridTable(pageHtml);
         postbackFired = true;
+        (args as any).__diag = {
+          target,
+          sub_field: subField.field,
+          raw_delta_len: rawDelta.length,
+          raw_delta_head: rawDelta.slice(0, 400),
+          panel_html_len: resultHtml.length,
+          has_master_table: /rgMasterTable/i.test(resultHtml),
+          has_no_records: /rgNoRecords/i.test(resultHtml),
+          panel_head: resultHtml.slice(0, 400),
+        };
+      } else {
+        (args as any).__diag = { target: null, reason: "no_search_button" };
       }
     }
 
