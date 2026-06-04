@@ -1325,7 +1325,7 @@ const EditItemForm: React.FC<{
 
 
           {/* Approving Parties — collapsible (default expanded) */}
-          <div className="border-t border-border/40 pt-4">
+          <div className="border-t border-border/40 pt-4 group/sect">
             <div className="flex items-center justify-between">
               <button
                 type="button"
@@ -1343,7 +1343,7 @@ const EditItemForm: React.FC<{
               </button>
               <Popover open={addApproverOpen} onOpenChange={setAddApproverOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={addBtnClass}>
+                  <Button variant="outline" size="sm" className={`${addBtnClass} opacity-0 group-hover/sect:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 transition-opacity`}>
                     <Plus className="w-3 h-3" /> Add
                   </Button>
                 </PopoverTrigger>
