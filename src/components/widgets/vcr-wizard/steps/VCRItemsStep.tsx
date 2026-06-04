@@ -1201,8 +1201,13 @@ const EditItemForm: React.FC<{
                 <Textarea
                   value={guidanceNotes}
                   onChange={(e) => setGuidanceNotes(e.target.value)}
-                  className="text-sm resize-none"
-                  rows={Math.max(3, (guidanceNotes || '').split('\n').length + 1)}
+                  className="text-sm resize-none overflow-hidden"
+                  ref={(el) => {
+                    if (el) {
+                      el.style.height = 'auto';
+                      el.style.height = `${el.scrollHeight}px`;
+                    }
+                  }}
                 />
               </div>
             )}
