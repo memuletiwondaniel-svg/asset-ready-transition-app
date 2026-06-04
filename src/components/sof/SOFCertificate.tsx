@@ -39,7 +39,7 @@ interface SOFCertificateProps {
   approvers: SOFApprover[];
   issuedAt?: string;
   status: string;
-  onSignComplete?: () => void;
+  onSignComplete?: (signatureData?: string) => void;
   onRejectComplete?: () => void;
   isViewOnly?: boolean;
   pssrId?: string;
@@ -104,7 +104,8 @@ export const SOFCertificate: React.FC<SOFCertificateProps> = ({
   };
 
   const handleSign = (signatureData: string, comments: string, pr2Action?: { priority: 'Pr2'; description: string }) => {
-    onSignComplete?.();
+    onSignComplete?.(signatureData);
+
     if (pr2Action) {
       toast({
         title: 'Statement of Fitness Signed with Pr2 Action',
