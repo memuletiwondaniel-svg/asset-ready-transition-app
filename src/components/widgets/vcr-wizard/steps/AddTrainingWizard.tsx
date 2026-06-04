@@ -28,12 +28,12 @@ import {
   Monitor,
   MapPin,
   Globe,
-  Sparkles,
   Plus,
   ClipboardCheck,
   Clock,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { StepCircle } from '@/components/widgets/shared/StepCircle';
 
 const DELIVERY_METHODS = [
   { id: 'Onsite', label: 'Onsite', description: 'At the project site', icon: MapPin },
@@ -41,16 +41,17 @@ const DELIVERY_METHODS = [
   { id: 'Online', label: 'Online', description: 'Virtual / remote delivery', icon: Monitor },
 ];
 
+// Display labels only — underlying persisted identifiers are unchanged.
+// Order is the canonical render order for the audience chip row.
 const SUGGESTED_AUDIENCES = [
-  'Operations Team',
-  'Maintenance – Electrical',
-  'Maintenance – Mechanical',
-  'Maintenance – Instrumentation',
-  'Operations Supervisors',
-  'Site Engineers',
-  'HSE Team',
-  'Process Engineering',
-  'Control Room Operators',
+  'Shift Supv.',
+  'Site Engr.',
+  'Control Room Operator',
+  'Field Operator',
+  'Instrumentation',
+  'Electrical',
+  'Static',
+  'Rotating',
   'Management',
   'Contractors',
 ];
