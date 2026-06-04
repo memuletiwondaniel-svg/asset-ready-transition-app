@@ -723,7 +723,7 @@ export async function paginateByStatusSplit(
       }
 
       const unseenTypes = allTypeCodes.filter(tc => !typeCountInResults[tc]);
-      const cappedTypes = allTypeCodes.filter(tc => typeCountInResults[tc] && typeCountInResults[tc]! >= ctx.PAGE_CAP);
+      const cappedTypes = allTypeCodes.filter(tc => typeCountInResults[tc] && typeCountInResults[tc]! >= pageThreshold);
       const typesToSweep = [...cappedTypes, ...unseenTypes];
 
       console.info('paginateByStatusSplit: sweeping ' + typesToSweep.length + ' types (' + cappedTypes.length + ' capped, ' + unseenTypes.length + ' unseen)');
