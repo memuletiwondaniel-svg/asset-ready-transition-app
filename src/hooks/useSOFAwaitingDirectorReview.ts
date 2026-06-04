@@ -4,8 +4,12 @@ import { useAuth } from '@/components/enhanced-auth/AuthProvider';
 
 export interface SOFPendingReview {
   id: string;
-  pssr_id: string;
-  sof_certificate_id: string;
+  source: 'PSSR' | 'VCR';
+  pssr_id?: string;
+  sof_certificate_id?: string;
+  vcr_id?: string;
+  project_id?: string;
+  vcr_label?: string;
   approver_role: string;
   approver_name: string;
   status: string;
@@ -21,8 +25,8 @@ export interface SOFPendingReview {
 }
 
 /**
- * Fetch SoF items awaiting director review
- * Returns SoFs where the current user is an approver and status is PENDING
+ * Fetch SoF items awaiting director review.
+ * Returns both PSSR-sourced and VCR-sourced approvals for the current user.
  */
 export const useSOFAwaitingDirectorReview = () => {
   const { user } = useAuth();
@@ -31,48 +35,92 @@ export const useSOFAwaitingDirectorReview = () => {
     queryKey: ['sof-awaiting-director-review', user?.id],
     queryFn: async (): Promise<SOFPendingReview[]> => {
       if (!user?.id) return [];
+      const client = supabase as any;
 
-      // Fetch SoF approvals where user is assigned and status is PENDING or LOCKED
-      // Note: use user_id field (not approver_user_id)
-      const { data: sofApprovals, error } = await supabase
+      // ---- PSSR-sourced (existing path) ----
+      const { data: sofApprovals, error } = await client
         .from('sof_approvers')
         .select('*')
         .eq('user_id', user.id)
         .in('status', ['PENDING', 'LOCKED']);
-
       if (error) throw error;
-      if (!sofApprovals || sofApprovals.length === 0) return [];
 
-      // Get unique PSSR IDs
-      const pssrIds = [...new Set(sofApprovals.map(a => a.pssr_id))];
+      const pssrIds = [...new Set((sofApprovals || []).map((a: any) => a.pssr_id).filter(Boolean))];
+      let pssrMap = new Map<string, any>();
+      if (pssrIds.length) {
+        const { data: pssrs } = await client
+          .from('pssrs')
+          .select('id, pssr_id, project_name, asset, scope, created_at')
+          .in('id', pssrIds);
+        pssrMap = new Map((pssrs || []).map((p: any) => [p.id, p]));
+      }
 
-      // Fetch PSSR details separately
-      const { data: pssrs, error: pssrError } = await supabase
-        .from('pssrs')
-        .select('id, pssr_id, project_name, asset, scope, created_at')
-        .in('id', pssrIds);
-
-      if (pssrError) throw pssrError;
-
-      // Create a lookup map for PSSRs
-      const pssrMap = new Map(pssrs?.map(p => [p.id, p]) || []);
-
-      // Transform data to expected format
-      const results: SOFPendingReview[] = sofApprovals.map((approval) => ({
-        id: approval.id,
-        pssr_id: approval.pssr_id,
-        sof_certificate_id: approval.sof_certificate_id,
-        approver_role: approval.approver_role,
-        approver_name: approval.approver_name,
-        status: approval.status,
-        created_at: approval.created_at,
-        pssr: pssrMap.get(approval.pssr_id) || null,
+      const pssrResults: SOFPendingReview[] = (sofApprovals || []).map((a: any) => ({
+        id: a.id,
+        source: 'PSSR',
+        pssr_id: a.pssr_id,
+        sof_certificate_id: a.sof_certificate_id,
+        approver_role: a.approver_role,
+        approver_name: a.approver_name,
+        status: a.status,
+        created_at: a.created_at,
+        pssr: pssrMap.get(a.pssr_id) || null,
       }));
 
-      return results;
+      // ---- VCR-sourced ----
+      const { data: vcrApprovals } = await client
+        .from('vcr_sof_approvers')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('status', ['PENDING', 'LOCKED']);
+
+      let vcrResults: SOFPendingReview[] = [];
+      if (vcrApprovals?.length) {
+        const hpIds = [...new Set(vcrApprovals.map((a: any) => a.handover_point_id))];
+        const { data: hps } = await client
+          .from('p2a_handover_points')
+          .select('id, vcr_code, name, handover_plan_id')
+          .in('id', hpIds);
+        const planIds = [...new Set((hps || []).map((h: any) => h.handover_plan_id))];
+        const { data: plans } = await client
+          .from('p2a_handover_plans')
+          .select('id, project_id, project_code')
+          .in('id', planIds);
+        const planMap = new Map((plans || []).map((p: any) => [p.id, p]));
+        const hpMap = new Map((hps || []).map((h: any) => [h.id, h]));
+
+        vcrResults = vcrApprovals.map((a: any) => {
+          const hp = hpMap.get(a.handover_point_id);
+          const plan = hp ? planMap.get(hp.handover_plan_id) : null;
+          const label = hp ? `${hp.vcr_code} ${hp.name}` : 'VCR';
+          return {
+            id: a.id,
+            source: 'VCR',
+            vcr_id: a.handover_point_id,
+            project_id: plan?.project_id,
+            vcr_label: label,
+            approver_role: a.approver_role,
+            approver_name: a.approver_name,
+            status: a.status,
+            created_at: a.created_at,
+            pssr: hp
+              ? {
+                  id: a.handover_point_id,
+                  pssr_id: hp.vcr_code,
+                  project_name: `${plan?.project_code || ''} ${hp.name}`.trim(),
+                  asset: hp.name,
+                  scope: null,
+                  created_at: a.created_at,
+                }
+              : null,
+          };
+        });
+      }
+
+      return [...pssrResults, ...vcrResults];
     },
     enabled: !!user?.id,
-    staleTime: 60 * 1000, // 1 minute cache
+    staleTime: 30 * 1000,
     refetchOnWindowFocus: true,
   });
 };
