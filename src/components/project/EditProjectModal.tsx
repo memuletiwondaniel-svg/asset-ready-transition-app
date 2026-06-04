@@ -30,6 +30,7 @@ import WizardStepProjectScope from './wizard/WizardStepProjectScope';
 import WizardStepProjectTeam from './wizard/WizardStepProjectTeam';
 import WizardStepMilestonesDocuments from './wizard/WizardStepMilestonesDocuments';
 import WizardStepProjectReview from './wizard/WizardStepProjectReview';
+import { DocumentNumberingDefaults } from './wizard/DocumentNumberingDefaults';
 
 interface EditProjectModalProps {
   open: boolean;
