@@ -283,7 +283,8 @@ Deno.serve(async (req) => {
     const overrideSubs: string[] | null = Array.isArray(body.override_subsystems) && body.override_subsystems.length
       ? body.override_subsystems.map((s: any) => String(s)) : null;
     // override_subsystems forces probe-only (no writes, no rollup updates, no cert upserts).
-    const dryRun = !!body.dry_run || !!overrideSubs;
+    // override_subsystems defaults to probe-only; pass dry_run:false to force writes.
+    const dryRun = body.dry_run === false ? false : (!!body.dry_run || !!overrideSubs);
 
     let subsystems: string[];
     if (overrideSubs) {
