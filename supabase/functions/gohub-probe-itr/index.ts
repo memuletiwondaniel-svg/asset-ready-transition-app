@@ -63,74 +63,50 @@ Deno.serve(async (req) => {
     let cookies = grid.cookies;
     report.grid_url = grid.url;
 
-    // 2. Resolve a system + subsystem under DP18*
-    let systemId: string | null = null;
+    // 2. GetSystems returns systems with nested SubSystem[] — no separate call needed
     let subsystemId: string | null = subsystemHint || null;
-    let subsystemRow: any = null;
+    let subsystemGuid: string | null = null;
 
     try {
       const r = await callAsmxMethod(cookies, grid.url, grid.html, "GetSystems", { itrClass: "All" });
       cookies = r.cookies;
       const list = Array.isArray(r.data) ? r.data : (r.data?.Items || r.data?.Systems || []);
-      const dp18 = list.filter((s: any) => {
-        const id = String(s.Number || s.SystemNumber || s.Name || s.Id || "");
-        return /DP[\s-]*18/i.test(id);
-      });
+      const dp18 = list.filter((s: any) => /DP[\s-]*18/i.test(String(s.Number || "")));
+      const sys = dp18[0] || list[0];
+      const subs: any[] = Array.isArray(sys?.SubSystem) ? sys.SubSystem : [];
+      const picked = subsystemHint ? subs.find(x => String(x.Number).includes(subsystemHint)) || subs[0] : subs[0];
       report.project = {
         systems_total: list.length,
         dp18_systems_count: dp18.length,
-        dp18_first: dp18[0] || null,
-        first_system_keys: list[0] ? Object.keys(list[0]) : [],
+        chosen_system: { Number: sys?.Number, ID: sys?.ID, Description: sys?.Description },
+        chosen_subsystem_count: subs.length,
+        chosen_subsystem: picked || null,
       };
-      const sys = dp18[0] || list[0];
-      if (sys) systemId = sys.Number || sys.SystemNumber || sys.Name || sys.Id;
+      if (picked) { subsystemId = picked.Number; subsystemGuid = picked.ID; }
     } catch (e: any) {
       report.errors.push("GetSystems: " + String(e).slice(0, 200));
     }
 
-    if (systemId && !subsystemId) {
-      // Try GetSubSystems with various param names
-      const paramVariants = [
-        { systemNumber: systemId }, { systemId }, { number: systemId },
-        { System: systemId }, { itrClass: "All", systemNumber: systemId },
-      ];
-      for (const params of paramVariants) {
-        try {
-          const r = await callAsmxMethod(cookies, grid.url, grid.html, "GetSubSystems", params);
-          cookies = r.cookies;
-          const list = Array.isArray(r.data) ? r.data : (r.data?.Items || r.data?.SubSystems || []);
-          if (list.length > 0) {
-            subsystemRow = list[0];
-            subsystemId = subsystemRow.Number || subsystemRow.SubSystemNumber ||
-                          subsystemRow.Name || subsystemRow.SubSystem || subsystemRow.Id;
-            report.project.subsystem_param_used = Object.keys(params).join(",");
-            report.project.subsystems_count = list.length;
-            report.project.first_subsystem = subsystemRow;
-            report.project.first_subsystem_keys = Object.keys(subsystemRow);
-            break;
-          }
-        } catch (e: any) {
-          report.errors.push(`GetSubSystems(${Object.keys(params).join(",")}): ` + String(e).slice(0, 150));
-        }
-      }
-    }
-
     if (!subsystemId) {
-      report.errors.push("No subsystem resolved; cannot probe ITRs. Pass subsystem_hint.");
+      report.errors.push("No subsystem resolved; cannot probe ITRs.");
     } else {
-      // 3. Try ASMX methods that might return ITRs/Tags for that subsystem
       const candidates: Array<{ name: string; body: Record<string, any> }> = [
-        { name: "GetItrs",                body: { subSystemNumber: subsystemId } },
-        { name: "GetItrs",                body: { subSystem: subsystemId } },
-        { name: "GetITRs",                body: { subSystem: subsystemId } },
-        { name: "GetItrsForSubSystem",    body: { subSystem: subsystemId } },
-        { name: "GetSubSystemItrs",       body: { subSystem: subsystemId } },
-        { name: "GetItrItems",            body: { subSystem: subsystemId } },
-        { name: "GetSubSystemDetails",    body: { subSystem: subsystemId } },
-        { name: "GetTags",                body: { subSystemNumber: subsystemId } },
-        { name: "GetTags",                body: { subSystem: subsystemId } },
-        { name: "GetTagItrs",             body: { subSystem: subsystemId } },
-        { name: "GetItrs",                body: { subSystemNumber: subsystemId, itrClass: "All" } },
+        { name: "GetItrs",              body: { subSystem: subsystemId } },
+        { name: "GetItrs",              body: { subSystemNumber: subsystemId } },
+        { name: "GetItrs",              body: { subSystemID: subsystemGuid } },
+        { name: "GetItrs",              body: { subSystemId: subsystemGuid } },
+        { name: "GetItrs",              body: { id: subsystemGuid } },
+        { name: "GetITRs",              body: { subSystem: subsystemId } },
+        { name: "GetItrItems",          body: { subSystem: subsystemId } },
+        { name: "GetItrItems",          body: { subSystemID: subsystemGuid } },
+        { name: "GetSubSystemDetails",  body: { subSystem: subsystemId } },
+        { name: "GetSubSystemDetails",  body: { subSystemID: subsystemGuid } },
+        { name: "GetSubSystemDetails",  body: { id: subsystemGuid } },
+        { name: "GetTags",              body: { subSystem: subsystemId } },
+        { name: "GetTags",              body: { subSystemID: subsystemGuid } },
+        { name: "GetTagItrs",           body: { subSystem: subsystemId } },
+        { name: "GetTagItrs",           body: { subSystemID: subsystemGuid } },
+        { name: "GetCertificationData", body: { subSystemID: subsystemGuid } },
       ];
 
       for (const m of candidates) {
