@@ -406,7 +406,7 @@ const AddEditModal: React.FC<{
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="max-w-[460px] p-0 gap-0 border-0"
-        showCloseButton={false}
+        hideCloseButton
       >
         <div className="px-6 pt-5 pb-4">
           {/* Header */}
