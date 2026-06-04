@@ -11,14 +11,19 @@
 // ─── 0. project_code shape guard ─────────────────────────────
 //
 // `project_code` in gohub_* mirror tables is the p2a plant code
-// (`DP-##X`, e.g. `DP-18A`). It is NOT the tile name. Earlier callers
-// silently wrote the tile name (`WEST QURNA`, shared by DP18A and
-// DP18F) as project_code, producing 97 latent-mislabel cert rows that
-// would join to the wrong project the moment a plan was created. This
-// guard turns that silent mislabel into a thrown error at the sync
-// entry point. The list is non-exhaustive on purpose — the shape check
-// (`DP-##X`) catches anything unexpected, the tile list just gives a
-// clearer error for the known offenders.
+// (e.g. `DP-18A`). It is NOT the tile name. Earlier callers silently
+// wrote the tile name (`WEST QURNA`, shared by DP18A and DP18F) as
+// project_code, producing 97 latent-mislabel cert rows that would join
+// to the wrong project the moment a plan was created. This guard turns
+// that silent mislabel into a thrown error at the sync entry point.
+//
+// We deliberately do NOT enforce a shape regex (e.g. `^DP-\d+[A-Z]$`).
+// The universe of valid project_code values is whatever p2a uses, which
+// we don't fully know and shouldn't hardcode. A trailing-letter
+// requirement would falsely reject `DP-300`; a `DP-` prefix requirement
+// would reject non-DP projects. The production path validates by
+// querying `p2a_handover_plans` — authoritative by construction — so any
+// propagated value that joins is legitimate.
 export const KNOWN_TILE_NAMES = new Set<string>([
   "WEST QURNA",
   "NORTH RUMAILA",
@@ -29,12 +34,10 @@ export const KNOWN_TILE_NAMES = new Set<string>([
   "BGC SANDPIT",
 ]);
 
-export const PROJECT_CODE_REGEX = /^DP-\d+[A-Z]$/;
-
 /**
- * Throws if `code` is a known tile name or does not match the canonical
- * `DP-##X` shape. Call at the sync entry point so a mis-passed value
- * fails loudly instead of corrupting the mirror tables.
+ * Throws if `code` is a known tile name, empty, or null/undefined.
+ * Call at the sync entry point so a mis-passed value fails loudly
+ * instead of corrupting the mirror tables.
  */
 export function assertValidProjectCode(code: unknown): asserts code is string {
   const s = String(code ?? "").trim();
@@ -45,11 +48,6 @@ export function assertValidProjectCode(code: unknown): asserts code is string {
       `Invalid project_code "${s}": that is a TILE NAME, not a project code. ` +
         `Tile names conflate multiple projects (e.g. WEST QURNA = DP18A + DP18F) ` +
         `and must never persist. Pass the p2a plant code (e.g. "DP-18A") instead.`,
-    );
-  }
-  if (!PROJECT_CODE_REGEX.test(s)) {
-    throw new Error(
-      `Invalid project_code "${s}": expected canonical p2a shape "DP-##X" (e.g. "DP-18A").`,
     );
   }
 }
