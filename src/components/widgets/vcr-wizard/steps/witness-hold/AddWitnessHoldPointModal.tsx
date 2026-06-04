@@ -9,8 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Select, SelectContent, SelectItem, SelectTrigger,
+  Select, SelectContent, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import * as SelectPrimitive from '@radix-ui/react-select';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
