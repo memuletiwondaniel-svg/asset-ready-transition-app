@@ -285,7 +285,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       case 3: return <ProceduresStep vcrId={vcr.id} />;
       case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={effectiveProjectCode} />;
       case 5: return <RegistersLogsheetsStep vcrId={vcr.id} />;
-      case 6: return <CMMSSparesStep vcrId={vcr.id} />;
+      case 6: return <MaintenanceSystemsStep vcrId={vcr.id} />;
       case 7: return <ApproversStep vcrId={vcr.id} />;
       case 8: return <VCRItemsStep vcrId={vcr.id} />;
       case 9: return <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} />;
