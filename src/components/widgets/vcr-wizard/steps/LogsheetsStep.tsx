@@ -82,7 +82,7 @@ export const LogsheetsStep: React.FC<LogsheetsStepProps> = ({ vcrId }) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          <Badge variant="outline">{items.length} logsheets</Badge>
+          {items.length > 0 && <Badge variant="outline">{items.length} logsheets</Badge>}
           {newCount > 0 && (
             <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-[10px]">
               <Sparkles className="w-3 h-3 mr-1" />{newCount} New

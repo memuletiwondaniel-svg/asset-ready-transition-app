@@ -79,7 +79,7 @@ export const DeliverablesStep: React.FC<DeliverablesStepProps> = ({ vcrId }) => 
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Badge variant="outline">{items.length} documents</Badge>
+          {items.length > 0 && <Badge variant="outline">{items.length} documents</Badge>}
           <Tabs value={tierFilter} onValueChange={(v) => setTierFilter(v as any)}>
             <TabsList className="h-8">
               <TabsTrigger value="all" className="text-xs px-3 h-7">All</TabsTrigger>
