@@ -226,14 +226,8 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                           size="small"
                         />
                         <span className={cn(
-                          'truncate text-xs flex-1 min-w-0',
-                          isActive
-                            ? 'font-semibold text-foreground'
-                            : isComplete
-                              ? 'font-medium text-foreground'
-                              : isSkippedMandatory
-                                ? 'font-medium text-amber-700 dark:text-amber-300'
-                                : 'font-normal text-muted-foreground'
+                          'truncate text-xs flex-1 min-w-0 text-foreground',
+                          isActive ? 'font-semibold' : 'font-normal'
                         )}>
                           {step.label}
                         </span>
