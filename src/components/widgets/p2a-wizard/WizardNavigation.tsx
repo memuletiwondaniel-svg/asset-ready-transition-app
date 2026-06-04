@@ -22,6 +22,7 @@ interface WizardNavigationProps {
   submitLabel?: string;
   saveAndExitLabel?: string;
   isReviewMode?: boolean;
+  nextMuted?: boolean;
 }
 
 export const WizardNavigation: React.FC<WizardNavigationProps> = ({
