@@ -522,38 +522,58 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
                               >
                                 <Checkbox
                                   checked={isMapped}
-                                  disabled={!!sys.systemAssignmentId || isLocked}
+                                  disabled={isLocked}
                                   onCheckedChange={async (v) => {
-                                    if (v) {
-                                      const { error } = await (supabase as any)
-                                        .from('p2a_handover_point_systems')
-                                        .insert({
-                                          handover_point_id: vcrId,
-                                          system_id: sys.id,
-                                          subsystem_id: ss.id,
-                                        });
-                                      if (error) toast.error(error.message);
-                                      else {
-                                        queryClient.invalidateQueries({
-                                          queryKey: ['vcr-systems-tree'],
-                                        });
+                                    try {
+                                      if (v) {
+                                        // Adding a subsystem when not already mapped via system-level
+                                        if (sys.systemAssignmentId) return; // already covered
+                                        const { error } = await (supabase as any)
+                                          .from('p2a_handover_point_systems')
+                                          .insert({
+                                            handover_point_id: vcrId,
+                                            system_id: sys.id,
+                                            subsystem_id: ss.id,
+                                          });
+                                        if (error) throw error;
                                         toast.success('Subsystem added');
+                                      } else {
+                                        // Unchecking
+                                        if (sys.systemAssignmentId) {
+                                          // Replace system-level assignment with all OTHER subsystems
+                                          const others = sys.subsystems.filter(s2 => s2.id !== ss.id);
+                                          const { error: delErr } = await (supabase as any)
+                                            .from('p2a_handover_point_systems')
+                                            .delete()
+                                            .eq('id', sys.systemAssignmentId);
+                                          if (delErr) throw delErr;
+                                          if (others.length > 0) {
+                                            const { error: insErr } = await (supabase as any)
+                                              .from('p2a_handover_point_systems')
+                                              .insert(others.map(o => ({
+                                                handover_point_id: vcrId,
+                                                system_id: sys.id,
+                                                subsystem_id: o.id,
+                                              })));
+                                            if (insErr) throw insErr;
+                                          }
+                                          toast.success('Subsystem removed');
+                                        } else if (ss.assignmentId) {
+                                          const { error } = await (supabase as any)
+                                            .from('p2a_handover_point_systems')
+                                            .delete()
+                                            .eq('id', ss.assignmentId);
+                                          if (error) throw error;
+                                          toast.success('Subsystem removed');
+                                        }
                                       }
-                                    } else if (ss.assignmentId) {
-                                      const { error } = await (supabase as any)
-                                        .from('p2a_handover_point_systems')
-                                        .delete()
-                                        .eq('id', ss.assignmentId);
-                                      if (error) toast.error(error.message);
-                                      else {
-                                        queryClient.invalidateQueries({
-                                          queryKey: ['vcr-systems-tree'],
-                                        });
-                                        toast.success('Subsystem removed');
-                                      }
+                                      queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
+                                    } catch (e: any) {
+                                      toast.error(e?.message || 'Update failed');
                                     }
                                   }}
                                 />
+
                                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border/50 bg-muted/30 text-muted-foreground max-w-[180px] truncate">
                                   {ss.subsystem_id}
                                 </span>
