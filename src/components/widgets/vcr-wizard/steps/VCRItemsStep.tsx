@@ -966,44 +966,231 @@ const EditItemForm: React.FC<{
     }
   };
 
-  return (
-    <ScrollArea className="h-[calc(100vh-100px)]">
-      <div className="space-y-5 mt-4 pr-4 pb-4">
-        <div className="space-y-1.5">
-          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">VCR Item Description *</Label>
-          <Textarea
-            value={vcrItem}
-            onChange={(e) => setVcrItem(e.target.value)}
-            className="text-sm"
-            rows={3}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Topic</Label>
-          <Input value={topic} onChange={(e) => setTopic(e.target.value)} className="text-sm" />
+  // ── Dirty-tracking + add'l UI state ────────────────────────────
+  const initialSnapshot = React.useMemo(() => ({
+    vcrItem: item.effective_vcr_item,
+    topic: item.effective_topic || '',
+    deliveringParty: item.effective_delivering_party_role_id || '',
+    approvingParties: [...(item.effective_approving_party_role_ids || [])],
+    guidanceNotes: item.effective_guidance_notes || '',
+  }), [item.id]);
+
+  const isDirty = React.useMemo(() => {
+    if (vcrItem !== initialSnapshot.vcrItem) return true;
+    if ((topic || '') !== initialSnapshot.topic) return true;
+    if ((deliveringParty || '') !== initialSnapshot.deliveringParty) return true;
+    if ((guidanceNotes || '') !== initialSnapshot.guidanceNotes) return true;
+    const a = [...approvingParties].sort().join('|');
+    const b = [...initialSnapshot.approvingParties].sort().join('|');
+    return a !== b;
+  }, [vcrItem, topic, deliveringParty, guidanceNotes, approvingParties, initialSnapshot]);
+
+  const [editingTopic, setEditingTopic] = useState(false);
+  const [guidanceOpen, setGuidanceOpen] = useState(false);
+  const [approversOpen, setApproversOpen] = useState(true);
+  const [deleteApproverTarget, setDeleteApproverTarget] = useState<{ roleId: string; name: string } | null>(null);
+  const [memberPopoverRoleId, setMemberPopoverRoleId] = useState<string | null>(null);
+  const [deliveringPopoverOpen, setDeliveringPopoverOpen] = useState(false);
+
+  const guidancePreview = (guidanceNotes || '').split(/[.\n]/).find(s => s.trim().length > 0)?.trim() || 'No guidance provided';
+
+  // Renders a single party row: role title + B2B chip + primary avatar + +N badge
+  const renderPartyRow = (opts: {
+    key: string;
+    title: string;
+    isB2B: boolean;
+    users: { user_id: string; full_name: string; avatar_url: string | null }[];
+    onDelete?: () => void;
+    onPopoverChange?: (open: boolean) => void;
+    popoverOpen?: boolean;
+    popoverContent?: React.ReactNode;
+  }) => {
+    const primary = opts.users[0];
+    const overflow = Math.max(0, opts.users.length - 1);
+    const allNames = opts.users.map(u => u.full_name).join(', ');
+    return (
+      <div
+        key={opts.key}
+        className="group/row flex items-center gap-3 py-2.5 border-b border-border/40 last:border-b-0"
+      >
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          <span className="text-xs font-medium text-foreground/80 truncate">{opts.title}</span>
+          {opts.isB2B && (
+            <Badge
+              variant="outline"
+              className="text-[9px] font-semibold tracking-wider px-1.5 py-0 h-4 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800 shrink-0"
+              title="Back-to-back pair — either holder can close the approval"
+            >
+              B2B
+            </Badge>
+          )}
         </div>
 
-        {/* Delivering Party */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
+        {primary ? (
+          <Popover open={!!opts.popoverOpen} onOpenChange={opts.onPopoverChange}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 rounded-md px-1 py-0.5 hover:bg-muted/60 transition-colors shrink-0"
+                  >
+                    <Avatar className="w-6 h-6">
+                      <AvatarImage src={getAvatarUrl(primary.avatar_url)} />
+                      <AvatarFallback className="text-[9px]">{getInitials(primary.full_name)}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs truncate max-w-[140px]">{primary.full_name}</span>
+                    {overflow > 0 && (
+                      <Badge variant="secondary" className="text-[9px] h-4 px-1.5 font-medium">+{overflow}</Badge>
+                    )}
+                  </button>
+                </PopoverTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="left" className="max-w-[240px]">
+                {allNames}
+              </TooltipContent>
+            </Tooltip>
+            <PopoverContent side="left" align="start" collisionPadding={16} className="w-64 p-2 z-[200]">
+              {opts.popoverContent ?? (
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-1 pb-1">
+                    Holders ({opts.users.length})
+                  </p>
+                  {opts.users.map(u => (
+                    <div key={u.user_id} className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-muted/60">
+                      <Avatar className="w-5 h-5">
+                        <AvatarImage src={getAvatarUrl(u.avatar_url)} />
+                        <AvatarFallback className="text-[9px]">{getInitials(u.full_name)}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs truncate">{u.full_name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
+        ) : (
+          <span className="text-[11px] italic text-muted-foreground shrink-0">No users assigned</span>
+        )}
+
+        {opts.onDelete && (
+          <button
+            type="button"
+            onClick={opts.onDelete}
+            className="shrink-0 p-1 rounded-md text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors"
+            title={`Remove ${opts.title}`}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  // Secondary outline → primary-fill hover button
+  const addBtnClass =
+    "h-7 text-xs gap-1 border-border/60 text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors";
+
+  const deliveringUsersForRow = displayDeliveringUsers.map(u => ({
+    user_id: u.user_id,
+    full_name: u.full_name,
+    avatar_url: u.avatar_url,
+  }));
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-80px)]">
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="space-y-5 mt-4 pr-4 pb-6">
+          {/* VCR Item Description */}
+          <div className="space-y-1.5">
             <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
-              Delivering Party ({displayDeliveringUsers.length})
+              VCR Item Description *
             </Label>
-            <Popover open={addDeliveringOpen} onOpenChange={setAddDeliveringOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
-                  <Plus className="w-3 h-3" /> Add
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64 p-2 z-[200]" align="end">
-                <Input
-                  placeholder="Search team members..."
-                  value={deliveringSearch}
-                  onChange={(e) => setDeliveringSearch(e.target.value)}
-                  className="h-8 text-xs mb-2"
+            <Textarea
+              value={vcrItem}
+              onChange={(e) => setVcrItem(e.target.value)}
+              className="text-sm"
+              rows={3}
+            />
+          </div>
+
+          {/* Topic — inline chip with click-to-edit */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Topic:</span>
+            {editingTopic ? (
+              <Input
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                onBlur={() => setEditingTopic(false)}
+                onKeyDown={(e) => { if (e.key === 'Enter') setEditingTopic(false); }}
+                autoFocus
+                className="h-7 text-xs w-48"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditingTopic(true)}
+                className="group inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted/60 hover:bg-muted text-xs font-medium transition-colors"
+              >
+                <span>{topic || <span className="italic text-muted-foreground">none</span>}</span>
+                <Pencil className="w-2.5 h-2.5 text-muted-foreground/60 group-hover:text-muted-foreground" />
+              </button>
+            )}
+          </div>
+
+          {/* Guidance Notes — collapsible, no inner scroll */}
+          <div className="border-t border-border/40 pt-4">
+            <button
+              type="button"
+              onClick={() => setGuidanceOpen(o => !o)}
+              className="w-full flex items-center gap-2 text-left group"
+            >
+              {guidanceOpen ? (
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              ) : (
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              )}
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium shrink-0">
+                Guidance Notes
+              </span>
+              {!guidanceOpen && (
+                <span className="text-[11px] text-muted-foreground/70 truncate flex-1 min-w-0 normal-case font-normal">
+                  {guidancePreview}
+                </span>
+              )}
+            </button>
+            {guidanceOpen && (
+              <div className="mt-2">
+                <Textarea
+                  value={guidanceNotes}
+                  onChange={(e) => setGuidanceNotes(e.target.value)}
+                  className="text-sm resize-none"
+                  rows={Math.max(3, (guidanceNotes || '').split('\n').length + 1)}
                 />
-                <ScrollArea className="h-48">
-                  <div className="space-y-0.5">
+              </div>
+            )}
+          </div>
+
+          {/* Delivering Party — single row, B2B-collapse pattern */}
+          <div className="border-t border-border/40 pt-4">
+            <div className="flex items-center justify-between mb-1">
+              <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                Delivering Party ({displayDeliveringUsers.length})
+              </Label>
+              <Popover open={addDeliveringOpen} onOpenChange={setAddDeliveringOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={addBtnClass}>
+                    <Plus className="w-3 h-3" /> Add
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent side="left" align="end" collisionPadding={16} className="w-64 p-2 z-[200]">
+                  <Input
+                    placeholder="Search team members..."
+                    value={deliveringSearch}
+                    onChange={(e) => setDeliveringSearch(e.target.value)}
+                    className="h-8 text-xs mb-2"
+                  />
+                  <div className="max-h-48 overflow-y-auto space-y-0.5">
                     {availableDeliveringCandidates.map(user => (
                       <button
                         key={user.user_id}
@@ -1020,69 +1207,93 @@ const EditItemForm: React.FC<{
                       <p className="text-xs text-muted-foreground text-center py-4">No members available</p>
                     )}
                   </div>
-                </ScrollArea>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <Select value={deliveringParty} onValueChange={setDeliveringParty}>
+              <SelectTrigger className="text-sm h-8">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent className="z-[200]">
+                {roles.map(r => (
+                  <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {displayDeliveringUsers.length > 0 ? (
+              <div className="mt-1">
+                {renderPartyRow({
+                  key: 'delivering-row',
+                  title: getRoleName(deliveringParty) || 'Delivering Party',
+                  isB2B: isB2BPairUsers(displayDeliveringUsers as any),
+                  users: deliveringUsersForRow,
+                  popoverOpen: deliveringPopoverOpen,
+                  onPopoverChange: setDeliveringPopoverOpen,
+                  popoverContent: (
+                    <div className="space-y-1">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-1 pb-1">
+                        Assigned ({displayDeliveringUsers.length})
+                      </p>
+                      {displayDeliveringUsers.map(u => (
+                        <div key={u.id} className="flex items-center justify-between gap-2 px-1.5 py-1 rounded hover:bg-muted/60 group/holder">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Avatar className="w-5 h-5">
+                              <AvatarImage src={getAvatarUrl(u.avatar_url)} />
+                              <AvatarFallback className="text-[9px]">{getInitials(u.full_name)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs truncate">{u.full_name}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => { void handleRemoveDeliveringUser(u); }}
+                            className="opacity-0 group-hover/holder:opacity-100 p-0.5 rounded text-muted-foreground hover:text-destructive transition"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ),
+                })}
+              </div>
+            ) : deliveringParty ? (
+              <p className="text-[11px] italic text-muted-foreground mt-1.5">No users assigned to this role</p>
+            ) : null}
           </div>
 
-          <Select value={deliveringParty} onValueChange={setDeliveringParty}>
-            <SelectTrigger className="text-sm">
-              <SelectValue placeholder="Select role" />
-            </SelectTrigger>
-            <SelectContent className="z-[200]">
-              {roles.map(r => (
-                <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {displayDeliveringUsers.length > 0 ? (
-            <div className="mt-2 flex items-center gap-2 flex-wrap">
-              {displayDeliveringUsers.map(user => (
-                <div key={user.id} className="group/delivering relative flex items-center gap-2 bg-muted/50 rounded-full pl-1 pr-6 py-1">
-                  <Avatar className="w-6 h-6">
-                    <AvatarImage src={getAvatarUrl(user.avatar_url)} />
-                    <AvatarFallback className="text-[9px]">{getInitials(user.full_name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-xs">{user.full_name}</span>
-                  <button
-                    onClick={() => { void handleRemoveDeliveringUser(user); }}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full text-destructive hover:bg-destructive/10 flex items-center justify-center opacity-0 group-hover/delivering:opacity-100 transition-opacity"
-                    title={`Remove ${user.full_name}`}
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : deliveringParty ? (
-            <p className="text-xs text-muted-foreground italic">No users assigned to this role</p>
-          ) : (
-            <div className="border border-dashed rounded-lg p-4 text-center">
-              <p className="text-xs text-muted-foreground">No delivering parties assigned</p>
-            </div>
-          )}
-        </div>
-
-        {/* Approving Parties */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Approving Parties ({approvingParties.length})</Label>
-            <Popover open={addApproverOpen} onOpenChange={setAddApproverOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
-                  <Plus className="w-3 h-3" /> Add
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64 p-2 z-[200]" align="end">
-                <Input
-                  placeholder="Search roles..."
-                  value={approverSearch}
-                  onChange={(e) => setApproverSearch(e.target.value)}
-                  className="h-8 text-xs mb-2"
-                />
-                <ScrollArea className="h-48">
-                  <div className="space-y-0.5">
+          {/* Approving Parties — collapsible (default expanded) */}
+          <div className="border-t border-border/40 pt-4">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setApproversOpen(o => !o)}
+                className="flex items-center gap-2 group"
+              >
+                {approversOpen ? (
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
+                <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium cursor-pointer">
+                  Approving Parties ({approvingParties.length})
+                </Label>
+              </button>
+              <Popover open={addApproverOpen} onOpenChange={setAddApproverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={addBtnClass}>
+                    <Plus className="w-3 h-3" /> Add
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent side="left" align="end" collisionPadding={16} className="w-64 p-2 z-[200]">
+                  <Input
+                    placeholder="Search roles..."
+                    value={approverSearch}
+                    onChange={(e) => setApproverSearch(e.target.value)}
+                    className="h-8 text-xs mb-2"
+                  />
+                  <div className="max-h-48 overflow-y-auto space-y-0.5">
                     {availableRolesToAdd.map(r => (
                       <button
                         key={r.id}
@@ -1099,94 +1310,103 @@ const EditItemForm: React.FC<{
                       <p className="text-xs text-muted-foreground text-center py-4">No more roles available</p>
                     )}
                   </div>
-                </ScrollArea>
-              </PopoverContent>
-            </Popover>
-          </div>
+                </PopoverContent>
+              </Popover>
+            </div>
 
-          {approvingParties.length > 0 ? (
-            <div className="space-y-2">
-              {approvingParties.map(roleId => {
-                const users = getApprovingUsersForRole(roleId);
-                const b2b = isB2BPairUsers(users);
-                return (
-                  <div key={roleId} className="border rounded-lg p-2.5 group/approver hover:border-primary/30 transition-colors">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-xs font-medium text-muted-foreground truncate">{getRoleName(roleId)}</span>
-                        {b2b && (
-                          <Badge
-                            variant="outline"
-                            className="text-[9px] font-semibold tracking-wider px-1.5 py-0 h-4 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800"
-                            title="Back-to-back pair — either holder can close the approval"
-                          >
-                            B2B
-                          </Badge>
-                        )}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-5 w-5 opacity-0 group-hover/approver:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => removeApprover(roleId)}
-                        title={`Remove ${getRoleName(roleId)}`}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                    {users.length > 0 ? (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {users.map(user => (
-                          <div key={user.user_id} className="flex items-center gap-2 bg-muted/50 rounded-full pl-1 pr-3 py-1">
-                            <Avatar className="w-6 h-6">
-                              <AvatarImage src={getAvatarUrl(user.avatar_url)} />
-                              <AvatarFallback className="text-[9px]">{getInitials(user.full_name)}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs">{user.full_name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-[10px] text-muted-foreground italic">No users assigned</p>
-                    )}
+            {approversOpen && (
+              <div className="mt-1">
+                {approvingParties.length > 0 ? (
+                  <div>
+                    {approvingParties.map(roleId => {
+                      const users = getApprovingUsersForRole(roleId);
+                      const b2b = isB2BPairUsers(users);
+                      const roleName = getRoleName(roleId);
+                      return renderPartyRow({
+                        key: roleId,
+                        title: roleName,
+                        isB2B: b2b,
+                        users: users.map(u => ({ user_id: u.user_id, full_name: u.full_name, avatar_url: u.avatar_url })),
+                        onDelete: () => setDeleteApproverTarget({ roleId, name: roleName }),
+                        popoverOpen: memberPopoverRoleId === roleId,
+                        onPopoverChange: (open) => setMemberPopoverRoleId(open ? roleId : null),
+                      });
+                    })}
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="border border-dashed rounded-lg p-4 text-center">
-              <p className="text-xs text-muted-foreground">No approving parties assigned</p>
-            </div>
-          )}
+                ) : (
+                  <p className="text-[11px] italic text-muted-foreground py-2">No approving parties assigned</p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
+      </ScrollArea>
 
-        <div className="space-y-1.5">
-          <Label className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">Guidance Notes</Label>
-          <Textarea
-            value={guidanceNotes}
-            onChange={(e) => setGuidanceNotes(e.target.value)}
-            className="text-sm"
-            rows={2}
-          />
-        </div>
-        <Button
-          onClick={() => onSave({
-            vcr_item_id: item.id,
-            vcr_item_override: vcrItem,
-            topic_override: topic || null,
-            delivering_party_role_id_override: deliveringParty || null,
-            approving_party_role_ids_override: approvingParties.length > 0 ? approvingParties : null,
-            guidance_notes_override: guidanceNotes || null,
-          })}
-          disabled={!vcrItem || isSaving}
-          className="w-full"
-        >
-          {isSaving ? 'Saving...' : 'Save Changes'}
-        </Button>
+      {/* Sticky footer — only when dirty */}
+      <div className="shrink-0 border-t bg-background/95 backdrop-blur px-1 py-3">
+        {isDirty ? (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setVcrItem(initialSnapshot.vcrItem);
+                setTopic(initialSnapshot.topic);
+                setDeliveringParty(initialSnapshot.deliveringParty);
+                setApprovingParties([...initialSnapshot.approvingParties]);
+                setGuidanceNotes(initialSnapshot.guidanceNotes);
+              }}
+              className="text-muted-foreground"
+            >
+              Discard
+            </Button>
+            <Button
+              onClick={() => onSave({
+                vcr_item_id: item.id,
+                vcr_item_override: vcrItem,
+                topic_override: topic || null,
+                delivering_party_role_id_override: deliveringParty || null,
+                approving_party_role_ids_override: approvingParties.length > 0 ? approvingParties : null,
+                guidance_notes_override: guidanceNotes || null,
+              })}
+              disabled={!vcrItem || isSaving}
+              className="flex-1"
+            >
+              {isSaving ? 'Saving…' : 'Save Changes'}
+            </Button>
+          </div>
+        ) : (
+          <p className="text-center text-[11px] text-muted-foreground italic">No changes</p>
+        )}
       </div>
-    </ScrollArea>
+
+      {/* Approver delete confirmation */}
+      <AlertDialog open={!!deleteApproverTarget} onOpenChange={(open) => !open && setDeleteApproverTarget(null)}>
+        <AlertDialogContent className="z-[200]" overlayClassName="z-[199] bg-black/80 backdrop-blur-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Approving Party</AlertDialogTitle>
+            <AlertDialogDescription>
+              Remove <span className="font-semibold text-foreground">{deleteApproverTarget?.name}</span> from this VCR item's approving parties?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteApproverTarget) removeApprover(deleteApproverTarget.roleId);
+                setDeleteApproverTarget(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 };
+
 
 // Add Item Form Component (mirrors EditItemForm structure)
 interface CreateItemPayload {
