@@ -712,27 +712,13 @@ const StepReview: React.FC<{
 }> = ({ title, overview, provider, deliveryMethods, targetAudience, selectedSystemIds, allSystems, durationDays, tentativeDate, formatDisplayDate }) => {
   const selectedSystems = allSystems.filter(s => selectedSystemIds.includes(s.id));
 
-  const completedFields = [title, overview, provider, deliveryMethods.length > 0, targetAudience.length > 0, selectedSystems.length > 0, durationDays, tentativeDate].filter(Boolean).length;
-  const totalFields = 8;
-
   return (
     <div className="space-y-4">
-      {/* Header with completion indicator */}
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-semibold text-foreground">Review your training item</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Confirm the details below before creating.</p>
-        </div>
-        <Badge
-          variant={completedFields >= 3 ? 'default' : 'secondary'}
-          className={cn(
-            'text-[10px] font-mono shrink-0',
-            completedFields >= 5 && 'bg-emerald-500 hover:bg-emerald-600 text-white'
-          )}
-        >
-          {completedFields}/{totalFields} completed
-        </Badge>
+      <div>
+        <p className="text-sm font-semibold text-foreground">Review your training item</p>
+        <p className="text-xs text-muted-foreground mt-0.5">Confirm the details below before creating.</p>
       </div>
+
 
       {/* Title card — hero treatment */}
       <div className="p-4 rounded-xl border bg-gradient-to-br from-primary/5 via-transparent to-transparent">
