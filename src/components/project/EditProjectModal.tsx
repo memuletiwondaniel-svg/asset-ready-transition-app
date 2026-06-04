@@ -47,6 +47,9 @@ interface FormData {
   plant_id: string;
   field_id: string;
   station_id: string;
+  default_plant_code: string | null;
+  default_site_code: string | null;
+  default_unit_code: string | null;
 }
 
 interface TeamMember {
