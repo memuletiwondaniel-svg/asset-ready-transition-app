@@ -367,7 +367,10 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
           plant_id: formData.plant_id || null,
           field_id: formData.field_id || null,
           station_id: formData.station_id || null,
-        },
+          default_plant_code: formData.default_plant_code || null,
+          default_site_code: formData.default_site_code || null,
+          default_unit_code: formData.default_unit_code || null,
+        } as any,
       });
 
       // 2. Locations
