@@ -449,15 +449,6 @@ export async function handleGetHandoverCertificateStatus(
     }
 
 
-    // Filter by subsystem if specified
-    let filtered = rows;
-    if (args.sub_system) {
-      filtered = rows.filter(r => {
-        const subSys = (r["Sub System"] || r.SubSystem || r.sub_system || "");
-        return subSys.includes(args.sub_system);
-      });
-    }
-
     await logFredMetric(supabaseClient, {
       user_id: userId,
       tool_used: "get_handover_certificate_status",
@@ -472,9 +463,12 @@ export async function handleGetHandoverCertificateStatus(
       project: projectCode,
       certificate_type: certType,
       total_certificates: filtered.length,
-      certificates: filtered.slice(0, 100).map(r => ({
+      postback_fired: postbackFired,
+      group_by: groupBy,
+      certificates: filtered.slice(0, 200).map(r => ({
         certificate_ref: r[certType] || r.Certificate || r.Ref || Object.values(r)[0],
         sub_system: r["Sub System"] || r.SubSystem,
+        discipline: r.Discipline || r["Discipline"] || null,
         tags: r.Tags,
         itrs: r.ITRs,
         outstanding_itrs: r["Outstanding ITRs"] || r.OutstandingITRs,
