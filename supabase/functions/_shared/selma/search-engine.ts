@@ -680,16 +680,17 @@ export async function paginateByStatusSplit(
 
   // Strategy 2: type-code sweep from DB if still capped
   const expectedFromHeader = ctx.paginationTotalAssaiCount;
+  const pageThreshold = ctx.detectedPageSize ?? ctx.PAGE_CAP;
   const needsTypeSweep = expectedFromHeader ? allDocs.length < expectedFromHeader :
     statusCodes.some(sc => {
       const countForStatus = allDocs.filter(d => d.status === sc).length;
-      return countForStatus >= ctx.PAGE_CAP;
+      return countForStatus >= pageThreshold;
     });
 
   if (needsTypeSweep && ctx.totalQueryCount < ctx.MAX_TOTAL_QUERIES - 5) {
     const cappedStatuses = statusCodes.filter(sc => {
       const countForStatus = allDocs.filter(d => d.status === sc).length;
-      return countForStatus >= ctx.PAGE_CAP;
+      return countForStatus >= pageThreshold;
     });
     console.info('paginateByStatusSplit: status split incomplete (' + allDocs.length + ' found' +
       (expectedFromHeader ? ', expected ~' + expectedFromHeader : '') + '), capped statuses: ' + cappedStatuses.join(', ') +
