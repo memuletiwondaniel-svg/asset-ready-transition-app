@@ -240,6 +240,7 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
                     key={vcr.id}
                     vcr={vcr}
                     onClick={handleVCRClick}
+                    isActive={(wizardVCR?.id ?? selectedVCR?.id) === vcr.id}
                   />
                 ))}
               </div>
@@ -342,13 +343,17 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
           </div>
 
           {showVCRList && canCreateVCR && (
-            <div className="flex-shrink-0 pt-2 mt-1 border-t border-border/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div className="flex-shrink-0 mt-1">
               <button
                 type="button"
                 onPointerDown={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => { e.stopPropagation(); setShowCreateVCR(true); }}
-                className="group/cta w-full flex items-center justify-center gap-1.5 h-8 rounded-md text-xs font-medium text-muted-foreground/70 hover:text-primary hover:bg-primary/5 transition-all relative z-10"
+                className="group/cta w-full flex items-center justify-center gap-1.5 rounded-lg text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors relative z-10"
+                style={{
+                  padding: '10px',
+                  border: '0.5px dashed hsl(var(--border))',
+                }}
               >
                 <Plus className="h-3.5 w-3.5 transition-transform group-hover/cta:rotate-90 duration-200" />
                 <span>Add VCR</span>
