@@ -121,10 +121,125 @@ export interface SearchResult {
 }
 
 // ============================================================
-// PURE FUNCTIONS
+// V12 PURE FUNCTIONS (recall-first, self-diagnosing)
 // ============================================================
 
 const stripHtml = (s: string) => String(s || '').replace(/<[^>]*>/g, '').trim();
+
+/**
+ * V12 #1 — Normalise an LLM-supplied search term.
+ *   - Trim + collapse internal whitespace
+ *   - Normalise Unicode dashes to '-'
+ *   - Strip smart quotes
+ *   - Uppercase document-number-shaped input
+ *   - Strip stray leading/trailing wildcards
+ * Returns { raw, normalized }.
+ */
+export function normalizeSearchTerm(raw: string | undefined | null): { raw: string; normalized: string } {
+  const rawStr = String(raw ?? '');
+  let n = rawStr.trim().replace(/\s+/g, ' ');
+  n = n.replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]/g, '-');
+  n = n.replace(/[\u2018\u2019\u201A\u201B]/g, "'").replace(/[\u201C\u201D\u201E\u201F]/g, '"');
+  n = n.replace(/^%+|%+$/g, '');
+  // Uppercase if it looks like a document number (contains digit + uppercase-letter + hyphen)
+  if (/^[A-Za-z0-9\-_./]+$/.test(n) && /\d/.test(n) && /[A-Za-z]/.test(n)) n = n.toUpperCase();
+  return { raw: rawStr, normalized: n };
+}
+
+/**
+ * V12 #3 — Build number-pattern variants in cascade order.
+ * Caller iterates and uses the FIRST variant that returns rows; subsequent
+ * pagination should reuse the chosen mode (do NOT re-cascade per page).
+ */
+export function buildNumberVariants(term: string): Array<{ mode: string; value: string }> {
+  const t = (term || '').trim();
+  if (!t) return [];
+  const variants: Array<{ mode: string; value: string }> = [];
+  const seen = new Set<string>();
+  const add = (mode: string, value: string) => { if (!value || seen.has(value)) return; seen.add(value); variants.push({ mode, value }); };
+  add('asgiven', t);
+  add('contains', `%${t.replace(/^%+|%+$/g, '')}%`);
+  add('prefix', `${t.replace(/^%+|%+$/g, '')}%`);
+  add('bare', t.replace(/^%+|%+$/g, ''));
+  return variants;
+}
+
+/**
+ * V12 #4 — Classify an Assai HTTP response.
+ *   results    — myCells parsed >0 rows
+ *   empty_grid — HTTP 200, has search-results scaffold, "Showing results 0 to 0"
+ *   no_session — short (<4000) page with session-timeout / index.aweb redirect markers
+ *   login      — login form returned
+ *   error      — anything else
+ */
+export type ResponseClass = 'results' | 'empty_grid' | 'no_session' | 'login' | 'error';
+export function classifyResponse(html: string, httpStatus: number): ResponseClass {
+  if (!html || httpStatus !== 200) return 'error';
+  const lower = html.toLowerCase();
+  const isLogin = lower.includes('id="password"') || lower.includes('type="password"') || lower.includes('loginform');
+  if (isLogin && lower.includes('name="userid"')) return 'login';
+  const sessionTimeout = lower.includes('showsessiontimeouterrormessage') || lower.includes('was inactive for too long');
+  const redirectsToIndex = /document\.location\s*=\s*["']index\.aweb/i.test(html);
+  if (sessionTimeout || (html.length < 4000 && redirectsToIndex)) return 'no_session';
+  if (html.length < 4000 && !html.includes('myCells')) return 'no_session';
+  const hasGrid = html.includes('var myCells');
+  if (!hasGrid) return 'error';
+  // Try to parse myCells
+  const idx = html.indexOf('var myCells');
+  const br = html.indexOf('[', idx);
+  if (br >= 0) {
+    let depth = 0; let end = -1;
+    for (let i = br; i < html.length; i++) {
+      if (html[i] === '[') depth++;
+      else if (html[i] === ']') { depth--; if (depth === 0) { end = i; break; } }
+    }
+    if (end > br) {
+      try {
+        const arr = JSON.parse(html.substring(br, end + 1));
+        if (Array.isArray(arr) && arr.length > 0) return 'results';
+      } catch { /* fall through */ }
+    }
+  }
+  return 'empty_grid';
+}
+
+/**
+ * V12 #2 — Map a search.aweb form to real input names per target field.
+ * Uses both <label for=…>/<input id=…> adjacency AND a known-id catalog
+ * (legacy Assai DWR forms often place labels in adjacent <td> with no `for`).
+ * Returns map + list of unresolved targets (loud telemetry on miss).
+ */
+export interface FormFieldMap {
+  map: Partial<Record<'number'|'description'|'document_type'|'discipline_code'|'status_code'|'company_code'|'purchase_code', string>>;
+  allNames: string[];
+  unresolved: string[];
+}
+const KNOWN_FIELD_IDS: Record<string, string[]> = {
+  number: ['number'],
+  description: ['description'],
+  document_type: ['document_type'],
+  discipline_code: ['discipline_code'],
+  status_code: ['status_code'],
+  company_code: ['company_code', 'codo_company_code'],
+  purchase_code: ['purchase_code'],
+};
+export function mapFormFields(html: string): FormFieldMap {
+  const allNames: string[] = [];
+  const inputRe = /<input[^>]*>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = inputRe.exec(html)) !== null) {
+    const n = m[0].match(/name=["']([^"']+)["']/i)?.[1];
+    if (n && !allNames.includes(n)) allNames.push(n);
+  }
+  const map: FormFieldMap['map'] = {};
+  const unresolved: string[] = [];
+  for (const [target, candidates] of Object.entries(KNOWN_FIELD_IDS)) {
+    const hit = candidates.find(c => allNames.includes(c));
+    if (hit) (map as any)[target] = hit;
+    else unresolved.push(target);
+  }
+  return { map, allNames, unresolved };
+}
 
 export function extractHiddenFields(html: string): Array<{ name: string; type: string; value: string }> {
   const fields: Array<{ name: string; type: string; value: string }> = [];
@@ -139,6 +254,26 @@ export function extractHiddenFields(html: string): Array<{ name: string; type: s
     fields.push({ name, type, value });
   }
   return fields;
+}
+
+/**
+ * V12 #7 — Detect & parse the single-doc detail page Assai returns when exactly
+ * one document matches. Looks for pk_seq_nr + entt_seq_nr + no populated grid.
+ */
+export function parseDetailPage(html: string): SearchResult | null {
+  if (!html) return null;
+  const hasGrid = /var\s+myCells\s*=\s*\[\s*\[/.test(html);
+  if (hasGrid) return null;
+  const pk = html.match(/(?:name|id)=["']pk_seq_nr["'][^>]*value=["'](\d+)["']/i)?.[1]
+          || html.match(/pk_seq_nr["']?\s*[:=]\s*["']?(\d{3,})/i)?.[1];
+  const enttRaw = html.match(/(?:name|id)=["']entt_seq_nr["'][^>]*value=["'](\d+)["']/i)?.[1];
+  if (!pk) return null;
+  const docNum = html.match(/document[_\s]*nr[^<>]*[:>]\s*<[^>]+>\s*([A-Z0-9][A-Z0-9\-]+)/i)?.[1]
+              || html.match(/<title>[^<]*?([0-9]{4,}-[A-Z0-9\-]+)<\/title>/i)?.[1] || '';
+  const title = stripHtml(html.match(/<td[^>]*>\s*Title\s*<\/td>\s*<td[^>]*>([^<]+)</i)?.[1] || '');
+  const rev = stripHtml(html.match(/Revision[^<]*<\/td>\s*<td[^>]*>([^<]+)</i)?.[1] || '');
+  const status = stripHtml(html.match(/Status[^<]*<\/td>\s*<td[^>]*>([^<]+)</i)?.[1] || '');
+  return { document_number: docNum, title, revision: rev, status, pk_seq_nr: pk, entt_seq_nr: enttRaw || '' };
 }
 
 export function parseDocuments(html: string, subclass?: string): SearchResult[] {
@@ -328,24 +463,25 @@ export async function fetchResultPage(
   let resultHtml = await resultResp.text();
   console.info('result.aweb POST (start_row=' + (startRow ?? 1) + '): status ' + resultResp.status + ', html length: ' + resultHtml.length);
 
-  // Login-page detection — if Assai returned the login page, force session refresh and retry once
-  if (resultHtml.includes('type="password"') || resultHtml.includes('id="password"') || resultHtml.includes('loginForm')) {
-    console.warn('[Selma:SEARCH_V11] fetchResultPage returned login page — forcing session refresh');
+  // V12 #4 — classify; on no_session/login force re-auth + warmup + retry ONCE.
+  let cls = classifyResponse(resultHtml, resultResp.status);
+  if (cls === 'no_session' || cls === 'login') {
+    console.warn('[Selma:V12] fetchResultPage classified=' + cls + ' (len=' + resultHtml.length + ') — forcing session refresh + retry');
     const freshCookie = await ctx.sessionManager.getSession(true);
     const retryResp = await fetch(resultUrl, {
       method: 'POST',
-      headers: {
-        Cookie: freshCookie,
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Accept: 'text/html',
-        Referer: searchUrl,
-        'User-Agent': ctx.ua,
-      },
-      body: formData.toString(),
-      redirect: 'follow',
+      headers: { Cookie: freshCookie, 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'text/html', Referer: searchUrl, 'User-Agent': ctx.ua },
+      body: formData.toString(), redirect: 'follow',
     });
     resultHtml = await retryResp.text();
-    console.info('[Selma:SEARCH_V11] fetchResultPage retry: status ' + retryResp.status + ', html length: ' + resultHtml.length);
+    cls = classifyResponse(resultHtml, retryResp.status);
+    console.info('[Selma:V12] fetchResultPage retry: status ' + retryResp.status + ', html length: ' + resultHtml.length + ', classification=' + cls);
+    if (cls === 'no_session' || cls === 'login') {
+      // V12 Correction 4 — terminal: surface as classified error, never as "not found"
+      const err: any = new Error('Selma:V12 session unrecoverable after retry (classification=' + cls + ')');
+      err.v12Class = cls; err.v12HtmlLength = resultHtml.length;
+      throw err;
+    }
   }
 
   return resultHtml;
@@ -405,8 +541,26 @@ export async function executeFilteredSearch(
     body: formData.toString(),
     redirect: 'follow',
   });
-  const html = await resp.text();
+  let html = await resp.text();
   console.info('executeFilteredSearch: result.aweb POST status=' + resp.status + ', html length: ' + html.length + ', filters: ' + JSON.stringify(extraFilters));
+  // V12 #4 — on no_session/login force ONE retry; if still bad, throw classified error
+  let cls = classifyResponse(html, resp.status);
+  if (cls === 'no_session' || cls === 'login') {
+    console.warn('[Selma:V12] executeFilteredSearch classified=' + cls + ' — forcing session refresh');
+    const fresh = await ctx.sessionManager.getSession(true);
+    const retry = await fetch(ctx.assaiBase + '/result.aweb', {
+      method: 'POST',
+      headers: { Cookie: fresh, 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'text/html', Referer: searchUrl, 'User-Agent': ctx.ua },
+      body: formData.toString(), redirect: 'follow',
+    });
+    html = await retry.text();
+    cls = classifyResponse(html, retry.status);
+    if (cls === 'no_session' || cls === 'login') {
+      const err: any = new Error('Selma:V12 session unrecoverable in executeFilteredSearch (cls=' + cls + ')');
+      err.v12Class = cls; err.v12HtmlLength = html.length;
+      throw err;
+    }
+  }
   const docs = parseDocuments(html, params.subclass_type);
   return { docs, hiddenFields: subHidden, textFields: subText };
 }
@@ -897,10 +1051,52 @@ export async function executeSearch(
           console.error('[SEARCH_V11] escalation strategy 3 error:', esc3Err);
         }
       }
+
+      // V12 #6 — Drop-the-type-filter escalation: rerun with type AND discipline removed.
+      if (allDocuments.length === 0 && (ctx.document_type || effectiveDocType) && ctx.totalQueryCount < ctx.MAX_TOTAL_QUERIES - 3) {
+        try {
+          strategiesTried.push('drop_type_filter');
+          const savedType = ctx.document_type;
+          const savedEff = ctx.effectiveDocType;
+          const savedDisc = ctx.discipline_code;
+          ctx.document_type = undefined;
+          ctx.effectiveDocType = undefined;
+          ctx.discipline_code = undefined;
+          await ctx.sessionManager.getSession(true);
+          const escDocs4 = await paginateSearch(ctx, moduleParams);
+          ctx.document_type = savedType;
+          ctx.effectiveDocType = savedEff;
+          ctx.discipline_code = savedDisc;
+          if (escDocs4.length > 0) {
+            allDocuments = escDocs4;
+            console.log('[Selma:V12] escalation drop_type_filter found ' + escDocs4.length + ' docs');
+          }
+        } catch (esc4Err) {
+          console.error('[Selma:V12] escalation drop_type_filter error:', esc4Err);
+        }
+      }
     }
 
     if (allDocuments.length === 0) {
-      return { found: false, results: [], totalFound: 0, total_found: 0, message: 'No documents found matching the search criteria in Assai. Strategies tried: ' + strategiesTried.join(', ') + '.', search_pattern: ctx.document_number_pattern, strategies_tried: strategiesTried, cascade_depth: strategiesTried.length, strategy_stages: strategiesTried };
+      // V12 #12 — Auditable not-found payload
+      return {
+        found: false,
+        results: [],
+        totalFound: 0,
+        total_found: 0,
+        message: 'No documents found matching the search criteria in Assai. Strategies tried: ' + strategiesTried.join(', ') + '.',
+        search_pattern: ctx.document_number_pattern,
+        strategies_tried: strategiesTried,
+        cascade_depth: strategiesTried.length,
+        strategy_stages: strategiesTried,
+        v12_audit: {
+          normalized_term: normalizeSearchTerm(ctx.document_number_pattern || ctx.title || '').normalized,
+          raw_term: ctx.document_number_pattern || ctx.title || '',
+          filters_applied: { discipline_code: ctx.discipline_code, document_type: ctx.document_type, status_code: ctx.status_code, company_code: ctx.company_code, title: ctx.title },
+          response_classification: 'empty_grid',
+          totalQueryCount: ctx.totalQueryCount,
+        },
+      };
     }
 
     // Build summaries
@@ -952,6 +1148,14 @@ export async function executeSearch(
     };
   } catch (err: any) {
     console.error('[SEARCH_V11] executeSearch error:', err);
+    if (err?.v12Class === 'no_session' || err?.v12Class === 'login') {
+      return {
+        found: false, results: [], totalFound: 0,
+        error: 'selma_session_unrecoverable',
+        message: "I couldn't reach Assai right now — the session expired and didn't recover. Please retry in a moment.",
+        v12_audit: { response_classification: err.v12Class, html_length: err.v12HtmlLength },
+      };
+    }
     return { found: false, results: [], totalFound: 0, error: 'Assai search failed: ' + (err.message || String(err)) };
   }
 }
