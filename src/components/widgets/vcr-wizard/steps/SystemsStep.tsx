@@ -387,46 +387,50 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
 
       {/* ── Populated state: search + count + actions ────────────── */}
       {rows.length > 0 && (
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative flex-1 min-w-[220px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search systems / subsystems..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          {rows.length > 0 && <Badge variant="outline">{rows.length} systems</Badge>}
-          {hcCount > 0 && (
-            <Badge variant="outline" className="border-orange-300 text-orange-600 gap-1">
-              <Flame className="w-3 h-3" />
-              {hcCount} HC
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search systems / subsystems..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Badge variant="outline" className="shrink-0">
+              {rows.length} systems
             </Badge>
-          )}
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={handleSync}
-            disabled={syncing}
-            title="Sync GoCompletions"
-            aria-label="Sync GoCompletions"
-            className="h-8 w-8"
-          >
-            <RefreshCw className={cn("w-3.5 h-3.5", syncing && "animate-spin")} />
-          </Button>
-          {!isFinalized && !isLocked && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 text-xs gap-1.5"
-              onClick={() => finalizeMutation.mutate(true)}
-              disabled={finalizeMutation.isPending}
-              title="Mark this system list as final"
+            {hcCount > 0 && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-amber-300/70 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:border-amber-900/40 dark:text-amber-300 shrink-0">
+                {hcCount} HC
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleSync}
+              disabled={syncing}
+              title="Sync GoCompletions"
+              aria-label="Sync GoCompletions"
+              className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0 disabled:opacity-50"
             >
-              <Lock className="w-3 h-3" />
-              Finalize
-            </Button>
+              <RefreshCw className={cn('w-3.5 h-3.5', syncing && 'animate-spin')} />
+            </button>
+          </div>
+          {!isFinalized && !isLocked && (
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+                onClick={() => finalizeMutation.mutate(true)}
+                disabled={finalizeMutation.isPending}
+                title="Mark this system list as final — VCR will no longer follow P2A plan edits"
+              >
+                <Lock className="w-3 h-3" />
+                Finalize systems
+              </Button>
+            </div>
           )}
         </div>
       )}
