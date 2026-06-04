@@ -46,12 +46,14 @@ interface ProjectsHomePageProps {
 const ProjectsHomePage = ({ onBack: _onBack }: ProjectsHomePageProps) => {
   const navigate = useNavigate();
   useLanguage();
-  const { projects, isLoading, deleteProject, isDeleting } = useProjects();
+  const { projects, isLoading, deleteProject, permanentlyDeleteProject, isDeleting } = useProjects();
   const { canPerformActions } = useCanPerformActionsPermission();
+  const { isAdmin } = useIsAdminPermission();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'heatmap' | 'list'>('list');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [hardDelete, setHardDelete] = useState(false);
   const [qualProject, setQualProject] = useState<Project | null>(null);
   const queryClient = useQueryClient();
   const { prefs: tablePrefs, setPrefs: setTablePrefs, reset: resetTablePrefs } = useTablePreferences(
