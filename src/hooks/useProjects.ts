@@ -242,9 +242,11 @@ export const useProjects = () => {
     updateProject: updateProjectMutation.mutate,
     updateProjectAsync: updateProjectMutation.mutateAsync,
     deleteProject: deleteProjectMutation.mutate,
+    permanentlyDeleteProject: permanentlyDeleteProjectMutation.mutate,
+    permanentlyDeleteProjectAsync: permanentlyDeleteProjectMutation.mutateAsync,
     isCreating: createProjectMutation.isPending,
     isUpdating: updateProjectMutation.isPending,
-    isDeleting: deleteProjectMutation.isPending,
+    isDeleting: deleteProjectMutation.isPending || permanentlyDeleteProjectMutation.isPending,
   };
 };
 
