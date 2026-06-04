@@ -259,11 +259,9 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
                     </span>
                   </button>
                   {i < STEPS.length - 1 && (
-                    <div className={cn(
-                      'flex-1 h-0.5 rounded-full mx-1 mb-5 min-w-3 transition-colors duration-300',
-                      complete || (i < step && isStepComplete(i)) ? 'bg-emerald-500' :
-                      i < step ? 'bg-amber-300 dark:bg-amber-600' : 'bg-border'
-                    )} />
+                    /* Neutral scaffolding — connectors do NOT encode status.
+                       Step status is fully conveyed by the StepCircle itself. */
+                    <div className="flex-1 h-px rounded-full mx-1 mb-5 min-w-3 bg-border" />
                   )}
                 </React.Fragment>
               );
