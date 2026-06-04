@@ -478,11 +478,26 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
     switch (currentStep) {
       case 1:
         return (
-          <WizardStepProjectInfo
-            formData={formData}
-            onFormDataChange={handleFormDataChange}
-            currentProjectId={project?.id}
-          />
+          <div className="space-y-6">
+            <WizardStepProjectInfo
+              formData={formData}
+              onFormDataChange={handleFormDataChange}
+              currentProjectId={project?.id}
+            />
+            <DocumentNumberingDefaults
+              projectKey={
+                formData.project_id_prefix && formData.project_id_number
+                  ? `${formData.project_id_prefix}-${formData.project_id_number}`
+                  : undefined
+              }
+              value={{
+                default_plant_code: formData.default_plant_code,
+                default_site_code: formData.default_site_code,
+                default_unit_code: formData.default_unit_code,
+              }}
+              onChange={(next) => handleFormDataChange(next)}
+            />
+          </div>
         );
       case 2:
         return (
