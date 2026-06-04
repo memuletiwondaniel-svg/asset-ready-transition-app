@@ -198,8 +198,12 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
-    // ITP (6), Approvers (7), VCR Checklist (8), Review (9) — visit-based
-    if (idx === 6 || idx === 7 || idx === 8 || idx === 9) return visitedSteps.has(idx);
+    // ITP (6), Approvers (7), VCR Checklist (8), Review (9) have no count-based data.
+    // They count as complete only after the user has visited AND navigated away
+    // (explicit Continue / Back / sidebar click to another step).
+    if (idx === 6 || idx === 7 || idx === 8 || idx === 9) {
+      return visitedSteps.has(idx) && idx !== currentStep;
+    }
     return (stepCounts[idx] || 0) > 0;
   };
 
