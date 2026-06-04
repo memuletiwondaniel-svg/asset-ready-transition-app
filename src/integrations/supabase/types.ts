@@ -13558,6 +13558,59 @@ export type Database = {
           },
         ]
       }
+      vcr_sof_approvers: {
+        Row: {
+          approver_level: number
+          approver_name: string
+          approver_role: string
+          comments: string | null
+          created_at: string
+          handover_point_id: string
+          id: string
+          signature_data: string | null
+          signed_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approver_level: number
+          approver_name: string
+          approver_role: string
+          comments?: string | null
+          created_at?: string
+          handover_point_id: string
+          id?: string
+          signature_data?: string | null
+          signed_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approver_level?: number
+          approver_name?: string
+          approver_role?: string
+          comments?: string | null
+          created_at?: string
+          handover_point_id?: string
+          id?: string
+          signature_data?: string | null
+          signed_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vcr_sof_approvers_handover_point_id_fkey"
+            columns: ["handover_point_id"]
+            isOneToOne: false
+            referencedRelation: "p2a_handover_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vcr_template_approvers: {
         Row: {
           approval_status: string
