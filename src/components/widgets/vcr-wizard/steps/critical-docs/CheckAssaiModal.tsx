@@ -307,7 +307,7 @@ export const CheckAssaiModal: React.FC<CheckAssaiModalProps> = ({
                     </TableCell>
                     <TableCell className="text-xs py-1.5">{d.revision}</TableCell>
 
-                    <TableCell className="text-right">
+                    <TableCell className="text-right py-1.5">
                       <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <a
                           href={`https://eu.assaicloud.com/AWeu578/get/details/BGC_PROJ/DOCS/${d.document_number}`}
