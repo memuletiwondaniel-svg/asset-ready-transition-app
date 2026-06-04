@@ -455,8 +455,13 @@ Deno.serve(async (req) => {
     }
 
     // ── Certificates pass via Fred handler (MCC, MCC-DAC, PCC, PCDAC, RFC, RFSU, RFOC) ──
+    // HandoverSearch.aspx is WebForms RadButton — the search button postback
+    // target must be the control UniqueID WITHOUT the trailing `_input`
+    // (same trap class as TagSearch). Fred's handler now applies that fix
+    // and groups by SubSystem,Discipline for DAC variants.
     if (!body.skip_certs) {
       const certTypes = ["MCC", "MCC-DAC", "PCC", "PCDAC", "RFC", "RFSU", "RFOC"];
+      report.cert_pass.per_type = [] as any[];
       for (const certType of certTypes) {
         report.cert_pass.attempted++;
         try {
@@ -465,6 +470,14 @@ Deno.serve(async (req) => {
             supa,
           );
           const certs = (res?.certificates || []) as any[];
+          report.cert_pass.per_type.push({
+            cert_type: certType,
+            postback_fired: res?.postback_fired ?? null,
+            group_by: res?.group_by ?? null,
+            total: res?.total_certificates ?? certs.length,
+            note: res?.note ?? null,
+            error: res?.error ?? null,
+          });
           if (!certs.length) continue;
           report.cert_pass.ok++;
           if (dryRun) continue;
@@ -473,7 +486,7 @@ Deno.serve(async (req) => {
           for (const c of certs) {
             const subsys = String(c.sub_system || c.SubSystem || "").trim() || null;
             const objectId = String(c.certificate_ref || c.Ref || c.Certificate || c.raw?.Ref || "").trim();
-            const discipline = String(c.raw?.Discipline || c.discipline || "").trim();
+            const discipline = String(c.discipline || c.raw?.Discipline || "").trim();
             if (!objectId) continue;
             const key = `${certType}|${objectId}|${discipline}`;
             if (seen.has(key)) continue;
@@ -504,6 +517,7 @@ Deno.serve(async (req) => {
         }
       }
     }
+
 
 
     return new Response(JSON.stringify(report, null, 2), {
