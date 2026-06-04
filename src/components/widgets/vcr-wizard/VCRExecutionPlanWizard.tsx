@@ -40,6 +40,7 @@ function hashCode(str: string): number {
 }
 
 import { WizardShell, WizardShellStep } from '../shared/WizardShell';
+import { WizardSubtitle } from '../shared/WizardSubtitle';
 import { SystemsStep } from './steps/SystemsStep';
 import { VCRItemsStep } from './steps/VCRItemsStep';
 import { TrainingStep } from './steps/TrainingStep';
@@ -50,7 +51,7 @@ import { InspectionTestPlanStep } from './steps/InspectionTestPlanStep';
 import { ApproversStep } from './steps/ApproversStep';
 import { CMMSSparesStep } from './steps/CMMSSparesStep';
 import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
-import { Layers, CheckCircle2 } from 'lucide-react';
+import { Layers, CheckCircle2, Eye } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
 
@@ -59,19 +60,24 @@ interface VCRExecutionPlanWizardProps {
   onOpenChange: (open: boolean) => void;
   vcr: ProjectVCR;
   projectCode?: string;
+  projectName?: string;
 }
 
+// Step order — Witness & Hold Points (formerly Inspection Test Plan)
+// moved from position 7 to position 2 so users define inspection scope
+// alongside Systems, before the support artefacts.
+// Internal id 'itp' is intentionally preserved — UI label only changed.
 const STEPS: WizardShellStep[] = [
-  { id: 'systems',             label: 'Systems',              icon: Layers,         color: 'text-orange-500' },
-  { id: 'training',            label: 'Training',             icon: GraduationCap,  color: 'text-blue-500' },
-  { id: 'procedures',          label: 'Procedures',           icon: BookOpen,       color: 'text-emerald-500' },
-  { id: 'critical-docs',       label: 'Critical Documents',   icon: FileText,       color: 'text-amber-500' },
-  { id: 'registers-logsheets', label: 'Registers & Logsheets',icon: ClipboardList,  color: 'text-cyan-500' },
-  { id: 'cmms-spares',         label: 'CMMS & Spares',        icon: Wrench,         color: 'text-amber-500' },
-  { id: 'itp',                 label: 'Inspection Test Plan', icon: ClipboardList,  color: 'text-orange-500' },
-  { id: 'approvers',           label: 'Approvers',            icon: UserCheck,      color: 'text-primary' },
-  { id: 'checklist',           label: 'VCR Checklist',        icon: ClipboardCheck, color: 'text-violet-500' },
-  { id: 'review',              label: 'Review and Submit',    icon: CheckCircle2,   color: 'text-emerald-500' },
+  { id: 'systems',             label: 'Systems',                 icon: Layers,         color: 'text-orange-500' },
+  { id: 'itp',                 label: 'Witness & Hold Points',   icon: Eye,            color: 'text-orange-500' },
+  { id: 'training',            label: 'Training',                icon: GraduationCap,  color: 'text-blue-500' },
+  { id: 'procedures',          label: 'Procedures',              icon: BookOpen,       color: 'text-emerald-500' },
+  { id: 'critical-docs',       label: 'Critical Documents',      icon: FileText,       color: 'text-amber-500' },
+  { id: 'registers-logsheets', label: 'Registers & Logsheets',   icon: ClipboardList,  color: 'text-cyan-500' },
+  { id: 'cmms-spares',         label: 'CMMS & Spares',           icon: Wrench,         color: 'text-amber-500' },
+  { id: 'approvers',           label: 'Approvers',               icon: UserCheck,      color: 'text-primary' },
+  { id: 'checklist',           label: 'VCR Checklist',           icon: ClipboardCheck, color: 'text-violet-500' },
+  { id: 'review',              label: 'Review and Submit',       icon: CheckCircle2,   color: 'text-emerald-500' },
 ];
 
 const TOTAL_STEPS = STEPS.length; // 10
@@ -82,12 +88,46 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   onOpenChange,
   vcr,
   projectCode,
+  projectName,
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const hasPromotedRef = useRef(false);
+
+  // Resolve project code/name from the parent P2A plan when not supplied by caller.
+  const { data: resolvedProject } = useQuery({
+    queryKey: ['vcr-wizard-project-context', vcr.id],
+    enabled: open && (!projectCode || !projectName),
+    queryFn: async () => {
+      const client = supabase as any;
+      const { data: hp } = await client
+        .from('p2a_handover_points')
+        .select('handover_plan_id')
+        .eq('id', vcr.id)
+        .maybeSingle();
+      if (!hp?.handover_plan_id) return null;
+      const { data: plan } = await client
+        .from('p2a_handover_plans')
+        .select('project_id')
+        .eq('id', hp.handover_plan_id)
+        .maybeSingle();
+      if (!plan?.project_id) return null;
+      const { data: project } = await client
+        .from('projects')
+        .select('project_id_prefix, project_id_number, project_title')
+        .eq('id', plan.project_id)
+        .maybeSingle();
+      if (!project) return null;
+      const code = [project.project_id_prefix, project.project_id_number]
+        .filter(Boolean).join('-');
+      return { project_code: code, project_title: project.project_title };
+    },
+  });
+
+  const effectiveProjectCode = projectCode || resolvedProject?.project_code || '';
+  const effectiveProjectName = projectName || resolvedProject?.project_title || '';
 
   // ── Progress sync (mirrors P2A pattern) ──────────────────────────
   const syncVCRProgress = useCallback(async (progress: number) => {
@@ -167,10 +207,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     })();
   }, [open, user?.id, vcr.id, queryClient]);
 
-  // Query step data counts for completion
-  // New order:
-  // 0:Systems 1:Training 2:Procedures 3:Critical Docs
-  // 4:Registers+Logsheets 5:CMMS+Spares 6:ITP 7:Approvers 8:VCR Checklist 9:Review
+  // Query step data counts for completion. Current order:
+  // 0:Systems 1:W&HP(itp) 2:Training 3:Procedures 4:Critical Docs
+  // 5:Registers+Logsheets 6:CMMS+Spares 7:Approvers 8:VCR Checklist 9:Review
   const { data: stepCounts = {} } = useQuery({
     queryKey: ['vcr-wizard-step-counts', vcr.id],
     queryFn: async () => {
@@ -186,11 +225,11 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       ]);
       return {
         0: systems.count || 0,
-        1: training.count || 0,
-        2: procedures.count || 0,
-        3: criticalDocs.count || 0,
-        4: (registers.count || 0) + (logsheets.count || 0),
-        5: (cmms.count || 0) + (spares.count || 0),
+        2: training.count || 0,
+        3: procedures.count || 0,
+        4: criticalDocs.count || 0,
+        5: (registers.count || 0) + (logsheets.count || 0),
+        6: (cmms.count || 0) + (spares.count || 0),
       } as Record<number, number>;
     },
     enabled: open,
@@ -198,10 +237,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
-    // ITP (6), Approvers (7), VCR Checklist (8), Review (9) have no count-based data.
-    // They count as complete only after the user has visited AND navigated away
-    // (explicit Continue / Back / sidebar click to another step).
-    if (idx === 6 || idx === 7 || idx === 8 || idx === 9) {
+    // Visit-based completion for steps without count data:
+    // W&HP (1, formerly ITP), Approvers (7), VCR Checklist (8), Review (9).
+    if (idx === 1 || idx === 7 || idx === 8 || idx === 9) {
       return visitedSteps.has(idx) && idx !== currentStep;
     }
     return (stepCounts[idx] || 0) > 0;
@@ -242,13 +280,13 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   const renderStep = () => {
     switch (currentStep) {
-      case 0: return <SystemsStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 1: return <TrainingStep vcrId={vcr.id} />;
-      case 2: return <ProceduresStep vcrId={vcr.id} />;
-      case 3: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 4: return <RegistersLogsheetsStep vcrId={vcr.id} />;
-      case 5: return <CMMSSparesStep vcrId={vcr.id} />;
-      case 6: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 0: return <SystemsStep vcrId={vcr.id} projectCode={effectiveProjectCode} />;
+      case 1: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={effectiveProjectCode} />;
+      case 2: return <TrainingStep vcrId={vcr.id} />;
+      case 3: return <ProceduresStep vcrId={vcr.id} />;
+      case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={effectiveProjectCode} />;
+      case 5: return <RegistersLogsheetsStep vcrId={vcr.id} />;
+      case 6: return <CMMSSparesStep vcrId={vcr.id} />;
       case 7: return <ApproversStep vcrId={vcr.id} />;
       case 8: return <VCRItemsStep vcrId={vcr.id} />;
       case 9: return <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} />;
@@ -299,28 +337,28 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   const topHeaderContent = (
     <TooltipProvider delayDuration={150}>
-    <div className="flex items-start justify-between gap-4 py-3">
+    <div className="flex items-stretch gap-3 py-3">
+      {/* HC accent stripe — full content height, 6px thick */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span
+            className={cn("self-stretch w-1.5 rounded-sm cursor-help shrink-0", stripeMeta.cls)}
+            aria-label={stripeMeta.tooltip}
+          />
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-xs text-xs">
+          {stripeMeta.tooltip}
+        </TooltipContent>
+      </Tooltip>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                className={cn("inline-block w-1 self-stretch rounded-sm cursor-help shrink-0", stripeMeta.cls)}
-                style={{ minHeight: '1.5rem' }}
-                aria-label={stripeMeta.tooltip}
-              />
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="max-w-xs text-xs">
-              {stripeMeta.tooltip}
-            </TooltipContent>
-          </Tooltip>
-          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground truncate">
-            {shortVcrId ? `${shortVcrId}: ` : ''}{vcr.name}
-          </h1>
-        </div>
-        <p className="text-[11px] text-muted-foreground mt-1">
-          Create VCR Plan · Step {currentStep + 1} of {STEPS.length} — {STEPS[currentStep]?.label}
-        </p>
+        <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground truncate">
+          {shortVcrId ? `${shortVcrId}: ` : ''}{vcr.name}
+        </h1>
+        <WizardSubtitle
+          prefix="Create VCR Plan"
+          code={effectiveProjectCode}
+          name={effectiveProjectName}
+        />
       </div>
       <div className="flex items-center gap-1.5 shrink-0 pt-1">
         <Badge variant="outline" className={cn("text-[10px] h-5 px-2", statusLabel.cls)}>
