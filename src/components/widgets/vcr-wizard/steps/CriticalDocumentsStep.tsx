@@ -447,6 +447,9 @@ const DocTypeList: React.FC<{
   onToggle: (id: string) => void;
   savedTypeIds: Map<string, RequirementRow>;
 }> = ({ items, isSelected, onToggle, savedTypeIds }) => {
+  // Grid: checkbox | code | name | tier | discipline | bound
+  const gridCols =
+    'grid grid-cols-[28px_76px_minmax(0,1fr)_56px_140px_72px] gap-x-3 items-center';
   return (
     <ul className="divide-y divide-border/40">
       {items.map((d) => {
@@ -458,27 +461,31 @@ const DocTypeList: React.FC<{
             key={d.id}
             onClick={() => onToggle(d.id)}
             className={cn(
-              'flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors text-sm',
+              gridCols,
+              'px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors text-sm',
               sel && 'bg-primary/5',
             )}
           >
             <Checkbox checked={sel} onCheckedChange={() => onToggle(d.id)} onClick={(e) => e.stopPropagation()} />
-            <span className="font-mono text-[11px] text-muted-foreground w-24 shrink-0 truncate">{d.code}</span>
-            <span className="flex-1 truncate">{d.document_name}</span>
-            {d.tier && (
-              <Badge variant="outline" className="text-[10px] shrink-0">
-                {d.tier === 'Tier 1' ? 'T1' : d.tier === 'Tier 2' ? 'T2' : d.tier}
-              </Badge>
-            )}
-            {d.rlmu === 'RLMU' && (
-              <Badge variant="outline" className="text-[10px] shrink-0">RLMU</Badge>
-            )}
-            {d.discipline_name && (
-              <Badge variant="secondary" className="text-[10px] shrink-0 max-w-[140px] truncate">{d.discipline_name}</Badge>
-            )}
-            {bound && (
-              <Badge className="text-[10px] shrink-0 bg-emerald-500/20 text-emerald-700 hover:bg-emerald-500/30 border-transparent">Bound</Badge>
-            )}
+            <span className="font-mono text-[11px] text-muted-foreground truncate">{d.code}</span>
+            <span className="truncate">{d.document_name}</span>
+            <div className="flex justify-center">
+              {d.tier ? (
+                <Badge variant="outline" className="text-[10px]">
+                  {d.tier === 'Tier 1' ? 'T1' : d.tier === 'Tier 2' ? 'T2' : d.tier}
+                </Badge>
+              ) : null}
+            </div>
+            <div className="min-w-0">
+              {d.discipline_name && (
+                <Badge variant="secondary" className="text-[10px] max-w-full truncate">{d.discipline_name}</Badge>
+              )}
+            </div>
+            <div className="flex justify-end">
+              {bound && (
+                <Badge className="text-[10px] bg-emerald-500/20 text-emerald-700 hover:bg-emerald-500/30 border-transparent">Bound</Badge>
+              )}
+            </div>
           </li>
         );
       })}
