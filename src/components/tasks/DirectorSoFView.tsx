@@ -188,6 +188,12 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
     setOverlayOpen(true);
   };
 
+  const handleViewVCRSoF = (projectId: string | undefined, vcrId: string) => {
+    if (!projectId) return;
+    navigate(`/project/${projectId}?vcr=${vcrId}&tab=sof`);
+  };
+
+
   const handleExit = async () => {
     await signOut();
     await performHardReset();
