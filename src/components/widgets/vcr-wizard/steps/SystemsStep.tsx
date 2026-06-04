@@ -189,6 +189,92 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
     onError: (e: any) => toast.error(e?.message || 'Failed to add systems'),
   });
 
+  /**
+   * Assign a batch of WizardSystem (from CMS / Excel / Manual) to this VCR.
+   * Two-step: (1) upsert into p2a_systems scoped to parent plan,
+   * (2) insert p2a_handover_point_systems rows for any not already linked.
+   */
+  const assignWizardSystems = async (incoming: WizardSystem[]) => {
+    if (!planId || !incoming.length) return;
+    setImporting(true);
+    try {
+      // 1) Upsert into p2a_systems (unique on system_id + handover_plan_id).
+      const rowsToUpsert = incoming.map(s => ({
+        handover_plan_id: planId,
+        system_id: s.system_id,
+        name: s.name,
+        is_hydrocarbon: !!s.is_hydrocarbon,
+        source_type: 'MANUAL' as const,
+      }));
+      const { data: upserted, error: upErr } = await (supabase as any)
+        .from('p2a_systems')
+        .upsert(rowsToUpsert, { onConflict: 'system_id,handover_plan_id', ignoreDuplicates: false })
+        .select('id, system_id');
+      if (upErr) throw upErr;
+
+      // Build system_id (text) → uuid map. Fall back to a fetch if upsert didn't return rows.
+      let codeToUuid = new Map<string, string>((upserted || []).map((r: any) => [r.system_id, r.id]));
+      const missingCodes = incoming.map(s => s.system_id).filter(c => !codeToUuid.has(c));
+      if (missingCodes.length) {
+        const { data: fetched } = await (supabase as any)
+          .from('p2a_systems')
+          .select('id, system_id')
+          .eq('handover_plan_id', planId)
+          .in('system_id', missingCodes);
+        for (const r of fetched || []) codeToUuid.set(r.system_id, r.id);
+      }
+
+      // 2) Skip systems already assigned at system-level to this VCR.
+      const newSystemUuids = Array.from(codeToUuid.values());
+      const { data: existing } = await (supabase as any)
+        .from('p2a_handover_point_systems')
+        .select('system_id, subsystem_id')
+        .eq('handover_point_id', vcrId)
+        .in('system_id', newSystemUuids);
+      const alreadyFullyAssigned = new Set(
+        (existing || []).filter((r: any) => !r.subsystem_id).map((r: any) => r.system_id)
+      );
+      const toLink = newSystemUuids.filter(uuid => !alreadyFullyAssigned.has(uuid));
+
+      // Remove any subsystem-level rows for systems we're about to fully assign.
+      if (toLink.length) {
+        await (supabase as any)
+          .from('p2a_handover_point_systems')
+          .delete()
+          .eq('handover_point_id', vcrId)
+          .in('system_id', toLink)
+          .not('subsystem_id', 'is', null);
+        const inserts = toLink.map(uuid => ({
+          handover_point_id: vcrId,
+          system_id: uuid,
+          subsystem_id: null,
+        }));
+        const { error: linkErr } = await (supabase as any)
+          .from('p2a_handover_point_systems')
+          .insert(inserts);
+        if (linkErr) throw linkErr;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-systems-picker'] });
+      const newCount = toLink.length;
+      const expandedPlan = incoming.length - alreadyFullyAssigned.size;
+      toast.success(
+        newCount === 0
+          ? 'All selected systems were already on this VCR'
+          : `Added ${newCount} ${newCount === 1 ? 'system' : 'systems'} to VCR${
+              expandedPlan > 0 && incoming.some(s => !codeToUuid.has(s.system_id) === false)
+                ? ''
+                : ''
+            }`
+      );
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to add systems');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const deleteMutation = useMutation({
     mutationFn: async (assignmentId: string) => {
       const { error } = await (supabase as any)
