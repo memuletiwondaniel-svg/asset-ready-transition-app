@@ -1,12 +1,35 @@
-// Daily health-check for the GoHub catalog.
+// Daily health-check for the GoHub catalog + GoCompletions extractors.
 //
-// Reports per-tile freshness and counts so we can alert if a tile that
-// should have many systems (e.g. WEST QURNA, ~148+) silently drops to 0.
-// Designed to be called by a scheduled cron job (or hit on-demand by an
-// admin). Returns 200 with `healthy:false` and a list of `alerts` when
-// anything looks off — so the cron can pipe that into a notification.
+// Two layers:
+//   1. Catalog freshness/coverage (pre-existing) — tile counts + staleness.
+//   2. STRUCTURAL CANARY (new, Phase B) — runs the real extractors against
+//      a known-good oracle subsystem and asserts INVARIANTS that survive
+//      real-world data change. Goal: break loud-and-fast when something
+//      drifts silently (wrong param → []/500, stale postback → blank form,
+//      &nbsp; placeholder phantom row, parser regression).
+//
+// The cert dates checked here are 2019 COMPLETED gates — immutable
+// historical facts, so asserting their presence is a stable liveness
+// signal, not a cry-wolf risk. Mutable counts (e.g. outstanding ITRs)
+// are deliberately NOT asserted.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import {
+  GocSessionManager,
+  getGoCompletionsCredentials,
+  postRadAjaxAsync,
+  parseRadGridTable,
+} from "../_shared/gocompletions-auth.ts";
+import {
+  CANARY_ORACLE,
+  CLASS_NAME_ALL,
+  ITR_CLASS_ALL,
+  ITR_CODE_REGEX,
+  cleanCellText,
+  discoverSearchPostbackTarget,
+  isEmptyPlaceholderCell,
+  parseItrCode,
+} from "../_shared/gohub-contract.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,9 +49,6 @@ interface Alert {
   reason: string;
 }
 
-// Tiles we expect to always have a non-trivial number of systems.
-// If any of these drop to 0, that's a critical regression (likely the
-// session-bleed bug or upstream auth break).
 const CRITICAL_TILES: Record<string, number> = {
   "WEST QURNA (WQ)": 50,
   "WEST QURNA": 50,
@@ -39,8 +59,173 @@ const CRITICAL_TILES: Record<string, number> = {
   "BGC BNGL (NR)": 5,
 };
 
-// Warn if catalog hasn't been refreshed in this many hours.
 const STALE_AFTER_HOURS = 48;
+
+// ─── Canary probes ───────────────────────────────────────────
+
+async function probeGetSystems(session: GocSessionManager) {
+  const data: any = await session.callMethod("GetSystems", { itrClass: ITR_CLASS_ALL });
+  const arr: any[] = Array.isArray(data)
+    ? data
+    : (data?.Items || data?.Systems || data?.results || []);
+  if (!arr.length) throw new Error("GetSystems returned empty array");
+  // Walk to find the oracle subsystem & its rollup ITR total.
+  for (const sys of arr) {
+    const subs: any[] = sys.SubSystem || sys.SubSystems || sys.Subsystems || [];
+    for (const sub of subs) {
+      const num = String(sub.Number || sub.SubSystemNumber || sub.Name || "").trim();
+      if (num === CANARY_ORACLE.subsystem_number) {
+        return { rollup_itrs: Number(sub.ITRs ?? 0), guid: String(sub.ID || sub.GUID || "") };
+      }
+    }
+  }
+  throw new Error(`oracle subsystem ${CANARY_ORACLE.subsystem_number} not in GetSystems rollup`);
+}
+
+async function probeItrs(session: GocSessionManager): Promise<{ count: number; a: number; b: number; bad_codes: string[] }> {
+  const rows: any = await session.callMethod("GetSubSystemTagITRList", {
+    subSystemID: CANARY_ORACLE.subsystem_guid,
+    className: CLASS_NAME_ALL,
+  });
+  if (!Array.isArray(rows)) throw new Error("GetSubSystemTagITRList non-array");
+  let a = 0, b = 0;
+  const bad: string[] = [];
+  for (const r of rows) {
+    const code = String(r.ITR ?? "").trim();
+    const parsed = parseItrCode(code);
+    if (!parsed) { bad.push(code); continue; }
+    if (parsed.ab_phase === "A") a++; else b++;
+  }
+  return { count: rows.length, a, b, bad_codes: bad };
+}
+
+async function probeCertDates(session: GocSessionManager): Promise<Record<string, string | null>> {
+  // For each historical gate (MCC, PCC, RFC), fire a per-subsystem
+  // HandoverSearch and parse the Accepted Date.
+  const out: Record<string, string | null> = {};
+  const types: Array<[string, string, string]> = [
+    ["MCC", "aafaeac5-e094-df11-b37f-0050ba0820b5", "SubSystem"],
+    ["PCC", "fe342975-e1f7-df11-bfbc-001ec9b317f3", "SubSystem"],
+    ["RFC", "f5317275-0f88-e211-bfbc-001ec9b317f3", "SubSystem"],
+  ];
+  for (const [certType, typeId, groupBy] of types) {
+    try {
+      const path = `GoCompletions/Handovers/HandoverSearch.aspx?TypeID=${typeId}&GroupBy=${encodeURIComponent(groupBy)}`;
+      const { html, url, cookies } = await session.navigateTo(path);
+      const trigger = discoverSearchPostbackTarget(html);
+      if (!trigger) { out[certType] = null; continue; }
+      // Find subsystem field (prefer PrimarySearchCriteria textbox)
+      const subFieldMatch = html.match(/name="([^"]*PrimarySearchCriteria[^"]*SubSystemTextBox)"/i)
+        || html.match(/name="([^"]*SubSystem[^"]*TextBox)"/i);
+      const subField = subFieldMatch?.[1];
+      if (!subField) { out[certType] = null; continue; }
+      const { html: result } = await postRadAjaxAsync(cookies, url, html, trigger, {
+        [subField]: CANARY_ORACLE.subsystem_number,
+      });
+      const rows = parseRadGridTable(result);
+      // Find a non-placeholder row matching the subsystem
+      const row = rows.find((r) =>
+        cleanCellText(String(r["Sub System"] || r.SubSystem || "")).includes(CANARY_ORACLE.subsystem_number)
+      );
+      if (!row) { out[certType] = null; continue; }
+      const accepted = cleanCellText(String(row["Accepted Date"] || ""));
+      out[certType] = accepted || null;
+    } catch (e) {
+      out[certType] = null;
+    }
+  }
+  return out;
+}
+
+function parseAcceptedDateToIso(s: string | null): string | null {
+  if (!s) return null;
+  const m = s.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/);
+  if (!m) return null;
+  const months: Record<string, string> = {
+    jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06",
+    jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12",
+  };
+  const mm = months[m[2].toLowerCase()];
+  if (!mm) return null;
+  return `${m[3]}-${mm}-${m[1].padStart(2, "0")}`;
+}
+
+async function runCanary(supabase: any): Promise<{ ok: boolean; checks: any[]; alerts: Alert[] }> {
+  const checks: any[] = [];
+  const alerts: Alert[] = [];
+  const tile = CANARY_ORACLE.tile_name;
+  try {
+    const creds = await getGoCompletionsCredentials(supabase);
+    const session = new GocSessionManager(creds.portalUrl, creds.username, creds.password, tile);
+
+    // 1. GetSystems
+    try {
+      const rs = await probeGetSystems(session);
+      checks.push({ name: "GetSystems.oracle_in_rollup", ok: true, rollup_itrs: rs.rollup_itrs });
+      if (rs.rollup_itrs !== CANARY_ORACLE.expected_itr_total) {
+        alerts.push({
+          level: "critical", tile,
+          reason: `CANARY: GetSystems rollup_itrs=${rs.rollup_itrs} != expected ${CANARY_ORACLE.expected_itr_total} on oracle ${CANARY_ORACLE.subsystem_number}`,
+        });
+      }
+    } catch (e: any) {
+      checks.push({ name: "GetSystems.oracle_in_rollup", ok: false, error: String(e?.message || e) });
+      alerts.push({ level: "critical", tile, reason: `CANARY: GetSystems failed — ${String(e?.message || e).slice(0, 200)}` });
+    }
+
+    // 2. ITRs
+    try {
+      const itr = await probeItrs(session);
+      checks.push({ name: "GetSubSystemTagITRList.oracle", ok: true, ...itr });
+      if (itr.count !== CANARY_ORACLE.expected_itr_total) {
+        alerts.push({ level: "critical", tile, reason: `CANARY: ITR count=${itr.count} != ${CANARY_ORACLE.expected_itr_total}` });
+      }
+      if (itr.a !== CANARY_ORACLE.expected_itr_a || itr.b !== CANARY_ORACLE.expected_itr_b) {
+        alerts.push({ level: "critical", tile, reason: `CANARY: A/B split=${itr.a}/${itr.b} != ${CANARY_ORACLE.expected_itr_a}/${CANARY_ORACLE.expected_itr_b}` });
+      }
+      if (itr.bad_codes.length) {
+        alerts.push({ level: "critical", tile, reason: `CANARY: ${itr.bad_codes.length} ITR codes failed BGC-{disc}{digits}{A|B}: ${itr.bad_codes.slice(0, 3).join(", ")}` });
+      }
+    } catch (e: any) {
+      checks.push({ name: "GetSubSystemTagITRList.oracle", ok: false, error: String(e?.message || e) });
+      alerts.push({ level: "critical", tile, reason: `CANARY: ITR probe failed — ${String(e?.message || e).slice(0, 200)}` });
+    }
+
+    // 3. Cert Accepted Dates (immutable 2019 facts)
+    try {
+      const dates = await probeCertDates(session);
+      checks.push({ name: "HandoverSearch.cert_accepted_dates", ok: true, dates });
+      for (const [k, expected] of Object.entries(CANARY_ORACLE.expected_cert_dates)) {
+        const got = parseAcceptedDateToIso(dates[k]);
+        if (got !== expected) {
+          alerts.push({
+            level: "critical", tile,
+            reason: `CANARY: ${k} accepted_date='${dates[k] ?? "(none)"}' parsed='${got ?? "(none)"}' != expected '${expected}' — HandoverSearch postback or RadGrid parser regressed`,
+          });
+        }
+      }
+    } catch (e: any) {
+      checks.push({ name: "HandoverSearch.cert_accepted_dates", ok: false, error: String(e?.message || e) });
+      alerts.push({ level: "critical", tile, reason: `CANARY: cert probe failed — ${String(e?.message || e).slice(0, 200)}` });
+    }
+
+    // 4. Placeholder/empty-row skip guard (pure-function sanity check
+    //    that the contract helper still rejects `&nbsp;` placeholders).
+    const placeholderOk = isEmptyPlaceholderCell("&nbsp;") && isEmptyPlaceholderCell("") && !isEmptyPlaceholderCell("X");
+    checks.push({ name: "contract.isEmptyPlaceholderCell", ok: placeholderOk });
+    if (!placeholderOk) {
+      alerts.push({ level: "critical", tile, reason: "CANARY: isEmptyPlaceholderCell regressed — &nbsp; rows would persist as phantom certs" });
+    }
+
+    return { ok: alerts.length === 0, checks, alerts };
+  } catch (e: any) {
+    return {
+      ok: false,
+      checks,
+      alerts: [{ level: "critical", tile, reason: `CANARY: setup failed — ${String(e?.message || e).slice(0, 200)}` }],
+    };
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -48,6 +233,8 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const url = new URL(req.url);
+    const skipCanary = url.searchParams.get("skip_canary") === "1";
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
@@ -65,8 +252,6 @@ Deno.serve(async (req) => {
     const alerts: Alert[] = [];
     const now = Date.now();
 
-    // Critical: known tile present in catalog but dropped below threshold,
-    // OR known tile entirely missing.
     const tileByName = new Map(tiles.map((t) => [t.tile_name.toUpperCase(), t]));
     for (const [name, threshold] of Object.entries(CRITICAL_TILES)) {
       const found = tileByName.get(name.toUpperCase());
@@ -87,7 +272,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Warning: any tile with stale data
     for (const t of tiles) {
       if (!t.last_synced_at) continue;
       const ageHours = (now - new Date(t.last_synced_at).getTime()) / 3_600_000;
@@ -100,17 +284,21 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Structural canary (live extractor invariants)
+    let canaryReport: any = { skipped: true };
+    if (!skipCanary) {
+      const canary = await runCanary(supabase);
+      alerts.push(...canary.alerts);
+      canaryReport = { ok: canary.ok, checks: canary.checks };
+    }
+
     const critical = alerts.filter((a) => a.level === "critical");
     const healthy = critical.length === 0;
 
     console.log(
-      `HealthCheck: tiles=${tiles.length} alerts=${alerts.length} critical=${critical.length} healthy=${healthy}`,
+      `HealthCheck: tiles=${tiles.length} alerts=${alerts.length} critical=${critical.length} canary_ok=${canaryReport.ok ?? "skipped"} healthy=${healthy}`,
     );
-    if (alerts.length > 0) {
-      for (const a of alerts) {
-        console.log(`HealthCheck[${a.level}] ${a.tile}: ${a.reason}`);
-      }
-    }
+    for (const a of alerts) console.log(`HealthCheck[${a.level}] ${a.tile}: ${a.reason}`);
 
     return new Response(
       JSON.stringify({
@@ -118,6 +306,7 @@ Deno.serve(async (req) => {
         checked_at: new Date().toISOString(),
         tiles,
         alerts,
+        canary: canaryReport,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
