@@ -1008,23 +1008,16 @@ const EditItemForm: React.FC<{
     const primary = opts.users[0];
     const overflow = Math.max(0, opts.users.length - 1);
     const allNames = opts.users.map(u => u.full_name).join(', ');
+    // Fixed column grid:
+    //   [role label] [avatar] [name] [B2B chip slot] [trash slot]
+    // Every column has a fixed width so avatars, names, chips, and trash icons
+    // line up vertically across every row. Empty slots stay reserved.
     return (
       <div
         key={opts.key}
-        className="group/row flex items-center gap-3 py-2.5 border-b border-border/40 last:border-b-0"
+        className="group/row grid grid-cols-[minmax(140px,180px)_28px_minmax(0,1fr)_44px_24px] items-center gap-x-2 py-2.5 border-b border-border/40 last:border-b-0"
       >
-        <div className="flex items-center gap-1.5 min-w-0 flex-1">
-          <span className="text-xs font-medium text-foreground/80 truncate">{opts.title}</span>
-          {opts.isB2B && (
-            <Badge
-              variant="outline"
-              className="text-[9px] font-semibold tracking-wider px-1.5 py-0 h-4 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800 shrink-0"
-              title="Back-to-back pair — either holder can close the approval"
-            >
-              B2B
-            </Badge>
-          )}
-        </div>
+        <span className="text-xs font-medium text-foreground/80 truncate">{opts.title}</span>
 
         {primary ? (
           <Popover open={!!opts.popoverOpen} onOpenChange={opts.onPopoverChange}>
@@ -1033,16 +1026,13 @@ const EditItemForm: React.FC<{
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="flex items-center gap-1.5 rounded-md px-1 py-0.5 hover:bg-muted/60 transition-colors shrink-0"
+                    className="contents text-left"
                   >
-                    <Avatar className="w-6 h-6">
+                    <Avatar className="w-6 h-6 justify-self-start">
                       <AvatarImage src={getAvatarUrl(primary.avatar_url)} />
                       <AvatarFallback className="text-[9px]">{getInitials(primary.full_name)}</AvatarFallback>
                     </Avatar>
-                    <span className="text-xs truncate max-w-[140px]">{primary.full_name}</span>
-                    {overflow > 0 && (
-                      <Badge variant="secondary" className="text-[9px] h-4 px-1.5 font-medium">+{overflow}</Badge>
-                    )}
+                    <span className="text-xs truncate min-w-0 justify-self-start">{primary.full_name}</span>
                   </button>
                 </PopoverTrigger>
               </TooltipTrigger>
@@ -1070,19 +1060,36 @@ const EditItemForm: React.FC<{
             </PopoverContent>
           </Popover>
         ) : (
-          <span className="text-[11px] italic text-muted-foreground shrink-0">No users assigned</span>
+          <>
+            <span className="w-6 h-6" />
+            <span className="text-[11px] italic text-muted-foreground truncate min-w-0">No users assigned</span>
+          </>
         )}
 
-        {opts.onDelete && (
-          <button
-            type="button"
-            onClick={opts.onDelete}
-            className="shrink-0 p-1 rounded-md text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors"
-            title={`Remove ${opts.title}`}
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        )}
+        <div className="justify-self-start">
+          {opts.isB2B && (
+            <Badge
+              variant="outline"
+              className="text-[9px] font-semibold tracking-wider px-1.5 py-0 h-4 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+              title="Back-to-back pair — either holder can close the approval"
+            >
+              B2B
+            </Badge>
+          )}
+        </div>
+
+        <div className="justify-self-end">
+          {opts.onDelete && (
+            <button
+              type="button"
+              onClick={opts.onDelete}
+              className="opacity-0 group-hover/row:opacity-100 transition-opacity p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              title={`Remove ${opts.title}`}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
     );
   };
