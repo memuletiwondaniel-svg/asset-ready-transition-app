@@ -235,16 +235,16 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   const renderStep = () => {
     switch (currentStep) {
-      case 0: return <SystemsStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 1: return <VCRItemsStep vcrId={vcr.id} />;
+      case 0: return <VCRItemsStep vcrId={vcr.id} />;
+      case 1: return <SystemsStep vcrId={vcr.id} projectCode={projectCode} />;
       case 2: return <TrainingStep vcrId={vcr.id} />;
       case 3: return <ProceduresStep vcrId={vcr.id} />;
       case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={projectCode} />;
       case 5: return <RegistersLogsheetsStep vcrId={vcr.id} />;
-      case 6: return <CMMSStep vcrId={vcr.id} />;
-      case 7: return <SparesStep vcrId={vcr.id} />;
-      case 8: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 9: return <ApproversStep vcrId={vcr.id} />;
+      case 6: return <CMMSSparesStep vcrId={vcr.id} />;
+      case 7: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 8: return <ApproversStep vcrId={vcr.id} />;
+      case 9: return <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} />;
       default: return null;
     }
   };
