@@ -448,16 +448,30 @@ Deno.serve(async (req) => {
     // top-level may be array OR { Items | data | results | Systems }.
     // Subsystem children may be SubSystem | SubSystems | Subsystems | SubsystemList.
     try {
-      const sysResp = await session.callMethod("GetSystems", {});
+      const sysRespRaw = await session.callMethod("GetSystems", {});
+      // ASMX wraps the payload in `{ d: ... }`. Unwrap before traversing.
+      const sysResp: any = (sysRespRaw && typeof sysRespRaw === "object" && "d" in (sysRespRaw as any))
+        ? (sysRespRaw as any).d
+        : sysRespRaw;
       const arr: any[] = Array.isArray(sysResp)
         ? sysResp
         : (sysResp?.Items || sysResp?.data || sysResp?.results || sysResp?.Systems || []);
       if (debug) {
+        const rawStr = (() => { try { return JSON.stringify(sysRespRaw); } catch { return String(sysRespRaw); } })();
+        const outerKeys = (sysRespRaw && typeof sysRespRaw === "object") ? Object.keys(sysRespRaw as any) : ["<non-object>"];
         const topKeys = Array.isArray(sysResp) ? ["<array>"] : Object.keys(sysResp || {});
         const first = arr[0] || null;
         const firstKeys = first ? Object.keys(first) : [];
         const subKey = first ? (["SubSystem","SubSystems","Subsystems","SubsystemList","subSystems"].find((k) => Array.isArray((first as any)[k]))) : null;
-        report.getsystems_top_keys = { top: topKeys, first_system_keys: firstKeys, subsystem_array_key: subKey, array_length: arr.length };
+        report.getsystems_top_keys = {
+          outer_keys: outerKeys,
+          unwrapped_d: outerKeys.includes("d"),
+          top: topKeys,
+          first_system_keys: firstKeys,
+          subsystem_array_key: subKey,
+          array_length: arr.length,
+          raw_excerpt: rawStr.slice(0, 2048),
+        };
       }
       const bySub: Record<string, { total: number; complete: number }> = {};
       for (const sys of arr) {
