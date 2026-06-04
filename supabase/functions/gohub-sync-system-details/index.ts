@@ -168,11 +168,13 @@ function htmlCellText(html: string): string {
 
 async function scrapeTagSearch(session: GocSessionManager, subsystem: string) {
   const { html, url, cookies } = await session.navigateTo("GoCompletions/Completions/TagSearch.aspx");
-  const target = findPostbackTarget(html);
   const sub = findSubSystemField(html);
+  const target = findPostbackTarget(html, sub.scopePrefix);
   if (!target || !sub.field) {
     return { ok: false, reason: "no postback target or subsystem field", items: [] as any[] };
   }
+  // SubSystem on TagSearch is a plain textbox → post plain text only.
+  // Only write ClientState if the page actually has one (RadComboBox).
   const params: Record<string, string> = {
     [sub.field]: subsystem,
     __EVENTTARGET: target,
@@ -184,6 +186,9 @@ async function scrapeTagSearch(session: GocSessionManager, subsystem: string) {
       checkedIndices: [], checkedItemsTextOverflows: false,
     });
   }
+  // postWithViewState reuses __VIEWSTATE / __VIEWSTATEGENERATOR /
+  // __EVENTVALIDATION extracted from THIS GET — required for the
+  // SearchButton click to bind server-side.
   const { html: resultHtml } = await postWithViewState(cookies, url, html, params);
   const tableMatch = resultHtml.match(/<table[^>]*class="[^"]*rgMasterTable[^"]*"[^>]*>([\s\S]*?)<\/table>/i);
   if (!tableMatch) return { ok: false, reason: "no rgMasterTable", items: [] as any[] };
