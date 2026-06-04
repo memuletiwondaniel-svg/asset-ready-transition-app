@@ -568,13 +568,35 @@ export interface GridRow {
 
 export function parseRadGridTable(html: string, headerOverrides?: string[]): GridRow[] {
   const rows: GridRow[] = [];
-  
-  // Find main grid table — Telerik RadGrid uses <table class="rgMasterTable">
-  const tableMatch = html.match(/<table[^>]*class="[^"]*rgMasterTable[^"]*"[^>]*>([\s\S]*?)<\/table>/i)
-    || html.match(/<table[^>]*id="[^"]*_GridData[^"]*"[^>]*>([\s\S]*?)<\/table>/i);
-  
-  if (!tableMatch) return rows;
-  const tableHtml = tableMatch[1];
+
+  // Locate the rgMasterTable opening tag, then bracket-match nested <table>
+  // / </table> pairs. RadGrid embeds sub-tables (pager, filter) so a naive
+  // non-greedy regex truncates the body before any data rows.
+  const openRe = /<table[^>]*class="[^"]*rgMasterTable[^"]*"[^>]*>/i;
+  const openMatch = openRe.exec(html);
+  let tableHtml = "";
+  if (openMatch) {
+    const startContent = openMatch.index + openMatch[0].length;
+    let depth = 1;
+    const scan = /<table\b|<\/table>/gi;
+    scan.lastIndex = startContent;
+    let m: RegExpExecArray | null;
+    let endIdx = -1;
+    while ((m = scan.exec(html)) !== null) {
+      if (m[0].toLowerCase().startsWith("</")) {
+        depth--;
+        if (depth === 0) { endIdx = m.index; break; }
+      } else {
+        depth++;
+      }
+    }
+    tableHtml = endIdx > 0 ? html.slice(startContent, endIdx) : html.slice(startContent);
+  } else {
+    const fallback = html.match(/<table[^>]*id="[^"]*_GridData[^"]*"[^>]*>([\s\S]*?)<\/table>/i);
+    if (!fallback) return rows;
+    tableHtml = fallback[1];
+  }
+
 
   // Extract headers
   const headers: string[] = [];
