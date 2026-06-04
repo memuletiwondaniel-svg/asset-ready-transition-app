@@ -334,28 +334,28 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   const topHeaderContent = (
     <TooltipProvider delayDuration={150}>
-    <div className="flex items-start justify-between gap-4 py-3">
+    <div className="flex items-stretch gap-3 py-3">
+      {/* HC accent stripe — full content height, 6px thick */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span
+            className={cn("self-stretch w-1.5 rounded-sm cursor-help shrink-0", stripeMeta.cls)}
+            aria-label={stripeMeta.tooltip}
+          />
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-xs text-xs">
+          {stripeMeta.tooltip}
+        </TooltipContent>
+      </Tooltip>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                className={cn("inline-block w-1 self-stretch rounded-sm cursor-help shrink-0", stripeMeta.cls)}
-                style={{ minHeight: '1.5rem' }}
-                aria-label={stripeMeta.tooltip}
-              />
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="max-w-xs text-xs">
-              {stripeMeta.tooltip}
-            </TooltipContent>
-          </Tooltip>
-          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground truncate">
-            {shortVcrId ? `${shortVcrId}: ` : ''}{vcr.name}
-          </h1>
-        </div>
-        <p className="text-[11px] text-muted-foreground mt-1">
-          Create VCR Plan · Step {currentStep + 1} of {STEPS.length} — {STEPS[currentStep]?.label}
-        </p>
+        <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground truncate">
+          {shortVcrId ? `${shortVcrId}: ` : ''}{vcr.name}
+        </h1>
+        <WizardSubtitle
+          prefix="Create VCR Plan"
+          code={effectiveProjectCode}
+          name={effectiveProjectName}
+        />
       </div>
       <div className="flex items-center gap-1.5 shrink-0 pt-1">
         <Badge variant="outline" className={cn("text-[10px] h-5 px-2", statusLabel.cls)}>
