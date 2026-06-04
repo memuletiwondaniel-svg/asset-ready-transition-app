@@ -62,9 +62,11 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
   }
 
   const cardContent = (
-    <Card 
+    <Card
       className={cn(
-        'group cursor-pointer transition-all duration-200 hover:shadow-sm border',
+        'group cursor-pointer transition-all duration-300 ease-out',
+        'hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-px hover:ring-1 hover:ring-primary/20',
+        'border',
         isDropTarget && 'ring-2 ring-primary ring-offset-2'
       )}
       style={{
@@ -78,19 +80,19 @@ export const HandoverPointCard: React.FC<HandoverPointCardProps> = ({
     >
       <CardContent style={{ padding: 'calc(6px * var(--ws-zoom-y, 1)) calc(6px * var(--ws-zoom, 1))' }}>
         <div className="flex items-start relative" style={{ gap: 'calc(6px * var(--ws-zoom, 1))' }}>
-          <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <GripVertical style={{ width: 'calc(12px * var(--ws-zoom, 1))', height: 'calc(12px * var(--ws-zoom-y, 1))' }} />
           </div>
           <div className="flex-1 min-w-0 ml-2">
-            <span className="font-medium truncate block leading-tight" style={{ fontSize: 'calc(10px * var(--ws-zoom-y, 1))' }}>
+            <span className="font-medium truncate block leading-tight group-hover:text-primary transition-colors duration-300" style={{ fontSize: 'calc(10px * var(--ws-zoom-y, 1))' }}>
               {handoverPoint.name}
             </span>
             <div className="flex items-center justify-between gap-1 [*[data-hide-ids]_&]:hidden">
-              <span className="text-muted-foreground font-mono truncate" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
+              <span className="text-muted-foreground font-mono truncate group-hover:text-foreground transition-colors duration-300" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
                 {shortenVCR(handoverPoint.vcr_code || 'VCR-???')}
               </span>
               {progress > 0 && (
-                <span className="font-medium text-muted-foreground shrink-0" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
+                <span className="font-medium text-muted-foreground shrink-0 group-hover:text-primary transition-colors duration-300" style={{ fontSize: 'calc(8px * var(--ws-zoom-y, 1))' }}>
                   {progress}%
                 </span>
               )}
