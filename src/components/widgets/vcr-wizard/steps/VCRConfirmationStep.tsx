@@ -1,40 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import {
-  Box,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  XCircle,
-  ClipboardCheck,
-  Wrench,
-  Package,
-  GraduationCap,
-  BookOpen,
-  FileText,
-  ClipboardList,
-  ScrollText,
-  Layers,
-  UserCheck,
-} from 'lucide-react';
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { cn } from '@/lib/utils';
+import { AlertCircle, CheckCircle2, Check, Minus, ArrowRight, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface VCRConfirmationStepProps {
   vcrId: string;
   vcrName?: string;
   vcrCode?: string;
-}
-
-interface StepStat {
-  key: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  count: number;
-  iconClass: string;
+  onNavigateToStep?: (stepIdx: number) => void;
 }
 
 interface ResolvedApprover {
@@ -55,46 +38,86 @@ const getInitials = (name?: string) => {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 };
 
+interface ReadinessRow {
+  key: string;
+  stepIdx: number;            // wizard step index (0-based)
+  stepLabel: string;          // "Step 1"
+  name: string;
+  summary: string;
+  required: boolean;
+  complete: boolean;
+}
+
 export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
   vcrId,
-  vcrName,
-  vcrCode,
+  onNavigateToStep,
 }) => {
+  const [submissionNote, setSubmissionNote] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['vcr-confirmation-stats', vcrId],
+    queryKey: ['vcr-review-readiness', vcrId],
     queryFn: async () => {
       const client = supabase as any;
-      const [systems, training, procedures, criticalDocs, registers, logsheets, maintenance] =
-        await Promise.all([
-          client.from('p2a_handover_point_systems').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
-          client.from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
-          client.from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
-          client.from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
-          client.from('p2a_vcr_register_selections').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
-          client.from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
-          client.from('p2a_vcr_maintenance_deliverables').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId).eq('is_applicable', true),
-        ]);
+
+      // Look up project context to count VCR Checklist template items.
+      const { data: hp } = await client
+        .from('p2a_handover_points')
+        .select('handover_plan_id')
+        .eq('id', vcrId)
+        .maybeSingle();
+      let projectId: string | null = null;
+      if (hp?.handover_plan_id) {
+        const { data: plan } = await client
+          .from('p2a_handover_plans')
+          .select('project_id')
+          .eq('id', hp.handover_plan_id)
+          .maybeSingle();
+        projectId = plan?.project_id || null;
+      }
+
+      const [
+        systems, itp, training, procedures, criticalDocs,
+        registers, logsheets, maintenanceTotal, maintenanceApplicable,
+        checklist,
+      ] = await Promise.all([
+        client.from('p2a_handover_point_systems').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+        client.from('p2a_itp_activities').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+        client.from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+        client.from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+        client.from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+        client.from('p2a_vcr_register_selections').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+        client.from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+        client.from('p2a_vcr_maintenance_deliverables').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId),
+        client.from('p2a_vcr_maintenance_deliverables').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcrId).eq('is_applicable', true),
+        projectId
+          ? client.from('vcr_template_items').select('id', { count: 'exact', head: true }).eq('project_id', projectId)
+          : Promise.resolve({ count: 0 }),
+      ]);
+
+      // Systems count for W&HP summary
+      const systemsCount = systems.count || 0;
+      const itpSystemsCount = systemsCount; // approximation: points span the mapped systems
+
       return {
-        systems: systems.count || 0,
+        systems: systemsCount,
+        itp: itp.count || 0,
+        itpSystems: itpSystemsCount,
         training: training.count || 0,
         procedures: procedures.count || 0,
         criticalDocs: criticalDocs.count || 0,
         registers: registers.count || 0,
         logsheets: logsheets.count || 0,
-        maintenance: maintenance.count || 0,
+        maintenanceTotal: maintenanceTotal.count || 0,
+        maintenanceApplicable: maintenanceApplicable.count || 0,
+        checklist: checklist.count || 0,
       };
     },
   });
 
-  // Pull the same approver state used by ApproversStep (read-only here)
   const { data: approvers } = useQuery<ResolvedApprover[]>({
     queryKey: ['vcr-approvers-summary', vcrId],
     queryFn: async () => {
-      // Local state lives in ApproversStep; for the summary we re-derive
-      // the canonical default labels and resolved users via the same RPC
-      // path so the review reflects the canonical 5.
-      // (When persistence lands in Phase C, switch to reading the stored
-      // approver rows.)
       const client = supabase as any;
       const { data: hp } = await client
         .from('p2a_handover_points')
@@ -131,7 +154,6 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
         });
       }
 
-      // Deputy Plant Director
       const { data: project } = await client
         .from('projects')
         .select('plant_id')
@@ -161,129 +183,258 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
 
   if (isLoading || !stats) {
     return (
-      <div className="space-y-3 p-4">
+      <div className="space-y-3 p-1">
         <Skeleton className="h-5 w-40" />
-        <div className="grid grid-cols-4 gap-3">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20" />)}
-        </div>
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
-  const tiles: StepStat[] = [
-    { key: 'systems',     label: 'Systems',            icon: Layers,         count: stats.systems,                      iconClass: 'text-orange-500' },
-    { key: 'training',    label: 'Training',           icon: GraduationCap,  count: stats.training,                     iconClass: 'text-blue-500' },
-    { key: 'procedures',  label: 'Procedures',         icon: BookOpen,       count: stats.procedures,                   iconClass: 'text-emerald-500' },
-    { key: 'docs',        label: 'Critical Docs',      icon: FileText,       count: stats.criticalDocs,                 iconClass: 'text-amber-500' },
-    { key: 'reglog',      label: 'Reg. & Logsheets',   icon: ClipboardList,  count: stats.registers + stats.logsheets,  iconClass: 'text-cyan-500' },
-    { key: 'maintenance', label: 'Maintenance Systems', icon: Wrench,         count: stats.maintenance,                  iconClass: 'text-amber-500' },
+  const rows: ReadinessRow[] = [
+    {
+      key: 'systems', stepIdx: 0, stepLabel: 'Step 1', name: 'Systems',
+      required: true,
+      complete: stats.systems > 0,
+      summary: stats.systems > 0 ? `${stats.systems} system${stats.systems === 1 ? '' : 's'} mapped` : 'No systems mapped',
+    },
+    {
+      key: 'whp', stepIdx: 1, stepLabel: 'Step 2', name: 'Witness & Hold Points',
+      required: false,
+      complete: stats.itp > 0,
+      summary: stats.itp > 0
+        ? `${stats.itp} point${stats.itp === 1 ? '' : 's'} across ${stats.itpSystems || 1} system${stats.itpSystems === 1 ? '' : 's'}`
+        : 'None added (optional)',
+    },
+    {
+      key: 'training', stepIdx: 2, stepLabel: 'Step 3', name: 'Training',
+      required: true,
+      complete: stats.training > 0,
+      summary: stats.training > 0 ? `${stats.training} training items` : 'No training items',
+    },
+    {
+      key: 'procedures', stepIdx: 3, stepLabel: 'Step 4', name: 'Procedures',
+      required: true,
+      complete: stats.procedures > 0,
+      summary: stats.procedures > 0 ? `${stats.procedures} procedure${stats.procedures === 1 ? '' : 's'}` : 'No procedures',
+    },
+    {
+      key: 'docs', stepIdx: 4, stepLabel: 'Step 5', name: 'Critical Documents',
+      required: true,
+      complete: stats.criticalDocs > 0,
+      summary: stats.criticalDocs > 0
+        ? `${stats.criticalDocs} document${stats.criticalDocs === 1 ? '' : 's'} identified`
+        : 'No documents identified',
+    },
+    {
+      key: 'reglog', stepIdx: 5, stepLabel: 'Step 6', name: 'Registers & Logsheets',
+      required: false,
+      complete: (stats.registers + stats.logsheets) > 0,
+      summary: (stats.registers + stats.logsheets) > 0
+        ? `${stats.registers} Register${stats.registers === 1 ? '' : 's'}, ${stats.logsheets} Logsheet${stats.logsheets === 1 ? '' : 's'}`
+        : 'None added',
+    },
+    {
+      key: 'maintenance', stepIdx: 6, stepLabel: 'Step 7', name: 'Maintenance Systems',
+      required: false,
+      complete: stats.maintenanceApplicable > 0,
+      summary: stats.maintenanceApplicable > 0
+        ? `${stats.maintenanceApplicable} of ${stats.maintenanceTotal} deliverables marked applicable`
+        : 'No deliverables marked applicable',
+    },
+    {
+      key: 'checklist', stepIdx: 8, stepLabel: 'Step 9', name: 'VCR Checklist',
+      required: true,
+      complete: stats.checklist > 0,
+      summary: stats.checklist > 0 ? `${stats.checklist} items reviewed` : 'No checklist items',
+    },
   ];
 
-  const issues: string[] = [];
-  if (stats.systems === 0) issues.push('No systems mapped');
-  if (stats.training === 0) issues.push('No training items');
-  if (stats.procedures === 0) issues.push('No procedures');
-  if (stats.criticalDocs === 0) issues.push('No critical documents');
-  if (stats.registers + stats.logsheets === 0) issues.push('No registers or logsheets');
-  if (stats.maintenance === 0) issues.push('No maintenance deliverables marked applicable');
+  const requiredGaps = rows.filter(r => r.required && !r.complete);
+  const isReady = requiredGaps.length === 0;
+  const approverCount = approvers?.length || 0;
 
-  const hasIssues = issues.length > 0;
-  const unresolvedApprovers = (approvers || []).filter(a => !a.user_id).length;
-  if (unresolvedApprovers > 0) issues.push(`${unresolvedApprovers} approver${unresolvedApprovers === 1 ? '' : 's'} unresolved`);
+  const handleSubmitClick = () => {
+    if (!isReady) {
+      toast.error('Resolve the gaps above before submitting');
+      return;
+    }
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    // TODO Phase C — Submit for approval RPC
+    // Call submit_plan_for_approval(plan_type='VCR', plan_id={vcrId}, submission_note={submissionNote})
+    // On success: transition VCR to 'pending_approval', fan out approver tasks, notify approvers
+    setConfirmOpen(false);
+    toast.success('Submission queued (backend wiring pending — see Phase C)');
+  };
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-medium">Review &amp; Confirm</h3>
-          <p className="text-xs text-muted-foreground">
-            {vcrCode ? `${vcrCode} · ` : ''}{vcrName || 'VCR Execution Plan'}
-          </p>
-        </div>
-        <Badge
-          variant={hasIssues ? 'destructive' : 'default'}
-          className={cn(!hasIssues && 'bg-emerald-500')}
-        >
-          {hasIssues ? `${issues.length} issue${issues.length === 1 ? '' : 's'}` : 'Ready'}
-        </Badge>
+    <div className="space-y-5">
+      {/* Header */}
+      <div>
+        <h2 className="text-base font-medium">Review and Submit</h2>
+        <p className="text-[13px] text-muted-foreground leading-[1.5] mt-0.5">
+          Confirm the VCR Plan is complete and submit for approval.
+        </p>
       </div>
 
-      {hasIssues && (
-        <div className="p-3 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/50 rounded-lg">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-            <div className="text-xs text-amber-700 dark:text-amber-400">
-              <ul className="space-y-0.5 list-disc list-inside">
-                {issues.map((issue, i) => <li key={i}>{issue}</li>)}
-              </ul>
+      {/* Readiness banner */}
+      {isReady ? (
+        <div
+          className="rounded-md border px-4 py-3.5 flex items-start gap-2.5"
+          style={{ backgroundColor: '#E1F5EE', borderColor: '#0F6E56' }}
+        >
+          <CheckCircle2 className="w-[18px] h-[18px] shrink-0 mt-0.5" style={{ color: '#0F6E56' }} />
+          <div>
+            <div className="text-[13px] font-medium" style={{ color: '#04342C' }}>Ready to submit</div>
+            <div className="text-[12px] leading-[1.5] mt-0.5" style={{ color: '#085041' }}>
+              All required content is in place. Submit to send to approvers.
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div
+          className="rounded-md border px-4 py-3.5 flex items-start gap-2.5"
+          style={{ backgroundColor: '#FAEEDA', borderColor: '#EF9F27' }}
+        >
+          <AlertCircle className="w-[18px] h-[18px] shrink-0 mt-0.5" style={{ color: '#854F0B' }} />
+          <div>
+            <div className="text-[13px] font-medium" style={{ color: '#412402' }}>
+              Not ready to submit — {requiredGaps.length} item{requiredGaps.length === 1 ? '' : 's'} need attention
+            </div>
+            <div className="text-[12px] leading-[1.5] mt-0.5" style={{ color: '#633806' }}>
+              Resolve the gaps below before submitting for approval.
             </div>
           </div>
         </div>
       )}
 
-      {/* Step count tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {tiles.map(t => {
-          const Icon = t.icon;
-          return (
-            <div key={t.key} className="p-3 rounded-lg border bg-card">
-              <div className="flex items-center gap-2 mb-1">
-                <Icon className={cn('h-4 w-4', t.iconClass)} />
-                <span className="text-xs font-medium">{t.label}</span>
-              </div>
-              <div className="text-xl font-bold">{t.count}</div>
-            </div>
-          );
-        })}
+      {/* Plan content */}
+      <div>
+        <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+          Plan content
+        </div>
+        <div className="rounded-md border border-border overflow-hidden">
+          {rows.map((row, idx) => (
+            <button
+              type="button"
+              key={row.key}
+              onClick={() => onNavigateToStep?.(row.stepIdx)}
+              className={cn(
+                'w-full grid items-center gap-3 px-3.5 py-2.5 text-[13px] text-left transition-colors hover:bg-muted/30',
+                idx > 0 && 'border-t border-border',
+              )}
+              style={{ gridTemplateColumns: '24px 1fr auto auto' }}
+            >
+              <span className="flex items-center justify-center">
+                {row.complete ? (
+                  <Check className="w-4 h-4" style={{ color: '#0F6E56' }} />
+                ) : row.required ? (
+                  <AlertCircle className="w-4 h-4" style={{ color: '#BA7517' }} />
+                ) : (
+                  <Minus className="w-4 h-4 text-muted-foreground" />
+                )}
+              </span>
+              <span className="flex items-baseline gap-2 min-w-0">
+                <span className="font-medium text-foreground truncate">{row.name}</span>
+                <span className="text-[12px] text-muted-foreground truncate">{row.summary}</span>
+              </span>
+              <span className="text-[12px] text-muted-foreground">{row.stepLabel}</span>
+              <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Approvers */}
       {approvers && approvers.length > 0 && (
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            <UserCheck className="h-3.5 w-3.5" />
-            Approvers
+          <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+            Approvers ({approvers.length})
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-1">
-            {approvers.map((a, i) => {
-              const hasUser = !!a.user_id;
-              const badgeClass = !hasUser ? 'bg-muted-foreground' : 'bg-amber-500';
-              const BadgeIcon = !hasUser ? AlertCircle : Clock;
-              return (
-                <div key={`${a.role}-${i}`} className="flex items-center gap-2.5 py-2">
-                  <div className="relative shrink-0">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={resolveAvatarUrl(a.user_avatar)} />
-                      <AvatarFallback className="text-[9px] bg-muted font-medium">
-                        {getInitials(a.user_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className={cn(
-                      'absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full ring-2 ring-background flex items-center justify-center',
-                      badgeClass
-                    )}>
-                      <BadgeIcon className="h-2 w-2 text-white" />
-                    </span>
-                  </div>
-                  <div className="min-w-0">
-                    {hasUser ? (
-                      <>
-                        <p className="text-xs font-medium truncate">{a.user_name}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{a.role}</p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-xs font-medium text-muted-foreground truncate">{a.role}</p>
-                        <p className="text-[10px] text-amber-600 dark:text-amber-400">Unassigned</p>
-                      </>
-                    )}
-                  </div>
+          <div className="rounded-md border border-border overflow-hidden">
+            {approvers.map((a, idx) => (
+              <div
+                key={`${a.role}-${idx}`}
+                className={cn(
+                  'grid items-center gap-3 px-3.5 py-2.5',
+                  idx > 0 && 'border-t border-border',
+                )}
+                style={{ gridTemplateColumns: '32px 1fr auto' }}
+              >
+                <Avatar className="h-7 w-7">
+                  <AvatarImage src={resolveAvatarUrl(a.user_avatar)} />
+                  <AvatarFallback
+                    className="text-[11px] font-medium"
+                    style={{ backgroundColor: '#E6F1FB', color: '#0C447C' }}
+                  >
+                    {getInitials(a.user_name || a.role)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <div className="text-[13px] font-medium truncate">{a.user_name || a.role}</div>
+                  <div className="text-[11px] text-muted-foreground truncate">{a.role}</div>
                 </div>
-              );
-            })}
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
+                  Awaiting submission
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}
+
+      {/* Submission note (ready state only) */}
+      {isReady && (
+        <div>
+          <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+            Submission note (optional)
+          </div>
+          <Textarea
+            value={submissionNote}
+            onChange={(e) => setSubmissionNote(e.target.value)}
+            placeholder="Add context for the approvers (optional)..."
+            className="text-[13px] min-h-[50px]"
+          />
+        </div>
+      )}
+
+      {/* Submit footer */}
+      <div className="border-t border-border pt-4 flex items-center justify-between gap-3">
+        <span className="text-[12px] text-muted-foreground">
+          {isReady
+            ? `${approverCount} approver${approverCount === 1 ? '' : 's'} will be notified.`
+            : `Resolve the ${requiredGaps.length} gap${requiredGaps.length === 1 ? '' : 's'} above to enable submission.`}
+        </span>
+        <Button
+          size="sm"
+          onClick={handleSubmitClick}
+          disabled={!isReady}
+          className="gap-1.5"
+        >
+          <Send className="w-3.5 h-3.5" />
+          Submit for approval
+        </Button>
+      </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Submit VCR Plan for approval?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {approverCount} approver{approverCount === 1 ? '' : 's'} will be notified. This action cannot be undone from the wizard.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSubmit}>
+              Confirm submission
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
