@@ -64,6 +64,7 @@ export const AddSystemModal: React.FC<AddSystemModalProps> = ({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
         className="sm:max-w-md z-[200]"
+        overlayClassName="z-[199] bg-black/70 backdrop-blur-sm"
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
