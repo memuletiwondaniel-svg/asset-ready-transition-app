@@ -31,6 +31,7 @@ import {
   Plus,
   ClipboardCheck,
   Clock,
+  Pencil,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { StepCircle } from '@/components/widgets/shared/StepCircle';
