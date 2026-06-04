@@ -1169,13 +1169,14 @@ const EditItemForm: React.FC<{
               <button
                 type="button"
                 onClick={() => setEditingTopic(true)}
-                className="group inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted/60 hover:bg-muted text-xs font-medium transition-colors"
+                className="text-xs font-medium px-1 py-0.5 rounded hover:bg-muted/60 hover:underline underline-offset-2 transition-colors"
+                title="Click to edit"
               >
-                <span>{topic || <span className="italic text-muted-foreground">none</span>}</span>
-                <Pencil className="w-2.5 h-2.5 text-muted-foreground/60 group-hover:text-muted-foreground" />
+                {topic || <span className="italic text-muted-foreground">none</span>}
               </button>
             )}
           </div>
+
 
           {/* Guidance Notes — collapsible, label-left aligned with peers */}
           <div className="border-t border-border/40 pt-4 relative">
