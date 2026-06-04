@@ -183,7 +183,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
   const [naItem, setNaItem] = useState<MergedVCRItem | null>(null);
 
   // Determine if VCR has hydrocarbon systems
-  const { data: hasHydrocarbon, isLoading: isLoadingHydrocarbon } = useQuery({
+  const { data: hcCheck, isLoading: isLoadingHydrocarbon } = useQuery({
     queryKey: ['vcr-hydrocarbon-check', vcrId],
     queryFn: async () => {
       // Get systems linked to this VCR
@@ -192,7 +192,9 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
         .select('system_id')
         .eq('handover_point_id', vcrId);
       if (lsError) throw lsError;
-      if (!linkedSystems || linkedSystems.length === 0) return false;
+      if (!linkedSystems || linkedSystems.length === 0) {
+        return { hasHydrocarbon: false, systemCount: 0 };
+      }
 
       const systemIds = linkedSystems.map(s => s.system_id);
       const { data: systems, error: sError } = await supabase
@@ -202,9 +204,11 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
         .eq('is_hydrocarbon', true)
         .limit(1);
       if (sError) throw sError;
-      return (systems && systems.length > 0);
+      return { hasHydrocarbon: !!(systems && systems.length > 0), systemCount: linkedSystems.length };
     },
   });
+  const hasHydrocarbon = hcCheck?.hasHydrocarbon;
+  const linkedSystemsCount = hcCheck?.systemCount ?? 0;
 
   // Hydrocarbon template: 363a831c-edb3-4224-a97f-2e8b11fac2dc
   // Non-Hydrocarbon template: 2ebe8392-e404-4655-b9eb-46e4e3cb39e8
@@ -433,6 +437,19 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
 
   return (
     <div className="space-y-4">
+      {/* No-systems warning — checklist may be wrong until systems are selected */}
+      {linkedSystemsCount === 0 && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/40 bg-amber-500/5 px-3.5 py-2.5">
+          <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <div className="text-xs leading-relaxed">
+            <span className="font-medium text-amber-700 dark:text-amber-400">Select systems first to load the correct checklist.</span>{' '}
+            <span className="text-muted-foreground">
+              The hydrocarbon / non-hydrocarbon checklist is chosen from the systems mapped to this VCR. Without systems we&apos;re showing the non-hydrocarbon template by default.
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Guidance note */}
       <div className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-3.5 py-2.5">
         <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />

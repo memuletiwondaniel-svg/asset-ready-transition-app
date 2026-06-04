@@ -48,9 +48,9 @@ import { CriticalDocumentsStep } from './steps/CriticalDocumentsStep';
 import { RegistersLogsheetsStep } from './steps/RegistersLogsheetsStep';
 import { InspectionTestPlanStep } from './steps/InspectionTestPlanStep';
 import { ApproversStep } from './steps/ApproversStep';
-import { CMMSStep } from './steps/CMMSStep';
-import { SparesStep } from './steps/SparesStep';
-import { Layers } from 'lucide-react';
+import { CMMSSparesStep } from './steps/CMMSSparesStep';
+import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
+import { Layers, CheckCircle2 } from 'lucide-react';
 
 interface VCRExecutionPlanWizardProps {
   open: boolean;
@@ -60,16 +60,16 @@ interface VCRExecutionPlanWizardProps {
 }
 
 const STEPS: WizardShellStep[] = [
-  { id: 'systems', label: 'Systems', icon: Layers, color: 'text-orange-500' },
-  { id: 'items', label: 'VCR Items', icon: ClipboardCheck, color: 'text-violet-500' },
-  { id: 'training', label: 'Training', icon: GraduationCap, color: 'text-blue-500' },
-  { id: 'procedures', label: 'Procedures', icon: BookOpen, color: 'text-emerald-500' },
-  { id: 'critical-docs', label: 'Critical Documents', icon: FileText, color: 'text-amber-500' },
-  { id: 'registers-logsheets', label: 'Registers & Logsheets', icon: ClipboardList, color: 'text-cyan-500' },
-  { id: 'cmms', label: 'CMMS', icon: Wrench, color: 'text-amber-500' },
-  { id: 'spares', label: '2Y Spares', icon: Package, color: 'text-teal-500' },
-  { id: 'itp', label: 'Inspection Test Plan', icon: ClipboardList, color: 'text-orange-500' },
-  { id: 'approvers', label: 'Approvers', icon: UserCheck, color: 'text-primary' },
+  { id: 'items',               label: 'VCR Items',            icon: ClipboardCheck, color: 'text-violet-500' },
+  { id: 'systems',             label: 'Systems',              icon: Layers,         color: 'text-orange-500' },
+  { id: 'training',            label: 'Training',             icon: GraduationCap,  color: 'text-blue-500' },
+  { id: 'procedures',          label: 'Procedures',           icon: BookOpen,       color: 'text-emerald-500' },
+  { id: 'critical-docs',       label: 'Critical Documents',   icon: FileText,       color: 'text-amber-500' },
+  { id: 'registers-logsheets', label: 'Registers & Logsheets',icon: ClipboardList,  color: 'text-cyan-500' },
+  { id: 'cmms-spares',         label: 'CMMS & Spares',        icon: Wrench,         color: 'text-amber-500' },
+  { id: 'itp',                 label: 'Inspection Test Plan', icon: ClipboardList,  color: 'text-orange-500' },
+  { id: 'approvers',           label: 'Approvers',            icon: UserCheck,      color: 'text-primary' },
+  { id: 'review',              label: 'Review and Submit',    icon: CheckCircle2,   color: 'text-emerald-500' },
 ];
 
 const TOTAL_STEPS = STEPS.length; // 10
@@ -165,7 +165,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     })();
   }, [open, user?.id, vcr.id, queryClient]);
 
-  // Query step data counts for completion (now Systems is index 0)
+  // Query step data counts for completion (after Phase B reorder + merge)
+  // 0:Items 1:Systems 2:Training 3:Procedures 4:Critical Docs
+  // 5:Registers+Logsheets 6:CMMS+Spares 7:ITP 8:Approvers 9:Review
   const { data: stepCounts = {} } = useQuery({
     queryKey: ['vcr-wizard-step-counts', vcr.id],
     queryFn: async () => {
@@ -180,13 +182,12 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         (supabase as any).from('p2a_vcr_spares').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
       ]);
       return {
-        0: systems.count || 0,
+        1: systems.count || 0,
         2: training.count || 0,
         3: procedures.count || 0,
         4: criticalDocs.count || 0,
         5: (registers.count || 0) + (logsheets.count || 0),
-        6: cmms.count || 0,
-        7: spares.count || 0,
+        6: (cmms.count || 0) + (spares.count || 0),
       } as Record<number, number>;
     },
     enabled: open,
@@ -194,8 +195,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
-    // VCR Items (1), ITP (8), Approvers (9) — completion based on visit
-    if (idx === 1 || idx === 8 || idx === 9) return visitedSteps.has(idx);
+    // Items (0), ITP (7), Approvers (8), Review (9) — completion based on visit
+    if (idx === 0 || idx === 7 || idx === 8 || idx === 9) return visitedSteps.has(idx);
     return (stepCounts[idx] || 0) > 0;
   };
 
@@ -234,16 +235,16 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   const renderStep = () => {
     switch (currentStep) {
-      case 0: return <SystemsStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 1: return <VCRItemsStep vcrId={vcr.id} />;
+      case 0: return <VCRItemsStep vcrId={vcr.id} />;
+      case 1: return <SystemsStep vcrId={vcr.id} projectCode={projectCode} />;
       case 2: return <TrainingStep vcrId={vcr.id} />;
       case 3: return <ProceduresStep vcrId={vcr.id} />;
       case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={projectCode} />;
       case 5: return <RegistersLogsheetsStep vcrId={vcr.id} />;
-      case 6: return <CMMSStep vcrId={vcr.id} />;
-      case 7: return <SparesStep vcrId={vcr.id} />;
-      case 8: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 9: return <ApproversStep vcrId={vcr.id} />;
+      case 6: return <CMMSSparesStep vcrId={vcr.id} />;
+      case 7: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 8: return <ApproversStep vcrId={vcr.id} />;
+      case 9: return <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} />;
       default: return null;
     }
   };
