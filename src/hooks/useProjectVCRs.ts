@@ -51,7 +51,7 @@ export function useProjectVCRs(projectId: string) {
 
       const vcrsResult = await client
         .from('p2a_handover_points')
-        .select('id, vcr_code, name, description, status, target_date, created_at, updated_at, execution_plan_status, execution_plan_submitted_at, execution_plan_approved_at')
+        .select('id, vcr_code, name, description, status, target_date, created_at, updated_at, execution_plan_status, execution_plan_submitted_at, execution_plan_approved_at, sof_signed_at, pac_signed_at')
         .eq('handover_plan_id', plan.id)
         .order('vcr_code', { ascending: true });
 
@@ -99,14 +99,17 @@ export function useProjectVCRs(projectId: string) {
           const submittedAt: string | null = vcr.execution_plan_submitted_at ?? null;
           const approvedAt: string | null = vcr.execution_plan_approved_at ?? null;
 
-          // SoF sign-off proxy (no dedicated VCR-level field yet — Phase C gap)
-          const sofSigned = !!approvedAt && status === 'SIGNED';
+          // Gate model derived from HC status: HC VCRs gate on SoF, non-HC on PAC.
+          const gate: VCRGate = hasHydrocarbon ? 'SOF' : 'PAC';
+          const sofSigned = hasHydrocarbon && !!vcr.sof_signed_at;
+          const pacSigned = !hasHydrocarbon && !!vcr.pac_signed_at;
+          const gateSigned = sofSigned || pacSigned;
 
           // Lifecycle derivation
           let lifecycle: VCRLifecycle;
           if (total === 0 && !submittedAt && !approvedAt) {
             lifecycle = 'not_started';
-          } else if (sofSigned || status === 'SIGNED' || execStatus === 'APPROVED') {
+          } else if (gateSigned || status === 'SIGNED' || execStatus === 'APPROVED') {
             lifecycle = 'approved';
           } else if (submittedAt || execStatus === 'SUBMITTED' || execStatus === 'IN_APPROVAL' || execStatus === 'PENDING_APPROVAL') {
             lifecycle = 'in_approval';
@@ -114,9 +117,9 @@ export function useProjectVCRs(projectId: string) {
             lifecycle = 'draft';
           }
 
-          // Weighted progress: checklist = 95%, SoF gate = 5%
+          // Weighted progress: checklist = 95%, gate sign-off = 5%
           const checklistPct = total > 0 ? (closed / total) * 95 : 0;
-          const progress = Math.round(checklistPct + (sofSigned ? 5 : 0));
+          const progress = Math.round(checklistPct + (gateSigned ? 5 : 0));
 
           return {
             id: vcr.id,
@@ -132,7 +135,10 @@ export function useProjectVCRs(projectId: string) {
             progress,
             closed_items: closed,
             total_items: total,
+            gate,
+            gate_signed: gateSigned,
             sof_signed: sofSigned,
+            pac_signed: pacSigned,
             lifecycle,
             systems_count: systemsCount,
             has_hydrocarbon: hasHydrocarbon,
