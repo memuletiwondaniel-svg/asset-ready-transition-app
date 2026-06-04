@@ -510,22 +510,25 @@ const StepAudienceSystems: React.FC<{
       </label>
       <p className="text-[10px] text-muted-foreground -mt-1">Who should attend this training?</p>
       <div className="flex flex-wrap gap-1.5">
-        {SUGGESTED_AUDIENCES.map(a => (
-          <Badge
-            key={a}
-            variant={targetAudience.includes(a) ? 'default' : 'outline'}
-            className={cn(
-              'cursor-pointer text-[11px] transition-all',
-              targetAudience.includes(a)
-                ? 'bg-blue-500 hover:bg-blue-600 border-blue-500'
-                : 'hover:bg-accent'
-            )}
-            onClick={() => toggleAudience(a)}
-          >
-            {targetAudience.includes(a) && <Check className="w-3 h-3 mr-0.5" />}
-            {a}
-          </Badge>
-        ))}
+        {SUGGESTED_AUDIENCES.map(a => {
+          const selected = targetAudience.includes(a);
+          return (
+            <Badge
+              key={a}
+              variant="outline"
+              className={cn(
+                'cursor-pointer text-[11px] transition-all gap-1',
+                selected
+                  ? 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/15'
+                  : 'hover:bg-accent'
+              )}
+              onClick={() => toggleAudience(a)}
+            >
+              {selected && <Check className="w-3 h-3" />}
+              {a}
+            </Badge>
+          );
+        })}
       </div>
       {/* Custom audience entries */}
       {targetAudience.filter(a => !SUGGESTED_AUDIENCES.includes(a)).length > 0 && (
