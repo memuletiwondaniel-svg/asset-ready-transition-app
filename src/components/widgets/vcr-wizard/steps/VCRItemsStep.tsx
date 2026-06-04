@@ -411,10 +411,10 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
 
-  // Default all categories to collapsed on first load
+  // Default all categories (including N/A bucket) to collapsed on first load
   useEffect(() => {
     if (collapsedCategories === null && sortedCategories.length > 0) {
-      setCollapsedCategories(new Set(sortedCategories));
+      setCollapsedCategories(new Set([...sortedCategories, '__NA__']));
     }
   }, [sortedCategories, collapsedCategories]);
 
