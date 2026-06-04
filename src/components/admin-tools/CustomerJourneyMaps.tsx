@@ -133,7 +133,7 @@ const CustomerJourneyMaps: React.FC<CustomerJourneyMapsProps> = ({ onBack }) => 
       journeyPhases: [
         { phase: 'Dashboard Review', actions: ['Open ORSH landing page', 'Review favorited projects', 'Check ORI scores'], touchpoints: ['Landing Page', 'Project Cards', 'ORI Widget'], emotion: 'positive', outcome: 'Instant visibility into portfolio readiness' },
         { phase: 'AI-Assisted Insights', actions: ['Ask Bob CoPilot for project summary', 'Get document readiness score', 'Review AI-flagged blockers'], touchpoints: ['AI Chat', 'ORI Dashboard', 'Notifications'], emotion: 'positive', outcome: 'Data-driven decisions without manual report digging' },
-        { phase: 'Director SoF View', actions: ['View My Tasks (Director view)', 'Review pending approvals', 'Check SoF status'], touchpoints: ['My Tasks Page', 'Director SoF View'], emotion: 'neutral', outcome: 'Understand approval backlog' },
+        { phase: 'Director SoF View', actions: ['View My Tasks (Director view)', 'Review pending approvals', 'Check SoF status, Review OR Maintenance oversight'], touchpoints: ['My Tasks Page', 'Director SoF View'], emotion: 'neutral', outcome: 'Understand approval backlog' },
         { phase: 'Approval Decisions', actions: ['Review P2A plans', 'Approve/reject ORA plans', 'Sign-off certificates'], touchpoints: ['Task Detail Sheet', 'Approval Controls'], emotion: 'positive', outcome: 'Plans unblocked and progressing' },
         { phase: 'Escalation Review', actions: ['Identify at-risk projects', 'Review overdue activities', 'Engage with hub leads'], touchpoints: ['Project Overview', 'Gantt Chart', 'Comments'], emotion: 'frustrated', outcome: 'Blockers identified and action taken' },
       ],
@@ -149,7 +149,7 @@ const CustomerJourneyMaps: React.FC<CustomerJourneyMapsProps> = ({ onBack }) => 
       journeyPhases: [
         { phase: 'Morning Dashboard', actions: ['Check My Tasks inbox', 'Review overnight updates', 'Scan project dashboards'], touchpoints: ['My Tasks', 'Landing Page', 'Project Overview'], emotion: 'neutral', outcome: 'Daily priorities identified' },
         { phase: 'PSSR Management', actions: ['Review submitted PSSRs', 'Assign checklists', 'Track item completion'], touchpoints: ['PSSR Workflow', 'Checklist Response', 'Key Activities'], emotion: 'neutral', outcome: 'PSSRs progressing toward approval' },
-        { phase: 'P2A Oversight', actions: ['Monitor VCR progress', 'Review delivering party status', 'Check handover phases'], touchpoints: ['VCR Detail Overlay', 'P2A Dashboard'], emotion: 'positive', outcome: 'Handover blockers identified early' },
+        { phase: 'P2A Oversight', actions: ['Monitor VCR progress', 'Review delivering party status', 'Check handover phases, Review Critical Documents'], touchpoints: ['VCR Detail Overlay', 'P2A Dashboard'], emotion: 'positive', outcome: 'Handover blockers identified early' },
         { phase: 'Reporting', actions: ['Export data for meetings', 'Share ORI trends', 'Escalate risks upward'], touchpoints: ['Data Export', 'ORI Scores', 'Project Cards'], emotion: 'neutral', outcome: 'Stakeholders informed with data' },
       ],
     },
@@ -194,9 +194,10 @@ const CustomerJourneyMaps: React.FC<CustomerJourneyMapsProps> = ({ onBack }) => 
         { phase: 'Task Management', actions: ['Open My Tasks', 'View Kanban board', 'Prioritize by smart priority'], touchpoints: ['My Tasks Page', 'Kanban Board', 'Task Cards'], emotion: 'neutral', outcome: 'Daily work plan clear' },
         { phase: 'ORA Plan Creation', actions: ['Open ORA wizard from task CTA', 'Select phase & project type', 'Choose activities from catalog', 'Schedule on Gantt chart'], touchpoints: ['ORA Wizard Steps 1-6', 'Activity Catalog', 'Gantt Chart'], emotion: 'neutral', outcome: 'ORA plan submitted for approval' },
         { phase: 'Activity Execution', actions: ['Open activity task', 'Update progress & status', 'Add comments & evidence', 'Mark as completed'], touchpoints: ['Task Detail Sheet', 'ORA Activity Sheet', 'Gantt Chart'], emotion: 'positive', outcome: 'Activities completed on schedule' },
-        { phase: 'P2A Handover', actions: ['Create P2A plan from task', 'Define systems & VCRs', 'Assign handover phases', 'Submit for approval'], touchpoints: ['P2A Wizard', 'VCR Creation', 'System Assignment'], emotion: 'frustrated', outcome: 'P2A plan submitted and tracked' },
+        { phase: 'P2A Handover', actions: ['Create P2A plan from task', 'Define systems & VCRs', 'Identify Critical Documents, Assign handover phases', 'Submit for approval'], touchpoints: ['P2A Wizard', 'VCR Creation, Critical Documents Step', 'System Assignment'], emotion: 'frustrated', outcome: 'P2A plan submitted and tracked' },
         { phase: 'AI CoPilot Assistance', actions: ['Ask Bob about document gaps', 'Get quality scores for DMS', 'Check ORA linkage for documents', 'Get numbering config help'], touchpoints: ['AI Chat', 'Document Specialist', 'DMS Config'], emotion: 'positive', outcome: 'AI-guided document readiness and gap closure' },
-        { phase: 'Training Coordination', actions: ['Create training plan', 'Schedule training items', 'Track PO status', 'Upload evidence'], touchpoints: ['Training Module', 'Training Items', 'Evidence Upload'], emotion: 'neutral', outcome: 'Training requirements fulfilled' },
+        { phase: 'Training & CD&A', actions: ['Review competence gaps', 'Create training plan', 'Schedule training items', 'Track PO status', 'Upload evidence'], touchpoints: ['Training Module', 'Training Items', 'Evidence Upload'], emotion: 'neutral', outcome: 'Training requirements fulfilled' },
+        { phase: 'OR Maintenance', actions: ['Manage CMMS development', 'Configure maintenance readiness', 'Track spares & procedures'], touchpoints: ['OR Maintenance Dashboard', 'ORM Details'], emotion: 'neutral', outcome: 'Maintenance readiness ensured' },
       ],
     },
     {
@@ -238,8 +239,10 @@ const CustomerJourneyMaps: React.FC<CustomerJourneyMapsProps> = ({ onBack }) => 
       icon: <Wrench className="h-5 w-5" />,
       gradient: 'from-sky-500 to-blue-600',
       journeyPhases: [
+        { phase: 'Onboarding & SSO', actions: ['Secure Login via SSO', 'Take platform onboarding tour', 'Set up profile preferences'], touchpoints: ['Login Page', 'Onboarding Tour', 'User Settings'], emotion: 'positive', outcome: 'Platform ready for use' },
         { phase: 'Task Review', actions: ['Open My Tasks', 'Read task descriptions', 'Understand required deliverables'], touchpoints: ['My Tasks', 'Task Detail Sheet'], emotion: 'neutral', outcome: 'Work scope understood' },
         { phase: 'Execution', actions: ['Complete technical activities', 'Update progress percentage', 'Upload evidence documents'], touchpoints: ['Activity Sheet', 'File Upload', 'Progress Slider'], emotion: 'positive', outcome: 'Activities completed with evidence' },
+        { phase: 'CD&A / Competence', actions: ['Review assigned training', 'Complete competency assessments', 'Upload skill evidence'], touchpoints: ['CD&A Module', 'My Tasks'], emotion: 'positive', outcome: 'Competency verified' },
         { phase: 'PSSR Support', actions: ['Join PSSR as technical expert', 'Respond to checklist items', 'Flag safety concerns'], touchpoints: ['PSSR Checklist', 'Response Forms', 'Comments'], emotion: 'neutral', outcome: 'Technical expertise applied to safety reviews' },
       ],
     },

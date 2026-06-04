@@ -100,7 +100,7 @@ const ProcessFlowMaps: React.FC<ProcessFlowMapsProps> = ({ onBack }) => {
     { id: 'project-creation', label: 'Project Creation & Team Setup' },
     { id: 'ora-workflow', label: 'ORA Plan Workflow' },
     { id: 'p2a-workflow', label: 'P2A Handover Plan Workflow' },
-    { id: 'vcr-workflow', label: 'VCR Lifecycle' },
+    { id: 'vcr-workflow', label: 'VCR Build & Lifecycle' },
     { id: 'pssr-workflow', label: 'PSSR Workflow' },
     { id: 'certificate-workflow', label: 'Certificates (SoF, PAC, FAC)' },
     { id: 'orm-workflow', label: 'ORM Deliverables Workflow' },
@@ -273,10 +273,23 @@ const ProcessFlowMaps: React.FC<ProcessFlowMapsProps> = ({ onBack }) => {
           <Separator />
 
           {/* 5. VCR Lifecycle */}
-          <ProcessSection id="vcr-workflow" icon={<ClipboardList className="h-5 w-5 text-primary" />} title="5. VCR Lifecycle" description="Verification Certificate of Readiness from creation to sign-off">
+          <ProcessSection id="vcr-workflow" icon={<ClipboardList className="h-5 w-5 text-primary" />} title="5. VCR Build & Lifecycle" description="Verification Certificate of Readiness — 10-step wizard, build, delivery, approval, and final review">
+            <p className="text-xs text-muted-foreground -mt-2">VCR Execution Plan Wizard (10 steps):</p>
+            <FlowDiagram steps={[
+              { label: 'Systems', type: 'start' },
+              { label: 'W&HP', type: 'process' },
+              { label: 'Training', type: 'process' },
+              { label: 'Procedures', type: 'process' },
+              { label: 'Critical Docs', type: 'process' },
+              { label: 'Reg / Log', type: 'process' },
+              { label: 'Maintenance', type: 'process' },
+              { label: 'Approvers', type: 'process' },
+              { label: 'Checklist', type: 'process' },
+              { label: 'Review & Submit', type: 'end' },
+            ]} />
+            <p className="text-xs text-muted-foreground mt-3">Post-submit lifecycle:</p>
             <FlowDiagram steps={[
               { label: 'VCR Created', type: 'start' },
-              { label: 'Systems Assigned', type: 'process' },
               { label: 'Prerequisites Populated', type: 'auto' },
               { label: '⚡ Checklist Bundle Tasks', type: 'auto' },
               { label: 'Delivering Parties Execute', type: 'process' },
@@ -287,8 +300,10 @@ const ProcessFlowMaps: React.FC<ProcessFlowMapsProps> = ({ onBack }) => {
             ]} />
             <Card className="bg-muted/30">
               <CardContent className="pt-4">
-                <p className="text-xs font-semibold text-foreground mb-2">Progressive Task Activation</p>
+                <p className="text-xs font-semibold text-foreground mb-2">Key Automations & Recent Redesigns</p>
                 <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>• <strong className="text-foreground">Step 10 — Review & Submit:</strong> Action-led readiness banner (Green / Amber) with cross-step dependency validation in <code className="bg-muted px-1 rounded text-[10px]">VCRConfirmationStep</code></li>
+                  <li>• <strong className="text-foreground">Critical Documents step:</strong> Empty-state "Click to start" CTA, catalog browse, Check Assai integration, and Clear-all reset in <code className="bg-muted px-1 rounded text-[10px]">CriticalDocumentsStep</code></li>
                   <li>• <strong className="text-foreground">Delivery Phase:</strong> <code className="bg-muted px-1 rounded text-[10px]">vcr_checklist_bundle</code> tasks for each delivering party</li>
                   <li>• <strong className="text-foreground">Review Phase:</strong> <code className="bg-muted px-1 rounded text-[10px]">vcr_approval_bundle</code> tasks activate only after delivery complete</li>
                   <li>• <strong className="text-foreground">Soft-Blocking:</strong> ORA Activity Intelligence warns when related activities are incomplete</li>

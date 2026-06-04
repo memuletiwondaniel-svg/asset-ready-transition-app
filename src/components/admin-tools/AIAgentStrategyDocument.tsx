@@ -108,14 +108,14 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
               <p className="text-sm text-muted-foreground">Multi-agent architecture, A2A protocol, model strategy, and continuous training framework</p>
               <div className="flex items-center gap-1.5 mt-1">
                 <Calendar className="h-3 w-3 text-muted-foreground/70" />
-                <span className="text-xs text-muted-foreground/70">Last updated: April 2026 — Hannah removed. Confirmed agent family: Bob, Selma, Fred, Ivan, Zain, Alex.</span>
+                <span className="text-xs text-muted-foreground/70">Last updated: June 2026 — Live agents: Bob, Selma, Fred, Ivan. Planned: Hannah, Alex.</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <DocumentDownloadButton contentRef={contentRef} fileName="ORSH-AI-Agent-Strategy" />
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-              v6.0 — March 2026
+              v6.1 — June 2026
             </Badge>
           </div>
         </div>
@@ -132,7 +132,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ORSH employs a <strong className="text-foreground">Google A2A-inspired multi-agent architecture</strong> where 
                 <strong className="text-foreground"> Bob</strong> (the CoPilot) serves as the central orchestrator, routing queries to 
                 specialist domain agents via a structured Agent-to-Agent (A2A) communication protocol. <strong className="text-foreground">Ivan</strong> (Technical Authority) 
-                serves as the cross-agent readiness conductor, aggregating data from Selma, Fred, Zain, and Alex to deliver Safe-to-Start verdicts. Each agent has its own 
+                serves as the cross-agent readiness conductor, aggregating data from Selma, Fred, Hannah, and Alex to deliver Safe-to-Start verdicts. Each agent has its own 
                 optimized LLM model, tool registry, and domain knowledge — enabling independent scaling, training, and improvement.
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed">
@@ -204,7 +204,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="bg-blue-500/5 rounded p-2 border border-blue-500/20">
-                        <p className="font-semibold text-foreground">Zain (Training & Competence Development)</p>
+                        <p className="font-semibold text-foreground">Hannah (Training & Competence)</p>
                         <p className="text-muted-foreground">Claude Haiku | 0 tools | Planned</p>
                         <Badge variant="outline" className="mt-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/20">PLANNED</Badge>
                       </div>
@@ -249,9 +249,9 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 <div className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
                   <p className="text-xs">
-                    <strong className="text-foreground">CURRENT MODEL STRATEGY — Updated April 2026:</strong> All active ORSH agents (Bob, Selma, Fred, Ivan) 
-                    run on the Anthropic API with Claude Sonnet 4.5 (claude-sonnet-4-5). The migration from the Lovable AI Gateway was completed on 23 March 2026. 
-                    Hannah was retired in April 2026 — her orchestration responsibilities are now handled by Ivan (Technical Authority) and app-level workflows.
+                    <strong className="text-foreground">CURRENT MODEL STRATEGY — Updated June 2026:</strong> All active ORSH agents (Bob, Selma, Fred, Ivan)
+                    run on the Anthropic API with Claude Sonnet 4.5 (claude-sonnet-4-5). The migration from the Lovable AI Gateway was completed on 23 March 2026.
+                    Hannah (Training & Competence) and Alex (Maintenance) remain on the build roadmap; orchestration and Safe-to-Start synthesis are handled by Ivan today.
                     The Lovable AI Gateway has been completely removed from the ai-chat Edge Function. All LLM calls now go directly 
                     to https://api.anthropic.com/v1/messages using the ANTHROPIC_API_KEY stored as a Supabase Edge Function secret.
                   </p>
@@ -266,7 +266,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['Selma (Document Intelligence)', 'claude-sonnet-4-5', 'Anthropic', 'Document intelligence specialist', 'Active'],
                 ['Fred (Commissioning & Hardware Readiness)', 'claude-sonnet-4-5', 'Anthropic', 'GoCompletions integration, hardware readiness', 'Active'],
                 ['Ivan (Technical Authority)', 'claude-sonnet-4-5', 'Anthropic', 'HAZOP, cumulative risk, Safe-to-Start verdict', 'Active'],
-                ['Zain — Training & Competence Development (Phase 2)', 'claude-haiku', 'Anthropic', 'Competency management, training gaps', 'Planned'],
+                ['Hannah — Training & Competence (Phase 2)', 'claude-haiku', 'Anthropic', 'Competency management, training gaps', 'Planned'],
                 ['Alex — Maintenance & Inspection System Build (Phase 2)', 'claude-haiku', 'Anthropic', 'CMMS data, asset registers', 'Planned'],
                 
               ]}
@@ -281,7 +281,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                   <li><strong className="text-foreground">Selma (Document Intelligence):</strong> Claude Sonnet 4.5 — accurate SQL-based analysis and status calculations</li>
                   <li><strong className="text-foreground">Fred (Commissioning & Hardware Readiness):</strong> Claude Sonnet 4.5 — completions data analysis, GoCompletions integration</li>
                   <li><strong className="text-foreground">Ivan (Technical Authority):</strong> Claude Sonnet 4.5 — process safety domain requiring precision, cumulative risk assessment, and cross-agent aggregation</li>
-                  <li><strong className="text-foreground">Zain — Training & Competence Development (planned):</strong> Will use Claude Haiku — competency queries are structured and domain-specific</li>
+                  <li><strong className="text-foreground">Hannah — Training & Competence (planned):</strong> Will use Claude Haiku — competency queries are structured and domain-specific</li>
                   <li><strong className="text-foreground">Alex — Maintenance & Inspection System Build (planned):</strong> Will use Claude Haiku — maintenance queries are lookup-heavy, speed matters</li>
                   
                 </ul>
@@ -305,7 +305,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['document_agent', 'Selma', 'claude-sonnet-4-5', 'Active', '13', 'dms, document, readiness, quality, maturity, handover'],
                 ['pssr_ora_agent', 'Fred (Commissioning & Hardware Readiness)', 'claude-sonnet-4-5', 'Active', '14', 'completions, itr, punchlist, commissioning, gocompletions'],
                 ['ivan', 'Ivan (Technical Authority)', 'claude-sonnet-4-5', 'Active', '17', 'hazop, stq, moc, override, cumulative_risk, pid, safeguarding, omar, simops, flow_assurance'],
-                ['training_agent', 'Zain (Training & Competence Development)', 'claude-haiku', 'Planned', '0', 'training, competency, learning'],
+                ['training_agent', 'Hannah (Training & Competence)', 'claude-haiku', 'Planned', '0', 'training, competency, learning'],
                 ['cmms_agent', 'Alex (Maintenance & Inspection System Build)', 'claude-haiku', 'Planned', '0', 'cmms, maintenance, equipment, spares'],
                 
               ]}
@@ -413,9 +413,9 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['data_request', 'Agent A -> Agent B', 'Request specific data via a tool', 'Ivan asks Selma for document readiness per VCR'],
                 ['data_response', 'Agent B -> Agent A', 'Return requested data', 'Selma returns 25% readiness'],
                 ['insight_share', 'Any -> Any', 'Proactively share a finding', 'Selma alerts: "8 Process docs still in Draft"'],
-                ['escalation', 'Specialist -> CoPilot', 'Escalate complex query that needs multi-domain reasoning', 'Zain: "Need PSSR data to assess training gaps"'],
+                ['escalation', 'Specialist -> CoPilot', 'Escalate complex query that needs multi-domain reasoning', 'Hannah: "Need PSSR data to assess training gaps"'],
                 ['context_handoff', 'Agent A -> Agent B', 'Transfer conversation context for continuity', 'CoPilot hands off DMS context to Selma'],
-                ['cross_reference', 'Ivan -> Multiple', 'Gather data from multiple agents simultaneously', 'Ivan queries Selma + Fred + Zain + Alex for Safe-to-Start verdict'],
+                ['cross_reference', 'Ivan -> Multiple', 'Gather data from multiple agents simultaneously', 'Ivan queries Selma + Fred + Hannah + Alex for Safe-to-Start verdict'],
                 ['alert', 'Any -> CoPilot', 'Critical finding that needs user attention', 'Fred: "3 open Punch List A items blocking PAC issuance"'],
               ]}
             />
@@ -473,7 +473,7 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                   </div>
                   <ul className="list-disc list-inside space-y-1 text-xs">
                     <li>Thumbs up/down UI in chat — stores to <code className="bg-muted px-1 rounded">ai_response_feedback</code></li>
-                    <li>Zain (Training Agent) tools (training plan analysis, competency gaps, cost tracking)</li>
+                    <li>Hannah (Training Agent) tools (training plan analysis, competency gaps, cost tracking)</li>
                     <li>Alex (CMMS Agent) tools (equipment care, spare parts, maintenance readiness)</li>
                     
                     <li>Persistent conversation memory — cross-conversation context</li>
@@ -846,8 +846,8 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
                 ['Q1 2026', 'Advanced Document Tools (v4)', 'Cross-discipline, bulk status, trend analysis, task creation (11 tools)', 'Complete'],
                 ['Q1 2026', 'Autonomous Training + Quality Score (v5)', 'Auto-apply improvements, self-healing edge cases, quality scoring, ORA linkage (13 tools)', 'Complete'],
                 ['Q1 2026', 'Anthropic Migration (v6)', 'Claude Sonnet 4.5 migration, Selma naming, Document Intelligence build sequence', 'Complete'],
-                ['Q1 2026', 'Hannah Retired', 'P2A Handover agent removed — responsibilities split between Fred (hardware) and Ivan (readiness verdict)', 'Complete'],
-                ['Q2 2026', 'Zain (Training & Competence Development)', 'Competence management, OperatorSuite integration, training gap analysis (Claude Haiku)', 'Planned'],
+                ['Q1 2026', 'Orchestration consolidated under Ivan', 'Standalone P2A Handover agent retired; hardware concerns delegated to Fred, readiness verdict to Ivan', 'Complete'],
+                ['Q2 2026', 'Hannah (Training & Competence)', 'Competence management, OperatorSuite integration, training gap analysis (Claude Haiku)', 'Planned'],
                 ['Q2 2026', 'Alex (Maintenance & Inspection System Build)', 'Asset registers, CMMS data, inspection frameworks (Claude Haiku)', 'Planned'],
                 
                 ['Q3 2026', 'Cross-Agent Reasoning', 'A2A cross_reference messages, Claude synthesis', 'Planned'],
@@ -862,11 +862,11 @@ const AIAgentStrategyDocument: React.FC<AIAgentStrategyDocumentProps> = ({ onBac
           <Card className="bg-muted/30 border-border">
             <CardContent className="pt-4">
               <p className="text-xs text-muted-foreground text-center">
-                <strong className="text-foreground">AI Agent Strategy & Training — Living Document v6.0</strong>
+                <strong className="text-foreground">AI Agent Strategy & Training — Living Document v6.1</strong>
                 <br />
                 Continuously updated as new agents are built, tools added, and training strategy evolves.
                 <br />
-                Last updated: April 2026 — Hannah removed. Confirmed agent family (6): Bob (CoPilot), Selma (Document Intelligence), Fred (Commissioning & Hardware Readiness), Ivan (Technical Authority), Zain (Training & Competence Development), Alex (Maintenance & Inspection System Build).
+                Last updated: June 2026 — Live (4): Bob (CoPilot), Selma (Document Intelligence), Fred (Commissioning & Hardware Readiness), Ivan (Technical Authority). Planned (2): Hannah (Training & Competence), Alex (Maintenance & Inspection System Build).
               </p>
             </CardContent>
           </Card>
