@@ -478,6 +478,27 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <AlertDialog open={confirmClearAll} onOpenChange={setConfirmClearAll}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Clear all critical documents?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will remove all {totalCount} document type{totalCount === 1 ? '' : 's'} (including any bound specific documents) from this VCR. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={clearAllMutation.isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); clearAllMutation.mutate(); }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={clearAllMutation.isPending}
+              >
+                {clearAllMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Clear all'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </TooltipProvider>
   );
