@@ -606,12 +606,13 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
           </ScrollArea>
 
 
-          {/* ── Add more ─────────────────────────────────────────── */}
+          {/* ── Add more (collapsed by default) ──────────────────── */}
           {!isLocked && (
-            <div className="pt-2 border-t">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+            <details className="pt-2 border-t group/addmore">
+              <summary className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 cursor-pointer hover:text-foreground list-none select-none">
+                <Plus className="w-3 h-3 transition-transform group-open/addmore:rotate-45" />
                 Add more
-              </p>
+              </summary>
               <div className="grid grid-cols-3 gap-3">
                 <button
                   onClick={() => setShowCMSModal(true)}
@@ -641,7 +642,7 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
                   <span className="text-xs font-medium">Add Manually</span>
                 </button>
               </div>
-            </div>
+            </details>
           )}
         </>
       )}
