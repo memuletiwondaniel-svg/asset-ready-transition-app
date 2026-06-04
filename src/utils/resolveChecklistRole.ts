@@ -29,6 +29,7 @@ const COMMISSION_BASED_ROLES = [
   'Elect TA2',
   'Static TA2',
   'Rotating TA2',
+  'MCI TA2',
 ];
 
 // Roles that don't need any suffix
@@ -218,6 +219,7 @@ export const BASE_ROLES_FOR_CHECKLIST = [
   'Elect TA2',
   'Static TA2',
   'Rotating TA2',
+  'MCI TA2',
   // TA2 Roles (No suffix)
   'Civil TA2',
   'Tech Safety TA2',
