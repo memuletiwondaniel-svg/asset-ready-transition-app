@@ -594,7 +594,15 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
       />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
+      <AlertDialog
+        open={!!projectToDelete}
+        onOpenChange={(open) => {
+          if (!open) {
+            setProjectToDelete(null);
+            setHardDelete(false);
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Project</AlertDialogTitle>
@@ -603,13 +611,35 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
               <span className="font-semibold text-foreground">
                 {projectToDelete?.project_id_prefix}{projectToDelete?.project_id_number} - {projectToDelete?.project_title}
               </span>
-              ? This action cannot be undone.
+              ? By default this is a soft delete and the project can be restored.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {isAdmin && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="hard-delete-admin"
+                  checked={hardDelete}
+                  onCheckedChange={(v) => setHardDelete(v === true)}
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="hard-delete-admin" className="text-sm font-medium cursor-pointer flex items-center gap-1.5">
+                    <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                    Permanently delete from backend (admin only)
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Hard-deletes the project and all related records (handover, milestones, documents, registers, DMS). Cannot be undone; frees the project ID for reuse immediately.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteProject} className="bg-destructive hover:bg-destructive/90">
-              Delete
+              {hardDelete && isAdmin ? 'Permanently Delete' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
