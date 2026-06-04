@@ -111,8 +111,8 @@ const getInitials = (name: string) =>
 // ─── Member-management popover (anchored inside the panel) ──────────
 interface MemberManagePopoverProps {
   trigger: React.ReactNode;
-  existingMembers: { user_id: string; full_name: string; avatar_url?: string | null; role_name?: string }[];
-  candidates: { user_id: string; full_name: string; avatar_url: string | null; role_name?: string }[];
+  existingMembers: { user_id: string; full_name: string; avatar_url?: string | null; role_name?: string | null }[];
+  candidates: { user_id: string; full_name: string; avatar_url?: string | null; role_name?: string | null }[];
   onAdd: (userId: string) => void;
   onRemove?: (memberId: string) => void;
   removeKey?: (m: any) => string;
