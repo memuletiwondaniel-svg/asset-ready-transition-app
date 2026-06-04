@@ -9,9 +9,11 @@ import {
   getGoCompletionsCredentials,
   parseRadGridTable,
   postWithViewState,
+  postRadAjaxAsync,
   extractPaginationInfo,
   navigateToPage,
 } from "../gocompletions-auth.ts";
+
 import { lookupITRForEquipment } from "./itr-matrix.ts";
 import { getHandoverCertSpec, HANDOVER_CERTS } from "../gohub-contract.ts";
 
