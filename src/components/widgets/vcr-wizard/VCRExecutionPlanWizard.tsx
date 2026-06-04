@@ -282,16 +282,6 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         </p>
       </div>
       <div className="flex items-center gap-1.5 shrink-0 pt-1">
-        {shortVcrId && (
-          <Badge
-            className={cn(
-              "text-[10px] font-mono font-semibold border-0 px-2 py-0.5",
-              idColors.bg, idColors.text
-            )}
-          >
-            {shortVcrId}
-          </Badge>
-        )}
         <Badge variant="outline" className={cn("text-[10px] h-5 px-2", statusLabel.cls)}>
           {statusLabel.label}
         </Badge>
