@@ -468,7 +468,7 @@ const DocTypeList: React.FC<{
           >
             <Checkbox checked={sel} onCheckedChange={() => onToggle(d.id)} onClick={(e) => e.stopPropagation()} />
             <span className="font-mono text-[11px] text-muted-foreground truncate">{d.code}</span>
-            <span className="truncate">{d.document_name}</span>
+            <span className="truncate text-xs">{d.document_name}</span>
             <div className="flex justify-center">
               {d.tier ? (
                 <Badge variant="outline" className="text-[10px]">
