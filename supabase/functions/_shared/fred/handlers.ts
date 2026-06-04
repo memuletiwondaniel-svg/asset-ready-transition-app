@@ -49,16 +49,9 @@ function findHandoverSubsystemField(html: string): { field: string | null; clien
   return { field, clientState };
 }
 
-// Known MCC TypeID GUID — others to be captured from live session
-const CERTIFICATE_TYPE_IDS: Record<string, string> = {
-  MCC: "aafaeac5-e094-df11-b37f-0050ba0820b5",
-  // PCC, RFC, RFSU, FAC, MCC-DAC, PCDAC, RFOC: to be captured
-};
-
-const CERTIFICATE_GATES: Record<string, number> = {
-  MCC: 1, PCC: 2, RFC: 3, RFSU: 4, FAC: 5,
-  "MCC-DAC": 1, PCDAC: 2, RFOC: 3,
-};
+// Certificate TypeIDs + gate/groupBy contract lives in
+// _shared/gohub-contract.ts (HANDOVER_CERTS). Do not redeclare maps here —
+// import via getHandoverCertSpec(certType).
 
 // ─── Metrics Logger (fire-and-forget) ────────────────────────
 
