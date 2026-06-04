@@ -271,10 +271,43 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     return { label: 'Draft', cls: 'bg-muted text-muted-foreground border-border' };
   })();
 
+  const { data: hcStatus } = useVCRHydrocarbonStatus(vcr.id);
+  const stripeMeta = (() => {
+    if (!hcStatus || hcStatus.status === 'UNKNOWN') {
+      return {
+        cls: 'bg-muted-foreground/40',
+        tooltip: 'HC status not yet determined — add systems to set.',
+      };
+    }
+    if (hcStatus.status === 'HC') {
+      return {
+        cls: 'bg-amber-500',
+        tooltip: `Hydrocarbon VCR (${hcStatus.systemCount} linked system${hcStatus.systemCount === 1 ? '' : 's'} include hydrocarbon service)`,
+      };
+    }
+    return {
+      cls: 'bg-blue-500',
+      tooltip: `Non-hydrocarbon VCR (${hcStatus.systemCount} linked system${hcStatus.systemCount === 1 ? '' : 's'}, none flagged hydrocarbon)`,
+    };
+  })();
+
   const topHeaderContent = (
+    <TooltipProvider delayDuration={150}>
     <div className="flex items-start justify-between gap-4 py-3">
       <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className={cn("inline-block w-1 self-stretch rounded-sm cursor-help shrink-0", stripeMeta.cls)}
+                style={{ minHeight: '1.5rem' }}
+                aria-label={stripeMeta.tooltip}
+              />
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs text-xs">
+              {stripeMeta.tooltip}
+            </TooltipContent>
+          </Tooltip>
           <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground truncate">
             {shortVcrId ? `${shortVcrId}: ` : ''}{vcr.name}
           </h1>
@@ -289,6 +322,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         </Badge>
       </div>
     </div>
+    </TooltipProvider>
   );
 
   return (
