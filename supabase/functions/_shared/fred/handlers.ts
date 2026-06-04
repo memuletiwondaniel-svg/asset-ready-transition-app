@@ -14,6 +14,40 @@ import {
 } from "../gocompletions-auth.ts";
 import { lookupITRForEquipment } from "./itr-matrix.ts";
 
+// ─── HandoverSearch postback helpers ─────────────────────────
+//
+// HandoverSearch.aspx is the same WebForms RadButton/RadAjax pattern as
+// TagSearch/PunchlistItemSearch: query-string TypeID/HandoverGate/GroupBy
+// configure the form, but the grid is empty until a Search postback fires.
+// The page renders an inner <input name="..._input"> for the RadButton; the
+// real server-side postback target is the OUTER UniqueID (strip "_input").
+// Posting the "_input" name is treated as a plain reload → empty grid.
+function findHandoverPostbackTarget(html: string): string | null {
+  const targets: string[] = [];
+  const re = /<input[^>]*name=["']([^"']+SearchButton)_input["']/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) targets.push(m[1]);
+  if (!targets.length) return null;
+  const scoped = targets.find((t) => /PrimarySearchCriteria/i.test(t))
+    || targets.find((t) => /MasterRadPanelBar/i.test(t));
+  return scoped || targets[0];
+}
+
+function findHandoverSubsystemField(html: string): { field: string | null; clientState: string | null } {
+  const cands: string[] = [];
+  const re = /<input[^>]*name=["']([^"']*[Ss]ub[Ss]ystem[^"']*)["']/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) cands.push(m[1]);
+  const primary = cands.filter((c) => /PrimarySearchCriteria/i.test(c));
+  const pool = primary.length ? primary : cands;
+  const field = pool.find((c) => /SubSystemTextBox$/i.test(c))
+    || pool.find((c) => /\$SubSystem$/.test(c))
+    || pool.find((c) => /SubSystem_Input$/i.test(c))
+    || null;
+  const clientState = pool.find((c) => /SubSystem_ClientState$/i.test(c)) || null;
+  return { field, clientState };
+}
+
 // Known MCC TypeID GUID — others to be captured from live session
 const CERTIFICATE_TYPE_IDS: Record<string, string> = {
   MCC: "aafaeac5-e094-df11-b37f-0050ba0820b5",
