@@ -600,6 +600,43 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
         </ScrollArea>
       )}
 
+      {/* CMS Import */}
+      <CMSImportModal
+        open={showCMSModal}
+        onOpenChange={setShowCMSModal}
+        onImport={(systems) => { setShowCMSModal(false); void assignWizardSystems(systems); }}
+        projectCode={projectCode}
+      />
+
+      {/* Excel Upload */}
+      <ExcelUploadModal
+        open={showExcelModal}
+        onOpenChange={setShowExcelModal}
+        title="Upload Systems"
+        description="Import systems from an Excel spreadsheet (.xlsx, .xls, .csv)"
+        onUpload={async (file) => {
+          setShowExcelModal(false);
+          try {
+            const { parseSystemsExcel } = await import('@/components/widgets/p2a-wizard/steps/parseSystemsExcel');
+            const parsed = await parseSystemsExcel(file);
+            if (!parsed.length) {
+              toast.error('No systems found. Expecting columns like "System ID" and "Name".');
+              return;
+            }
+            await assignWizardSystems(parsed);
+          } catch (e: any) {
+            toast.error(e?.message || 'Failed to parse Excel file');
+          }
+        }}
+      />
+
+      {/* Manual Add */}
+      <AddSystemModal
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
+        onAdd={(system) => { setShowAddModal(false); void assignWizardSystems([system]); }}
+      />
+
       {/* Add System Picker */}
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
         <DialogContent className="max-w-lg z-[110]" overlayClassName="z-[105]">
