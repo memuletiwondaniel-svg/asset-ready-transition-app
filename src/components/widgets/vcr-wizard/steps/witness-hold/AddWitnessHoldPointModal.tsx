@@ -104,9 +104,6 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
 
   const noSystemsMapped = systems.length === 0;
   const selectedSystem = systems.find((system) => system.id === systemId);
-  const selectedSystemLabel = selectedSystem
-    ? `${selectedSystem.name}${selectedSystem.code ? ` · ${selectedSystem.code}` : ''}`
-    : 'Select system…';
 
   const canSubmit = !!systemId && !!activity.trim() && !!type && !saving;
 
