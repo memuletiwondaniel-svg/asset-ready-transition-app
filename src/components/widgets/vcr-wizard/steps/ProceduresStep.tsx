@@ -60,16 +60,44 @@ export const ProceduresStep: React.FC<ProceduresStepProps> = ({ vcrId }) => {
 
   const addItem = useMutation({
     mutationFn: async (item: any) => {
-      const { error } = await (supabase as any)
+      const { data: inserted, error } = await (supabase as any)
         .from('p2a_vcr_procedures')
-        .insert({ ...item, handover_point_id: vcrId });
+        .insert({ ...item, handover_point_id: vcrId })
+        .select('id')
+        .single();
       if (error) throw error;
+      // Auto-assign placeholder document number (idempotent server-side).
+      // Soft-fail: if assignment errors, the row remains and the user can
+      // recover via the "Assign number" link on the card.
+      if (inserted?.id) {
+        const { error: rpcErr } = await (supabase as any).rpc(
+          'assign_procedure_document_number',
+          { p_procedure_id: inserted.id }
+        );
+        if (rpcErr) console.warn('Document number assignment failed', rpcErr);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vcr-exec-procedures'] });
       toast.success('Procedure added');
       setAddOpen(false);
     },
+  });
+
+  const assignNumber = useMutation({
+    mutationFn: async (procedureId: string) => {
+      const { data, error } = await (supabase as any).rpc(
+        'assign_procedure_document_number',
+        { p_procedure_id: procedureId }
+      );
+      if (error) throw error;
+      return data as string;
+    },
+    onSuccess: (docNo) => {
+      queryClient.invalidateQueries({ queryKey: ['vcr-exec-procedures'] });
+      if (docNo) toast.success(`Assigned ${docNo}`);
+    },
+    onError: (err: any) => toast.error(err?.message || 'Failed to assign number'),
   });
 
   const deleteItem = useMutation({
