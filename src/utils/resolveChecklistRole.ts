@@ -219,6 +219,7 @@ export const BASE_ROLES_FOR_CHECKLIST = [
   'Elect TA2',
   'Static TA2',
   'Rotating TA2',
+  'MCI TA2',
   // TA2 Roles (No suffix)
   'Civil TA2',
   'Tech Safety TA2',
