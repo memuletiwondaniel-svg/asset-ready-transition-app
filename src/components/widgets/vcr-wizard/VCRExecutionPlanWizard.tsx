@@ -48,9 +48,9 @@ import { CriticalDocumentsStep } from './steps/CriticalDocumentsStep';
 import { RegistersLogsheetsStep } from './steps/RegistersLogsheetsStep';
 import { InspectionTestPlanStep } from './steps/InspectionTestPlanStep';
 import { ApproversStep } from './steps/ApproversStep';
-import { CMMSStep } from './steps/CMMSStep';
-import { SparesStep } from './steps/SparesStep';
-import { Layers } from 'lucide-react';
+import { CMMSSparesStep } from './steps/CMMSSparesStep';
+import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
+import { Layers, CheckCircle2 } from 'lucide-react';
 
 interface VCRExecutionPlanWizardProps {
   open: boolean;
@@ -60,16 +60,16 @@ interface VCRExecutionPlanWizardProps {
 }
 
 const STEPS: WizardShellStep[] = [
-  { id: 'systems', label: 'Systems', icon: Layers, color: 'text-orange-500' },
-  { id: 'items', label: 'VCR Items', icon: ClipboardCheck, color: 'text-violet-500' },
-  { id: 'training', label: 'Training', icon: GraduationCap, color: 'text-blue-500' },
-  { id: 'procedures', label: 'Procedures', icon: BookOpen, color: 'text-emerald-500' },
-  { id: 'critical-docs', label: 'Critical Documents', icon: FileText, color: 'text-amber-500' },
-  { id: 'registers-logsheets', label: 'Registers & Logsheets', icon: ClipboardList, color: 'text-cyan-500' },
-  { id: 'cmms', label: 'CMMS', icon: Wrench, color: 'text-amber-500' },
-  { id: 'spares', label: '2Y Spares', icon: Package, color: 'text-teal-500' },
-  { id: 'itp', label: 'Inspection Test Plan', icon: ClipboardList, color: 'text-orange-500' },
-  { id: 'approvers', label: 'Approvers', icon: UserCheck, color: 'text-primary' },
+  { id: 'items',               label: 'VCR Items',            icon: ClipboardCheck, color: 'text-violet-500' },
+  { id: 'systems',             label: 'Systems',              icon: Layers,         color: 'text-orange-500' },
+  { id: 'training',            label: 'Training',             icon: GraduationCap,  color: 'text-blue-500' },
+  { id: 'procedures',          label: 'Procedures',           icon: BookOpen,       color: 'text-emerald-500' },
+  { id: 'critical-docs',       label: 'Critical Documents',   icon: FileText,       color: 'text-amber-500' },
+  { id: 'registers-logsheets', label: 'Registers & Logsheets',icon: ClipboardList,  color: 'text-cyan-500' },
+  { id: 'cmms-spares',         label: 'CMMS & Spares',        icon: Wrench,         color: 'text-amber-500' },
+  { id: 'itp',                 label: 'Inspection Test Plan', icon: ClipboardList,  color: 'text-orange-500' },
+  { id: 'approvers',           label: 'Approvers',            icon: UserCheck,      color: 'text-primary' },
+  { id: 'review',              label: 'Review and Submit',    icon: CheckCircle2,   color: 'text-emerald-500' },
 ];
 
 const TOTAL_STEPS = STEPS.length; // 10
