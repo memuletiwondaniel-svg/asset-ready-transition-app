@@ -16,8 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  Search, Layers, Trash2, Flame, Snowflake, ChevronRight, ChevronDown,
-  Plus, RefreshCw, CheckCircle2, Info, Lock, Database, Upload,
+  Search, Trash2, Plus, RefreshCw, CheckCircle2, Lock, Database, Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -26,6 +25,7 @@ import { CMSImportModal } from '@/components/widgets/p2a-wizard/steps/CMSImportM
 import { ExcelUploadModal } from '@/components/widgets/p2a-wizard/steps/ExcelUploadModal';
 import { AddSystemModal } from '@/components/widgets/p2a-wizard/steps/AddSystemModal';
 import type { WizardSystem } from '@/components/widgets/p2a-wizard/steps/SystemsImportStep';
+import { SystemRow, SystemsList } from '@/components/widgets/shared/SystemRow';
 
 interface SystemsStepProps {
   vcrId: string;
