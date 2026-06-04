@@ -33,26 +33,38 @@ interface RejectionActivity {
 }
 
 // Mock approvers for the overlay - returns different states based on activity
+// Brief ordering: Marije SIGNED (lvl 1) -> Ali SIGNED (lvl 2) -> Paul PENDING (lvl 3)
 const getMockApproversForOverlay = (activity?: RejectionActivity | null) => {
+  const marijeSignature = typeof window !== 'undefined' ? localStorage.getItem('marije-hoedemaker-signature') : null;
   const aliSignature = typeof window !== 'undefined' ? localStorage.getItem('ali-danbous-signature') : null;
-  
-  // Base state: Ali approved, Paul pending, Marije locked
+
+  // Base state: Marije + Ali APPROVED, Paul PENDING (last)
   const baseApprovers = [
     {
       id: 'approver-1',
+      approver_name: 'Marije Hoedemaker',
+      approver_role: 'P&E Director',
+      approver_level: 1,
+      status: 'APPROVED',
+      comments: 'Project engineering deliverables reviewed and accepted.',
+      approved_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      signature_data: marijeSignature || undefined,
+    },
+    {
+      id: 'approver-2',
       approver_name: 'Ali Danbous',
       approver_role: 'HSSE Director',
-      approver_level: 1,
+      approver_level: 2,
       status: 'APPROVED',
       comments: 'All safety requirements have been verified. Ready for facility startup.',
       approved_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       signature_data: aliSignature || undefined,
     },
     {
-      id: 'approver-2',
+      id: 'approver-3',
       approver_name: 'Paul Van Den Hemel',
       approver_role: 'P&M Director',
-      approver_level: 2,
+      approver_level: 3,
       status: 'PENDING',
       comments: undefined,
       approved_at: undefined,
@@ -61,48 +73,33 @@ const getMockApproversForOverlay = (activity?: RejectionActivity | null) => {
       rejection_priority: undefined as 'Pr1' | undefined,
       rejection_description: undefined as string | undefined,
     },
-    {
-      id: 'approver-3',
-      approver_name: 'Marije Hoedemaker',
-      approver_role: 'P&E Director',
-      approver_level: 3,
-      status: 'LOCKED',
-      comments: undefined,
-      approved_at: undefined,
-      signature_data: undefined,
-    },
   ];
 
   // If viewing history, update Paul's status based on activity
   if (activity) {
     if (activity.type === 'rejected') {
-      baseApprovers[1] = {
-        ...baseApprovers[1],
+      baseApprovers[2] = {
+        ...baseApprovers[2],
         status: 'REJECTED_PR1',
         rejected_at: activity.timestamp,
         rejection_priority: 'Pr1',
         rejection_description: activity.description,
       };
     } else if (activity.type === 'approved') {
-      // Get Paul's saved signature if available
       const paulSignature = typeof window !== 'undefined' ? localStorage.getItem('paul-vandenhemel-signature') : null;
-      baseApprovers[1] = {
-        ...baseApprovers[1],
+      baseApprovers[2] = {
+        ...baseApprovers[2],
         status: 'APPROVED',
         comments: activity.comments || 'Approved',
         approved_at: activity.timestamp,
         signature_data: paulSignature || undefined,
-      };
-      // Unlock Marije
-      baseApprovers[2] = {
-        ...baseApprovers[2],
-        status: 'PENDING',
       };
     }
   }
 
   return baseApprovers;
 };
+
 
 // Completed approvers for DP-385 historical view
 const getDP385Approvers = () => {
