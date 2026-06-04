@@ -17,16 +17,12 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
   GocSessionManager,
   getGoCompletionsCredentials,
-  postRadAjaxAsync,
-  parseRadGridTable,
 } from "../_shared/gocompletions-auth.ts";
+import { handleGetHandoverCertificateStatus } from "../_shared/fred/handlers.ts";
 import {
   CANARY_ORACLE,
   CLASS_NAME_ALL,
   ITR_CLASS_ALL,
-  ITR_CODE_REGEX,
-  cleanCellText,
-  discoverSearchPostbackTarget,
   isEmptyPlaceholderCell,
   parseItrCode,
 } from "../_shared/gohub-contract.ts";
