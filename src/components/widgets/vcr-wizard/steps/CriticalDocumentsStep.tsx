@@ -17,7 +17,7 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Search, X, Loader2, ChevronDown,
+  Search, X, Loader2, ChevronDown, Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -65,6 +65,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
   const [pendingRemovals, setPendingRemovals] = useState<Set<string>>(new Set());
   const [assaiOpen, setAssaiOpen] = useState(false);
   const [confirmRemoveBound, setConfirmRemoveBound] = useState<{ typeId: string; reqId: string } | null>(null);
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
 
   // Debounce search
   React.useEffect(() => {
@@ -290,6 +291,34 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
     }
   };
 
+  const clearAllMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await (supabase as any)
+        .from('vcr_document_requirements')
+        .delete()
+        .eq('vcr_id', vcrId);
+      if (error) throw error;
+      // Shadow clear of legacy table (best-effort)
+      const { error: cErr } = await (supabase as any)
+        .from('p2a_vcr_critical_docs')
+        .delete()
+        .eq('handover_point_id', vcrId);
+      if (cErr) console.warn('shadow p2a_vcr_critical_docs clear warning:', cErr.message);
+    },
+    onSuccess: () => {
+      setPendingSelections(new Set());
+      setPendingRemovals(new Set());
+      queryClient.invalidateQueries({ queryKey: ['vcr-doc-requirements', vcrId] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-critical-docs', vcrId] });
+      queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcrId] });
+      toast.success('All critical documents cleared');
+      setConfirmClearAll(false);
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || 'Failed to clear');
+    },
+  });
+
   return (
     <TooltipProvider>
       <div className="flex flex-col h-full min-h-0 space-y-3">
@@ -312,6 +341,21 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
                 <TooltipContent side="bottom">
                   {totalCount - boundCount} type{totalCount - boundCount === 1 ? '' : 's'}, {boundCount} specific document{boundCount === 1 ? '' : 's'}
                 </TooltipContent>
+              </Tooltip>
+            )}
+            {totalCount > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => setConfirmClearAll(true)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Clear all selections</TooltipContent>
               </Tooltip>
             )}
             <Button variant="outline" size="sm" onClick={() => setAssaiOpen(true)} className="gap-1.5">
@@ -430,6 +474,27 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleConfirmRemoveBound} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 Remove
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={confirmClearAll} onOpenChange={setConfirmClearAll}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Clear all critical documents?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will remove all {totalCount} document type{totalCount === 1 ? '' : 's'} (including any bound specific documents) from this VCR. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={clearAllMutation.isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); clearAllMutation.mutate(); }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={clearAllMutation.isPending}
+              >
+                {clearAllMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Clear all'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
