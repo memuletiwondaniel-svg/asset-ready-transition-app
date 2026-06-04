@@ -352,6 +352,176 @@ Deno.serve(async (req) => {
     const creds = await getGoCompletionsCredentials(supa);
     const session = new GocSessionManager(creds.portalUrl, creds.username, creds.password, tileName);
 
+    // ── Discovery branch ───────────────────────────────────────
+    // body.discover=true: probe the CompletionsGrid ASMX surface to find
+    // the WebMethod that populates the subsystem-detail ITRS tab.
+    // No writes. Returns method list + JS proxy + sample sub GUID.
+    if (body.discover) {
+      const disc: any = { asmx_base: null, help_page: null, js_proxy: null, page_scripts: [], itr_method_candidates: [], sample_subsystem: null, probe_results: [] };
+      try {
+        const grid = await session.getGridPage();
+        const asmxBase = resolveAsmxServiceUrl(grid.html, grid.url);
+        disc.asmx_base = asmxBase;
+        const cookies = session.getCookies();
+        const origin = new URL(grid.url).origin;
+
+        const authedGet = async (url: string) => {
+          try {
+            const r = await fetch(url, {
+              headers: {
+                Cookie: formatCookies(cookies),
+                "User-Agent": BROWSER_UA,
+                Referer: grid.url,
+                Accept: "text/html,application/javascript,*/*",
+              },
+            });
+            const t = await r.text();
+            return { status: r.status, contentType: r.headers.get("content-type"), body: t };
+          } catch (e: any) {
+            return { status: null, contentType: null, body: "", error: String(e?.message || e).slice(0, 200) };
+          }
+        };
+
+        // 1. ASMX help page (no method) — lists every WebMethod
+        if (asmxBase) {
+          const help = await authedGet(asmxBase);
+          // pull method names from anchor list and from <li> entries
+          const methodSet = new Set<string>();
+          const reA = /href=["'][^"']*CompletionsGrid\.asmx\?op=([A-Za-z0-9_]+)["']/gi;
+          let m: RegExpExecArray | null;
+          while ((m = reA.exec(help.body)) !== null) methodSet.add(m[1]);
+          disc.help_page = {
+            status: help.status,
+            contentType: help.contentType,
+            methods: Array.from(methodSet).sort(),
+            excerpt: help.body.slice(0, 2048),
+          };
+          disc.itr_method_candidates = Array.from(methodSet)
+            .filter((n) => /itr|inspection|itp|test/i.test(n))
+            .sort();
+
+          // 2. /js proxy — has parameter names per method
+          const jsProxy = await authedGet(asmxBase + "/js");
+          // capture per-method signature blocks: `MethodName:function(p1,p2,...,onSuccess...)`
+          const sigs: any[] = [];
+          const sigRe = /([A-Za-z0-9_]+)\s*:\s*function\s*\(([^)]*)\)/g;
+          while ((m = sigRe.exec(jsProxy.body)) !== null) {
+            sigs.push({ method: m[1], params: m[2].split(",").map((s) => s.trim()).filter(Boolean) });
+          }
+          disc.js_proxy = {
+            status: jsProxy.status,
+            contentType: jsProxy.contentType,
+            length: jsProxy.body.length,
+            signatures: sigs.filter((s) => methodSet.has(s.method)),
+          };
+        }
+
+        // 3. scripts referenced from the grid page that might call ITR methods
+        const scriptSrcs: string[] = [];
+        const srcRe = /<script[^>]*src=["']([^"']+)["']/gi;
+        let s: RegExpExecArray | null;
+        while ((s = srcRe.exec(grid.html)) !== null) {
+          const src = s[1];
+          if (/CompletionsGrid|SubSystem|ITR|Detail|Modal/i.test(src)) scriptSrcs.push(src);
+        }
+        for (const src of scriptSrcs.slice(0, 8)) {
+          const abs = src.startsWith("http") ? src : new URL(src, grid.url).toString();
+          const js = await authedGet(abs);
+          // search for ASMX method calls / fetches involving "ITR"
+          const hits: string[] = [];
+          const callRe = /(?:CompletionsGrid\.asmx\/[A-Za-z0-9_]+|\.([A-Za-z0-9_]*[Ii][Tt][Rr][A-Za-z0-9_]*)\s*\()/g;
+          let h: RegExpExecArray | null;
+          while ((h = callRe.exec(js.body)) !== null && hits.length < 20) hits.push(h[0]);
+          disc.page_scripts.push({
+            url: abs,
+            status: js.status,
+            length: js.body.length,
+            hits: Array.from(new Set(hits)),
+          });
+        }
+
+        // 4. GetSystems → grab one subsystem (preferably the override target if present)
+        const sysResp = await session.callMethod("GetSystems", { itrClass: "All" });
+        const arr: any[] = Array.isArray(sysResp)
+          ? sysResp
+          : (sysResp?.Items || sysResp?.data || sysResp?.results || sysResp?.Systems || []);
+        const targetSub = overrideSubs?.[0] || subsystems[0];
+        let foundSub: any = null;
+        let foundSys: any = null;
+        for (const sys of arr) {
+          const subs = sys.SubSystem || sys.SubSystems || sys.Subsystems || sys.SubsystemList || sys.subSystems || [];
+          for (const sub of subs) {
+            const num = String(sub.Number || sub.SubSystemNumber || sub.Name || "").trim();
+            if (num === targetSub) { foundSub = sub; foundSys = sys; break; }
+          }
+          if (foundSub) break;
+        }
+        if (foundSub) {
+          disc.sample_subsystem = {
+            looking_for: targetSub,
+            number: foundSub.Number ?? foundSub.SubSystemNumber ?? foundSub.Name,
+            keys: Object.keys(foundSub),
+            full: foundSub,
+            parent_system_keys: foundSys ? Object.keys(foundSys) : null,
+            parent_system_id: foundSys?.ID || foundSys?.Id || foundSys?.SystemID || null,
+          };
+        } else {
+          disc.sample_subsystem = { looking_for: targetSub, found: false, total_systems: arr.length };
+        }
+
+        // 5. Probe likely ITR methods if we have a sub GUID. Try a few payload shapes.
+        const subGuid = foundSub?.ID || foundSub?.Id || foundSub?.SubSystemID || foundSub?.GUID || null;
+        const sysGuid = foundSys?.ID || foundSys?.Id || foundSys?.SystemID || null;
+        if (subGuid) {
+          const candidates = Array.from(new Set([
+            ...(disc.itr_method_candidates as string[]),
+            "GetSubSystemITRs", "GetITRs", "GetSubSystemITR", "GetSubSystemITRList",
+            "GetITRsForSubSystem", "GetITRList", "GetTagITRs", "GetSubSystemInspections",
+          ]));
+          const payloads = [
+            { subSystemId: subGuid, itrClass: "All" },
+            { subsystemId: subGuid, itrClass: "All" },
+            { SubSystemID: subGuid, itrClass: "All" },
+            { id: subGuid, itrClass: "All" },
+            { subSystemId: subGuid },
+            { subSystemId: subGuid, systemId: sysGuid, itrClass: "All" },
+          ];
+          for (const name of candidates) {
+            for (const payload of payloads) {
+              const diag: any[] = [];
+              try {
+                const r = await session.callMethod(name, payload, diag);
+                const ok = r !== null && r !== undefined;
+                disc.probe_results.push({
+                  method: name,
+                  payload,
+                  ok,
+                  status: diag[0]?.status,
+                  contentType: diag[0]?.contentType,
+                  body_excerpt: diag[0]?.body2kb?.slice(0, 400),
+                  result_kind: Array.isArray(r) ? `array(${r.length})` : (r && typeof r === "object") ? `object(${Object.keys(r).join(",").slice(0, 120)})` : typeof r,
+                  result_sample: Array.isArray(r) ? r.slice(0, 2) : (r && typeof r === "object") ? r : r,
+                });
+                if (ok && (Array.isArray(r) ? r.length : (typeof r === "object" && Object.keys(r).length))) {
+                  // first hit is good enough; try other payloads to find best
+                }
+              } catch (e: any) {
+                disc.probe_results.push({ method: name, payload, error: String(e?.message || e).slice(0, 200) });
+              }
+            }
+          }
+        }
+      } catch (e: any) {
+        disc.error = String(e?.message || e).slice(0, 300);
+      }
+      report.discovery = disc;
+      return new Response(JSON.stringify(report, null, 2), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
+
     // ── Per-subsystem: TagSearch + Punch ──
     for (const ss of subsystems) {
       report.subsystems_attempted++;
