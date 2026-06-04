@@ -437,6 +437,19 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
 
   return (
     <div className="space-y-4">
+      {/* No-systems warning — checklist may be wrong until systems are selected */}
+      {linkedSystemsCount === 0 && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/40 bg-amber-500/5 px-3.5 py-2.5">
+          <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <div className="text-xs leading-relaxed">
+            <span className="font-medium text-amber-700 dark:text-amber-400">Select systems first to load the correct checklist.</span>{' '}
+            <span className="text-muted-foreground">
+              The hydrocarbon / non-hydrocarbon checklist is chosen from the systems mapped to this VCR. Without systems we&apos;re showing the non-hydrocarbon template by default.
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Guidance note */}
       <div className="flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-3.5 py-2.5">
         <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
