@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger,
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -102,6 +102,9 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
   }, [open, isEdit, existing, defaultSystemId]);
 
   const noSystemsMapped = systems.length === 0;
+  const selectedSystemLabel = systems.find((system) => system.id === systemId)
+    ? `${systems.find((system) => system.id === systemId)?.name}${systems.find((system) => system.id === systemId)?.code ? ` · ${systems.find((system) => system.id === systemId)?.code}` : ''}`
+    : 'Select system…';
 
   const canSubmit = !!systemId && !!activity.trim() && !!type && !saving;
 
@@ -199,7 +202,9 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
                 className="h-9 text-sm"
                 title={noSystemsMapped ? 'Add systems first (step 1)' : undefined}
               >
-                <SelectValue placeholder="Select system…" />
+                <span className={cn('block flex-1 min-w-0 text-left truncate', !systemId && 'text-muted-foreground')}>
+                  {selectedSystemLabel}
+                </span>
               </SelectTrigger>
               <SelectContent className="z-[210]">
                 {systems.map((s) => (
