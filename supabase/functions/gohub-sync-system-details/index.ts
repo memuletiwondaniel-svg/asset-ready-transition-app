@@ -279,6 +279,15 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    // Guard: reject tile names and non-canonical shapes. This is the silent
+    // mislabel that produced the 97-row WEST QURNA cert landmine — make it loud.
+    try {
+      assertValidProjectCode(projectCode);
+    } catch (e) {
+      return new Response(JSON.stringify({ error: (e as Error).message }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     report.project_code = projectCode;
     const debug = !!body.debug;
     const overrideSubs: string[] | null = Array.isArray(body.override_subsystems) && body.override_subsystems.length
