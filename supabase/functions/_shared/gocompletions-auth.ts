@@ -465,6 +465,101 @@ export async function postWithViewState(
   return { html, cookies };
 }
 
+// ─── RadAjax Async Partial Postback ──────────────────────────
+//
+// WebForms pages wrapped in a Telerik RadAjaxPanel/RadAjaxManager submit
+// via an MS-AJAX **partial** postback (single XHR), not a full-page
+// postback. Captured contract (live HandoverSearch XHR):
+//
+//   __ASYNCPOST=true
+//   __EVENTTARGET=<trigger UniqueID, "_input" stripped>
+//   __EVENTARGUMENT=
+//   ctl00$ScriptManager=ctl00$ScriptManager|<trigger>
+//   (+ __VIEWSTATE / __VIEWSTATEGENERATOR / __EVENTVALIDATION)
+//
+// Headers: X-MicrosoftAjax: Delta=true, X-Requested-With: XMLHttpRequest.
+// Response is a pipe-delimited delta (`length|type|id|content|…`), NOT a
+// full HTML page — extract the `updatePanel` segment(s) and run RadGrid
+// parsing on that fragment. The ScriptManager UniqueID is conventionally
+// `ctl00$ScriptManager` on these pages; pass `scriptManagerUniqueId` to
+// override if a page differs.
+export async function postRadAjaxAsync(
+  cookies: Record<string, string>,
+  pageUrl: string,
+  pageHtml: string,
+  trigger: string,
+  extraFields: Record<string, string> = {},
+  scriptManagerUniqueId = "ctl00$ScriptManager"
+): Promise<{ html: string; cookies: Record<string, string>; rawDelta: string }> {
+  const hiddenFields = extractHiddenFields(pageHtml);
+  const formData: Record<string, string> = {
+    ...hiddenFields,
+    ...extraFields,
+    [scriptManagerUniqueId]: `${scriptManagerUniqueId}|${trigger}`,
+    __EVENTTARGET: trigger,
+    __EVENTARGUMENT: "",
+    __ASYNCPOST: "true",
+  };
+
+  const actionMatch = pageHtml.match(/<form[^>]*action=["']([^"']*?)["'][^>]*>/i);
+  const formAction = actionMatch
+    ? new URL(decodeHtmlEntities(actionMatch[1]), pageUrl).toString()
+    : pageUrl;
+
+  const response = await fetch(formAction, {
+    method: "POST",
+    redirect: "manual",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+      Cookie: formatCookies(cookies),
+      "User-Agent": BROWSER_UA,
+      Referer: pageUrl,
+      Origin: new URL(pageUrl).origin,
+      "X-MicrosoftAjax": "Delta=true",
+      "X-Requested-With": "XMLHttpRequest",
+      Accept: "*/*",
+    },
+    body: new URLSearchParams(formData).toString(),
+  });
+  cookies = parseCookiesFromResponse(response, cookies);
+  const rawDelta = await response.text();
+  const html = parseRadAjaxDelta(rawDelta);
+  return { html, cookies, rawDelta };
+}
+
+// Parse a RadAjax/MS-AJAX delta response. Format is a stream of
+// `length|type|id|content|` segments. We concatenate the HTML of every
+// `updatePanel` segment. If the payload doesn't look like a delta (e.g.
+// server returned a full-page fallback), pass it through so callers can
+// still try to scrape it.
+export function parseRadAjaxDelta(delta: string): string {
+  if (!delta) return "";
+  if (!/^\s*\d+\s*\|/.test(delta)) return delta;
+  const panels: string[] = [];
+  let i = 0;
+  const n = delta.length;
+  while (i < n) {
+    const pipe1 = delta.indexOf("|", i);
+    if (pipe1 < 0) break;
+    const len = parseInt(delta.slice(i, pipe1), 10);
+    if (!Number.isFinite(len)) break;
+    const pipe2 = delta.indexOf("|", pipe1 + 1);
+    if (pipe2 < 0) break;
+    const type = delta.slice(pipe1 + 1, pipe2);
+    const pipe3 = delta.indexOf("|", pipe2 + 1);
+    if (pipe3 < 0) break;
+    const contentStart = pipe3 + 1;
+    const contentEnd = contentStart + len;
+    if (contentEnd > n) break;
+    const content = delta.slice(contentStart, contentEnd);
+    if (type === "updatePanel") panels.push(content);
+    i = contentEnd + 1;
+  }
+  return panels.join("\n");
+}
+
+
+
 // ─── Telerik RadGrid HTML Parsing ────────────────────────────
 
 export interface GridRow {
