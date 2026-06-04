@@ -777,29 +777,32 @@ export async function paginateSearch(
 
   const totalFromHtml = parseTotalCount(firstHtml);
   ctx.paginationTotalAssaiCount = totalFromHtml;
-  console.info('[SEARCH_V11] initial search returned ' + firstDocs.length + ' docs, parsed total: ' + (totalFromHtml ?? 'unknown'));
+  // V12.1 — empirically detect Assai's real page size from page 1 (server caps at ~100 regardless of number_of_results)
+  const detectedPageSize = firstDocs.length;
+  ctx.detectedPageSize = detectedPageSize;
+  console.info('[SEARCH_V11] initial search returned ' + firstDocs.length + ' docs, parsed total: ' + (totalFromHtml ?? 'unknown') + ', detectedPageSize: ' + detectedPageSize);
 
-  // Fix 1D — diagnostic logging at escalation decision point
+  // V12.1 — pagination trigger: page is FULL and total says more rows exist.
+  // If total unknown, paginate when first page is "substantial" (>=50) as a probable-cap heuristic.
+  const moreRowsExist = totalFromHtml ? totalFromHtml > firstDocs.length : firstDocs.length >= 50;
   console.log(
-    `[Selma:SEARCH_V11] paginateSearch — firstDocs: ${firstDocs.length}, ` +
-    `parsedTotal: ${totalFromHtml ?? 'unknown'}, PAGE_CAP: ${ctx.PAGE_CAP}, ` +
-    `escalating to pagination: ${firstDocs.length >= ctx.PAGE_CAP}, ` +
-    `totalQueryCount: ${ctx.totalQueryCount}`
+    `[Selma:V12.1] paginateSearch — firstDocs: ${firstDocs.length}, ` +
+    `parsedTotal: ${totalFromHtml ?? 'unknown'}, detectedPageSize: ${detectedPageSize}, ` +
+    `escalating to pagination: ${moreRowsExist}, totalQueryCount: ${ctx.totalQueryCount}`
   );
 
-  if (firstDocs.length < ctx.PAGE_CAP) return firstDocs;
+  if (!moreRowsExist) return firstDocs;
 
-  // Sequential start_row pagination
+  // Sequential start_row pagination — collect FULL SearchResult rows on every page (titles preserved for cross-page filtering).
   const estimatedTotal = totalFromHtml || 10000;
-  const detectedPageSize = firstDocs.length;
   const allDocs = [...firstDocs];
-  const metadataOnly: Array<{ document_number: string; type_code: string; status: string }> = [];
+  const seen = new Set<string>(firstDocs.map(d => d.document_number).filter(Boolean) as string[]);
   let startRow = detectedPageSize + 1;
   const TIME_GUARD_MS = 120000;
 
   while (startRow <= estimatedTotal) {
     if (Date.now() - paginationStartTime > TIME_GUARD_MS) {
-      console.warn('paginateSearch: time guard hit at startRow=' + startRow + ', collected ' + (allDocs.length + metadataOnly.length) + ' of ' + estimatedTotal);
+      console.warn('paginateSearch: time guard hit at startRow=' + startRow + ', collected ' + allDocs.length + ' of ' + estimatedTotal);
       break;
     }
 
@@ -816,11 +819,7 @@ export async function paginateSearch(
         break;
       }
 
-      const existingNums = new Set([
-        ...allDocs.map((d: any) => d.document_number),
-        ...metadataOnly.map(d => d.document_number),
-      ]);
-      const newDocs = pageDocs.filter((d: any) => d.document_number && !existingNums.has(d.document_number));
+      const newDocs = pageDocs.filter((d: any) => d.document_number && !seen.has(d.document_number));
 
       if (newDocs.length === 0 && startRow === detectedPageSize + 1) {
         console.warn('paginateSearch: start_row pagination unsupported (page 2 all duplicates) — falling back to paginateByStatusSplit');
@@ -836,13 +835,16 @@ export async function paginateSearch(
 
       if (newDocs.length === 0) break;
 
+      // V12.1 — push FULL rows (with titles) so cross-page title/desc filtering can match them.
       for (const doc of newDocs) {
-        metadataOnly.push({
-          document_number: doc.document_number,
-          type_code: doc.type_code || '',
-          status: doc.status || '',
-        });
+        seen.add(doc.document_number);
+        allDocs.push(doc);
       }
+      console.info('paginateSearch: start_row=' + startRow + ' added ' + newDocs.length + ' docs (running total: ' + allDocs.length + ')');
+
+      // Stop if Assai returned a short page (last page) or we've reached parsed total.
+      if (pageDocs.length < detectedPageSize) break;
+      if (ctx.paginationTotalAssaiCount && allDocs.length >= ctx.paginationTotalAssaiCount) break;
 
       startRow += detectedPageSize;
     } catch (pageErr) {
@@ -851,17 +853,7 @@ export async function paginateSearch(
     }
   }
 
-  for (const meta of metadataOnly) {
-    allDocs.push({
-      document_number: meta.document_number,
-      type_code: meta.type_code,
-      status: meta.status,
-      title: '', revision: '',
-      _metadataOnly: true,
-    });
-  }
-
-  console.info('paginateSearch: sequential pagination complete. Full docs: ' + firstDocs.length + ', metadata-only: ' + metadataOnly.length + ', total: ' + allDocs.length + ' of ' + totalFromHtml);
+  console.info('paginateSearch: sequential pagination complete. Collected ' + allDocs.length + ' of ' + (ctx.paginationTotalAssaiCount ?? 'unknown'));
   return allDocs;
 }
 
