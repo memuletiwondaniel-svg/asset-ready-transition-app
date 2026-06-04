@@ -11,14 +11,14 @@ export interface ProjectVCR {
   status: string;
   target_date: string | null;
   created_at: string;
-  updated_at: string | null;
-  submitted_at: string | null;
-  approved_at: string | null;
+  updated_at?: string | null;
+  submitted_at?: string | null;
+  approved_at?: string | null;
   progress: number;
-  closed_items: number;
-  total_items: number;
-  sof_signed: boolean;
-  lifecycle: VCRLifecycle;
+  closed_items?: number;
+  total_items?: number;
+  sof_signed?: boolean;
+  lifecycle?: VCRLifecycle;
   systems_count: number;
   has_hydrocarbon: boolean;
 }
