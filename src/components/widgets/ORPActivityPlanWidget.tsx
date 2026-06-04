@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings2, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, ChevronRight, ChevronDown, Trash2, CalendarRange, Activity, CircleDot, Plus, Pencil } from 'lucide-react';
+import { Settings2, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, AlertCircle, ChevronRight, ChevronDown, Trash2, CalendarRange, Activity, CircleDot, Plus, Pencil } from 'lucide-react';
 
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectORPPlans, ProjectORPActivity } from '@/hooks/useProjectORPPlans';
