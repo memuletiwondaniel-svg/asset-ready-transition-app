@@ -183,7 +183,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
   const [naItem, setNaItem] = useState<MergedVCRItem | null>(null);
 
   // Determine if VCR has hydrocarbon systems
-  const { data: hasHydrocarbon, isLoading: isLoadingHydrocarbon } = useQuery({
+  const { data: hcCheck, isLoading: isLoadingHydrocarbon } = useQuery({
     queryKey: ['vcr-hydrocarbon-check', vcrId],
     queryFn: async () => {
       // Get systems linked to this VCR
@@ -192,7 +192,9 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
         .select('system_id')
         .eq('handover_point_id', vcrId);
       if (lsError) throw lsError;
-      if (!linkedSystems || linkedSystems.length === 0) return false;
+      if (!linkedSystems || linkedSystems.length === 0) {
+        return { hasHydrocarbon: false, systemCount: 0 };
+      }
 
       const systemIds = linkedSystems.map(s => s.system_id);
       const { data: systems, error: sError } = await supabase
@@ -202,9 +204,11 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
         .eq('is_hydrocarbon', true)
         .limit(1);
       if (sError) throw sError;
-      return (systems && systems.length > 0);
+      return { hasHydrocarbon: !!(systems && systems.length > 0), systemCount: linkedSystems.length };
     },
   });
+  const hasHydrocarbon = hcCheck?.hasHydrocarbon;
+  const linkedSystemsCount = hcCheck?.systemCount ?? 0;
 
   // Hydrocarbon template: 363a831c-edb3-4224-a97f-2e8b11fac2dc
   // Non-Hydrocarbon template: 2ebe8392-e404-4655-b9eb-46e4e3cb39e8
