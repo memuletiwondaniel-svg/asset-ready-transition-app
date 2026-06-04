@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Button } from '@/components/ui/button';
-import { Check, AlertCircle, X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { WizardNavigation } from '../p2a-wizard/WizardNavigation';
@@ -150,7 +150,6 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                   {steps.map((step, idx) => {
                     const isActive = idx === currentStep;
                     const isComplete = isStepComplete(idx);
-                    const isWarning = isStepWarning?.(idx) ?? false;
                     return (
                       <button
                         key={step.id}
@@ -158,21 +157,21 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                         className={cn(
                           'relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap shrink-0 transition-all border',
                           isActive
-                            ? 'bg-primary/10 text-primary border-primary/30'
+                            ? 'bg-primary text-primary-foreground border-primary'
                             : isComplete
-                              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
-                              : 'bg-muted text-muted-foreground border-transparent'
+                              ? 'bg-emerald-500 text-white border-emerald-500'
+                              : 'bg-transparent text-muted-foreground border-border'
                         )}
                       >
-                        {isComplete && !isActive ? (
-                          <Check className="w-3 h-3" strokeWidth={3} />
-                        ) : (
-                          <span className="text-[10px]">{idx + 1}</span>
-                        )}
-                        {isActive && step.label}
-                        {isWarning && !isActive && !isComplete && (
-                          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 ring-2 ring-background" />
-                        )}
+                        <span className="relative inline-flex items-center justify-center w-4 h-4">
+                          <span className="text-[10px] font-semibold leading-none">{idx + 1}</span>
+                          {isComplete && !isActive && (
+                            <span className="absolute -top-1 -right-1.5 w-2.5 h-2.5 rounded-full bg-emerald-600 ring-2 ring-background flex items-center justify-center">
+                              <Check className="w-1.5 h-1.5 text-white" strokeWidth={4} />
+                            </span>
+                          )}
+                        </span>
+                        {isActive && <span>{step.label}</span>}
                       </button>
                     );
                   })}
@@ -201,7 +200,6 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                   {steps.map((step, idx) => {
                     const isActive = idx === currentStep;
                     const isComplete = isStepComplete(idx);
-                    const isWarning = isStepWarning?.(idx) ?? false;
                     const isOptional = isStepOptional?.(idx) ?? false;
                     const showOptionalHint = isOptional && !isComplete && !isActive;
 
@@ -225,24 +223,22 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                                 ? 'bg-emerald-500 border border-emerald-500 text-white'
                                 : 'bg-background border border-border text-muted-foreground'
                           )}>
-                            {isComplete && !isActive ? (
-                              <Check className="w-3.5 h-3.5" strokeWidth={3} />
-                            ) : (
-                              idx + 1
-                            )}
+                            {idx + 1}
                           </div>
-                          {isWarning && !isActive && !isComplete && (
+                          {isComplete && !isActive && (
                             <span
-                              className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-background"
-                              aria-label="Incomplete"
-                            />
+                              className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-600 ring-2 ring-background flex items-center justify-center"
+                              aria-label="Complete"
+                            >
+                              <Check className="w-2 h-2 text-white" strokeWidth={4} />
+                            </span>
                           )}
                         </div>
                         <span className={cn(
                           'truncate text-xs flex-1 min-w-0',
                           isActive
                             ? 'font-semibold text-foreground'
-                            : isComplete || isWarning
+                            : isComplete
                               ? 'font-medium text-foreground'
                               : 'font-medium text-muted-foreground'
                         )}>

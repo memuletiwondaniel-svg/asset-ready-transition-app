@@ -653,23 +653,23 @@ export const P2APlanCreationWizard: React.FC<P2APlanCreationWizardProps> = ({
     : '';
 
   const topHeaderContent = (
-    <div className="flex items-center justify-between gap-4 min-w-0">
+    <div className="flex items-start justify-between gap-4 py-3">
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="text-lg sm:text-xl font-semibold leading-none text-foreground tracking-tight">
-            {headerTitle}
-          </h2>
-          {statusChip.label !== 'Draft' && (
-            <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-medium", statusChip.cls)}>
-              {statusChip.label}
-            </Badge>
-          )}
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground truncate">
+            {projectCode}{prettyProjectName ? `: ${prettyProjectName}` : ''}
+          </h1>
         </div>
-        <p className="text-[12px] leading-snug mt-2 truncate flex items-center gap-2">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground font-medium text-[10px] tracking-wide uppercase border border-border/60">{projectCode}</span>
-          {prettyProjectName ? <span className="text-muted-foreground">{prettyProjectName}</span> : null}
+        <p className="text-[11px] text-muted-foreground mt-1">
+          {headerTitle} · Step {currentStep + 1} of {WIZARD_STEPS.length} — {WIZARD_STEPS[currentStep]?.label}
         </p>
-
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0 pt-1">
+        {statusChip.label !== 'Draft' && (
+          <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-medium", statusChip.cls)}>
+            {statusChip.label}
+          </Badge>
+        )}
       </div>
     </div>
   );
