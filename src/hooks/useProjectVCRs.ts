@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export type VCRLifecycle = 'not_started' | 'draft' | 'in_approval' | 'approved';
+export type VCRGate = 'SOF' | 'PAC';
 
 export interface ProjectVCR {
   id: string;
@@ -17,7 +18,14 @@ export interface ProjectVCR {
   progress: number;
   closed_items?: number;
   total_items?: number;
+  /** True when the VCR's HC/non-HC gate has been signed (SoF for HC, PAC for non-HC). */
+  gate_signed?: boolean;
+  /** Which gate model applies — derived from has_hydrocarbon. */
+  gate: VCRGate;
+  /** @deprecated kept for back-compat with existing callers; equals gate_signed when HC. */
   sof_signed?: boolean;
+  /** True when PAC has been signed (non-HC VCRs only). */
+  pac_signed?: boolean;
   lifecycle?: VCRLifecycle;
   systems_count: number;
   has_hydrocarbon: boolean;
