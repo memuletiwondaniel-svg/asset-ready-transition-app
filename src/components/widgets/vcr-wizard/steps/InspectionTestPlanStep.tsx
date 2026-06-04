@@ -280,7 +280,7 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
         />
 
         <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
-          <AlertDialogContent>
+          <AlertDialogContent className="z-[210]" overlayClassName="z-[209] bg-black/80 backdrop-blur-sm">
             <AlertDialogHeader>
               <AlertDialogTitle>Remove this point?</AlertDialogTitle>
               <AlertDialogDescription>
