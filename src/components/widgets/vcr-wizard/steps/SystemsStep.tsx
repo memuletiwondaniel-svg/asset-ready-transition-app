@@ -57,6 +57,10 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerSelection, setPickerSelection] = useState<Record<string, true>>({});
   const [syncing, setSyncing] = useState(false);
+  const [showCMSModal, setShowCMSModal] = useState(false);
+  const [showExcelModal, setShowExcelModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   // Resolve handover_plan_id + finalize state from VCR
   const { data: vcrMeta } = useQuery({
