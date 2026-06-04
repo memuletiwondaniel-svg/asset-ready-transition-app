@@ -201,38 +201,30 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                     const isActive = idx === currentStep;
                     const isComplete = isStepComplete(idx);
                     const isOptional = isStepOptional?.(idx) ?? false;
-                    const showOptionalHint = isOptional && !isComplete && !isActive;
+                    const isSkippedMandatory =
+                      !isActive && !isComplete && !isOptional && (isStepWarning?.(idx) ?? false);
 
                     return (
                       <button
                         key={step.id}
                         onClick={() => onStepChange(idx)}
                         className={cn(
-                          'group relative w-full flex items-center gap-2.5 pl-3 pr-3 py-2.5 rounded-md text-left transition-all text-sm border-l-[3px]',
-                          isActive
-                            ? 'bg-primary/[0.06] border-l-primary'
-                            : 'border-l-transparent hover:bg-muted/40'
+                          'group relative w-full flex items-center gap-2.5 pl-3 pr-3 py-2.5 rounded-md text-left transition-colors text-sm hover:bg-muted/40'
                         )}
                       >
                         <div className="relative shrink-0">
                           <div className={cn(
-                            'w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold transition-colors',
+                            'w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold transition-colors border',
                             isActive
-                              ? 'bg-primary text-primary-foreground border border-primary'
+                              ? 'bg-primary text-primary-foreground border-primary'
                               : isComplete
-                                ? 'bg-emerald-500 border border-emerald-500 text-white'
-                                : 'bg-background border border-border text-muted-foreground'
+                                ? 'bg-transparent border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                                : isSkippedMandatory
+                                  ? 'bg-transparent border-2 border-amber-500 text-amber-600 dark:text-amber-400'
+                                  : 'bg-background border-border text-muted-foreground'
                           )}>
                             {idx + 1}
                           </div>
-                          {isComplete && !isActive && (
-                            <span
-                              className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-600 ring-2 ring-background flex items-center justify-center"
-                              aria-label="Complete"
-                            >
-                              <Check className="w-2 h-2 text-white" strokeWidth={4} />
-                            </span>
-                          )}
                         </div>
                         <span className={cn(
                           'truncate text-xs flex-1 min-w-0',
@@ -240,15 +232,12 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                             ? 'font-semibold text-foreground'
                             : isComplete
                               ? 'font-medium text-foreground'
-                              : 'font-medium text-muted-foreground'
+                              : isSkippedMandatory
+                                ? 'font-medium text-amber-700 dark:text-amber-300'
+                                : 'font-normal text-muted-foreground'
                         )}>
                           {step.label}
                         </span>
-                        {showOptionalHint && (
-                          <span className="text-[9px] uppercase tracking-wide text-muted-foreground/70 shrink-0">
-                            Optional
-                          </span>
-                        )}
                       </button>
                     );
                   })}
