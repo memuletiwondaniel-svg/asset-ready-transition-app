@@ -17,11 +17,12 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Search, X, Cloud, Loader2, ChevronDown,
+  Search, X, Loader2, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CheckAssaiModal } from './critical-docs/CheckAssaiModal';
+import assaiIcon from '@/assets/assai-icon.png';
 
 interface CriticalDocumentsStepProps {
   vcrId: string;
@@ -291,7 +292,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
 
   return (
     <TooltipProvider>
-      <div className="space-y-3">
+      <div className="flex flex-col h-full min-h-0 space-y-3">
         {/* Header row */}
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="space-y-0.5">
@@ -314,7 +315,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
               </Tooltip>
             )}
             <Button variant="outline" size="sm" onClick={() => setAssaiOpen(true)} className="gap-1.5">
-              <Cloud className="w-4 h-4" /> Check Assai
+              <img src={assaiIcon} alt="" className="w-4 h-4 object-contain" /> Check Assai
             </Button>
           </div>
         </div>
@@ -340,7 +341,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
                 <ChevronDown className="w-3 h-3" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-72 p-2 max-h-80 overflow-auto" align="start">
+            <PopoverContent className="w-72 p-2 max-h-80 overflow-auto z-[200]" align="start">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-medium">Discipline</span>
                 {disciplines.length > 0 && (
@@ -377,8 +378,8 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
           </div>
         </div>
 
-        {/* List body */}
-        <div className="border border-border/60 rounded-md max-h-[480px] overflow-auto">
+        {/* List body — the only scroll surface */}
+        <div className="border border-border/60 rounded-md flex-1 min-h-0 overflow-y-auto">
           {typesLoading ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
               <Loader2 className="w-4 h-4 animate-spin" /> <span className="text-sm">Loading catalog…</span>
@@ -446,6 +447,9 @@ const DocTypeList: React.FC<{
   onToggle: (id: string) => void;
   savedTypeIds: Map<string, RequirementRow>;
 }> = ({ items, isSelected, onToggle, savedTypeIds }) => {
+  // Grid: checkbox | code | name | tier | discipline | bound
+  const gridCols =
+    'grid grid-cols-[28px_76px_minmax(0,1fr)_56px_140px_72px] gap-x-3 items-center';
   return (
     <ul className="divide-y divide-border/40">
       {items.map((d) => {
@@ -457,27 +461,31 @@ const DocTypeList: React.FC<{
             key={d.id}
             onClick={() => onToggle(d.id)}
             className={cn(
-              'flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors text-sm',
+              gridCols,
+              'px-3 py-2 cursor-pointer hover:bg-muted/40 transition-colors text-sm',
               sel && 'bg-primary/5',
             )}
           >
             <Checkbox checked={sel} onCheckedChange={() => onToggle(d.id)} onClick={(e) => e.stopPropagation()} />
-            <span className="font-mono text-[11px] text-muted-foreground w-24 shrink-0 truncate">{d.code}</span>
-            <span className="flex-1 truncate">{d.document_name}</span>
-            {d.tier && (
-              <Badge variant="outline" className="text-[10px] shrink-0">
-                {d.tier === 'Tier 1' ? 'T1' : d.tier === 'Tier 2' ? 'T2' : d.tier}
-              </Badge>
-            )}
-            {d.rlmu === 'RLMU' && (
-              <Badge variant="outline" className="text-[10px] shrink-0">RLMU</Badge>
-            )}
-            {d.discipline_name && (
-              <Badge variant="secondary" className="text-[10px] shrink-0 max-w-[140px] truncate">{d.discipline_name}</Badge>
-            )}
-            {bound && (
-              <Badge className="text-[10px] shrink-0 bg-emerald-500/20 text-emerald-700 hover:bg-emerald-500/30 border-transparent">Bound</Badge>
-            )}
+            <span className="font-mono text-[11px] text-muted-foreground truncate">{d.code}</span>
+            <span className="truncate">{d.document_name}</span>
+            <div className="flex justify-center">
+              {d.tier ? (
+                <Badge variant="outline" className="text-[10px]">
+                  {d.tier === 'Tier 1' ? 'T1' : d.tier === 'Tier 2' ? 'T2' : d.tier}
+                </Badge>
+              ) : null}
+            </div>
+            <div className="min-w-0">
+              {d.discipline_name && (
+                <Badge variant="secondary" className="text-[10px] max-w-full truncate">{d.discipline_name}</Badge>
+              )}
+            </div>
+            <div className="flex justify-end">
+              {bound && (
+                <Badge className="text-[10px] bg-emerald-500/20 text-emerald-700 hover:bg-emerald-500/30 border-transparent">Bound</Badge>
+              )}
+            </div>
           </li>
         );
       })}
