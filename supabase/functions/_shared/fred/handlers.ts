@@ -435,17 +435,20 @@ export async function handleGetHandoverCertificateStatus(
         (args as any).__diag = {
           target,
           sub_field: subField.field,
-          raw_delta_len: rawDelta.length,
           panel_html_len: resultHtml.length,
-          has_master_table: /rgMasterTable/i.test(resultHtml),
-          has_no_records: /rgNoRecords/i.test(resultHtml),
-          row_class_counts: {
-            rgRow: (resultHtml.match(/class="[^"]*\brgRow\b/gi) || []).length,
-            rgAltRow: (resultHtml.match(/class="[^"]*\brgAltRow\b/gi) || []).length,
-            rgGroupHeader: (resultHtml.match(/class="[^"]*\brgGroupHeader\b/gi) || []).length,
-            tr_total: (resultHtml.match(/<tr\b/gi) || []).length,
-          },
-          panel_mid: resultHtml.slice(8000, 12000),
+          has_rg_header: /rgHeader/i.test(resultHtml),
+          has_thead: /<thead\b/i.test(resultHtml),
+          rg_row_count: (resultHtml.match(/class="[^"]*\brgRow\b/gi) || []).length,
+          rg_alt_count: (resultHtml.match(/class="[^"]*\brgAltRow\b/gi) || []).length,
+          rg_master_open_count: (resultHtml.match(/class="[^"]*rgMasterTable/gi) || []).length,
+          parsed_rows: rows.length,
+          first_row_keys: rows[0] ? Object.keys(rows[0]) : null,
+          first_row: rows[0] || null,
+          // raw HTML around the first rgRow occurrence to inspect cells
+          row_html_snip: (() => {
+            const m = resultHtml.match(/<tr[^>]*class="[^"]*\brgRow\b[^"]*"[^>]*>[\s\S]{0,1200}/);
+            return m ? m[0] : null;
+          })(),
         };
       } else {
         (args as any).__diag = { target: null, reason: "no_search_button" };
