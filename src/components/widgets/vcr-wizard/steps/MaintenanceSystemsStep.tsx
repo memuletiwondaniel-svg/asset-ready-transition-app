@@ -108,16 +108,15 @@ export const MaintenanceSystemsStep: React.FC<MaintenanceSystemsStepProps> = ({ 
     upsert.mutate({ deliverable_type: type, comments: draft || null });
   };
 
+  const [notesOpen, setNotesOpen] = useState<Record<string, boolean>>({});
+
   return (
     <div className="space-y-4 p-2">
-      <div className="flex items-start gap-2">
-        <Wrench className="w-4 h-4 text-amber-500 mt-0.5" />
-        <div>
-          <h2 className="text-base font-semibold">Maintenance Systems</h2>
-          <p className="text-xs text-muted-foreground">
-            Mark which maintenance deliverables apply to this VCR. Add comments where useful.
-          </p>
-        </div>
+      <div>
+        <h2 className="text-base font-semibold">Maintenance Systems</h2>
+        <p className="text-xs text-muted-foreground">
+          Mark which maintenance deliverables apply to this VCR. Add comments where useful.
+        </p>
       </div>
 
       {isLoading ? (
@@ -131,11 +130,14 @@ export const MaintenanceSystemsStep: React.FC<MaintenanceSystemsStepProps> = ({ 
           {MAINTENANCE_DELIVERABLES.map((def, idx) => {
             const row = byType.get(def.type);
             const applicable = !!row?.is_applicable;
+            const draft = commentDrafts[def.type] ?? row?.comments ?? '';
+            const hasNote = !!draft.trim();
+            const showTextarea = applicable && (hasNote || notesOpen[def.type]);
             return (
               <div
                 key={def.type}
                 className={cn(
-                  'px-4 py-3 transition-colors',
+                  'px-4 py-2.5 transition-colors',
                   idx > 0 && 'border-t border-border/40',
                   applicable && 'bg-muted/20'
                 )}
@@ -150,17 +152,33 @@ export const MaintenanceSystemsStep: React.FC<MaintenanceSystemsStepProps> = ({ 
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-foreground">{def.name}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{def.guidance}</div>
-                    {applicable && (
+                    <div className="text-sm font-medium text-foreground">{def.name}</div>
+                    <div className="text-xs text-muted-foreground/70 mt-0.5 leading-snug">{def.guidance}</div>
+                    {applicable && !showTextarea && (
+                      <button
+                        type="button"
+                        onClick={() => setNotesOpen((p) => ({ ...p, [def.type]: true }))}
+                        className="mt-1.5 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Add note
+                      </button>
+                    )}
+                    {showTextarea && (
                       <Textarea
+                        autoFocus={!hasNote}
                         placeholder="Optional notes — scope, timing, responsibility…"
-                        className="mt-2 min-h-[60px] text-xs"
-                        value={commentDrafts[def.type] ?? row?.comments ?? ''}
+                        className="mt-2 min-h-[60px] text-xs animate-in fade-in slide-in-from-top-1 duration-150"
+                        value={draft}
                         onChange={(e) =>
                           setCommentDrafts((p) => ({ ...p, [def.type]: e.target.value }))
                         }
-                        onBlur={() => handleCommentBlur(def.type)}
+                        onBlur={() => {
+                          handleCommentBlur(def.type);
+                          if (!draft.trim()) {
+                            setNotesOpen((p) => ({ ...p, [def.type]: false }));
+                          }
+                        }}
                       />
                     )}
                   </div>
