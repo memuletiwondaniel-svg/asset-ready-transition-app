@@ -1,223 +1,215 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, X, Plus, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, Trash2, Plus } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useProfileUsers } from '@/hooks/useProfileUsers';
+import { useProjectRoleUsers } from '@/hooks/useProjectRoleUsers';
+import {
+  P2A_AND_VCR_APPROVER_ROLES,
+  DEPUTY_DIRECTOR_KEY,
+  rpcResolvedLabels,
+} from '@/components/widgets/shared/wizardApproverRoles';
 
 interface ApproversStepProps {
   vcrId: string;
 }
 
-interface ResolvedApprover {
-  role: string;
-  name: string;
-  position: string;
-  avatarUrl: string;
+interface VCRApprover {
+  id: string;
+  role_name: string;
+  display_order: number;
+  user_id?: string;
+  user_name?: string;
+  user_avatar?: string;
 }
 
-const getFullAvatarUrl = (avatarUrl: string | null) => {
-  if (!avatarUrl) return '';
-  if (avatarUrl.startsWith('http')) return avatarUrl;
-  const { data } = supabase.storage.from('user-avatars').getPublicUrl(avatarUrl);
-  return data.publicUrl;
-};
-
-const getInitials = (name: string) => {
-  if (!name) return '??';
+const getInitials = (name?: string) => {
+  if (!name) return '?';
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 };
 
-const DEFAULT_APPROVER_ROLES = [
-  'Snr. ORA Engr.',
-  'Commissioning Lead',
-  'Construction Lead',
-  'Project Hub Lead',
-  'Deputy Plant Director',
-];
+const resolveAvatarUrl = (avatarUrl?: string): string | undefined => {
+  if (!avatarUrl) return undefined;
+  if (avatarUrl.startsWith('http')) return avatarUrl;
+  return supabase.storage.from('user-avatars').getPublicUrl(avatarUrl).data.publicUrl;
+};
 
-import { getRegionKeywords, posMatchesRegion } from '@/utils/hubRegionMapping';
+const FIXED_ROLES = P2A_AND_VCR_APPROVER_ROLES;
+const RPC_LABELS = rpcResolvedLabels(FIXED_ROLES);
 
 export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
-  const [removedIndices, setRemovedIndices] = useState<Set<number>>(new Set());
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [approvers, setApprovers] = useState<VCRApprover[]>([]);
+  const [showAddRow, setShowAddRow] = useState(false);
+  const [newRoleName, setNewRoleName] = useState('');
 
-  const { data: approvers, isLoading, refetch, isFetching } = useQuery<ResolvedApprover[]>({
-    queryKey: ['vcr-exec-plan-approvers', vcrId],
+  const { data: allProfileUsers } = useProfileUsers();
+
+  // Resolve VCR → project + plant
+  const { data: ctx } = useQuery({
+    queryKey: ['vcr-approvers-ctx', vcrId],
     queryFn: async () => {
       const client = supabase as any;
-
       const { data: hp } = await client
         .from('p2a_handover_points')
         .select('handover_plan_id')
         .eq('id', vcrId)
         .maybeSingle();
-
-      let projectId = '';
+      if (!hp?.handover_plan_id) return { projectId: '', plantName: '' };
+      const { data: plan } = await client
+        .from('p2a_handover_plans')
+        .select('project_id')
+        .eq('id', hp.handover_plan_id)
+        .maybeSingle();
+      const projectId: string = plan?.project_id ?? '';
       let plantName = '';
-      let hubName = '';
-
-      if (hp?.handover_plan_id) {
-        const { data: plan } = await client
-          .from('p2a_handover_plans')
-          .select('project_id')
-          .eq('id', hp.handover_plan_id)
-          .maybeSingle();
-
-        if (plan?.project_id) {
-          projectId = plan.project_id;
-          const { data: project } = await client
-            .from('projects')
-            .select('plant_id, hub_id')
-            .eq('id', plan.project_id)
-            .maybeSingle();
-
-          if (project?.plant_id) {
-            const { data: plant } = await client
-              .from('plant')
-              .select('name')
-              .eq('id', project.plant_id)
-              .maybeSingle();
-            plantName = plant?.name || '';
-          }
-
-          if (project?.hub_id) {
-            const { data: hub } = await client
-              .from('hubs')
-              .select('name')
-              .eq('id', project.hub_id)
-              .maybeSingle();
-            hubName = hub?.name || '';
-          }
-        }
-      }
-
-      const { data: allProfiles } = await client
-        .from('profiles')
-        .select('user_id, full_name, avatar_url, position')
-        .eq('is_active', true);
-      if (!allProfiles) return [];
-
-      const explicitRoleMatches: Record<string, { full_name?: string; avatar_url?: string; position?: string }> = {};
-
       if (projectId) {
-        const { data: teamMembers } = await client
-          .from('project_team_members')
-          .select('user_id, role')
-          .eq('project_id', projectId);
-
-        const roleMatchers: Record<string, (role: string) => boolean> = {
-          'Project Hub Lead': (role) => role.includes('project hub lead') || role === 'hub lead' || role.includes('hub lead'),
-          'Construction Lead': (role) => role.includes('construction lead'),
-        };
-
-        await Promise.all(
-          Object.entries(roleMatchers).map(async ([roleLabel, matcher]) => {
-            const teamMember = teamMembers?.find((m: any) => matcher((m.role || '').toLowerCase().trim()));
-            if (!teamMember?.user_id) return;
-
-            const fromProfiles = allProfiles.find((p: any) => p.user_id === teamMember.user_id);
-            if (fromProfiles) {
-              explicitRoleMatches[roleLabel] = {
-                full_name: fromProfiles.full_name,
-                avatar_url: fromProfiles.avatar_url,
-                position: fromProfiles.position,
-              };
-              return;
-            }
-
-            const { data: safeProfileData } = await client.rpc('get_safe_profile_data', {
-              target_user_id: teamMember.user_id,
-            });
-            const safeProfile = Array.isArray(safeProfileData) ? safeProfileData[0] : safeProfileData;
-            if (!safeProfile) return;
-
-            explicitRoleMatches[roleLabel] = {
-              full_name: safeProfile.full_name,
-              avatar_url: safeProfile.avatar_url,
-              position: safeProfile.position,
-            };
-          })
-        );
+        const { data: project } = await client
+          .from('projects')
+          .select('plant_id')
+          .eq('id', projectId)
+          .maybeSingle();
+        if (project?.plant_id) {
+          const { data: plant } = await client
+            .from('plant')
+            .select('name')
+            .eq('id', project.plant_id)
+            .maybeSingle();
+          plantName = plant?.name || '';
+        }
       }
-
-      const plantLower = plantName.toLowerCase();
-      const regionKeywords = hubName ? getRegionKeywords(hubName) : [];
-
-      return DEFAULT_APPROVER_ROLES.map((role) => {
-        const explicitMatch = explicitRoleMatches[role];
-        if (explicitMatch?.full_name) {
-          return {
-            role,
-            name: explicitMatch.full_name || '',
-            position: explicitMatch.position || role,
-            avatarUrl: getFullAvatarUrl(explicitMatch.avatar_url || null),
-          };
-        }
-
-        const candidates = allProfiles.filter((p: any) => {
-          const pos = (p.position || '').toLowerCase().replace(/–/g, '-').replace(/—/g, '-');
-
-          if (role === 'Snr. ORA Engr.') {
-            return pos.includes('ora') && (pos.includes('snr') || pos.includes('senior')) && pos.includes('engr');
-          }
-          if (role === 'Commissioning Lead') {
-            return (pos.includes('commissioning') || pos.includes('csu')) && pos.includes('lead');
-          }
-          if (role === 'Construction Lead') {
-            return pos.includes('construction') && pos.includes('lead');
-          }
-          if (role === 'Project Hub Lead') {
-            return pos.includes('project hub lead');
-          }
-          if (role === 'Deputy Plant Director') {
-            return (pos.includes('deputy') || pos.includes('dep.')) && pos.includes('plant') && pos.includes('director') && (plantLower ? pos.includes(plantLower) : true);
-          }
-          return false;
-        });
-
-        let match: any = null;
-        if (candidates.length === 1) {
-          match = candidates[0];
-        } else if (candidates.length > 1 && regionKeywords.length > 0) {
-          const regionMatches = candidates.filter((p: any) => {
-            const pos = (p.position || '').toLowerCase().replace(/–/g, '-').replace(/—/g, '-');
-            return posMatchesRegion(pos, regionKeywords);
-          });
-          const pool = regionMatches.length > 0 ? regionMatches : candidates;
-          match = pool.find((p: any) => p.avatar_url) || pool[0];
-        } else if (candidates.length > 1) {
-          match = candidates.find((p: any) => p.avatar_url) || candidates[0];
-        }
-
-        return {
-          role,
-          name: match?.full_name || '',
-          position: match?.position || role,
-          avatarUrl: getFullAvatarUrl(match?.avatar_url || null),
-        };
-      });
+      return { projectId, plantName };
     },
   });
 
-  const visibleApprovers = approvers?.filter((_, idx) => !removedIndices.has(idx)) || [];
-  const totalResolved = visibleApprovers.filter(a => a.name).length;
+  const projectId = ctx?.projectId;
+  const plantName = ctx?.plantName;
 
-  const handleRemove = (originalIdx: number) => {
-    setRemovedIndices(prev => new Set(prev).add(originalIdx));
+  const {
+    data: resolvedByLabel,
+    isLoading: rolesLoading,
+    isFetching: rolesFetching,
+    refetch: refetchRoles,
+  } = useProjectRoleUsers(projectId, RPC_LABELS);
+
+  // Deputy Plant Director via canonical RPC (plant-scoped)
+  const [deputyDirector, setDeputyDirector] = useState<
+    { user_id: string; full_name: string; avatar_url?: string | null } | null
+  >(null);
+  const [deputyLoading, setDeputyLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!plantName) {
+        setDeputyDirector(null);
+        return;
+      }
+      setDeputyLoading(true);
+      try {
+        const { data: deputies } = await (supabase as any).rpc(
+          'find_deputy_plant_director',
+          { plant_name_param: plantName },
+        );
+        if (!cancelled) setDeputyDirector(deputies?.[0] ?? null);
+      } catch (err) {
+        console.error('[VCR Approvers] Deputy lookup failed:', err);
+        if (!cancelled) setDeputyDirector(null);
+      } finally {
+        if (!cancelled) setDeputyLoading(false);
+      }
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [plantName]);
+
+  const isLoading = rolesLoading || deputyLoading || !ctx;
+
+  // Build canonical default approver list
+  const canonicalApprovers = useMemo<VCRApprover[]>(() => {
+    if (!resolvedByLabel) return [];
+    return FIXED_ROLES.map((role) => {
+      if (role.key === DEPUTY_DIRECTOR_KEY) {
+        return {
+          id: `vcr-approver-${role.key}`,
+          role_name: role.label,
+          display_order: role.order,
+          user_id: deputyDirector?.user_id,
+          user_name: deputyDirector?.full_name,
+          user_avatar: deputyDirector?.avatar_url ?? undefined,
+        };
+      }
+      const resolved = resolvedByLabel[role.label] ?? null;
+      return {
+        id: `vcr-approver-${role.key}`,
+        role_name: role.label,
+        display_order: role.order,
+        user_id: resolved?.user_id,
+        user_name: resolved?.full_name,
+        user_avatar: resolved?.avatar_url ?? undefined,
+      };
+    });
+  }, [resolvedByLabel, deputyDirector]);
+
+  // Seed local state once canonical list is ready (no persistence yet —
+  // Phase C will add the vcr_plan_approvers table and replace this with
+  // a saved-list reconciliation pattern, mirroring P2A's enrich-in-place).
+  useEffect(() => {
+    if (isLoading || canonicalApprovers.length === 0) return;
+    setApprovers(prev => {
+      if (prev.length === 0) return canonicalApprovers;
+      // Enrich-in-place
+      const fixedLabels = new Set(FIXED_ROLES.map(r => r.label));
+      return prev.map(a => {
+        if (!fixedLabels.has(a.role_name)) return a;
+        const canon = canonicalApprovers.find(c => c.role_name === a.role_name);
+        if (!canon) return a;
+        if (!a.user_id && canon.user_id) {
+          return { ...a, user_id: canon.user_id, user_name: canon.user_name, user_avatar: canon.user_avatar };
+        }
+        return a;
+      });
+    });
+  }, [isLoading, canonicalApprovers]);
+
+  const handleRefresh = () => {
+    refetchRoles();
+    setApprovers(canonicalApprovers);
+  };
+
+  const handleDelete = (id: string) => {
+    setApprovers(prev => prev.filter(a => a.id !== id));
   };
 
   const handleAdd = () => {
-    // TODO: open a picker to add a new approver
+    const maxOrder = approvers.reduce((m, a) => Math.max(m, a.display_order), 0);
+    setApprovers(prev => [
+      ...prev,
+      {
+        id: `vcr-approver-custom-${Date.now()}`,
+        role_name: newRoleName.trim() || 'New Approver',
+        display_order: maxOrder + 1,
+      },
+    ]);
+    setNewRoleName('');
+    setShowAddRow(false);
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 p-4">
         {[...Array(5)].map((_, i) => (
           <div key={i} className="flex items-center gap-3 p-3">
-            <Skeleton className="w-10 h-10 rounded-full" />
+            <Skeleton className="w-9 h-9 rounded-full" />
             <div className="flex-1 space-y-1.5">
               <Skeleton className="h-3.5 w-32" />
               <Skeleton className="h-3 w-48" />
@@ -229,87 +221,144 @@ export const ApproversStep: React.FC<ApproversStepProps> = ({ vcrId }) => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Users className="w-3.5 h-3.5" />
-          <span>{totalResolved} of {visibleApprovers.length} approvers resolved</span>
+        <div>
+          <h3 className="text-sm font-medium">Approvers</h3>
+          <p className="text-xs text-muted-foreground">
+            Auto-populated from project team
+          </p>
         </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-            onClick={() => refetch()}
-            disabled={isFetching}
-            title="Resync approvers"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-            onClick={handleAdd}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleRefresh}
+          className="text-xs gap-1"
+          disabled={rolesFetching}
+        >
+          {rolesFetching ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+          Refresh
+        </Button>
       </div>
 
-      <div className="space-y-1">
-        {approvers?.map((approver, idx) => {
-          if (removedIndices.has(idx)) return null;
-          const seqNum = approvers.slice(0, idx + 1).filter((_, i) => !removedIndices.has(i)).length;
-          const isHovered = hoveredIdx === idx;
+      <div className="space-y-2 ml-4">
+        {approvers.map((approver) => {
+          const hasUser = !!approver.user_id;
+
+          // B2B partner detection (mirrors P2A)
+          let partner: { user_id: string; full_name: string; avatar_url?: string; position?: string } | null = null;
+          if (hasUser && allProfileUsers) {
+            const normalize = (p?: string | null) => (p || '').toLowerCase().replace(/\s+/g, ' ').trim();
+            const me = allProfileUsers.find((u: any) => u.user_id === approver.user_id);
+            const myPos = normalize(me?.position);
+            if (myPos) {
+              const sharing = allProfileUsers.filter((u: any) => normalize(u.position) === myPos);
+              const others = sharing.filter((u: any) => u.user_id !== approver.user_id);
+              if (sharing.length === 2 && others.length === 1) {
+                partner = others[0];
+              }
+            }
+          }
 
           return (
             <div
-              key={`${approver.role}-${idx}`}
-              className="group flex items-center gap-3 p-3 rounded-lg border border-border/60 bg-card hover:bg-muted/30 transition-colors"
-              onMouseEnter={() => setHoveredIdx(idx)}
-              onMouseLeave={() => setHoveredIdx(null)}
+              key={approver.id}
+              className="group flex items-center gap-3 p-3.5 rounded-lg border border-border bg-card hover:bg-accent/40 hover:border-primary/40 hover:shadow-md hover:-translate-y-px transition-all duration-200 max-w-md cursor-default"
             >
-              {/* Sequence number */}
-              <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center shrink-0">
-                <span className="text-[10px] font-semibold text-muted-foreground">{seqNum}</span>
-              </div>
-
-              {/* Avatar */}
-              <Avatar className="w-9 h-9 shrink-0">
-                {approver.avatarUrl && <AvatarImage src={approver.avatarUrl} alt={approver.name} />}
-                <AvatarFallback className="text-[10px] font-semibold bg-muted text-muted-foreground">
-                  {getInitials(approver.name)}
+              <Avatar className="h-9 w-9 shrink-0">
+                <AvatarImage src={resolveAvatarUrl(approver.user_avatar)} />
+                <AvatarFallback className="text-xs bg-muted">
+                  {getInitials(approver.user_name)}
                 </AvatarFallback>
               </Avatar>
-
-              {/* Info */}
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-foreground truncate">
-                  {approver.name || <span className="italic text-muted-foreground">Unassigned</span>}
-                </div>
-                <div className="text-[11px] text-muted-foreground truncate">{approver.position}</div>
+                {hasUser ? (
+                  <>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium truncate">{approver.user_name}</span>
+                      {partner && (
+                        <TooltipProvider delayDuration={150}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setApprovers(prev => prev.map(a =>
+                                    a.id === approver.id
+                                      ? {
+                                          ...a,
+                                          user_id: partner!.user_id,
+                                          user_name: partner!.full_name,
+                                          user_avatar: partner!.avatar_url,
+                                        }
+                                      : a
+                                  ));
+                                }}
+                                className="text-[9px] font-semibold tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0 hover:bg-amber-200 dark:hover:bg-amber-900/60 cursor-pointer transition-colors"
+                                title={`Switch to B2B: ${partner.full_name}`}
+                              >
+                                B2B
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" align="start" sideOffset={4} className="text-xs">
+                              Click to switch to B2B: {partner.full_name}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{approver.role_name}</p>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm font-medium text-muted-foreground">{approver.role_name}</span>
+                    <p className="text-[10px] text-amber-600">Not assigned</p>
+                  </>
+                )}
               </div>
-
-              {/* Delete button on hover */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemove(idx);
-                }}
-                className={`shrink-0 w-7 h-7 rounded-md flex items-center justify-center transition-all ${
-                  isHovered
-                    ? 'opacity-100 bg-destructive/10 text-destructive hover:bg-destructive/20'
-                    : 'opacity-0 pointer-events-none'
-                }`}
-                title="Remove approver"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+              <div className="flex items-center shrink-0">
+                <button
+                  onClick={() => handleDelete(approver.id)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-destructive/10 text-destructive"
+                  title="Remove approver"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
           );
         })}
+
+        {showAddRow ? (
+          <div className="flex items-center gap-2 max-w-md">
+            <Input
+              value={newRoleName}
+              onChange={(e) => setNewRoleName(e.target.value)}
+              placeholder="Role name, e.g. Safety Lead"
+              className="h-9 text-sm"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newRoleName.trim()) handleAdd();
+                if (e.key === 'Escape') { setShowAddRow(false); setNewRoleName(''); }
+              }}
+            />
+            <Button size="sm" onClick={handleAdd} disabled={!newRoleName.trim()}>Add</Button>
+            <Button size="sm" variant="ghost" onClick={() => { setShowAddRow(false); setNewRoleName(''); }}>
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-xs mt-1 text-muted-foreground border border-dashed border-border/70 hover:text-primary-foreground hover:bg-primary hover:border-primary hover:shadow-sm transition-all"
+            onClick={() => setShowAddRow(true)}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Approver
+          </Button>
+        )}
       </div>
     </div>
   );
