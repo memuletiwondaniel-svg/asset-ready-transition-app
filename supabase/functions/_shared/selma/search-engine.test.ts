@@ -59,6 +59,17 @@ Deno.test("classifyResponse: login — real login_page fixture", () => {
   const cls = classifyResponse(html, 200);
   assert(cls === "login" || cls === "error", `login fixture classified as ${cls}`);
 });
+Deno.test("classifyResponse: no_session is CONTENT-based, not byte-size (variant w/ different length still classifies)", () => {
+  // Synthesise a 3000-byte-ish session-timeout page that carries the same content
+  // markers but a different byte count — locks the contract that classification
+  // keys on content signatures, not the literal 2368 byte size.
+  const variant = `<!DOCTYPE html><html><head><script>document.location="index.aweb";</script></head><body>${"x".repeat(2500)}</body></html>`;
+  assertNotEquals(variant.length, 2368);
+  assertEquals(classifyResponse(variant, 200), "no_session");
+  // And a page with the literal sessionTimeout marker at any size:
+  const timeoutMarker = `<html><body>showSessionTimeoutErrorMessage</body></html>`;
+  assertEquals(classifyResponse(timeoutMarker, 200), "no_session");
+});
 Deno.test("classifyResponse: empty_grid — real Assai empty result page", () => {
   const html = read("result_empty_grid.html");
   assertEquals(classifyResponse(html, 200), "empty_grid");
