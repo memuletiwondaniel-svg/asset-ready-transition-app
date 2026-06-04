@@ -610,9 +610,9 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
             );
           })}
 
-          {/* N/A Items Section */}
+          {/* N/A Items Section — muted secondary accordion */}
           {naItems.length > 0 && (
-            <div className="border-t border-border pt-3 mt-3">
+            <div>
               <button
                 onClick={() => setCollapsedCategories(prev => {
                   const next = new Set(prev ?? []);
@@ -622,11 +622,9 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                 className="flex items-center gap-2 w-full text-left py-2 px-1 hover:bg-muted/40 rounded transition-colors"
               >
                 {effectiveCollapsed.has('__NA__') ? <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/50" />}
-                <Ban className="w-3.5 h-3.5 text-orange-500" />
-                <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">Not Applicable Items</span>
-                <Badge variant="outline" className="text-[10px] ml-auto border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30">
-                  {filteredNaItems.length}
-                </Badge>
+                <Ban className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-semibold text-muted-foreground">Not Applicable Items</span>
+                <Badge variant="secondary" className="text-[10px] ml-auto">{filteredNaItems.length}</Badge>
               </button>
 
               {!effectiveCollapsed.has('__NA__') && (
@@ -643,10 +641,10 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                     const catColor = getVCRCategoryConfig(catName);
 
                     return (
-                      <Card key={item.id} className="group border-dashed border-orange-200 dark:border-orange-900/50 bg-orange-50/30 dark:bg-orange-950/10">
+                      <Card key={item.id} className="group bg-muted/30">
                         <CardContent className="p-3">
                           <div className="flex items-start gap-3">
-                            <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border line-through", catColor.badgeBg, catColor.badgeText, catColor.badgeBorder)}>
+                            <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold shrink-0 mt-0.5 border line-through opacity-70", catColor.badgeBg, catColor.badgeText, catColor.badgeBorder)}>
                               {itemId}
                             </Badge>
                             <div className="flex-1 min-w-0">
@@ -655,7 +653,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                                 <p className="text-[10px] text-muted-foreground/70 mt-1">Topic: {item.effective_topic}</p>
                               )}
                               <div className="flex items-center gap-2 mt-1.5">
-                                <Badge variant="outline" className="text-[9px] h-4 border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30">N/A</Badge>
+                                <Badge variant="secondary" className="text-[9px] h-4">N/A</Badge>
                                 <span className="text-[10px] text-muted-foreground">{catName}</span>
                               </div>
                             </div>
