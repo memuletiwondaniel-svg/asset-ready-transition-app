@@ -44,7 +44,7 @@ export const MAINTENANCE_DELIVERABLES: MaintenanceDeliverableDef[] = [
     type: 'RISKPOYNT',
     name: 'RiskPoynt Update',
     guidance:
-      'Update the RiskPoynt risk-based inspection register with the new assets and their inspection intervals.',
+      'Update the facility status reporting and deviation management system.',
   },
   {
     type: 'IMS',
