@@ -26,9 +26,6 @@ import {
   getGoCompletionsCredentials,
   postWithViewState,
   parseRadGridTable,
-  resolveAsmxServiceUrl,
-  formatCookies,
-  BROWSER_UA,
 } from "../_shared/gocompletions-auth.ts";
 import { handleGetHandoverCertificateStatus } from "../_shared/fred/handlers.ts";
 
