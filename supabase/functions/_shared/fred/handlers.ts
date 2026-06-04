@@ -436,11 +436,16 @@ export async function handleGetHandoverCertificateStatus(
           target,
           sub_field: subField.field,
           raw_delta_len: rawDelta.length,
-          raw_delta_head: rawDelta.slice(0, 400),
           panel_html_len: resultHtml.length,
           has_master_table: /rgMasterTable/i.test(resultHtml),
           has_no_records: /rgNoRecords/i.test(resultHtml),
-          panel_head: resultHtml.slice(0, 400),
+          row_class_counts: {
+            rgRow: (resultHtml.match(/class="[^"]*\brgRow\b/gi) || []).length,
+            rgAltRow: (resultHtml.match(/class="[^"]*\brgAltRow\b/gi) || []).length,
+            rgGroupHeader: (resultHtml.match(/class="[^"]*\brgGroupHeader\b/gi) || []).length,
+            tr_total: (resultHtml.match(/<tr\b/gi) || []).length,
+          },
+          panel_mid: resultHtml.slice(8000, 12000),
         };
       } else {
         (args as any).__diag = { target: null, reason: "no_search_button" };
