@@ -52,7 +52,7 @@ export const StepCircle: React.FC<StepCircleProps> = ({
           'rounded-full flex items-center justify-center font-semibold leading-none transition-colors border',
           dim,
           state === 'current' && 'bg-primary text-primary-foreground border-primary',
-          state === 'completed' && 'bg-emerald-500 text-white border-emerald-500',
+          state === 'completed' && 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
           state === 'skipped' && 'bg-transparent border-amber-500 text-amber-600 dark:text-amber-400',
           state === 'pending' && 'bg-background border-border text-muted-foreground',
         )}
@@ -63,11 +63,11 @@ export const StepCircle: React.FC<StepCircleProps> = ({
       {showCornerBadge && (
         <div
           className={cn(
-            'absolute rounded-full bg-emerald-600 ring-2 ring-background flex items-center justify-center pointer-events-none',
+            'absolute rounded-full bg-emerald-100 dark:bg-emerald-900 ring-1 ring-background flex items-center justify-center pointer-events-none',
             badgeSize,
           )}
         >
-          <Check className={cn('text-white', checkIconSize)} strokeWidth={3.5} />
+          <Check className={cn('text-emerald-700 dark:text-emerald-300', checkIconSize)} strokeWidth={3.5} />
         </div>
       )}
     </div>
