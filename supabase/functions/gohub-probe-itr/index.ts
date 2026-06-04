@@ -222,15 +222,19 @@ async function runPunch(session: GocSessionManager, subsystemNumber: string) {
   try {
     const { html, url, cookies } = await session.navigateTo("GoCompletions/Completions/PunchlistItemSearch.aspx");
     const { target } = findSearchPostbackTarget(html);
-    const subField = findSubSystemField(html);
+    const sub = findSubSystemField(html);
     probe.postback_target = target;
-    probe.subsystem_field = subField;
-    if (!target || !subField) { probe.error = "no target/subField"; return probe; }
+    probe.subsystem_field = sub.field;
+    probe.subsystem_field_candidates = sub.candidates;
+    if (!target || !sub.field) { probe.error = "no target/subField"; return probe; }
     const params: Record<string, string> = {
-      [subField]: subsystemNumber,
+      [sub.field]: subsystemNumber,
       __EVENTTARGET: target,
       __EVENTARGUMENT: "",
     };
+    if (sub.clientStateField) {
+      params[sub.clientStateField] = JSON.stringify({ value: subsystemNumber, text: subsystemNumber, enabled: true });
+    }
     const { html: resultHtml } = await postWithViewState(cookies, url, html, params);
     const rows = parseRadGridTable(resultHtml);
     probe.rows = rows.length;
