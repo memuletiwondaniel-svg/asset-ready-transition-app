@@ -27,7 +27,7 @@ interface StepCircleProps {
  *                 small white-on-emerald check as a corner badge sitting on
  *                 the top-right perimeter — `default` size only. At `small`
  *                 size the badge is omitted; the emerald fill is the cue.
- *  - SKIPPED    : amber outline ring, amber digit visible.
+ *  - SKIPPED    : 1px amber outline, amber digit visible.
  */
 export const StepCircle: React.FC<StepCircleProps> = ({
   state,
@@ -53,7 +53,7 @@ export const StepCircle: React.FC<StepCircleProps> = ({
           dim,
           state === 'current' && 'bg-primary text-primary-foreground border-primary',
           state === 'completed' && 'bg-emerald-500 text-white border-emerald-500',
-          state === 'skipped' && 'bg-transparent border-2 border-amber-500 text-amber-600 dark:text-amber-400',
+          state === 'skipped' && 'bg-transparent border-amber-500 text-amber-600 dark:text-amber-400',
           state === 'pending' && 'bg-background border-border text-muted-foreground',
         )}
       >
