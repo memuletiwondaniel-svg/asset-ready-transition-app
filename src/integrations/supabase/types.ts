@@ -6534,9 +6534,13 @@ export type Database = {
           handover_plan_id: string | null
           id: string
           name: string
+          pac_signed_at: string | null
+          pac_signed_by: string | null
           phase_id: string | null
           position_x: number
           position_y: number
+          sof_signed_at: string | null
+          sof_signed_by: string | null
           status: Database["public"]["Enums"]["p2a_handover_point_status"]
           systems_finalized_at: string | null
           systems_finalized_by: string | null
@@ -6559,9 +6563,13 @@ export type Database = {
           handover_plan_id?: string | null
           id?: string
           name: string
+          pac_signed_at?: string | null
+          pac_signed_by?: string | null
           phase_id?: string | null
           position_x?: number
           position_y?: number
+          sof_signed_at?: string | null
+          sof_signed_by?: string | null
           status?: Database["public"]["Enums"]["p2a_handover_point_status"]
           systems_finalized_at?: string | null
           systems_finalized_by?: string | null
@@ -6584,9 +6592,13 @@ export type Database = {
           handover_plan_id?: string | null
           id?: string
           name?: string
+          pac_signed_at?: string | null
+          pac_signed_by?: string | null
           phase_id?: string | null
           position_x?: number
           position_y?: number
+          sof_signed_at?: string | null
+          sof_signed_by?: string | null
           status?: Database["public"]["Enums"]["p2a_handover_point_status"]
           systems_finalized_at?: string | null
           systems_finalized_by?: string | null
