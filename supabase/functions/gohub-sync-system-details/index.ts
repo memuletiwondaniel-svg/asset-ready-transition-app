@@ -478,13 +478,15 @@ Deno.serve(async (req) => {
             "GetSubSystemITRs", "GetITRs", "GetSubSystemITR", "GetSubSystemITRList",
             "GetITRsForSubSystem", "GetITRList", "GetTagITRs", "GetSubSystemInspections",
           ]));
+          // JS proxy signature: GetSubSystemTagITRList(subSystemID, className).
+          // ASMX ScriptService matches JSON keys case-sensitively, and `className`
+          // is the right param (not `itrClass` — that's GetSystems).
           const payloads = [
-            { subSystemId: subGuid, itrClass: "All" },
-            { subsystemId: subGuid, itrClass: "All" },
-            { SubSystemID: subGuid, itrClass: "All" },
-            { id: subGuid, itrClass: "All" },
-            { subSystemId: subGuid },
-            { subSystemId: subGuid, systemId: sysGuid, itrClass: "All" },
+            { subSystemID: subGuid, className: "All" },
+            { subSystemID: subGuid, className: "A" },
+            { subSystemID: subGuid, className: "B" },
+            { subSystemID: subGuid, className: "" },
+            { subSystemID: subGuid },
           ];
           for (const name of candidates) {
             for (const payload of payloads) {
