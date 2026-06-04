@@ -417,21 +417,6 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
               <RefreshCw className={cn('w-3.5 h-3.5', syncing && 'animate-spin')} />
             </button>
           </div>
-          {!isFinalized && !isLocked && (
-            <div className="flex justify-end">
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
-                onClick={() => finalizeMutation.mutate(true)}
-                disabled={finalizeMutation.isPending}
-                title="Mark this system list as final — VCR will no longer follow P2A plan edits"
-              >
-                <Lock className="w-3 h-3" />
-                Finalize systems
-              </Button>
-            </div>
-          )}
         </div>
       )}
 
