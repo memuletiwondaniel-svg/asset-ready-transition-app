@@ -16,8 +16,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  Search, Layers, Trash2, Flame, Snowflake, ChevronRight, ChevronDown,
-  Plus, RefreshCw, CheckCircle2, Info, Lock, Database, Upload,
+  Search, Plus, RefreshCw, CheckCircle2, Lock, Database, Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -26,6 +25,7 @@ import { CMSImportModal } from '@/components/widgets/p2a-wizard/steps/CMSImportM
 import { ExcelUploadModal } from '@/components/widgets/p2a-wizard/steps/ExcelUploadModal';
 import { AddSystemModal } from '@/components/widgets/p2a-wizard/steps/AddSystemModal';
 import type { WizardSystem } from '@/components/widgets/p2a-wizard/steps/SystemsImportStep';
+import { SystemRow, SystemsList } from '@/components/widgets/shared/SystemRow';
 
 interface SystemsStepProps {
   vcrId: string;
@@ -387,46 +387,50 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
 
       {/* ── Populated state: search + count + actions ────────────── */}
       {rows.length > 0 && (
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative flex-1 min-w-[220px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search systems / subsystems..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          {rows.length > 0 && <Badge variant="outline">{rows.length} systems</Badge>}
-          {hcCount > 0 && (
-            <Badge variant="outline" className="border-orange-300 text-orange-600 gap-1">
-              <Flame className="w-3 h-3" />
-              {hcCount} HC
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search systems / subsystems..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Badge variant="outline" className="shrink-0">
+              {rows.length} systems
             </Badge>
-          )}
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={handleSync}
-            disabled={syncing}
-            title="Sync GoCompletions"
-            aria-label="Sync GoCompletions"
-            className="h-8 w-8"
-          >
-            <RefreshCw className={cn("w-3.5 h-3.5", syncing && "animate-spin")} />
-          </Button>
-          {!isFinalized && !isLocked && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 text-xs gap-1.5"
-              onClick={() => finalizeMutation.mutate(true)}
-              disabled={finalizeMutation.isPending}
-              title="Mark this system list as final"
+            {hcCount > 0 && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-amber-300/70 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:border-amber-900/40 dark:text-amber-300 shrink-0">
+                {hcCount} HC
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleSync}
+              disabled={syncing}
+              title="Sync GoCompletions"
+              aria-label="Sync GoCompletions"
+              className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0 disabled:opacity-50"
             >
-              <Lock className="w-3 h-3" />
-              Finalize
-            </Button>
+              <RefreshCw className={cn('w-3.5 h-3.5', syncing && 'animate-spin')} />
+            </button>
+          </div>
+          {!isFinalized && !isLocked && (
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+                onClick={() => finalizeMutation.mutate(true)}
+                disabled={finalizeMutation.isPending}
+                title="Mark this system list as final — VCR will no longer follow P2A plan edits"
+              >
+                <Lock className="w-3 h-3" />
+                Finalize systems
+              </Button>
+            </div>
           )}
         </div>
       )}
@@ -480,109 +484,122 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
       ) : (
         <>
           <ScrollArea className="h-[calc(min(90vh,780px)-380px)]">
-            <div className="space-y-2 pr-3">
-              {filtered.map((sys) => {
-                const isOpen = !!expanded[sys.id];
-                return (
-                  <Card key={sys.id} className="group">
-                    <div className="p-3 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setExpanded(prev => ({ ...prev, [sys.id]: !prev[sys.id] }))}
-                        className="p-1 rounded hover:bg-muted shrink-0"
-                        aria-label={isOpen ? 'Collapse' : 'Expand'}
-                      >
-                        {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                      </button>
-                      {sys.is_hydrocarbon
-                        ? <Flame className="w-4 h-4 text-orange-500 shrink-0" />
-                        : <Snowflake className="w-4 h-4 text-blue-500 shrink-0" />}
-                      <Badge variant="outline" className="text-[10px] font-mono shrink-0">{sys.system_id}</Badge>
-                      <span className="text-sm font-medium truncate flex-1 min-w-0">{sys.name}</span>
-                      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground shrink-0 cursor-pointer">
-                        <Checkbox
-                          checked={sys.is_hydrocarbon}
-                          onCheckedChange={(v) => toggleHC.mutate({ id: sys.id, value: !!v })}
-                        />
-                        Hydrocarbon
-                      </label>
-                      {(sys.systemAssignmentId || sys.subsystems.some(s => s.assignmentId)) && (
-                        <button
-                          onClick={() => {
-                            const id = sys.systemAssignmentId;
-                            if (id) {
-                              setDeleteTarget({ id, label: sys.name });
-                            } else {
-                              const ids = sys.subsystems.filter(s => s.assignmentId).map(s => s.assignmentId!);
-                              Promise.all(ids.map(i =>
-                                (supabase as any).from('p2a_handover_point_systems').delete().eq('id', i)
-                              )).then(() => {
-                                queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
-                                toast.success('Removed');
-                              });
-                            }
-                          }}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
-                          aria-label="Remove"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+            <div className="pr-3">
+              <SystemsList>
+                {filtered.map((sys) => {
+                  const isOpen = !!expanded[sys.id];
+                  const isAssigned =
+                    !!sys.systemAssignmentId ||
+                    sys.subsystems.some((s) => s.assignmentId);
+                  const handleRemove = () => {
+                    if (sys.systemAssignmentId) {
+                      deleteMutation.mutate(sys.systemAssignmentId);
+                    } else {
+                      const ids = sys.subsystems
+                        .filter((s) => s.assignmentId)
+                        .map((s) => s.assignmentId!);
+                      Promise.all(
+                        ids.map((i) =>
+                          (supabase as any)
+                            .from('p2a_handover_point_systems')
+                            .delete()
+                            .eq('id', i)
+                        )
+                      ).then(() => {
+                        queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
+                        toast.success('Removed');
+                      });
+                    }
+                  };
+                  return (
+                    <SystemRow
+                      key={sys.id}
+                      systemCode={sys.system_id}
+                      name={sys.name}
+                      isHydrocarbon={sys.is_hydrocarbon}
+                      hasSubsystems={sys.subsystems.length > 0}
+                      expanded={isOpen}
+                      onToggleExpand={() =>
+                        setExpanded((prev) => ({ ...prev, [sys.id]: !prev[sys.id] }))
+                      }
+                      onRemove={isAssigned && !isLocked ? handleRemove : undefined}
+                      target="vcr"
+                    >
+                      {sys.subsystems.length > 0 ? (
+                        <div className="space-y-0">
+                          {sys.subsystems.map((ss) => {
+                            const isMapped =
+                              !!ss.assignmentId || !!sys.systemAssignmentId;
+                            return (
+                              <div
+                                key={ss.id}
+                                className="flex items-center gap-2 py-1.5 px-2"
+                              >
+                                <Checkbox
+                                  checked={isMapped}
+                                  disabled={!!sys.systemAssignmentId || isLocked}
+                                  onCheckedChange={async (v) => {
+                                    if (v) {
+                                      const { error } = await (supabase as any)
+                                        .from('p2a_handover_point_systems')
+                                        .insert({
+                                          handover_point_id: vcrId,
+                                          system_id: sys.id,
+                                          subsystem_id: ss.id,
+                                        });
+                                      if (error) toast.error(error.message);
+                                      else {
+                                        queryClient.invalidateQueries({
+                                          queryKey: ['vcr-systems-tree'],
+                                        });
+                                        toast.success('Subsystem added');
+                                      }
+                                    } else if (ss.assignmentId) {
+                                      const { error } = await (supabase as any)
+                                        .from('p2a_handover_point_systems')
+                                        .delete()
+                                        .eq('id', ss.assignmentId);
+                                      if (error) toast.error(error.message);
+                                      else {
+                                        queryClient.invalidateQueries({
+                                          queryKey: ['vcr-systems-tree'],
+                                        });
+                                        toast.success('Subsystem removed');
+                                      }
+                                    }
+                                  }}
+                                />
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border/50 bg-muted/30 text-muted-foreground max-w-[180px] truncate">
+                                  {ss.subsystem_id}
+                                </span>
+                                <span className="text-xs text-muted-foreground truncate flex-1 min-w-0">
+                                  {ss.name}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="px-2 py-1.5 text-[11px] text-muted-foreground">
+                          No subsystems available. Sync with GoCompletions to populate.
+                        </div>
                       )}
-                    </div>
-                    {isOpen && sys.subsystems.length > 0 && (
-                      <div className="border-t bg-muted/20 px-3 py-2 space-y-1">
-                        {sys.subsystems.map((ss) => {
-                          const isMapped = !!ss.assignmentId || !!sys.systemAssignmentId;
-                          return (
-                            <div key={ss.id} className="flex items-center gap-2 py-1 group/sub">
-                              <Checkbox
-                                checked={isMapped}
-                                disabled={!!sys.systemAssignmentId}
-                                onCheckedChange={async (v) => {
-                                  if (v) {
-                                    const { error } = await (supabase as any)
-                                      .from('p2a_handover_point_systems')
-                                      .insert({ handover_point_id: vcrId, system_id: sys.id, subsystem_id: ss.id });
-                                    if (error) toast.error(error.message);
-                                    else {
-                                      queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
-                                      toast.success('Subsystem added');
-                                    }
-                                  } else if (ss.assignmentId) {
-                                    const { error } = await (supabase as any)
-                                      .from('p2a_handover_point_systems')
-                                      .delete()
-                                      .eq('id', ss.assignmentId);
-                                    if (error) toast.error(error.message);
-                                    else {
-                                      queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
-                                      toast.success('Subsystem removed');
-                                    }
-                                  }
-                                }}
-                              />
-                              <Badge variant="outline" className="text-[10px] font-mono shrink-0">{ss.subsystem_id}</Badge>
-                              <span className="text-xs text-foreground/80 truncate flex-1 min-w-0">{ss.name}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {isOpen && sys.subsystems.length === 0 && (
-                      <div className="border-t px-3 py-2 text-[11px] text-muted-foreground">
-                        No subsystems available. Sync with GoCompletions to populate.
-                      </div>
-                    )}
-                  </Card>
-                );
-              })}
+                    </SystemRow>
+                  );
+                })}
+              </SystemsList>
               {filtered.length === 0 && searchQuery && (
-                <Card><CardContent className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground">No systems match your search</p>
-                </CardContent></Card>
+                <Card className="mt-2">
+                  <CardContent className="py-8 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No systems match your search
+                    </p>
+                  </CardContent>
+                </Card>
               )}
             </div>
           </ScrollArea>
+
 
           {/* ── Add more ─────────────────────────────────────────── */}
           {!isLocked && (
