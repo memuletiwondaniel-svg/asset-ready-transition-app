@@ -147,18 +147,26 @@ async function runTagSearch(
     const { target, rawInputName } = findSearchPostbackTarget(html);
     probe.postback_target = target;
     probe.search_button_input_name = rawInputName;
-    const subField = findSubSystemField(html);
-    probe.subsystem_field = subField;
-    if (!target || !subField) {
+    const sub = findSubSystemField(html);
+    probe.subsystem_field = sub.field;
+    probe.subsystem_field_candidates = sub.candidates;
+    probe.subsystem_clientstate_field = sub.clientStateField;
+    if (!target || !sub.field) {
       probe.error = "could not discover postback target or subsystem field";
       return probe;
     }
 
     const params: Record<string, string> = {
-      [subField]: subsystemNumber,
+      [sub.field]: subsystemNumber,
       __EVENTTARGET: target,
       __EVENTARGUMENT: "",
     };
+    if (sub.clientStateField) {
+      params[sub.clientStateField] = JSON.stringify({
+        logEntries: null, value: subsystemNumber, text: subsystemNumber,
+        enabled: true, checkedIndices: [], checkedItemsTextOverflows: false,
+      });
+    }
     const { html: resultHtml } = await postWithViewState(cookies, url, html, params);
 
     const tableMatch = resultHtml.match(/<table[^>]*class="[^"]*rgMasterTable[^"]*"[^>]*>([\s\S]*?)<\/table>/i);
