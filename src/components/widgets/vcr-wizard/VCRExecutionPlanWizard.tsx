@@ -239,15 +239,20 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   const isStepComplete = (idx: number): boolean => {
     // Visit-based completion for steps without count data:
-    // W&HP (1, formerly ITP), Approvers (7), VCR Checklist (8), Review (9).
-    if (idx === 1 || idx === 7 || idx === 8 || idx === 9) {
+    // Approvers (7), VCR Checklist (8), Review (9).
+    if (idx === 7 || idx === 8 || idx === 9) {
       return visitedSteps.has(idx) && idx !== currentStep;
     }
     return (stepCounts[idx] || 0) > 0;
   };
 
+  const isStepOptional = (idx: number): boolean => {
+    // Witness & Hold Points is optional — never show amber warning when empty.
+    return idx === 1;
+  };
+
   const isStepWarning = (idx: number): boolean => {
-    return visitedSteps.has(idx) && !isStepComplete(idx);
+    return visitedSteps.has(idx) && !isStepComplete(idx) && !isStepOptional(idx);
   };
 
   const goToStep = (step: number) => {
