@@ -176,8 +176,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
     { key: 'procedures',  label: 'Procedures',         icon: BookOpen,       count: stats.procedures,                   iconClass: 'text-emerald-500' },
     { key: 'docs',        label: 'Critical Docs',      icon: FileText,       count: stats.criticalDocs,                 iconClass: 'text-amber-500' },
     { key: 'reglog',      label: 'Reg. & Logsheets',   icon: ClipboardList,  count: stats.registers + stats.logsheets,  iconClass: 'text-cyan-500' },
-    { key: 'cmms',        label: 'CMMS',               icon: Wrench,         count: stats.cmms,                         iconClass: 'text-amber-500' },
-    { key: 'spares',      label: '2Y Spares',          icon: Package,        count: stats.spares,                       iconClass: 'text-teal-500' },
+    { key: 'maintenance', label: 'Maintenance Systems', icon: Wrench,         count: stats.maintenance,                  iconClass: 'text-amber-500' },
   ];
 
   const issues: string[] = [];
@@ -186,8 +185,7 @@ export const VCRConfirmationStep: React.FC<VCRConfirmationStepProps> = ({
   if (stats.procedures === 0) issues.push('No procedures');
   if (stats.criticalDocs === 0) issues.push('No critical documents');
   if (stats.registers + stats.logsheets === 0) issues.push('No registers or logsheets');
-  if (stats.cmms === 0) issues.push('No CMMS items');
-  if (stats.spares === 0) issues.push('No 2Y spares');
+  if (stats.maintenance === 0) issues.push('No maintenance deliverables marked applicable');
 
   const hasIssues = issues.length > 0;
   const unresolvedApprovers = (approvers || []).filter(a => !a.user_id).length;
