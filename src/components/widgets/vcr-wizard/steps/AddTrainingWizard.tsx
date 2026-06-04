@@ -162,11 +162,15 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
     s.system_id?.toLowerCase().includes(systemSearch.toLowerCase())
   );
 
-  // Only step 0 has required fields (Title + Objective & Justification).
-  // Steps 1–3 have no required fields and are therefore always considered complete.
+  // Completion rules:
+  //   step 0 (required Title + Objective): filled in
+  //   steps 1–3 (no required fields): considered complete only after the user
+  //   has visited AND moved past them (explicit Continue/Skip / Back navigation
+  //   away). Optional data filled implies a visit, so this also covers that case.
+  //   step 4 (Review): never auto-complete.
   const isStepComplete = (i: number): boolean => {
     if (i === 0) return title.trim().length > 0 && overview.trim().length > 0;
-    if (i === 1 || i === 2 || i === 3) return true;
+    if (i === 1 || i === 2 || i === 3) return visitedSteps.has(i) && i !== step;
     return false;
   };
 
@@ -249,11 +253,8 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
                   >
                     <StepCircle state={circleState} number={i + 1} size="small" />
                     <span className={cn(
-                      'text-[10px] font-medium leading-tight text-center max-w-[64px] whitespace-nowrap truncate transition-colors',
-                      complete && 'text-emerald-600 dark:text-emerald-400',
-                      isActive && 'text-foreground font-semibold',
-                      incomplete && !isActive && 'text-amber-600 dark:text-amber-400',
-                      !complete && !isActive && !incomplete && 'text-muted-foreground/60'
+                      'text-[10px] leading-tight text-center max-w-[64px] whitespace-nowrap truncate text-foreground',
+                      isActive ? 'font-semibold' : 'font-normal'
                     )}>
                       {s.title}
                     </span>
