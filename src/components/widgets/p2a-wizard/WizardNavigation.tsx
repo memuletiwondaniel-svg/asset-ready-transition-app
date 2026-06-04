@@ -141,7 +141,7 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
               <span className="hidden xs:inline">Approve</span>
             </Button>
           </>
-        ) : isLastStep && onSubmit ? (
+        ) : isLastStep && !onSubmit ? null : isLastStep && onSubmit ? (
           <Button
             size="sm"
             onClick={onSubmit}
