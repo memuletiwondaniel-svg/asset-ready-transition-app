@@ -49,7 +49,7 @@ import { CriticalDocumentsStep } from './steps/CriticalDocumentsStep';
 import { RegistersLogsheetsStep } from './steps/RegistersLogsheetsStep';
 import { InspectionTestPlanStep } from './steps/InspectionTestPlanStep';
 import { ApproversStep } from './steps/ApproversStep';
-import { CMMSSparesStep } from './steps/CMMSSparesStep';
+import { MaintenanceSystemsStep } from './steps/MaintenanceSystemsStep';
 import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
 import { Layers, CheckCircle2, Eye } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
