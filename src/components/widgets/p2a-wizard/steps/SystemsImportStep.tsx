@@ -222,9 +222,9 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
           </TooltipProvider>
         </div>
       ) : (
-        <div className="border rounded-lg flex-1 min-h-0 bg-muted/20">
+        <div className="flex-1 min-h-0">
           <ScrollArea className="h-full">
-            <div className="p-1.5 space-y-1">
+            <SystemsList className="mr-1">
               {[...systems]
                 .sort((a, b) => compareSystemIds(a.system_id, b.system_id))
                 .map((system) => (
@@ -238,7 +238,7 @@ export const SystemsImportStep: React.FC<SystemsImportStepProps> = ({
                     onRemove={() => handleRemoveSystem(system.id)}
                   />
                 ))}
-            </div>
+            </SystemsList>
           </ScrollArea>
         </div>
       )}
