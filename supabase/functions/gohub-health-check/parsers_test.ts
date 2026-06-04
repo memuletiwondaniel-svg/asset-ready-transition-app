@@ -10,7 +10,7 @@ import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.t
 import {
   parseRadGridTable,
   parseRadAjaxDelta,
-} from "./gocompletions-auth.ts";
+} from "../_shared/gocompletions-auth.ts";
 import {
   cleanCellText,
   discoverSearchPostbackTarget,
@@ -19,7 +19,7 @@ import {
   stripInputSuffix,
   HANDOVER_CERTS,
   CANARY_ORACLE,
-} from "./gohub-contract.ts";
+} from "../_shared/gohub-contract.ts";
 
 // ─── Pure-function units ─────────────────────────────────────
 
