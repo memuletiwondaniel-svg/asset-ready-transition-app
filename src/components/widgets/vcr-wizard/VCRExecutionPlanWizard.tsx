@@ -213,8 +213,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const { data: stepCounts = {} } = useQuery({
     queryKey: ['vcr-wizard-step-counts', vcr.id],
     queryFn: async () => {
-      const [systems, training, procedures, criticalDocs, registers, logsheets, maintenance] = await Promise.all([
+      const [systems, itp, training, procedures, criticalDocs, registers, logsheets, maintenance] = await Promise.all([
         (supabase as any).from('p2a_handover_point_systems').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
+        (supabase as any).from('p2a_itp_activities').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
@@ -224,6 +225,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       ]);
       return {
         0: systems.count || 0,
+        1: itp.count || 0,
         2: training.count || 0,
         3: procedures.count || 0,
         4: criticalDocs.count || 0,
@@ -237,15 +239,20 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   const isStepComplete = (idx: number): boolean => {
     // Visit-based completion for steps without count data:
-    // W&HP (1, formerly ITP), Approvers (7), VCR Checklist (8), Review (9).
-    if (idx === 1 || idx === 7 || idx === 8 || idx === 9) {
+    // Approvers (7), VCR Checklist (8), Review (9).
+    if (idx === 7 || idx === 8 || idx === 9) {
       return visitedSteps.has(idx) && idx !== currentStep;
     }
     return (stepCounts[idx] || 0) > 0;
   };
 
+  const isStepOptional = (idx: number): boolean => {
+    // Witness & Hold Points is optional — never show amber warning when empty.
+    return idx === 1;
+  };
+
   const isStepWarning = (idx: number): boolean => {
-    return visitedSteps.has(idx) && !isStepComplete(idx);
+    return visitedSteps.has(idx) && !isStepComplete(idx) && !isStepOptional(idx);
   };
 
   const goToStep = (step: number) => {
@@ -378,6 +385,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       onStepChange={goToStep}
       isStepComplete={isStepComplete}
       isStepWarning={isStepWarning}
+      isStepOptional={isStepOptional}
       header={null}
       topHeader={topHeaderContent}
       navigation={{
