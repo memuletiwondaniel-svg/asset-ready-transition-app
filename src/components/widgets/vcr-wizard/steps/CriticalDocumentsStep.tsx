@@ -17,11 +17,12 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Search, X, Cloud, Loader2, ChevronDown,
+  Search, X, Loader2, ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { CheckAssaiModal } from './critical-docs/CheckAssaiModal';
+import assaiIcon from '@/assets/assai-icon.png';
 
 interface CriticalDocumentsStepProps {
   vcrId: string;
