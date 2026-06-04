@@ -12,11 +12,10 @@ import {
   Trash2,
   Upload,
   Database,
-  Edit2,
   Check,
-  ChevronRight,
   Info,
 } from 'lucide-react';
+import { SystemRow, SystemsList } from '@/components/widgets/shared/SystemRow';
 import {
   AlertDialog,
   AlertDialogAction,
