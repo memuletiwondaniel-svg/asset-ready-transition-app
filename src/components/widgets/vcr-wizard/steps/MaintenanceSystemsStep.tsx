@@ -147,7 +147,7 @@ export const MaintenanceSystemsStep: React.FC<MaintenanceSystemsStepProps> = ({ 
                       onCheckedChange={(v) => handleToggle(def.type, !!v)}
                       aria-label={`Mark ${def.name} as applicable`}
                       className="h-5 w-9 border border-border data-[state=unchecked]:bg-muted data-[state=checked]:bg-primary/60 [&>span]:h-4 [&>span]:w-4 [&>span]:data-[state=checked]:translate-x-4 [&>span]:bg-background"
-                    />,
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-foreground">{def.name}</div>
