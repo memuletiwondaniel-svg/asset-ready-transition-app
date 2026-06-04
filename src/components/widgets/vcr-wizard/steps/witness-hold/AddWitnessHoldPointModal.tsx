@@ -102,6 +102,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
   }, [open, isEdit, existing, defaultSystemId]);
 
   const noSystemsMapped = systems.length === 0;
+  const selectedSystem = systems.find((system) => system.id === systemId);
 
   const canSubmit = !!systemId && !!activity.trim() && !!type && !saving;
 
@@ -199,7 +200,9 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
                 className="h-9 text-sm"
                 title={noSystemsMapped ? 'Add systems first (step 1)' : undefined}
               >
-                <SelectValue placeholder="Select system…" />
+                <SelectValue placeholder="Select system…">
+                  {selectedSystem ? `${selectedSystem.name}${selectedSystem.code ? ` · ${selectedSystem.code}` : ''}` : undefined}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent className="z-[210]">
                 {systems.map((s) => (
@@ -231,14 +234,14 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
             <div className="grid grid-cols-2 gap-2">
               <TypeCard
                 title="Witness"
-                description="ORA must be present during this activity"
+                description="Asset must be present during this activity"
                 variant="witness"
                 selected={type === 'WITNESS'}
                 onClick={() => setType('WITNESS')}
               />
               <TypeCard
                 title="Hold"
-                description="Activity cannot start without ORA approval"
+                description="Activity cannot start without Asset approval"
                 variant="hold"
                 selected={type === 'HOLD'}
                 onClick={() => setType('HOLD')}
