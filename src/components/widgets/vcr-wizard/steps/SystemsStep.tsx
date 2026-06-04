@@ -493,10 +493,12 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
                       return next;
                     })}
                   />
-                  {s.is_hydrocarbon
-                    ? <Flame className="w-3.5 h-3.5 text-orange-500" />
-                    : <Snowflake className="w-3.5 h-3.5 text-blue-500" />}
                   <Badge variant="outline" className="text-[10px] font-mono">{s.system_id}</Badge>
+                  {s.is_hydrocarbon && (
+                    <Badge className="text-[9px] h-4 px-1.5 bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 border-0 font-semibold">
+                      HC
+                    </Badge>
+                  )}
                   <span className="text-sm truncate">{s.name}</span>
                 </label>
               ))}
