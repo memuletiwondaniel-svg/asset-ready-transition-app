@@ -150,7 +150,6 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                   {steps.map((step, idx) => {
                     const isActive = idx === currentStep;
                     const isComplete = isStepComplete(idx);
-                    const isWarning = isStepWarning?.(idx) ?? false;
                     return (
                       <button
                         key={step.id}
@@ -158,21 +157,21 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                         className={cn(
                           'relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap shrink-0 transition-all border',
                           isActive
-                            ? 'bg-primary/10 text-primary border-primary/30'
+                            ? 'bg-primary text-primary-foreground border-primary'
                             : isComplete
-                              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
-                              : 'bg-muted text-muted-foreground border-transparent'
+                              ? 'bg-emerald-500 text-white border-emerald-500'
+                              : 'bg-transparent text-muted-foreground border-border'
                         )}
                       >
-                        {isComplete && !isActive ? (
-                          <Check className="w-3 h-3" strokeWidth={3} />
-                        ) : (
-                          <span className="text-[10px]">{idx + 1}</span>
-                        )}
-                        {isActive && step.label}
-                        {isWarning && !isActive && !isComplete && (
-                          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 ring-2 ring-background" />
-                        )}
+                        <span className="relative inline-flex items-center justify-center w-4 h-4">
+                          <span className="text-[10px] font-semibold leading-none">{idx + 1}</span>
+                          {isComplete && !isActive && (
+                            <span className="absolute -top-1 -right-1.5 w-2.5 h-2.5 rounded-full bg-emerald-600 ring-2 ring-background flex items-center justify-center">
+                              <Check className="w-1.5 h-1.5 text-white" strokeWidth={4} />
+                            </span>
+                          )}
+                        </span>
+                        {isActive && <span>{step.label}</span>}
                       </button>
                     );
                   })}
