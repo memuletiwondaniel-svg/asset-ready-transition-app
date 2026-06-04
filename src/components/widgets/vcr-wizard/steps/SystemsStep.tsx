@@ -360,9 +360,9 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
               Pick an import method below to get started, or add systems to this VCR.
             </p>
           </div>
-          <div className="grid grid-cols-3 gap-3 shrink-0">
+          <div className="grid grid-cols-4 gap-3 shrink-0">
             <button
-              onClick={() => setPickerOpen(true)}
+              onClick={() => setShowCMSModal(true)}
               className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             >
               <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
@@ -374,7 +374,7 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
               </span>
             </button>
             <button
-              onClick={() => setPickerOpen(true)}
+              onClick={() => setShowExcelModal(true)}
               className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             >
               <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
@@ -384,7 +384,7 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
               <span className="text-[10px] text-muted-foreground leading-tight text-center">Import spreadsheet</span>
             </button>
             <button
-              onClick={() => setPickerOpen(true)}
+              onClick={() => setShowAddModal(true)}
               className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             >
               <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
@@ -392,6 +392,16 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
               </div>
               <span className="font-medium text-xs">Add Manually</span>
               <span className="text-[10px] text-muted-foreground leading-tight text-center">Enter details</span>
+            </button>
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
+                <Layers className="h-4 w-4 text-violet-600" />
+              </div>
+              <span className="font-medium text-xs">Pick from Plan</span>
+              <span className="text-[10px] text-muted-foreground leading-tight text-center">Already in P2A plan</span>
             </button>
           </div>
         </div>
