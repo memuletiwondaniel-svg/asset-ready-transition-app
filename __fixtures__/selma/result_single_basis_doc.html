@@ -1,0 +1,1700 @@
+
+
+
+<!DOCTYPE html>
+                 
+
+
+
+
+
+
+
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+<!-- DWR -->
+<script type='text/javascript' src='dwr/interface/DWRBean.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'></script>
+<script type='text/javascript' src='dwr/interface/DwrMail.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'></script>
+<script type='text/javascript' src='dwr/engine.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'></script>
+<script type='text/javascript' src='dwr/util.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'></script>
+<!-- Active Widgets -->
+<script type='text/javascript' src="runtime/lib/aw.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<!-- log4javascript -->
+<script type='text/javascript' src="js/log/log4javascript_uncompressed.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<script type="text/javascript" src="jquery/js/jquery-1.11.2.min.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<!-- Assai -->
+<script type='text/javascript' src="label.aweb"></script>
+<script type='text/javascript' src="js/assai.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<script type='text/javascript' src="js/result.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<script type='text/javascript' src="js/validate.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<script type='text/javascript' src="js/lov.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<script type='text/javascript' src="js/multiselect.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<script type='text/javascript' src="js/modal/modal.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" id="modalJs"></script>
+<script type='text/javascript' src="js/acrobat/acrobat_redliner.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<!-- Chart -->
+<script type='text/javascript' src='js/charts/d3.min.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'></script>
+<script type='text/javascript' src='js/charts/custom_uvcharts.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'></script>
+<link rel="stylesheet" type="text/css" href="css/modal/modal.css?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2">
+<link rel="stylesheet" type="text/css" href="runtime/styles/xp/aw.css?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"/>
+<link rel="stylesheet" type="text/css" href="css/assaiweb.css?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"/>
+<style>
+    .non_doc_button{padding-top:0px;font-size:10px;border-style:solid;border-color:gray;border-width:1px;width:120px;height:20px;}
+    .non_doc_button_on{background-image:url(./img/buttons/non_document_on.jpg);background-position: 130px}
+    .non_doc_button_off{background-image:url(./img/buttons/non_document_off.jpg);background-position: 130px}
+    .gisImage {cursor: pointer; cursor: hand;}
+    div.toolTipDiv {
+    	width: 270px;
+		zIndex: 9999;
+		position: absolute;
+		border: #7777cc 1px solid;
+		background-color: #ffffff;
+		padding: 5px;
+		white-space: normal;
+    }			
+    body{overflow:hidden;}
+    #docsGrid{overflow:auto;}
+</style>
+<script>
+var entity_code   = "DORE";
+var entt_seq_nr   = "1";
+var clas_seq_nr_milestone   = "1";
+var subclass_type = "DES_DOC";
+var proj_seq_nr   = "59734";
+
+
+
+PrimaryKeys.entt_seq_nr = entt_seq_nr;
+PrimaryKeys.subclass_type = subclass_type;
+PrimaryKeys.proj_seq_nr_milestone = proj_seq_nr;
+PrimaryKeys.clas_seq_nr_milestone = clas_seq_nr_milestone;
+
+var toModifyWindow;
+try
+{
+    if (parent.frames[0])
+    {
+        var menuPage = parent.frames[0];
+        if(parent.activateButtonBySubclass)
+        {
+            parent.activateButtonBySubclass(subclass_type.toUpperCase());
+            if ( menuPage && menuPage.location.toString().indexOf("navbar.aweb")!=-1)
+            {
+                if ( menuPage.location.toString().indexOf("subclass_type=" + subclass_type)==-1)
+                    menuPage.location = "navbar.aweb?subclass_type="+subclass_type;
+            }
+        }
+    }
+}
+catch (e)
+{
+    alert("activateButtonByClassError "+e);
+}
+var search_type   = "default";
+var openerContentFrame = "content_d2OEXESd7Xw96wCb";
+
+var NDOCButton = "";
+var showNDOCSInboxTab  = (subclass_type=="SUP_DOC"     && search_type=="inbox");
+var showSUPDOCInboxTab = (subclass_type=="SUP_NON_DOC" && search_type=="inbox");
+if (showNDOCSInboxTab||showSUPDOCInboxTab)
+{
+
+    NDOCButton = "<form name='ndoc_sup_doc_inbox_frm' id='ndoc_sup_doc_inbox_frm' action='result.aweb' target='"+openerContentFrame+"' method='GET'>"
+            + " <input type='hidden' name='search_type' value='inbox'/>"
+            + " <input type='hidden' name='subclass_type' value='" + (subclass_type=='SUP_NON_DOC'?'SUP_DOC':'SUP_NON_DOC') + "'/>"
+            + " <input type='hidden' name='selected_proj_seq_nrs' value='59734'/>"
+            + " <input type='hidden' name='pers_seq_nr' value='14719262'/>"
+            + " <input type='hidden' name='full_nr' value=''/>"
+            + " <input type='hidden' name='description' value=''/>"
+            + " <input type='hidden' name='company_code' value=''/>"
+            + " <input type='hidden' name='transmittal_number' value=''/>"
+            + " <input type='hidden' name='searchBean' value='" + (subclass_type=='SUP_NON_DOC'?'docs.SearchDocsInbox':'docs.SearchDocsInboxNonDocuments') + "'/>"
+            + "</form>"
+            + " <button class='non_doc_button non_doc_button_off' onmouseover=\"this.className='non_doc_button non_doc_button_on'\" onmouseout=\"this.className='non_doc_button non_doc_button_off'\" type='button' onClick='document.ndoc_sup_doc_inbox_frm.submit()'>"
+            + "Documents"
+            + "</button><img width='5px' src='img/spacer.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'/>";
+
+}
+
+window.onresize=
+        function()
+        {
+            resizeGrid(docsGrid);
+            return true;
+        };
+function browse(direction)
+{
+    if (direction == "previous" || direction == "next" || direction == "current" )
+    {
+        document.paging_form.paging.value=direction;
+        document.paging_form.submit();
+
+        // Set content body to busy while request is in progress
+        var indicator = new ASSAI.CORE.BUSYINDICATOR();
+        indicator.setElementBusy(document.body);
+    }
+}
+
+
+function getRowCount() {
+    var RowCount = new ASSAI.CORE.ROWCOUNT();
+    RowCount.getCount("100"
+                    , "1"
+                    , null
+                    , true
+                    , null
+                    , document.getElementById("rowCountCell")
+    );
+}
+
+
+/*
+[DOCUMENT_NR, LATEST_REV, REVISION_CREATION_DATE, STATUS, APPROVAL_CODE, DESCRIPTION, PRIORITY_CODE, ORIGINATOR, RESP_ENGINEER, COMPANY_CODE, DISCIPLINE_CODE, DOCUMENT_TYPE, WORK_PACKAGE_CODE, PURCHASE_ORDER_NR, CLASSIFICATION_CODE, COMPANY_DOCUMENT_NR, CREATION_DATE, PLANNED_START_DATE, FORECAST_START_DATE, ACTUAL_START_DATE, PLANNED_END_DATE, FORECAST_END_DATE, ACTUAL_END_DATE, PROJECT_CODE, PROJECT_TITLE, ASSET_ITEM_LIST, EXT_REF_LIST, SUBCLASS_CODE, LANGUAGE_CODE, CLAS_SEQ_NR, DOCS_SEQ_NR, DORE_SEQ_NR, PK_SEQ_NR, PROJ_SEQ_NR, SHARED_IND, SUPERSEDED_BY, URL_ICON, USFA_SEQ_NR, WFIT_SEQ_NR]
+*/
+var columnsFile    = 'docs.SearchDocuments';
+var fileColumnIndex    = 1;
+var publicationFileColumnIndex    = -1;
+var sourceFileColumnIndex    = -1;
+var commentFileColumnIndex    = -1;
+var otherFilesColumnIndex    = -1;
+var redlineMarkupFilesColumnIndex    = -1;
+var infoColumnIndex    = 2;
+var commentColumnIndex = -1;
+var markupAcceptanceColumnIndex = -1;
+var markupColumnIndex = -1;
+var checkedColumnIndex = -1;
+var deleteColumnIndex  = -1;
+var customIconColumnIndex = -1;
+var editColumnIndex    = -1;
+var attachmentColumnIndex = -1;
+var emailColumnIndex   = -1;
+var settingsColumnIndex= -1;
+var selectRowsIndex    = 0;
+var selectFilesOnly = true;
+var myCells = 
+[["","<img src='img/icons/pdf.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'>","<img src='img/i.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'>","6529-BGC-C033-ISGP-G00000-AA-8203-00001_BGC_PROJ","04A","18-12-2021","IFA","A","ST300 HM Additional Compression Project Basis for Design","N/A","","IQPSA1","BGC","AA","8203","ST/DP300","","6529","6529-BGC-C033-ISGP-G00000-AA-8203-00001","13-01-2022","23-05-2022","23-05-2022","18-12-2021","29-01-2023","29-01-2023","","BGC_PROJ","Basrah Gas Company Projects","","BGC:6529-BGC-C033-ISGP-G00000-AA-8203-00001","DOCUMENT NR","","1","16556529","21597841","16556529","59734","N","","","",""]
+];
+function renderCheckBox(col,row)
+{
+  var checkBox=new AW.Templates.Checkbox;
+  docsGrid.setCellTemplate(checkBox, col, row);
+}
+function renderCheckedInCheckboxes(shiftRowPosition){
+shiftRowPosition = shiftRowPosition || 0;
+  renderCheckBox(0,0+shiftRowPosition)
+  docsGrid.setCellValue( false, 0,0+shiftRowPosition)
+  docsGrid.setCellText( "", 0,0+shiftRowPosition)
+
+}
+;
+var docsGrid = new AW.UI.Grid;
+docsGrid.setId('docsGrid');
+docsGrid.setRowCount(myCells.length);
+docsGrid.setSelectionMode('single-row');
+docsGrid.setCellData(myCells);
+docsGrid.setCellEditable(false);
+var docsGridHeader = new GridHeader();
+var columns   = [ ''
+, ''
+, ''
+, 'Document nr.'
+, 'Rev.'
+, 'Rev. date'
+, 'Status'
+, 'Approval'
+, 'Title'
+, 'Priority'
+, 'Originator'
+, 'Responsible eng.'
+, 'Company code'
+, 'Discipline code'
+, 'Document type'
+, 'Work package code'
+, 'Purchase order'
+, 'Classification'
+, 'Company document nr'
+, 'Created'
+, 'Planned start'
+, 'Forecast start'
+, 'Actual start'
+, 'Planned end'
+, 'Forecast end'
+, 'Actual end'
+, 'Project code'
+, 'Project title'
+, 'Asset item'
+, 'External Refs.'
+, 'Subclass code'
+, 'Language'
+,'CLAS_SEQ_NR'
+,'DOCS_SEQ_NR'
+,'DORE_SEQ_NR'
+,'PK_SEQ_NR'
+,'PROJ_SEQ_NR'
+,'SHARED_IND'
+,'SUPERSEDED_BY'
+,'URL_ICON'
+,'USFA_SEQ_NR'
+,'WFIT_SEQ_NR'];
+var orderColumns   = [ 3,'DOCUMENT_NR','LATEST_REV','REVISION_CREATION_DATE','STATUS','APPROVAL_CODE','DESCRIPTION','PRIORITY_CODE','ORIGINATOR','RESP_ENGINEER','COMPANY_CODE','DISCIPLINE_CODE','DOCUMENT_TYPE','WORK_PACKAGE_CODE','PURCHASE_ORDER_NR','CLASSIFICATION_CODE','COMPANY_DOCUMENT_NR','CREATION_DATE','PLANNED_START_DATE','FORECAST_START_DATE','ACTUAL_START_DATE','PLANNED_END_DATE','FORECAST_END_DATE','ACTUAL_END_DATE','PROJECT_CODE','PROJECT_TITLE','ASSET_ITEM_LIST','EXT_REF_LIST','SUBCLASS_CODE','LANGUAGE_CODE','CLAS_SEQ_NR','DOCS_SEQ_NR','DORE_SEQ_NR'];
+docsGridHeader.setColumns(columns);
+docsGridHeader.setOrderColumns(orderColumns);
+docsGrid.setHeaderText(docsGridHeader.getColumns());
+var allSelectCheckbox;
+if (selectRowsIndex != -1) 
+{
+   allSelectCheckbox = new AW.UI.Checkbox;
+   allSelectCheckbox.onControlValueChanged = function(value){
+      var i;
+      for (i = 0; i < myCells.length; i++)
+      {
+          if (selectFilesOnly)
+          {
+              if (!value || docsGrid.getCellText(fileColumnIndex, i))
+              {
+                  docsGrid.setCellValue(value, selectRowsIndex, i);
+              }
+          }
+          else
+          {
+              docsGrid.setCellValue(value, selectRowsIndex, i);
+          }
+      }
+   }
+   docsGrid.setHeaderTemplate(allSelectCheckbox, selectRowsIndex);
+}
+docsGrid.setHeaderTooltip(docsGridHeader.getColumns());
+docsGrid.setSize(800, 200);
+ if (typeof setLocalStoreColumnSizes == "undefined" || !setLocalStoreColumnSizes()){docsGrid.setColumnWidth( _25px,  0);
+docsGrid.setColumnWidth( _20px,  1);
+docsGrid.setColumnWidth( _20px,  2);
+docsGrid.setColumnWidth( 100,  3);
+docsGrid.setColumnWidth( 50,  4);
+docsGrid.setColumnWidth( 70,  5);
+docsGrid.setColumnWidth( 40,  6);
+docsGrid.setColumnWidth( 40,  7);
+docsGrid.setColumnWidth( 200,  8);
+docsGrid.setColumnWidth( 30,  9);
+docsGrid.setColumnWidth( 20,  10);
+docsGrid.setColumnWidth( 20,  11);
+docsGrid.setColumnWidth( 20,  12);
+docsGrid.setColumnWidth( 20,  13);
+docsGrid.setColumnWidth( 20,  14);
+docsGrid.setColumnWidth( 20,  15);
+docsGrid.setColumnWidth( 20,  16);
+docsGrid.setColumnWidth( 20,  17);
+docsGrid.setColumnWidth( 30,  18);
+docsGrid.setColumnWidth( 30,  19);
+docsGrid.setColumnWidth( 50,  20);
+docsGrid.setColumnWidth( 30,  21);
+docsGrid.setColumnWidth( 30,  22);
+docsGrid.setColumnWidth( 30,  23);
+docsGrid.setColumnWidth( 30,  24);
+docsGrid.setColumnWidth( 30,  25);
+docsGrid.setColumnWidth( 30,  26);
+docsGrid.setColumnWidth( 30,  27);
+docsGrid.setColumnWidth( 30,  28);
+docsGrid.setColumnWidth( 200,  29);
+docsGrid.setColumnWidth( 200,  30);
+docsGrid.setColumnWidth( 200,  31);
+}docsGrid.setCellFormat([html,html,html,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string,string]);
+docsGrid.setColumnIndices([0,1,2,3,4,5,6,7,8,9]);
+docsGrid.setColumnCount(10);
+
+ASSAI.customizeGridColumns(docsGrid, columns, 'apply');
+
+function resizeColumns(fWidth)
+{
+ var totalColumnsWidth = 1705;
+ var fixedColumnsWidth = 1405;
+ var dynamColumnsWidth = 315;
+
+	docsGrid.setColumnWidth((fWidth-fixedColumnsWidth)*(100/dynamColumnsWidth),3);
+	docsGrid.setColumnWidth((fWidth-fixedColumnsWidth)*(200/dynamColumnsWidth),8);
+
+}
+function downloadFile(row)
+{
+  if (myCells[row][fileColumnIndex] != '')
+  {
+    var pkColumnIndex = getPkColumnIndex();
+    var entt_seq_nr = getListEntitySeqNr();
+    var proj_seq_nr = getCellText('PROJ_SEQ_NR', row);
+    var clas_seq_nr = getCellText('CLAS_SEQ_NR', row);
+    var fils_seq_nr = getCellText('FILS_SEQ_NR', row);
+    var pk_seq_nr;
+	 if (  typeof columnsFile != "undefined" 
+	    && (  columnsFile == "pack_tab_rev_docs"
+          || columnsFile == "pack_tab_pack_docs"
+          || columnsFile == "trns_tab_documents"
+          || columnsFile == "trns_tab_documents_outstanding"
+          || columnsFile == "transmitted_document_tab_reference_docs"
+          || columnsFile == "pack_tab_planning"
+          || columnsFile == "puor_tab_documents"
+          || columnsFile == "eqpm_tab_design"
+          || columnsFile == "docs_tab_compound"
+          || columnsFile == "milestone_document_tab"
+          || columnsFile == "wfac_tab_documents_outstanding"
+          || columnsFile == "docs.SearchDocumentsForPackAndFolders"
+          || columnsFile == "asst.SearchDocuments")
+	    )
+	 {
+	 	for (y = 0; y < columns.length; y++)
+	 	{
+			if (columns[y] == "DORE_SEQ_NR")
+			{
+				pkColumnIndex = y;
+				
+			}
+		}
+	 }
+    if (pkColumnIndex != -1)
+    {
+      pk_seq_nr = myCells[row][pkColumnIndex];
+    }
+    else
+    {
+      if (getCellText('RCPT_PATH', row))
+      {
+        pk_seq_nr = getCellText('RCPT_SEQ_NR', row)
+        entt_seq_nr = getCellText('ENTT_SEQ_NR_RCPT', row)
+      }
+      else if (getCellText('TRNS_INT_PATH', row))
+      {
+        pk_seq_nr = getCellText('TRNS_SEQ_NR_INT', row)
+        entt_seq_nr = getCellText('ENTT_SEQ_NR_TRNS', row)
+      }
+      else if (getCellText('TRNS_EXT_PATH', row))
+      {
+        pk_seq_nr = getCellText('TRNS_SEQ_NR_EXT', row)
+        entt_seq_nr = getCellText('ENTT_SEQ_NR_TRNS', row)
+      }
+    }
+    getAttachment(pk_seq_nr, '',entt_seq_nr, fils_seq_nr);
+  }
+}
+function getCellText(column_name, row)
+{
+    return docsGrid.getCellText(docsGridHeader.getIndexOf(column_name), row);
+}
+</script>
+<script type="text/javascript" src="js/standard_result.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<script>
+
+
+
+var CtxMenu01;
+function buildCtxMenu01()
+{
+    CtxMenu01 = new ASSAI.CORE.CONTEXTMENU();
+    if (document.getElementById('post_action'))
+    {
+        return;
+    }
+    CtxMenu01.addItem('download_published', 'ContextMenuActions.DOCS.DownloadPublished()', 'Download published file', 'false', 'true');
+    CtxMenu01.addItem('download_source', 'ContextMenuActions.DOCS.DownloadSource()', 'Download source file', 'false', 'true');
+    CtxMenu01.addItem('download_other_file', 'ContextMenuActions.DOCS.DownloadOther()', 'Download other files', 'false', 'true');
+    CtxMenu01.addItem('download_comments', 'ContextMenuActions.DOCS.DownloadCommentFiles()', 'Download comment files', 'false', 'true');
+    CtxMenu01.addItem('download_redline', 'ContextMenuActions.DOCS.DownloadRedlineMarkups()', 'Download redline files', 'false', 'true');
+    CtxMenu01.addItem('print_published', 'ContextMenuActions.DOCS.PrintPublished()', 'Print published', 'false', 'true');
+    CtxMenu01.addItem('redline', 'ContextMenuActions.DOCS.openInViewer()', 'Open with redline tool', 'false', 'true');
+    CtxMenu01.addItem('upload_redline_markup', 'ContextMenuActions.DOCS.uploadRedlineMarkup()', 'Upload redline markup', 'false', 'true');
+    CtxMenu01.addItem('versions', 'ContextMenuActions.DOCS.showVersions()', 'Revision details', 'false', 'true');
+    CtxMenu01.addItem('access_history', 'ContextMenuActions.DOCS.showAccessHistory()', 'Access history', 'false', 'true');
+    CtxMenu01.addItem('monitor', 'ContextMenuActions.DOCS.showMonitor()', 'Monitor', 'false', 'false');
+    CtxMenu01.addRule();
+    CtxMenu01.addItem('add_favourite', 'ContextMenuActions.DOCS.addFavourite()', 'Add to favourites', 'false', 'true');
+    CtxMenu01.addItem('check_in_out', 'ContextMenuActions.dummy()', 'Check out', 'false', 'true');
+    CtxMenu01.addItem('mark_as_unread', 'createMail()', 'E-mail', 'false', 'true');
+    CtxMenu01.addItem('direct_link', 'directLinkDemo()', 'Direct link', 'false', 'true');
+    CtxMenu01.addItem('superseded_by', 'ContextMenuActions.DOCS.showSupersededDocs()', 'Superseded by', 'false', 'true');
+    CtxMenu01.itemEnableFunction = function CtxMenu01EnableFunction()
+{
+    var menu = CtxMenu01;
+    var row = menu.getSelectedRow();
+    if(row == null)
+    {//disable all options not concerning a row
+        menu.disableRowItems();
+    }
+    else if ( myCells.length > 0)
+    {//enable file options
+        menu.enableRowItems();
+        if( (myCells[row][fileColumnIndex] && myCells[row][fileColumnIndex] != "") || 
+        	((myCells[row][publicationFileColumnIndex] && myCells[row][publicationFileColumnIndex] != "") && 
+        	(myCells[row][markupAcceptanceColumnIndex] && myCells[row][markupAcceptanceColumnIndex] != "")))
+        {
+        	menu.enableItem('download_published');        	
+        	menu.enableItem('download_comments');
+        	menu.enableItem('download_redline');
+        	menu.enableItem('download_other_file');
+        	menu.enableItem('upload_redline_markup');
+        	menu.enableItem('print_published');
+        	menu.enableItem('redline');
+        	menu.enableItem('versions');
+        	menu.enableItem('access_history');
+        	var brava_frm=document.getElementById("brava_frm");
+        	if(brava_frm==null)
+            {
+                brava_frm=parent.document.getElementById("brava_frm");
+            }                
+            if(brava_frm!=null && brava_frm.pk_seq_nr.value!="")
+            {                 
+                menu.enableItem('brava_compare');
+            }
+            else
+            {                    
+                menu.disableItem('brava_compare');
+            }
+        }
+        //else if( myCells[row][infoColumnIndex]=="<img src='img/spacer.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'>")
+        //{      
+        //  menu.enableNotSharedDocumentItems();      
+        //}
+        else
+        {
+        	menu.disableItem('download_published');
+        	menu.disableItem('download_source');
+        	menu.disableItem('download_comments');
+        	menu.disableItem('download_other_file');
+        	menu.disableItem('download_redline');
+        	menu.disableItem('print_published');
+        	menu.disableItem('upload_redline_markup');
+        	menu.disableItem('redline');
+            menu.disableItem('brava_compare');
+        	//menu.disableItem('versions');
+        	menu.disableItem('access_history');
+            menu.disableItem('open_for_notes');
+            menu.disableItem('consolidate_notes');
+        } 
+        if(menu.hasItem('download_source') && docsGrid.getCellText(docsGridHeader.getIndexOf("SHARED_IND"), row ) != "Y")
+        {	        	
+	        	var pk_seq_nr_value = docsGrid.getCellText(docsGridHeader.getIndexOf("DORE_SEQ_NR"), row) ;
+	        	try
+	        	{
+		        	var entity_code_value = getEntityCode();
+		        	if('CORR' == entity_code_value || 'TQRY' == entity_code_value)
+		        	{
+		        		pk_seq_nr_value = docsGrid.getCellText(docsGridHeader.getIndexOf("PK_SEQ_NR"), row);
+		        	}	   
+	        	}
+	        	catch(ignore)
+				{
+				}
+	        	DWRBean.hasSourceFile(pk_seq_nr_value,getListEntitySeqNr(), function (msg) {
+	        				if(msg=="true")
+	                        {
+				        		menu.enableItem('download_source');
+				        	}
+				        	else
+				        	{
+				        		menu.disableItem('download_source');
+				        	}
+	        	});
+	    }
+	    if(menu.hasItem('download_other_file') && docsGrid.getCellText(docsGridHeader.getIndexOf("SHARED_IND"), row ) != "Y")
+                {
+        	        	var pk_seq_nr_value = docsGrid.getCellText(docsGridHeader.getIndexOf("DORE_SEQ_NR"), row) ;
+        	        	try
+        	        	{
+        		        	var entity_code_value = getEntityCode();
+        		        	if('CORR' == entity_code_value || 'TQRY' == entity_code_value)
+        		        	{
+        		        		pk_seq_nr_value = docsGrid.getCellText(docsGridHeader.getIndexOf("PK_SEQ_NR"), row);
+        		        	}
+        	        	}
+        	        	catch(ignore)
+        				{
+        				}
+        	        	DWRBean.hasOtherFile(pk_seq_nr_value,getListEntitySeqNr(), function (msg) {
+        	        				if(msg=="true")
+        	                        {
+        				        		menu.enableItem('download_other_file');
+        				        	}
+        				        	else
+        				        	{
+        				        		menu.disableItem('download_other_file');
+        				        	}
+        	        	});
+        	    }
+	           
+        if(menu.hasItem('download_redline') && docsGrid.getCellText(docsGridHeader.getIndexOf("SHARED_IND"), row ) != "Y")
+        {	        	
+        	var dore_seq_nr = docsGrid.getCellText(docsGridHeader.getIndexOf("DORE_SEQ_NR"), row) ;
+        	DWRBean.hasRedlineMarkupFile(dore_seq_nr, function (result) {
+				if(result == "Y") {
+	        		menu.enableItem('download_redline');
+	        	} else {
+	        		menu.disableItem('download_redline');
+	        	}
+        	});
+	    }
+	           
+        if(menu.hasItem('upload_redline_markup') && docsGrid.getCellText(docsGridHeader.getIndexOf("SHARED_IND"), row ) != "Y")
+        {	        	
+        	var dore_seq_nr = docsGrid.getCellText(docsGridHeader.getIndexOf("DORE_SEQ_NR"), row) ;
+        	if (typeof dore_seq_nr !== "undefined" && dore_seq_nr !== "-999") {
+        	   menu.enableItem('upload_redline_markup');
+        	} else {
+              	menu.disableItem('upload_redline_markup');
+        	}
+	    } 
+	    
+	    if(menu.hasItem('download_comments') && docsGrid.getCellText(docsGridHeader.getIndexOf("SHARED_IND"), row ) != "Y")
+        {	        	
+        	var dore_seq_nr = docsGrid.getCellText(docsGridHeader.getIndexOf("DORE_SEQ_NR"), row) ;
+        	DWRBean.hasCommentFile(dore_seq_nr, function (result) {
+				if(result == "Y") {
+	        		menu.enableItem('download_comments');
+	        	} else {
+	        		menu.disableItem('download_comments');
+	        	}
+        	});
+	    }
+
+        console.log('menu.hasItem(\'redline\'): ' + menu.hasItem('redline'));
+	    if(menu.hasItem('redline') && docsGrid.getCellText(docsGridHeader.getIndexOf("SHARED_IND"), row ) != "Y")
+        {
+        	var dore_seq_nr = docsGrid.getCellText(docsGridHeader.getIndexOf("DORE_SEQ_NR"), row) ;
+        	DWRBean.hasRedlineSuportedFile(dore_seq_nr, function (result) {
+				if(result == "Y") {
+	        		menu.enableItem('redline');
+	        	} else {
+	        		menu.disableItem('redline');
+	        	}
+        	});
+	    }
+	}
+    else
+    {//disable file options
+        menu.enableRowItems();
+        menu.disableItem('download_published');
+        menu.disableItem('download_source');
+      	menu.disableItem('download_comments');
+      	menu.disableItem('download_other_file');
+      	menu.disableItem('download_redline');
+      	menu.disableItem('upload_redline_markup');
+        menu.disableItem('print_published');
+        menu.disableItem('redline');
+        menu.disableItem('versions');
+        menu.disableItem('access_history');
+    }   
+    if(docsGrid.getCellText(docsGridHeader.getIndexOf("SHARED_IND"), row ) == "Y")
+    {//this is a shared document. Disable most options    
+    	menu.enableSharedDocumentItems();
+    }
+
+     if (typeof columnsFile != "undefined" && columnsFile == 'pack_tab_rev_docs' && row)
+     {
+        var isSharedPackage = parent.document.getElementById("PACKAGE_IS_SHARED").value;
+        var isSharedDocument = docsGrid.getCellText(docsGridHeader.getIndexOf("SHARED_IND"), row );
+
+        if (isSharedPackage == 'Y' && isSharedDocument == 'N')
+        {
+            menu.disableContextMenu();
+            return;
+        }
+     }
+
+}
+
+if (  typeof columnsFile != "undefined" && (columnsFile == "transmitted_document_tab_transmittal_recipients" || columnsFile == "tab_trans_recipients"))
+{
+   if (typeof responsible_engineer_ind != "undefined" && responsible_engineer_ind != "Y")
+   {
+     CtxMenu01.disableContextMenu();
+   }
+   else if (parent && parent.finishedFlag && parent.finishedFlag == "true")
+   {
+     CtxMenu01.disableContextMenu();
+   }
+};
+    CtxMenu01.display();
+}
+
+
+/*
+ *  Set order direction indicator in the grid header
+ */
+function setOrderByIndicator()
+{
+    var order_direction;
+    if (!document.paging_form)
+    {
+        return;
+    }
+    if (!document.paging_form.order_by_index)
+    {
+        return;
+    }
+    if (!document.paging_form.order_direction)
+    {
+        return;
+    }
+    var order_by_index = document.paging_form.order_by_index.value;
+    if (order_by_index)
+    {
+        order_direction = document.paging_form.order_direction.value;
+        if (order_direction == "asc")
+        {
+            docsGrid.setSortColumn(order_by_index);
+            docsGrid.setSortDirection('descending', order_by_index);
+        }
+        else if (order_direction == "desc")
+        {
+            docsGrid.setSortColumn(order_by_index);
+            docsGrid.setSortDirection('ascending', order_by_index);
+        }
+    }
+}
+
+function refreshPageMenu()
+{
+    var ifPageMenu;
+    var switchedProject = 'N';
+    if (switchedProject == 'Y')
+    {
+        ifPageMenu = parent.document.getElementById('pagemenu');
+        ifPageMenu.src = ifPageMenu.src;
+    }
+    setOrderByIndicator();
+    if(opener != null && typeof opener != 'undefined' && typeof opener.newPageIsLoaded == 'number')
+    {
+        opener.newPageIsLoaded = 1;
+    }
+}
+
+// Get comma separated list of selected key values
+function getSelectedKeys(columnName){
+    var selection = '';
+    var i;
+    for (i = 0; i < myCells.length; i++)
+    {
+        if (docsGrid.getCellValue(selectRowsIndex, i))
+        {
+            if (selection != '')
+            {
+                selection += ',';
+            }
+            selection += docsGrid.getCellText(docsGridHeader.getIndexOf(columnName), i);
+        }
+    }
+    return selection;
+}
+
+// Get delimiter separated list of selected key values, this is for when there is a comma in the full_nr
+function getDelimitedKeys(columnName, delimiter){
+    var selection = '';
+    var i;
+    for (i = 0; i < myCells.length; i++)
+    {
+        if (docsGrid.getCellValue(selectRowsIndex, i))
+        {
+            if (selection != '')
+            {
+                selection += delimiter;
+            }
+            selection += docsGrid.getCellText(docsGridHeader.getIndexOf(columnName), i);
+        }
+    }
+    return selection;
+}
+
+// Refresh the target window that initiated the post search action, show DWR message if available
+function refreshPostActionTarget(data, selectionParam)
+{
+    var extraParam = '';
+    var post_action = '';
+    var post_action_target = '';
+    var post_action_url = '';
+    var msg = data.toString();
+    if (msg)
+    {
+        alert(msg);
+    }
+
+    if (post_action_target == '_top')
+    {
+        var topWin = window.open('', 'content_d2OEXESd7Xw96wCb');
+        if (topWin)
+        {
+            topWin.location = post_action_url;
+
+        }
+        window.close();
+        return;
+    }
+
+    if (post_action_target == 'explorerWindow' || post_action_target == 'assetExplorerWindow')
+    {
+        var topWin = window.open('', post_action_target);
+        if (topWin)
+        {
+            topWin.location = post_action_url;
+
+        }
+        window.close();
+        return;
+    }
+    // Open target window and check if the global variable is available from the originator
+    var targetWin = window.open('', post_action_target);
+    if ((targetWin.globalWindowIdentifier && targetWin.globalWindowIdentifier == post_action) || targetWin.name == post_action_target)
+    {
+        if (selectionParam)
+        {
+            extraParam = selectionParam;
+        }
+        window.open(post_action_url + extraParam, post_action_target);
+    }
+    else
+    {
+        // If the other window just opened is empty then close it
+        if (targetWin.document.getElementsByTagName("body")[0].childNodes.length == 0)
+        {
+            targetWin.close();
+        }
+    }
+    window.close();
+}
+// Refine search for Aseet and Folder Browser
+function refineSearch()
+{
+    var extraParam = '';
+    var post_action = '';
+    var post_action_target = '';
+    var post_action_url = '';
+    var post_action_prompt = '';
+    var subclass_type = 'DES_DOC';
+    
+    var node_type = 'null';
+    var node_seq_nr = 'null';
+    var asst_seq_nr = "";
+    var asit_seq_nr = "";
+    var package_code_add = "";
+    var sUrl = 'search.aweb?';
+    sUrl += 'subclass_type=' + subclass_type;
+    sUrl += '&search_type=default';
+    sUrl += '&window=search';
+    sUrl += '&post_action_target=' + post_action_target;
+    sUrl += '&post_action_prompt=' + post_action_prompt;
+    sUrl += '&post_action=' + post_action;
+    sUrl += '&window=search';
+    sUrl += '&search_type=default';
+    if(node_type != null && node_type != "null" && (node_type == 'asset' || node_type == 'package' || node_type == 'folder'))
+    {
+        sUrl += '&node_seq_nr=' + node_seq_nr;
+        sUrl += '&node_type=' + node_type;
+
+
+        sUrl += '&post_action_target=_top';
+        if(node_type == 'asset')
+        {
+            sUrl += '&asst_seq_nr=null';
+            sUrl += '&asit_seq_nr=null';
+        }
+        if(node_type == 'package')
+        {
+            sUrl += '&package_code_add=null';
+            sUrl += '&default_sketch_prefix=';
+            sUrl += '&pcopy_to_pare_seq_nr=null';
+        }
+    }
+    if(post_action != null && (post_action == 'add_doc_to_package' || post_action == 'add_corr_to_package' || post_action == 'add_qry_to_package'))
+    {
+        sUrl += '&package_code_add=null';
+        if(subclass_type != null && (subclass_type == "DES_DOC" || subclass_type == "SUP_DOC"))
+        {
+        	sUrl += '&default_sketch_prefix=';
+            sUrl += '&pcopy_to_pare_seq_nr=null';
+        }
+    }
+    if(post_action != null && (post_action == 'add_doc_to_work_package' || post_action == 'add_doc_to_work_package_document_level' || post_action == 'add_pack_to_work_package' || post_action == 'add_corr_to_workpackage' || post_action == 'add_qry_to_workpackage'))
+    {
+        sUrl += '&work_package_code_add=null';
+    }
+    if(post_action != null && (post_action == 'add_doc_to_milestone'))
+    {
+        sUrl += '&milestone_code_add=null';
+    }    
+    if(post_action != null && post_action == 'add_linked_objects')
+    {
+        var linked_corr_seq_nr = null;
+        if(linked_corr_seq_nr != null && linked_corr_seq_nr !='')
+        {
+            sUrl += '&linked_corr_seq_nr='+linked_corr_seq_nr;
+        }
+        var linked_docs_seq_nr = null;
+        if(linked_docs_seq_nr != null && linked_docs_seq_nr !='')
+        {
+            sUrl += '&linked_docs_seq_nr='+linked_docs_seq_nr;
+        }
+        var linked_dore_seq_nr = null;
+        if(linked_dore_seq_nr != null && linked_dore_seq_nr !='')
+        {
+            sUrl += '&linked_dore_seq_nr='+linked_dore_seq_nr;
+        }
+    }
+
+    sUrl += '&post_action_url=' + escape(post_action_url);
+    window.open(sUrl,'searchdocs','width=570, height=700,left=10, top=10, resizeable=1,scrollbars=1,status=no');
+    //window.close();
+}
+// Excecute a specified post action on selected result records
+function submitPostAction()
+{
+    var post_action = '';
+    var post_action_url = '';
+    var selection = '';
+    var sketch_prefix = '';
+    var pcopy_to_pare_seq_nr = '';
+    var proj_seq_nr = '59734';
+    var clas_seq_nr = '1';
+
+    try
+    {
+        if (post_action == 'add_favourites')
+        {
+            selection = getSelectedKeys('DOCS_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                refreshPostActionTarget('', '&favourite_selection=' + selection);
+            }
+        }
+        else if (post_action == 'add_doc_to_package')
+        {
+            selection = getSelectedKeys('DORE_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else if (sketch_prefix && document.getElementById("sketch_prefix").value === '')
+            {
+                alert(Label.getLabel("sketch_prefix_is_mandatory"));
+                document.getElementById("sketch_prefix").focus();
+            }	
+            else
+            {
+                // First check for existing sketches
+                var spinner = document.createElement("div");
+				spinner.setAttribute("id", "content-busy-indicator");
+				
+                if (sketch_prefix)
+                {
+                    DWRBean.checkExistingSketch(selection, proj_seq_nr, clas_seq_nr, function (msg) {
+                        var addDocs = true;
+                        if (msg && !confirm(msg))
+                        {
+                            addDocs = false;
+                        }
+                        if (addDocs)
+                        {
+                            sketch_prefix = document.getElementById("sketch_prefix").value;
+                            DWRBean.addDocumentsToPackage(post_action_url + "&sketch_prefix=" + sketch_prefix + "&pcopy_to_pare_seq_nr=" + pcopy_to_pare_seq_nr, selection, document.getElementById("latest_revision").checked, refreshPostActionTarget);
+                            document.getElementById("submitbutton").style.visibility="hidden";
+                            document.body.appendChild(spinner);
+                        }
+                    } );
+                }
+                else
+                {
+                    sketch_prefix = document.getElementById("sketch_prefix").value;
+                    DWRBean.addDocumentsToPackage(post_action_url + "&sketch_prefix=" + sketch_prefix + "&pcopy_to_pare_seq_nr=" + pcopy_to_pare_seq_nr, selection, document.getElementById("latest_revision").checked ,refreshPostActionTarget);
+                    document.getElementById("submitbutton").style.visibility="hidden";
+                    document.body.appendChild(spinner);
+                }
+            }
+        }
+        else if (post_action == 'add_documents_only_to_package')
+        {
+            selection = getSelectedKeys('DOCS_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addDocumentsOnlyToPackage(post_action_url, selection, refreshPostActionTarget);
+            }
+        }
+        else if (post_action == 'add_documents_only_to_folder')
+        {
+            selection = getSelectedKeys('DOCS_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addDocumentsOnlyToFolder(post_action_url, selection, refreshPostActionTarget);
+            }
+        }
+        else if (post_action == 'add_documents_only_to_asset' || post_action == 'add_documents_only_to_equipment')
+        {
+            selection = getSelectedKeys('DOCS_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addDocumentsOnlyToAssetItem(post_action_url, selection, refreshPostActionTarget);
+            }
+        }
+        else if (post_action == 'add_corr_only_to_asset')
+        {
+            selection = getSelectedKeys('CORR_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addCorrOnlyToAssetItem(post_action_url, selection, refreshPostActionTarget);
+            }
+        }
+        else if (post_action == 'add_qry_only_to_asset')
+        {
+            selection = getSelectedKeys('TQRY_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addCorrOnlyToAssetItem(post_action_url, selection, refreshPostActionTarget);
+            }
+        }
+        else if (post_action == 'add_qry_to_package')
+        {
+            selection = getSelectedKeys('TQRY_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addQueriesToPackage(post_action_url, selection, refreshPostActionTarget);
+            }
+        }
+        else if (post_action == 'add_qry_only_to_package')
+        {
+            selection = getSelectedKeys('TQRY_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addCorrespondenceOnlyToPackage(post_action_url, selection, refreshPostActionTarget);
+            }
+        }
+        else if (post_action == 'add_qry_only_to_folder')
+        {
+            selection = getSelectedKeys('TQRY_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addCorrespondenceOnlyToFolder(post_action_url, selection, refreshPostActionTarget);
+            }
+        }
+        else if (post_action == 'add_corr_to_package')
+        {
+            selection = getSelectedKeys('CORR_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addQueriesToPackage(post_action_url, selection, refreshPostActionTarget);
+            }
+        }
+        else if (post_action == 'add_corr_only_to_package')
+        {
+            selection = getSelectedKeys('CORR_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addCorrespondenceOnlyToPackage(post_action_url, selection, refreshPostActionTarget);
+            }
+        }
+        else if (post_action == 'add_corr_only_to_folder')
+        {
+            selection = getSelectedKeys('CORR_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addCorrespondenceOnlyToFolder(post_action_url, selection, refreshPostActionTarget);
+            }
+        }
+        else if (post_action == 'add_xref')
+        {
+            selection = getSelectedKeys('DOCS_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            if(selection.indexOf(',')>0)
+            {
+                alert(Label.getLabel("single_selection"));
+            }
+            else
+            {
+                //new revision
+                var theForm = toModifyWindow.document.uploadform;
+                var lovForm = toModifyWindow.document.lov_frm;
+                if(!theForm)
+                {//new document
+                    theForm = toModifyWindow.document.full_nr;
+                    lovForm = toModifyWindow.document.lov_frm_pagepart;
+                }
+                theForm.main_document.value=getSelectedKeys("Document nr.");
+                theForm.main_document_description.value=getSelectedKeys("Title");
+                theForm.main_revision.value=getSelectedKeys("Rev.");
+                theForm.main_revision_description.value=getSelectedKeys("Rev.");
+                lovForm.main_document.value=getSelectedKeys("Document nr.");
+                window.close();
+            }
+        }
+        else if (post_action == 'add_linked_objects')
+        {
+            
+            if (linked_objects == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                var current_type        = getEntityCode();
+                if(post_action_url && post_action_url.indexOf('=') > 0 && post_action_url.length > 28)
+                {
+                    current_type = post_action_url.substring(post_action_url.indexOf('=')+1,26);
+                }
+                if(current_type == "DORE")
+                {
+                    current_type = "DOCS";
+                }
+                if(post_action_url && post_action_url.indexOf("isDore") > 0)
+                {
+                    //linked_objects = getSelectedKeys('DORE_SEQ_NR');
+                    //linked_objects = getSelectedKeys(Label.getLabel("document_nr"))+" "+getSelectedKeys(Label.getLabel("rev"));
+                    // do customized selection of "<DOCUMENT_NR> <REVISION>"
+                    var selection = '';
+                    var i;
+                    for (i = 0; i < myCells.length; i++)
+                    {
+                        if (docsGrid.getCellValue(selectRowsIndex, i))
+                        {
+                            if (selection != '')
+                            {
+                                selection += ';';
+                            }
+                            selection += docsGrid.getCellText(docsGridHeader.getIndexOf(Label.getLabel("document_nr")), i)+" Rev.: "+docsGrid.getCellText(docsGridHeader.getIndexOf(Label.getLabel("rev")), i);
+                        }
+                    }
+                    linked_objects=selection;
+                    object_type = 'DORE';
+                }
+                var current_pkey        = current_type + ("000000000").substring(0,9-pk_seq_nr.length) + pk_seq_nr;
+                //var object_type         = getEntityCode();
+
+                var parchi_opts         = document.getElementById("parent_child").options;
+                var parent_child        = parchi_opts[parchi_opts.selectedIndex].value;
+                var relation_opts       = document.getElementById("relationship").options;
+                var relation            = relation_opts[relation_opts.selectedIndex].value;
+
+                var remarks             = document.getElementById("remarks").value;
+                var proj_seq_nr         = getSelectedKeys('PROJ_SEQ_NR')
+                var clas_seq_nr         = getSelectedKeys('CLAS_SEQ_NR')
+                DWRBean.addLinkedObject(linked_objects
+                        ,current_type
+                        , current_pkey
+                        , object_type
+                        ,parent_child
+                        ,relation,remarks
+                        , clas_seq_nr
+                        , proj_seq_nr
+                        , function(data)
+                        {
+                            if (data=="")
+                            {
+                                alert("Object linked and saved");refreshPostActionTarget('','');
+                            }
+                            else
+                            {
+                                alert(data);
+                            }
+                        });
+            }
+        }
+        else if (post_action == 'add_reference_docs')
+        {
+            // TODO
+            selection = getSelectedKeys('DORE_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                var proj_seq_nr         = getSelectedKeys('PROJ_SEQ_NR');
+                var clas_seq_nr         = getSelectedKeys('CLAS_SEQ_NR');
+                var dore_seq_nr         = getSelectedKeys('DORE_SEQ_NR');
+                
+
+                DWRBean.addReferenceDocToComment(
+                        post_action_url
+                        , selection
+                        , proj_seq_nr
+                        , clas_seq_nr
+                        , cmnt_seq_nr
+                        , function(data)
+                        {
+                            if (data=="")
+                            {
+                                alert("Reference document linked and saved");refreshPostActionTarget('','');
+                            }
+                            else
+                            {
+                                alert(data);
+                            }
+                        });
+            }
+        }
+        else if (post_action == 'add_doc_to_work_package')
+        {
+            selection = getSelectedKeys('DOCS_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addDocumentsToWorkPackage(post_action_url, selection, refreshPostActionTarget);
+            }
+        }
+        else if (post_action == 'add_doc_to_work_package_document_level')
+        {
+            selection = getSelectedKeys('DOCS_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addDocumentsToWorkPackageDocumentLevel(post_action_url, selection, refreshPostActionTarget);
+            }
+        }        
+        else if (post_action == 'add_pack_to_work_package')
+        {
+            selection = getSelectedKeys('PK_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addPackagesToWorkPackage(post_action_url, selection, refreshPostActionTarget);
+            }
+        }
+        else if (post_action == 'add_doc_to_milestone')
+        {
+            selection = getSelectedKeys('DOCS_SEQ_NR');
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+                DWRBean.addDocumentsToMilestone(post_action_url, selection, refreshPostActionTarget);
+            }
+        }
+        else if (post_action == 'add_corr_to_workpackage' || post_action == 'add_qry_to_workpackage')
+        {
+        	if(post_action == 'add_qry_to_workpackage') {
+            	selection = getSelectedKeys('TQRY_SEQ_NR');
+        	} else {
+            	selection = getSelectedKeys('CORR_SEQ_NR');
+        	}
+            if (selection == '')
+            {
+                alert(Label.getLabel("no_selection"));
+            }
+            else
+            {
+            	 DWRBean.addCorrespondencesToWorkPackage(post_action_url, selection,{
+                     async: false,
+                     callback: refreshPostActionTarget
+                });
+            }
+        }
+    }
+    catch(e)
+    {
+        alert("E:130 "+e);
+    }
+}
+// Refresh the page after adding the favourite selection, but prevent dialog to popup again
+function refreshPage()
+{
+    var href = location.href.replace('favourite_selection','favourite_done');
+    location.replace(href);
+}
+
+// If documents were selected to add to favourites then popup a dialog to apply to all selected documents
+function handleFavouriteSelection()
+{
+    var favourite_selection = '';
+    if (favourite_selection)
+    {
+        DWRBean.getUserFavourite("NULL", "NULL", "NULL"
+                , function(notify)
+                {
+                    setContextUserFavourite(notify);
+                    addToFavourite(null, favourite_selection, refreshPage);
+                }
+        );
+    }
+}
+
+</script>
+<title>Search results</title>
+</head>
+<body onLoad="refreshPageMenu();getRowCount();buildCtxMenu01('DES_DOC');resizeGrid(docsGrid);" onClick="CtxMenu01.hide();" SCROLL="NO">
+
+<table width="100%">
+    <tr>
+        <td>
+            <button id="previousPageButton" disabled style="padding-top:0px;font-size:10px;border-style:solid;border-color:gray;border-width:1px;width:140px;height:20px;background-image:url(img/buttons/previouspage_off.gif);background-position: -10px" type="button" onClick="browse('previous');" onmouseover="this.style.backgroundImage='url(img/buttons/previouspage_on.gif)';" onmouseout="this.style.backgroundImage='url(img/buttons/previouspage_off.gif)';">
+                Previous page
+            </button>
+        </td>
+        <td id="rowCountCell" style="white-space:nowrap; overflow:hidden; font-weight:bold ">Showing results 1 to 1 of <count></count> records in 0.0 seconds.</td>
+        <td>
+            <button id="nextPageButton" disabled style="padding-top:0px;font-size:10px;border-style:solid;border-color:gray;border-width:1px;width:135px;height:20px;background-image:url(img/buttons/nextpage_off.gif);background-position: 145px" type="button" onClick="browse('next');" onmouseover="this.style.backgroundImage='url(img/buttons/nextpage_on.gif)';" onmouseout="this.style.backgroundImage='url(img/buttons/nextpage_off.gif)';">
+                Next page
+            </button>
+        </td>
+        <td>
+            <script>document.write(NDOCButton)</script>
+            <button style="padding-top:0px;font-size:10px;border-style:solid;border-color:gray;border-width:1px;width:150px;height:20px;background-image:url(img/buttons/currentpage_off.gif);background-position: 165px" type="button" onClick="browse('current');" onmouseover="this.style.backgroundImage='url(img/buttons/currentpage_on.gif)';" onmouseout="this.style.backgroundImage='url(img/buttons/currentpage_off.gif)';">
+                Reload page
+            </button>
+        </td>
+        <td>
+            <span onclick="ASSAI.customizeGridColumns(docsGrid, columns, 'edit')"><img class="floatRight" src="img/wrench.png?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" title="Customize"></span>
+        </td>
+        <td>
+            <span onclick="printPageReport()"><img class="floatRight" src="img/print.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" title="Print"/></span>
+        </td>
+        <td>
+            <a href="help.aweb?custom=subclass_type,search_type,post_action&post_action=&subclass_type=DES_DOC&search_type=default" target="_blank"><img class="floatRight" src="img/help_button_off.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" title="Help"/></a>
+        </td>
+    </tr>
+</table>
+
+<script>
+    docsGrid.setVirtualMode(docsGrid.getRowCount() > 200 ? true : false);
+    document.write(docsGrid);
+    docsGrid.setSize('1024', '786');
+    refreshDownloadIcons();
+    refreshCheckedOutIndicators();
+    // Handle any selected documents to add to the favourites
+    handleFavouriteSelection();
+</script>
+
+<form name="redlmarkupAcceptancefrm" id="redlmarkupAcceptancefrm"
+	action="details.aweb"
+      method="post"
+target="redlines">
+	<input type="hidden"
+           name="pk_seq_nr">
+    <input type="hidden"
+           name="pobo_seq_nr"
+           value="14719262">
+    <input type="hidden"
+           name="dore_seq_nr">
+    <input type="hidden" name="proj_seq_nr">
+    <input type="hidden" name="selected_proj_seq_nrs" />
+    <input type="hidden"
+           name="clas_seq_nr">
+    <input type="hidden"
+           name="img_icon">
+    <input type="hidden"
+           name="mufi_seq_nr">
+    <input type="hidden" name="entity_code"   value="REDL_MARKUP_DOC_ACCEPTANCE"/>
+</form>
+<form name="commentsfrm" id="commentsfrm"
+      action="details.aweb"
+      method="post"
+      target="Comments">
+    <input type="hidden"
+           name="pk_seq_nr">
+    <input type="hidden"
+           name="docs_seq_nr">
+    <input type="hidden"
+           name="pobo_seq_nr"
+           value="14719262">
+    <input type="hidden"
+           name="dore_seq_nr">
+    <input type="hidden" name="proj_seq_nr">
+    <input type="hidden" name="selected_proj_seq_nrs" />
+    <input type="hidden"
+           name="clas_seq_nr">
+    <input type="hidden"
+           name="trdr_seq_nr">
+    <input type="hidden"
+           name="trdo_seq_nr">
+    <input type="hidden"
+           name="cmnt_seq_nr">
+    <input type="hidden"
+           name="img_icon">
+    <!-- <input type="hidden"
+           name="replace"
+           value="usr_dore/form_comments_docs.psql"> -->
+    <input type="hidden" name="entity_code"   value="TRNS_DOC_COMMENTS"/>
+</form>
+<form name="paging_form" action="result.aweb" method="post">
+    <input type="hidden" name="selected_proj_seq_nrs" value="59734" />
+    <input type="hidden" name="clas_seq_nr"           value="1"/>
+    <input type="hidden" name="proj_seq_nr"           value="59734"/>
+    <input type="hidden" name="order_by"              value="1"/>
+    <input type="hidden" name="searchBean"            value="docs.SearchDocuments"/>
+    <input type="hidden" name="subclass_type"         value="DES_DOC"/>
+    <input type="hidden" name="sucl_seq_nr"           value="null"/>
+    <input type="hidden" name="entity_code"           value="DORE"/>
+    <input type="hidden" name="search_type"           value="default"/>
+    <input type="hidden" name="order_by_index"        value=""/>
+    <input type="hidden" name="order_direction"       value="asc"/>
+    
+    <input type="hidden" name="actualResults"         value="1"/>
+    <input type="hidden" name="number"                value="6529-BGC-C033-ISGP-G00000-AA-8203-00001">
+    <input type="hidden" name="number_regex"          value="">
+    <input type="hidden" name="use_number_regex"      value="">
+    <input type="hidden" name="exclude_regex"         value="">
+    <input type="hidden" name="use_exclude_regex"     value="">
+    <input type="hidden" id="pobo_seq_nr" name="pobo_seq_nr" value="14719262">
+    <input type="hidden" name="archive"               value="">
+    <input type="hidden" name="use_free_text_ind"     value="">
+    <input type="hidden" name="free_text_ind"         value="">
+    <input type="hidden" name="cmpy_seq_nr"           value=""/>
+    <input type="hidden" name="milestone_clas_seq_nr"           value="1"/>
+    
+    <input type="hidden" name="content"           value=""/>
+    
+    <input type="hidden" name="reportType" value="search_results"/>
+    <input type="hidden" name="paging"/>
+    <input type="hidden" name="postactionGetUrl" id="postactionGetUrl" value="https://eu.assaicloud.com/AWeu578/result.aweb?use_coel1_code=--&use_coel2_code=--&clas_seq_nr=1&suty_seq_nr=1&proj_seq_nr=59734&use_discipline_code=--&entity_code=DOCS&use_company_code=--&subclass_type=DES_DOC&start_row=1&searchBean=docs.SearchDocuments&use_suppl_docnr=--&xmlFile=WEB-INF/template/pages/docsSearch.xml&desc_reference_code=Value&use_current_rev=--&use_date=--&use_latest_rev= &selected_project_codes=&number=6529-BGC-C033-ISGP-G00000-AA-8203-00001&revision_code=&revision_code_description=&description=&date_from=&date_before=&codo_company_code=&codo_company_code_description=&codo_document_nr=&key_words=&content=&originator=&resp_engr_seq_nr=&resp_engr_seq_nr_description=&company_code=&company_code_description=&discipline_code=&discipline_code_description=&document_type=&document_type_description=&status_code=&status_code_description=&approval_code=&approval_code_description=&subclass_code=&subclass_code_description=&priority_code=&priority_code_description=&classification_code=&classification_code_description=&language_code=&language_code_description=&transmittal_number=&receipt=&sender_reference=&archive=&package_code=&package_code_description=&work_package_code=&work_package_code_description=&purchase_code=&purchase_code_description=&asset_code=&asset_code_description=&asset_item_code=&asset_item_code_description=&person_code_checked_out=&person_code_checked_out_description=&ce_docs=&characteristics_code=&characteristics_code_description=&reference_code=&coel1_code=&coel1_value=&coel2_code=&coel2_value=&number_of_results=100"/>
+
+    
+</form>
+<form id="brava_frm" method="post" name="brava_frm" action="brava.aweb" target="brava">
+    <input type="hidden" name="pre-view" value="true">
+    <input type="hidden" name="pk_seq_nr" value="">
+    <input type="hidden" name="trdr_seq_nr" value="">
+    <input type="hidden" name="p_entity" value="docs">
+    <input type="hidden" name="entt_seq_nr" value="1">
+    <input type="hidden" name="file_name" value="">
+    <input type="hidden" name="url_path" value="">
+    <input type="hidden" name="revision" value="">
+    <input type="hidden" name="pk_seq_nr_compare" value="">
+    <input type="hidden" name="p_entity_compare" value="docs">
+    <input type="hidden" name="file_name_compare" value="">
+    <input type="hidden" name="url_path_compare" value="">
+    <input type="hidden" name="revision_compare" value="">
+    <input type="hidden" name="search_type" value="default" >
+</form>
+<form name="lov_frm" id="lov_frm" action="lov.aweb">
+    <input type="hidden" name="clas_seq_nr" value=1>
+    <input type="hidden" name="proj_seq_nr" value=59734>
+    <input type="hidden" name="sucl_seq_nr" value=>
+    <input type="hidden" name="element_code">
+    <input type="hidden" name="name_field">
+    <input type="hidden" name="code_field">
+    <input type="hidden" name="dore_seq_nr">
+</form>
+
+<script src="js/custom/docs_asset_tab.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<form name="asst_hier_frm" action="hierarchy.aweb" method="get">
+    <input type="hidden" name="asit_seq_nr"/>
+    <input type="hidden" name="asst_seq_nr"/>
+    <input type="hidden" name="asitcode"/>
+    <input type="hidden" name="referer" value="navigator"/>
+    <input type="hidden" name="parentWndow" value="asset"/>
+</form>
+
+<!-- <iframe name="processframe" src="foo.jsp" width="300px" height="200px"></iframe> -->
+<script type="text/javascript">
+    (function ( $ ) {
+
+        $( document ).ready( function () {
+
+            // Add handler for IE to copy selected cell text to clipboard upon ctrl+c (only needed for ActiveWidgets on IE)
+            if (typeof window.clipboardData != 'undefined')
+            {
+                $(document).keydown(function(e) {
+                    if(e.ctrlKey && e.which == '67' ) {
+                            if (window.status) {
+                                var txt = '' + window.status;
+                                // Copy outside of main thread, otherwise empty
+                                setTimeout(function(){
+                                    try {
+                                        window.clipboardData.setData('text', txt );
+                                    } catch (ignore) { }
+                                },10);
+                            }
+                    }
+                });
+            }
+
+            /**
+             * TODO: this is a temporary fix to add the select checkbox back into the list for select screens.
+             * The checkbox is removed by the result controller for file systems other that ADC and PDC.
+             * But in a select screen the checkbox must be there off course.
+             */
+            function fixSelectCheckBoxOnSelectScreens()
+            {
+                var post_action = document.getElementById('post_action');
+                if (post_action && docsGrid)
+                {
+                    var indices = docsGrid.getColumnIndices();
+                    if (indices[0] != 0)
+                    {
+                        indices.unshift(0);     // At column index 0 to start of array to show the checkbox
+                        docsGrid.setColumnIndices(indices);
+                        docsGrid.setColumnCount(indices.length);
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            if (fixSelectCheckBoxOnSelectScreens())
+            {
+                ASSAI.customizeGridColumns(docsGrid, columns, 'apply');
+            }
+
+        });
+
+    })( jQuery );
+    
+</script>
+<script>
+
+var ldrv_status_descriptions = '{"statuses":[{"code":"L","description":"Loaded"},{"code":"M","description":"Loaded in Portal"},{"code":"R","description":"Rejected"},{"code":"S","description":"Rejected in Portal"},{"code":"T","description":"Rejected by DC"},{"code":"P","description":"Processed"},{"code":"Q","description":"Processed in Portal"},{"code":"V","description":"Review by DC"}]}';
+var ldrv_status_obj = JSON.parse(ldrv_status_descriptions);
+function getLdrvStatusDescriptionOf( code )
+{
+	if (code === 'P') {
+		return Label.getLabel("received");
+	}
+	else {
+	    for ( var i = 0; i < ldrv_status_obj.statuses.length; i++) {
+		    if (ldrv_status_obj.statuses[i].code===code) {
+			    return ldrv_status_obj.statuses[i].description;
+			}
+	    }
+	    return "";
+	}
+}
+
+function setFileIcon(filsSeqNrIndex, iconIndex, row) {
+	var fils_seq_nr_icon = docsGrid.getCellText(filsSeqNrIndex, row);
+	if (fils_seq_nr_icon == null || fils_seq_nr_icon == "") {
+		docsGrid.setCellText("", iconIndex, row)
+	}
+	else {
+		var imgSrc = "src='img/icons/" + fils_seq_nr_icon.substring(fils_seq_nr_icon.indexOf(";")+1).toLowerCase() + ".gif'";
+//		console.log("<img " + imgSrc + ">");
+		docsGrid.setCellText("<img " + imgSrc + ">", iconIndex, row)
+		docsGrid.setCellText(fils_seq_nr_icon.substring(0,fils_seq_nr_icon.indexOf(";")), filsSeqNrIndex, row)
+	}
+}
+
+if (docsGridHeader.getColumnIndexOf("REDL_FILE_STATUS"))
+{
+	var rowCount               = docsGrid.getRowCount();
+	var redl_pub_file_index    = docsGridHeader.getColumnIndexOf("PUBLICATION_FILS_SEQ_NR");
+	var redl_markup_file_index = docsGridHeader.getColumnIndexOf("REDLINE_MARKUP_FILS_SEQ_NR");
+	columns[publicationFileColumnIndex]=Label.getLabel("redl_inbox_publication_file");
+	columns[redlineMarkupFilesColumnIndex]=Label.getLabel("redl_inbox_redline_markup_files");
+    docsGrid.setHeaderText(columns);
+    
+    for (var row = 0; row < rowCount; row++ )
+	{
+    	setFileIcon(redl_pub_file_index, publicationFileColumnIndex, row);
+    	setFileIcon(redl_markup_file_index, redlineMarkupFilesColumnIndex, row);
+    	docsGrid.refresh();
+	}
+}
+
+if (docsGridHeader.getColumnIndexOf("LDRV_STATUS_DESCRIPTION"))
+{
+	
+	var rowCount               = docsGrid.getRowCount();
+	var ldrv_status_index      = docsGridHeader.getColumnIndexOf("LDRV_STATUS");
+	var ldrv_status_desc_index = docsGridHeader.getColumnIndexOf("LDRV_STATUS_DESCRIPTION");
+	var ldrv_status_display_col = ldrv_status_desc_index; 
+	var clnt_source_file_index      = docsGridHeader.getColumnIndexOf("CLNT_SOURCE_FILE");
+	var clnt_publication_file_index = docsGridHeader.getColumnIndexOf("CLNT_PUBLICATION_FILE");
+	var clnt_comments_file_index    = docsGridHeader.getColumnIndexOf("CLNT_COMMENTS_FILE");
+	var clnt_other_file_index       = docsGridHeader.getColumnIndexOf("CLNT_OTHER_FILE");
+	var clnt_redline_markup_file_index       = docsGridHeader.getColumnIndexOf("CLNT_REDLINE_MARKUP_FILE");
+	
+	// fils_seq_nr of ldrv files
+	var ldrv_source_file_index      = docsGridHeader.getColumnIndexOf("SOURCE_FILS_SEQ_NR");
+	var ldrv_publication_file_index = docsGridHeader.getColumnIndexOf("PUBLICATION_FILS_SEQ_NR");
+	var ldrv_comment_file_index    = docsGridHeader.getColumnIndexOf("COMMENT_FILS_SEQ_NR");
+	var ldrv_other_file_index    = docsGridHeader.getColumnIndexOf("OTHER_FILS_SEQ_NR");
+	var ldrv_seq_nr_index      = docsGridHeader.getColumnIndexOf("LDRV_SEQ_NR");
+//	var dore_seq_nr_index      = docsGridHeader.getColumnIndexOf("DORE_SEQ_NR");
+	var ldrv_remarks_index     = docsGridHeader.getColumnIndexOf("LOAD_REMARKS");
+//	var dore_entt_seq_nr       = "1";
+
+    var source_file_ind_index       = docsGridHeader.getColumnIndexOf("SOURCE_FILE_IND");
+    var publication_file_ind_index  = docsGridHeader.getColumnIndexOf("PUBLICATION_FILE_IND");
+    var comments_file_ind_index     = docsGridHeader.getColumnIndexOf("COMMENTS_FILE_IND");
+    var other_file_ind_index        = docsGridHeader.getColumnIndexOf("OTHER_FILE_IND");
+    var redline_markup_file_ind_index        = docsGridHeader.getColumnIndexOf("REDLINE_MARKUP_FILE_IND");
+    
+    // added to place a info icon on this column which opens inc trx detailscreen
+    var rcpt_seq_nr_index = docsGridHeader.getColumnIndexOf("RCPT_SEQ_NR");
+    var inc_trx_info_index = docsGridHeader.getColumnIndexOf("INC_TRX_ICON");
+
+    columns[publicationFileColumnIndex]=Label.getLabel("publication_file");
+    columns[sourceFileColumnIndex]=Label.getLabel("source_file");
+    columns[commentFileColumnIndex]=Label.getLabel("comment_file");
+    columns[otherFilesColumnIndex]=Label.getLabel("other_files");
+    docsGrid.setHeaderText(columns);
+
+	if (typeof clnt_source_file_index == "undefined") 
+		clnt_source_file_index = -1;
+	if (typeof clnt_publication_file_index == "undefined") 
+		clnt_publication_file_index = -1;
+	if (typeof clnt_comments_file_index == "undefined") 
+		clnt_comments_file_index = -1;
+	if (typeof other_file_index == "undefined") 
+		other_file_index = -1;
+	function getStatusBGColor(pLdrStatus, pLdrRemarks) {
+		if (pLdrStatus === "P" || pLdrStatus === "Q")
+		{
+			return "#EC6E09";
+		}
+		else if (pLdrStatus === "R" || pLdrStatus === "S") {
+			// if remarks is empty (network / server error)
+			if (typeof pLdrRemarks != "undefined" && (pLdrRemarks === "" || pLdrRemarks.endsWith("Data processed"))) {
+				return "#EC6E09";
+			}
+			return "red";	
+		}
+	}
+	var trxIcon = "src='img/i.gif'";
+	for (var row = 0; row < rowCount; row++ )
+	{
+		//set icons
+		setFileIcon(ldrv_publication_file_index, publicationFileColumnIndex, row);
+		setFileIcon(ldrv_source_file_index, sourceFileColumnIndex, row);
+		setFileIcon(ldrv_comment_file_index, commentFileColumnIndex, row);
+		setFileIcon(ldrv_other_file_index, otherFilesColumnIndex, row);
+		
+		docsGrid.setCellText("<img " + trxIcon + ">", inc_trx_info_index, row);
+
+//		var fils_seq_nr_icon = docsGrid.getCellText(ldrv_publication_file_index, row);
+//		if (fils_seq_nr_icon == null || fils_seq_nr_icon == "") {
+//			docsGrid.setCellText("", publicationFileColumnIndex, row)
+//		}
+//		else {
+//			docsGrid.setCellText(getFileIcon(fils_seq_nr_icon.substring(fils_seq_nr_icon.indexOf(",")+1)), publicationFileColumnIndex, row)
+//			docsGrid.setCellText(fils_seq_nr_icon.substring(0,fils_seq_nr_icon.indexOf(",")), ldrv_publication_file_index, row)
+//		}
+				
+		var lStatus = docsGrid.getCellText(ldrv_status_index, row);
+		// replace the code by the (translated) description
+		docsGrid.setCellText(getLdrvStatusDescriptionOf(lStatus), ldrv_status_display_col, row);
+
+		docsGrid.getCellTemplate(ldrv_status_display_col,row).setStyle("background", (lStatus==="P"||lStatus==="Q")?"green":(lStatus=="R"||lStatus=="S"||lStatus=="T")?"red":"#DDDDFF");
+		docsGrid.getCellTemplate(ldrv_status_display_col,row).setStyle("color", (lStatus=="P"||lStatus=="Q")?"white":(lStatus=="R"||lStatus=="S"||lStatus=="T")?"white":"black");
+		
+		var loaderRmks = docsGrid.getCellText(ldrv_remarks_index, row );
+		//Added to show DC comments when the ldrv status is "code:T,description:Rejected by DC" 
+ 		if(lStatus !== "T"){
+ 			docsGrid.setCellText("",ldrv_remarks_index, row )
+ 		}
+ 	   if (lStatus === "R" || lStatus === "S" || lStatus === "P" || lStatus === "Q")
+ 	   {
+ 		   // Initial todo background colors 
+		   var publication_file_ind = docsGrid.getCellText(publication_file_ind_index, row);
+		   var source_file_ind      = docsGrid.getCellText(source_file_ind_index, row);
+		   var comments_file_ind    = docsGrid.getCellText(comments_file_ind_index, row);
+
+
+ 		   if (clnt_source_file_index != -1) {
+ 			   if (source_file_ind == "Y") {
+ 			       docsGrid.getCellTemplate(clnt_source_file_index,row).setStyle("background-color", "#CFC");
+ 			   }
+ 			   else if (loaderRmks.indexOf("Source file")!= -1 || docsGrid.getCellText(clnt_source_file_index, row) != "") {
+ 			       docsGrid.getCellTemplate(sourceFileColumnIndex,row).setStyle("background-color", "#FCC");
+ 			       docsGrid.getCellTemplate(ldrv_status_display_col,row).setStyle("background", getStatusBGColor(lStatus, loaderRmks)); // Orange, to distinguish between metadata fail and file upload fail
+ 	               docsGrid.getCellTemplate(ldrv_status_display_col,row).setStyle("color", "white");	   
+ 	           }
+ 		   }
+ 		   if (clnt_publication_file_index != -1) {
+ 			   if (publication_file_ind == "Y") {
+ 			       docsGrid.getCellTemplate(clnt_publication_file_index,row).setStyle("background-color", "#CFC");
+ 		       }
+ 		       else if (loaderRmks.indexOf("Publication file")!=-1 || docsGrid.getCellText(clnt_publication_file_index, row) != "") {
+ 			       docsGrid.getCellTemplate(publicationFileColumnIndex,row).setStyle("background-color", "#FCC");
+ 			       docsGrid.getCellTemplate(ldrv_status_display_col,row).setStyle("background", getStatusBGColor(lStatus, loaderRmks)); // Orange, to distinguish between metadata fail and file upload fail
+ 	               docsGrid.getCellTemplate(ldrv_status_display_col,row).setStyle("color", "white");	   
+ 			   }
+ 		   }
+ 		   if (clnt_comments_file_index != -1) {
+ 			   if (comments_file_ind == "Y") {
+ 			       docsGrid.getCellTemplate(clnt_comments_file_index,row).setStyle("background-color", "#CFC");
+ 		       }
+ 		       else if (loaderRmks.indexOf("Comments file") != -1 || docsGrid.getCellText(clnt_comments_file_index, row) != "") {
+ 			       docsGrid.getCellTemplate(commentFileColumnIndex,row).setStyle("background-color", "#FCC");
+ 			       docsGrid.getCellTemplate(ldrv_status_display_col,row).setStyle("background", getStatusBGColor(lStatus, loaderRmks)); // Orange, to distinguish between metadata fail and file upload fail
+ 	               docsGrid.getCellTemplate(ldrv_status_display_col,row).setStyle("color", "white");
+ 		       }
+ 		   }
+ 	   }
+		docsGrid.refresh();
+	}
+}
+</script>
+<script>
+try {
+ var cols = docsGrid.getColumnCount();
+ var numberStyleNode = document.createElement("STYLE");
+ var numberStyleTxt = "";
+
+ for ( var col = 0; col < cols; col++) {
+	if (docsGrid.getCellFormat(col) instanceof AW.Formats.Number ) {
+		console.log("Found number format for " + col);
+		numberStyleTxt += ".aw-column-" + parseInt(col) + "{text-align: right}\r\n";
+	}
+ }
+ console.log(numberStyleTxt);
+ numberStyleNode.appendChild(document.createTextNode(numberStyleTxt));
+ document.getElementsByTagName("HEAD")[0].appendChild(numberStyleNode);
+}
+catch(e) {	
+}
+</script>
+</body>
+</html>
