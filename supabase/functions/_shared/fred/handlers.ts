@@ -432,12 +432,36 @@ export async function handleGetHandoverCertificateStatus(
         pageHtml = resultHtml;
         rows = parseRadGridTable(pageHtml);
         postbackFired = true;
-        const theadMatch = resultHtml.match(/<thead[^>]*>([\s\S]*?)<\/thead>/i);
-        const rgHeaderMatch = resultHtml.match(/<tr[^>]*class="[^"]*rgHeader[^"]*"[^>]*>([\s\S]*?)<\/tr>/i);
+        // Manually replicate the bracket-matched master-table extraction to debug
+        const openM = resultHtml.match(/<table[^>]*class="[^"]*rgMasterTable[^"]*"[^>]*>/i);
+        let extractedLen = 0;
+        let extractedHead = "";
+        let extractedTail = "";
+        let depthEnd = -99;
+        if (openM) {
+          const startC = (openM.index || 0) + openM[0].length;
+          let depth = 1;
+          const scan = /<table\b|<\/table>/gi;
+          scan.lastIndex = startC;
+          let m: RegExpExecArray | null;
+          let endIdx = -1;
+          while ((m = scan.exec(resultHtml)) !== null) {
+            if (m[0].toLowerCase().startsWith("</")) { depth--; if (depth === 0) { endIdx = m.index; break; } }
+            else depth++;
+          }
+          depthEnd = depth;
+          const t = endIdx > 0 ? resultHtml.slice(startC, endIdx) : resultHtml.slice(startC);
+          extractedLen = t.length;
+          extractedHead = t.slice(0, 500);
+          extractedTail = t.slice(-500);
+        }
         (args as any).__diag = {
           parsed_rows: rows.length,
-          thead_snip: theadMatch ? theadMatch[1].slice(0, 800) : null,
-          rg_header_snip: rgHeaderMatch ? rgHeaderMatch[1].slice(0, 800) : null,
+          extracted_table_len: extractedLen,
+          extracted_depth_end: depthEnd,
+          extracted_head: extractedHead,
+          extracted_tail: extractedTail,
+          rgRow_in_extracted: (extractedHead + extractedTail).match(/rgRow/gi)?.length || 0,
         };
       } else {
         (args as any).__diag = { target: null, reason: "no_search_button" };
