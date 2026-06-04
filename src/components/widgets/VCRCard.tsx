@@ -269,8 +269,8 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
                 transform: 'translateX(-50%)',
                 width: 9,
                 height: 9,
-                backgroundColor: vcr.sof_signed ? SOF_SIGNED_COLOR : 'hsl(var(--card))',
-                border: `1.5px solid ${vcr.sof_signed ? SOF_SIGNED_COLOR : 'hsl(var(--muted-foreground))'}`,
+                backgroundColor: sofSigned ? SOF_SIGNED_COLOR : 'hsl(var(--card))',
+                border: `1.5px solid ${sofSigned ? SOF_SIGNED_COLOR : 'hsl(var(--muted-foreground))'}`,
               }}
             />
           </div>
