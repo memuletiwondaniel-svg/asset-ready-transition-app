@@ -90,6 +90,8 @@ export interface SearchContext {
   totalQueryCount: number;
   paginationTotalAssaiCount: number | null;
   sweepStartTime: number;
+  // V12.1 — empirically detected page size from page 1 (Assai caps at ~100 regardless of number_of_results)
+  detectedPageSize: number | null;
 
   SWEEP_TIME_GUARD_MS: number;
   MAX_TOTAL_QUERIES: number;
