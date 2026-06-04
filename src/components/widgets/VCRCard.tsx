@@ -139,18 +139,18 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
     const sysLabel = `${vcr.systems_count} system${vcr.systems_count === 1 ? '' : 's'}`;
     let left: React.ReactNode = sysLabel;
     let right = '';
-    if (vcr.lifecycle === 'draft') {
+    if (lifecycle === 'draft') {
       right = vcr.updated_at ? `Updated ${formatRelative(vcr.updated_at)}` : '';
-    } else if (vcr.lifecycle === 'in_approval') {
+    } else if (lifecycle === 'in_approval') {
       left = (
         <>
           {sysLabel}
           <Dot />
-          {vcr.sof_signed ? 'SoF signed' : 'SoF pending'}
+          {sofSigned ? 'SoF signed' : 'SoF pending'}
         </>
       );
       right = vcr.submitted_at ? `Submitted ${formatShortDate(vcr.submitted_at)}` : '';
-    } else if (vcr.lifecycle === 'approved') {
+    } else if (lifecycle === 'approved') {
       right = vcr.approved_at ? `Approved ${formatShortDate(vcr.approved_at)}` : '';
     }
     footer = (
