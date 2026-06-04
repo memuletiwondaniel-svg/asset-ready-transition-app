@@ -17,16 +17,12 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
   GocSessionManager,
   getGoCompletionsCredentials,
-  postRadAjaxAsync,
-  parseRadGridTable,
 } from "../_shared/gocompletions-auth.ts";
+import { handleGetHandoverCertificateStatus } from "../_shared/fred/handlers.ts";
 import {
   CANARY_ORACLE,
   CLASS_NAME_ALL,
   ITR_CLASS_ALL,
-  ITR_CODE_REGEX,
-  cleanCellText,
-  discoverSearchPostbackTarget,
   isEmptyPlaceholderCell,
   parseItrCode,
 } from "../_shared/gohub-contract.ts";
@@ -99,43 +95,33 @@ async function probeItrs(session: GocSessionManager): Promise<{ count: number; a
   return { count: rows.length, a, b, bad_codes: bad };
 }
 
-async function probeCertDates(session: GocSessionManager): Promise<Record<string, string | null>> {
-  // For each historical gate (MCC, PCC, RFC), fire a per-subsystem
-  // HandoverSearch and parse the Accepted Date.
+async function probeCertDates(supabase: any): Promise<Record<string, string | null>> {
+  // Use the proven Fred handler (same code path as the sync) so the canary
+  // exercises the real extraction pipeline, not a parallel re-implementation.
   const out: Record<string, string | null> = {};
-  const types: Array<[string, string, string]> = [
-    ["MCC", "aafaeac5-e094-df11-b37f-0050ba0820b5", "SubSystem"],
-    ["PCC", "fe342975-e1f7-df11-bfbc-001ec9b317f3", "SubSystem"],
-    ["RFC", "f5317275-0f88-e211-bfbc-001ec9b317f3", "SubSystem"],
-  ];
-  for (const [certType, typeId, groupBy] of types) {
+  for (const certType of ["MCC", "PCC", "RFC"]) {
     try {
-      const path = `GoCompletions/Handovers/HandoverSearch.aspx?TypeID=${typeId}&GroupBy=${encodeURIComponent(groupBy)}`;
-      const { html, url, cookies } = await session.navigateTo(path);
-      const trigger = discoverSearchPostbackTarget(html);
-      if (!trigger) { out[certType] = null; continue; }
-      // Find subsystem field (prefer PrimarySearchCriteria textbox)
-      const subFieldMatch = html.match(/name="([^"]*PrimarySearchCriteria[^"]*SubSystemTextBox)"/i)
-        || html.match(/name="([^"]*SubSystem[^"]*TextBox)"/i);
-      const subField = subFieldMatch?.[1];
-      if (!subField) { out[certType] = null; continue; }
-      const { html: result } = await postRadAjaxAsync(cookies, url, html, trigger, {
-        [subField]: CANARY_ORACLE.subsystem_number,
-      });
-      const rows = parseRadGridTable(result);
-      // Find a non-placeholder row matching the subsystem
-      const row = rows.find((r) =>
-        cleanCellText(String(r["Sub System"] || r.SubSystem || "")).includes(CANARY_ORACLE.subsystem_number)
-      );
-      if (!row) { out[certType] = null; continue; }
-      const accepted = cleanCellText(String(row["Accepted Date"] || ""));
+      const res = await handleGetHandoverCertificateStatus({
+        project_code: CANARY_ORACLE.tile_name,
+        certificate_type: certType,
+        sub_system: CANARY_ORACLE.subsystem_number,
+      }, supabase);
+      const certs = (res?.certificates || []) as any[];
+      const match = certs.find((c) => {
+        const sub = String(c.sub_system || c.SubSystem || c.raw?.["Sub System"] || c.raw?.SubSystem || "").trim();
+        return sub.includes(CANARY_ORACLE.subsystem_number);
+      }) || certs[0];
+      const accepted = match
+        ? String(match.accepted_date || match.raw?.["Accepted Date"] || "").trim()
+        : "";
       out[certType] = accepted || null;
-    } catch (e) {
+    } catch (_) {
       out[certType] = null;
     }
   }
   return out;
 }
+
 
 function parseAcceptedDateToIso(s: string | null): string | null {
   if (!s) return null;
@@ -193,7 +179,7 @@ async function runCanary(supabase: any): Promise<{ ok: boolean; checks: any[]; a
 
     // 3. Cert Accepted Dates (immutable 2019 facts)
     try {
-      const dates = await probeCertDates(session);
+      const dates = await probeCertDates(supabase);
       checks.push({ name: "HandoverSearch.cert_accepted_dates", ok: true, dates });
       for (const [k, expected] of Object.entries(CANARY_ORACLE.expected_cert_dates)) {
         const got = parseAcceptedDateToIso(dates[k]);

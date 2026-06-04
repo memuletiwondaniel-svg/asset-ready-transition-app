@@ -59,7 +59,8 @@ export function formatCookies(cookies: Record<string, string>): string {
 // Pure parsers (decodeHtmlEntities, parseRadAjaxDelta, parseRadGridTable,
 // GridRow) live in `gohub-parsers.ts` so unit tests can import without
 // pulling in npm packages. Re-exported here for back-compat.
-export { decodeHtmlEntities, parseRadAjaxDelta, parseRadGridTable } from "./gohub-parsers.ts";
+import { decodeHtmlEntities, parseRadAjaxDelta, parseRadGridTable } from "./gohub-parsers.ts";
+export { decodeHtmlEntities, parseRadAjaxDelta, parseRadGridTable };
 export type { GridRow } from "./gohub-parsers.ts";
 
 export function extractHiddenFields(html: string): Record<string, string> {
