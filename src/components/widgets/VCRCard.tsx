@@ -56,7 +56,7 @@ const LIFECYCLE_STYLE: Record<
   },
 };
 
-const SOF_SIGNED_COLOR = '#0F6E56';
+const GATE_SIGNED_COLOR = '#0F6E56';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -100,7 +100,9 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
   const percent = Math.max(0, Math.min(100, vcr.progress));
   const closedItems = vcr.closed_items ?? 0;
   const totalItems = vcr.total_items ?? 0;
-  const sofSigned = vcr.sof_signed ?? false;
+  const gate = vcr.gate ?? (vcr.has_hydrocarbon ? 'SOF' : 'PAC');
+  const gateLabel = gate === 'SOF' ? 'SoF' : 'PAC';
+  const gateSigned = vcr.gate_signed ?? vcr.sof_signed ?? false;
 
   // Summary line
   let summary: React.ReactNode = null;
@@ -122,13 +124,13 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
   } else if (lifecycle === 'in_approval') {
     const text =
       totalItems > 0 && closedItems >= totalItems
-        ? `All ${totalItems} items closed · awaiting SoF sign-off`
+        ? `All ${totalItems} items closed · awaiting ${gateLabel} sign-off`
         : `${closedItems} of ${totalItems} items closed · submitted for approval`;
     summary = <p className="text-[12px] leading-[1.4] mb-2.5 text-muted-foreground">{text}</p>;
   } else {
     summary = (
       <p className="text-[12px] leading-[1.4] mb-2.5 text-muted-foreground">
-        All items closed · SoF signed off
+        All items closed · {gateLabel} signed off
       </p>
     );
   }
@@ -146,7 +148,7 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
         <>
           {sysLabel}
           <Dot />
-          {sofSigned ? 'SoF signed' : 'SoF pending'}
+          {gateSigned ? `${gateLabel} signed` : `${gateLabel} pending`}
         </>
       );
       right = vcr.submitted_at ? `Submitted ${formatShortDate(vcr.submitted_at)}` : '';
@@ -259,9 +261,10 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
                 transition: 'width 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)',
               }}
             />
-            {/* SoF marker at right edge */}
+            {/* Gate marker at right edge (SoF for HC, PAC for non-HC) */}
             <span
               aria-hidden
+              title={`${gateLabel} sign-off`}
               className="absolute rounded-full"
               style={{
                 top: -3,
@@ -269,8 +272,8 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
                 transform: 'translateX(-50%)',
                 width: 9,
                 height: 9,
-                backgroundColor: sofSigned ? SOF_SIGNED_COLOR : 'hsl(var(--card))',
-                border: `1.5px solid ${sofSigned ? SOF_SIGNED_COLOR : 'hsl(var(--muted-foreground))'}`,
+                backgroundColor: gateSigned ? GATE_SIGNED_COLOR : 'hsl(var(--card))',
+                border: `1.5px solid ${gateSigned ? GATE_SIGNED_COLOR : 'hsl(var(--muted-foreground))'}`,
               }}
             />
           </div>
