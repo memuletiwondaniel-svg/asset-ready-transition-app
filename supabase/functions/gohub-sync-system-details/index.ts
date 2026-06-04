@@ -169,70 +169,50 @@ function htmlCellText(html: string): string {
 
 // ─── Per-subsystem scrapers ──────────────────────────────────
 
-async function scrapeTagSearch(session: GocSessionManager, subsystem: string, debug = false) {
-  const { html, url, cookies } = await session.navigateTo("GoCompletions/Completions/TagSearch.aspx");
-  const sub = findSubSystemField(html);
-  const target = findPostbackTarget(html, sub.scopePrefix);
-  const dbg: any = debug ? { subsystem_field: sub.field, postback_target: target, tagsearch_html_excerpt: null } : null;
-  if (!target || !sub.field) {
-    return { ok: false, reason: "no postback target or subsystem field", items: [] as any[], debug: dbg };
+// Authoritative per-subsystem ITR set via the CompletionsGrid ASMX
+// WebMethod that backs the subsystem-detail modal's "X of Y" header.
+// Row shape: { Tag, ITR, Location, Inspector, CompletedDate }.
+//
+// className must be "All" — "A"/"B"/"" silently return [], empty 500s;
+// A/B is derived from the ITR code suffix, not this param. (Same trap
+// class as GetSystems' itrClass.)
+async function scrapeSubSystemITRs(
+  session: GocSessionManager,
+  subsystem: string,
+  subGuid: string,
+) {
+  const rows: any[] = await session.callMethod("GetSubSystemTagITRList", {
+    subSystemID: subGuid,
+    className: "All",
+  });
+  if (!Array.isArray(rows)) {
+    return { ok: false, reason: "GetSubSystemTagITRList non-array", items: [] as any[] };
   }
-  // SubSystem on TagSearch is a plain textbox → post plain text only.
-  // Only write ClientState if the page actually has one (RadComboBox).
-  const params: Record<string, string> = {
-    [sub.field]: subsystem,
-    __EVENTTARGET: target,
-    __EVENTARGUMENT: "",
-  };
-  if (sub.clientState) {
-    params[sub.clientState] = JSON.stringify({
-      value: subsystem, text: subsystem, enabled: true, logEntries: null,
-      checkedIndices: [], checkedItemsTextOverflows: false,
-    });
-  }
-  // postWithViewState reuses __VIEWSTATE / __VIEWSTATEGENERATOR /
-  // __EVENTVALIDATION extracted from THIS GET — required for the
-  // SearchButton click to bind server-side.
-  const { html: resultHtml } = await postWithViewState(cookies, url, html, params);
-  if (dbg) dbg.tagsearch_html_excerpt = resultHtml.slice(0, 2048);
-  const tableMatch = resultHtml.match(/<table[^>]*class="[^"]*rgMasterTable[^"]*"[^>]*>([\s\S]*?)<\/table>/i);
-  if (!tableMatch) return { ok: false, reason: "no rgMasterTable", items: [] as any[], debug: dbg };
-
-  const headers = extractHeaders(tableMatch[1]);
-  const rows = extractRowCellsHtml(tableMatch[1]);
-  const idIdx = headers.findIndex((h) => /^id$/i.test(h));
-  const tagIdx = headers.findIndex((h) => /^tag$/i.test(h));
-  const descIdx = headers.findIndex((h) => /^description$/i.test(h));
-  const discIdx = headers.findIndex((h) => /^discipline$/i.test(h));
-  const itrsIdx = headers.findIndex((h) => /tag\s*itrs/i.test(h));
-  if (itrsIdx < 0) return { ok: false, reason: "no Tag ITRs column", items: [] as any[], debug: dbg };
-
   const items: any[] = [];
   for (const r of rows) {
-    const tagGuid = idIdx >= 0
-      ? (r[idIdx].match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0] || htmlCellText(r[idIdx]))
-      : "";
-    const tagCode = tagIdx >= 0 ? htmlCellText(r[tagIdx]) : "";
-    const tagDesc = descIdx >= 0 ? htmlCellText(r[descIdx]) : "";
-    const discColumn = discIdx >= 0 ? htmlCellText(r[discIdx]) : "";
-    const itrs = parseTagItrsCell(r[itrsIdx]);
-    for (const itr of itrs) {
-      const ab = itr.code.match(/([AB])\s*$/i)?.[1]?.toUpperCase() ?? "?";
-      const disc = itr.code.match(/BGC-([A-Z])/)?.[1] ?? (discColumn[0] || "");
-      items.push({
-        tag_guid: tagGuid,
-        tag_code: tagCode,
-        tag_description: tagDesc,
-        itr_code: itr.code,
-        ab_phase: ab === "A" || ab === "B" ? ab : "?",
-        discipline: disc,
-        status: itr.outstanding ? "open" : "complete",
-        raw: { tag_id_cell: r[idIdx], discipline_cell: discColumn },
-      });
-    }
+    const tag = String(r.Tag ?? "").trim();
+    const itr_code = String(r.ITR ?? "").trim();
+    if (!tag || !itr_code) continue;
+    const inspector = String(r.Inspector ?? "").trim();
+    const completed_date = parseDmyDate(r.CompletedDate);
+    const location = String(r.Location ?? "").trim() || null;
+    const ab = itr_code.match(/([AB])\s*$/i)?.[1]?.toUpperCase();
+    const disc = itr_code.match(/BGC-([A-Z])/)?.[1] ?? null;
+    const complete = !!(inspector && completed_date);
+    items.push({
+      tag_guid: tag,            // soft-link key; CompletionsGrid ITRS has no tag GUID
+      tag_code: tag,
+      tag_description: null,
+      itr_code,
+      ab_phase: ab === "A" || ab === "B" ? ab : "?",
+      discipline: disc,
+      status: complete ? "complete" : "open",
+      raw: { ...r, _subsystem_guid: subGuid, inspector, completed_date, location },
+    });
   }
-  return { ok: true, items, header_count: headers.length, row_count: rows.length, debug: dbg };
+  return { ok: true, items, row_count: rows.length };
 }
+
 
 async function scrapePunch(session: GocSessionManager, subsystem: string) {
   const { html, url, cookies } = await session.navigateTo("GoCompletions/Completions/PunchlistItemSearch.aspx");
