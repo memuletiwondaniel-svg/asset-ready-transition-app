@@ -160,7 +160,12 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
             size="sm"
             onClick={onNext}
             disabled={isSubmitting || isSaving || !canProceed}
-            className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
+            variant={nextMuted ? 'outline' : 'default'}
+            className={
+              nextMuted
+                ? 'h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm text-muted-foreground border-border/60 bg-transparent hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors'
+                : 'h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm'
+            }
           >
             {isSaving ? (
               <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-0.5 sm:mr-1 animate-spin" />
