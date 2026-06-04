@@ -174,8 +174,8 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); else onOpenChange(true); }}>
       <DialogContent
-        className="sm:max-w-[440px] p-0 gap-0 z-[100]"
-        overlayClassName="z-[99] bg-black/70"
+        className="sm:max-w-[440px] p-0 gap-0 z-[200]"
+        overlayClassName="z-[199] bg-black/80 backdrop-blur-sm"
       >
         <DialogHeader className="px-6 pt-5 pb-0 space-y-1">
           <DialogTitle className="text-base font-medium">
