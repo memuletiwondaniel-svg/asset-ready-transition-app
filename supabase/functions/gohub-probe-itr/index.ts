@@ -58,10 +58,18 @@ function findSearchPostbackTarget(html: string): { target: string | null; rawInp
  *  corresponding ClientState hidden when the combo is populated by JS,
  *  but for a free-text search the visible input is enough.
  */
-function findSubSystemField(html: string): string | null {
-  const m = html.match(/<input[^>]*name=["']([^"']+\$SubSystem)["']/i)
-    || html.match(/<input[^>]*name=["']([^"']+PrimarySearchCriteria[^"']*SubSystem)["']/i);
-  return m ? m[1] : null;
+function findSubSystemField(html: string): { field: string | null; clientStateField: string | null; candidates: string[] } {
+  const candidates: string[] = [];
+  const re = /<input[^>]*name=["']([^"']*[Ss]ub[Ss]ystem[^"']*)["']/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) candidates.push(m[1]);
+  // RadComboBox: visible typed value is `..._Input`, hidden state is `..._ClientState`
+  const inputField = candidates.find((c) => /SubSystem_Input$/i.test(c))
+    || candidates.find((c) => /\$SubSystem$/.test(c))
+    || candidates.find((c) => /PrimarySearchCriteria[^_]*SubSystem/i.test(c))
+    || null;
+  const clientStateField = candidates.find((c) => /SubSystem_ClientState$/i.test(c)) || null;
+  return { field: inputField, clientStateField, candidates };
 }
 
 /** Parse the "Tag ITRs" cell HTML to extract per-ITR open/closed.
