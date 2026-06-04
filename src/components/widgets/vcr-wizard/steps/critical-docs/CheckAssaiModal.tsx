@@ -170,7 +170,10 @@ export const CheckAssaiModal: React.FC<CheckAssaiModalProps> = ({
         overlayClassName="z-[199] bg-black/80 backdrop-blur-sm"
       >
         <DialogHeader>
-          <DialogTitle>Browse Assai — Live Documents</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <img src={assaiIcon} alt="" className="w-5 h-5 object-contain" />
+            Browse Assai — Live Documents
+          </DialogTitle>
           <div className="text-xs text-muted-foreground">
             Project: {projectCode || 'TBD'} · Plant: {plantCode || 'TBD'}
           </div>
