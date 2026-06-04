@@ -40,6 +40,7 @@ function hashCode(str: string): number {
 }
 
 import { WizardShell, WizardShellStep } from '../shared/WizardShell';
+import { WizardSubtitle } from '../shared/WizardSubtitle';
 import { SystemsStep } from './steps/SystemsStep';
 import { VCRItemsStep } from './steps/VCRItemsStep';
 import { TrainingStep } from './steps/TrainingStep';
@@ -50,7 +51,7 @@ import { InspectionTestPlanStep } from './steps/InspectionTestPlanStep';
 import { ApproversStep } from './steps/ApproversStep';
 import { CMMSSparesStep } from './steps/CMMSSparesStep';
 import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
-import { Layers, CheckCircle2 } from 'lucide-react';
+import { Layers, CheckCircle2, Eye } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
 
@@ -59,19 +60,24 @@ interface VCRExecutionPlanWizardProps {
   onOpenChange: (open: boolean) => void;
   vcr: ProjectVCR;
   projectCode?: string;
+  projectName?: string;
 }
 
+// Step order — Witness & Hold Points (formerly Inspection Test Plan)
+// moved from position 7 to position 2 so users define inspection scope
+// alongside Systems, before the support artefacts.
+// Internal id 'itp' is intentionally preserved — UI label only changed.
 const STEPS: WizardShellStep[] = [
-  { id: 'systems',             label: 'Systems',              icon: Layers,         color: 'text-orange-500' },
-  { id: 'training',            label: 'Training',             icon: GraduationCap,  color: 'text-blue-500' },
-  { id: 'procedures',          label: 'Procedures',           icon: BookOpen,       color: 'text-emerald-500' },
-  { id: 'critical-docs',       label: 'Critical Documents',   icon: FileText,       color: 'text-amber-500' },
-  { id: 'registers-logsheets', label: 'Registers & Logsheets',icon: ClipboardList,  color: 'text-cyan-500' },
-  { id: 'cmms-spares',         label: 'CMMS & Spares',        icon: Wrench,         color: 'text-amber-500' },
-  { id: 'itp',                 label: 'Inspection Test Plan', icon: ClipboardList,  color: 'text-orange-500' },
-  { id: 'approvers',           label: 'Approvers',            icon: UserCheck,      color: 'text-primary' },
-  { id: 'checklist',           label: 'VCR Checklist',        icon: ClipboardCheck, color: 'text-violet-500' },
-  { id: 'review',              label: 'Review and Submit',    icon: CheckCircle2,   color: 'text-emerald-500' },
+  { id: 'systems',             label: 'Systems',                 icon: Layers,         color: 'text-orange-500' },
+  { id: 'itp',                 label: 'Witness & Hold Points',   icon: Eye,            color: 'text-orange-500' },
+  { id: 'training',            label: 'Training',                icon: GraduationCap,  color: 'text-blue-500' },
+  { id: 'procedures',          label: 'Procedures',              icon: BookOpen,       color: 'text-emerald-500' },
+  { id: 'critical-docs',       label: 'Critical Documents',      icon: FileText,       color: 'text-amber-500' },
+  { id: 'registers-logsheets', label: 'Registers & Logsheets',   icon: ClipboardList,  color: 'text-cyan-500' },
+  { id: 'cmms-spares',         label: 'CMMS & Spares',           icon: Wrench,         color: 'text-amber-500' },
+  { id: 'approvers',           label: 'Approvers',               icon: UserCheck,      color: 'text-primary' },
+  { id: 'checklist',           label: 'VCR Checklist',           icon: ClipboardCheck, color: 'text-violet-500' },
+  { id: 'review',              label: 'Review and Submit',       icon: CheckCircle2,   color: 'text-emerald-500' },
 ];
 
 const TOTAL_STEPS = STEPS.length; // 10
