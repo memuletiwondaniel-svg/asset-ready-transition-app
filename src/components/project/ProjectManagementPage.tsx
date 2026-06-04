@@ -276,19 +276,25 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
     if (!projectToDelete) return;
     
     try {
-      deleteProject(projectToDelete.id);
-      
+      if (hardDelete && isAdmin) {
+        permanentlyDeleteProject(projectToDelete.id);
+      } else {
+        deleteProject(projectToDelete.id);
+      }
+
       // Log activity
       logActivity({
         activityType: 'project_deleted',
-        description: `Deleted project: ${projectToDelete.project_id_prefix}${projectToDelete.project_id_number} - ${projectToDelete.project_title}`,
+        description: `${hardDelete && isAdmin ? 'Permanently deleted' : 'Deleted'} project: ${projectToDelete.project_id_prefix}${projectToDelete.project_id_number} - ${projectToDelete.project_title}`,
         metadata: {
           project_id: `${projectToDelete.project_id_prefix}${projectToDelete.project_id_number}`,
-          project_title: projectToDelete.project_title
+          project_title: projectToDelete.project_title,
+          hard_delete: hardDelete && isAdmin,
         }
       });
-      
+
       setProjectToDelete(null);
+      setHardDelete(false);
     } catch (error) {
       console.error('Error deleting project:', error);
     }
