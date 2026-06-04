@@ -1,10 +1,23 @@
 /**
- * Combined probe v2 — uses GocSessionManager (Fred-warmed) + raw row capture.
+ * Combined probe v3 — applies live-capture fix:
+ *   - TagSearch / PunchlistItemSearch / HandoverSearch fire via Telerik
+ *     RadButton. Postback target is the RadButton control UniqueID WITHOUT
+ *     the trailing `_input` (which is the inner <input> name, not the
+ *     server-side button id). Posting `_input` is treated as a plain
+ *     reload → empty grid.
+ *   - GocSessionManager already selects the project tile in ensureSession,
+ *     so project context is established before navigateTo().
  *
- *  - Reuses Fred's working path (handleSearchCompletionsTags style).
- *  - Captures RAW <tr> innerHTML to expose hidden ids / drill-link hrefs that
- *    parseRadGridTable strips. Critical for finding a stable per-ITR id.
- *  - Same warmed session for Punch + DAC postbacks.
+ * Verifies §3 row contract for TagSearch:
+ *   columns ID | Tag | Description | Sub System | Module | Discipline |
+ *           Attachments | Tag ITRs
+ *   - ID         = stable tag GUID (also in ShowDetailsID('<guid>'))
+ *   - Tag ITRs   = comma-separated ITR codes; <b>code</b> = outstanding
+ *   - ab_phase   = last char of code (A/B)
+ *   - discipline = letter after `BGC-` (I/P/M/E/Q/C)
+ *   - instance key = (project_code, subsystem, tag_guid, itr_code)
+ *
+ * Also probes Punch + DAC with the same `_input`-stripped postback.
  */
 
 import { createClient } from "npm:@supabase/supabase-js@2.39.0";
@@ -13,261 +26,266 @@ import {
   getGoCompletionsCredentials,
   postWithViewState,
   parseRadGridTable,
-  extractHiddenFields,
 } from "../_shared/gocompletions-auth.ts";
-import { handleSearchCompletionsTags, handleGetPunchlistDetails } from "../_shared/fred/handlers.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+/** Discover RadButton postback target on a search page.
+ *  Strategy: find an <input ... name="...$SearchButton_input"> and return
+ *  the UniqueID with `_input` stripped. Falls back to scanning RadButton
+ *  client init for SearchButton id.
+ */
+function findSearchPostbackTarget(html: string): { target: string | null; rawInputName: string | null } {
+  const inputRe = /<input[^>]*name=["']([^"']+SearchButton)_input["']/i;
+  const m = html.match(inputRe);
+  if (m) return { target: m[1], rawInputName: m[1] + "_input" };
+  // fallback: client-side RadButton init mentions ClientID
+  const cidRe = /id="([^"]+SearchButton)"[^>]*class="[^"]*RadButton/i;
+  const c = html.match(cidRe);
+  if (c) {
+    // convert ClientID (underscores) to UniqueID (dollar signs) — heuristic
+    const uid = c[1].replace(/^ctl00_/, "ctl00$").replace(/_/g, "$");
+    return { target: uid, rawInputName: null };
+  }
+  return { target: null, rawInputName: null };
+}
+
+/** Find the field name on this page that takes the subsystem filter.
+ *  Telerik combo: input name endsWith `$SubSystem`. We also need the
+ *  corresponding ClientState hidden when the combo is populated by JS,
+ *  but for a free-text search the visible input is enough.
+ */
+function findSubSystemField(html: string): string | null {
+  const m = html.match(/<input[^>]*name=["']([^"']+\$SubSystem)["']/i)
+    || html.match(/<input[^>]*name=["']([^"']+PrimarySearchCriteria[^"']*SubSystem)["']/i);
+  return m ? m[1] : null;
+}
+
+/** Parse the "Tag ITRs" cell HTML to extract per-ITR open/closed.
+ *  Cell example: `BGC-I01A, <b>BGC-I02A</b>, BGC-I20B`
+ *  Returns [{ code, outstanding }]
+ */
+function parseTagItrsCell(cellHtml: string): Array<{ code: string; outstanding: boolean }> {
+  const out: Array<{ code: string; outstanding: boolean }> = [];
+  // Split on commas at the top level (not inside tags)
+  const parts = cellHtml.split(/,(?![^<]*>)/);
+  for (const raw of parts) {
+    const s = raw.trim();
+    if (!s) continue;
+    const isBold = /<b\b[^>]*>/i.test(s);
+    const code = s.replace(/<[^>]+>/g, "").trim();
+    if (code) out.push({ code, outstanding: isBold });
+  }
+  return out;
+}
+
+/** Extract per-row cells, preserving inner HTML (needed for <b> detection). */
+function extractRowCellsHtml(tableHtml: string): string[][] {
+  const tbodyMatch = tableHtml.match(/<tbody[^>]*>([\s\S]*?)<\/tbody>/i);
+  const body = tbodyMatch ? tbodyMatch[1] : tableHtml;
+  const trRe = /<tr[^>]*class="[^"]*rg(?:Row|AltRow)[^"]*"[^>]*>([\s\S]*?)<\/tr>/gi;
+  const rows: string[][] = [];
+  let m: RegExpExecArray | null;
+  while ((m = trRe.exec(body)) !== null) {
+    const tdRe = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+    const cells: string[] = [];
+    let t: RegExpExecArray | null;
+    while ((t = tdRe.exec(m[1])) !== null) cells.push(t[1]);
+    if (cells.length) rows.push(cells);
+  }
+  return rows;
+}
+
+/** Extract headers in order. */
+function extractHeaders(tableHtml: string): string[] {
+  const headerRowMatch = tableHtml.match(/<thead[^>]*>([\s\S]*?)<\/thead>/i)
+    || tableHtml.match(/<tr[^>]*class="[^"]*rgHeader[^"]*"[^>]*>([\s\S]*?)<\/tr>/i);
+  if (!headerRowMatch) return [];
+  const headers: string[] = [];
+  const thRe = /<th[^>]*>([\s\S]*?)<\/th>/gi;
+  let m;
+  while ((m = thRe.exec(headerRowMatch[1])) !== null) {
+    headers.push(m[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim());
+  }
+  return headers;
+}
+
+async function runTagSearch(
+  session: GocSessionManager,
+  subsystemNumber: string,
+) {
+  const probe: any = {
+    subsystem: subsystemNumber,
+    page_loaded: false,
+    postback_target: null,
+    subsystem_field: null,
+    result_rows: 0,
+    headers: [],
+    parsed_itr_instances: 0,
+    a_count: 0,
+    b_count: 0,
+    outstanding_count: 0,
+    complete_count: 0,
+    discipline_breakdown: {},
+    sample_rows: [] as any[],
+    error: null as string | null,
+  };
+  try {
+    const { html, url, cookies } = await session.navigateTo("GoCompletions/Completions/TagSearch.aspx");
+    probe.page_loaded = true;
+    const { target, rawInputName } = findSearchPostbackTarget(html);
+    probe.postback_target = target;
+    probe.search_button_input_name = rawInputName;
+    const subField = findSubSystemField(html);
+    probe.subsystem_field = subField;
+    if (!target || !subField) {
+      probe.error = "could not discover postback target or subsystem field";
+      return probe;
+    }
+
+    const params: Record<string, string> = {
+      [subField]: subsystemNumber,
+      __EVENTTARGET: target,
+      __EVENTARGUMENT: "",
+    };
+    const { html: resultHtml } = await postWithViewState(cookies, url, html, params);
+
+    const tableMatch = resultHtml.match(/<table[^>]*class="[^"]*rgMasterTable[^"]*"[^>]*>([\s\S]*?)<\/table>/i);
+    if (!tableMatch) {
+      probe.error = "no rgMasterTable in result";
+      return probe;
+    }
+    const tableHtml = tableMatch[1];
+    const headers = extractHeaders(tableHtml);
+    probe.headers = headers;
+    const rows = extractRowCellsHtml(tableHtml);
+    probe.result_rows = rows.length;
+
+    const tagItrsIdx = headers.findIndex((h) => /tag\s*itrs/i.test(h));
+    const idIdx = headers.findIndex((h) => /^id$/i.test(h));
+    const tagIdx = headers.findIndex((h) => /^tag$/i.test(h));
+    const discIdx = headers.findIndex((h) => /discipline/i.test(h));
+
+    const sampleOut: any[] = [];
+    for (const r of rows) {
+      const idCell = idIdx >= 0 ? r[idIdx] : "";
+      const tagCell = tagIdx >= 0 ? r[tagIdx] : "";
+      const discCell = discIdx >= 0 ? r[discIdx] : "";
+      const itrsCell = tagItrsIdx >= 0 ? r[tagItrsIdx] : "";
+      const guidMatch = idCell.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+      const tag_guid = guidMatch ? guidMatch[0] : idCell.replace(/<[^>]+>/g, "").trim();
+      const tag = tagCell.replace(/<[^>]+>/g, "").trim();
+      const discipline_col = discCell.replace(/<[^>]+>/g, "").trim();
+      const itrs = parseTagItrsCell(itrsCell);
+      for (const itr of itrs) {
+        probe.parsed_itr_instances++;
+        const ab = itr.code.match(/([AB])\s*$/i)?.[1]?.toUpperCase() ?? "?";
+        if (ab === "A") probe.a_count++;
+        else if (ab === "B") probe.b_count++;
+        if (itr.outstanding) probe.outstanding_count++; else probe.complete_count++;
+        const disc = itr.code.match(/BGC-([A-Z])/)?.[1] ?? discipline_col?.[0] ?? "?";
+        probe.discipline_breakdown[disc] = (probe.discipline_breakdown[disc] || 0) + 1;
+      }
+      if (sampleOut.length < 3) {
+        sampleOut.push({ tag_guid, tag, discipline: discipline_col, itrs });
+      }
+    }
+    probe.sample_rows = sampleOut;
+    return probe;
+  } catch (e: any) {
+    probe.error = String(e?.message || e).slice(0, 300);
+    return probe;
+  }
+}
+
+async function runPunch(session: GocSessionManager, subsystemNumber: string) {
+  const probe: any = { rows: 0, headers: [], sample: [], per_punchlist_groups: [], error: null };
+  try {
+    const { html, url, cookies } = await session.navigateTo("GoCompletions/Completions/PunchlistItemSearch.aspx");
+    const { target } = findSearchPostbackTarget(html);
+    const subField = findSubSystemField(html);
+    probe.postback_target = target;
+    probe.subsystem_field = subField;
+    if (!target || !subField) { probe.error = "no target/subField"; return probe; }
+    const params: Record<string, string> = {
+      [subField]: subsystemNumber,
+      __EVENTTARGET: target,
+      __EVENTARGUMENT: "",
+    };
+    const { html: resultHtml } = await postWithViewState(cookies, url, html, params);
+    const rows = parseRadGridTable(resultHtml);
+    probe.rows = rows.length;
+    probe.headers = rows[0] ? Object.keys(rows[0]) : [];
+    probe.sample = rows.slice(0, 5);
+    const groups: Record<string, number[]> = {};
+    for (const r of rows.slice(0, 1000)) {
+      const pl = String(r.Punchlist || r["Punch List"] || r.PunchList || "");
+      const itemNo = Number(r.Item || r["Item No"] || r.ItemNo || NaN);
+      if (!pl || !Number.isFinite(itemNo)) continue;
+      (groups[pl] ||= []).push(itemNo);
+    }
+    probe.per_punchlist_groups = Object.entries(groups).slice(0, 8)
+      .map(([p, ns]) => ({ punchlist: p, item_nos: ns.sort((a, b) => a - b).slice(0, 12) }));
+    probe.per_punchlist_confirmed = probe.per_punchlist_groups.filter((g: any) => g.item_nos.includes(1)).length >= 2;
+  } catch (e: any) { probe.error = String(e?.message || e).slice(0, 300); }
+  return probe;
+}
+
+async function runDac(session: GocSessionManager, subsystemNumber: string) {
+  const probe: any = { rows: 0, headers: [], sample: [], discipline_fanout: [], error: null };
+  try {
+    const path = "GoCompletions/Handovers/HandoverSearch.aspx?HandoverGate=1&GroupBy=SubSystem,Discipline";
+    const { html, url, cookies } = await session.navigateTo(path);
+    const { target } = findSearchPostbackTarget(html);
+    const subField = findSubSystemField(html);
+    probe.postback_target = target;
+    probe.subsystem_field = subField;
+    const params: Record<string, string> = { __EVENTTARGET: target || "", __EVENTARGUMENT: "" };
+    if (subField) params[subField] = subsystemNumber;
+    const { html: resultHtml } = target
+      ? await postWithViewState(cookies, url, html, params)
+      : { html };
+    const rows = parseRadGridTable(resultHtml);
+    probe.rows = rows.length;
+    probe.headers = rows[0] ? Object.keys(rows[0]) : [];
+    probe.sample = rows.slice(0, 5);
+    const byss: Record<string, Set<string>> = {};
+    for (const r of rows.slice(0, 1000)) {
+      const ss = String(r["Sub System"] || r.SubSystem || "");
+      const disc = String(r.Discipline || "");
+      if (!ss) continue;
+      (byss[ss] ||= new Set()).add(disc);
+    }
+    probe.discipline_fanout = Object.entries(byss).slice(0, 8)
+      .map(([ss, d]) => ({ subsystem: ss, disciplines: Array.from(d) }));
+    probe.per_discipline_confirmed = Object.values(byss).some((s) => s.size > 1);
+  } catch (e: any) { probe.error = String(e?.message || e).slice(0, 300); }
+  return probe;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const report: any = {
-    inputs: {},
-    chosen_subsystem: null,
-    tagsearch: {
-      form_action: null,
-      search_button_inputs: [],
-      raw_html_len: 0,
-      contains_rgMasterTable: false,
-      err_marker: null,
-      parsed_row_count: 0,
-      first_row_keys: [],
-      raw_first_row_html: null,
-      drill_link_samples: [],
-      hrefs_in_rows: [],
-      hidden_inputs_in_rows: [],
-      itr_id_field_candidates: [],
-      itr_code_repetition: { unique_itr_codes: 0, total_rows: 0, max_repeat: 0, repeating_examples: [] },
-      a_b_suffix_breakdown: {},
-      sample_rows: [],
-    },
-    punch: { parsed_row_count: 0, first_row_keys: [], per_punchlist_confirmed: null, sample_groups: [], err: null },
-    dac:   { parsed_row_count: 0, first_row_keys: [], per_discipline_confirmed: null, sample_rows: [], err: null },
-    fred_direct_tagsearch: { found: false, returned: 0, total_available: 0, keys: [], sample: [] },
-    fred_direct_punch: { count: 0, keys: [], sample: [] },
-    errors: [],
-  };
-
+  const report: any = { inputs: {}, tagsearch: [], punch: null, dac: null, errors: [] };
 
   try {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
-    const projectCode = body.project_code || "WEST QURNA"; // matches tile name substring
-    const subsystemNumber: string = body.subsystem_number || "C013-DP18A-08X"; // in-progress (32/33)
-    report.inputs = { projectCode, subsystemNumber };
+    const projectCode: string = body.project_code || "WEST QURNA";
+    const subsystems: string[] = body.subsystems || ["C013-DP18A-08X"]; // pass DP-18F subs to verify 26-vs-33
+    report.inputs = { projectCode, subsystems };
 
     const supa = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const creds = await getGoCompletionsCredentials(supa);
     const session = new GocSessionManager(creds.portalUrl, creds.username, creds.password, projectCode);
 
-    // ── TAG SEARCH (raw) ────────────────────────────────────────
-    try {
-      const { html, url, cookies } = await session.navigateTo("GoCompletions/Completions/TagSearch.aspx");
-      // discover form action & all input[type=submit/button] candidates
-      const actionMatch = html.match(/<form[^>]*action=["']([^"']+)["']/i);
-      report.tagsearch.form_action = actionMatch?.[1] ?? null;
-      const btnRe = /<input[^>]*type=["'](?:submit|button)["'][^>]*name=["']([^"']+)["'][^>]*(?:value=["']([^"']*)["'])?/gi;
-      const btns: any[] = []; let m;
-      while ((m = btnRe.exec(html)) !== null) {
-        if (/search|find|go/i.test(m[1]) || /search|find|go/i.test(m[2] || "")) {
-          btns.push({ name: m[1], value: m[2] || null });
-        }
-      }
-      report.tagsearch.search_button_inputs = btns.slice(0, 10);
-
-      // post
-      const prefix = "ctl00$ContentPlaceHolder1$MasterRadPanelBar$i0$i0$TagSearch_PrimarySearchCriteria$";
-      const searchParams: Record<string, string> = {
-        [`${prefix}SubSystem`]: subsystemNumber,
-        // include both possible search button names
-        "ctl00$ContentPlaceHolder1$MasterRadPanelBar$i0$i7$SearchButton_input": "Search",
-        "ctl00$ContentPlaceHolder1$MasterRadPanelBar$i0$i7$SearchButton": "Search",
-      };
-      const { html: resultHtml } = await postWithViewState(cookies, url, html, searchParams);
-
-      report.tagsearch.raw_html_len = resultHtml.length;
-      report.tagsearch.contains_rgMasterTable = /rgMasterTable/i.test(resultHtml);
-      const errM = resultHtml.match(/<span[^>]*ErrorLabel[^>]*>([\s\S]*?)<\/span>/i)
-        || resultHtml.match(/<div[^>]*class=["'][^"']*alert[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
-      report.tagsearch.err_marker = errM ? errM[1].replace(/<[^>]+>/g, "").trim().slice(0, 200) : null;
-
-      // parsed rows (Fred-style)
-      const rows = parseRadGridTable(resultHtml);
-      report.tagsearch.parsed_row_count = rows.length;
-      report.tagsearch.first_row_keys = rows[0] ? Object.keys(rows[0]) : [];
-      report.tagsearch.sample_rows = rows.slice(0, 5);
-
-      // raw row capture — preserves hrefs and hidden inputs
-      const tableMatch = resultHtml.match(/<table[^>]*class="[^"]*rgMasterTable[^"]*"[^>]*>([\s\S]*?)<\/table>/i);
-      if (tableMatch) {
-        const tableHtml = tableMatch[1];
-        const tbodyMatch = tableHtml.match(/<tbody[^>]*>([\s\S]*?)<\/tbody>/i);
-        const bodyHtml = tbodyMatch ? tbodyMatch[1] : tableHtml;
-        const trRe = /<tr[^>]*class="[^"]*rg(?:Row|AltRow)[^"]*"[^>]*>([\s\S]*?)<\/tr>/gi;
-        let rowIdx = 0; let rowMatch: RegExpExecArray | null;
-        const allHrefs = new Set<string>();
-        const allHidden = new Set<string>();
-        while ((rowMatch = trRe.exec(bodyHtml)) !== null) {
-          if (rowIdx === 0) report.tagsearch.raw_first_row_html = rowMatch[0].slice(0, 4000);
-          const trHtml = rowMatch[1];
-          // hrefs in row
-          const hrefRe = /href=["']([^"']+)["']/gi; let h;
-          while ((h = hrefRe.exec(trHtml)) !== null) {
-            const href = h[1];
-            if (rowIdx < 3 && report.tagsearch.drill_link_samples.length < 8) {
-              report.tagsearch.drill_link_samples.push({ row: rowIdx, href });
-            }
-            allHrefs.add(href.split("?")[0]);
-          }
-          // hidden inputs in row
-          const hidRe = /<input[^>]*type=["']hidden["'][^>]*name=["']([^"']+)["'][^>]*(?:value=["']([^"']*)["'])?/gi;
-          let hh;
-          while ((hh = hidRe.exec(trHtml)) !== null) {
-            allHidden.add(hh[1]);
-            if (rowIdx < 3 && report.tagsearch.hidden_inputs_in_rows.length < 8) {
-              report.tagsearch.hidden_inputs_in_rows.push({ row: rowIdx, name: hh[1], value: hh[2] || "" });
-            }
-          }
-          rowIdx++;
-        }
-        report.tagsearch.hrefs_in_rows = Array.from(allHrefs).slice(0, 12);
-        // candidate id fields: hidden input names matching itr/id/guid; or query params in hrefs
-        const candidates = new Set<string>();
-        for (const n of allHidden) if (/itr|id|guid|key/i.test(n)) candidates.add("hidden:" + n.split("$").pop());
-        for (const href of allHrefs) {
-          try {
-            const u = new URL(href, "https://x/");
-            for (const k of u.searchParams.keys()) {
-              if (/itr|id|guid|key/i.test(k)) candidates.add(`qs:${k}`);
-            }
-          } catch { /* relative non-url */ }
-        }
-        report.tagsearch.itr_id_field_candidates = Array.from(candidates).slice(0, 20);
-      }
-
-      // ITR code repetition + A/B breakdown
-      if (rows.length) {
-        const itrKey = Object.keys(rows[0]).find(k => /^ITR$/i.test(k) || /itr.?code|itr.?no|itr.?#/i.test(k));
-        if (itrKey) {
-          const freq = new Map<string, number>();
-          for (const r of rows) {
-            const v = String(r[itrKey] || "").trim();
-            if (!v) continue;
-            freq.set(v, (freq.get(v) || 0) + 1);
-          }
-          const reps = [...freq.entries()].filter(([_, n]) => n > 1).slice(0, 8);
-          report.tagsearch.itr_code_repetition = {
-            unique_itr_codes: freq.size, total_rows: rows.length,
-            max_repeat: reps.reduce((m, [_, n]) => Math.max(m, n), 1),
-            repeating_examples: reps.map(([c, n]) => ({ itr_code: c, count: n })),
-          };
-          // A/B suffix
-          const split: Record<string, number> = {};
-          for (const c of freq.keys()) {
-            const tail = c.match(/([A-Za-z])\s*$/);
-            const k = tail ? tail[1].toUpperCase() : "?";
-            split[k] = (split[k] || 0) + 1;
-          }
-          report.tagsearch.a_b_suffix_breakdown = split;
-        }
-      }
-    } catch (e: any) {
-      report.errors.push("tagsearch: " + String(e?.message || e).slice(0, 300));
+    for (const ss of subsystems) {
+      report.tagsearch.push(await runTagSearch(session, ss));
     }
-
-    // ── PUNCH ───────────────────────────────────────────────────
-    try {
-      const { html, url, cookies } = await session.navigateTo("GoCompletions/Completions/PunchlistItemSearch.aspx");
-      // discover prefix from form field names
-      const subFieldRe = /name=["']([^"']*SubSystem[^"']*)["']/i;
-      const subField = html.match(subFieldRe)?.[1];
-      const btnFieldRe = /name=["']([^"']*Search[^"']*Button[^"']*)["']/i;
-      const btnField = html.match(btnFieldRe)?.[1];
-      const params: Record<string, string> = {};
-      if (subField) params[subField] = subsystemNumber;
-      if (btnField) params[btnField + "_input"] = "Search";
-      params["__EVENTTARGET"] = "";
-      const { html: resultHtml } = await postWithViewState(cookies, url, html, params);
-      const rows = parseRadGridTable(resultHtml);
-      report.punch.parsed_row_count = rows.length;
-      report.punch.first_row_keys = rows[0] ? Object.keys(rows[0]) : [];
-      const groups: Record<string, number[]> = {};
-      for (const r of rows.slice(0, 800)) {
-        const pl = String(r.Punchlist || r["Punch List"] || r.PunchList || "");
-        const itemNo = Number(r.Item || r["Item No"] || r.ItemNo || NaN);
-        if (!pl || !Number.isFinite(itemNo)) continue;
-        (groups[pl] ||= []).push(itemNo);
-      }
-      report.punch.sample_groups = Object.entries(groups).slice(0, 8).map(([p, n]) => ({ punchlist: p, items: n.sort((a,b)=>a-b).slice(0,12) }));
-      report.punch.per_punchlist_confirmed = report.punch.sample_groups.filter((g:any) => g.items.includes(1)).length >= 2;
-    } catch (e: any) {
-      report.punch.err = String(e?.message || e).slice(0, 300);
-    }
-
-    // ── DAC ─────────────────────────────────────────────────────
-    try {
-      const path = `GoCompletions/Handovers/HandoverSearch.aspx?HandoverGate=1&GroupBy=SubSystem,Discipline&IsPartialHandover=False&IsMultiHandover=False&IsProcedure=False&HasInterimDate=False&AdditionalFilters=`;
-      const { html, url, cookies } = await session.navigateTo(path);
-      // attempt a search-button postback to materialize rows
-      const btnField = html.match(/name=["']([^"']*Search[^"']*Button[^"']*)["']/i)?.[1];
-      const params: Record<string, string> = {};
-      if (btnField) params[btnField + "_input"] = "Search";
-      const { html: resultHtml } = btnField
-        ? await postWithViewState(cookies, url, html, params)
-        : { html };
-      const rows = parseRadGridTable(resultHtml);
-      report.dac.parsed_row_count = rows.length;
-      report.dac.first_row_keys = rows[0] ? Object.keys(rows[0]) : [];
-      report.dac.sample_rows = rows.slice(0, 8);
-      const byss: Record<string, Set<string>> = {};
-      for (const r of rows.slice(0, 800)) {
-        const ss = String(r["Sub System"] || r.SubSystem || "");
-        const disc = String(r.Discipline || "");
-        if (!ss) continue;
-        (byss[ss] ||= new Set()).add(disc);
-      }
-      (report.dac as any).subsystem_discipline_fanout =
-        Object.entries(byss).slice(0, 8).map(([ss, d]) => ({ subsystem: ss, disciplines: Array.from(d) }));
-      report.dac.per_discipline_confirmed = Object.values(byss).some(s => s.size > 1);
-    } catch (e: any) {
-      report.dac.err = String(e?.message || e).slice(0, 300);
-    }
-
-    // ── FRED-DIRECT confirmations (production-proven handlers) ─
-    try {
-      const r = await handleSearchCompletionsTags(
-        { project_code: projectCode, sub_system: subsystemNumber, max_results: 50 },
-        supa,
-      );
-      report.fred_direct_tagsearch = {
-        found: !!r.found,
-        returned: r.returned ?? (r.tags?.length || 0),
-        total_available: r.total_available ?? 0,
-        keys: r.tags?.[0] ? Object.keys(r.tags[0]) : [],
-        sample: (r.tags || []).slice(0, 5),
-        error: r.error || null,
-      };
-    } catch (e: any) {
-      report.errors.push("fred-tagsearch: " + String(e?.message || e).slice(0, 300));
-    }
-    try {
-      const r = await handleGetPunchlistDetails(
-        { project_code: projectCode, sub_system: subsystemNumber },
-        supa,
-      );
-      const items = r.items || r.punchlist_items || r.results || [];
-      report.fred_direct_punch = {
-        count: items.length,
-        keys: items[0] ? Object.keys(items[0]) : Object.keys(r).slice(0, 20),
-        sample: items.slice(0, 5),
-        raw_top: Object.keys(r).slice(0, 20),
-      };
-    } catch (e: any) {
-      report.errors.push("fred-punch: " + String(e?.message || e).slice(0, 300));
-    }
+    report.punch = await runPunch(session, subsystems[0]);
+    report.dac = await runDac(session, subsystems[0]);
 
     return json(report);
   } catch (e: any) {
@@ -278,6 +296,7 @@ Deno.serve(async (req) => {
 
 function json(body: any, status = 200) {
   return new Response(JSON.stringify(body, null, 2), {
-    status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
