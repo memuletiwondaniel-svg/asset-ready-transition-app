@@ -322,6 +322,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
       setSearchInput('');
       setSearch('');
       setBrowseCatalog(false);
+      queryClient.setQueryData(['vcr-doc-requirements', vcrId], []);
       queryClient.invalidateQueries({ queryKey: ['vcr-doc-requirements', vcrId] });
       queryClient.invalidateQueries({ queryKey: ['vcr-critical-docs', vcrId] });
       queryClient.invalidateQueries({ queryKey: ['vcr-wizard-step-counts', vcrId] });
@@ -481,7 +482,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
             </p>
             <div className="mt-6 flex items-center gap-3">
               <Button size="lg" className="gap-2 shadow-sm" onClick={() => setBrowseCatalog(true)}>
-                <Plus className="h-4 w-4" /> Add first document
+                <Plus className="h-4 w-4" /> Click to start
               </Button>
               <Button variant="outline" size="lg" onClick={() => setAssaiOpen(true)} className="gap-2">
                 <img src={assaiIcon} alt="" className="h-4 w-4 object-contain" /> Check Assai
