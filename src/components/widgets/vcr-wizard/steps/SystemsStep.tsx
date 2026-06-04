@@ -22,6 +22,10 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/enhanced-auth/AuthProvider';
+import { CMSImportModal } from '@/components/widgets/p2a-wizard/steps/CMSImportModal';
+import { ExcelUploadModal } from '@/components/widgets/p2a-wizard/steps/ExcelUploadModal';
+import { AddSystemModal } from '@/components/widgets/p2a-wizard/steps/AddSystemModal';
+import type { WizardSystem } from '@/components/widgets/p2a-wizard/steps/SystemsImportStep';
 
 interface SystemsStepProps {
   vcrId: string;
