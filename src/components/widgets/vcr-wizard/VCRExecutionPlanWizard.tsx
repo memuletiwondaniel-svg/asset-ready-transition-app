@@ -88,12 +88,43 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   onOpenChange,
   vcr,
   projectCode,
+  projectName,
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set([0]));
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const hasPromotedRef = useRef(false);
+
+  // Resolve project code/name from the parent P2A plan when not supplied by caller.
+  const { data: resolvedProject } = useQuery({
+    queryKey: ['vcr-wizard-project-context', vcr.id],
+    enabled: open && (!projectCode || !projectName),
+    queryFn: async () => {
+      const client = supabase as any;
+      const { data: hp } = await client
+        .from('p2a_handover_points')
+        .select('handover_plan_id')
+        .eq('id', vcr.id)
+        .maybeSingle();
+      if (!hp?.handover_plan_id) return null;
+      const { data: plan } = await client
+        .from('p2a_handover_plans')
+        .select('project_id')
+        .eq('id', hp.handover_plan_id)
+        .maybeSingle();
+      if (!plan?.project_id) return null;
+      const { data: project } = await client
+        .from('projects')
+        .select('project_code, project_title')
+        .eq('id', plan.project_id)
+        .maybeSingle();
+      return project || null;
+    },
+  });
+
+  const effectiveProjectCode = projectCode || resolvedProject?.project_code || '';
+  const effectiveProjectName = projectName || resolvedProject?.project_title || '';
 
   // ── Progress sync (mirrors P2A pattern) ──────────────────────────
   const syncVCRProgress = useCallback(async (progress: number) => {
