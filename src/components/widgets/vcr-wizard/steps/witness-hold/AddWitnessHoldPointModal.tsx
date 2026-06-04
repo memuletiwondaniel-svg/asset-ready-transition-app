@@ -288,9 +288,11 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
 const TypeCard: React.FC<{
   title: string;
   description: string;
+  variant: 'witness' | 'hold';
   selected: boolean;
   onClick: () => void;
-}> = ({ title, description, selected, onClick }) => {
+}> = ({ title, description, variant, selected, onClick }) => {
+  const isWitness = variant === 'witness';
   return (
     <button
       type="button"
@@ -298,11 +300,18 @@ const TypeCard: React.FC<{
       className={cn(
         'text-left rounded-md px-3 py-2.5 border transition-colors',
         selected
-          ? 'border-primary/60 bg-primary/5'
-          : 'border-border/60 hover:bg-muted/40',
+          ? isWitness
+            ? 'border-amber-400 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-700'
+            : 'border-red-400 bg-red-50 dark:bg-red-950/40 dark:border-red-700'
+          : isWitness
+            ? 'border-border/60 hover:border-amber-300 hover:bg-amber-50/50 dark:hover:bg-amber-950/20'
+            : 'border-border/60 hover:border-red-300 hover:bg-red-50/50 dark:hover:bg-red-950/20',
       )}
     >
-      <div className="text-sm font-medium">{title}</div>
+      <div className={cn(
+        'text-sm font-medium',
+        selected && (isWitness ? 'text-amber-900 dark:text-amber-200' : 'text-red-900 dark:text-red-200'),
+      )}>{title}</div>
       <div className="text-[11px] text-muted-foreground leading-snug mt-0.5">{description}</div>
     </button>
   );
