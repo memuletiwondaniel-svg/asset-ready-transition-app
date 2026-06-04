@@ -118,6 +118,8 @@ const ProjectManagementPage = ({ onBack, selectedLanguage = 'English', translati
   const [selectedPlant, setSelectedPlant] = useState('all');
   const [selectedHub, setSelectedHub] = useState('all');
   const [projectToDelete, setProjectToDelete] = useState<any>(null);
+  const [hardDelete, setHardDelete] = useState(false);
+  const { isAdmin } = useIsAdminPermission();
   
   // Get translations
   const t = translations || getCurrentTranslations(selectedLanguage);
