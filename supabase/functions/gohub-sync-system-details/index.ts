@@ -28,7 +28,7 @@ import {
   parseRadGridTable,
 } from "../_shared/gocompletions-auth.ts";
 import { handleGetHandoverCertificateStatus } from "../_shared/fred/handlers.ts";
-import { HANDOVER_CERTS } from "../_shared/gohub-contract.ts";
+import { HANDOVER_CERTS, assertValidProjectCode } from "../_shared/gohub-contract.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -276,6 +276,15 @@ Deno.serve(async (req) => {
     const projectCode: string = body.project_code;
     if (!projectCode) {
       return new Response(JSON.stringify({ error: "project_code required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // Guard: reject tile names and non-canonical shapes. This is the silent
+    // mislabel that produced the 97-row WEST QURNA cert landmine — make it loud.
+    try {
+      assertValidProjectCode(projectCode);
+    } catch (e) {
+      return new Response(JSON.stringify({ error: (e as Error).message }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
