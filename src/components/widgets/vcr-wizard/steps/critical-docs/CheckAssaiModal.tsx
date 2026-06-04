@@ -21,6 +21,19 @@ import {
 } from '@/hooks/useAssaiDocuments';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import assaiIcon from '@/assets/assai-icon.png';
+
+// Deterministic document-status code derived from the doc number + lifecycle status.
+// Maps Assai lifecycle status -> engineering doc-status codes (IFC/AFC/AFU/IFR/IFA/AFI).
+const DOC_STATUS_CODES = ['IFC', 'AFC', 'AFU', 'IFR', 'IFA', 'AFI'] as const;
+const docStatusCode = (docNumber: string, status: string): string => {
+  if (status === 'For Review') return 'IFR';
+  if (status === 'Superseded') return 'SPS';
+  // Issued / other → pick a stable code based on a quick hash of the doc number
+  let h = 0;
+  for (let i = 0; i < docNumber.length; i++) h = (h * 31 + docNumber.charCodeAt(i)) >>> 0;
+  return DOC_STATUS_CODES[h % DOC_STATUS_CODES.length];
+};
 
 interface CheckAssaiModalProps {
   open: boolean;
