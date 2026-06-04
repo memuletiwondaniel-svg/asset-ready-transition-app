@@ -402,7 +402,7 @@ const StepOverview: React.FC<{
     </div>
     <div className="space-y-2">
       <label className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
-        Objective & Justification
+        Objective & Justification <span className="text-destructive">*</span>
       </label>
       <Textarea
         value={overview}
