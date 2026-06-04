@@ -484,109 +484,122 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
       ) : (
         <>
           <ScrollArea className="h-[calc(min(90vh,780px)-380px)]">
-            <div className="space-y-2 pr-3">
-              {filtered.map((sys) => {
-                const isOpen = !!expanded[sys.id];
-                return (
-                  <Card key={sys.id} className="group">
-                    <div className="p-3 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setExpanded(prev => ({ ...prev, [sys.id]: !prev[sys.id] }))}
-                        className="p-1 rounded hover:bg-muted shrink-0"
-                        aria-label={isOpen ? 'Collapse' : 'Expand'}
-                      >
-                        {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                      </button>
-                      {sys.is_hydrocarbon
-                        ? <Flame className="w-4 h-4 text-orange-500 shrink-0" />
-                        : <Snowflake className="w-4 h-4 text-blue-500 shrink-0" />}
-                      <Badge variant="outline" className="text-[10px] font-mono shrink-0">{sys.system_id}</Badge>
-                      <span className="text-sm font-medium truncate flex-1 min-w-0">{sys.name}</span>
-                      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground shrink-0 cursor-pointer">
-                        <Checkbox
-                          checked={sys.is_hydrocarbon}
-                          onCheckedChange={(v) => toggleHC.mutate({ id: sys.id, value: !!v })}
-                        />
-                        Hydrocarbon
-                      </label>
-                      {(sys.systemAssignmentId || sys.subsystems.some(s => s.assignmentId)) && (
-                        <button
-                          onClick={() => {
-                            const id = sys.systemAssignmentId;
-                            if (id) {
-                              setDeleteTarget({ id, label: sys.name });
-                            } else {
-                              const ids = sys.subsystems.filter(s => s.assignmentId).map(s => s.assignmentId!);
-                              Promise.all(ids.map(i =>
-                                (supabase as any).from('p2a_handover_point_systems').delete().eq('id', i)
-                              )).then(() => {
-                                queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
-                                toast.success('Removed');
-                              });
-                            }
-                          }}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
-                          aria-label="Remove"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+            <div className="pr-3">
+              <SystemsList>
+                {filtered.map((sys) => {
+                  const isOpen = !!expanded[sys.id];
+                  const isAssigned =
+                    !!sys.systemAssignmentId ||
+                    sys.subsystems.some((s) => s.assignmentId);
+                  const handleRemove = () => {
+                    if (sys.systemAssignmentId) {
+                      deleteMutation.mutate(sys.systemAssignmentId);
+                    } else {
+                      const ids = sys.subsystems
+                        .filter((s) => s.assignmentId)
+                        .map((s) => s.assignmentId!);
+                      Promise.all(
+                        ids.map((i) =>
+                          (supabase as any)
+                            .from('p2a_handover_point_systems')
+                            .delete()
+                            .eq('id', i)
+                        )
+                      ).then(() => {
+                        queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
+                        toast.success('Removed');
+                      });
+                    }
+                  };
+                  return (
+                    <SystemRow
+                      key={sys.id}
+                      systemCode={sys.system_id}
+                      name={sys.name}
+                      isHydrocarbon={sys.is_hydrocarbon}
+                      hasSubsystems={sys.subsystems.length > 0}
+                      expanded={isOpen}
+                      onToggleExpand={() =>
+                        setExpanded((prev) => ({ ...prev, [sys.id]: !prev[sys.id] }))
+                      }
+                      onRemove={isAssigned && !isLocked ? handleRemove : undefined}
+                      target="vcr"
+                    >
+                      {sys.subsystems.length > 0 ? (
+                        <div className="space-y-0">
+                          {sys.subsystems.map((ss) => {
+                            const isMapped =
+                              !!ss.assignmentId || !!sys.systemAssignmentId;
+                            return (
+                              <div
+                                key={ss.id}
+                                className="flex items-center gap-2 py-1.5 px-2"
+                              >
+                                <Checkbox
+                                  checked={isMapped}
+                                  disabled={!!sys.systemAssignmentId || isLocked}
+                                  onCheckedChange={async (v) => {
+                                    if (v) {
+                                      const { error } = await (supabase as any)
+                                        .from('p2a_handover_point_systems')
+                                        .insert({
+                                          handover_point_id: vcrId,
+                                          system_id: sys.id,
+                                          subsystem_id: ss.id,
+                                        });
+                                      if (error) toast.error(error.message);
+                                      else {
+                                        queryClient.invalidateQueries({
+                                          queryKey: ['vcr-systems-tree'],
+                                        });
+                                        toast.success('Subsystem added');
+                                      }
+                                    } else if (ss.assignmentId) {
+                                      const { error } = await (supabase as any)
+                                        .from('p2a_handover_point_systems')
+                                        .delete()
+                                        .eq('id', ss.assignmentId);
+                                      if (error) toast.error(error.message);
+                                      else {
+                                        queryClient.invalidateQueries({
+                                          queryKey: ['vcr-systems-tree'],
+                                        });
+                                        toast.success('Subsystem removed');
+                                      }
+                                    }
+                                  }}
+                                />
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono tabular-nums tracking-tight shrink-0 leading-none border border-border/50 bg-muted/30 text-muted-foreground max-w-[180px] truncate">
+                                  {ss.subsystem_id}
+                                </span>
+                                <span className="text-xs text-muted-foreground truncate flex-1 min-w-0">
+                                  {ss.name}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="px-2 py-1.5 text-[11px] text-muted-foreground">
+                          No subsystems available. Sync with GoCompletions to populate.
+                        </div>
                       )}
-                    </div>
-                    {isOpen && sys.subsystems.length > 0 && (
-                      <div className="border-t bg-muted/20 px-3 py-2 space-y-1">
-                        {sys.subsystems.map((ss) => {
-                          const isMapped = !!ss.assignmentId || !!sys.systemAssignmentId;
-                          return (
-                            <div key={ss.id} className="flex items-center gap-2 py-1 group/sub">
-                              <Checkbox
-                                checked={isMapped}
-                                disabled={!!sys.systemAssignmentId}
-                                onCheckedChange={async (v) => {
-                                  if (v) {
-                                    const { error } = await (supabase as any)
-                                      .from('p2a_handover_point_systems')
-                                      .insert({ handover_point_id: vcrId, system_id: sys.id, subsystem_id: ss.id });
-                                    if (error) toast.error(error.message);
-                                    else {
-                                      queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
-                                      toast.success('Subsystem added');
-                                    }
-                                  } else if (ss.assignmentId) {
-                                    const { error } = await (supabase as any)
-                                      .from('p2a_handover_point_systems')
-                                      .delete()
-                                      .eq('id', ss.assignmentId);
-                                    if (error) toast.error(error.message);
-                                    else {
-                                      queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
-                                      toast.success('Subsystem removed');
-                                    }
-                                  }
-                                }}
-                              />
-                              <Badge variant="outline" className="text-[10px] font-mono shrink-0">{ss.subsystem_id}</Badge>
-                              <span className="text-xs text-foreground/80 truncate flex-1 min-w-0">{ss.name}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {isOpen && sys.subsystems.length === 0 && (
-                      <div className="border-t px-3 py-2 text-[11px] text-muted-foreground">
-                        No subsystems available. Sync with GoCompletions to populate.
-                      </div>
-                    )}
-                  </Card>
-                );
-              })}
+                    </SystemRow>
+                  );
+                })}
+              </SystemsList>
               {filtered.length === 0 && searchQuery && (
-                <Card><CardContent className="py-8 text-center">
-                  <p className="text-sm text-muted-foreground">No systems match your search</p>
-                </CardContent></Card>
+                <Card className="mt-2">
+                  <CardContent className="py-8 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No systems match your search
+                    </p>
+                  </CardContent>
+                </Card>
               )}
             </div>
           </ScrollArea>
+
 
           {/* ── Add more ─────────────────────────────────────────── */}
           {!isLocked && (
