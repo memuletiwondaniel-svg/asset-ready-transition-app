@@ -203,16 +203,8 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
               </SelectTrigger>
               <SelectContent className="z-[210]">
                 {systems.map((s) => (
-                  <SelectItem
-                    key={s.id}
-                    value={s.id}
-                    className="text-sm"
-                    textValue={s.code ? `${s.name} · ${s.code}` : s.name}
-                  >
-                    <span className="font-medium">{s.name}</span>
-                    {s.code && (
-                      <span className="ml-1.5 text-[11px] text-muted-foreground font-mono">{s.code}</span>
-                    )}
+                  <SelectItem key={s.id} value={s.id} className="text-sm">
+                    {s.code ? `${s.name} · ${s.code}` : s.name}
                   </SelectItem>
                 ))}
               </SelectContent>
