@@ -293,7 +293,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
       </Sheet>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent className="z-[150]">
+        <AlertDialogContent className="z-[150]" overlayClassName="z-[149] bg-black/80 backdrop-blur-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Document</AlertDialogTitle>
             <AlertDialogDescription>This will remove the document from this VCR's delivery plan.</AlertDialogDescription>

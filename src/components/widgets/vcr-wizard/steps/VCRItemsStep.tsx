@@ -706,7 +706,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
 
       {/* N/A Confirmation */}
       <AlertDialog open={!!naItem} onOpenChange={() => setNaItem(null)}>
-        <AlertDialogContent className="z-[150]">
+        <AlertDialogContent className="z-[150]" overlayClassName="z-[149] bg-black/80 backdrop-blur-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>Mark as Not Applicable</AlertDialogTitle>
             <AlertDialogDescription>
