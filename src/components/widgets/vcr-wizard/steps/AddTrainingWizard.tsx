@@ -360,15 +360,12 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
               size="sm"
               onClick={isLastStep ? handleSubmit : () => goToStep(step + 1)}
               disabled={!canProceed(step) || (isLastStep && (isSaving || !allStepsComplete))}
-              className={cn(
-                'gap-1.5',
-                isLastStep && 'bg-emerald-600 hover:bg-emerald-700 text-white'
-              )}
+              className="gap-1.5"
             >
               {isSaving ? (
                 <><Loader2 className="w-4 h-4 animate-spin" />Creating...</>
               ) : isLastStep ? (
-                <><Sparkles className="w-4 h-4" />Create Training</>
+                'Create Training'
               ) : (
                 <>Continue<ChevronRight className="w-4 h-4" /></>
               )}
