@@ -261,9 +261,10 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
                 transition: 'width 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)',
               }}
             />
-            {/* SoF marker at right edge */}
+            {/* Gate marker at right edge (SoF for HC, PAC for non-HC) */}
             <span
               aria-hidden
+              title={`${gateLabel} sign-off`}
               className="absolute rounded-full"
               style={{
                 top: -3,
@@ -271,8 +272,8 @@ export const VCRCard: React.FC<VCRCardProps> = ({ vcr, onClick, isActive = false
                 transform: 'translateX(-50%)',
                 width: 9,
                 height: 9,
-                backgroundColor: sofSigned ? SOF_SIGNED_COLOR : 'hsl(var(--card))',
-                border: `1.5px solid ${sofSigned ? SOF_SIGNED_COLOR : 'hsl(var(--muted-foreground))'}`,
+                backgroundColor: gateSigned ? GATE_SIGNED_COLOR : 'hsl(var(--card))',
+                border: `1.5px solid ${gateSigned ? GATE_SIGNED_COLOR : 'hsl(var(--muted-foreground))'}`,
               }}
             />
           </div>
