@@ -248,10 +248,18 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
       const selectedDocIds = selections['__all__'] || [];
       if (selectedDocIds.length === 0) return;
 
-      // Get current user
+      // Get current user. tenant_id is auto-set by trigger for vcr_document_requirements;
+      // for tables without that trigger (document_ingest_queue, orp_activity_log) we
+      // resolve tenant_id from the profiles table.
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id;
-      const tenantId = user?.user_metadata?.tenant_id || null;
+      let tenantId: string | null = null;
+      if (userId) {
+        const { data: prof } = await (supabase as any)
+          .from('profiles').select('tenant_id').eq('id', userId).maybeSingle();
+        tenantId = prof?.tenant_id ?? null;
+      }
+
 
       // Fetch full doc type info for selected docs
       const { data: selectedDocTypes } = await supabase
@@ -269,7 +277,7 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
           .eq('id', handoverPlanId);
       }
 
-      // 1. Save to vcr_document_requirements
+      // 1. Save to vcr_document_requirements (tenant_id set by trigger)
       const vcrDocInserts = selectedDocTypes.map((doc: any) => ({
         vcr_id: vcrId,
         document_type_id: doc.id,
@@ -281,13 +289,13 @@ export const CriticalDocsWizard: React.FC<CriticalDocsWizardProps> = ({
         vendor_po_sequence: doc.vendor_po_sequence || null,
         status: 'required',
         identified_by: userId || null,
-        tenant_id: tenantId,
       }));
 
       const { error: vcrDocError } = await (supabase as any)
         .from('vcr_document_requirements')
         .insert(vcrDocInserts);
       if (vcrDocError) throw vcrDocError;
+
 
       // 2. Also insert into p2a_vcr_critical_docs for backward compat
       const critDocInserts = selectedDocIds.map(docTypeId => ({
