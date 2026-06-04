@@ -29,6 +29,7 @@ const COMMISSION_BASED_ROLES = [
   'Elect TA2',
   'Static TA2',
   'Rotating TA2',
+  'MCI TA2',
 ];
 
 // Roles that don't need any suffix
