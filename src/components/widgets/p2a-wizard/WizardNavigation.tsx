@@ -44,6 +44,7 @@ export const WizardNavigation: React.FC<WizardNavigationProps> = ({
   submitLabel = 'Submit',
   saveAndExitLabel,
   isReviewMode = false,
+  nextMuted = false,
 }) => {
   const isLastStep = currentStep === totalSteps;
 
