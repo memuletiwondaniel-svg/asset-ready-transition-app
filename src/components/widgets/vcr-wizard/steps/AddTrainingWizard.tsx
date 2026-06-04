@@ -230,8 +230,14 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
               const isActive = i === step;
               const complete = isStepComplete(i) && !isActive;
               const incomplete = isStepIncomplete(i);
-              const isUnreachable = i > highestStep && !isActive;
               const blocked = step === 0 && !canProceed(0) && i > 0;
+              const circleState = isActive
+                ? 'current'
+                : complete
+                  ? 'completed'
+                  : incomplete
+                    ? 'skipped'
+                    : 'pending';
               return (
                 <React.Fragment key={s.id}>
                   <button
@@ -241,22 +247,13 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
                       blocked && 'cursor-not-allowed opacity-50'
                     )}
                   >
-                    <div className={cn(
-                      'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300 border-2',
-                      complete && 'border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-500/25',
-                      isActive && 'border-primary bg-primary text-primary-foreground shadow-md shadow-primary/30 scale-110',
-                      incomplete && !isActive && 'border-amber-400 bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-500',
-                      !complete && !isActive && !incomplete && isUnreachable && 'border-border bg-muted/50 text-muted-foreground/50',
-                      !complete && !isActive && !incomplete && !isUnreachable && 'border-border bg-muted/80 text-muted-foreground'
-                    )}>
-                      {complete ? <Check className="w-4 h-4" /> : i + 1}
-                    </div>
+                    <StepCircle state={circleState} number={i + 1} size="small" />
                     <span className={cn(
                       'text-[10px] font-medium leading-tight text-center max-w-[64px] whitespace-nowrap truncate transition-colors',
                       complete && 'text-emerald-600 dark:text-emerald-400',
                       isActive && 'text-foreground font-semibold',
                       incomplete && !isActive && 'text-amber-600 dark:text-amber-400',
-                      !complete && !isActive && !incomplete && 'text-muted-foreground/40'
+                      !complete && !isActive && !incomplete && 'text-muted-foreground/60'
                     )}>
                       {s.title}
                     </span>
