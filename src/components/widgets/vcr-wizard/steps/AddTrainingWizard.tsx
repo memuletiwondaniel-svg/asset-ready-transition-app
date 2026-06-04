@@ -253,11 +253,8 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
                   >
                     <StepCircle state={circleState} number={i + 1} size="small" />
                     <span className={cn(
-                      'text-[10px] font-medium leading-tight text-center max-w-[64px] whitespace-nowrap truncate transition-colors',
-                      complete && 'text-emerald-600 dark:text-emerald-400',
-                      isActive && 'text-foreground font-semibold',
-                      incomplete && !isActive && 'text-amber-600 dark:text-amber-400',
-                      !complete && !isActive && !incomplete && 'text-muted-foreground/60'
+                      'text-[10px] leading-tight text-center max-w-[64px] whitespace-nowrap truncate text-foreground',
+                      isActive ? 'font-semibold' : 'font-normal'
                     )}>
                       {s.title}
                     </span>
