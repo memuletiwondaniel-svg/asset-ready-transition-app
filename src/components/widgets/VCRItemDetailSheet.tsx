@@ -614,7 +614,7 @@ export const VCRItemDetailSheet: React.FC<VCRItemDetailSheetProps> = ({
                               </Button>
                             }
                             existingMembers={roleMembers}
-                            candidates={teamMembers.filter(m => m.role_id === role.id)}
+                            candidates={teamMembers as any}
                             onAdd={() => { /* role-level membership managed in Team Settings */ }}
                             emptyMessage="No team members assigned to this role yet — invite from Team Settings."
                           />
