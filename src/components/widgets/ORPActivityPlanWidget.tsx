@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings2, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, ChevronRight, ChevronDown, Trash2, CalendarRange, Activity, CircleDot, Plus, Pencil } from 'lucide-react';
+import { Settings2, Clock, CheckCircle2, FileEdit, Send, AlertTriangle, AlertCircle, ChevronRight, ChevronDown, Trash2, CalendarRange, Activity, CircleDot, Plus, Pencil } from 'lucide-react';
 
 import { StyledWidgetIcon } from './StyledWidgetIcon';
 import { useProjectORPPlans, ProjectORPActivity } from '@/hooks/useProjectORPPlans';
@@ -14,7 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ORAApprovalsPanel } from '@/components/ora/ORAApprovalsPanel';
-import { format, parseISO, isPast, isToday } from 'date-fns';
+import { format, parseISO, isPast, isToday, differenceInCalendarDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface ORPActivityPlanWidgetProps {
@@ -45,22 +45,34 @@ const getActivityStatus = (activity: { end_date: string | null; status: string }
 
 const ActivityRow: React.FC<{ activity: ProjectORPActivity; isCompleted?: boolean; onClick?: () => void }> = ({ activity, isCompleted, onClick }) => {
   const actStatus = isCompleted ? 'completed' : getActivityStatus(activity);
-  const Icon =
-    actStatus === 'completed' ? CheckCircle2 :
-    actStatus === 'overdue' ? AlertTriangle :
-    actStatus === 'in-progress' ? CircleDot :
-    Clock;
-  const iconColor =
-    actStatus === 'completed' ? 'text-green-600' :
-    actStatus === 'overdue' ? 'text-destructive' :
-    actStatus === 'in-progress' ? 'text-amber-500' :
-    'text-muted-foreground';
+  const daysToDue = activity.end_date ? differenceInCalendarDays(parseISO(activity.end_date), new Date()) : null;
+  const isDueSoon = !isCompleted && daysToDue !== null && daysToDue >= 0 && daysToDue <= 7;
+
+  // State-aware leading icon. Only render an icon when it carries signal.
+  let Icon: React.ElementType | null = null;
+  let iconColor = 'text-muted-foreground';
+  if (actStatus === 'completed') {
+    Icon = CheckCircle2;
+    iconColor = 'text-teal-600';
+  } else if (actStatus === 'overdue') {
+    Icon = AlertCircle;
+    iconColor = 'text-amber-600';
+  } else if (isDueSoon) {
+    Icon = Clock;
+    iconColor = 'text-muted-foreground';
+  }
+  // on-track / future: no leading icon — date column on the right is the timing anchor.
+
   return (
     <div
       className="flex items-center gap-2 text-xs py-1.5 px-2 rounded-md bg-muted/40 hover:bg-muted/70 transition-colors cursor-pointer"
       onClick={onClick}
     >
-      <Icon className={cn("h-3.5 w-3.5 shrink-0", iconColor)} />
+      {Icon ? (
+        <Icon className={cn("h-3.5 w-3.5 shrink-0", iconColor)} />
+      ) : (
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/40 ml-1 mr-1" aria-hidden />
+      )}
       <span className={cn("truncate flex-1 text-foreground/90", isCompleted && "text-muted-foreground")}>
         {activity.name}
       </span>
