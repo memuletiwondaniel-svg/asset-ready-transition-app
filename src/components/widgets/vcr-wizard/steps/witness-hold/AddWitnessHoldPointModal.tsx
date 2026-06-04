@@ -9,8 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Select, SelectContent, SelectItem, SelectTrigger,
+  Select, SelectContent, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import * as SelectPrimitive from '@radix-ui/react-select';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -103,9 +104,6 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
 
   const noSystemsMapped = systems.length === 0;
   const selectedSystem = systems.find((system) => system.id === systemId);
-  const selectedSystemLabel = selectedSystem
-    ? `${selectedSystem.name}${selectedSystem.code ? ` · ${selectedSystem.code}` : ''}`
-    : 'Select system…';
 
   const canSubmit = !!systemId && !!activity.trim() && !!type && !saving;
 
@@ -195,7 +193,7 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground">System</label>
             <Select
-              value={systemId}
+              value={systemId || undefined}
               onValueChange={setSystemId}
               disabled={noSystemsMapped}
             >
@@ -203,15 +201,39 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
                 className="h-9 text-sm"
                 title={noSystemsMapped ? 'Add systems first (step 1)' : undefined}
               >
-                <span className={cn('block flex-1 min-w-0 text-left truncate', !systemId && 'text-muted-foreground')}>
-                  {selectedSystemLabel}
-                </span>
+                {selectedSystem ? (
+                  <span className="flex items-baseline gap-2 min-w-0 text-left truncate">
+                    <span className="truncate">{selectedSystem.name}</span>
+                    {selectedSystem.code && (
+                      <span className="font-mono text-xs text-muted-foreground shrink-0">
+                        {selectedSystem.code}
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  <SelectValue placeholder="Select system…" />
+                )}
               </SelectTrigger>
               <SelectContent className="z-[210]">
                 {systems.map((s) => (
-                  <SelectItem key={s.id} value={s.id} className="text-sm">
-                    {s.code ? `${s.name} · ${s.code}` : s.name}
-                  </SelectItem>
+                  <SelectPrimitive.Item
+                    key={s.id}
+                    value={s.id}
+                    className={cn(
+                      'relative flex w-full cursor-pointer select-none items-center justify-between gap-3',
+                      'rounded-sm py-1.5 px-2 text-sm outline-none transition-colors',
+                      'hover:bg-accent/50 focus:bg-accent focus:text-accent-foreground',
+                      'data-[state=checked]:bg-accent/60 data-[state=checked]:font-medium',
+                      'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+                    )}
+                  >
+                    <SelectPrimitive.ItemText>{s.name}</SelectPrimitive.ItemText>
+                    {s.code && (
+                      <span className="font-mono text-xs text-muted-foreground shrink-0">
+                        {s.code}
+                      </span>
+                    )}
+                  </SelectPrimitive.Item>
                 ))}
               </SelectContent>
             </Select>
