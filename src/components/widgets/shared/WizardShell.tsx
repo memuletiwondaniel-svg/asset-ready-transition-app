@@ -207,7 +207,8 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                         key={step.id}
                         onClick={() => onStepChange(idx)}
                         className={cn(
-                          'group relative w-full flex items-center gap-2.5 pl-3 pr-3 py-2.5 rounded-md text-left transition-colors text-sm hover:bg-muted/40'
+                          'group relative w-full flex items-center gap-2.5 pl-3 pr-3 py-2.5 rounded-md text-left transition-colors text-sm',
+                          isActive ? 'bg-primary/10' : 'hover:bg-muted/40'
                         )}
                       >
                         <div className="relative shrink-0">
