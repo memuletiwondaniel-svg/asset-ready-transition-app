@@ -1,48 +1,44 @@
 /**
- * One-off live probe to determine:
- *   a) How to programmatically fetch per-subsystem ITR lists from GoCompletions
- *   b) ITR cardinality (loop B-ITR: one row multi-tags, or repeated rows; unique ITR instance id?)
- *   c) Confirm punch item_no is per-punchlist (not per-project)
- *   d) Confirm MCC-DAC / PCDAC return per-discipline rows per subsystem
- *
- * Project under probe: DP-18F (West Qurna). Tile name match is case-insensitive substring.
- *
- * Returns a JSON report — not a sync. Safe to call repeatedly.
- *
- * POST body (all optional):
- *   { project_code?: string,        // default "DP18F"
- *     subsystem_hint?: string,      // a fragment of a real subsystem id to probe ITRs on
- *     punchlist_hint?: string }     // optional punchlist id fragment
+ * Live ITR probe for DP-18F. See file in repo for goals (a-d).
+ * Uses fresh login + tile select + grid nav directly (does not rely on
+ * GocSessionManager.getGridPage which can fail without postSelection HTML).
  */
 
 import { createClient } from "npm:@supabase/supabase-js@2.39.0";
+import {
+  getGoCompletionsCredentials,
+  loginGoCompletions,
+  extractAllProjectTiles,
+  selectProjectTile,
+  navigateToCompletionsGrid,
+  navigateToPage,
+  callAsmxMethod,
+  parseRadGridTable,
+} from "../_shared/gocompletions-auth.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-import {
-  GocSessionManager,
-  getGoCompletionsCredentials,
-  callAsmxMethod,
-  parseRadGridTable,
-  navigateToPage,
-} from "../_shared/gocompletions-auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const report: any = {
     project: null,
+    tiles: [],
+    selected_tile: null,
+    grid_url: null,
     a_itr_endpoint: { tried: [], working: null, sample: null },
     b_itr_cardinality: { note: "see a_itr_endpoint.sample", needs_human: true },
-    c_punch_item_no: { sample_groups: [], per_punchlist_confirmed: null },
-    d_dac_per_discipline: { sample_rows: [], per_discipline_confirmed: null },
+    c_punch_item_no: { sample_groups: [], per_punchlist_confirmed: null, first_row_keys: [] },
+    d_dac_per_discipline: { sample_rows: [], per_discipline_confirmed: null, first_row_keys: [] },
     errors: [],
   };
 
   try {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
-    const projectCode = body.project_code || "DP18F";
+    const projectMatch = String(body.project_code || "DP-18F").toLowerCase().replace(/[^a-z0-9]/g, "");
     const subsystemHint: string | undefined = body.subsystem_hint;
 
     const supa = createClient(
@@ -50,142 +46,141 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
     const creds = await getGoCompletionsCredentials(supa);
-    const session = new GocSessionManager(creds.portalUrl, creds.username, creds.password, projectCode);
 
-    // ── pick a subsystem ──
-    const sysData = await session.callMethod("GetSystems", { itrClass: "All" });
-    const systems = Array.isArray(sysData) ? sysData : (sysData?.Items || sysData?.Systems || []);
-    report.project = { code: projectCode, systems_returned: systems.length, first_system: systems[0] || null };
+    // 1. Login + tile select
+    const login = await loginGoCompletions(creds.portalUrl, creds.username, creds.password);
+    const tiles = extractAllProjectTiles(login.homePageHtml);
+    report.tiles = tiles.map(t => t.name);
+    const tile = tiles.find(t => t.name.toLowerCase().replace(/[^a-z0-9]/g, "").includes(projectMatch));
+    if (!tile) {
+      report.errors.push(`No tile matched ${projectMatch}. Available: ${report.tiles.join(", ")}`);
+      return json(report);
+    }
+    report.selected_tile = tile.name;
 
+    const sel = await selectProjectTile(login.cookies, login.homePageHtml, login.homePageUrl, tile);
+    const grid = await navigateToCompletionsGrid(sel.cookies, creds.portalUrl, sel.responseHtml, sel.responseUrl);
+    let cookies = grid.cookies;
+    report.grid_url = grid.url;
+
+    // 2. Resolve a subsystem
     let subsystemId: string | null = subsystemHint || null;
     let subsystemRow: any = null;
 
-    // Try a wide search for a subsystem under this project
-    const searchTerm = subsystemHint || projectCode;
-    const subs = await session.searchSubSystems(searchTerm);
-    report.project.subsystems_search_count = subs.length;
-    if (subs.length > 0) {
-      subsystemRow = subs[0];
-      subsystemId =
-        subsystemRow.Number || subsystemRow.SubSystemNumber ||
-        subsystemRow.Name || subsystemRow.Id || subsystemRow.SubSystem || subsystemId;
-      report.project.first_subsystem = subsystemRow;
+    try {
+      const r = await callAsmxMethod(cookies, grid.url, grid.html, "GetSubSystems", {});
+      cookies = r.cookies;
+      const list = Array.isArray(r.data) ? r.data : (r.data?.Items || r.data?.SubSystems || []);
+      if (list.length > 0) {
+        subsystemRow = subsystemHint
+          ? list.find((s: any) => JSON.stringify(s).includes(subsystemHint)) || list[0]
+          : list[0];
+        subsystemId =
+          subsystemRow.Number || subsystemRow.SubSystemNumber ||
+          subsystemRow.Name || subsystemRow.SubSystem || subsystemRow.Id;
+        report.project = { subsystems_count: list.length, first_subsystem: subsystemRow };
+      } else {
+        report.project = { subsystems_count: 0, raw_shape: shapeOf(r.data) };
+      }
+    } catch (e: any) {
+      report.errors.push("GetSubSystems failed: " + String(e).slice(0, 200));
     }
 
     if (!subsystemId) {
-      report.errors.push("Could not resolve a subsystem to probe; pass subsystem_hint.");
-      return json(report);
-    }
-
-    // ── (a) Try multiple ASMX methods that might return ITRs for a subsystem ──
-    const grid = await session.getGridPage();
-    const candidateMethods: Array<{ name: string; body: Record<string, any> }> = [
-      { name: "GetItrs",                body: { subSystem: subsystemId } },
-      { name: "GetITRs",                body: { subSystem: subsystemId } },
-      { name: "GetItrsForSubSystem",    body: { subSystem: subsystemId } },
-      { name: "GetSubSystemItrs",       body: { subSystem: subsystemId } },
-      { name: "GetItrItems",            body: { subSystem: subsystemId } },
-      { name: "GetSubSystemDetails",    body: { subSystem: subsystemId } },
-      { name: "GetItrs",                body: { SubSystemNumber: subsystemId } },
-      { name: "GetItrs",                body: { subsystemId, itrClass: "All" } },
-    ];
-
-    for (const m of candidateMethods) {
-      try {
-        const r = await callAsmxMethod(session.getCookies(), grid.url, grid.html, m.name, m.body);
-        const ok = r.data !== null && r.data !== undefined &&
-                   !(Array.isArray(r.data) && r.data.length === 0);
-        report.a_itr_endpoint.tried.push({
-          method: m.name,
-          body_keys: Object.keys(m.body),
-          status: ok ? "data" : "empty_or_null",
-          shape: shapeOf(r.data),
-          rows: countRows(r.data),
-        });
-        if (ok && !report.a_itr_endpoint.working) {
-          report.a_itr_endpoint.working = m.name;
-          report.a_itr_endpoint.sample = trim(r.data);
-        }
-      } catch (e: any) {
-        report.a_itr_endpoint.tried.push({ method: m.name, error: String(e).slice(0, 200) });
-      }
-    }
-
-    // Fallback: try scraping the subsystem-modal ITRS tab via aspx
-    if (!report.a_itr_endpoint.working) {
-      try {
-        const itrPagePaths = [
-          `GoCompletions/Completions/SubSystemItrs.aspx?SubSystem=${encodeURIComponent(subsystemId)}`,
-          `GoCompletions/Completions/ItrSearch.aspx?SubSystem=${encodeURIComponent(subsystemId)}`,
-          `GoCompletions/Certification/ItrSearch.aspx?SubSystem=${encodeURIComponent(subsystemId)}`,
-        ];
-        for (const path of itrPagePaths) {
-          try {
-            const r = await navigateToPage(session.getCookies(), creds.portalUrl, path);
-            const rows = parseRadGridTable(r.html);
-            report.a_itr_endpoint.tried.push({
-              method: "aspx:" + path,
-              status: rows.length > 0 ? "data" : "empty",
-              rows: rows.length,
-              first_row_keys: rows[0] ? Object.keys(rows[0]) : [],
-            });
-            if (rows.length > 0 && !report.a_itr_endpoint.working) {
-              report.a_itr_endpoint.working = "aspx:" + path;
-              report.a_itr_endpoint.sample = rows.slice(0, 5);
-            }
-          } catch (e: any) {
-            report.a_itr_endpoint.tried.push({ method: "aspx:" + path, error: String(e).slice(0, 200) });
+      report.errors.push("No subsystem resolved; cannot probe ITRs. Pass subsystem_hint.");
+    } else {
+      // 3. Try ASMX methods that might return ITRs for that subsystem
+      const candidates: Array<{ name: string; body: Record<string, any> }> = [
+        { name: "GetItrs",                body: { subSystem: subsystemId } },
+        { name: "GetITRs",                body: { subSystem: subsystemId } },
+        { name: "GetItrsForSubSystem",    body: { subSystem: subsystemId } },
+        { name: "GetSubSystemItrs",       body: { subSystem: subsystemId } },
+        { name: "GetItrItems",            body: { subSystem: subsystemId } },
+        { name: "GetSubSystemDetails",    body: { subSystem: subsystemId } },
+        { name: "GetItrs",                body: { SubSystemNumber: subsystemId } },
+        { name: "GetItrs",                body: { subSystem: subsystemId, itrClass: "All" } },
+        { name: "GetTags",                body: { subSystem: subsystemId } },
+      ];
+      for (const m of candidates) {
+        try {
+          const r = await callAsmxMethod(cookies, grid.url, grid.html, m.name, m.body);
+          cookies = r.cookies;
+          const rows = countRows(r.data);
+          report.a_itr_endpoint.tried.push({
+            method: m.name, body_keys: Object.keys(m.body),
+            shape: shapeOf(r.data), rows,
+          });
+          if (rows > 0 && !report.a_itr_endpoint.working) {
+            report.a_itr_endpoint.working = m.name + "(" + Object.keys(m.body).join(",") + ")";
+            report.a_itr_endpoint.sample = trim(r.data);
           }
+        } catch (e: any) {
+          report.a_itr_endpoint.tried.push({ method: m.name, error: String(e).slice(0, 200) });
         }
-      } catch (e: any) {
-        report.errors.push("itr aspx probe: " + String(e).slice(0, 200));
+      }
+
+      // Fallback: try scraping aspx pages
+      const itrAspx = [
+        `GoCompletions/Completions/ItrSearch.aspx?SubSystem=${encodeURIComponent(subsystemId)}`,
+        `GoCompletions/Certification/ItrSearch.aspx?SubSystem=${encodeURIComponent(subsystemId)}`,
+        `GoCompletions/Completions/SubSystemItrs.aspx?SubSystem=${encodeURIComponent(subsystemId)}`,
+      ];
+      for (const path of itrAspx) {
+        try {
+          const r = await navigateToPage(cookies, creds.portalUrl, path);
+          cookies = r.cookies;
+          const rows = parseRadGridTable(r.html);
+          report.a_itr_endpoint.tried.push({
+            method: "aspx:" + path.split("?")[0], rows: rows.length,
+            first_row_keys: rows[0] ? Object.keys(rows[0]) : [],
+          });
+          if (rows.length > 0 && !report.a_itr_endpoint.working) {
+            report.a_itr_endpoint.working = "aspx:" + path;
+            report.a_itr_endpoint.sample = rows.slice(0, 5);
+          }
+        } catch (e: any) {
+          report.a_itr_endpoint.tried.push({ method: "aspx:" + path.split("?")[0], error: String(e).slice(0, 200) });
+        }
       }
     }
 
-    // ── (c) Confirm punch item_no is per-punchlist ──
+    // 4. Punch (c) — confirm item_no per-punchlist
     try {
-      const punch = await navigateToPage(
-        session.getCookies(), creds.portalUrl,
-        "GoCompletions/Completions/PunchlistItemSearch.aspx",
-      );
-      const punchRows = parseRadGridTable(punch.html);
-      // Group by punchlist column and list item numbers
+      const punch = await navigateToPage(cookies, creds.portalUrl, "GoCompletions/Completions/PunchlistItemSearch.aspx");
+      cookies = punch.cookies;
+      const rows = parseRadGridTable(punch.html);
+      report.c_punch_item_no.first_row_keys = rows[0] ? Object.keys(rows[0]) : [];
       const groups: Record<string, number[]> = {};
-      for (const r of punchRows.slice(0, 200)) {
+      for (const r of rows.slice(0, 300)) {
         const pl = String(r.Punchlist || r["Punch List"] || r.PunchList || "");
         const itemNo = Number(r.Item || r["Item No"] || r.ItemNo || NaN);
         if (!pl || !Number.isFinite(itemNo)) continue;
         (groups[pl] ||= []).push(itemNo);
       }
-      const sample = Object.entries(groups).slice(0, 5).map(([pl, nums]) => ({ punchlist: pl, items: nums }));
+      const sample = Object.entries(groups).slice(0, 6).map(([pl, nums]) => ({ punchlist: pl, items: nums }));
       report.c_punch_item_no.sample_groups = sample;
-      // If item #1 appears in >1 punchlist, confirms per-punchlist numbering
-      const onesIn = sample.filter(g => g.items.includes(1)).length;
-      report.c_punch_item_no.per_punchlist_confirmed = onesIn >= 2;
-      report.c_punch_item_no.first_row_keys = punchRows[0] ? Object.keys(punchRows[0]) : [];
+      report.c_punch_item_no.per_punchlist_confirmed = sample.filter(g => g.items.includes(1)).length >= 2;
     } catch (e: any) {
       report.errors.push("punch probe: " + String(e).slice(0, 200));
     }
 
-    // ── (d) MCC-DAC per-discipline rows ──
+    // 5. DAC (d) — per-discipline rows
     try {
-      // MCC-DAC: gate 1, GroupBy=SubSystem,Discipline. TypeID is unknown, but the page may render the grid.
       const dacPath = `GoCompletions/Handovers/HandoverSearch.aspx?HandoverGate=1&GroupBy=SubSystem,Discipline&IsPartialHandover=False&IsMultiHandover=False&IsProcedure=False&HasInterimDate=False&AdditionalFilters=`;
-      const dac = await navigateToPage(session.getCookies(), creds.portalUrl, dacPath);
-      const dacRows = parseRadGridTable(dac.html);
-      // Group by SubSystem and count distinct disciplines
+      const dac = await navigateToPage(cookies, creds.portalUrl, dacPath);
+      cookies = dac.cookies;
+      const rows = parseRadGridTable(dac.html);
+      report.d_dac_per_discipline.first_row_keys = rows[0] ? Object.keys(rows[0]) : [];
+      report.d_dac_per_discipline.sample_rows = rows.slice(0, 5);
       const byss: Record<string, Set<string>> = {};
-      for (const r of dacRows.slice(0, 200)) {
-        const ss = String(r["Sub System"] || r.SubSystem || r["SubSystem"] || "");
-        const disc = String(r.Discipline || r["Discipline"] || "");
+      for (const r of rows.slice(0, 300)) {
+        const ss = String(r["Sub System"] || r.SubSystem || "");
+        const disc = String(r.Discipline || "");
         if (!ss) continue;
         (byss[ss] ||= new Set()).add(disc);
       }
-      report.d_dac_per_discipline.first_row_keys = dacRows[0] ? Object.keys(dacRows[0]) : [];
-      report.d_dac_per_discipline.sample_rows = dacRows.slice(0, 5);
-      report.d_dac_per_discipline.subsystem_discipline_fanout = Object.entries(byss)
-        .slice(0, 5)
-        .map(([ss, d]) => ({ subsystem: ss, disciplines: Array.from(d) }));
+      report.d_dac_per_discipline.subsystem_discipline_fanout =
+        Object.entries(byss).slice(0, 5).map(([ss, d]) => ({ subsystem: ss, disciplines: Array.from(d) }));
       report.d_dac_per_discipline.per_discipline_confirmed =
         Object.values(byss).some(s => s.size > 1);
     } catch (e: any) {
@@ -201,14 +196,12 @@ Deno.serve(async (req) => {
 
 function json(body: any, status = 200) {
   return new Response(JSON.stringify(body, null, 2), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status, headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
-
 function shapeOf(d: any): string {
   if (d === null || d === undefined) return "null";
-  if (Array.isArray(d)) return `array(${d.length})` + (d[0] ? "<" + Object.keys(d[0]).slice(0, 8).join(",") + ">" : "");
+  if (Array.isArray(d)) return `array(${d.length})` + (d[0] && typeof d[0] === "object" ? "<" + Object.keys(d[0]).slice(0, 8).join(",") + ">" : "");
   if (typeof d === "object") return "object<" + Object.keys(d).slice(0, 8).join(",") + ">";
   return typeof d;
 }
