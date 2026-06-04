@@ -666,7 +666,7 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
                 const badgeId = `${catCode}-${String(idx + 1).padStart(2, '0')}`;
                 const colors = getVCRCategoryConfig(catName);
                 return (
-                  <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold border", colors.badgeBg, colors.badgeText, colors.badgeBorder)}>
+                  <Badge variant="outline" className={cn("text-[10px] font-mono font-semibold border h-5 px-2 py-0 leading-none inline-flex items-center", colors.badgeBg, colors.badgeText, colors.badgeBorder)}>
                     {badgeId}
                   </Badge>
                 );
