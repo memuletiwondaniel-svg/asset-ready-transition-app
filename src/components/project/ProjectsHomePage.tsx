@@ -11,7 +11,10 @@ import { CreateProjectWizard } from '@/components/project/CreateProjectWizard';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useCanPerformActionsPermission } from '@/hooks/usePermissions';
+import { useCanPerformActionsPermission, useIsAdminPermission } from '@/hooks/usePermissions';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { AlertTriangle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
