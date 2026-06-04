@@ -213,15 +213,14 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   const { data: stepCounts = {} } = useQuery({
     queryKey: ['vcr-wizard-step-counts', vcr.id],
     queryFn: async () => {
-      const [systems, training, procedures, criticalDocs, registers, logsheets, cmms, spares] = await Promise.all([
+      const [systems, training, procedures, criticalDocs, registers, logsheets, maintenance] = await Promise.all([
         (supabase as any).from('p2a_handover_point_systems').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_training').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_procedures').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_critical_docs').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_register_selections').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
         (supabase as any).from('p2a_vcr_logsheets').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
-        (supabase as any).from('p2a_vcr_cmms').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
-        (supabase as any).from('p2a_vcr_spares').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
+        (supabase as any).from('p2a_vcr_maintenance_deliverables').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id).eq('is_applicable', true),
       ]);
       return {
         0: systems.count || 0,
@@ -229,7 +228,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         3: procedures.count || 0,
         4: criticalDocs.count || 0,
         5: (registers.count || 0) + (logsheets.count || 0),
-        6: (cmms.count || 0) + (spares.count || 0),
+        6: maintenance.count || 0,
       } as Record<number, number>;
     },
     enabled: open,
