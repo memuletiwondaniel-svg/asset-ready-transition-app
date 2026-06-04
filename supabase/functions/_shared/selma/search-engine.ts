@@ -918,6 +918,7 @@ export async function executeSearch(
     title: options.title || '',
     totalQueryCount: 0,
     paginationTotalAssaiCount: null,
+    detectedPageSize: null,
     sweepStartTime: Date.now(),
     SWEEP_TIME_GUARD_MS: 90000,
     MAX_TOTAL_QUERIES: 80,
