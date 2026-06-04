@@ -208,10 +208,11 @@ export const CheckAssaiModal: React.FC<CheckAssaiModalProps> = ({
         <div className="flex items-center gap-2 flex-wrap">
           <Tabs value={filters.tier} onValueChange={(v) => updateTier(v as any)}>
             <TabsList className="h-8">
-              <TabsTrigger value="all" className="text-xs px-3 h-7">All</TabsTrigger>
-              <TabsTrigger value="Tier 1" className="text-xs px-3 h-7">Tier 1</TabsTrigger>
-              <TabsTrigger value="Tier 2" className="text-xs px-3 h-7">Tier 2</TabsTrigger>
-              <TabsTrigger value="RLMU" className="text-xs px-3 h-7">RLMU</TabsTrigger>
+              <TabsTrigger value="all" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">All</TabsTrigger>
+              <TabsTrigger value="Tier 1" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">Tier 1</TabsTrigger>
+              <TabsTrigger value="Tier 2" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">Tier 2</TabsTrigger>
+              <TabsTrigger value="RLMU" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">RLMU</TabsTrigger>
+
             </TabsList>
           </Tabs>
 
@@ -232,10 +233,11 @@ export const CheckAssaiModal: React.FC<CheckAssaiModalProps> = ({
 
           <Tabs value={filters.status} onValueChange={(v) => updateStatus(v as any)}>
             <TabsList className="h-8">
-              <TabsTrigger value="all" className="text-xs px-3 h-7">All Status</TabsTrigger>
-              <TabsTrigger value="Issued" className="text-xs px-3 h-7">Issued</TabsTrigger>
-              <TabsTrigger value="For Review" className="text-xs px-3 h-7">For Review</TabsTrigger>
-              <TabsTrigger value="Superseded" className="text-xs px-3 h-7">Superseded</TabsTrigger>
+              <TabsTrigger value="all" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">All Status</TabsTrigger>
+              <TabsTrigger value="Issued" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">Issued</TabsTrigger>
+              <TabsTrigger value="For Review" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">For Review</TabsTrigger>
+              <TabsTrigger value="Superseded" className="text-xs px-3 h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-medium">Superseded</TabsTrigger>
+
             </TabsList>
           </Tabs>
 
@@ -280,7 +282,7 @@ export const CheckAssaiModal: React.FC<CheckAssaiModalProps> = ({
                 <TableRow>
                   <TableHead className="text-xs w-[260px]">Doc Number</TableHead>
                   <TableHead className="text-xs">Title</TableHead>
-                  <TableHead className="text-xs w-[64px]">Tier</TableHead>
+                  <TableHead className="text-xs w-[48px] text-center">Tier</TableHead>
                   <TableHead className="text-xs">Discipline</TableHead>
                   <TableHead className="text-xs w-[80px]">Status</TableHead>
                   <TableHead className="text-xs w-[56px]">Rev</TableHead>
@@ -290,17 +292,22 @@ export const CheckAssaiModal: React.FC<CheckAssaiModalProps> = ({
               <TableBody>
                 {data.map((d) => (
                   <TableRow key={d.document_type_id + d.document_number} className="group">
-                    <TableCell className="font-mono text-[11px] whitespace-nowrap">{d.document_number}</TableCell>
-                    <TableCell className="text-xs max-w-[260px] truncate" title={d.title}>{d.title}</TableCell>
-                    <TableCell>
-                      {d.tier && <Badge variant="outline" className="text-[10px]">{d.tier}</Badge>}
+                    <TableCell className="font-mono text-[11px] whitespace-nowrap py-1.5">{d.document_number}</TableCell>
+                    <TableCell className="text-xs max-w-[260px] truncate py-1.5" title={d.title}>{d.title}</TableCell>
+                    <TableCell className="py-1.5 text-center">
+                      {d.tier && (
+                        <span className="inline-flex items-center justify-center min-w-[22px] h-[20px] px-1.5 rounded border border-border text-[10px] font-medium text-foreground">
+                          {d.tier.replace(/^Tier\s*/i, '')}
+                        </span>
+                      )}
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{d.discipline_name || d.discipline_code}</TableCell>
-                    <TableCell className="font-mono text-[11px] font-medium">
+                    <TableCell className="text-xs text-muted-foreground py-1.5">{d.discipline_name || d.discipline_code}</TableCell>
+                    <TableCell className="font-mono text-[11px] font-medium py-1.5">
                       {docStatusCode(d.document_number, d.status)}
                     </TableCell>
-                    <TableCell className="text-xs">{d.revision}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-xs py-1.5">{d.revision}</TableCell>
+
+                    <TableCell className="text-right py-1.5">
                       <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <a
                           href={`https://eu.assaicloud.com/AWeu578/get/details/BGC_PROJ/DOCS/${d.document_number}`}
