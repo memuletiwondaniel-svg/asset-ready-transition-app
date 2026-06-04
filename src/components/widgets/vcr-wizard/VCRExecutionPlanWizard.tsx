@@ -165,7 +165,9 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     })();
   }, [open, user?.id, vcr.id, queryClient]);
 
-  // Query step data counts for completion (now Systems is index 0)
+  // Query step data counts for completion (after Phase B reorder + merge)
+  // 0:Items 1:Systems 2:Training 3:Procedures 4:Critical Docs
+  // 5:Registers+Logsheets 6:CMMS+Spares 7:ITP 8:Approvers 9:Review
   const { data: stepCounts = {} } = useQuery({
     queryKey: ['vcr-wizard-step-counts', vcr.id],
     queryFn: async () => {
@@ -180,13 +182,12 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         (supabase as any).from('p2a_vcr_spares').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
       ]);
       return {
-        0: systems.count || 0,
+        1: systems.count || 0,
         2: training.count || 0,
         3: procedures.count || 0,
         4: criticalDocs.count || 0,
         5: (registers.count || 0) + (logsheets.count || 0),
-        6: cmms.count || 0,
-        7: spares.count || 0,
+        6: (cmms.count || 0) + (spares.count || 0),
       } as Record<number, number>;
     },
     enabled: open,
@@ -194,8 +195,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
-    // VCR Items (1), ITP (8), Approvers (9) — completion based on visit
-    if (idx === 1 || idx === 8 || idx === 9) return visitedSteps.has(idx);
+    // Items (0), ITP (7), Approvers (8), Review (9) — completion based on visit
+    if (idx === 0 || idx === 7 || idx === 8 || idx === 9) return visitedSteps.has(idx);
     return (stepCounts[idx] || 0) > 0;
   };
 
