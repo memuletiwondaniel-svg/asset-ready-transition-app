@@ -152,7 +152,10 @@ export const CheckAssaiModal: React.FC<CheckAssaiModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[1100px] sm:max-h-[90vh] flex flex-col">
+      <DialogContent
+        className="sm:max-w-[1100px] sm:max-h-[90vh] flex flex-col z-[200]"
+        overlayClassName="z-[199] bg-black/80 backdrop-blur-sm"
+      >
         <DialogHeader>
           <DialogTitle>Browse Assai — Live Documents</DialogTitle>
           <div className="text-xs text-muted-foreground">
