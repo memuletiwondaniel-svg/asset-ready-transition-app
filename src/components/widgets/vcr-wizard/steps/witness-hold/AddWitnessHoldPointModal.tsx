@@ -232,12 +232,14 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
               <TypeCard
                 title="Witness"
                 description="ORA must be present during this activity"
+                variant="witness"
                 selected={type === 'WITNESS'}
                 onClick={() => setType('WITNESS')}
               />
               <TypeCard
                 title="Hold"
                 description="Activity cannot start without ORA approval"
+                variant="hold"
                 selected={type === 'HOLD'}
                 onClick={() => setType('HOLD')}
               />
