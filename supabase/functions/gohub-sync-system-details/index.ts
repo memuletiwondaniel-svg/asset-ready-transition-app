@@ -36,24 +36,68 @@ const corsHeaders = {
 };
 
 // ─── Page-shape discovery helpers ───────────────────────────
+//
+// Live-capture findings (TagSearch.aspx):
+//   - SubSystem filter is a plain textbox:
+//       ctl00$ContentPlaceHolder1$MasterRadPanelBar$i0$i0
+//         $TagSearch_PrimarySearchCriteria$SubSystemTextBox
+//     There is NO RadComboBox _ClientState on the SubSystem field.
+//   - SearchButton is a RadButton:
+//       ctl00$ContentPlaceHolder1$MasterRadPanelBar$i0$i7$SearchButton
+//     The page renders an inner <input name="..._input">; the postback
+//     target is the OUTER UniqueID (strip the trailing "_input").
+//
+// To avoid grabbing controls from an unrelated pane (header search,
+// alerts, other panels), prefer the PrimarySearchCriteria-scoped
+// SubSystem control, then derive the SearchButton from the same
+// MasterRadPanelBar$i0$iN parent path when possible.
 
-function findPostbackTarget(html: string): string | null {
-  const m = html.match(/<input[^>]*name=["']([^"']+SearchButton)_input["']/i);
-  return m ? m[1] : null;
-}
-
-function findSubSystemField(html: string): { field: string | null; clientState: string | null } {
+function findSubSystemField(html: string): {
+  field: string | null;
+  clientState: string | null;
+  scopePrefix: string | null;
+} {
   const cands: string[] = [];
   const re = /<input[^>]*name=["']([^"']*[Ss]ub[Ss]ystem[^"']*)["']/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) !== null) cands.push(m[1]);
-  const field = cands.find((c) => /SubSystem_Input$/i.test(c))
-    || cands.find((c) => /SubSystemTextBox$/.test(c))
-    || cands.find((c) => /\$SubSystem$/.test(c))
-    || cands.find((c) => /PrimarySearchCriteria[^_]*SubSystem/i.test(c))
+
+  // Prefer controls inside *PrimarySearchCriteria — that's the real search
+  // form for TagSearch/PunchlistItemSearch/HandoverSearch. Inside that
+  // scope, prefer the plain textbox (SubSystemTextBox); fall back to a
+  // RadComboBox visible input ($SubSystem_Input) only if no textbox.
+  const primary = cands.filter((c) => /PrimarySearchCriteria/i.test(c));
+  const pool = primary.length ? primary : cands;
+  const field = pool.find((c) => /SubSystemTextBox$/i.test(c))
+    || pool.find((c) => /\$SubSystem$/.test(c))
+    || pool.find((c) => /SubSystem_Input$/i.test(c))
     || null;
-  const clientState = cands.find((c) => /SubSystem_ClientState$/i.test(c)) || null;
-  return { field, clientState };
+
+  // ClientState only exists when the control is a RadComboBox. For the
+  // TagSearch plain textbox it will (correctly) be null.
+  const clientState = pool.find((c) => /SubSystem_ClientState$/i.test(c)) || null;
+
+  // Scope prefix = the MasterRadPanelBar$i0$iN parent of the chosen field.
+  let scopePrefix: string | null = null;
+  if (field) {
+    const sm = field.match(/^(.*?MasterRadPanelBar\$i\d+)\$i\d+/i);
+    if (sm) scopePrefix = sm[1];
+  }
+  return { field, clientState, scopePrefix };
+}
+
+function findPostbackTarget(html: string, scopePrefix: string | null): string | null {
+  // Strip "_input" → UniqueID for the RadButton outer name.
+  const targets: string[] = [];
+  const re = /<input[^>]*name=["']([^"']+SearchButton)_input["']/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) targets.push(m[1]);
+  if (!targets.length) return null;
+  if (scopePrefix) {
+    const scoped = targets.find((t) => t.startsWith(scopePrefix));
+    if (scoped) return scoped;
+  }
+  return targets[0];
 }
 
 function extractRowCellsHtml(tableHtml: string): string[][] {
