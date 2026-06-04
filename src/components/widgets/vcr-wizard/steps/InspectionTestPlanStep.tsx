@@ -157,35 +157,36 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
   return (
     <TooltipProvider>
       <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-0.5">
-            <h2 className="text-base font-semibold">Witness &amp; Hold points</h2>
-            <p className="text-xs text-muted-foreground">
-              Identify activities where ORA must witness or place a hold before commissioning can proceed.
-            </p>
-          </div>
-          {!isEmpty && (
+        {/* Header — hidden in empty state to keep focus on the CTA */}
+        {!isEmpty && (
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-0.5">
+              <h2 className="text-base font-semibold">Witness &amp; Hold points</h2>
+              <p className="text-xs text-muted-foreground">
+                Identify activities where ORA must witness or place a hold before commissioning can proceed.
+              </p>
+            </div>
             <Button variant="outline" size="sm" onClick={openAdd} className="gap-1.5 shrink-0">
               <Plus className="w-3.5 h-3.5" /> Add point
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         {isEmpty ? (
           /* Empty state */
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center mb-4">
-              <Eye className="w-[22px] h-[22px] text-muted-foreground" />
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-5">
+              <Eye className="w-7 h-7 text-primary" />
             </div>
-            <h3 className="text-sm font-medium">No witness or hold points yet</h3>
-            <p className="text-[13px] text-muted-foreground max-w-[380px] mt-2 leading-relaxed">
+            <h3 className="text-lg font-semibold">No witness or hold points yet</h3>
+            <p className="text-sm text-muted-foreground max-w-[420px] mt-2 leading-relaxed">
               Identify commissioning activities that require ORA presence (witness) or approval before proceeding (hold). Examples: pigging, dewatering, hydrotest sign-off.
             </p>
-            <Button variant="outline" size="sm" onClick={openAdd} className="gap-1.5 mt-4">
-              <Plus className="w-3.5 h-3.5" /> Add first point
+            <Button size="lg" onClick={openAdd} className="gap-2 mt-6 shadow-sm">
+              <Plus className="w-4 h-4" /> Add first point
             </Button>
           </div>
+
         ) : (
           <>
             {/* Stat pills */}
