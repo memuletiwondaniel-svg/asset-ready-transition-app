@@ -378,8 +378,8 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
           </div>
         </div>
 
-        {/* List body */}
-        <div className="border border-border/60 rounded-md max-h-[480px] overflow-auto">
+        {/* List body — the only scroll surface */}
+        <div className="border border-border/60 rounded-md flex-1 min-h-0 overflow-y-auto">
           {typesLoading ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
               <Loader2 className="w-4 h-4 animate-spin" /> <span className="text-sm">Loading catalog…</span>
