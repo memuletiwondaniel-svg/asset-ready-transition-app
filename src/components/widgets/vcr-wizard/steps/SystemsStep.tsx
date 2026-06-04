@@ -415,10 +415,6 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
           >
             <RefreshCw className={cn("w-3.5 h-3.5", syncing && "animate-spin")} />
           </Button>
-          <Button size="sm" onClick={() => setPickerOpen(true)} className="gap-1.5">
-            <Plus className="w-3.5 h-3.5" />
-            Add System
-          </Button>
           {!isFinalized && !isLocked && (
             <Button
               size="sm"
@@ -446,7 +442,7 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
               Pick an import method below to get started, or add systems to this VCR.
             </p>
           </div>
-          <div className="grid grid-cols-4 gap-3 shrink-0">
+          <div className="grid grid-cols-3 gap-3 shrink-0">
             <button
               onClick={() => setShowCMSModal(true)}
               className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
@@ -479,125 +475,153 @@ export const SystemsStep: React.FC<SystemsStepProps> = ({ vcrId, projectCode }) 
               <span className="font-medium text-xs">Add Manually</span>
               <span className="text-[10px] text-muted-foreground leading-tight text-center">Enter details</span>
             </button>
-            <button
-              onClick={() => setPickerOpen(true)}
-              className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-            >
-              <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
-                <Layers className="h-4 w-4 text-violet-600" />
-              </div>
-              <span className="font-medium text-xs">Pick from Plan</span>
-              <span className="text-[10px] text-muted-foreground leading-tight text-center">Already in P2A plan</span>
-            </button>
           </div>
         </div>
       ) : (
-        <ScrollArea className="h-[calc(min(90vh,780px)-320px)]">
-          <div className="space-y-2 pr-3">
-            {filtered.map((sys) => {
-              const isOpen = !!expanded[sys.id];
-              return (
-                <Card key={sys.id} className="group">
-                  <div className="p-3 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setExpanded(prev => ({ ...prev, [sys.id]: !prev[sys.id] }))}
-                      className="p-1 rounded hover:bg-muted shrink-0"
-                      aria-label={isOpen ? 'Collapse' : 'Expand'}
-                    >
-                      {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                    </button>
-                    {sys.is_hydrocarbon
-                      ? <Flame className="w-4 h-4 text-orange-500 shrink-0" />
-                      : <Snowflake className="w-4 h-4 text-blue-500 shrink-0" />}
-                    <Badge variant="outline" className="text-[10px] font-mono shrink-0">{sys.system_id}</Badge>
-                    <span className="text-sm font-medium truncate flex-1 min-w-0">{sys.name}</span>
-                    <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground shrink-0 cursor-pointer">
-                      <Checkbox
-                        checked={sys.is_hydrocarbon}
-                        onCheckedChange={(v) => toggleHC.mutate({ id: sys.id, value: !!v })}
-                      />
-                      Hydrocarbon
-                    </label>
-                    {(sys.systemAssignmentId || sys.subsystems.some(s => s.assignmentId)) && (
+        <>
+          <ScrollArea className="h-[calc(min(90vh,780px)-380px)]">
+            <div className="space-y-2 pr-3">
+              {filtered.map((sys) => {
+                const isOpen = !!expanded[sys.id];
+                return (
+                  <Card key={sys.id} className="group">
+                    <div className="p-3 flex items-center gap-2">
                       <button
-                        onClick={() => {
-                          // Remove the whole system mapping (and any subsystem mappings)
-                          const id = sys.systemAssignmentId;
-                          if (id) {
-                            setDeleteTarget({ id, label: sys.name });
-                          } else {
-                            // Bulk-remove all subsystem mappings under this system
-                            const ids = sys.subsystems.filter(s => s.assignmentId).map(s => s.assignmentId!);
-                            Promise.all(ids.map(i =>
-                              (supabase as any).from('p2a_handover_point_systems').delete().eq('id', i)
-                            )).then(() => {
-                              queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
-                              toast.success('Removed');
-                            });
-                          }
-                        }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
-                        aria-label="Remove"
+                        type="button"
+                        onClick={() => setExpanded(prev => ({ ...prev, [sys.id]: !prev[sys.id] }))}
+                        className="p-1 rounded hover:bg-muted shrink-0"
+                        aria-label={isOpen ? 'Collapse' : 'Expand'}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                       </button>
+                      {sys.is_hydrocarbon
+                        ? <Flame className="w-4 h-4 text-orange-500 shrink-0" />
+                        : <Snowflake className="w-4 h-4 text-blue-500 shrink-0" />}
+                      <Badge variant="outline" className="text-[10px] font-mono shrink-0">{sys.system_id}</Badge>
+                      <span className="text-sm font-medium truncate flex-1 min-w-0">{sys.name}</span>
+                      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground shrink-0 cursor-pointer">
+                        <Checkbox
+                          checked={sys.is_hydrocarbon}
+                          onCheckedChange={(v) => toggleHC.mutate({ id: sys.id, value: !!v })}
+                        />
+                        Hydrocarbon
+                      </label>
+                      {(sys.systemAssignmentId || sys.subsystems.some(s => s.assignmentId)) && (
+                        <button
+                          onClick={() => {
+                            const id = sys.systemAssignmentId;
+                            if (id) {
+                              setDeleteTarget({ id, label: sys.name });
+                            } else {
+                              const ids = sys.subsystems.filter(s => s.assignmentId).map(s => s.assignmentId!);
+                              Promise.all(ids.map(i =>
+                                (supabase as any).from('p2a_handover_point_systems').delete().eq('id', i)
+                              )).then(() => {
+                                queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
+                                toast.success('Removed');
+                              });
+                            }
+                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-destructive/10 text-destructive shrink-0"
+                          aria-label="Remove"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    {isOpen && sys.subsystems.length > 0 && (
+                      <div className="border-t bg-muted/20 px-3 py-2 space-y-1">
+                        {sys.subsystems.map((ss) => {
+                          const isMapped = !!ss.assignmentId || !!sys.systemAssignmentId;
+                          return (
+                            <div key={ss.id} className="flex items-center gap-2 py-1 group/sub">
+                              <Checkbox
+                                checked={isMapped}
+                                disabled={!!sys.systemAssignmentId}
+                                onCheckedChange={async (v) => {
+                                  if (v) {
+                                    const { error } = await (supabase as any)
+                                      .from('p2a_handover_point_systems')
+                                      .insert({ handover_point_id: vcrId, system_id: sys.id, subsystem_id: ss.id });
+                                    if (error) toast.error(error.message);
+                                    else {
+                                      queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
+                                      toast.success('Subsystem added');
+                                    }
+                                  } else if (ss.assignmentId) {
+                                    const { error } = await (supabase as any)
+                                      .from('p2a_handover_point_systems')
+                                      .delete()
+                                      .eq('id', ss.assignmentId);
+                                    if (error) toast.error(error.message);
+                                    else {
+                                      queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
+                                      toast.success('Subsystem removed');
+                                    }
+                                  }
+                                }}
+                              />
+                              <Badge variant="outline" className="text-[10px] font-mono shrink-0">{ss.subsystem_id}</Badge>
+                              <span className="text-xs text-foreground/80 truncate flex-1 min-w-0">{ss.name}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
+                    {isOpen && sys.subsystems.length === 0 && (
+                      <div className="border-t px-3 py-2 text-[11px] text-muted-foreground">
+                        No subsystems available. Sync with GoCompletions to populate.
+                      </div>
+                    )}
+                  </Card>
+                );
+              })}
+              {filtered.length === 0 && searchQuery && (
+                <Card><CardContent className="py-8 text-center">
+                  <p className="text-sm text-muted-foreground">No systems match your search</p>
+                </CardContent></Card>
+              )}
+            </div>
+          </ScrollArea>
+
+          {/* ── Add more ─────────────────────────────────────────── */}
+          {!isLocked && (
+            <div className="pt-2 border-t">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                Add more
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  onClick={() => setShowCMSModal(true)}
+                  className="group flex items-center gap-2 p-2.5 rounded-lg border border-border bg-card hover:bg-accent/50 hover:border-primary/30 transition-all"
+                >
+                  <div className="w-7 h-7 rounded-md bg-amber-500/10 flex items-center justify-center shrink-0">
+                    <Database className="h-3.5 w-3.5 text-amber-600" />
                   </div>
-                  {isOpen && sys.subsystems.length > 0 && (
-                    <div className="border-t bg-muted/20 px-3 py-2 space-y-1">
-                      {sys.subsystems.map((ss) => {
-                        const isMapped = !!ss.assignmentId || !!sys.systemAssignmentId;
-                        return (
-                          <div key={ss.id} className="flex items-center gap-2 py-1 group/sub">
-                            <Checkbox
-                              checked={isMapped}
-                              disabled={!!sys.systemAssignmentId}
-                              onCheckedChange={async (v) => {
-                                if (v) {
-                                  const { error } = await (supabase as any)
-                                    .from('p2a_handover_point_systems')
-                                    .insert({ handover_point_id: vcrId, system_id: sys.id, subsystem_id: ss.id });
-                                  if (error) toast.error(error.message);
-                                  else {
-                                    queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
-                                    toast.success('Subsystem added');
-                                  }
-                                } else if (ss.assignmentId) {
-                                  const { error } = await (supabase as any)
-                                    .from('p2a_handover_point_systems')
-                                    .delete()
-                                    .eq('id', ss.assignmentId);
-                                  if (error) toast.error(error.message);
-                                  else {
-                                    queryClient.invalidateQueries({ queryKey: ['vcr-systems-tree'] });
-                                    toast.success('Subsystem removed');
-                                  }
-                                }
-                              }}
-                            />
-                            <Badge variant="outline" className="text-[10px] font-mono shrink-0">{ss.subsystem_id}</Badge>
-                            <span className="text-xs text-foreground/80 truncate flex-1 min-w-0">{ss.name}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {isOpen && sys.subsystems.length === 0 && (
-                    <div className="border-t px-3 py-2 text-[11px] text-muted-foreground">
-                      No subsystems available. Sync with GoCompletions to populate.
-                    </div>
-                  )}
-                </Card>
-              );
-            })}
-            {filtered.length === 0 && searchQuery && (
-              <Card><CardContent className="py-8 text-center">
-                <p className="text-sm text-muted-foreground">No systems match your search</p>
-              </CardContent></Card>
-            )}
-          </div>
-        </ScrollArea>
+                  <span className="text-xs font-medium">CMS Import</span>
+                </button>
+                <button
+                  onClick={() => setShowExcelModal(true)}
+                  className="group flex items-center gap-2 p-2.5 rounded-lg border border-border bg-card hover:bg-accent/50 hover:border-primary/30 transition-all"
+                >
+                  <div className="w-7 h-7 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0">
+                    <Upload className="h-3.5 w-3.5 text-emerald-600" />
+                  </div>
+                  <span className="text-xs font-medium">Upload Excel</span>
+                </button>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="group flex items-center gap-2 p-2.5 rounded-lg border border-border bg-card hover:bg-accent/50 hover:border-primary/30 transition-all"
+                >
+                  <div className="w-7 h-7 rounded-md bg-blue-500/10 flex items-center justify-center shrink-0">
+                    <Plus className="h-3.5 w-3.5 text-blue-600" />
+                  </div>
+                  <span className="text-xs font-medium">Add Manually</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* CMS Import */}
