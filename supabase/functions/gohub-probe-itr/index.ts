@@ -15,6 +15,7 @@ import {
   parseRadGridTable,
   extractHiddenFields,
 } from "../_shared/gocompletions-auth.ts";
+import { handleSearchCompletionsTags, handleGetPunchlistDetails } from "../_shared/fred/handlers.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
