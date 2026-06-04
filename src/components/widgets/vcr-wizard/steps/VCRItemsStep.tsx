@@ -77,6 +77,7 @@ import { useVCRItemDeliveringParties } from '@/hooks/useVCRItemDeliveringParties
 import { getRegionKeywords, getPortfolio, profileMatchesProjectLocation, getRoleFamilyNames, type ProjectLocationContext } from '@/utils/hubRegionMapping';
 import { requiresPortfolio, requiresHub } from '@/utils/roleAssignmentConfig';
 import { useApprovingPartyHoldersByIds } from '@/hooks/useApprovingPartyHolders';
+import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
 
 interface VCRItemsStepProps {
   vcrId: string;
@@ -184,33 +185,10 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [naItem, setNaItem] = useState<MergedVCRItem | null>(null);
 
-  // Determine if VCR has hydrocarbon systems
-  const { data: hcCheck, isLoading: isLoadingHydrocarbon } = useQuery({
-    queryKey: ['vcr-hydrocarbon-check', vcrId],
-    queryFn: async () => {
-      // Get systems linked to this VCR
-      const { data: linkedSystems, error: lsError } = await supabase
-        .from('p2a_handover_point_systems')
-        .select('system_id')
-        .eq('handover_point_id', vcrId);
-      if (lsError) throw lsError;
-      if (!linkedSystems || linkedSystems.length === 0) {
-        return { hasHydrocarbon: false, systemCount: 0 };
-      }
-
-      const systemIds = linkedSystems.map(s => s.system_id);
-      const { data: systems, error: sError } = await supabase
-        .from('p2a_systems')
-        .select('is_hydrocarbon')
-        .in('id', systemIds)
-        .eq('is_hydrocarbon', true)
-        .limit(1);
-      if (sError) throw sError;
-      return { hasHydrocarbon: !!(systems && systems.length > 0), systemCount: linkedSystems.length };
-    },
-  });
-  const hasHydrocarbon = hcCheck?.hasHydrocarbon;
-  const linkedSystemsCount = hcCheck?.systemCount ?? 0;
+  // Hydrocarbon status — shared hook (single source of truth for header + step)
+  const { data: hcStatus, isLoading: isLoadingHydrocarbon } = useVCRHydrocarbonStatus(vcrId);
+  const hasHydrocarbon = hcStatus?.hasHydrocarbon;
+  const linkedSystemsCount = hcStatus?.systemCount ?? 0;
 
   // Hydrocarbon template: 363a831c-edb3-4224-a97f-2e8b11fac2dc
   // Non-Hydrocarbon template: 2ebe8392-e404-4655-b9eb-46e4e3cb39e8
@@ -443,10 +421,10 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
       {/* Step header */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-base font-semibold leading-tight">VCR Items</h3>
+          <h3 className="text-base font-semibold leading-tight">VCR Checklist</h3>
           <div className="flex items-center gap-1.5 mt-0.5">
             <p className="text-xs text-muted-foreground">
-              Review the VCR checklist for this VCR Execution Plan.
+              Final verification of all items required for this VCR before submission.
             </p>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -466,16 +444,13 @@ export const VCRItemsStep: React.FC<VCRItemsStepProps> = ({ vcrId }) => {
         </div>
       </div>
 
-      {/* No-systems warning — calm icon, amber accent retained */}
+      {/* No-systems banner — short, conditional. HC stripe in header carries the "why". */}
       {linkedSystemsCount === 0 && (
-        <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2">
-          <HelpCircle className="w-3.5 h-3.5 text-amber-600/80 shrink-0 mt-0.5" />
-          <div className="text-xs leading-relaxed">
-            <span className="font-medium text-amber-700 dark:text-amber-400">Select systems first to load the correct checklist.</span>{' '}
-            <span className="text-muted-foreground">
-              The hydrocarbon / non-hydrocarbon checklist is chosen from the systems mapped to this VCR. Without systems we&apos;re showing the non-hydrocarbon template by default.
-            </span>
-          </div>
+        <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-1.5">
+          <HelpCircle className="w-3.5 h-3.5 text-amber-600/80 shrink-0" />
+          <span className="text-xs text-amber-700 dark:text-amber-400">
+            Add systems first — the checklist depends on system mapping.
+          </span>
         </div>
       )}
 

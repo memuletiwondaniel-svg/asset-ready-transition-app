@@ -51,6 +51,8 @@ import { ApproversStep } from './steps/ApproversStep';
 import { CMMSSparesStep } from './steps/CMMSSparesStep';
 import { VCRConfirmationStep } from './steps/VCRConfirmationStep';
 import { Layers, CheckCircle2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useVCRHydrocarbonStatus } from '@/hooks/useVCRHydrocarbonStatus';
 
 interface VCRExecutionPlanWizardProps {
   open: boolean;
@@ -60,7 +62,6 @@ interface VCRExecutionPlanWizardProps {
 }
 
 const STEPS: WizardShellStep[] = [
-  { id: 'items',               label: 'VCR Items',            icon: ClipboardCheck, color: 'text-violet-500' },
   { id: 'systems',             label: 'Systems',              icon: Layers,         color: 'text-orange-500' },
   { id: 'training',            label: 'Training',             icon: GraduationCap,  color: 'text-blue-500' },
   { id: 'procedures',          label: 'Procedures',           icon: BookOpen,       color: 'text-emerald-500' },
@@ -69,6 +70,7 @@ const STEPS: WizardShellStep[] = [
   { id: 'cmms-spares',         label: 'CMMS & Spares',        icon: Wrench,         color: 'text-amber-500' },
   { id: 'itp',                 label: 'Inspection Test Plan', icon: ClipboardList,  color: 'text-orange-500' },
   { id: 'approvers',           label: 'Approvers',            icon: UserCheck,      color: 'text-primary' },
+  { id: 'checklist',           label: 'VCR Checklist',        icon: ClipboardCheck, color: 'text-violet-500' },
   { id: 'review',              label: 'Review and Submit',    icon: CheckCircle2,   color: 'text-emerald-500' },
 ];
 
@@ -165,9 +167,10 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     })();
   }, [open, user?.id, vcr.id, queryClient]);
 
-  // Query step data counts for completion (after Phase B reorder + merge)
-  // 0:Items 1:Systems 2:Training 3:Procedures 4:Critical Docs
-  // 5:Registers+Logsheets 6:CMMS+Spares 7:ITP 8:Approvers 9:Review
+  // Query step data counts for completion
+  // New order:
+  // 0:Systems 1:Training 2:Procedures 3:Critical Docs
+  // 4:Registers+Logsheets 5:CMMS+Spares 6:ITP 7:Approvers 8:VCR Checklist 9:Review
   const { data: stepCounts = {} } = useQuery({
     queryKey: ['vcr-wizard-step-counts', vcr.id],
     queryFn: async () => {
@@ -182,12 +185,12 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         (supabase as any).from('p2a_vcr_spares').select('id', { count: 'exact', head: true }).eq('handover_point_id', vcr.id),
       ]);
       return {
-        1: systems.count || 0,
-        2: training.count || 0,
-        3: procedures.count || 0,
-        4: criticalDocs.count || 0,
-        5: (registers.count || 0) + (logsheets.count || 0),
-        6: (cmms.count || 0) + (spares.count || 0),
+        0: systems.count || 0,
+        1: training.count || 0,
+        2: procedures.count || 0,
+        3: criticalDocs.count || 0,
+        4: (registers.count || 0) + (logsheets.count || 0),
+        5: (cmms.count || 0) + (spares.count || 0),
       } as Record<number, number>;
     },
     enabled: open,
@@ -195,8 +198,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
   });
 
   const isStepComplete = (idx: number): boolean => {
-    // Items (0), ITP (7), Approvers (8), Review (9) — completion based on visit
-    if (idx === 0 || idx === 7 || idx === 8 || idx === 9) return visitedSteps.has(idx);
+    // ITP (6), Approvers (7), VCR Checklist (8), Review (9) — visit-based
+    if (idx === 6 || idx === 7 || idx === 8 || idx === 9) return visitedSteps.has(idx);
     return (stepCounts[idx] || 0) > 0;
   };
 
@@ -235,15 +238,15 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
 
   const renderStep = () => {
     switch (currentStep) {
-      case 0: return <VCRItemsStep vcrId={vcr.id} />;
-      case 1: return <SystemsStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 2: return <TrainingStep vcrId={vcr.id} />;
-      case 3: return <ProceduresStep vcrId={vcr.id} />;
-      case 4: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 5: return <RegistersLogsheetsStep vcrId={vcr.id} />;
-      case 6: return <CMMSSparesStep vcrId={vcr.id} />;
-      case 7: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
-      case 8: return <ApproversStep vcrId={vcr.id} />;
+      case 0: return <SystemsStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 1: return <TrainingStep vcrId={vcr.id} />;
+      case 2: return <ProceduresStep vcrId={vcr.id} />;
+      case 3: return <CriticalDocumentsStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 4: return <RegistersLogsheetsStep vcrId={vcr.id} />;
+      case 5: return <CMMSSparesStep vcrId={vcr.id} />;
+      case 6: return <InspectionTestPlanStep vcrId={vcr.id} projectCode={projectCode} />;
+      case 7: return <ApproversStep vcrId={vcr.id} />;
+      case 8: return <VCRItemsStep vcrId={vcr.id} />;
       case 9: return <VCRConfirmationStep vcrId={vcr.id} vcrName={vcr.name} vcrCode={vcr.vcr_code} />;
       default: return null;
     }
@@ -270,10 +273,43 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     return { label: 'Draft', cls: 'bg-muted text-muted-foreground border-border' };
   })();
 
+  const { data: hcStatus } = useVCRHydrocarbonStatus(vcr.id);
+  const stripeMeta = (() => {
+    if (!hcStatus || hcStatus.status === 'UNKNOWN') {
+      return {
+        cls: 'bg-muted-foreground/40',
+        tooltip: 'HC status not yet determined — add systems to set.',
+      };
+    }
+    if (hcStatus.status === 'HC') {
+      return {
+        cls: 'bg-amber-500',
+        tooltip: `Hydrocarbon VCR (${hcStatus.systemCount} linked system${hcStatus.systemCount === 1 ? '' : 's'} include hydrocarbon service)`,
+      };
+    }
+    return {
+      cls: 'bg-blue-500',
+      tooltip: `Non-hydrocarbon VCR (${hcStatus.systemCount} linked system${hcStatus.systemCount === 1 ? '' : 's'}, none flagged hydrocarbon)`,
+    };
+  })();
+
   const topHeaderContent = (
+    <TooltipProvider delayDuration={150}>
     <div className="flex items-start justify-between gap-4 py-3">
       <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className={cn("inline-block w-1 self-stretch rounded-sm cursor-help shrink-0", stripeMeta.cls)}
+                style={{ minHeight: '1.5rem' }}
+                aria-label={stripeMeta.tooltip}
+              />
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs text-xs">
+              {stripeMeta.tooltip}
+            </TooltipContent>
+          </Tooltip>
           <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground truncate">
             {shortVcrId ? `${shortVcrId}: ` : ''}{vcr.name}
           </h1>
@@ -288,6 +324,7 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         </Badge>
       </div>
     </div>
+    </TooltipProvider>
   );
 
   return (
