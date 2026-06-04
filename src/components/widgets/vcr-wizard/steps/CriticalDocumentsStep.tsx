@@ -315,7 +315,7 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({
               </Tooltip>
             )}
             <Button variant="outline" size="sm" onClick={() => setAssaiOpen(true)} className="gap-1.5">
-              <Cloud className="w-4 h-4" /> Check Assai
+              <img src={assaiIcon} alt="" className="w-4 h-4 object-contain" /> Check Assai
             </Button>
           </div>
         </div>
