@@ -278,32 +278,28 @@ export const CheckAssaiModal: React.FC<CheckAssaiModalProps> = ({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs">Doc Number</TableHead>
+                  <TableHead className="text-xs w-[260px]">Doc Number</TableHead>
                   <TableHead className="text-xs">Title</TableHead>
-                  <TableHead className="text-xs">Tier</TableHead>
+                  <TableHead className="text-xs w-[64px]">Tier</TableHead>
                   <TableHead className="text-xs">Discipline</TableHead>
-                  <TableHead className="text-xs">Status</TableHead>
-                  <TableHead className="text-xs">Rev</TableHead>
-                  <TableHead className="text-xs">Last Modified</TableHead>
-                  <TableHead className="text-xs text-right">Actions</TableHead>
+                  <TableHead className="text-xs w-[80px]">Status</TableHead>
+                  <TableHead className="text-xs w-[56px]">Rev</TableHead>
+                  <TableHead className="text-xs text-right w-[140px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data.map((d) => (
                   <TableRow key={d.document_type_id + d.document_number} className="group">
-                    <TableCell className="font-mono text-[11px]">{d.document_number}</TableCell>
+                    <TableCell className="font-mono text-[11px] whitespace-nowrap">{d.document_number}</TableCell>
                     <TableCell className="text-xs max-w-[260px] truncate" title={d.title}>{d.title}</TableCell>
                     <TableCell>
                       {d.tier && <Badge variant="outline" className="text-[10px]">{d.tier}</Badge>}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{d.discipline_name || d.discipline_code}</TableCell>
-                    <TableCell>
-                      <Badge variant={d.status === 'Issued' ? 'default' : d.status === 'For Review' ? 'secondary' : 'outline'} className="text-[10px]">
-                        {d.status}
-                      </Badge>
+                    <TableCell className="font-mono text-[11px] font-medium">
+                      {docStatusCode(d.document_number, d.status)}
                     </TableCell>
                     <TableCell className="text-xs">{d.revision}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{d.last_modified}</TableCell>
                     <TableCell className="text-right">
                       <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <a
