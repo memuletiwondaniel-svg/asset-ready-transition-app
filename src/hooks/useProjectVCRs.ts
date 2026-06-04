@@ -21,7 +21,7 @@ export interface ProjectVCR {
   /** True when the VCR's HC/non-HC gate has been signed (SoF for HC, PAC for non-HC). */
   gate_signed?: boolean;
   /** Which gate model applies — derived from has_hydrocarbon. */
-  gate: VCRGate;
+  gate?: VCRGate;
   /** @deprecated kept for back-compat with existing callers; equals gate_signed when HC. */
   sof_signed?: boolean;
   /** True when PAC has been signed (non-HC VCRs only). */
