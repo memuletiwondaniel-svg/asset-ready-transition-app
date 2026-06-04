@@ -260,11 +260,15 @@ async function runDac(session: GocSessionManager, subsystemNumber: string) {
     const path = "GoCompletions/Handovers/HandoverSearch.aspx?HandoverGate=1&GroupBy=SubSystem,Discipline";
     const { html, url, cookies } = await session.navigateTo(path);
     const { target } = findSearchPostbackTarget(html);
-    const subField = findSubSystemField(html);
+    const sub = findSubSystemField(html);
     probe.postback_target = target;
-    probe.subsystem_field = subField;
+    probe.subsystem_field = sub.field;
+    probe.subsystem_field_candidates = sub.candidates;
     const params: Record<string, string> = { __EVENTTARGET: target || "", __EVENTARGUMENT: "" };
-    if (subField) params[subField] = subsystemNumber;
+    if (sub.field) params[sub.field] = subsystemNumber;
+    if (sub.clientStateField) {
+      params[sub.clientStateField] = JSON.stringify({ value: subsystemNumber, text: subsystemNumber, enabled: true });
+    }
     const { html: resultHtml } = target
       ? await postWithViewState(cookies, url, html, params)
       : { html };
