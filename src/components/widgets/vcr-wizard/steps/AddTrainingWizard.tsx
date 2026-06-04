@@ -162,11 +162,15 @@ export const AddTrainingWizard: React.FC<AddTrainingWizardProps> = ({
     s.system_id?.toLowerCase().includes(systemSearch.toLowerCase())
   );
 
-  // Only step 0 has required fields (Title + Objective & Justification).
-  // Steps 1–3 have no required fields and are therefore always considered complete.
+  // Completion rules:
+  //   step 0 (required Title + Objective): filled in
+  //   steps 1–3 (no required fields): considered complete only after the user
+  //   has visited AND moved past them (explicit Continue/Skip / Back navigation
+  //   away). Optional data filled implies a visit, so this also covers that case.
+  //   step 4 (Review): never auto-complete.
   const isStepComplete = (i: number): boolean => {
     if (i === 0) return title.trim().length > 0 && overview.trim().length > 0;
-    if (i === 1 || i === 2 || i === 3) return true;
+    if (i === 1 || i === 2 || i === 3) return visitedSteps.has(i) && i !== step;
     return false;
   };
 
