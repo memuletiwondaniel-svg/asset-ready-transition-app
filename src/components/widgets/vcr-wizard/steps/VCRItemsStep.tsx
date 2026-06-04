@@ -1014,9 +1014,13 @@ const EditItemForm: React.FC<{
     popoverOpen?: boolean;
     popoverContent?: React.ReactNode;
   }) => {
-    const primary = opts.users[0];
+    const primaryUser = opts.users[0];
     const partner = opts.users[1];
     const expanded = opts.isB2B && !!partner && expandedB2BKeys.has(opts.key);
+    // When B2B is toggled on, swap the displayed holder to the partner
+    // instead of showing both inline. The chip toggles which single
+    // holder (delivering vs B2B partner) is shown in the row.
+    const primary = expanded && partner ? partner : primaryUser;
     const allNames = opts.users.map(u => u.full_name).join(', ');
     return (
       <div
@@ -1039,18 +1043,7 @@ const EditItemForm: React.FC<{
                       <AvatarFallback className="text-[9px]">{getInitials(primary.full_name)}</AvatarFallback>
                     </Avatar>
                     <span className="text-xs truncate min-w-0 justify-self-start hover:underline">
-                      {expanded && partner ? (
-                        <span className="inline-flex items-center gap-2">
-                          <span className="truncate">{primary.full_name}</span>
-                          <Avatar className="w-6 h-6 shrink-0">
-                            <AvatarImage src={getAvatarUrl(partner.avatar_url)} />
-                            <AvatarFallback className="text-[9px]">{getInitials(partner.full_name)}</AvatarFallback>
-                          </Avatar>
-                          <span className="truncate">{partner.full_name}</span>
-                        </span>
-                      ) : (
-                        primary.full_name
-                      )}
+                      {primary.full_name}
                     </span>
                   </button>
                 </PopoverTrigger>
