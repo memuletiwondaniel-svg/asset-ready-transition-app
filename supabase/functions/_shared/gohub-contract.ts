@@ -224,7 +224,11 @@ export function getHandoverCertSpec(certType: string): HandoverCertSpec | undefi
 // day and we'd cry wolf.
 export const CANARY_ORACLE = {
   tile_name: "WEST QURNA",
-  project_code: "C013",
+  // Canonical p2a-style plant code — gohub_* rows for 08X are stored under
+  // 'DP-18A' so the soft-join into p2a_handover_plans aligns. (DP-18A has
+  // no handover plan yet, so we don't query through p2a for the oracle —
+  // we override by subsystem_number/GUID.)
+  project_code: "DP-18A",
   subsystem_number: "C013-DP18A-08X",
   subsystem_guid: "f6046332-9f41-442d-9924-24e51e4093d2",
   // Historical completed gate dates — immutable.
