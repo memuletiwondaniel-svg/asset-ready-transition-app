@@ -362,6 +362,23 @@ Deno.serve(async (req) => {
     }
 
     // ── Per-subsystem: ITRs (CompletionsGrid ASMX) + Punch ──
+    //
+    // Don't-clobber-on-empty guard: if a subsystem had N>0 detail rows
+    // last sync and suddenly returns 0 (or anomalously fewer), flag and
+    // SKIP the destructive overwrite. Symptom of a stale session, a
+    // GoCompletions schema drift, or a parser regression — never let it
+    // silently wipe last-known-good data.
+    const DONT_CLOBBER_DROP_RATIO = 0.5; // anomalous if new < 50% of prior
+    report.clobber_guard_skips = [] as any[];
+
+    async function priorRowCount(table: string, ss: string): Promise<number> {
+      const { count } = await supa.from(table)
+        .select("id", { count: "exact", head: true })
+        .eq("project_code", projectCode)
+        .eq("subsystem_number", ss);
+      return count ?? 0;
+    }
+
     for (const ss of subsystems) {
       report.subsystems_attempted++;
       const perSs: any = { subsystem: ss, itr: null, punch: null };
@@ -391,15 +408,23 @@ Deno.serve(async (req) => {
             reason: (itr as any).reason,
             subsystem_guid: subGuid,
           };
-          if (itr.ok && items.length && !dryRun) {
-            const payload = items.map((it) => ({
-              project_code: projectCode, subsystem_number: ss, ...it,
-              last_synced_at: new Date().toISOString(),
-            }));
-            const { error } = await supa.from("gohub_itr_items")
-              .upsert(payload, { onConflict: "project_code,subsystem_number,tag_guid,itr_code" });
-            if (error) perSs.itr.upsert_error = error.message;
-            else report.itr_items_upserted += payload.length;
+          if (itr.ok && !dryRun) {
+            const prior = await priorRowCount("gohub_itr_items", ss);
+            const anomalous = prior > 0 && items.length < Math.ceil(prior * DONT_CLOBBER_DROP_RATIO);
+            if (anomalous) {
+              perSs.itr.clobber_guard = { skipped: true, prior, now: items.length };
+              report.clobber_guard_skips.push({ table: "gohub_itr_items", subsystem: ss, prior, now: items.length });
+            } else if (items.length) {
+              const payload = items.map((it) => ({
+                project_code: projectCode, subsystem_number: ss, ...it,
+                last_synced_at: new Date().toISOString(),
+              }));
+              const { data: written, error } = await supa.from("gohub_itr_items")
+                .upsert(payload, { onConflict: "project_code,subsystem_number,tag_guid,itr_code" })
+                .select("id");
+              if (error) perSs.itr.upsert_error = error.message;
+              else report.itr_items_upserted += (written?.length ?? 0);
+            }
           }
         }
       } catch (e: any) { perSs.itr = { ok: false, error: String(e?.message || e).slice(0, 200) }; }
@@ -422,15 +447,23 @@ Deno.serve(async (req) => {
           closed,
           reason: (punch as any).reason,
         };
-        if (punch.ok && items.length && !dryRun) {
-          const payload = items.map((it) => ({
-            project_code: projectCode, subsystem_number: ss, ...it,
-            last_synced_at: new Date().toISOString(),
-          }));
-          const { error } = await supa.from("gohub_punch_items")
-            .upsert(payload, { onConflict: "project_code,punchlist,item_no" });
-          if (error) perSs.punch.upsert_error = error.message;
-          else report.punch_items_upserted += payload.length;
+        if (punch.ok && !dryRun) {
+          const prior = await priorRowCount("gohub_punch_items", ss);
+          const anomalous = prior > 0 && items.length < Math.ceil(prior * DONT_CLOBBER_DROP_RATIO);
+          if (anomalous) {
+            perSs.punch.clobber_guard = { skipped: true, prior, now: items.length };
+            report.clobber_guard_skips.push({ table: "gohub_punch_items", subsystem: ss, prior, now: items.length });
+          } else if (items.length) {
+            const payload = items.map((it) => ({
+              project_code: projectCode, subsystem_number: ss, ...it,
+              last_synced_at: new Date().toISOString(),
+            }));
+            const { data: written, error } = await supa.from("gohub_punch_items")
+              .upsert(payload, { onConflict: "project_code,punchlist,item_no" })
+              .select("id");
+            if (error) perSs.punch.upsert_error = error.message;
+            else report.punch_items_upserted += (written?.length ?? 0);
+          }
         }
       } catch (e: any) { perSs.punch = { ok: false, error: String(e?.message || e).slice(0, 200) }; }
 
@@ -439,20 +472,28 @@ Deno.serve(async (req) => {
     }
 
     // ── Rollup snapshot writeback (uses bySub built above) ──
+    //
+    // Counter fix: increment rollup_updated on AFFECTED-ROW count, not
+    // on `!error`. PostgREST update returning 0 rows is not an error —
+    // the previous version reported success against subsystems that
+    // weren't in p2a_systems, masking the `rollup_updated:1` + `synced_at:NULL`
+    // bug. `.select('system_id')` forces an affected-rows response.
     const now = new Date().toISOString();
     for (const ss of subsystems) {
       const r = bySub[ss];
       if (!r) continue;
       if (dryRun) { report.rollup_updated++; continue; }
-      const { error } = await supa
+      const { data: updated, error } = await supa
         .from("p2a_systems")
         .update({
           gohub_rollup_total_itrs: r.total,
           gohub_rollup_complete_itrs: r.complete,
           gohub_rollup_synced_at: now,
         })
-        .eq("system_id", ss);
-      if (!error) report.rollup_updated++;
+        .eq("system_id", ss)
+        .select("system_id");
+      if (error) continue;
+      if ((updated?.length ?? 0) > 0) report.rollup_updated++;
     }
 
     // ── Certificates pass via Fred handler ──
@@ -533,15 +574,18 @@ Deno.serve(async (req) => {
               });
             }
             if (payload.length) {
-              const { error } = await supa.from("gohub_certificates")
-                .upsert(payload, { onConflict: "project_code,cert_type,object_id,discipline" });
+              // Counter fix: count AFFECTED rows, not just `!error`.
+              const { data: written, error } = await supa.from("gohub_certificates")
+                .upsert(payload, { onConflict: "project_code,cert_type,object_id,discipline" })
+                .select("id");
               if (error) {
                 report.cert_pass.errors.push(
                   `${certType}[${scope ?? "project"}]: ${error.message}`
                 );
               } else {
-                perTypeEntry.rows_persisted += payload.length;
-                report.certs_upserted += payload.length;
+                const n = written?.length ?? 0;
+                perTypeEntry.rows_persisted += n;
+                report.certs_upserted += n;
               }
             }
           } catch (e: any) {
