@@ -166,12 +166,13 @@ function htmlCellText(html: string): string {
 
 // ─── Per-subsystem scrapers ──────────────────────────────────
 
-async function scrapeTagSearch(session: GocSessionManager, subsystem: string) {
+async function scrapeTagSearch(session: GocSessionManager, subsystem: string, debug = false) {
   const { html, url, cookies } = await session.navigateTo("GoCompletions/Completions/TagSearch.aspx");
   const sub = findSubSystemField(html);
   const target = findPostbackTarget(html, sub.scopePrefix);
+  const dbg: any = debug ? { subsystem_field: sub.field, postback_target: target, tagsearch_html_excerpt: null } : null;
   if (!target || !sub.field) {
-    return { ok: false, reason: "no postback target or subsystem field", items: [] as any[] };
+    return { ok: false, reason: "no postback target or subsystem field", items: [] as any[], debug: dbg };
   }
   // SubSystem on TagSearch is a plain textbox → post plain text only.
   // Only write ClientState if the page actually has one (RadComboBox).
@@ -190,8 +191,9 @@ async function scrapeTagSearch(session: GocSessionManager, subsystem: string) {
   // __EVENTVALIDATION extracted from THIS GET — required for the
   // SearchButton click to bind server-side.
   const { html: resultHtml } = await postWithViewState(cookies, url, html, params);
+  if (dbg) dbg.tagsearch_html_excerpt = resultHtml.slice(0, 2048);
   const tableMatch = resultHtml.match(/<table[^>]*class="[^"]*rgMasterTable[^"]*"[^>]*>([\s\S]*?)<\/table>/i);
-  if (!tableMatch) return { ok: false, reason: "no rgMasterTable", items: [] as any[] };
+  if (!tableMatch) return { ok: false, reason: "no rgMasterTable", items: [] as any[], debug: dbg };
 
   const headers = extractHeaders(tableMatch[1]);
   const rows = extractRowCellsHtml(tableMatch[1]);
@@ -200,7 +202,7 @@ async function scrapeTagSearch(session: GocSessionManager, subsystem: string) {
   const descIdx = headers.findIndex((h) => /^description$/i.test(h));
   const discIdx = headers.findIndex((h) => /^discipline$/i.test(h));
   const itrsIdx = headers.findIndex((h) => /tag\s*itrs/i.test(h));
-  if (itrsIdx < 0) return { ok: false, reason: "no Tag ITRs column", items: [] as any[] };
+  if (itrsIdx < 0) return { ok: false, reason: "no Tag ITRs column", items: [] as any[], debug: dbg };
 
   const items: any[] = [];
   for (const r of rows) {
@@ -226,7 +228,7 @@ async function scrapeTagSearch(session: GocSessionManager, subsystem: string) {
       });
     }
   }
-  return { ok: true, items, header_count: headers.length, row_count: rows.length };
+  return { ok: true, items, header_count: headers.length, row_count: rows.length, debug: dbg };
 }
 
 async function scrapePunch(session: GocSessionManager, subsystem: string) {
@@ -297,18 +299,26 @@ Deno.serve(async (req) => {
       });
     }
     report.project_code = projectCode;
-    const dryRun = !!body.dry_run;
+    const debug = !!body.debug;
+    const overrideSubs: string[] | null = Array.isArray(body.override_subsystems) && body.override_subsystems.length
+      ? body.override_subsystems.map((s: any) => String(s)) : null;
+    // override_subsystems forces probe-only (no writes, no rollup updates, no cert upserts).
+    const dryRun = !!body.dry_run || !!overrideSubs;
 
-    // Resolve subsystems from p2a_systems for this project
-    const { data: sysRows, error: sysErr } = await supa
-      .from("p2a_systems")
-      .select("system_id, handover_plan_id, p2a_handover_plans!inner(project_code)")
-      .eq("p2a_handover_plans.project_code", projectCode);
-    if (sysErr) throw new Error(`p2a_systems query: ${sysErr.message}`);
-    let subsystems = (sysRows || []).map((r: any) => r.system_id).filter(Boolean);
-    if (Array.isArray(body.system_ids) && body.system_ids.length) {
-      const filter = new Set<string>(body.system_ids);
-      subsystems = subsystems.filter((s: string) => filter.has(s));
+    let subsystems: string[];
+    if (overrideSubs) {
+      subsystems = overrideSubs;
+    } else {
+      const { data: sysRows, error: sysErr } = await supa
+        .from("p2a_systems")
+        .select("system_id, handover_plan_id, p2a_handover_plans!inner(project_code)")
+        .eq("p2a_handover_plans.project_code", projectCode);
+      if (sysErr) throw new Error(`p2a_systems query: ${sysErr.message}`);
+      subsystems = (sysRows || []).map((r: any) => r.system_id).filter(Boolean);
+      if (Array.isArray(body.system_ids) && body.system_ids.length) {
+        const filter = new Set<string>(body.system_ids);
+        subsystems = subsystems.filter((s: string) => filter.has(s));
+      }
     }
     if (!subsystems.length) {
       report.errors.push("no subsystems found for project");
@@ -317,9 +327,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Tile name: caller > gohub_synced_systems lookup > best guess
+    // Tile name: caller > gohub_synced_systems lookup (skipped under override)
     let tileName: string | null = body.tile_name || null;
-    if (!tileName) {
+    if (!tileName && !overrideSubs) {
       const { data: tileRow } = await supa
         .from("gohub_synced_systems")
         .select("tile_name")
@@ -344,9 +354,14 @@ Deno.serve(async (req) => {
       report.subsystems_attempted++;
       const perSs: any = { subsystem: ss, itr: null, punch: null };
       try {
-        const tag = await scrapeTagSearch(session, ss);
-        perSs.itr = { ok: tag.ok, count: tag.items?.length || 0, reason: (tag as any).reason };
-        if (tag.ok && tag.items.length && !dryRun) {
+        const tag = await scrapeTagSearch(session, ss, debug);
+        const items = tag.items || [];
+        const aCount = items.filter((i: any) => i.ab_phase === "A").length;
+        const bCount = items.filter((i: any) => i.ab_phase === "B").length;
+        const outstanding = items.filter((i: any) => i.status === "open").length;
+        perSs.itr = { ok: tag.ok, count: items.length, a: aCount, b: bCount, outstanding, reason: (tag as any).reason };
+        if (debug) perSs.debug = (tag as any).debug;
+        if (tag.ok && items.length && !dryRun) {
           const payload = tag.items.map((it) => ({
             project_code: projectCode, subsystem_number: ss, ...it,
             last_synced_at: new Date().toISOString(),
@@ -437,6 +452,13 @@ Deno.serve(async (req) => {
       const arr: any[] = Array.isArray(sysResp)
         ? sysResp
         : (sysResp?.Items || sysResp?.data || sysResp?.results || sysResp?.Systems || []);
+      if (debug) {
+        const topKeys = Array.isArray(sysResp) ? ["<array>"] : Object.keys(sysResp || {});
+        const first = arr[0] || null;
+        const firstKeys = first ? Object.keys(first) : [];
+        const subKey = first ? (["SubSystem","SubSystems","Subsystems","SubsystemList","subSystems"].find((k) => Array.isArray((first as any)[k]))) : null;
+        report.getsystems_top_keys = { top: topKeys, first_system_keys: firstKeys, subsystem_array_key: subKey, array_length: arr.length };
+      }
       const bySub: Record<string, { total: number; complete: number }> = {};
       for (const sys of arr) {
         const subs: any[] = sys.SubSystem || sys.SubSystems || sys.Subsystems
