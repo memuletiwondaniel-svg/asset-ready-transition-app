@@ -452,6 +452,13 @@ Deno.serve(async (req) => {
       const arr: any[] = Array.isArray(sysResp)
         ? sysResp
         : (sysResp?.Items || sysResp?.data || sysResp?.results || sysResp?.Systems || []);
+      if (debug) {
+        const topKeys = Array.isArray(sysResp) ? ["<array>"] : Object.keys(sysResp || {});
+        const first = arr[0] || null;
+        const firstKeys = first ? Object.keys(first) : [];
+        const subKey = first ? (["SubSystem","SubSystems","Subsystems","SubsystemList","subSystems"].find((k) => Array.isArray((first as any)[k]))) : null;
+        report.getsystems_top_keys = { top: topKeys, first_system_keys: firstKeys, subsystem_array_key: subKey, array_length: arr.length };
+      }
       const bySub: Record<string, { total: number; complete: number }> = {};
       for (const sys of arr) {
         const subs: any[] = sys.SubSystem || sys.SubSystems || sys.Subsystems
