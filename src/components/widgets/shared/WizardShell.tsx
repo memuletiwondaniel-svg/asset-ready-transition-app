@@ -200,7 +200,6 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                   {steps.map((step, idx) => {
                     const isActive = idx === currentStep;
                     const isComplete = isStepComplete(idx);
-                    const isWarning = isStepWarning?.(idx) ?? false;
                     const isOptional = isStepOptional?.(idx) ?? false;
                     const showOptionalHint = isOptional && !isComplete && !isActive;
 
@@ -224,24 +223,22 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                                 ? 'bg-emerald-500 border border-emerald-500 text-white'
                                 : 'bg-background border border-border text-muted-foreground'
                           )}>
-                            {isComplete && !isActive ? (
-                              <Check className="w-3.5 h-3.5" strokeWidth={3} />
-                            ) : (
-                              idx + 1
-                            )}
+                            {idx + 1}
                           </div>
-                          {isWarning && !isActive && !isComplete && (
+                          {isComplete && !isActive && (
                             <span
-                              className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-background"
-                              aria-label="Incomplete"
-                            />
+                              className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-600 ring-2 ring-background flex items-center justify-center"
+                              aria-label="Complete"
+                            >
+                              <Check className="w-2 h-2 text-white" strokeWidth={4} />
+                            </span>
                           )}
                         </div>
                         <span className={cn(
                           'truncate text-xs flex-1 min-w-0',
                           isActive
                             ? 'font-semibold text-foreground'
-                            : isComplete || isWarning
+                            : isComplete
                               ? 'font-medium text-foreground'
                               : 'font-medium text-muted-foreground'
                         )}>
