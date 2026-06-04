@@ -578,10 +578,9 @@ const StepAudienceSystems: React.FC<{
     {/* Applicable Systems */}
     <div className="space-y-2.5">
       <div className="flex items-center justify-between">
-        <label className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground flex items-center gap-1.5">
-          <Layers className="w-3.5 h-3.5" />
+        <label className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
           Applicable Systems
-          <span className="text-[10px] normal-case font-normal">(optional)</span>
+          <span className="text-[10px] normal-case font-normal ml-1">(optional)</span>
         </label>
         {selectedSystemIds.length > 0 && (
           <Badge variant="secondary" className="text-[10px] bg-blue-500/10 text-blue-500">
