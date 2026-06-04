@@ -416,24 +416,25 @@ export async function handleGetHandoverCertificateStatus(
       const target = findHandoverPostbackTarget(pageHtml);
       const subField = findHandoverSubsystemField(pageHtml);
       if (target) {
-        const params: Record<string, string> = {
-          __EVENTTARGET: target,
-          __EVENTARGUMENT: "",
-        };
+        const extra: Record<string, string> = {};
         if (args.sub_system && subField.field) {
-          params[subField.field] = args.sub_system;
+          extra[subField.field] = args.sub_system;
           if (subField.clientState) {
-            params[subField.clientState] = JSON.stringify({
+            extra[subField.clientState] = JSON.stringify({
               value: args.sub_system, text: args.sub_system, enabled: true,
             });
           }
         }
-        const { html: resultHtml } = await postWithViewState(pageCookies, pageUrl, pageHtml, params);
+        // RadAjax async partial postback (see postRadAjaxAsync docs).
+        const { html: resultHtml } = await postRadAjaxAsync(
+          pageCookies, pageUrl, pageHtml, target, extra
+        );
         pageHtml = resultHtml;
         rows = parseRadGridTable(pageHtml);
         postbackFired = true;
       }
     }
+
 
     // Filter by subsystem if specified (client-side belt + suspenders).
     let filtered = rows;
