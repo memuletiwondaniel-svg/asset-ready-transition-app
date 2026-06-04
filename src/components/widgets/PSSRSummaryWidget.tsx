@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -105,6 +107,9 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
   const [showP2ASummary, setShowP2ASummary] = useState(false);
   const [showP2AApprovals, setShowP2AApprovals] = useState(false);
   const [selectedVCR, setSelectedVCR] = useState<ProjectVCR | null>(null);
+  const [vcrInitialTab, setVcrInitialTab] = useState<string | undefined>(undefined);
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [wizardVCR, setWizardVCR] = useState<ProjectVCR | null>(null);
   const [showDeleteP2ADraft, setShowDeleteP2ADraft] = useState(false);
   const [showP2ASubmission, setShowP2ASubmission] = useState(false);
@@ -142,6 +147,21 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
 
   // VCRs should only be shown in the widget after the plan is approved
   const showVCRList = planIsApproved && allVCRs.length > 0;
+
+  // Auto-open VCR detail overlay when ?vcr=<id>&tab=<x> is present in URL.
+  useEffect(() => {
+    const vcrParam = searchParams.get('vcr');
+    const tabParam = searchParams.get('tab');
+    if (!vcrParam || !allVCRs.length) return;
+    const found = allVCRs.find((v) => v.id === vcrParam);
+    if (found) {
+      setSelectedVCR(found);
+      setVcrInitialTab(tabParam || undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allVCRs.length, searchParams]);
+
+
 
   const handlePSSRClick = (pssrId: string, displayId: string) => {
     setSelectedPSSR({ id: pssrId, displayId });
@@ -462,12 +482,24 @@ export const PSSRSummaryWidget: React.FC<PSSRSummaryWidgetProps> = ({
       {selectedVCR && (
         <VCRDetailOverlayWidget
           open={!!selectedVCR}
-          onOpenChange={(open) => { if (!open) setSelectedVCR(null); }}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedVCR(null);
+              setVcrInitialTab(undefined);
+              // Clean URL params so navigating back doesn't re-open
+              const next = new URLSearchParams(searchParams);
+              next.delete('vcr');
+              next.delete('tab');
+              setSearchParams(next, { replace: true });
+            }
+          }}
           vcr={selectedVCR}
           projectName={projectName}
           projectCode={projectCode}
+          initialTab={vcrInitialTab}
         />
       )}
+
 
       {wizardVCR && (
         <VCRExecutionPlanWizard
