@@ -455,70 +455,99 @@ Deno.serve(async (req) => {
       if (!error) report.rollup_updated++;
     }
 
-    // ── Certificates pass via Fred handler (MCC, MCC-DAC, PCC, PCDAC, RFC, RFSU, RFOC) ──
-    // HandoverSearch.aspx is WebForms RadButton — the search button postback
-    // target must be the control UniqueID WITHOUT the trailing `_input`
-    // (same trap class as TagSearch). Fred's handler now applies that fix
-    // and groups by SubSystem,Discipline for DAC variants.
+    // ── Certificates pass via Fred handler ──
+    // Drive the query off each cert spec's `level` (from HANDOVER_CERTS):
+    //   • subsystem / subsystem,discipline / system / system-terminal
+    //     → ONE filtered HandoverSearch per processed subsystem
+    //       (sub_system filter propagates via the handler's extraFields).
+    //       This avoids the page-1-only false-negative bug for DACs.
+    //   • project-terminal (FAC, GroupBy=Project)
+    //     → ONE read per project; HandoverSearch has no SubSystem field
+    //       at project scope, so postback_fired=false is expected.
     if (!body.skip_certs) {
-      // Iterate the full contract (MCC, MCC-DAC, PCC, PCDAC, RFC, RFSU, RFOC, FAC).
-      // GUIDs/gate/groupBy come from HANDOVER_CERTS — do not hardcode here.
-      const certTypes = HANDOVER_CERTS.map((c) => c.cert_type);
       report.cert_pass.per_type = [] as any[];
-      for (const certType of certTypes) {
-        report.cert_pass.attempted++;
-        try {
-          const res = await handleGetHandoverCertificateStatus(
-            { project_code: tileName, certificate_type: certType },
-            supa,
-          );
-          const certs = (res?.certificates || []) as any[];
-          report.cert_pass.per_type.push({
-            cert_type: certType,
-            postback_fired: res?.postback_fired ?? null,
-            group_by: res?.group_by ?? null,
-            total: res?.total_certificates ?? certs.length,
-            note: res?.note ?? null,
-            error: res?.error ?? null,
-            diag: res?.diag ?? null,
-          });
-          if (!certs.length) continue;
-          report.cert_pass.ok++;
-          if (dryRun) continue;
-          const seen = new Set<string>();
-          const payload: any[] = [];
-          for (const c of certs) {
-            const subsys = String(c.sub_system || c.SubSystem || "").trim() || null;
-            const objectId = String(c.certificate_ref || c.Ref || c.Certificate || c.raw?.Ref || "").trim();
-            const discipline = String(c.discipline || c.raw?.Discipline || "").trim();
-            if (!objectId) continue;
-            const key = `${certType}|${objectId}|${discipline}`;
-            if (seen.has(key)) continue;
-            seen.add(key);
-            payload.push({
-              project_code: projectCode,
-              system_number: subsys ? null : (c.raw?.System || null),
-              subsystem_number: subsys,
-              cert_type: certType,
-              object_id: objectId,
-              discipline,
-              status: String(c.raw?.Status || c.status || "").trim() || null,
-              planned_date: parseDmyDate(c.raw?.["Planned Date"] || c.raw?.PlannedDate),
-              actual_date: parseDmyDate(c.accepted_date || c.raw?.["Accepted Date"]),
-              signed_by: String(c.raw?.["Accepted By"] || c.raw?.AcceptedBy || "").trim() || null,
-              raw: c.raw || c,
-              last_synced_at: new Date().toISOString(),
+
+      for (const spec of HANDOVER_CERTS) {
+        const certType = spec.cert_type;
+        const isProject = spec.level === "project-terminal";
+        const scopes: (string | null)[] = isProject ? [null] : subsystems;
+        const perTypeEntry: any = {
+          cert_type: certType,
+          level: spec.level,
+          group_by: spec.groupBy,
+          scopes: scopes.length,
+          rows_total: 0,
+          rows_persisted: 0,
+          per_scope: [] as any[],
+        };
+
+        for (const scope of scopes) {
+          report.cert_pass.attempted++;
+          try {
+            const callArgs: any = { project_code: tileName, certificate_type: certType };
+            if (scope) callArgs.sub_system = scope;
+            const res = await handleGetHandoverCertificateStatus(callArgs, supa);
+            const certs = (res?.certificates || []) as any[];
+            perTypeEntry.per_scope.push({
+              scope,
+              postback_fired: res?.postback_fired ?? null,
+              total: res?.total_certificates ?? certs.length,
+              note: res?.note ?? null,
+              error: res?.error ?? null,
             });
+            perTypeEntry.rows_total += certs.length;
+            if (!certs.length) continue;
+            report.cert_pass.ok++;
+            if (dryRun) continue;
+
+            const seen = new Set<string>();
+            const payload: any[] = [];
+            for (const c of certs) {
+              const subsys = scope
+                || (String(c.sub_system || c.SubSystem || "").trim() || null);
+              const objectId = String(
+                c.certificate_ref || c.Ref || c.Certificate || c.raw?.Ref || ""
+              ).trim();
+              const discipline = String(c.discipline || c.raw?.Discipline || "").trim();
+              if (!objectId) continue;
+              const key = `${certType}|${objectId}|${discipline}`;
+              if (seen.has(key)) continue;
+              seen.add(key);
+              payload.push({
+                project_code: projectCode,
+                system_number: subsys ? null : (c.raw?.System || null),
+                subsystem_number: subsys,
+                cert_type: certType,
+                object_id: objectId,
+                discipline,
+                status: String(c.raw?.Status || c.status || "").trim() || null,
+                planned_date: parseDmyDate(c.raw?.["Planned Date"] || c.raw?.PlannedDate),
+                actual_date: parseDmyDate(c.accepted_date || c.raw?.["Accepted Date"]),
+                signed_by: String(c.raw?.["Accepted By"] || c.raw?.AcceptedBy || "").trim() || null,
+                raw: c.raw || c,
+                last_synced_at: new Date().toISOString(),
+              });
+            }
+            if (payload.length) {
+              const { error } = await supa.from("gohub_certificates")
+                .upsert(payload, { onConflict: "project_code,cert_type,object_id,discipline" });
+              if (error) {
+                report.cert_pass.errors.push(
+                  `${certType}[${scope ?? "project"}]: ${error.message}`
+                );
+              } else {
+                perTypeEntry.rows_persisted += payload.length;
+                report.certs_upserted += payload.length;
+              }
+            }
+          } catch (e: any) {
+            report.cert_pass.errors.push(
+              `${certType}[${scope ?? "project"}]: ${String(e?.message || e).slice(0, 200)}`
+            );
           }
-          if (payload.length) {
-            const { error } = await supa.from("gohub_certificates")
-              .upsert(payload, { onConflict: "project_code,cert_type,object_id,discipline" });
-            if (error) report.cert_pass.errors.push(`${certType}: ${error.message}`);
-            else report.certs_upserted += payload.length;
-          }
-        } catch (e: any) {
-          report.cert_pass.errors.push(`${certType}: ${String(e?.message || e).slice(0, 200)}`);
         }
+
+        report.cert_pass.per_type.push(perTypeEntry);
       }
     }
 
