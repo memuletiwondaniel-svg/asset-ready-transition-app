@@ -139,8 +139,8 @@ export const CriticalDocumentsStep: React.FC<CriticalDocumentsStepProps> = ({ vc
           <Tabs value={tierFilter} onValueChange={(v) => setTierFilter(v as any)}>
             <TabsList className="h-8">
               <TabsTrigger value="all" className="text-xs px-3 h-7">All</TabsTrigger>
-              <TabsTrigger value="tier_1" className="text-xs px-3 h-7">Tier 1 ({tier1Count})</TabsTrigger>
-              <TabsTrigger value="tier_2" className="text-xs px-3 h-7">Tier 2 ({tier2Count})</TabsTrigger>
+              <TabsTrigger value="tier_1" className="text-xs px-3 h-7">Tier 1{tier1Count > 0 ? ` (${tier1Count})` : ''}</TabsTrigger>
+              <TabsTrigger value="tier_2" className="text-xs px-3 h-7">Tier 2{tier2Count > 0 ? ` (${tier2Count})` : ''}</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
