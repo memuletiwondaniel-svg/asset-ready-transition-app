@@ -50,7 +50,11 @@ import { ProjectVCR } from '@/hooks/useProjectVCRs';
 import { getVCRColor } from '@/components/p2a-workspace/utils/vcrColors';
 import { format, differenceInDays } from 'date-fns';
 import { useHandoverPointSystems } from '@/components/p2a-workspace/hooks/useP2AHandoverPoints';
-import SOFCertificate from '@/components/handover/SOFCertificate';
+import SOFCertificateLegacy from '@/components/handover/SOFCertificate';
+import { SOFCertificate as SOFCertificateInteractive } from '@/components/sof/SOFCertificate';
+import { useVCRSoFApprovers } from '@/hooks/useVCRSoFApprovers';
+import { useUserSignature } from '@/hooks/useUserSignature';
+
 import PACCertificate from '@/components/handover/PACCertificate';
 import { SystemDetailSheet } from '@/components/p2a-workspace/systems/SystemDetailSheet';
 import { VCRTrainingTab } from '@/components/p2a-workspace/handover-points/VCRTrainingTab';
@@ -72,7 +76,9 @@ interface VCRDetailOverlayProps {
   vcr: ProjectVCR;
   projectName?: string;
   projectCode?: string;
+  initialTab?: string;
 }
+
 
 type NavItem = {
   id: string;
@@ -1267,7 +1273,80 @@ const PlaceholderContent: React.FC<{ title: string; icon: React.ElementType }> =
   </div>
 );
 
+// ── VCR SoF Tab (interactive cert with per-approver signing) ─────
+const VCRSoFTabContent: React.FC<{
+  vcr: ProjectVCR;
+  displayCode: string;
+  projectName: string;
+  sofDirectorApprovers: Array<{ id: string; name: string; role: string; avatarUrl?: string }>;
+}> = ({ vcr, displayCode, projectName, sofDirectorApprovers }) => {
+  const { data: rows = [], sign } = useVCRSoFApprovers(vcr.id);
+  const queryClient = useQueryClient();
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getUser();
+      return data.user;
+    },
+  });
+
+  // Map rows to the interactive cert's approver shape
+  const approvers = (rows || []).map((r) => ({
+    id: r.id,
+    approver_name: r.approver_name,
+    approver_role: r.approver_role,
+    approver_level: r.approver_level,
+    status: r.status,
+    comments: r.comments || undefined,
+    approved_at: r.signed_at || undefined,
+    signature_data: r.signature_data || undefined,
+  }));
+
+  const currentRow = (rows || []).find((r) => r.user_id === currentUser?.id && r.status === 'PENDING');
+
+  // Override the cert's onSignComplete by listening to its dialog via approver mutation.
+  // The interactive cert auto-detects "current user" by looking for any PENDING row; we
+  // make sure only the actual current user's row is PENDING (others are SIGNED/LOCKED).
+  const handleSignComplete = async (signatureData?: string) => {
+    if (!currentRow) return;
+    await sign.mutateAsync({
+      approverId: currentRow.id,
+      signature_data: signatureData || '',
+    });
+    queryClient.invalidateQueries({ queryKey: ['project-vcrs'] });
+  };
+
+  // The interactive SOFCertificate uses its own SOFSignatureDialog and calls
+  // onSignComplete(); but we need the signature bytes too. Wrap it: provide a
+  // controlled flow by directly using the same flow but intercepting signature
+  // via custom render — we leverage SignatureCanvas via the existing dialog
+  // which already saves to user_signatures. We then attach the signature_data
+  // separately by reading it from user_signatures after success.
+  return (
+    <div className="space-y-4">
+      <SOFCertificateInteractive
+        certificateNumber={`SOF-${displayCode}`}
+        plantName={projectName}
+        facilityName={vcr.name}
+        projectName={projectName}
+        pssrTitle={vcr.name}
+        pssrReason="Start-up of a New Project or Facility"
+        approvers={approvers}
+        status={approvers.every((a) => a.status === 'SIGNED') ? 'COMPLETED' : 'PENDING_SIGNATURE'}
+        sourceType="VCR"
+        onSignComplete={(sig) => handleSignComplete(sig)}
+      />
+      {approvers.length === 0 && (
+        <div className="text-sm text-muted-foreground text-center py-8">
+          SoF approvers have not been seeded for this VCR yet.
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── Sortable Card Wrapper ─────────────────────────────────────────
+
 const SortableCard: React.FC<{ id: string; children: React.ReactNode }> = ({ id, children }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
@@ -1296,10 +1375,15 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
   vcr,
   projectName = '',
   projectCode = '',
+  initialTab,
 }) => {
   const { id: projectId } = useParams<{ id: string }>();
-  const [activeNav, setActiveNav] = useState('overview');
+  const [activeNav, setActiveNav] = useState(initialTab || 'overview');
+  React.useEffect(() => {
+    if (initialTab) setActiveNav(initialTab);
+  }, [initialTab]);
   const vcrColor = getVCRColor(vcr.vcr_code);
+
   const displayCode = shortCode(vcr.vcr_code);
   const isComplete = vcr.progress === 100;
   const [cardOrder, setCardOrder] = useState<string[]>(['overview', 'progress', 'approvals']);
@@ -1924,18 +2008,14 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       }
       case 'sof':
         return (
-          <SOFCertificate
-            certificateNumber={`SOF-${displayCode}`}
-            plantName={projectName}
-            facilityName={vcr.name}
+          <VCRSoFTabContent
+            vcr={vcr}
+            displayCode={displayCode}
             projectName={projectName}
-            pssrNumber={displayCode}
-            sofDate={vcr.target_date ? format(new Date(vcr.target_date), 'dd MMM yyyy') : ''}
-            sourceType="VCR"
-            pssrReason="Start-up of a new Project or Facility"
-            approvers={sofDirectorApprovers.length > 0 ? sofDirectorApprovers : undefined}
+            sofDirectorApprovers={sofDirectorApprovers}
           />
         );
+
       case 'pac':
         return (
           <PACCertificate

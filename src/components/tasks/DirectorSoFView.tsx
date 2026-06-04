@@ -33,26 +33,38 @@ interface RejectionActivity {
 }
 
 // Mock approvers for the overlay - returns different states based on activity
+// Brief ordering: Marije SIGNED (lvl 1) -> Ali SIGNED (lvl 2) -> Paul PENDING (lvl 3)
 const getMockApproversForOverlay = (activity?: RejectionActivity | null) => {
+  const marijeSignature = typeof window !== 'undefined' ? localStorage.getItem('marije-hoedemaker-signature') : null;
   const aliSignature = typeof window !== 'undefined' ? localStorage.getItem('ali-danbous-signature') : null;
-  
-  // Base state: Ali approved, Paul pending, Marije locked
+
+  // Base state: Marije + Ali APPROVED, Paul PENDING (last)
   const baseApprovers = [
     {
       id: 'approver-1',
+      approver_name: 'Marije Hoedemaker',
+      approver_role: 'P&E Director',
+      approver_level: 1,
+      status: 'APPROVED',
+      comments: 'Project engineering deliverables reviewed and accepted.',
+      approved_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      signature_data: marijeSignature || undefined,
+    },
+    {
+      id: 'approver-2',
       approver_name: 'Ali Danbous',
       approver_role: 'HSSE Director',
-      approver_level: 1,
+      approver_level: 2,
       status: 'APPROVED',
       comments: 'All safety requirements have been verified. Ready for facility startup.',
       approved_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       signature_data: aliSignature || undefined,
     },
     {
-      id: 'approver-2',
+      id: 'approver-3',
       approver_name: 'Paul Van Den Hemel',
       approver_role: 'P&M Director',
-      approver_level: 2,
+      approver_level: 3,
       status: 'PENDING',
       comments: undefined,
       approved_at: undefined,
@@ -61,48 +73,33 @@ const getMockApproversForOverlay = (activity?: RejectionActivity | null) => {
       rejection_priority: undefined as 'Pr1' | undefined,
       rejection_description: undefined as string | undefined,
     },
-    {
-      id: 'approver-3',
-      approver_name: 'Marije Hoedemaker',
-      approver_role: 'P&E Director',
-      approver_level: 3,
-      status: 'LOCKED',
-      comments: undefined,
-      approved_at: undefined,
-      signature_data: undefined,
-    },
   ];
 
   // If viewing history, update Paul's status based on activity
   if (activity) {
     if (activity.type === 'rejected') {
-      baseApprovers[1] = {
-        ...baseApprovers[1],
+      baseApprovers[2] = {
+        ...baseApprovers[2],
         status: 'REJECTED_PR1',
         rejected_at: activity.timestamp,
         rejection_priority: 'Pr1',
         rejection_description: activity.description,
       };
     } else if (activity.type === 'approved') {
-      // Get Paul's saved signature if available
       const paulSignature = typeof window !== 'undefined' ? localStorage.getItem('paul-vandenhemel-signature') : null;
-      baseApprovers[1] = {
-        ...baseApprovers[1],
+      baseApprovers[2] = {
+        ...baseApprovers[2],
         status: 'APPROVED',
         comments: activity.comments || 'Approved',
         approved_at: activity.timestamp,
         signature_data: paulSignature || undefined,
-      };
-      // Unlock Marije
-      baseApprovers[2] = {
-        ...baseApprovers[2],
-        status: 'PENDING',
       };
     }
   }
 
   return baseApprovers;
 };
+
 
 // Completed approvers for DP-385 historical view
 const getDP385Approvers = () => {
@@ -190,6 +187,12 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
     setIsViewOnly(viewOnly);
     setOverlayOpen(true);
   };
+
+  const handleViewVCRSoF = (projectId: string | undefined, vcrId: string) => {
+    if (!projectId) return;
+    navigate(`/project/${projectId}?vcr=${vcrId}&tab=sof`);
+  };
+
 
   const handleExit = async () => {
     await signOut();
@@ -315,15 +318,28 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
         {/* Pending SoF Items */}
         <div className="space-y-4">
         {pendingItems.map((item, index) => {
-          // Extract project code from PSSR ID (e.g., "PSSR-DP300-001" -> "DP300")
-          const pssrIdParts = item.pssr?.pssr_id?.replace('PSSR-', '').split('-') || ['DP217'];
-          const projectCode = pssrIdParts[0] || 'DP217'; // First part is the project code
-          // Display with hyphen for readability (DP-217), use raw for color (DP217)
-          const displayId = projectCode.match(/^([A-Z]+)(\d+)$/) 
+          const isVCR = item.source === 'VCR';
+          const openItem = () => {
+            if (isVCR) handleViewVCRSoF(item.project_id, item.vcr_id!);
+            else handleViewSoF(item.pssr_id!);
+          };
+          // For VCR: derive project code from project_name "DP-300 Compressor C and D"
+          // For PSSR: parse from PSSR ID "PSSR-DP300-001"
+          let projectCode = 'DP217';
+          if (isVCR) {
+            const m = (item.pssr?.project_name || '').match(/[A-Z]{2,}-?\d+/);
+            projectCode = m ? m[0].replace('-', '') : 'DP300';
+          } else {
+            const parts = item.pssr?.pssr_id?.replace('PSSR-', '').split('-') || ['DP217'];
+            projectCode = parts[0] || 'DP217';
+          }
+          const displayId = projectCode.match(/^([A-Z]+)(\d+)$/)
             ? `${projectCode.match(/^([A-Z]+)(\d+)$/)?.[1]}-${projectCode.match(/^([A-Z]+)(\d+)$/)?.[2]}`
             : projectCode;
-          const projectName = item.pssr?.project_name || 'HM Additional Compressors';
-          
+          const projectName = isVCR
+            ? (item.vcr_label || item.pssr?.asset || 'VCR')
+            : (item.pssr?.project_name || 'HM Additional Compressors');
+
           return (
             <Card
               key={item.id}
@@ -332,7 +348,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                 "animate-fade-in"
               )}
               style={{ animationDelay: `${index * 100}ms` }}
-              onClick={() => handleViewSoF(item.pssr_id)}
+              onClick={openItem}
             >
               <CardContent className="p-5">
                 <div className="flex items-center justify-between gap-4">
@@ -347,7 +363,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                     </div>
                     <div className="flex items-center gap-2 mb-2">
                       <Badge variant="outline" className="text-xs">
-                        SoF
+                        {isVCR ? 'VCR SoF' : 'SoF'}
                       </Badge>
                       <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/20">
                         Pending
@@ -367,7 +383,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
                     className="shrink-0 opacity-80 group-hover:opacity-100 transition-opacity"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleViewSoF(item.pssr_id);
+                      openItem();
                     }}
                   >
                     Review & Sign
@@ -377,6 +393,7 @@ export const DirectorSoFView: React.FC<DirectorSoFViewProps> = ({ userName }) =>
             </Card>
           );
         })}
+
 
           {/* Locked items - still waiting for other approvers */}
           {lockedItems.length > 0 && (
