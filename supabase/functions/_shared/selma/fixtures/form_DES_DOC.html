@@ -1,0 +1,719 @@
+
+
+
+
+<!DOCTYPE HTML>
+
+
+
+
+
+<html>
+<head>
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Expires" content="0">
+<meta http-equiv="Cache-Control" content="no-cache">
+<!-- DWR -->
+<script type='text/javascript' src='dwr/interface/DWRBean.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'></script>
+<script type='text/javascript' src='dwr/engine.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'></script>
+<script type='text/javascript' src='dwr/util.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'></script>
+<!-- Active Widgets -->
+<script type='text/javascript' src="runtime/lib/aw.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+  <!-- log4javascript -->
+  <script type='text/javascript' src="js/log/log4javascript_uncompressed.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<!-- Assai -->
+<script type='text/javascript' src="label.aweb"></script>
+<script type='text/javascript' src="js/assai.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<script type='text/javascript' src="js/grid.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<script type='text/javascript' src="js/validate.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<script type='text/javascript' src="js/lov.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<script type='text/javascript' src="js/calendar/CalendarPopup.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+<link rel="stylesheet" type="text/css" href="runtime/styles/xp/aw.css?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" />
+<link rel="stylesheet" type="text/css" href="css/assaiweb.css?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" />
+<title>Search Documents</title>
+<script>  
+  var post_actionWin;
+  function sendSearch()
+  {
+	document.forms["full_nr"].submit();
+
+    // Set content body to busy while request is in progress
+    var indicator = new ASSAI.CORE.BUSYINDICATOR();
+    indicator.setElementBusy(parent.window.opener.parent.content.document.body);
+
+	window.close();
+  }
+  function buildProjectMenu()
+  {
+    OptMenu = new ASSAI.CORE.DROPDOWNLIST("select_projects","proj_code");
+    OptMenu.addItem("", "BGC_OPS", "Basrah Gas Company Operations", "false" );
+    OptMenu.addItem("", "BGC_PROJ", "Basrah Gas Company Projects", "true" );
+    OptMenu.addItem("", "ISG", "Basrah Gas Company", "false" );
+
+    OptMenu.addItem("", "", "", "false" );
+    OptMenu.setWidth(200);
+    OptMenu.setPosition(167,15);
+//    OptMenu.submitOnChange();
+//    OptMenu.submitOnChange("submitSearchfrm();");
+  }  
+  function preSubmitExtInbox(v_form) {
+	  console.log(typeof v_form.showAllOutstandingOrLate);
+	  if (typeof v_form.showAllOutstandingOrLate != "undefined") {
+		  if(v_form.showAllOutstandingOrLate[0].checked) { // All
+			  // show all
+			  v_form.use_outstanding_only.value = "--";
+			  v_form.use_late_only.value        = "--";
+			  if (v_form.checked_ind) {
+				  v_form.use_checked_ind.value  = "--";
+			  }
+		  }
+		  else if(v_form.showAllOutstandingOrLate[1].checked) { // Outstanding
+			  // show outstanding
+			  v_form.use_outstanding_only.value = " ";
+			  v_form.use_late_only.value        = "--";
+			  if (v_form.checked_ind) {
+				  v_form.use_checked_ind.value  = " ";
+			  }
+		  }
+		  else if(v_form.showAllOutstandingOrLate[2].checked) { // Late
+			  // show late
+			  v_form.use_outstanding_only.value = " ";
+			  v_form.use_late_only.value        = " ";
+			  if (v_form.checked_ind) {
+				  v_form.use_checked_ind.value  = " ";
+			  }
+		  }
+	  }
+  }
+  function submitSearchForm()
+  {
+	  var left = 100;
+	  var top = 40;
+	  var theForm = document.forms["full_nr"];
+	  preSubmitExtInbox(theForm);
+	  if ('1' == '2')
+      {
+        alert('Not likely');
+        
+      } 
+              else if ( theForm.date_from
+               && theForm.date_from.value
+               && !isDate(theForm.date_from.value,'dd-MM-yyyy') )
+        {
+          tabindex = parseInt("Tabindex");
+          if (!isNaN(tabindex))
+          {
+              try
+              {
+                  tabsBar.setSelectedItems([tabindex]);    
+              } 
+              catch(e) 
+              {
+                  alert(e);
+              }
+          }
+          alert( "Unrecognised date format, use dd-MM-yyyy.");
+          openDateLOV('date_from');
+        }
+        else if ( theForm.date_before
+               && theForm.date_before.value
+               && !isDate(theForm.date_before.value,'dd-MM-yyyy') )
+        {
+          tabindex = parseInt("Tabindex");
+          if (!isNaN(tabindex))
+          {
+              try
+              {
+                  tabsBar.setSelectedItems([tabindex]);    
+              } 
+              catch(e) 
+              {
+                  alert(e);
+              }
+          }
+          alert( "Unrecognised date format, use dd-MM-yyyy.");
+          openDateLOV('date_before');
+        }
+           
+      else
+      {
+    	  if(typeof document.forms["full_nr"].elements["date_from"] != "undefined")
+          { 
+              if(!(document.forms["full_nr"].elements["date_from"].value=="")||!(document.forms["full_nr"].elements["date_before"].value==""))    
+              {   
+                  document.forms["full_nr"].elements["use_date"].value="";                                                
+              }
+          }
+    	  if(typeof document.forms["full_nr"].elements["active_ind"] != "undefined" && typeof document.forms["full_nr"].elements["active_ind_hidden"] != "undefined")
+          { 
+              if(document.forms["full_nr"].elements["active_ind"].checked)    
+              {   
+                  document.forms["full_nr"].elements["active_ind_hidden"].value="Y";                                                
+              }
+              else
+              {
+            	  document.forms["full_nr"].elements["active_ind_hidden"].value="";
+              }
+          } 
+    	  if(typeof document.forms["full_nr"].elements["completed_ind"] != "undefined" && typeof document.forms["full_nr"].elements["completed_ind_hidden"] != "undefined")
+          { 
+              if(document.forms["full_nr"].elements["completed_ind"].checked)    
+              {   
+                  document.forms["full_nr"].elements["completed_ind_hidden"].value="Y";                                                
+              }
+              else
+              {
+            	  document.forms["full_nr"].elements["completed_ind_hidden"].value="N";
+              }
+          }  	    	      	  
+    	    
+
+          var rootWindow = null;
+          var searchBeanValue = document.forms["full_nr"].searchBean.value;
+          if (parent && parent.window && parent.window.opener && parent.window.opener.parent && parent.window.opener.parent.window
+        		  && 'docs.SearchDocsInboxMatrix' != searchBeanValue && 'docs.SearchDocumentMatrix' != searchBeanValue)
+          {
+              rootWindow = parent.window.opener.parent.window;
+              if (rootWindow && (typeof rootWindow.showContentBusy == 'function')) {
+                  rootWindow.showContentBusy();
+              }
+          }
+
+          document.forms["full_nr"].submit();
+    	  	if('' == 'add_xref')
+    	  	{
+	    	  	checkNewPageIsLoaded();
+    	  	}
+    	  	else
+    	  	{
+    	  		window.close();
+    	  	}
+    	  	
+      }		
+  }
+  var newPageIsLoaded = 0;
+  function checkNewPageIsLoaded()
+  {	  
+	  chk_timer=setTimeout("checkNewPageIsLoaded()",300);	  
+	  if(newPageIsLoaded==1)
+	  {
+		  clearTimeout(chk_timer);
+		  post_actionWin.toModifyWindow=window.opener;
+		  window.close();
+	  }
+		
+  }
+  
+  // Added for search transmittals screen
+  function setRadioButtonText(){
+	  
+	  if(document.forms["full_nr"].elements["searchBean"].value === 'rcpt.SearchReceipts'){
+		  var withStatusNotReady = document.getElementsByClassName("l_r_6");
+		  var withSatusAll = document.getElementsByClassName("l_r_7");
+		  withSatusAll["0"].nextSibling.previousSibling.previousElementSibling.checked=true;
+	  }
+  }
+  
+  function setCheckboxValues()
+  { 
+    var elements = document.forms["full_nr"].elements;
+    var checkboxes      = new Array();
+    var checkboxObjects = new Array();
+    var summary = "";
+    var y = 0;
+    for ( i = 0; i < elements.length; i++)
+    {
+      if ( elements[i].type == "checkbox" || elements[i].type == "radio" )
+      { 
+        checkboxObjects[y] = elements[i];
+        y++;
+        if ( summary.indexOf(elements[i].name) == -1 )
+        {
+          if (summary.length > 0)
+            summary = summary + "," + elements[i].name ;
+          else
+            summary = elements[i].name ;
+        }
+      }
+    }
+    checkboxes = summary.split(",");
+    DWRBean.getSearchIndicators("docs.SearchDocuments" 
+                               , checkboxes
+                               , function(data)
+                                 {
+    	console.log("searchIndicators");
+    	console.log(data);
+                                   for (i = 0; i < data.length; i++ )
+                                   {
+                                     for (y = 0; y < checkboxObjects.length; y++)
+                                     {
+                                       if (checkboxObjects[y].name == checkboxes[i])
+                                       {
+                                         if (checkboxObjects[y].value == data[i])
+                                           checkboxObjects[y].checked=true;
+                                         else
+                                           checkboxObjects[y].checked=false;
+                                       }
+                                     }
+                                   }
+                                   setRadioButtonText();
+                                 }
+                               ); 
+  }
+  
+  function pageInit()
+  {
+    setCheckboxValues();
+      setFocus();
+
+      
+    // Resize window to fit content
+    var width = "innerWidth" in window
+          ? window.innerWidth
+          : document.documentElement.offsetWidth;
+    var height = "innerHeight" in window
+          ? window.innerHeight
+          : document.documentElement.offsetHeight;
+
+    var clientHeight = document.body.clientHeight + 100;
+
+    window.resizeTo(width + 15, clientHeight);
+    // initialize 
+    showLovForUserDefinedAttributes('init');
+  }
+  function setFocus()
+  {
+    var formObj = document.forms["full_nr"];
+    if (typeof formObj.number != "undefined")
+        formObj.number.focus();
+    else if (typeof formObj.full_nr != "undefined")
+        formObj.full_nr.focus();
+    else if (typeof formObj.document_nr != "undefined")
+        formObj.document_nr.focus();    
+    else if (typeof formObj.asset_code != "undefined")
+    	formObj.asset_code.focus();
+    else if (typeof formObj.query_nr != "undefined")
+        formObj.query_nr.focus();      	
+	else if (typeof formObj.package_code != "undefined")
+      formObj.package_code.focus();
+    else if (typeof formObj.number != "undefined")
+      formObj.number.focus();
+    else if (typeof formObj.correspondence_nr != "undefined")
+      formObj.correspondence_nr.focus();
+    else if (typeof formObj.work_package_code != "undefined")
+        formObj.work_package_code.focus();
+    else if (typeof formObj.full_receipt_nr != "undefined")
+        formObj.full_receipt_nr.focus();
+    else if (typeof formObj.transmittal_number != "undefined")
+        formObj.transmittal_number.focus();
+    else if (typeof formObj.milestone_code != "undefined")
+        formObj.milestone_code.focus();
+    else if (typeof formObj.milestone_set_code != "undefined")
+        formObj.milestone_set_code.focus();
+    else if (typeof formObj.milestone_clas_seq_nr != "undefined") {
+    	document.querySelectorAll('.button1')[0].focus();
+    }
+    else if (typeof formObj.order_nr != "undefined")
+        formObj.order_nr.focus();
+  }
+	function checkEnter(e)
+	{ //e is event object passed from function invocation 
+		var characterCode //literal character code will be stored in this variable
+		
+		if(e && e.which)
+		{ //if which property of event object is supported (NN4)
+			e = e
+			characterCode = e.which //character code is contained in NN4's which property
+		}
+		else if(typeof event != "undefined")
+		{
+			e = event
+			characterCode = e.keyCode //character code is contained in IE's keyCode property
+		}
+		
+		if(characterCode == 13)
+		{ //if generated character code is equal to ascii 13 (if enter key)
+		    var initval1 = e.target.value;
+		    if (e.target && e.target.className == "i_cd2_1") {
+		    	e.target.onchange();
+		    }
+		    var initval2 = e.target.value;
+		    if (initval1 === initval2){
+		    	submitSearchForm();
+		    }
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}	
+	
+	
+	// Added to clear Discipline Code and disable Document type  field when multiple projects are selected.
+	// Redmine 4778
+ 	function modifyDisplayedFields() {
+ 	    var selected_projects = document.forms["full_nr"].elements["selected_project_codes"].value;
+ 	    if(document.forms["full_nr"].elements["searchBean"].value === 'docs.SearchDocuments'){
+ 	 	    if (selected_projects && selected_projects.indexOf("+") !== -1 || selected_projects == "All projects") {
+ 	 	        document.forms["full_nr"].elements["discipline_code"].value = '';
+ 	 	        document.forms["full_nr"].elements["discipline_code_description"].value = '';
+ 	 	        document.forms["lov_frm"].elements["use_discipline_code"].value = '--';
+ 	 	    } else {
+ 	 	        var doc_type_lov = document.forms["full_nr"].elements["document_type"].parentNode.getElementsByClassName("lov_2_1")[0];
+ 	 	        if (doc_type_lov.hidden ||
+ 	 	            doc_type_lov.style.display == "none") {
+ 	 	            document.forms["full_nr"].elements["document_type"].disabled = false;
+ 	 	            document.forms["full_nr"].elements["document_type_description"].disabled = false;
+ 	 	            if (typeof doc_type_lov.hidden !== 'undefined') { 
+ 	 	                doc_type_lov.hidden = false;
+ 	 	            } else { // for IE
+ 	 	                doc_type_lov.style.display = "block";
+ 	 	            }
+
+ 	 	        }
+
+ 	 	    }
+ 	    }
+
+ 	    
+ 	}
+	
+</script>
+
+</head>
+<body topmargin="5" leftmargin="5" onLoad="pageInit();" style="overflow:auto;overflow-x:hidden">
+<div class="main_tabs">
+	<div class="tabDiv">	
+	<p class="screentitle">Search Documents
+    	<a href="help.aweb" target="_blank"><img class="floatRight" src="img/help_button_off.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" title="Help"/></a>
+	</p>
+	</div>
+</div>
+<br/>
+<form name="lov_frm" id="lov_frm" target="Fullnr" action="lov.aweb">
+	<input type="hidden" name="element_code">
+	<input type="hidden" name="use_coel1_code" value="--">
+	<input type="hidden" name="coel1_code">
+	<input type="hidden" name="use_coel2_code" value="--">
+	<input type="hidden" name="coel2_code">	
+	<input type="hidden" name="clas_seq_nr" value="1">
+	<input type="hidden" name="suty_seq_nr" value="1">
+	<input type="hidden" name="proj_seq_nr" value="59734">
+	<input type="hidden" name="name_field">
+	<input type="hidden" name="code_field">
+	<input type="hidden" name="document_nr">
+    <input type="hidden" name="use_discipline_code" value="--">		
+	<input type="hidden" name="discipline_code">
+	<input type="hidden" name="entity_code" value="DOCS">
+	<input type="hidden" name="asset_code" id="fake_IE">
+	<input type="hidden" name="company_code"> 
+	<input type="hidden" name="use_company_code" value="--">
+	<input type="hidden" name="enca_code" id="enca_code" value="">
+	<input type="hidden" name="asset_type" id="asset_type">	
+	<input type="hidden" name="asset_attribute" id="asset_attribute">
+	<input type="hidden" name="use_asset_type" id="use_asset_type">
+	<input type="hidden" name="use_asset_attribute" id="use_asset_attribute">
+	<input type="hidden" name="use_asset_code" id="use_asset_code">
+</form>
+<form method="POST" action="result.aweb" target="content_d2OEXESd7Xw96wCb" name="full_nr" id="full_nr">	
+
+    <input type="hidden" name="subclass_type" id="subclass_type" value="DES_DOC">
+
+	<input type="hidden" name="clas_seq_nr" id="clas_seq_nr" value="1">
+	<input type="hidden" name="suty_seq_nr" id="suty_seq_nr" value="1">
+	<input type="hidden" name="proj_seq_nr" id="proj_seq_nr" value="59734">
+	<input type="hidden" name="start_row"     value="1">
+	<input type="hidden" name="searchBean"    value="docs.SearchDocuments">
+	<input type="hidden" name="use_suppl_docnr" value="--">
+	
+	<input type='hidden' name='xmlFile' value='WEB-INF/template/pages/docsSearch.xml' /><div>
+<p class="l_2_1" title="Select project">Select project</p>
+<input type="text" readonly="true" tabindex="0" name="selected_project_codes" id="selected_project_codes" class="i_345_1_ro" value="BGC_PROJ"
+       onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="1" tabindex="1"
+        dwrid="dwrid" onChange="modifyDisplayedFields();" />
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('project_available','selected_project_codes_description', 'selected_project_codes');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Document nr.">Document nr.</p>
+<input type="text" name="number" id="number" class="i_345_1" value="" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="2" onChange="trim(this);"/>    
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Revision">Revision</p>
+<input type="text" name="revision_code" class="i_cd2_1" title="" id="revision_code" value="" dwrid="desc_revision_code" onChange="inputOnChange(this,'revision_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="3"/>
+<input type="text" name="revision_code_description" title="" id="revision_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('revision','revision_code_description', 'revision_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Title">Title</p>
+<input type="text" name="description" id="description" class="i_345_1" value="" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="4" onChange="trim(this);"/>    
+</div>
+<br/>
+<div>
+<P class="l_2_1" title="Date from">Date from</P>
+<INPUT type="text" class="i_345_1" value="" title="" name="date_from" id="date_from" onChange="if(this.value!='' && !isDate(this.value,'dd-MM-yyyy')){alert('Unrecognised date format, use dd-MM-yyyy.');openDateLOV('date_from');}" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="5">
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="openDateLOV('date_from');"></p></div>
+<br/>
+<div>
+<P class="l_2_1" title="Date before">Date before</P>
+<INPUT type="text" class="i_345_1" value="" title="" name="date_before" id="date_before" onChange="if(this.value!='' && !isDate(this.value,'dd-MM-yyyy')){alert('Unrecognised date format, use dd-MM-yyyy.');openDateLOV('date_before');}" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="6">
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="openDateLOV('date_before');"></p></div>
+<br/>
+<div>
+<p class="l_2_1" title="Ext. ref. company">Ext. ref. company</p>
+<input type="text" name="codo_company_code" class="i_cd2_1" title="" id="codo_company_code" value="" dwrid="desc_ext_ref_company" onChange="inputOnChange(this,'codo_company_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="7"/>
+<input type="text" name="codo_company_code_description" title="" id="codo_company_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('company','codo_company_code_description', 'codo_company_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="External reference">External reference</p>
+<input type="text" name="codo_document_nr" id="codo_document_nr" class="i_345_1" value="" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="8" onChange="trim(this);"/>    
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Keywords">Keywords</p>
+<input type="text" name="key_words" class="i_345_1" value="" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="9" tabindex="9" onChange="trim(this);"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('key_words','key_words_description', 'key_words');"></p>    
+</div>
+<br/>
+<div>
+</div>
+<br/><hr class="search  portlet-header"/><div>
+<p class="l_2_1" title="Originator">Originator</p>
+<input type="text" name="originator" id="originator" class="i_345_1" value="" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="10" onChange="trim(this);"/>    
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Responsible eng.">Responsible eng.</p>
+<input type="text" name="resp_engr_seq_nr" class="i_cd2_1" title="" id="person_code" value="" dwrid="desc_responsible_engineer_code" onChange="inputOnChange(this,'resp_engr_seq_nr_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="11"/>
+<input type="text" name="resp_engr_seq_nr_description" title="" id="resp_engr_seq_nr_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('responsible_engineer','resp_engr_seq_nr_description', 'resp_engr_seq_nr');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Company">Company</p>
+<input type="text" name="company_code" class="i_cd2_1" title="" id="company_code" value="" dwrid="desc_company_code" onChange="inputOnChange(this,'company_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="12"/>
+<input type="text" name="company_code_description" title="" id="company_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('company','company_code_description', 'company_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Discipline">Discipline</p>
+<input type="text" name="discipline_code" class="i_cd2_1" title="" id="discipline_code" value="" dwrid="desc_discipline_code" onChange="inputOnChange(this,'discipline_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="13"/>
+<input type="text" name="discipline_code_description" title="" id="discipline_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('discipline','discipline_code_description', 'discipline_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Document type">Document type</p>
+<input type="text" name="document_type" class="i_cd2_1" title="" id="document_type" value="" dwrid="desc_document_type_code" onChange="inputOnChange(this,'document_type_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="14"/>
+<input type="text" name="document_type_description" title="" id="document_type_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('document_type','document_type_description', 'document_type');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Document status">Document status</p>
+<input type="text" name="status_code" class="i_cd2_1" title="" id="status_code" value="" dwrid="desc_status_code" onChange="inputOnChange(this,'status_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="15"/>
+<input type="text" name="status_code_description" title="" id="status_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('status','status_code_description', 'status_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Approval">Approval</p>
+<input type="text" name="approval_code" class="i_cd2_1" title="" id="approval_code" value="" dwrid="desc_approval_code" onChange="inputOnChange(this,'approval_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="16"/>
+<input type="text" name="approval_code_description" title="" id="approval_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('approval','approval_code_description', 'approval_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Subclass code">Subclass code</p>
+<input type="text" name="subclass_code" class="i_cd2_1" title="" id="subclass_code" value="" dwrid="desc_subclass_code" onChange="inputOnChange(this,'subclass_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="17"/>
+<input type="text" name="subclass_code_description" title="" id="subclass_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('subclass','subclass_code_description', 'subclass_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Priority">Priority</p>
+<input type="text" name="priority_code" class="i_cd2_1" title="" id="priority_code" value="" dwrid="desc_priority_code" onChange="inputOnChange(this,'priority_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="18"/>
+<input type="text" name="priority_code_description" title="" id="priority_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('priority','priority_code_description', 'priority_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Classification">Classification</p>
+<input type="text" name="classification_code" class="i_cd2_c_1" title="" id="classification_code" value="" dwrid="desc_classification_code" onChange="inputOnChange(this,'classification_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="19"/>
+<input type="text" name="classification_code_description" title="" id="classification_code_description" class="i_ds2_c_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('classification','classification_code_description', 'classification_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Language">Language</p>
+<input type="text" name="language_code" class="i_cd2_1" title="" id="language_code" value="" dwrid="desc_language" onChange="inputOnChange(this,'language_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="20"/>
+<input type="text" name="language_code_description" title="" id="language_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('language','language_code_description', 'language_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Transmittal number">Transmittal number</p>
+<input type="text" name="transmittal_number" id="transmittal_number" class="i_345_1" value="" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="21" onChange="trim(this);"/>    
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Inc. Transmittal">Inc. Transmittal</p>
+<input type="text" name="receipt" id="receipt" class="i_345_1" value="" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="22" onChange="trim(this);"/>    
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Sender reference">Sender reference</p>
+<input type="text" name="sender_reference" id="sender_reference" class="i_345_1" value="" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="23" onChange="trim(this);"/>    
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Archive">Archive</p>
+<input type="text" name="archive" id="archive" class="i_345_1" value="" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="24" onChange="trim(this);"/>    
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Package number">Package number</p>
+<input type="text" name="package_code" class="i_cd2_1" title="" id="package_code" value="" dwrid="desc_package_code" onChange="inputOnChange(this,'package_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="25"/>
+<input type="text" name="package_code_description" title="" id="package_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('package','package_code_description', 'package_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Work package code">Work package code</p>
+<input type="text" name="work_package_code" class="i_cd2_1" title="" id="work_package_code" value="" dwrid="desc_work_package_code" onChange="inputOnChange(this,'work_package_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="26"/>
+<input type="text" name="work_package_code_description" title="" id="work_package_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('work_package','work_package_code_description', 'work_package_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Purchase order">Purchase order</p>
+<input type="text" name="purchase_code" class="i_cd2_1" title="" id="purchase_code" value="" dwrid="desc_purchase_order" onChange="inputOnChange(this,'purchase_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="27"/>
+<input type="text" name="purchase_code_description" title="" id="purchase_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('purchase_order','purchase_code_description', 'purchase_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Asset">Asset</p>
+<input type="text" name="asset_code" class="i_cd2_1" title="" id="asset_code" value="" dwrid="desc_asset_code" onChange="inputOnChange(this,'asset_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="28"/>
+<input type="text" name="asset_code_description" title="" id="asset_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('asset','asset_code_description', 'asset_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Asset item">Asset item</p>
+<input type="text" name="asset_item_code" class="i_cd2_1" title="" id="asset_item_code" value="" dwrid="desc_asset_item" onChange="inputOnChange(this,'asset_item_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="29"/>
+<input type="text" name="asset_item_code_description" title="" id="asset_item_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1_asitTree">
+<img src="img/tree.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" title="Asset Item Tree" style='width:13px' onclick="showLOV('asset_item_tree','asset_item_code_description', 'asset_item_code');"/>
+<img src="img/spacer.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" style='width:10px'/>
+<img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('asset_item_lov','asset_item_code_description', 'asset_item_code');">
+</p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Checked out by">Checked out by</p>
+<input type="text" name="person_code_checked_out" class="i_cd2_1" title="" id="person_code" value="" dwrid="desc_staff_code" onChange="inputOnChange(this,'person_code_checked_out_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="30"/>
+<input type="text" name="person_code_checked_out_description" title="" id="person_code_checked_out_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('staff','person_code_checked_out_description', 'person_code_checked_out');"></p>
+</div>
+<br/>
+	    <div id="toggleElement" 
+	         onclick="toggleDisplayOf('toggleArea');"
+	         title="Show extra fields">
+	      <img style="position:absolute;left:12px;top:0px;" id="toggleImg" src="img/tree_plus.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"/><hr class="search"/>
+	      <script>
+	        function toggleDisplayOf(elementName)
+	        {
+		        try
+		        {
+			      var element = document.getElementById(elementName);
+			      var button  = document.getElementById("toggleElement");
+			      var btnImg  = document.getElementById("toggleImg");
+		          if (element.style.display!="none")
+		          {
+		        	element.style.display="none";
+		        	button.setAttribute("title","Show extra fields");
+		        	btnImg.src = "img/tree_plus.gif";
+		          } 
+		          else
+		          {
+		        	element.style.display="block";
+		        	button.setAttribute("title","Hide extra fields");
+		        	btnImg.src = "img/tree_minus.gif";
+		          }
+		        }
+		        catch (e)
+		        {
+			        alert(e.message);
+		        }
+	        }
+	      </script>
+	    </div>
+<div id="toggleArea" style="display:none;">
+<div>
+<P class="l_2_1">Show CE Documents</P>
+<INPUT class="i_r_5" type="radio" CHECKED value="C" name="ce_docs"  id="Current">
+<P class="l_r_5"><label for="Current">Current</label></P>
+<INPUT class="i_r_6" type="radio" value="A" name="ce_docs" id="All">
+<p class="l_r_6"><label for="All">All</label></p>
+<INPUT class="i_r_7" type="radio" value="N" name="ce_docs" id="None">
+<p class="l_r_7"><label for="None">None</label></p>
+<br/>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Custom attributes">Custom attributes</p>
+<input type="text" name="characteristics_code" class="i_cd2_1" title="" id="characteristics_code" value="" dwrid="desc_user_defined_attribute" onChange="inputOnChange(this,'characteristics_code_description','No such code available:');"  onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="31"/>
+<input type="text" name="characteristics_code_description" title="" id="characteristics_code_description" class="i_ds2_1" value="" readonly="true" tabindex="0"/>
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('user_defined_attribute','characteristics_code_description', 'characteristics_code');"></p>
+</div>
+<br/>
+<div>
+<p class="l_2_1" title="Value">Value</p>
+<input type="text" readonly="true" tabindex="0" name="reference_code" id="reference_code" class="i_345_1_ro" value=""
+       onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="32" tabindex="32"
+        dwrid="desc_reference_code" onChange="inputOnChange(this,'desc_reference_code','No such code available:');" />
+<p class="lov_2_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('reference_code','reference_code_description', 'reference_code');"></p>
+<input type="hidden" name="desc_reference_code" id="desc_reference_code" value="Value">
+</div>
+<br/><hr class="search  portlet-header"/><div>
+<p class="l_s_1" title="Composition element 1">Composition element 1</p>
+<input type="text" name="coel1_code" class="i_scd_1" value="" id="coel1_code" onChange="inputOnChange(this,'coel1_code_description');" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="33"/>    
+<p class="lov_s_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('coel_docs_code','coel1_code_description', 'coel1_code');"></p><p class="l_s_2" title="Value">Value</p>
+<input type="text" name="coel1_value" class="i_scd_2" value="" id="coel1_value" onChange="inputOnChange(this,'coel1_value_description');" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="34"/>    
+<p class="lov_s_2"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('coel1_value','coel1_value_description', 'coel1_value');"></p></div>
+<br/>
+<div>
+<p class="l_s_1" title="Composition element 2">Composition element 2</p>
+<input type="text" name="coel2_code" class="i_scd_1" value="" id="coel2_code" onChange="inputOnChange(this,'coel2_code_description');" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="35"/>    
+<p class="lov_s_1"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('coel_docs_code','coel2_code_description', 'coel2_code');"></p><p class="l_s_2" title="Value">Value</p>
+<input type="text" name="coel2_value" class="i_scd_2" value="" id="coel2_value" onChange="inputOnChange(this,'coel2_value_description');" onKeyPress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" tabindex="36"/>    
+<p class="lov_s_2"><img src="img/LOV.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" onClick="showLOV('coel2_value','coel2_value_description', 'coel2_value');"></p></div>
+<br/><hr class="search  portlet-header"/><div>
+<p class="l_2_1" title="Return rows">Return rows</p>
+<select class="text_area_pull" name="number_of_results">		
+	<option value="25">25
+       <option value="50" selected="true">50
+       <option value="75">75
+       <option value="100">100
+</select>
+</div>
+<br/><br/></div>
+<div class="s_buttonbar_2">
+<input type="button" value="Search" class="button1" onclick="submitSearchForm();"/>
+<input type="button" value="Reset"  class="button2" onclick="clearForm();if (typeof setCheckboxValues != 'undefined'){setCheckboxValues();}"/>
+<input type="button" value="Cancel" class="button3" onclick="window.close();"/></div>
+<input type="hidden" name="use_current_rev" id="use_current_rev" value="--">
+<input type="hidden" name="use_date" id="use_date" value="--">
+<input type="hidden" name="use_latest_rev" id="use_latest_rev" value=" ">
+
+</form>
+</body>
+</html>

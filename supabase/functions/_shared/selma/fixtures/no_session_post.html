@@ -1,0 +1,103 @@
+
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script>
+	var rootWindow = getRootWindow();
+	if(rootWindow != null && (typeof rootWindow.showSessionTimeOutErrorMessage == 'function')) {
+		rootWindow.showSessionTimeOutErrorMessage("The session was inactive for too long.\nYou were logged off automatically.");
+	} else {
+	  document.location="index.aweb"; 
+	}
+	
+	if (window.opener) {
+		window.close();
+	} 
+	if (window.parent && window.parent.opener) {
+	     window.parent.close();
+	     actionTaken = true;
+	}
+	
+	function getRootWindow() {
+		var rootWindow = null;
+		var openerWindow = window.opener;
+		while(openerWindow) {
+			if(openerWindow.opener) {
+				openerWindow = openerWindow.opener; 
+			} else {
+				if(openerWindow.parent && openerWindow.parent.window) {
+					rootWindow = openerWindow.parent.window;
+				}
+				openerWindow = null;
+			}
+		}
+		if(rootWindow == null) {
+			if (parent && parent.window) { // if it is not a popup then it is in frame
+				rootWindow = parent.window;
+			}
+		}
+		return rootWindow;		
+	}
+  
+
+//   var actionTaken = false;
+//   var root = findRootWindow(window, 0);
+//   if (root)
+//   {
+//       root.closeCurrentPopupWindows();
+//       root.location="index.aweb"; 
+//       actionTaken = true;
+//   } 
+//   if (window.opener)
+//   {
+//      window.close();
+//      actionTaken = true;
+//   }
+//   if (window.parent && window.parent.opener)
+//   {
+//      window.parent.close();
+//      actionTaken = true;
+//   }
+
+//   if(!actionTaken) {
+//       document.location="index.aweb"; 
+//   }
+
+//   function findRootWindow(win, level)
+//   {
+// 	  try
+// 	  {
+// 	      if (level > 10)
+// 	      {
+// 	          return null;
+// 	      }
+// 	      if (win.name == 'root')
+// 	      {
+// 	          return win;
+// 	      }
+// 	      if (win.opener)
+// 	      {
+// 	          return findRootWindow(win.opener, level + 1);
+// 	      }
+// 	      if (win.parent && win.name != win.parent.name)
+// 	      {
+// 	          return findRootWindow(win.parent, level + 1);
+// 	      }
+// 	  }
+//       catch (e)
+//       {
+//           // The opening window may be closed in the meantime and be invalid
+//       }
+// 	  return null;
+//   }
+
+</script>  
+<title>No session</title>
+</head>
+<body>
+</body>
+</html>

@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+
+
+
+
+
+
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel=stylesheet type="text/css" href="css/logon.css?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2">
+<title>Assai Web</title>
+<meta name="description" content="Assai Software Services provides leading edge document control and document management software to the oil, gas, engineering and construction industries."/>
+<meta name="keywords" content="Assai,Document Control,Document Management,Asset management,Planning,Workflow,AssaiNET Cloud,Redlining,Brava,Livelink,Filenet,Opentext,Solr"/>
+<meta name="robots" content="noindex, nofollow" />
+<meta name="copyright" content="Copyright © 2026 Assai Software Services b.v. All Rights Reserved."/>
+<link rel="shortcut icon" href="transparent.ico"/>
+
+ <script type="text/javascript" src="js/sec/lib/aes.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+ <script type="text/javascript" src="js/sec/lib/pbkdf2.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+ <script type="text/javascript" src="js/sec/AesUtil.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2"></script>
+ <script type='text/javascript' src='dwr/interface/DWRBean.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'></script>
+ <script type='text/javascript' src='dwr/engine.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'></script>
+ <script type='text/javascript' src='dwr/util.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'></script>
+ <script type='text/javascript' src='js/login.js?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'></script>
+ <script type="text/javascript">
+ var v_empty_username          = "empty username";
+ var v_empty_email             = "empty email";
+ var v_confirm_reset_password  = "Do you want to reset the password?";
+ var v_empty_password          = "empty password";
+ var v_empty_database          = "empty database";
+ var v_changeLanguageToEnglish = false;
+ var v_passwordResetMessage    = "null";
+ var v_password_different      = "new password entries are not the same, please change.";
+ var v_password_same           = "Current password and new password are the same, please change.";
+ var v_password_failed         = "Password verification failed";
+ var v_invalid_character       = "Invalid character";
+ var v_username_or_password_wrong       = "Incorrect username or password.";
+  </script>
+<title>Home Page</title>
+</head>
+<body class="logon" border="0" oncontextmenu="return true;" onload="pageInit();initTogglePassword();">
+
+<form  name="form" id="form" action="login.aweb" method="post">
+ <input type="hidden" name="isSecure" id="isSecure" value="false" size="20">
+ <input type="hidden" name="contentUrl" id="contentUrl" value="./forward.aweb?page=root/body" size="20">
+ <input type="hidden" name="followUp" id="followUp" value="null">
+ <input type="hidden" name="ssodata" id="ssodata" value="null">
+ <input type="hidden" name="loginMethod" id="loginMethod" value="unpw">
+
+ <p class='link' onclick="displayObject(getElement('languages'),'75');"><img src="img/flags/.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2">&nbsp;Choose language</p>
+
+
+ <table id="logintable" onMouseOver="displayObject(this,85);" onMouseOut="displayObject(this,75);" onLoad="document.form.userid.focus();">
+     <tr>
+         <th></th>
+         <th nowrap colspan="2"><h1>Log in </h1></th>
+         <th></th>
+     </tr>
+  <tr>
+    <td colspan=4 class="errorMsg">&nbsp;</td>
+  </tr>
+     <tr>
+         <td></td>
+         <td class="tdLabel"><p>Username: </p></td>
+         <td class="tdValue"><input type="text" name="userid" id="userid" value="" onkeypress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" size="20"></td>
+         <td></td>
+     </tr>
+  <tr>
+    <td></td>
+    <td nowrap><p>Password: </p></td>
+    <td>
+        <input type="password" name="password" id="password" value="" onkeypress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" size="20" autocomplete="off">
+        <img src="./img/eye.svg?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2" id="togglePassword"></img>
+    </td>
+    <td></td>
+  </tr>
+  <tr style="display:none">
+    <td></td>
+    <td nowrap><p>Database: </p></td>
+    <td><input type="text" name="dbname" id="dbname" value="eu578" onkeypress="if(typeof (checkEnter) != 'undefined' ){checkEnter(event)}" size="20"></td>
+    <td></td>
+  </tr>
+  
+	  <tr>
+	    <td></td>
+	    <td nowrap><p>Remember me: </p></td>
+	    <td><input type="checkbox" name="remember_me" id="remember_me" value="true"><br></td>
+	    <td></td>
+	  </tr>
+   
+			
+			<tr>
+    <td></td>
+    <td></td>
+    <td>
+    <input id="button_log_on" class="button button_log_on" type="button" value="Log in" onClick="submitLogonForm();">
+     
+
+    </td>
+    <td></td>
+   </tr>
+
+  <tr>
+    <td></td>
+    <td></td>
+    <td><p class='smalllink' id="smallink" onclick="switchToForgetPasswordForm();"><span>Forgot password?</span></p></td>
+    <td></td>
+   </tr>
+     
+  <tr>
+    <td ></td>
+    <td colspan=2>
+    </td>
+    <td></td>
+  </tr>
+  </table>
+  <input type="hidden" name="uniqueName" id="uniqueName" value="">
+<div id="languages" onclick="hideObject(this)">
+ <table>
+  <tr class='Passive' style="background-color:#000080;color:#FFFFFF;"><td><p>Close</p></td></tr>
+  <tr class='Passive' onmouseover="this.className='Active';" onmouseout="this.className='Passive';"><td>
+  <p onclick="setLanguage('ru');"><img src='img/flags/ru.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'/>&nbsp;русский</p>
+</td></tr>
+<tr class='Passive' onmouseover="this.className='Active';" onmouseout="this.className='Passive';"><td>
+  <p onclick="setLanguage('en');"><img src='img/flags/en.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'/>&nbsp;English</p>
+</td></tr>
+<tr class='Passive' onmouseover="this.className='Active';" onmouseout="this.className='Passive';"><td>
+  <p onclick="setLanguage('zh');"><img src='img/flags/zh.gif?v=58feb66e37a5a5f3f668b82f292b85298ae58cb2'/>&nbsp;中文</p>
+</td></tr>
+
+ </table>
+</div>
+</form>
+<form name="forgetpwd_form" id="forgetpwd_form" action="resetpassword.aweb" method="post" >
+<input type="hidden" name="forgetpwd_loginMethod" id="forgetpwd_loginMethod" value="unpw">
+<br>
+	<table id="forgetpwdtable">
+        <tr>
+            <th></th>
+            <th nowrap colspan="2"><h1>Reset password </h1></th>
+            <th></th>
+        </tr>
+		<tr>
+            <td colspan=4 class="errorMsg">&nbsp;</td>
+        </tr>
+		<tr>
+            <td></td>
+            <td class="tdLabel" nowrap><p>Username: </p></td>
+            <td class="tdValue"><input type="text" name="forgetpwd_userid" id="forgetpwd_userid" value="" size="20"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td nowrap><p>E-mail: </p></td>
+            <td><input type="text" name="reset_email" id="reset_email" value="" size="20"></td>
+            <td></td>
+        </tr>
+        <tr style="display:none">
+    		<td></td>
+    		<td nowrap><p>Database: </p></td>
+    		<td><input type="text" name="forgetpwd_dbname" id="forgetpwd_dbname" value="eu578" size="20"></td>
+    		<td></td>
+  		</tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td><input type="button" class="button button_reset_password" value="Reset PWD" onClick="submitForgetPasswordForm();">
+                <input type="button" class="button button_back" value="Back" onClick="switchToLoginForm();">
+            </td>
+            <td></td>
+        </tr>
+        <tr>
+            <td ></td>
+            <td colspan=2><p></p></td>
+            <td></td>
+        </tr>
+	</table>
+</form>
+
+<form  name="reset_form" id="reset_form" action="resetpassword.aweb" method="post">
+
+<input type="hidden" name="reset_userid" id="reset_userid" value="null">
+<input type="hidden" name="reset_dbname" id="reset_dbname" value="eu578">
+<input type="hidden" name="reset_contentUrl" id="reset_contentUrl" value="./forward.aweb?page=root/body" size="20">
+<input type="hidden" name="reset_followUp" id="reset_followUp" value="null">
+<input type="hidden" name="reset_ssodata" id="reset_ssodata" value="null">
+<input type="hidden" name="reset_loginMethod" id="reset_loginMethod" value="unpw">
+<br>
+    <table id="resettable">
+        <tr>
+            <td colspan=4 class="errorMsg">&nbsp;</td>
+        </tr>
+        <tr>
+    		 <td class="tdLabel" nowrap><p>Current password: </p></td>
+    		 <td class="tdValue"><input type="password" name="current_password" id="current_password" value="" size="20" autocomplete="off"></td>
+    		<td></td>
+ 		</tr>
+        <tr>
+    		 <td nowrap><p>New password: </p></td>
+    		 <td><input type="password" name="new_password" id="new_password" value="" size="20" autocomplete="off"></td>
+    		<td></td>
+ 		</tr>
+ 		<tr>
+    		 <td nowrap><p>Retype password: </p></td>
+    		 <td><input type="password" name="retype_password" id="retype_password" value="" size="20" autocomplete="off"></td>
+    		<td></td>
+ 		</tr>
+        <tr>
+            <td></td>
+            <td><input type="button" class="button button_reset_password" id="button_reset_password" value="Reset PWD" onClick="submitResetForm();">
+                <input type="button" class="button button_back" value="Back" onClick="switchToLoginForm();">
+            </td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td colspan=2><p></p></td>
+            <td></td>
+        </tr>
+    </table>
+    <input type="hidden" name="reset_uniqueName" id="reset_uniqueName" value="">
+</form>
+   <form name="languageform" method="post" action="index.aweb">
+    <input type="hidden" name="loginMethod" id="loginMethod" value="unpw">
+    <input type="hidden" name="siteLanguage">
+    <input type="hidden" name="loggedOff" value="true">
+    <input type="hidden" name="isFromLanguageForm" value="true">
+    <input type="hidden" name="uniqueName" value="">
+   </form>
+   <p id="assaiVersion" style="position: absolute; bottom: 0; float: right; width:100%; text-align: right; font-style: italic; font-size: 9px;">Assai Web v12.1.1.85 2026-05-28 08:22 (58feb66e37a5a5f3f668b82f292b85298ae58cb2@58feb66e37a5a5f3f668b82f292b85298ae58cb2)  12</p>
+  <p class="footer">Copyright © 2026 Assai Software Services, All rights reserved.</p>
+</body>
+</html>

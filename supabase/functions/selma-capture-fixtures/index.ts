@@ -58,6 +58,8 @@ Deno.serve(async (req) => {
   fixtures["form_SUP_DOC.html"] = await (async () => { await fetch(`${assaiBase}/label.aweb?subclass_type=SUP_DOC`, { headers: { Cookie: cookieHeader, "User-Agent": ASSAI_UA } }).then(r=>r.text()); const r = await fetch(`${assaiBase}/search.aweb?subclass_type=SUP_DOC`, { headers: { Cookie: cookieHeader, "User-Agent": ASSAI_UA } }); return await r.text(); })();
   // Populated grid (project + type=8203 contains the basis doc)
   fixtures["result_populated_type8203.html"] = (await fullCycle({ number: "6529-%", document_type: "8203" })).html;
+  // V12 follow-up #2 — bare project-only query (no type, no description). Hypothesis: empty_grid.
+  fixtures["result_bare_project_only.html"] = (await fullCycle({ number: "6529-%" })).html;
   // Populated grid (description=basis) — 15 rows including the basis doc
   fixtures["result_populated_desc_basis.html"] = (await fullCycle({ number: "6529-%", description: "basis" })).html;
   // Single-result (exact doc)
