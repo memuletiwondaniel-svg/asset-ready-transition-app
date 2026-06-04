@@ -400,12 +400,54 @@ export async function handleGetHandoverCertificateStatus(
       };
     }
 
-    // Build URL with TypeID GUID
+    // Build URL with TypeID GUID. DAC variants need per-discipline rows; use
+    // GroupBy=SubSystem,Discipline (collapsing to SubSystem hides the
+    // per-discipline fan-out the DAC handover actually tracks).
     const session = await getSession(supabaseClient, projectCode);
-    const pagePath = `GoCompletions/Handovers/HandoverSearch.aspx?TypeID=${typeId}&HandoverGate=${gate}&GroupBy=SubSystem&IsPartialHandover=False&IsMultiHandover=False&IsProcedure=False&HasInterimDate=False&AdditionalFilters=`;
-    const { html } = await session.navigateTo(pagePath);
+    const isDac = /DAC$/i.test(certType);
+    const groupBy = isDac ? "SubSystem,Discipline" : "SubSystem";
+    const pagePath = `GoCompletions/Handovers/HandoverSearch.aspx?TypeID=${typeId}&HandoverGate=${gate}&GroupBy=${encodeURIComponent(groupBy)}&IsPartialHandover=False&IsMultiHandover=False&IsProcedure=False&HasInterimDate=False&AdditionalFilters=`;
+    const navResp = await session.navigateTo(pagePath);
+    let pageHtml = navResp.html;
+    const pageUrl = navResp.url;
+    const pageCookies = navResp.cookies;
 
-    const rows = parseRadGridTable(html);
+    let rows = parseRadGridTable(pageHtml);
+    let postbackFired = false;
+    // Initial load shows an empty grid until Search posts back. Apply the
+    // `_input`-stripped postback fix (same RadButton trap as TagSearch).
+    if (rows.length === 0) {
+      const target = findHandoverPostbackTarget(pageHtml);
+      const subField = findHandoverSubsystemField(pageHtml);
+      if (target) {
+        const params: Record<string, string> = {
+          __EVENTTARGET: target,
+          __EVENTARGUMENT: "",
+        };
+        if (args.sub_system && subField.field) {
+          params[subField.field] = args.sub_system;
+          if (subField.clientState) {
+            params[subField.clientState] = JSON.stringify({
+              value: args.sub_system, text: args.sub_system, enabled: true,
+            });
+          }
+        }
+        const { html: resultHtml } = await postWithViewState(pageCookies, pageUrl, pageHtml, params);
+        pageHtml = resultHtml;
+        rows = parseRadGridTable(pageHtml);
+        postbackFired = true;
+      }
+    }
+
+    // Filter by subsystem if specified (client-side belt + suspenders).
+    let filtered = rows;
+    if (args.sub_system) {
+      filtered = rows.filter(r => {
+        const subSys = String(r["Sub System"] || r.SubSystem || r.sub_system || "");
+        return subSys.includes(args.sub_system);
+      });
+    }
+
 
     // Filter by subsystem if specified
     let filtered = rows;
