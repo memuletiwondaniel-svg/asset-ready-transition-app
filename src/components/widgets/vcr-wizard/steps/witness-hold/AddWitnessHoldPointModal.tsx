@@ -173,7 +173,10 @@ export const AddWitnessHoldPointModal: React.FC<AddWitnessHoldPointModalProps> =
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); else onOpenChange(true); }}>
-      <DialogContent className="sm:max-w-[440px] p-0 gap-0">
+      <DialogContent
+        className="sm:max-w-[440px] p-0 gap-0 z-[100]"
+        overlayClassName="z-[99] bg-black/70"
+      >
         <DialogHeader className="px-6 pt-5 pb-0 space-y-1">
           <DialogTitle className="text-base font-medium">
             {isEdit ? 'Edit witness or hold point' : 'Add witness or hold point'}

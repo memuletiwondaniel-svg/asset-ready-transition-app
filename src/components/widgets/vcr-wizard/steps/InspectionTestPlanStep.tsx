@@ -201,11 +201,11 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
 
             {/* Table */}
             <div className="border border-border/60 rounded-md overflow-hidden">
-              <div className="grid grid-cols-[1.4fr_60px_1.4fr_60px] bg-muted/40 text-[11px] uppercase tracking-[0.04em] text-muted-foreground">
-                <div className="px-3.5 py-2.5">System</div>
-                <div className="px-3.5 py-2.5 text-center">Type</div>
-                <div className="px-3.5 py-2.5">Activity</div>
-                <div className="px-3.5 py-2.5" />
+              <div className="grid grid-cols-[minmax(180px,260px)_60px_1fr_60px] bg-muted/40 text-[11px] uppercase tracking-[0.04em] text-muted-foreground">
+                <div className="px-3.5 py-2">System</div>
+                <div className="px-3.5 py-2 text-center">Type</div>
+                <div className="px-3.5 py-2">Activity</div>
+                <div className="px-3.5 py-2" />
               </div>
               <div>
                 {orderedSystemIds.map((sysId) => {
@@ -219,13 +219,13 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                         key={row.id}
                         onClick={() => openEdit(row)}
                         className={cn(
-                          'group grid grid-cols-[1.4fr_60px_1.4fr_60px] items-center border-t border-border/40 first:border-t-0 cursor-pointer transition-colors',
+                          'group grid grid-cols-[minmax(180px,260px)_60px_1fr_60px] items-center border-t border-border/40 first:border-t-0 cursor-pointer transition-colors',
                           'hover:bg-muted/30',
                           isHighlight && 'bg-muted/40',
                         )}
                       >
                         {/* System cell */}
-                        <div className="px-3.5 py-3">
+                        <div className="px-3.5 py-2">
                           {isFirst ? (
                             <div>
                               <div className="text-[13px] font-medium leading-tight">{sys?.name || '—'}</div>
@@ -237,15 +237,15 @@ export const InspectionTestPlanStep: React.FC<InspectionTestPlanStepProps> = ({ 
                         </div>
 
                         {/* Type badge */}
-                        <div className="px-3.5 py-3 flex justify-center">
+                        <div className="px-3.5 py-2 flex justify-center">
                           <TypeBadge type={row.inspection_type} />
                         </div>
 
                         {/* Activity */}
-                        <div className="px-3.5 py-3 text-[13px]">{row.activity_name}</div>
+                        <div className="px-3.5 py-2 text-[13px]">{row.activity_name}</div>
 
                         {/* Actions */}
-                        <div className="px-3.5 py-3 flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="px-3.5 py-2 flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={(e) => { e.stopPropagation(); openEdit(row); }}
                             className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
