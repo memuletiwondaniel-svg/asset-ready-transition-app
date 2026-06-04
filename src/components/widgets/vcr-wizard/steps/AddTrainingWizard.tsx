@@ -710,8 +710,10 @@ const StepReview: React.FC<{
   durationDays: string;
   tentativeDate: string;
   formatDisplayDate: (d: string) => string;
-}> = ({ title, overview, provider, deliveryMethods, targetAudience, selectedSystemIds, allSystems, durationDays, tentativeDate, formatDisplayDate }) => {
+  goToStep: (target: number) => void;
+}> = ({ title, overview, provider, deliveryMethods, targetAudience, selectedSystemIds, allSystems, durationDays, tentativeDate, formatDisplayDate, goToStep }) => {
   const selectedSystems = allSystems.filter(s => selectedSystemIds.includes(s.id));
+  const showSystemsCard = selectedSystems.length > 0 || allSystems.length > 0;
 
   return (
     <div className="space-y-4">
@@ -720,52 +722,58 @@ const StepReview: React.FC<{
         <p className="text-xs text-muted-foreground mt-0.5">Confirm the details below before creating.</p>
       </div>
 
-
-      {/* Title card — hero treatment */}
-      <div className="p-4 rounded-xl border bg-gradient-to-br from-primary/5 via-transparent to-transparent">
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <GraduationCap className="w-4.5 h-4.5 text-primary" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-base font-semibold text-foreground leading-tight">{title}</p>
-            {overview && (
-              <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">{overview}</p>
-            )}
-          </div>
-        </div>
+      {/* Title + Objective card — hero treatment (no redundant icon; description as body text) */}
+      <div className="p-4 rounded-xl border bg-gradient-to-br from-primary/5 via-transparent to-transparent relative">
+        <EditLink onClick={() => goToStep(0)} />
+        <p className="text-base font-semibold text-foreground leading-tight pr-12">
+          {title || <span className="text-muted-foreground/50 italic font-normal">Not specified</span>}
+        </p>
+        {overview ? (
+          <p className="text-xs text-muted-foreground mt-2 leading-relaxed whitespace-pre-wrap">{overview}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground/40 italic mt-2">No objective specified</p>
+        )}
       </div>
 
       {/* Detail cards grid */}
       <div className="grid grid-cols-2 gap-3">
-        {/* Provider */}
         <ReviewCard
           icon={Building2}
           label="Provider"
           empty={!provider}
+          onEdit={() => goToStep(1)}
         >
           <span className="text-sm font-medium">{provider}</span>
         </ReviewCard>
 
-        {/* Duration & Date */}
         <ReviewCard
           icon={Clock}
           label="Schedule"
           empty={!durationDays && !tentativeDate}
+          onEdit={() => goToStep(3)}
         >
           <div className="space-y-0.5">
-            {durationDays && (
-              <p className="text-sm font-medium">{durationDays} day{parseFloat(durationDays) !== 1 ? 's' : ''}</p>
+            {tentativeDate ? (
+              <p className="text-sm font-medium">{formatDisplayDate(tentativeDate)}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground/50 italic">No date</p>
             )}
-            {tentativeDate && (
-              <p className="text-[11px] text-muted-foreground">{formatDisplayDate(tentativeDate)}</p>
+            {durationDays && (
+              <p className="text-[11px] text-muted-foreground">
+                {durationDays} day{parseFloat(durationDays) !== 1 ? 's' : ''}
+              </p>
             )}
           </div>
         </ReviewCard>
       </div>
 
-      {/* Delivery Format */}
-      <ReviewCard icon={MapPin} label="Delivery Format" empty={deliveryMethods.length === 0} fullWidth>
+      <ReviewCard
+        icon={MapPin}
+        label="Delivery Format"
+        empty={deliveryMethods.length === 0}
+        fullWidth
+        onEdit={() => goToStep(1)}
+      >
         <div className="flex flex-wrap gap-1.5">
           {deliveryMethods.map(dm => {
             const method = DELIVERY_METHODS.find(m => m.id === dm);
@@ -778,8 +786,13 @@ const StepReview: React.FC<{
         </div>
       </ReviewCard>
 
-      {/* Target Audience */}
-      <ReviewCard icon={Users} label="Target Audience" empty={targetAudience.length === 0} fullWidth>
+      <ReviewCard
+        icon={Users}
+        label="Target Audience"
+        empty={targetAudience.length === 0}
+        fullWidth
+        onEdit={() => goToStep(2)}
+      >
         <div className="flex flex-wrap gap-1.5">
           {targetAudience.map(a => (
             <Badge key={a} variant="outline" className="text-[10px] font-medium">{a}</Badge>
@@ -787,9 +800,15 @@ const StepReview: React.FC<{
         </div>
       </ReviewCard>
 
-      {/* Systems */}
-      {selectedSystems.length > 0 && (
-        <ReviewCard icon={Layers} label={`Applicable Systems (${selectedSystems.length})`} fullWidth>
+      {/* Applicable Systems — only render when systems exist for the VCR */}
+      {showSystemsCard && (
+        <ReviewCard
+          icon={Layers}
+          label={selectedSystems.length > 0 ? `Applicable Systems (${selectedSystems.length})` : 'Applicable Systems'}
+          empty={selectedSystems.length === 0}
+          fullWidth
+          onEdit={() => goToStep(2)}
+        >
           <div className="flex flex-wrap gap-1.5">
             {selectedSystems.map(s => (
               <Badge key={s.id} variant="secondary" className="text-[10px] font-medium font-mono">{s.name}</Badge>
@@ -801,6 +820,17 @@ const StepReview: React.FC<{
   );
 };
 
+/* ───── Edit link (top-right of a review card) ───── */
+const EditLink: React.FC<{ onClick: () => void }> = ({ onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="absolute top-2.5 right-3 text-[11px] font-medium text-primary hover:underline transition-colors"
+  >
+    Edit
+  </button>
+);
+
 /* ───── Review Card helper ───── */
 const ReviewCard: React.FC<{
   icon: React.ElementType;
@@ -808,11 +838,13 @@ const ReviewCard: React.FC<{
   children: React.ReactNode;
   empty?: boolean;
   fullWidth?: boolean;
-}> = ({ icon: Icon, label, children, empty, fullWidth }) => (
+  onEdit?: () => void;
+}> = ({ icon: Icon, label, children, empty, fullWidth, onEdit }) => (
   <div className={cn(
-    'p-3 rounded-lg border bg-card',
+    'relative p-3 rounded-lg border bg-card',
     fullWidth && 'col-span-2'
   )}>
+    {onEdit && <EditLink onClick={onEdit} />}
     <div className="flex items-center gap-1.5 mb-1.5">
       <Icon className="w-3 h-3 text-muted-foreground" />
       <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{label}</p>
