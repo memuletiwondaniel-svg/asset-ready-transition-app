@@ -12,6 +12,7 @@ import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { WizardNavigation } from '../p2a-wizard/WizardNavigation';
+import { StepCircle } from './StepCircle';
 
 export interface WizardShellStep {
   id: string;
