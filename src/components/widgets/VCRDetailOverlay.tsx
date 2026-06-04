@@ -1935,18 +1935,14 @@ export const VCRDetailOverlayWidget: React.FC<VCRDetailOverlayProps> = ({
       }
       case 'sof':
         return (
-          <SOFCertificate
-            certificateNumber={`SOF-${displayCode}`}
-            plantName={projectName}
-            facilityName={vcr.name}
+          <VCRSoFTabContent
+            vcr={vcr}
+            displayCode={displayCode}
             projectName={projectName}
-            pssrNumber={displayCode}
-            sofDate={vcr.target_date ? format(new Date(vcr.target_date), 'dd MMM yyyy') : ''}
-            sourceType="VCR"
-            pssrReason="Start-up of a new Project or Facility"
-            approvers={sofDirectorApprovers.length > 0 ? sofDirectorApprovers : undefined}
+            sofDirectorApprovers={sofDirectorApprovers}
           />
         );
+
       case 'pac':
         return (
           <PACCertificate
