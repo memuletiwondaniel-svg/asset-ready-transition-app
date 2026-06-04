@@ -156,24 +156,23 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                         key={step.id}
                         onClick={() => onStepChange(idx)}
                         className={cn(
-                          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap shrink-0 transition-all border',
+                          'relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap shrink-0 transition-all border',
                           isActive
                             ? 'bg-primary/10 text-primary border-primary/30'
                             : isComplete
                               ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
-                              : isWarning
-                                ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
-                                : 'bg-muted text-muted-foreground border-transparent'
+                              : 'bg-muted text-muted-foreground border-transparent'
                         )}
                       >
                         {isComplete && !isActive ? (
-                          <Check className="w-3 h-3" />
-                        ) : isWarning && !isActive ? (
-                          <AlertCircle className="w-3 h-3" />
+                          <Check className="w-3 h-3" strokeWidth={3} />
                         ) : (
                           <span className="text-[10px]">{idx + 1}</span>
                         )}
                         {isActive && step.label}
+                        {isWarning && !isActive && !isComplete && (
+                          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 ring-2 ring-background" />
+                        )}
                       </button>
                     );
                   })}
@@ -211,28 +210,32 @@ export const WizardShell: React.FC<WizardShellProps> = ({
                         key={step.id}
                         onClick={() => onStepChange(idx)}
                         className={cn(
-                          'group relative w-full flex items-center gap-2.5 pl-3 pr-3 py-2 rounded-md text-left transition-all text-sm',
+                          'group relative w-full flex items-center gap-2.5 pl-3 pr-3 py-2.5 rounded-md text-left transition-all text-sm border-l-[3px]',
                           isActive
-                            ? 'bg-primary/[0.08]'
-                            : 'hover:bg-muted/40'
+                            ? 'bg-primary/[0.06] border-l-primary'
+                            : 'border-l-transparent hover:bg-muted/40'
                         )}
                       >
-                        <div className={cn(
-                          'relative w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[11px] font-semibold transition-colors',
-                          isActive
-                            ? 'bg-primary text-primary-foreground border border-primary'
-                            : isComplete
-                              ? 'bg-background border border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                              : isWarning
-                                ? 'bg-background border border-amber-400 text-amber-700 dark:text-amber-400'
+                        <div className="relative shrink-0">
+                          <div className={cn(
+                            'w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold transition-colors',
+                            isActive
+                              ? 'bg-primary text-primary-foreground border border-primary'
+                              : isComplete
+                                ? 'bg-emerald-500 border border-emerald-500 text-white'
                                 : 'bg-background border border-border text-muted-foreground'
-                        )}>
-                          {isComplete && !isActive ? (
-                            <Check className="w-3 h-3" />
-                          ) : isWarning && !isActive ? (
-                            <AlertCircle className="w-3 h-3" />
-                          ) : (
-                            idx + 1
+                          )}>
+                            {isComplete && !isActive ? (
+                              <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                            ) : (
+                              idx + 1
+                            )}
+                          </div>
+                          {isWarning && !isActive && !isComplete && (
+                            <span
+                              className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-background"
+                              aria-label="Incomplete"
+                            />
                           )}
                         </div>
                         <span className={cn(

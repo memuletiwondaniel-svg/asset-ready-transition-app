@@ -269,13 +269,23 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
     return { label: 'Draft', cls: 'bg-muted text-muted-foreground border-border' };
   })();
 
-  const headerContent = (
-    <div className="flex flex-col gap-2 min-w-0">
-      <div className="flex items-center gap-2 flex-wrap">
+  const topHeaderContent = (
+    <div className="flex items-start justify-between gap-4 py-3">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground truncate">
+            {shortVcrId ? `${shortVcrId}: ` : ''}{vcr.name}
+          </h1>
+        </div>
+        <p className="text-[11px] text-muted-foreground mt-1">
+          Create VCR Plan · Step {currentStep + 1} of {STEPS.length} — {STEPS[currentStep]?.label}
+        </p>
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0 pt-1">
         {shortVcrId && (
           <Badge
             className={cn(
-              "text-[11px] font-mono font-semibold border-0 px-2.5 py-0.5",
+              "text-[10px] font-mono font-semibold border-0 px-2 py-0.5",
               idColors.bg, idColors.text
             )}
           >
@@ -286,8 +296,6 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
           {statusLabel.label}
         </Badge>
       </div>
-      <h2 className="text-sm font-black line-clamp-2 leading-tight text-foreground">{vcr.name}</h2>
-      <p className="text-[10px] text-muted-foreground">Create VCR Plan</p>
     </div>
   );
 
@@ -301,7 +309,8 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
       onStepChange={goToStep}
       isStepComplete={isStepComplete}
       isStepWarning={isStepWarning}
-      header={headerContent}
+      header={null}
+      topHeader={topHeaderContent}
       navigation={{
         onBack: handleBack,
         onNext: handleNext,
@@ -312,10 +321,6 @@ export const VCRExecutionPlanWizard: React.FC<VCRExecutionPlanWizardProps> = ({
         onSubmit: currentStep === STEPS.length - 1 ? handleDone : undefined,
       }}
     >
-      <div className="px-4 sm:px-6 pt-4 sm:pt-5 pb-2 border-b bg-background sticky top-0 z-10">
-        <h1 className="text-base sm:text-lg font-semibold text-foreground">Create VCR Plan</h1>
-        <p className="text-[11px] text-muted-foreground mt-0.5">{STEPS[currentStep]?.label}</p>
-      </div>
       <div className="p-3 sm:p-6">
         {renderStep()}
       </div>
